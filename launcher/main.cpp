@@ -1,3 +1,4 @@
+#include <array>
 #include <iostream>
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -83,14 +84,15 @@ int main()
         ImGui::SetNextWindowSize(viewport->WorkSize);
         {
             static int selected_tool = 0;
-            const char* items[] = { "GAME", "geditor", "Source Code" };
+            constexpr std::array<const char*, 6> items = { "Level Editor", "Model Editor", "Texture Editor", "Sound Editor", "Source Code", "Documentation" };
+
 
             ImGui::Begin("Game SDK",
                          nullptr,
                          ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
             const ImVec2 size = ImVec2(-1, ImGui::GetContentRegionAvail().y - 28);
             ImGui::BeginListBox("##mainlb", size);
-            for (int i = 0; i < IM_ARRAYSIZE(items); i++)
+            for (int i = 0; i < items.size(); i++)
             {
                 if (ImGui::Selectable(items[i], selected_tool == i)) selected_tool = i;
             }
