@@ -1,9 +1,39 @@
 #include <array>
-#include <iostream>
-#include <SDL3/SDL.h>
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
+#include <iostream>
+#include <SDL3/SDL.h>
+#include "imgui_internal.h"
+#include "libassets/TextureAsset.h"
+
+static TextureAsset texture;
+static bool texture_loaded = false;
+SDL_Renderer *renderer;
+SDL_Texture *sdltexture;
+
+void openGtexCallback(void *userdata, const char *const *filelist, int filter)
+{
+    if (filelist == nullptr || filelist[0] == nullptr) return;
+    texture = TextureAsset(static_cast<const char*>(filelist[0]));
+    texture.FinishLoading();
+    SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
+                          static_cast<int>(texture.GetHeight()),
+                          SDL_PIXELFORMAT_RGBA8888,
+                          texture.GetPixels(),
+                          static_cast<int>(texture.GetWidth() * sizeof(uint)));
+    if (surface == nullptr)
+    {
+        printf("SDL_CreateSurfaceFrom() failed: %s\n", SDL_GetError());
+        return;
+    }
+    sdltexture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (sdltexture == nullptr)
+    {
+        printf("SDL_CreateTextureFromSurface() failed: %s\n", SDL_GetError());
+        return;
+    }
+}
 
 int main()
 {
@@ -14,16 +44,13 @@ int main()
     }
 
     constexpr SDL_WindowFlags window_flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
-    SDL_Window *window = SDL_CreateWindow("Game SDK",
-                                          350,
-                                          250,
-                                          window_flags);
+    SDL_Window *window = SDL_CreateWindow("texedit", 800, 600, window_flags);
     if (window == nullptr)
     {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
         return -1;
     }
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, nullptr);
+    renderer = SDL_CreateRenderer(window, nullptr);
     SDL_SetRenderVSync(renderer, 1);
     if (renderer == nullptr)
     {
@@ -59,9 +86,13 @@ int main()
         {
             ImGui_ImplSDL3_ProcessEvent(&event);
             if (event.type == SDL_EVENT_QUIT)
+            {
                 done = true;
+            }
             if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
+            {
                 done = true;
+            }
         }
 
         if ((SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0)
@@ -78,24 +109,46 @@ int main()
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
         {
-            static int selected_tool = 0;
-            constexpr std::array<const char*, 6> items = { "Level Editor", "Model Editor", "Texture Editor", "Sound Editor", "Source Code", "Documentation" };
-
-
-            ImGui::Begin("Game SDK",
+            ImGui::Begin("texedit",
                          nullptr,
                          ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
-            const ImVec2 size = ImVec2(-1, ImGui::GetContentRegionAvail().y - 28);
-            ImGui::BeginListBox("##mainlb", size);
-            for (int i = 0; i < items.size(); i++)
+            if (ImGui::BeginMainMenuBar())
             {
-                if (ImGui::Selectable(items[i], selected_tool == i)) selected_tool = i;
+                if (ImGui::BeginMenu("File"))
+                {
+                    if (ImGui::MenuItem("Open", "Ctrl+O"))
+                    {
+                        constexpr SDL_DialogFileFilter gtexFilter = {"GAME texture (*.gtex)", "gtex"};
+                        SDL_ShowOpenFileDialog(openGtexCallback, nullptr, window, {&gtexFilter}, 1, nullptr, false);
+                    }
+                    if (ImGui::MenuItem("Import", "Ctrl+Shift+O"))
+                    {}
+                    if (ImGui::MenuItem("Save", "Ctrl+S"))
+                    {}
+                    if (ImGui::MenuItem("Export", "Ctrl+Shift+S"))
+                    {}
+                    ImGui::Separator();
+                    if (ImGui::MenuItem("Quit", "Alt+F4"))
+                    {
+                        done = true;
+                    }
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenu("Help"))
+                {
+                    if (ImGui::MenuItem("Documentation"))
+                    {}
+                    if (ImGui::MenuItem("About"))
+                    {}
+                    ImGui::EndMenu();
+                }
+                ImGui::EndMainMenuBar();
             }
-            ImGui::EndListBox();
-            ImGui::Separator();
-            if (ImGui::Button("Exit")) done = true;
-            ImGui::SameLine();
-            ImGui::Button("Launch");
+
+            ImGui::TextDisabled("No image is open");
+
+            ImGui::Image(sdltexture, ImGui::GetContentRegionAvail());
+
             ImGui::End();
         }
 
