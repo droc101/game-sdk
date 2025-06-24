@@ -34,7 +34,7 @@ class RawAsset final: public Asset {
         uint8_t *data = nullptr;
         std::size_t data_size = 0;
 
-        uint8_t* SaveToBuffer() override;
+        uint8_t* SaveToBuffer(std::size_t *outSize) override;
 };
 
 

@@ -61,7 +61,7 @@ class TextureAsset final: public Asset {
 
         void FinishLoading() override;
 
-        uint8_t* SaveToBuffer() override;
+        uint8_t* SaveToBuffer(std::size_t *outSize) override;
 
     private:
         uint32_t *pixels;

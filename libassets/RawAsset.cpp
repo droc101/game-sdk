@@ -26,8 +26,9 @@ void RawAsset::FinishLoading()
     delete[] tempCompressedData;
 }
 
-uint8_t *RawAsset::SaveToBuffer()
+uint8_t *RawAsset::SaveToBuffer(std::size_t *outSize)
 {
+    *outSize = data_size;
     return data;
 }
 

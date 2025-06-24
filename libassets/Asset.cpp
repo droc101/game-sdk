@@ -4,6 +4,7 @@
 
 #include "include/libassets/Asset.h"
 #include <cassert>
+#include <csignal>
 #include <cstdio>
 #include <cstring>
 #include <stdexcept>
@@ -65,16 +66,31 @@ uint8_t *Asset::Decompress(uint8_t *asset, std::size_t *outSize)
     stream.next_out = decompressedData;
     stream.avail_out = decompressedSize;
 
-    assert(inflateInit2(&stream, MAX_WBITS | 16) == Z_OK);
+    if (inflateInit2(&stream, MAX_WBITS | 16) != Z_OK)
+    {
+        printf("inflateInit2() failed with error: %s", stream.msg);
+        fflush(stdout);
+        raise(SIGABRT);
+    }
 
     int inflateReturnValue = inflate(&stream, Z_NO_FLUSH);
     while (inflateReturnValue != Z_STREAM_END)
     {
-        assert(inflateReturnValue == Z_OK);
+        if (inflateReturnValue != Z_OK)
+        {
+            printf("inflate() failed with error: %s", stream.msg);
+            fflush(stdout);
+            raise(SIGABRT);
+        }
         inflateReturnValue = inflate(&stream, Z_NO_FLUSH);
     }
 
-    assert(inflateEnd(&stream) == Z_OK);
+    if (inflateEnd(&stream) != Z_OK)
+    {
+        printf("inflateEnd() failed with error: %s", stream.msg);
+        fflush(stdout);
+        raise(SIGABRT);
+    }
 
     if (outSize != nullptr)
     {
@@ -84,65 +100,50 @@ uint8_t *Asset::Decompress(uint8_t *asset, std::size_t *outSize)
     return decompressedData;
 }
 
-const uint8_t *Asset::Compress(uint8_t *data, std::size_t data_size) const
+const uint8_t *Asset::Compress(uint8_t *data, std::size_t data_size, std::size_t *out_compressed_size) const
 {
     uint32_t* header = new uint32_t[4];
     header[1] = data_size;
     header[3] = GetAssetType();
 
-    std::vector<uint8_t> buffer;
-
-    constexpr size_t BUFSIZE = 128 * 1024;
-    uint8_t temp_buffer[BUFSIZE];
-
     Bytef* asset_bytef = reinterpret_cast<Bytef*>(data);
 
-    z_stream strm;
-    strm.zalloc = Z_NULL;
-    strm.zfree = Z_NULL;
-    strm.next_in = asset_bytef;
-    strm.avail_in = data_size;
-    strm.next_out = temp_buffer;
-    strm.avail_out = BUFSIZE;
+    z_stream zs{};
+    deflateInit2(&zs, Z_BEST_COMPRESSION, Z_DEFLATED, 15 | 16, 8, Z_DEFAULT_STRATEGY);
 
-    deflateInit(&strm, Z_BEST_COMPRESSION);
+    zs.next_in = asset_bytef;
+    zs.avail_in = data_size;
 
-    while (strm.avail_in != 0)
-    {
-        const int res = deflate(&strm, Z_NO_FLUSH);
-        assert(res == Z_OK);
-        if (strm.avail_out == 0)
-        {
-            buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE);
-            strm.next_out = temp_buffer;
-            strm.avail_out = BUFSIZE;
-        }
+    int ret;
+    constexpr size_t chunkSize = 16384;
+    std::vector<uint8_t> outBuffer(chunkSize);
+    std::vector<uint8_t> compressedData;
+
+    do {
+        zs.next_out = outBuffer.data();
+        zs.avail_out = outBuffer.size();
+
+        ret = deflate(&zs, Z_FINISH);
+
+        const size_t bytesCompressed = outBuffer.size() - zs.avail_out;
+        compressedData.insert(compressedData.end(), outBuffer.begin(), outBuffer.begin() + bytesCompressed);
+    } while (ret == Z_OK);
+
+    deflateEnd(&zs);
+
+    if (ret != Z_STREAM_END) {
+        throw std::runtime_error("deflate failed");
     }
 
-    int deflate_res = Z_OK;
-    while (deflate_res == Z_OK)
-    {
-        if (strm.avail_out == 0)
-        {
-            buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE);
-            strm.next_out = temp_buffer;
-            strm.avail_out = BUFSIZE;
-        }
-        deflate_res = deflate(&strm, Z_FINISH);
-    }
+    header[0] = compressedData.size();
 
-    assert(deflate_res == Z_STREAM_END);
-    buffer.insert(buffer.end(), temp_buffer, temp_buffer + BUFSIZE - strm.avail_out);
-    deflateEnd(&strm);
-
-    header[0] = buffer.size();
-
-    uint8_t* output = new uint8_t[(sizeof(uint32_t) * 4) + buffer.size()];
+    uint8_t* output = new uint8_t[(sizeof(uint32_t) * 4) + compressedData.size()];
     memcpy(output, header, sizeof(uint32_t) * 4);
-    memcpy(output + sizeof(uint32_t) * 4, buffer.data(), buffer.size());
+    memcpy(output + sizeof(uint32_t) * 4, compressedData.data(),compressedData.size());
 
-    delete header;
+    delete[] header;
 
+    *out_compressed_size = compressedData.size();
     return output;
 }
 
@@ -150,11 +151,14 @@ void Asset::SaveToFile(const char *path)
 {
     FILE *file = fopen(path, "wb");
     assert(file != nullptr);
-    const uint8_t *buffer = SaveToBuffer();
-    const uint32_t *header = reinterpret_cast<const uint32_t *>(buffer);
-    const uint32_t compressedSize = header[0] + sizeof(uint32_t) * 4;
-    fwrite(buffer, 1, compressedSize, file);
+    std::size_t size;
+    uint8_t *rawBuffer = SaveToBuffer(&size);
+    std::size_t compressedSize;
+    const uint8_t *buffer = Compress(rawBuffer, size, &compressedSize);
+    fwrite(buffer, 1, compressedSize + 16, file);
     fclose(file);
+    delete[] rawBuffer;
+    delete[] buffer;
 }
 
 Asset::AssetType Asset::GetAssetType() const
@@ -167,8 +171,9 @@ void Asset::SetAssetType(AssetType assetType)
     asset_type = assetType;
 }
 
-uint8_t *Asset::SaveToBuffer()
+uint8_t *Asset::SaveToBuffer(std::size_t *outSize)
 {
+    *outSize = 0;
     return nullptr;
 }
 

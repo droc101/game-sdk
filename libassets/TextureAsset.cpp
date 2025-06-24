@@ -46,7 +46,7 @@ TextureAsset::TextureAsset(const char *imagePath, int *channels)
     int width;
     int height;
     uint8_t *data = stbi_load(imagePath, &width, &height, channels, STBI_rgb_alpha);
-    assert(*channels == 4); // The image MUST be RGBA.
+    // assert(*channels == 4); // The image MUST be RGBA.
     this->width = width;
     this->height = height;
     this->pixels = new uint32_t[width * height];
@@ -85,15 +85,20 @@ TextureAsset::TextureAsset(uint32_t *pixels, const uint32_t width, const uint32_
 
 void TextureAsset::FinishLoading()
 {
-    std::size_t decompressed_size = 0;
-    uint8_t *data = Decompress(tempCompressedData, &decompressed_size);
-    delete[] tempCompressedData;
-    const uint32_t *header = reinterpret_cast<uint32_t *>(data);
-    const size_t pixelDataSize = header[0];
-    this->width = header[1];
-    this->height = header[2];
-    this->pixels = new uint32_t[this->width * this->height];
-    memcpy(this->pixels, &header[4], pixelDataSize);
+    if (tempCompressedData != nullptr)
+    {
+        std::size_t decompressed_size = 0;
+        uint8_t *data = Decompress(tempCompressedData, &decompressed_size);
+        delete[] tempCompressedData;
+        const uint32_t *header = reinterpret_cast<uint32_t *>(data);
+        const size_t pixelDataSize = header[0];
+        this->width = header[1];
+        this->height = header[2];
+        this->pixels = new uint32_t[this->width * this->height];
+        memcpy(this->pixels, &header[4], pixelDataSize);
+    }
+
+    // "fix" the byte order
     for (int i = 0; i < this->width * this->height; i++)
     {
         const uint32_t pixel = this->pixels[i];
@@ -103,19 +108,34 @@ void TextureAsset::FinishLoading()
         const uint8_t b = static_cast<uint8_t>(pixel);
 
         this->pixels[i] = b << 24 | g << 16 | r << 8 | a;
-
     }
 }
 
-uint8_t *TextureAsset::SaveToBuffer()
+uint8_t *TextureAsset::SaveToBuffer(std::size_t *outSize)
 {
-    const size_t dataSize = sizeof(uint32_t) * (4 + this->width * this->height);
+    const size_t dataSize = sizeof(uint32_t) * (4 + (this->width * this->height));
     uint8_t *buffer = new uint8_t[dataSize];
-    buffer[0] = this->width * this->height * sizeof(uint32_t);
-    buffer[1] = this->width;
-    buffer[2] = this->height;
-    buffer[3] = 0;
-    memcpy(buffer + 4, this->pixels, dataSize);
+    uint32_t *buffer32 = reinterpret_cast<uint32_t *>(buffer);
+    buffer32[0] = this->width * this->height * sizeof(uint32_t);
+    buffer32[1] = this->width;
+    buffer32[2] = this->height;
+    buffer32[3] = 0;
+    for (int x = 0; x < this->width; x++)
+    {
+        for (int y = 0; y < this->height; y++)
+        {
+            const size_t arrayIndex = x + y * this->width;
+            const uint32_t pixel = this->pixels[arrayIndex];
+
+            const uint8_t a = static_cast<uint8_t>(pixel);
+            const uint8_t r = static_cast<uint8_t>(pixel >> 8);
+            const uint8_t g = static_cast<uint8_t>(pixel >> 16);
+            const uint8_t b = static_cast<uint8_t>(pixel >> 24);
+
+            buffer32[4 + arrayIndex] = a << 24 | r << 16 | g << 8 | b;
+        }
+    }
+    *outSize = buffer32[0] + 16;
     return buffer;
 }
 

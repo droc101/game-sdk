@@ -43,7 +43,7 @@ class Asset {
         /**
          * Save the data of this asset to a buffer
          */
-        [[nodiscard]] virtual uint8_t* SaveToBuffer();
+        [[nodiscard]] virtual uint8_t* SaveToBuffer(std::size_t *outSize);
 
         /**
          * Save this asset to a file
@@ -69,7 +69,7 @@ class Asset {
 
     protected:
         AssetType asset_type;
-        uint8_t *tempCompressedData;
+        uint8_t *tempCompressedData = nullptr;
 
         /**
          * Decompress asset data
@@ -83,9 +83,12 @@ class Asset {
          * Compress asset data and add a header
          * @param data The data to compress
          * @param data_size The size of the data to compress
+         * @param out_compressed_size
          * @return The compressed data with a header
          */
-        [[nodiscard]] const uint8_t *Compress(uint8_t *data, std::size_t data_size) const ;
+        [[nodiscard]] const uint8_t *Compress(uint8_t *data,
+                                              std::size_t data_size,
+                                              std::size_t *out_compressed_size) const ;
 };
 
 
