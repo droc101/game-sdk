@@ -31,6 +31,7 @@ class TextureAsset final: public Asset {
         /**
          * Create a texture asset from an image on disk
          * @param imagePath The path to the image on disk
+         * @param channels Where to store the number of channels in the image
          */
         explicit TextureAsset(const char *imagePath, int *channels);
 
@@ -43,6 +44,12 @@ class TextureAsset final: public Asset {
          * Get an editable reference ot the pixels of this image.
          */
         [[nodiscard]] uint32_t *GetPixels() const;
+
+        /**
+         * Get a non-editable list of the image's pixels in RGBA format
+         */
+        [[nodiscard]] const uint32_t *GetPixelsRGBA() const;
+
         /**
          * Get the width of this image
          */

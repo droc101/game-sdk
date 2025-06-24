@@ -26,19 +26,21 @@ uint32_t *TextureAsset::GetPixels() const
 
 void TextureAsset::SaveAsImage(const char *imagePath, const ImageFormat format) const
 {
+    const uint32_t *rgba = GetPixelsRGBA();
     switch (format)
     {
         case IMAGE_FORMAT_PNG:
-            stbi_write_png(imagePath, static_cast<int>(width), static_cast<int>(height), 4, pixels, static_cast<int>(width * sizeof(uint32_t)));
+            stbi_write_png(imagePath, static_cast<int>(width), static_cast<int>(height), 4, rgba, static_cast<int>(width * sizeof(uint32_t)));
             break;
         case IMAGE_FORMAT_TGA:
-            stbi_write_tga(imagePath, static_cast<int>(width), static_cast<int>(height), 4, pixels);
+            stbi_write_tga(imagePath, static_cast<int>(width), static_cast<int>(height), 4, rgba);
             break;
         case IMAGE_FORMAT_BMP:
-            stbi_write_bmp(imagePath, static_cast<int>(width), static_cast<int>(height), 4, pixels);
+            stbi_write_bmp(imagePath, static_cast<int>(width), static_cast<int>(height), 4, rgba);
             break;
         default:;
     }
+    delete[] rgba;
 }
 
 TextureAsset::TextureAsset(const char *imagePath, int *channels)
@@ -120,6 +122,16 @@ uint8_t *TextureAsset::SaveToBuffer(std::size_t *outSize)
     buffer32[1] = this->width;
     buffer32[2] = this->height;
     buffer32[3] = 0;
+    const uint32_t *rgba = GetPixelsRGBA();
+    memcpy(buffer32 + 4, rgba, sizeof(uint32_t) * GetWidth() * GetHeight());
+    *outSize = buffer32[0] + 16;
+    delete[] rgba;
+    return buffer;
+}
+
+const uint32_t *TextureAsset::GetPixelsRGBA() const
+{
+    uint32_t *pixelsRGBA = new uint32_t[this->width * this->height];
     for (int x = 0; x < this->width; x++)
     {
         for (int y = 0; y < this->height; y++)
@@ -132,10 +144,9 @@ uint8_t *TextureAsset::SaveToBuffer(std::size_t *outSize)
             const uint8_t g = static_cast<uint8_t>(pixel >> 16);
             const uint8_t b = static_cast<uint8_t>(pixel >> 24);
 
-            buffer32[4 + arrayIndex] = a << 24 | r << 16 | g << 8 | b;
+            pixelsRGBA[arrayIndex] = a << 24 | r << 16 | g << 8 | b;
         }
     }
-    *outSize = buffer32[0] + 16;
-    return buffer;
+    return pixelsRGBA;
 }
 

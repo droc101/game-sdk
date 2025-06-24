@@ -14,6 +14,7 @@ SDL_Texture *sdltexture;
 
 void openGtexCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
 {
+    texture_loaded = false;
     if (filelist == nullptr || filelist[0] == nullptr) return;
     texture = TextureAsset(static_cast<const char*>(filelist[0]));
     texture.FinishLoading();
@@ -38,6 +39,7 @@ void openGtexCallback(void * /*userdata*/, const char *const *filelist, int  /*f
 
 void importCallback(void*  /*userdata*/, const char *const *filelist, int  /*filter*/)
 {
+    texture_loaded = false;
     if (filelist == nullptr || filelist[0] == nullptr) return;
     int _;
     texture = TextureAsset(static_cast<const char*>(filelist[0]), &_);
@@ -65,6 +67,12 @@ void saveGtexCallback(void * /*userdata*/, const char *const *filelist, int  /*f
 {
     if (filelist == nullptr || filelist[0] == nullptr) return;
     texture.SaveToFile(filelist[0]);
+}
+
+void exportCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
+{
+    if (filelist == nullptr || filelist[0] == nullptr) return;
+    texture.SaveAsImage(filelist[0], TextureAsset::IMAGE_FORMAT_PNG);
 }
 
 int main()
@@ -142,24 +150,26 @@ int main()
         ImGui::SetNextWindowSize(viewport->WorkSize);
         {
             constexpr SDL_DialogFileFilter gtexFilter = {"GAME texture (*.gtex)", "gtex"};
-            constexpr SDL_DialogFileFilter filters[] = {
-                {
+            constexpr SDL_DialogFileFilter pngFilter = {"PNG Image", "png"};
+            constexpr std::array<SDL_DialogFileFilter, 4> imageFilters = {
+                SDL_DialogFileFilter {
                     "Images",
                     "png;jpg;jpeg;tga"
                 },
-                {
+                SDL_DialogFileFilter {
                     "PNG Images",
                     "png"
                 },
-                {
+                SDL_DialogFileFilter {
                     "JPG Images",
                     "jpg;jepg"
                 },
-                {
+                SDL_DialogFileFilter {
                     "TGA Images",
                     "tga"
                 }
             };
+            static float zoom = 1.0f;
 
             ImGui::Begin("texedit",
                          nullptr,
@@ -174,18 +184,44 @@ int main()
                     }
                     if (ImGui::MenuItem("Import", "Ctrl+Shift+O"))
                     {
-                        SDL_ShowOpenFileDialog(importCallback, nullptr, window, filters, 4, nullptr, false);
+                        SDL_ShowOpenFileDialog(importCallback, nullptr, window, imageFilters.data(), 4, nullptr, false);
                     }
-                    if (ImGui::MenuItem("Save", "Ctrl+S"))
+                    if (ImGui::MenuItemEx("Save", nullptr, "Ctrl+S", false, texture_loaded))
                     {
                         SDL_ShowSaveFileDialog(saveGtexCallback, nullptr, window, {&gtexFilter}, 1, nullptr);
                     }
-                    if (ImGui::MenuItem("Export", "Ctrl+Shift+S"))
-                    {}
+                    if (ImGui::MenuItemEx("Export", nullptr, "Ctrl+Shift+S", false, texture_loaded))
+                    {
+                        SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&pngFilter}, 1, nullptr);
+                    }
                     ImGui::Separator();
                     if (ImGui::MenuItem("Quit", "Alt+F4"))
                     {
                         done = true;
+                    }
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenuEx("View", nullptr, texture_loaded))
+                {
+                    if (ImGui::MenuItem("Zoom In", "Ctrl+="))
+                    {
+                        zoom += 0.1;
+                        if (zoom > 5.0)
+                        {
+                            zoom = 5.0;
+                        }
+                    }
+                    if (ImGui::MenuItem("Zoom Out", "Ctrl+-"))
+                    {
+                        zoom -= 0.1;
+                        if (zoom < 0.1)
+                        {
+                            zoom = 0.1;
+                        }
+                    }
+                    if (ImGui::MenuItem("Reset Zoom", "Ctrl+0"))
+                    {
+                        zoom = 1.0f;
                     }
                     ImGui::EndMenu();
                 }
@@ -201,7 +237,7 @@ int main()
 
                 ImGui::BeginChild("ImagePane", ImVec2(imageWidth, availableSize.y), ImGuiChildFlags_Border, ImGuiWindowFlags_HorizontalScrollbar);
                 {
-                    const ImVec2 imageSize = ImVec2(texture.GetWidth(), texture.GetHeight());
+                    const ImVec2 imageSize = ImVec2(texture.GetWidth() * zoom, texture.GetHeight() * zoom);
                     ImGui::Image(sdltexture, imageSize);
                 }
                 ImGui::EndChild();

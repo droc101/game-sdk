@@ -126,7 +126,7 @@ const uint8_t *Asset::Compress(uint8_t *data, std::size_t data_size, std::size_t
         ret = deflate(&zs, Z_FINISH);
 
         const size_t bytesCompressed = outBuffer.size() - zs.avail_out;
-        compressedData.insert(compressedData.end(), outBuffer.begin(), outBuffer.begin() + bytesCompressed);
+        compressedData.insert(compressedData.end(), outBuffer.begin(), outBuffer.begin() + static_cast<int64_t>(bytesCompressed));
     } while (ret == Z_OK);
 
     deflateEnd(&zs);
