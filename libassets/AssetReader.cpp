@@ -2,7 +2,7 @@
 // Created by droc101 on 6/23/25.
 //
 
-#include "include/libassets/Asset.h"
+#include "include/libassets/AssetReader.h"
 #include <cassert>
 #include <csignal>
 #include <cstdio>
@@ -11,57 +11,20 @@
 #include <vector>
 #include <zlib.h>
 
-Asset::Asset()
-{
-    asset_type = ASSET_TYPE_TEXTURE; // this is only here to please clang-tidy, it does not matter.
-}
-
-Asset::Asset(const char *path)
-{
-    std::FILE *file = std::fopen(path, "rb");
-    if (file == nullptr)
-    {
-        throw std::runtime_error("Unable to open file");
-    }
-    fseek(file, 0, SEEK_END);
-    const std::size_t data_size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    uint8_t *data = new uint8_t[data_size];
-    fread(data, 1, data_size, file);
-    fclose(file);
-    tempCompressedData = data;
-    asset_type = ASSET_TYPE_TEXTURE; // this is only here to please clang-tidy, it does not matter.
-}
-
-Asset::Asset(uint8_t *data)
-{
-    tempCompressedData = data;
-    asset_type = ASSET_TYPE_TEXTURE; // this is only here to please clang-tidy, it does not matter.
-}
-
-void Asset::FinishLoading()
-{
-    // std::size_t decompressed_size = 0;
-    // uint8_t *data = Decompress(tempCompressedData, &decompressed_size);
-    delete[] tempCompressedData;
-}
-
-
-uint8_t *Asset::Decompress(uint8_t *asset, std::size_t *outSize)
+uint8_t *AssetReader::Decompress(uint8_t *asset, std::size_t *outSize, AssetType *outAssetType)
 {
     constexpr std::size_t dataOffset = sizeof(uint32_t) * 4;
     const uint32_t *header = reinterpret_cast<const uint32_t *>(asset);
     const uint32_t compressedSize = header[0];
     const uint32_t decompressedSize = header[1];
     // uint32_t*3 = unused
-    SetAssetType(static_cast<AssetType>(header[3]));
+    *outAssetType = static_cast<AssetType>(header[3]);
 
     uint8_t *decompressedData = new uint8_t[decompressedSize];
 
     z_stream stream = {nullptr};
 
-    Bytef* asset_bytef = reinterpret_cast<Bytef*>(asset + dataOffset);
-    stream.next_in = asset_bytef;
+    stream.next_in = asset + dataOffset;
     stream.avail_in = compressedSize;
     stream.next_out = decompressedData;
     stream.avail_out = decompressedSize;
@@ -100,18 +63,19 @@ uint8_t *Asset::Decompress(uint8_t *asset, std::size_t *outSize)
     return decompressedData;
 }
 
-const uint8_t *Asset::Compress(uint8_t *data, std::size_t data_size, std::size_t *out_compressed_size) const
+const uint8_t *AssetReader::Compress(uint8_t *data,
+                                     const std::size_t data_size,
+                                     std::size_t *out_compressed_size,
+                                     AssetType type)
 {
-    uint32_t* header = new uint32_t[4];
+    uint32_t *header = new uint32_t[4];
     header[1] = data_size;
-    header[3] = GetAssetType();
-
-    Bytef* asset_bytef = reinterpret_cast<Bytef*>(data);
+    header[3] = static_cast<uint32_t>(type);
 
     z_stream zs{};
     deflateInit2(&zs, Z_BEST_COMPRESSION, Z_DEFLATED, 15 | 16, 8, Z_DEFAULT_STRATEGY);
 
-    zs.next_in = asset_bytef;
+    zs.next_in = data;
     zs.avail_in = data_size;
 
     int ret;
@@ -119,27 +83,31 @@ const uint8_t *Asset::Compress(uint8_t *data, std::size_t data_size, std::size_t
     std::vector<uint8_t> outBuffer(chunkSize);
     std::vector<uint8_t> compressedData;
 
-    do {
+    do
+    {
         zs.next_out = outBuffer.data();
         zs.avail_out = outBuffer.size();
 
         ret = deflate(&zs, Z_FINISH);
 
         const size_t bytesCompressed = outBuffer.size() - zs.avail_out;
-        compressedData.insert(compressedData.end(), outBuffer.begin(), outBuffer.begin() + static_cast<int64_t>(bytesCompressed));
+        compressedData.insert(compressedData.end(),
+                              outBuffer.begin(),
+                              outBuffer.begin() + static_cast<int64_t>(bytesCompressed));
     } while (ret == Z_OK);
 
     deflateEnd(&zs);
 
-    if (ret != Z_STREAM_END) {
+    if (ret != Z_STREAM_END)
+    {
         throw std::runtime_error("deflate failed");
     }
 
     header[0] = compressedData.size();
 
-    uint8_t* output = new uint8_t[(sizeof(uint32_t) * 4) + compressedData.size()];
+    uint8_t *output = new uint8_t[(sizeof(uint32_t) * 4) + compressedData.size()];
     memcpy(output, header, sizeof(uint32_t) * 4);
-    memcpy(output + sizeof(uint32_t) * 4, compressedData.data(),compressedData.size());
+    memcpy(output + sizeof(uint32_t) * 4, compressedData.data(), compressedData.size());
 
     delete[] header;
 
@@ -147,33 +115,31 @@ const uint8_t *Asset::Compress(uint8_t *data, std::size_t data_size, std::size_t
     return output;
 }
 
-void Asset::SaveToFile(const char *path)
+void AssetReader::SaveToFile(const char *filePath, uint8_t *data, std::size_t dataSize, const AssetType type)
 {
-    FILE *file = fopen(path, "wb");
+    FILE *file = fopen(filePath, "wb");
     assert(file != nullptr);
-    std::size_t size;
-    uint8_t *rawBuffer = SaveToBuffer(&size);
     std::size_t compressedSize;
-    const uint8_t *buffer = Compress(rawBuffer, size, &compressedSize);
+    const uint8_t *buffer = Compress(data, dataSize, &compressedSize, type);
     fwrite(buffer, 1, compressedSize + 16, file);
     fclose(file);
-    delete[] rawBuffer;
     delete[] buffer;
 }
 
-Asset::AssetType Asset::GetAssetType() const
+uint8_t *AssetReader::LoadFromFile(const char *filePath, std::size_t *outSize, AssetType *outType)
 {
-    return asset_type;
+    std::FILE *file = std::fopen(filePath, "rb");
+    if (file == nullptr)
+    {
+        throw std::runtime_error("Unable to open file");
+    }
+    fseek(file, 0, SEEK_END);
+    const std::size_t data_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    uint8_t *compressedData = new uint8_t[data_size];
+    fread(compressedData, 1, data_size, file);
+    fclose(file);
+    uint8_t *data = Decompress(compressedData, outSize, outType);
+    delete[] compressedData;
+    return data;
 }
-
-void Asset::SetAssetType(AssetType assetType)
-{
-    asset_type = assetType;
-}
-
-uint8_t *Asset::SaveToBuffer(std::size_t *outSize)
-{
-    *outSize = 0;
-    return nullptr;
-}
-

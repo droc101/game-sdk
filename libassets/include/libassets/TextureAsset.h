@@ -5,12 +5,9 @@
 #ifndef TEXTUREASSET_H
 #define TEXTUREASSET_H
 #include <cstdint>
-#include "Asset.h"
+#include <vector>
 
-
-class TextureAsset final: public Asset {
-
-    using Asset::Asset;
+class TextureAsset final {
 
     public:
         enum ImageFormat
@@ -21,59 +18,77 @@ class TextureAsset final: public Asset {
         };
 
         /**
-         * Create a texture asset from a pixel buffer
-         * @param pixels The pixel buffer in RGBA 8-bit format
-         * @param width The width of the image
-         * @param height The height of the image
+         * Please use @c TextureAsset::Create* instead.
          */
-        TextureAsset(uint32_t *pixels, uint32_t width, uint32_t height);
+        TextureAsset() = default;
 
         /**
-         * Create a texture asset from an image on disk
-         * @param imagePath The path to the image on disk
-         * @param channels Where to store the number of channels in the image
+         * Create a @c TextureAsset from a .gtex asset
+         * @param assetPath The path to the gtex file
+         * @return @c The TextureAsset
          */
-        explicit TextureAsset(const char *imagePath, int *channels);
+        [[nodiscard]] static TextureAsset CreateFromAsset(const char *assetPath);
 
         /**
-         * Create a texture asset with the "missing texture" texture
+         * Create a @c TextureAsset from a pixel buffer
+         * @param pixels The pixel data
+         * @param width The width of the texture
+         * @param height The height of the texture
+         * @return The @c TextureAsset
          */
-        explicit TextureAsset();
+        [[nodiscard]] static TextureAsset CreateFromPixels(uint32_t *pixels, uint32_t width, uint32_t height);
 
         /**
-         * Get an editable reference ot the pixels of this image.
+         * Create a @c TextureAsset from a conventional image file (such as PNG)
+         * @param imagePath The path to the image file
+         * @return The @c TextureAsset
          */
-        [[nodiscard]] uint32_t *GetPixels() const;
+        [[nodiscard]] static TextureAsset CreateFromImage(const char *imagePath);
 
-        /**
-         * Get a non-editable list of the image's pixels in RGBA format
-         */
+        /// Create a TextureAsset with the "missing texture" pattern
+        [[nodiscard]] static TextureAsset CreateMissingTexture();
+
+        /// Get the pixel data in RGBA format
         [[nodiscard]] const uint32_t *GetPixelsRGBA() const;
 
-        /**
-         * Get the width of this image
-         */
+        /// Get the raw pixel data (not in RGBA)
+        [[nodiscard]] const unsigned *GetPixels() const;
+
+        /// Get the width of the texture
         [[nodiscard]] uint32_t GetWidth() const;
-        /**
-         * Get the height of this image
-         */
+
+        /// Get the height of the texture
         [[nodiscard]] uint32_t GetHeight() const;
 
         /**
-         * Save this image to disk
+         * Save this @c TextureAsset as a conventional image (such as PNG)
          * @param imagePath The path to save to
          * @param format The format to save as
          */
         void SaveAsImage(const char *imagePath, ImageFormat format) const;
 
-        void FinishLoading() override;
-
-        uint8_t* SaveToBuffer(std::size_t *outSize) override;
+        /**
+         * Save this @c TextureAsset as a GTEX file
+         * @param assetPath The path to save to
+         */
+        void SaveAsAsset(const char *assetPath) const;
 
     private:
-        uint32_t *pixels;
-        uint32_t width;
-        uint32_t height;
+        std::vector<uint32_t> pixels;
+        uint32_t width = 0;
+        uint32_t height = 0;
+
+        /**
+         * Create the uncompressed gtex payload
+         * @param outSize Where to store the size of the payload
+         * @return The payload data
+         */
+        uint8_t *SaveToBuffer(std::size_t *outSize) const;
+
+        /**
+         * Fix the byte order on imported pixels
+         */
+        void FixByteOrder();
 };
 
 

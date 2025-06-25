@@ -11,17 +11,46 @@ static TextureAsset texture;
 static bool texture_loaded = false;
 SDL_Renderer *renderer;
 SDL_Texture *sdltexture;
+SDL_Surface *sdlsurface;
+
+constexpr SDL_DialogFileFilter gtexFilter = {"GAME texture (*.gtex)", "gtex"};
+constexpr SDL_DialogFileFilter pngFilter = {"PNG Image", "png"};
+constexpr std::array imageFilters = {
+    SDL_DialogFileFilter {
+        "Images",
+        "png;jpg;jpeg;tga"
+    },
+    SDL_DialogFileFilter {
+        "PNG Images",
+        "png"
+    },
+    SDL_DialogFileFilter {
+        "JPG Images",
+        "jpg;jepg"
+    },
+    SDL_DialogFileFilter {
+        "TGA Images",
+        "tga"
+    }
+};
+
+void destroyExistingTexture()
+{
+    if (!texture_loaded) return;
+    SDL_DestroyTexture(sdltexture);
+    SDL_DestroySurface(sdlsurface);
+    texture_loaded = false;
+}
 
 void openGtexCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
 {
-    texture_loaded = false;
+    destroyExistingTexture();
     if (filelist == nullptr || filelist[0] == nullptr) return;
-    texture = TextureAsset(static_cast<const char*>(filelist[0]));
-    texture.FinishLoading();
+    texture = TextureAsset::CreateFromAsset(static_cast<const char*>(filelist[0]));
     SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
                           static_cast<int>(texture.GetHeight()),
                           SDL_PIXELFORMAT_RGBA8888,
-                          texture.GetPixels(),
+                          (void*)texture.GetPixels(),
                           static_cast<int>(texture.GetWidth() * sizeof(uint)));
     if (surface == nullptr)
     {
@@ -34,20 +63,20 @@ void openGtexCallback(void * /*userdata*/, const char *const *filelist, int  /*f
         printf("SDL_CreateTextureFromSurface() failed: %s\n", SDL_GetError());
         return;
     }
+    sdlsurface = surface;
     texture_loaded = true;
 }
 
-void importCallback(void*  /*userdata*/, const char *const *filelist, int  /*filter*/)
+void importCallback(void* /*userdata*/, const char *const *filelist, int  /*filter*/)
 {
-    texture_loaded = false;
+    destroyExistingTexture();
     if (filelist == nullptr || filelist[0] == nullptr) return;
     int _;
-    texture = TextureAsset(static_cast<const char*>(filelist[0]), &_);
-    texture.FinishLoading();
+    texture = TextureAsset::CreateFromImage(filelist[0]);
     SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
                           static_cast<int>(texture.GetHeight()),
                           SDL_PIXELFORMAT_RGBA8888,
-                          texture.GetPixels(),
+                          (void*)texture.GetPixels(),
                           static_cast<int>(texture.GetWidth() * sizeof(uint)));
     if (surface == nullptr)
     {
@@ -60,13 +89,14 @@ void importCallback(void*  /*userdata*/, const char *const *filelist, int  /*fil
         printf("SDL_CreateTextureFromSurface() failed: %s\n", SDL_GetError());
         return;
     }
+    sdlsurface = surface;
     texture_loaded = true;
 }
 
 void saveGtexCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
 {
     if (filelist == nullptr || filelist[0] == nullptr) return;
-    texture.SaveToFile(filelist[0]);
+    texture.SaveAsAsset(filelist[0]);
 }
 
 void exportCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
@@ -149,51 +179,29 @@ int main()
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
         {
-            constexpr SDL_DialogFileFilter gtexFilter = {"GAME texture (*.gtex)", "gtex"};
-            constexpr SDL_DialogFileFilter pngFilter = {"PNG Image", "png"};
-            constexpr std::array<SDL_DialogFileFilter, 4> imageFilters = {
-                SDL_DialogFileFilter {
-                    "Images",
-                    "png;jpg;jpeg;tga"
-                },
-                SDL_DialogFileFilter {
-                    "PNG Images",
-                    "png"
-                },
-                SDL_DialogFileFilter {
-                    "JPG Images",
-                    "jpg;jepg"
-                },
-                SDL_DialogFileFilter {
-                    "TGA Images",
-                    "tga"
-                }
-            };
+
             static float zoom = 1.0f;
 
             ImGui::Begin("texedit",
                          nullptr,
                          ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+            bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
+            bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
+            bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && texture_loaded;
+            bool exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && texture_loaded;
+
+            bool zoomInPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Equal) && texture_loaded;
+            bool zoomOutPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Minus) && texture_loaded;
+            bool resetZoomPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_0) && texture_loaded;
+
             if (ImGui::BeginMainMenuBar())
             {
                 if (ImGui::BeginMenu("File"))
                 {
-                    if (ImGui::MenuItem("Open", "Ctrl+O"))
-                    {
-                        SDL_ShowOpenFileDialog(openGtexCallback, nullptr, window, {&gtexFilter}, 1, nullptr, false);
-                    }
-                    if (ImGui::MenuItem("Import", "Ctrl+Shift+O"))
-                    {
-                        SDL_ShowOpenFileDialog(importCallback, nullptr, window, imageFilters.data(), 4, nullptr, false);
-                    }
-                    if (ImGui::MenuItemEx("Save", nullptr, "Ctrl+S", false, texture_loaded))
-                    {
-                        SDL_ShowSaveFileDialog(saveGtexCallback, nullptr, window, {&gtexFilter}, 1, nullptr);
-                    }
-                    if (ImGui::MenuItemEx("Export", nullptr, "Ctrl+Shift+S", false, texture_loaded))
-                    {
-                        SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&pngFilter}, 1, nullptr);
-                    }
+                    openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
+                    importPressed |= ImGui::MenuItem("Import", "Ctrl+Shift+O");
+                    savePressed |= ImGui::MenuItemEx("Save", nullptr, "Ctrl+S", false, texture_loaded);
+                    exportPressed |= ImGui::MenuItemEx("Export", nullptr, "Ctrl+Shift+S", false, texture_loaded);
                     ImGui::Separator();
                     if (ImGui::MenuItem("Quit", "Alt+F4"))
                     {
@@ -203,29 +211,49 @@ int main()
                 }
                 if (ImGui::BeginMenuEx("View", nullptr, texture_loaded))
                 {
-                    if (ImGui::MenuItem("Zoom In", "Ctrl+="))
-                    {
-                        zoom += 0.1;
-                        if (zoom > 5.0)
-                        {
-                            zoom = 5.0;
-                        }
-                    }
-                    if (ImGui::MenuItem("Zoom Out", "Ctrl+-"))
-                    {
-                        zoom -= 0.1;
-                        if (zoom < 0.1)
-                        {
-                            zoom = 0.1;
-                        }
-                    }
-                    if (ImGui::MenuItem("Reset Zoom", "Ctrl+0"))
-                    {
-                        zoom = 1.0f;
-                    }
+                    zoomInPressed |= ImGui::MenuItem("Zoom In", "Ctrl+=");
+                    zoomOutPressed |= ImGui::MenuItem("Zoom Out", "Ctrl+-");
+                    resetZoomPressed |= ImGui::MenuItem("Reset Zoom", "Ctrl+0");
                     ImGui::EndMenu();
                 }
                 ImGui::EndMainMenuBar();
+            }
+
+            if (openPressed)
+            {
+                SDL_ShowOpenFileDialog(openGtexCallback, nullptr, window, {&gtexFilter}, 1, nullptr, false);
+            }
+            else if (importPressed)
+            {
+                SDL_ShowOpenFileDialog(importCallback, nullptr, window, imageFilters.data(), 4, nullptr, false);
+            }
+            else if (savePressed)
+            {
+                SDL_ShowSaveFileDialog(saveGtexCallback, nullptr, window, {&gtexFilter}, 1, nullptr);
+            }
+            else if (exportPressed)
+            {
+                SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&pngFilter}, 1, nullptr);
+            }
+            else if (zoomInPressed)
+            {
+                zoom += 0.1;
+                if (zoom > 5.0)
+                {
+                    zoom = 5.0;
+                }
+            }
+            else if (zoomOutPressed)
+            {
+                zoom -= 0.1;
+                if (zoom < 0.1)
+                {
+                    zoom = 0.1;
+                }
+            }
+            else if (resetZoomPressed)
+            {
+                zoom = 1.0f;
             }
 
             if (texture_loaded)
@@ -237,7 +265,7 @@ int main()
 
                 ImGui::BeginChild("ImagePane", ImVec2(imageWidth, availableSize.y), ImGuiChildFlags_Border, ImGuiWindowFlags_HorizontalScrollbar);
                 {
-                    const ImVec2 imageSize = ImVec2(texture.GetWidth() * zoom, texture.GetHeight() * zoom);
+                    const ImVec2 imageSize = ImVec2(static_cast<float>(texture.GetWidth()) * zoom, static_cast<float>(texture.GetHeight()) * zoom);
                     ImGui::Image(sdltexture, imageSize);
                 }
                 ImGui::EndChild();
@@ -270,7 +298,7 @@ int main()
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
-
+    destroyExistingTexture();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

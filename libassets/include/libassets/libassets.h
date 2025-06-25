@@ -5,7 +5,7 @@
 #ifndef LIBASSETS_H
 #define LIBASSETS_H
 
-#include "Asset.h"
+#include "AssetReader.h"
 
 #define LIBASSETS_VERSION_MAJOR 0
 #define LIBASSETS_VERSION_MINOR 0
