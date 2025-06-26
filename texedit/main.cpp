@@ -46,7 +46,7 @@ void openGtexCallback(void * /*userdata*/, const char *const *filelist, int  /*f
 {
     destroyExistingTexture();
     if (filelist == nullptr || filelist[0] == nullptr) return;
-    texture = TextureAsset::CreateFromAsset(static_cast<const char*>(filelist[0]));
+    texture = TextureAsset::CreateFromAsset(filelist[0]);
     SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
                           static_cast<int>(texture.GetHeight()),
                           SDL_PIXELFORMAT_RGBA8888,

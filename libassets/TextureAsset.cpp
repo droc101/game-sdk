@@ -56,7 +56,7 @@ TextureAsset TextureAsset::CreateMissingTexture()
     return t;
 }
 
-TextureAsset TextureAsset::CreateFromPixels(uint32_t *pixels, uint32_t width, uint32_t height)
+TextureAsset TextureAsset::CreateFromPixels(uint32_t *pixels, const uint32_t width, const uint32_t height)
 {
     TextureAsset t;
     t.width = width;

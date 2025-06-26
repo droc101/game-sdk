@@ -66,7 +66,7 @@ uint8_t *AssetReader::Decompress(uint8_t *asset, std::size_t *outSize, AssetType
 const uint8_t *AssetReader::Compress(uint8_t *data,
                                      const std::size_t data_size,
                                      std::size_t *out_compressed_size,
-                                     AssetType type)
+                                     const AssetType type)
 {
     uint32_t *header = new uint32_t[4];
     header[1] = data_size;
@@ -115,7 +115,7 @@ const uint8_t *AssetReader::Compress(uint8_t *data,
     return output;
 }
 
-void AssetReader::SaveToFile(const char *filePath, uint8_t *data, std::size_t dataSize, const AssetType type)
+void AssetReader::SaveToFile(const char *filePath, uint8_t *data, const std::size_t dataSize, const AssetType type)
 {
     FILE *file = fopen(filePath, "wb");
     assert(file != nullptr);
