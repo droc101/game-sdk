@@ -79,7 +79,8 @@ int main()
         ImGui::SetNextWindowSize(viewport->WorkSize);
         {
             static int selected_tool = 0;
-            constexpr std::array<const char*, 6> items = { "Level Editor", "Model Editor", "Texture Editor", "Sound Editor", "Source Code", "Documentation" };
+            constexpr std::array<const char *, 6> items = {"Level Editor", "Model Editor", "Texture Editor",
+                                                           "Sound Editor", "Source Code", "Documentation"};
 
 
             ImGui::Begin("Game SDK",

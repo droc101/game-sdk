@@ -11,9 +11,9 @@
 #include <vector>
 #include <zlib.h>
 
-uint8_t *AssetReader::Decompress(uint8_t *asset, std::size_t *outSize, AssetType *outAssetType)
+uint8_t *AssetReader::Decompress(uint8_t *asset, size_t *outSize, AssetType *outAssetType)
 {
-    constexpr std::size_t dataOffset = sizeof(uint32_t) * 4;
+    constexpr size_t dataOffset = sizeof(uint32_t) * 4;
     const uint32_t *header = reinterpret_cast<const uint32_t *>(asset);
     const uint32_t compressedSize = header[0];
     const uint32_t decompressedSize = header[1];
@@ -64,8 +64,8 @@ uint8_t *AssetReader::Decompress(uint8_t *asset, std::size_t *outSize, AssetType
 }
 
 const uint8_t *AssetReader::Compress(uint8_t *data,
-                                     const std::size_t data_size,
-                                     std::size_t *out_compressed_size,
+                                     const size_t data_size,
+                                     size_t *out_compressed_size,
                                      const AssetType type)
 {
     uint32_t *header = new uint32_t[4];
@@ -115,18 +115,18 @@ const uint8_t *AssetReader::Compress(uint8_t *data,
     return output;
 }
 
-void AssetReader::SaveToFile(const char *filePath, uint8_t *data, const std::size_t dataSize, const AssetType type)
+void AssetReader::SaveToFile(const char *filePath, uint8_t *data, const size_t dataSize, const AssetType type)
 {
     FILE *file = fopen(filePath, "wb");
     assert(file != nullptr);
-    std::size_t compressedSize;
+    size_t compressedSize;
     const uint8_t *buffer = Compress(data, dataSize, &compressedSize, type);
     fwrite(buffer, 1, compressedSize + 16, file);
     fclose(file);
     delete[] buffer;
 }
 
-uint8_t *AssetReader::LoadFromFile(const char *filePath, std::size_t *outSize, AssetType *outType)
+uint8_t *AssetReader::LoadFromFile(const char *filePath, size_t *outSize, AssetType *outType)
 {
     std::FILE *file = std::fopen(filePath, "rb");
     if (file == nullptr)
@@ -134,7 +134,7 @@ uint8_t *AssetReader::LoadFromFile(const char *filePath, std::size_t *outSize, A
         throw std::runtime_error("Unable to open file");
     }
     fseek(file, 0, SEEK_END);
-    const std::size_t data_size = ftell(file);
+    const size_t data_size = ftell(file);
     fseek(file, 0, SEEK_SET);
     uint8_t *compressedData = new uint8_t[data_size];
     fread(compressedData, 1, data_size, file);

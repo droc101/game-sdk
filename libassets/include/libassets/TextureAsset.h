@@ -10,7 +10,7 @@
 class TextureAsset final {
 
     public:
-        enum ImageFormat
+        enum ImageFormat: uint8_t
         {
             IMAGE_FORMAT_PNG,
             IMAGE_FORMAT_TGA,
@@ -83,7 +83,7 @@ class TextureAsset final {
          * @param outSize Where to store the size of the payload
          * @return The payload data
          */
-        uint8_t *SaveToBuffer(std::size_t *outSize) const;
+        uint8_t *SaveToBuffer(size_t *outSize) const;
 
         /**
          * Fix the byte order on imported pixels

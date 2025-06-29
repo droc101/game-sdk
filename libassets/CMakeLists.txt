@@ -5,7 +5,13 @@ add_library(assets STATIC include/libassets/libassets.h
         AssetReader.cpp
         include/libassets/AssetReader.h
         include/libassets/TextureAsset.h
-        TextureAsset.cpp)
+        TextureAsset.cpp
+        ModelAsset.cpp
+        include/libassets/ModelAsset.h
+        DataReader.cpp
+        include/libassets/DataReader.h
+        DataWriter.cpp
+        include/libassets/DataWriter.h)
 
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})

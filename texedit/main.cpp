@@ -71,7 +71,6 @@ void importCallback(void* /*userdata*/, const char *const *filelist, int  /*filt
 {
     destroyExistingTexture();
     if (filelist == nullptr || filelist[0] == nullptr) return;
-    int _;
     texture = TextureAsset::CreateFromImage(filelist[0]);
     SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
                           static_cast<int>(texture.GetHeight()),

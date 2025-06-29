@@ -5,11 +5,12 @@
 #ifndef ASSET_H
 #define ASSET_H
 #include <cstdint>
+#include <cstddef>
 
 class AssetReader
 {
     public:
-        enum AssetType
+        enum AssetType: uint32_t // NOLINT(*-enum-size)
         {
             ASSET_TYPE_TEXTURE = 0,
             ASSET_TYPE_MP3 = 1,
@@ -34,7 +35,7 @@ class AssetReader
          * @param outAssetType Where to store the payload type
          * @return The payload data
          */
-        [[nodiscard]] static uint8_t *Decompress(uint8_t *asset, std::size_t *outSize, AssetType *outAssetType);
+        [[nodiscard]] static uint8_t *Decompress(uint8_t *asset, size_t *outSize, AssetType *outAssetType);
 
         /**
          * Create an asset given the uncompressed payload
@@ -45,8 +46,8 @@ class AssetReader
          * @return The asset data
          */
         [[nodiscard]] static const uint8_t *Compress(uint8_t *data,
-                                                     std::size_t data_size,
-                                                     std::size_t *out_compressed_size,
+                                                     size_t data_size,
+                                                     size_t *out_compressed_size,
                                                      AssetType type);
 
         /**
@@ -56,7 +57,7 @@ class AssetReader
          * @param outType Where to store the type of the asset
          * @return The payload data
          */
-        [[nodiscard]] static uint8_t *LoadFromFile(const char *filePath, std::size_t *outSize, AssetType *outType);
+        [[nodiscard]] static uint8_t *LoadFromFile(const char *filePath, size_t *outSize, AssetType *outType);
 
         /**
          * Create an asset file on disk
@@ -65,7 +66,7 @@ class AssetReader
          * @param dataSize The size of the payload data
          * @param type The type of asset
          */
-        static void SaveToFile(const char *filePath, uint8_t *data, std::size_t dataSize, AssetType type);
+        static void SaveToFile(const char *filePath, uint8_t *data, size_t dataSize, AssetType type);
 };
 
 
