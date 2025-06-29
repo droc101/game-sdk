@@ -23,7 +23,11 @@ add_executable(mdledit main.cpp
         ModelRenderer.cpp
         ModelRenderer.h
         Options.cpp
-        Options.h)
+        Options.h
+        OptionsWindow.cpp
+        OptionsWindow.h
+        AboutWindow.cpp
+        AboutWindow.h)
 
 find_package(SDL3 REQUIRED)
 include_directories(${SDL3_INCLUDE_DIR})

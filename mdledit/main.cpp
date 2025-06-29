@@ -8,13 +8,13 @@
 #include "imgui_internal.h"
 #include "libassets/ModelAsset.h"
 #include <GLES3/gl3.h>
+#include "AboutWindow.h"
 #include "ModelRenderer.h"
 #include "Options.h"
+#include "OptionsWindow.h"
 
 static bool model_loaded = false;
 static bool dragging = false;
-
-bool options_open = false;
 
 SDL_Window *window = nullptr;
 SDL_GLContext gl_context = nullptr;
@@ -47,13 +47,6 @@ void saveGmdlCallback(void * /*userdata*/, const char *const *filelist, int  /*f
 {
     if (filelist == nullptr || filelist[0] == nullptr) return;
     ModelRenderer::GetModel()->SaveAsAsset(filelist[0]);
-}
-
-void gamePathCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
-{
-    if (filelist == nullptr || filelist[0] == nullptr) return;
-    strncpy(Options::gamePath.data(), filelist[0], Options::gamePath.size());
-    Options::Save();
 }
 
 void exportCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
@@ -212,17 +205,32 @@ int main()
                     }
                     ImGui::EndMenu();
                 }
-                if (ImGui::BeginMenu("View"))
+                if (ImGui::BeginMenuEx("Edit", "", model_loaded))
+                {
+                    ImGui::MenuItem("Import LOD");
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenuEx("View", "", model_loaded))
                 {
                     if (ImGui::MenuItem("Reset View"))
                     {
                         ModelRenderer::UpdateView(0,0,1);
                     }
+                    if (ImGui::MenuItemEx("Backface Culling", "", nullptr, *ModelRenderer::GetCullBackfaces()))
+                    {
+                        *ModelRenderer::GetCullBackfaces() = !*ModelRenderer::GetCullBackfaces();
+                    }
                     ImGui::EndMenu();
                 }
                 if (ImGui::BeginMenu("Tools"))
                 {
-                    if (ImGui::MenuItem("Options")) options_open = true;
+                    if (ImGui::MenuItem("Options")) OptionsWindow::Show();
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenu("Help"))
+                {
+                    if (ImGui::MenuItem("Source Code")) SDL_OpenURL("https://github.com/droc101/game-sdk");
+                    if (ImGui::MenuItem("About")) AboutWindow::Show();
                     ImGui::EndMenu();
                 }
                 ImGui::EndMainMenuBar();
@@ -275,24 +283,8 @@ int main()
             ImGui::End();
         }
 
-        if (options_open)
-        {
-            ImGui::SetNextWindowSize(ImVec2(300, -1));
-            ImGui::Begin("Options", &options_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
-
-            ImGui::PushItemWidth(-40);
-            ImGui::InputTextWithHint("##gamepathinput", "GAME folder", Options::gamePath.data(), Options::gamePath.size());
-            ImGui::SameLine();
-            if (ImGui::Button("..."))
-            {
-                SDL_ShowOpenFolderDialog(gamePathCallback, nullptr, window, nullptr, false);
-            }
-
-            ImGui::Separator();
-            if (ImGui::Button("OK")) options_open = false;
-
-            ImGui::End();
-        }
+        OptionsWindow::Render(window);
+        AboutWindow::Render(window);
 
         ImGui::Render();
         glViewport(0, 0, static_cast<GLsizei>(io.DisplaySize.x), static_cast<GLsizei>(io.DisplaySize.y));

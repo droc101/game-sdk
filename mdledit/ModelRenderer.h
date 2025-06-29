@@ -37,6 +37,8 @@ class ModelRenderer {
 
         static int *GetSkin();
 
+        static bool *GetCullBackfaces();
+
     private:
         inline static ModelAsset model;
 
@@ -59,6 +61,8 @@ class ModelRenderer {
 
         inline static int lod = 0;
         inline static int skin = 0;
+
+        inline static bool cullBackfaces = true;
 
         inline static GLsizei windowWidth = 800;
         inline static GLsizei windowHeight = 600;

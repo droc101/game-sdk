@@ -211,8 +211,15 @@ void ModelRenderer::Render()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    if (cullBackfaces)
+    {
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+    } else
+    {
+        glDisable(GL_CULL_FACE);
+    }
+
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_SCISSOR_TEST);
 
@@ -289,3 +296,9 @@ int *ModelRenderer::GetSkin()
 {
     return &skin;
 }
+
+bool *ModelRenderer::GetCullBackfaces()
+{
+    return &cullBackfaces;
+}
+

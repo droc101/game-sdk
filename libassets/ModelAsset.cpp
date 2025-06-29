@@ -98,9 +98,8 @@ uint8_t *ModelAsset::SaveToBuffer(size_t *outSize) const
         }
     }
 
-    for (int li = 0; li < lods.size(); li++)
+    for (ModelLod l : lods)
     {
-        ModelLod l = lods.at(0);
         w.Write<float>(l.distance);
         w.Write<uint32_t>(static_cast<uint32_t>(l.vertices.size()));
         for (Vertex v : l.vertices)
