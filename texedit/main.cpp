@@ -6,6 +6,7 @@
 #include <SDL3/SDL.h>
 #include "AboutWindow.h"
 #include "imgui_internal.h"
+#include "Options.h"
 #include "OptionsWindow.h"
 #include "libassets/TextureAsset.h"
 
@@ -113,6 +114,8 @@ int main()
         printf("Error: SDL_Init(): %s\n", SDL_GetError());
         return -1;
     }
+
+    Options::Load();
 
     constexpr SDL_WindowFlags window_flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
     SDL_Window *window = SDL_CreateWindow("texedit", 800, 600, window_flags);
@@ -310,6 +313,8 @@ int main()
         ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
         SDL_RenderPresent(renderer);
     }
+
+    Options::Save();
 
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
