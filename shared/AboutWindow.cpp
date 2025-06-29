@@ -37,6 +37,8 @@ void AboutWindow::Render(SDL_Window *window)
         ImGui::TextLinkOpenURL("zlib", "https://zlib.net");
         ImGui::TextLinkOpenURL("JSON for Modern C++", "https://json.nlohmann.me");
         ImGui::Dummy(ImVec2(0.0f, 16.0f));
+        ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 60, 0));
+        ImGui::SameLine();
         if (ImGui::Button("OK", ImVec2(60, 0))) visible = false;
 
         ImGui::End();

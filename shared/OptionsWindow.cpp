@@ -37,16 +37,27 @@ void OptionsWindow::Render(SDL_Window *window)
         ImGui::Text("Folder with GAME executable");
         ImGui::SameLine();
         ImGui::TextDisabled("(no trailing slash)");
-        ImGui::PushItemWidth(-40);
+        ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
         ImGui::InputText("##gamepathinput", Options::gamePath.data(), Options::gamePath.size());
         ImGui::SameLine();
-        if (ImGui::Button("..."))
+        if (ImGui::Button("...", ImVec2(40, 0)))
         {
             SDL_ShowOpenFolderDialog(gamePathCallback, nullptr, window, nullptr, false);
         }
 
         ImGui::Dummy(ImVec2(0, 16));
+
+        const float sizeX = ImGui::GetContentRegionAvail().x;
+
+        ImGui::Dummy(ImVec2(sizeX - 120 - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().WindowPadding.x,0));
+        ImGui::SameLine();
         if (ImGui::Button("OK", ImVec2(60, 0))) visible = false;
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(60, 0)))
+        {
+            Options::Load();
+            visible = false;
+        }
 
         ImGui::End();
     }
