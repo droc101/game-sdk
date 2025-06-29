@@ -21,7 +21,9 @@ void AboutWindow::Render(SDL_Window *window)
     if (visible)
     {
         ImGui::SetNextWindowSize(ImVec2(300, -1));
-        ImGui::Begin("About the GAME SDK", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
+        ImGui::Begin("About the GAME SDK",
+                     &visible,
+                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
 
         ImGui::Text("Development & Authoring tools for");
         ImGui::SameLine();
@@ -31,12 +33,16 @@ void AboutWindow::Render(SDL_Window *window)
         ImGui::Dummy(ImVec2(0.0f, 16.0f));
         ImGui::Text("Third-Party libraries:");
         ImGui::TextLinkOpenURL("SDL3", "https://www.libsdl.org");
-        ImGui::TextLinkOpenURL("Dear ImGui", "https://www.dearimgui.com");
+        if (ImGui::TextLink("Dear ImGui")) imgui_about_visible = true;
         ImGui::TextLinkOpenURL("zlib", "https://zlib.net");
         ImGui::TextLinkOpenURL("JSON for Modern C++", "https://json.nlohmann.me");
         ImGui::Dummy(ImVec2(0.0f, 16.0f));
         if (ImGui::Button("OK", ImVec2(60, 0))) visible = false;
 
         ImGui::End();
+    }
+    if (imgui_about_visible)
+    {
+        ImGui::ShowAboutWindow(&imgui_about_visible);
     }
 }

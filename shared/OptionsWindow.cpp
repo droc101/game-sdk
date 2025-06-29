@@ -25,12 +25,14 @@ void OptionsWindow::gamePathCallback(void *, const char *const *filelist, int)
     Options::Save();
 }
 
-void OptionsWindow::Render(SDL_Window * window)
+void OptionsWindow::Render(SDL_Window *window)
 {
     if (visible)
     {
         ImGui::SetNextWindowSize(ImVec2(400, -1));
-        ImGui::Begin("GAME SDK Options", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
+        ImGui::Begin("GAME SDK Options",
+                     &visible,
+                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
 
         ImGui::Text("Folder with GAME executable");
         ImGui::SameLine();
@@ -49,4 +51,3 @@ void OptionsWindow::Render(SDL_Window * window)
         ImGui::End();
     }
 }
-

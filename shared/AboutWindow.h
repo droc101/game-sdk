@@ -7,15 +7,17 @@
 #include <SDL3/SDL_video.h>
 
 
-class AboutWindow {
+class AboutWindow
+{
     public:
         static void Show();
         static void Hide();
-        static void Render(SDL_Window * window);
+        static void Render(SDL_Window *window);
+
     private:
         inline static bool visible = false;
+        inline static bool imgui_about_visible = false;
 };
-
 
 
 #endif //ABOUTWINDOW_H

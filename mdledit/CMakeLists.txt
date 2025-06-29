@@ -22,12 +22,12 @@ add_executable(mdledit main.cpp
         ../lib/imgui/backends/imgui_impl_sdl3.h
         ModelRenderer.cpp
         ModelRenderer.h
-        Options.cpp
-        Options.h
-        OptionsWindow.cpp
-        OptionsWindow.h
-        AboutWindow.cpp
-        AboutWindow.h)
+        ../shared/Options.cpp
+        ../shared/Options.h
+        ../shared/OptionsWindow.cpp
+        ../shared/OptionsWindow.h
+        ../shared/AboutWindow.cpp
+        ../shared/AboutWindow.h)
 
 find_package(SDL3 REQUIRED)
 include_directories(${SDL3_INCLUDE_DIR})
@@ -37,6 +37,7 @@ find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
 find_package(glm REQUIRED)
 include_directories(${GLM_INCLUDE_DIRS})
+include_directories("../lib/json/include")
 
 set_target_properties(mdledit PROPERTIES LINKER_LANGUAGE CXX)
 

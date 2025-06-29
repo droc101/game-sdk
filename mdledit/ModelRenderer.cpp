@@ -8,7 +8,7 @@
 #include <iosfwd>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include "Options.h"
+#include "../shared/Options.h"
 #include "libassets/TextureAsset.h"
 
 GLuint ModelRenderer::CreateShader(const char* filename, const GLenum type)

@@ -7,17 +7,18 @@
 #include <SDL3/SDL_video.h>
 
 
-class OptionsWindow {
+class OptionsWindow
+{
     public:
         static void Show();
         static void Hide();
-        static void Render(SDL_Window * window);
+        static void Render(SDL_Window *window);
+
     private:
         inline static bool visible = false;
 
-        static void gamePathCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/);
+        static void gamePathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/);
 };
-
 
 
 #endif //OPTIONSWINDOW_H

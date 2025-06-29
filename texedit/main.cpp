@@ -4,7 +4,9 @@
 #include <imgui_impl_sdlrenderer3.h>
 #include <iostream>
 #include <SDL3/SDL.h>
+#include "AboutWindow.h"
 #include "imgui_internal.h"
+#include "OptionsWindow.h"
 #include "libassets/TextureAsset.h"
 
 static TextureAsset texture;
@@ -16,22 +18,22 @@ SDL_Surface *sdlsurface;
 constexpr SDL_DialogFileFilter gtexFilter = {"GAME texture (*.gtex)", "gtex"};
 constexpr SDL_DialogFileFilter pngFilter = {"PNG Image", "png"};
 constexpr std::array imageFilters = {
-    SDL_DialogFileFilter {
-        "Images",
-        "png;jpg;jpeg;tga"
-    },
-    SDL_DialogFileFilter {
-        "PNG Images",
-        "png"
-    },
-    SDL_DialogFileFilter {
-        "JPG Images",
-        "jpg;jepg"
-    },
-    SDL_DialogFileFilter {
-        "TGA Images",
-        "tga"
-    }
+        SDL_DialogFileFilter{
+                "Images",
+                "png;jpg;jpeg;tga"
+        },
+        SDL_DialogFileFilter{
+                "PNG Images",
+                "png"
+        },
+        SDL_DialogFileFilter{
+                "JPG Images",
+                "jpg;jepg"
+        },
+        SDL_DialogFileFilter{
+                "TGA Images",
+                "tga"
+        }
 };
 
 void destroyExistingTexture()
@@ -42,16 +44,16 @@ void destroyExistingTexture()
     texture_loaded = false;
 }
 
-void openGtexCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
+void openGtexCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
 {
     destroyExistingTexture();
     if (filelist == nullptr || filelist[0] == nullptr) return;
     texture = TextureAsset::CreateFromAsset(filelist[0]);
     SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
-                          static_cast<int>(texture.GetHeight()),
-                          SDL_PIXELFORMAT_RGBA8888,
-                          (void*)texture.GetPixels(),
-                          static_cast<int>(texture.GetWidth() * sizeof(uint)));
+                                                 static_cast<int>(texture.GetHeight()),
+                                                 SDL_PIXELFORMAT_RGBA8888,
+                                                 (void *)texture.GetPixels(),
+                                                 static_cast<int>(texture.GetWidth() * sizeof(uint)));
     if (surface == nullptr)
     {
         printf("SDL_CreateSurfaceFrom() failed: %s\n", SDL_GetError());
@@ -67,16 +69,16 @@ void openGtexCallback(void * /*userdata*/, const char *const *filelist, int  /*f
     texture_loaded = true;
 }
 
-void importCallback(void* /*userdata*/, const char *const *filelist, int  /*filter*/)
+void importCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
 {
     destroyExistingTexture();
     if (filelist == nullptr || filelist[0] == nullptr) return;
     texture = TextureAsset::CreateFromImage(filelist[0]);
     SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
-                          static_cast<int>(texture.GetHeight()),
-                          SDL_PIXELFORMAT_RGBA8888,
-                          (void*)texture.GetPixels(),
-                          static_cast<int>(texture.GetWidth() * sizeof(uint)));
+                                                 static_cast<int>(texture.GetHeight()),
+                                                 SDL_PIXELFORMAT_RGBA8888,
+                                                 (void *)texture.GetPixels(),
+                                                 static_cast<int>(texture.GetWidth() * sizeof(uint)));
     if (surface == nullptr)
     {
         printf("SDL_CreateSurfaceFrom() failed: %s\n", SDL_GetError());
@@ -92,13 +94,13 @@ void importCallback(void* /*userdata*/, const char *const *filelist, int  /*filt
     texture_loaded = true;
 }
 
-void saveGtexCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
+void saveGtexCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
 {
     if (filelist == nullptr || filelist[0] == nullptr) return;
     texture.SaveAsAsset(filelist[0]);
 }
 
-void exportCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
+void exportCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
 {
     if (filelist == nullptr || filelist[0] == nullptr) return;
     texture.SaveAsImage(filelist[0], TextureAsset::IMAGE_FORMAT_PNG);
@@ -134,7 +136,6 @@ int main()
     ImGuiIO &io = ImGui::GetIO();
     (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     if (SDL_GetSystemTheme() == SDL_SYSTEM_THEME_DARK)
     {
@@ -215,42 +216,47 @@ int main()
                     resetZoomPressed |= ImGui::MenuItem("Reset Zoom", "Ctrl+0");
                     ImGui::EndMenu();
                 }
+                if (ImGui::BeginMenu("Tools"))
+                {
+                    if (ImGui::MenuItem("Options")) OptionsWindow::Show();
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenu("Help"))
+                {
+                    if (ImGui::MenuItem("Source Code")) SDL_OpenURL("https://github.com/droc101/game-sdk");
+                    if (ImGui::MenuItem("About")) AboutWindow::Show();
+                    ImGui::EndMenu();
+                }
                 ImGui::EndMainMenuBar();
             }
 
             if (openPressed)
             {
                 SDL_ShowOpenFileDialog(openGtexCallback, nullptr, window, {&gtexFilter}, 1, nullptr, false);
-            }
-            else if (importPressed)
+            } else if (importPressed)
             {
                 SDL_ShowOpenFileDialog(importCallback, nullptr, window, imageFilters.data(), 4, nullptr, false);
-            }
-            else if (savePressed)
+            } else if (savePressed)
             {
                 SDL_ShowSaveFileDialog(saveGtexCallback, nullptr, window, {&gtexFilter}, 1, nullptr);
-            }
-            else if (exportPressed)
+            } else if (exportPressed)
             {
                 SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&pngFilter}, 1, nullptr);
-            }
-            else if (zoomInPressed)
+            } else if (zoomInPressed)
             {
                 zoom += 0.1;
                 if (zoom > 5.0)
                 {
                     zoom = 5.0;
                 }
-            }
-            else if (zoomOutPressed)
+            } else if (zoomOutPressed)
             {
                 zoom -= 0.1;
                 if (zoom < 0.1)
                 {
                     zoom = 0.1;
                 }
-            }
-            else if (resetZoomPressed)
+            } else if (resetZoomPressed)
             {
                 zoom = 1.0f;
             }
@@ -262,9 +268,14 @@ int main()
                 constexpr float statsWidth = 150.0f;
                 const float imageWidth = availableSize.x - statsWidth - 8.0f;
 
-                ImGui::BeginChild("ImagePane", ImVec2(imageWidth, availableSize.y), ImGuiChildFlags_Border, ImGuiWindowFlags_HorizontalScrollbar);
+                ImGui::BeginChild("ImagePane",
+                                  ImVec2(imageWidth, availableSize.y),
+                                  ImGuiChildFlags_Border,
+                                  ImGuiWindowFlags_HorizontalScrollbar |
+                                  ImGuiWindowFlags_NoBringToFrontOnFocus);
                 {
-                    const ImVec2 imageSize = ImVec2(static_cast<float>(texture.GetWidth()) * zoom, static_cast<float>(texture.GetHeight()) * zoom);
+                    const ImVec2 imageSize = ImVec2(static_cast<float>(texture.GetWidth()) * zoom,
+                                                    static_cast<float>(texture.GetHeight()) * zoom);
                     ImGui::Image(sdltexture, imageSize);
                 }
                 ImGui::EndChild();
@@ -274,7 +285,10 @@ int main()
                 {
                     ImGui::Text("Stats:");
                     ImGui::Separator();
-                    ImGui::Text("Width: %d\nHeight: %d\nMemory: %d B", texture.GetWidth(), texture.GetHeight(), texture.GetWidth() * texture.GetHeight() * sizeof(uint32_t));
+                    ImGui::Text("Width: %d\nHeight: %d\nMemory: %d B",
+                                texture.GetWidth(),
+                                texture.GetHeight(),
+                                texture.GetWidth() * texture.GetHeight() * sizeof(uint32_t));
                 }
                 ImGui::EndChild();
 
@@ -285,6 +299,9 @@ int main()
 
             ImGui::End();
         }
+
+        OptionsWindow::Render(window);
+        AboutWindow::Render(window);
 
         ImGui::Render();
         SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);

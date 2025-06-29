@@ -8,9 +8,9 @@
 #include "imgui_internal.h"
 #include "libassets/ModelAsset.h"
 #include <GLES3/gl3.h>
-#include "AboutWindow.h"
+#include "../shared/AboutWindow.h"
 #include "ModelRenderer.h"
-#include "Options.h"
+#include "../shared/Options.h"
 #include "OptionsWindow.h"
 
 static bool model_loaded = false;
@@ -18,6 +18,12 @@ static bool dragging = false;
 
 SDL_Window *window = nullptr;
 SDL_GLContext gl_context = nullptr;
+ImGuiIO io;
+bool done = false;
+bool openPressed = false;
+bool importPressed = false;
+bool savePressed = false;
+bool exportPressed = false;
 
 constexpr SDL_DialogFileFilter gmdlFilter = {"GAME model (*.gmdl)", "gmdl"};
 constexpr SDL_DialogFileFilter objFilter = {"OBJ model", "obj"};
@@ -29,7 +35,7 @@ void destroyExistingModel()
     model_loaded = false;
 }
 
-void openGmdlCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
+void openGmdlCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
 {
     destroyExistingModel();
     if (filelist == nullptr || filelist[0] == nullptr) return;
@@ -37,22 +43,136 @@ void openGmdlCallback(void * /*userdata*/, const char *const *filelist, int  /*f
     model_loaded = true;
 }
 
-void importCallback(void* /*userdata*/, const char *const *filelist, int  /*filter*/)
+void importCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
 {
     if (filelist == nullptr || filelist[0] == nullptr) return;
     // TODO: implement OBJ loader in ModelAsset
 }
 
-void saveGmdlCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
+void saveGmdlCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
 {
     if (filelist == nullptr || filelist[0] == nullptr) return;
     ModelRenderer::GetModel()->SaveAsAsset(filelist[0]);
 }
 
-void exportCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
+void exportCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
 {
     if (filelist == nullptr || filelist[0] == nullptr) return;
     // TODO: implement OBJ writer in ModelAsset
+}
+
+void ProcessEvent(const SDL_Event *event)
+{
+    ImGui_ImplSDL3_ProcessEvent(event);
+    io = ImGui::GetIO();
+    if (event->type == SDL_EVENT_QUIT)
+    {
+        done = true;
+    }
+    if (event->type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event->window.windowID == SDL_GetWindowID(window))
+    {
+        done = true;
+    }
+    if (event->type == SDL_EVENT_WINDOW_RESIZED)
+    {
+        int w;
+        int h;
+        SDL_GetWindowSize(window, &w, &h);
+        ModelRenderer::ResizeWindow(w, h);
+    }
+    if (!io.WantCaptureMouse)
+    {
+        if (event->type == SDL_EVENT_MOUSE_WHEEL)
+        {
+            SDL_MouseWheelEvent const e = event->wheel;
+            ModelRenderer::UpdateViewRel(0, 0, e.y / -10.0f);
+        }
+        if (event->type == SDL_EVENT_MOUSE_BUTTON_UP)
+        {
+            if (event->button.button == SDL_BUTTON_LEFT)
+            {
+                dragging = false;
+            }
+        } else if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+        {
+            if (event->button.button == SDL_BUTTON_LEFT)
+            {
+                dragging = true;
+            }
+        }
+        if (dragging && event->type == SDL_EVENT_MOUSE_MOTION)
+        {
+            ModelRenderer::UpdateViewRel(event->motion.yrel / 5.0f, event->motion.xrel / -5.0f, 0);
+        }
+    }
+}
+
+void HandleMenuAndShortcuts()
+{
+    openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
+    importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
+    savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && model_loaded;
+    exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && model_loaded;
+
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
+            importPressed |= ImGui::MenuItem("Import", "Ctrl+Shift+O");
+            savePressed |= ImGui::MenuItemEx("Save", nullptr, "Ctrl+S", false, model_loaded);
+            exportPressed |= ImGui::MenuItemEx("Export", nullptr, "Ctrl+Shift+S", false, model_loaded);
+            ImGui::Separator();
+            if (ImGui::MenuItem("Quit", "Alt+F4"))
+            {
+                done = true;
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenuEx("Edit", "", model_loaded))
+        {
+            ImGui::MenuItem("Import LOD");
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenuEx("View", "", model_loaded))
+        {
+            if (ImGui::MenuItem("Reset View"))
+            {
+                ModelRenderer::UpdateView(0, 0, 1);
+            }
+            if (ImGui::MenuItemEx("Backface Culling", "", nullptr, *ModelRenderer::GetCullBackfaces()))
+            {
+                *ModelRenderer::GetCullBackfaces() = !*ModelRenderer::GetCullBackfaces();
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Tools"))
+        {
+            if (ImGui::MenuItem("Options")) OptionsWindow::Show();
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Help"))
+        {
+            if (ImGui::MenuItem("Source Code")) SDL_OpenURL("https://github.com/droc101/game-sdk");
+            if (ImGui::MenuItem("About")) AboutWindow::Show();
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+
+    if (openPressed)
+    {
+        SDL_ShowOpenFileDialog(openGmdlCallback, nullptr, window, {&gmdlFilter}, 1, nullptr, false);
+    } else if (importPressed)
+    {
+        SDL_ShowOpenFileDialog(importCallback, nullptr, window, {&objFilter}, 1, nullptr, false);
+    } else if (savePressed)
+    {
+        SDL_ShowSaveFileDialog(saveGmdlCallback, nullptr, window, {&gmdlFilter}, 1, nullptr);
+    } else if (exportPressed)
+    {
+        SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&objFilter}, 1, nullptr);
+    }
 }
 
 int main()
@@ -65,7 +185,7 @@ int main()
 
     Options::Load();
 
-    const char* glsl_version = "#version 300 es";
+    const char *glsl_version = "#version 300 es";
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -95,7 +215,7 @@ int main()
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO io = ImGui::GetIO();
+    io = ImGui::GetIO();
     (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -114,55 +234,12 @@ int main()
     ModelRenderer::Init();
     ModelRenderer::ResizeWindow(800, 600);
 
-    bool done = false;
     while (!done)
     {
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            ImGui_ImplSDL3_ProcessEvent(&event);
-            io = ImGui::GetIO();
-            if (event.type == SDL_EVENT_QUIT)
-            {
-                done = true;
-            }
-            if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
-            {
-                done = true;
-            }
-            if (event.type == SDL_EVENT_WINDOW_RESIZED)
-            {
-                int w;
-                int h;
-                SDL_GetWindowSize(window, &w, &h);
-                ModelRenderer::ResizeWindow(w, h);
-            }
-            if (!io.WantCaptureMouse)
-            {
-                if (event.type == SDL_EVENT_MOUSE_WHEEL)
-                {
-                    SDL_MouseWheelEvent const e = event.wheel;
-                    ModelRenderer::UpdateViewRel(0, 0, e.y / -10.0f);
-                }
-                if (event.type == SDL_EVENT_MOUSE_BUTTON_UP)
-                {
-                    if (event.button.button == SDL_BUTTON_LEFT)
-                    {
-                        dragging = false;
-                    }
-                } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
-                {
-                    if (event.button.button == SDL_BUTTON_LEFT)
-                    {
-                        dragging = true;
-                    }
-                }
-                if (dragging && event.type == SDL_EVENT_MOUSE_MOTION)
-                {
-                    ModelRenderer::UpdateViewRel(event.motion.yrel / 5.0f, event.motion.xrel / -5.0f, 0);
-                }
-            }
-
+            ProcessEvent(&event);
         }
 
         if ((SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0)
@@ -178,80 +255,17 @@ int main()
         const ImGuiViewport *viewport = ImGui::GetMainViewport();
         constexpr float modelPaneSize = 250;
         const ImVec2 workSize = ImVec2(viewport->WorkSize.x, modelPaneSize);
-        const ImVec2 workPos = ImVec2(viewport->WorkPos.x, (viewport->WorkPos.y + viewport->WorkSize.y) - modelPaneSize);
+        const ImVec2 workPos = ImVec2(viewport->WorkPos.x,
+                                      (viewport->WorkPos.y + viewport->WorkSize.y) - modelPaneSize);
         ImGui::SetNextWindowPos(workPos);
         ImGui::SetNextWindowSize(workSize);
         {
             ImGui::Begin("mdledit",
                          nullptr,
-                         ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus);
-            bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
-            bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
-            bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && model_loaded;
-            bool exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && model_loaded;
+                         ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
+                         ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-            if (ImGui::BeginMainMenuBar())
-            {
-                if (ImGui::BeginMenu("File"))
-                {
-                    openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
-                    importPressed |= ImGui::MenuItem("Import", "Ctrl+Shift+O");
-                    savePressed |= ImGui::MenuItemEx("Save", nullptr, "Ctrl+S", false, model_loaded);
-                    exportPressed |= ImGui::MenuItemEx("Export", nullptr, "Ctrl+Shift+S", false, model_loaded);
-                    ImGui::Separator();
-                    if (ImGui::MenuItem("Quit", "Alt+F4"))
-                    {
-                        done = true;
-                    }
-                    ImGui::EndMenu();
-                }
-                if (ImGui::BeginMenuEx("Edit", "", model_loaded))
-                {
-                    ImGui::MenuItem("Import LOD");
-                    ImGui::EndMenu();
-                }
-                if (ImGui::BeginMenuEx("View", "", model_loaded))
-                {
-                    if (ImGui::MenuItem("Reset View"))
-                    {
-                        ModelRenderer::UpdateView(0,0,1);
-                    }
-                    if (ImGui::MenuItemEx("Backface Culling", "", nullptr, *ModelRenderer::GetCullBackfaces()))
-                    {
-                        *ModelRenderer::GetCullBackfaces() = !*ModelRenderer::GetCullBackfaces();
-                    }
-                    ImGui::EndMenu();
-                }
-                if (ImGui::BeginMenu("Tools"))
-                {
-                    if (ImGui::MenuItem("Options")) OptionsWindow::Show();
-                    ImGui::EndMenu();
-                }
-                if (ImGui::BeginMenu("Help"))
-                {
-                    if (ImGui::MenuItem("Source Code")) SDL_OpenURL("https://github.com/droc101/game-sdk");
-                    if (ImGui::MenuItem("About")) AboutWindow::Show();
-                    ImGui::EndMenu();
-                }
-                ImGui::EndMainMenuBar();
-            }
-
-            if (openPressed)
-            {
-                SDL_ShowOpenFileDialog(openGmdlCallback, nullptr, window, {&gmdlFilter}, 1, nullptr, false);
-            }
-            else if (importPressed)
-            {
-                SDL_ShowOpenFileDialog(importCallback, nullptr, window, {&objFilter}, 1, nullptr, false);
-            }
-            else if (savePressed)
-            {
-                SDL_ShowSaveFileDialog(saveGmdlCallback, nullptr, window, {&gmdlFilter}, 1, nullptr);
-            }
-            else if (exportPressed)
-            {
-                SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&objFilter}, 1, nullptr);
-            }
+            HandleMenuAndShortcuts();
 
             if (model_loaded)
             {
@@ -259,8 +273,14 @@ int main()
                 {
                     if (ImGui::BeginTabItem("Display", nullptr, 0))
                     {
-                        ImGui::SliderInt("LOD", ModelRenderer::GetLOD(), 0, ModelRenderer::GetModel()->GetLodCount() - 1);
-                        ImGui::SliderInt("Skin", ModelRenderer::GetSkin(), 0, ModelRenderer::GetModel()->GetSkinCount() - 1);
+                        ImGui::SliderInt("LOD",
+                                         ModelRenderer::GetLOD(),
+                                         0,
+                                         ModelRenderer::GetModel()->GetLodCount() - 1);
+                        ImGui::SliderInt("Skin",
+                                         ModelRenderer::GetSkin(),
+                                         0,
+                                         ModelRenderer::GetModel()->GetSkinCount() - 1);
                         ImGui::EndTabItem();
                     }
                     // if (ImGui::BeginTabItem("Skins", nullptr, 0))

@@ -18,7 +18,13 @@ add_executable(texedit main.cpp
         ../lib/imgui/backends/imgui_impl_sdlrenderer3.h
         ../lib/imgui/backends/imgui_impl_sdlrenderer3.cpp
         ../lib/imgui/backends/imgui_impl_sdl3.cpp
-        ../lib/imgui/backends/imgui_impl_sdl3.h)
+        ../lib/imgui/backends/imgui_impl_sdl3.h
+        ../shared/Options.cpp
+        ../shared/Options.h
+        ../shared/OptionsWindow.cpp
+        ../shared/OptionsWindow.h
+        ../shared/AboutWindow.cpp
+        ../shared/AboutWindow.h)
 
 find_package(SDL3 REQUIRED)
 include_directories(${SDL3_INCLUDE_DIR})
@@ -31,7 +37,8 @@ include_directories("../lib/json/include")
 set_target_properties(texedit PROPERTIES LINKER_LANGUAGE CXX)
 
 target_include_directories(texedit PRIVATE "../libassets/include")
+target_include_directories(texedit PRIVATE "../shared")
 
-target_link_libraries(texedit PRIVATE ${SDL3_LIBRARY} SDL3 z  ${CMAKE_BINARY_DIR}/libassets/libassets.a)
+target_link_libraries(texedit PRIVATE ${SDL3_LIBRARY} SDL3 z nlohmann_json::nlohmann_json  ${CMAKE_BINARY_DIR}/libassets/libassets.a)
 
 add_dependencies(texedit assets)
