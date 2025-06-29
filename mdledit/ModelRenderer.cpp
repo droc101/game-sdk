@@ -61,26 +61,20 @@ GLuint ModelRenderer::CreateTexture(const char *filename)
     return gt;
 }
 
-
-void ModelRenderer::Init()
+GLuint ModelRenderer::CreateProgram(const char *fragFilename, const char *vertFilename)
 {
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-
-    const GLuint vertexShader = CreateShader("assets/model.vert", GL_VERTEX_SHADER);
-    const GLuint fragmentShader = CreateShader("assets/model.frag", GL_FRAGMENT_SHADER);
-    if (vertexShader == -1 || fragmentShader == -1)
+    const GLuint vertexShader = CreateShader(vertFilename, GL_VERTEX_SHADER);
+    const GLuint fragmentShader = CreateShader(fragFilename, GL_FRAGMENT_SHADER);
+    if (vertexShader == -1u || fragmentShader == -1u)
     {
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
         printf("Could not create shader program\n");
-        assert(vertexShader != -1 || fragmentShader != -1);
-        return;
+        assert(vertexShader != -1u || fragmentShader != -1u);
+        return -1;
     }
 
-    program = glCreateProgram();
+    GLuint const program = glCreateProgram();
     glAttachShader(program, vertexShader);
     glAttachShader(program, fragmentShader);
     glLinkProgram(program);
@@ -92,8 +86,28 @@ void ModelRenderer::Init()
         glGetProgramInfoLog(program, 512, nullptr, infoLog);
         fprintf(stderr, "Program link failed: %s\n", infoLog);
         glDeleteProgram(program);
-        assert(false);
+        assert(success != 0);
+        return -1;
     }
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    return program;
+}
+
+
+void ModelRenderer::Init()
+{
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    program = CreateProgram("assets/model.frag", "assets/model.vert");
+    cubeProgram = CreateProgram("assets/cube.frag", "assets/cube.vert");
+
+    LoadCube();
 
     UpdateView(0,0,1);
 
@@ -231,7 +245,7 @@ void ModelRenderer::Render()
     glBindVertexArray(glod.vao);
 
     glBindBuffer(GL_ARRAY_BUFFER, glod.vbo);
-    const GLint posAttrib = glGetAttribLocation(program, "VERTEX");
+    GLint posAttrib = glGetAttribLocation(program, "VERTEX");
     const GLint uvAttrib = glGetAttribLocation(program, "VERTEX_UV");
     const GLint normAttrib = glGetAttribLocation(program, "VERTEX_NORMAL");
     glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
@@ -265,9 +279,21 @@ void ModelRenderer::Render()
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(model.GetLod(lod).indexCounts.at(i)), GL_UNSIGNED_INT, nullptr);
     }
+
+    if (showUnitCube)
+    {
+        glUseProgram(cubeProgram);
+        glBindVertexArray(cubeVao);
+        glBindBuffer(GL_ARRAY_BUFFER, cubeVbo);
+        posAttrib = glGetAttribLocation(cubeProgram, "VERTEX");
+        glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+        glEnableVertexAttribArray(posAttrib);
+        glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(projection));
+        glDrawArrays(GL_LINES, 0, 24);
+    }
 }
 
-void ModelRenderer::ResizeWindow(GLsizei w, GLsizei h)
+void ModelRenderer::ResizeWindow(const GLsizei w, const GLsizei h)
 {
     windowWidth = w;
     windowHeight = h;
@@ -288,23 +314,33 @@ void ModelRenderer::UpdateMatrix()
     projection = persp * look;
 }
 
-int *ModelRenderer::GetLOD()
+void ModelRenderer::LoadCube()
 {
-    return &lod;
-}
+    constexpr std::array<GLfloat, 72> cubeVerts = {
+        // Bottom face
+        -0.5f, -0.5f, -0.5f,   0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,   0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,  -0.5f,  0.5f, -0.5f,
+        -0.5f,  0.5f, -0.5f,  -0.5f, -0.5f, -0.5f,
 
-int *ModelRenderer::GetSkin()
-{
-    return &skin;
-}
+        // Top face
+        -0.5f, -0.5f,  0.5f,   0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,   0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,  -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,  -0.5f, -0.5f,  0.5f,
 
-bool *ModelRenderer::GetCullBackfaces()
-{
-    return &cullBackfaces;
-}
+        // Vertical edges
+        -0.5f, -0.5f, -0.5f,  -0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f, -0.5f,   0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f, -0.5f,   0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f,  -0.5f,  0.5f,  0.5f
+    };
 
-ModelRenderer::DisplayMode *ModelRenderer::GetDisplayMode()
-{
-    return &dispMode;
+    glGenVertexArrays(1, &cubeVao);
+    glBindVertexArray(cubeVao);
+
+    glGenBuffers(1, &cubeVbo);
+    glBindBuffer(GL_ARRAY_BUFFER, cubeVbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * cubeVerts.size(), cubeVerts.data(), GL_STATIC_DRAW);
 }
 

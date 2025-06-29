@@ -140,9 +140,9 @@ void HandleMenuAndShortcuts()
             {
                 ModelRenderer::UpdateView(0, 0, 1);
             }
-            if (ImGui::MenuItemEx("Backface Culling", "", nullptr, *ModelRenderer::GetCullBackfaces()))
+            if (ImGui::MenuItemEx("Backface Culling", "", nullptr, ModelRenderer::cullBackfaces))
             {
-                *ModelRenderer::GetCullBackfaces() = !*ModelRenderer::GetCullBackfaces();
+                ModelRenderer::cullBackfaces = !ModelRenderer::cullBackfaces;
             }
             ImGui::Separator();
             if (ImGui::BeginMenu("Display Mode"))
@@ -150,24 +150,29 @@ void HandleMenuAndShortcuts()
                 if (ImGui::MenuItemEx("Textured Unshaded",
                                       "",
                                       nullptr,
-                                      *ModelRenderer::GetDisplayMode() == ModelRenderer::DisplayMode::TEXTURED))
-                    *ModelRenderer::GetDisplayMode() = ModelRenderer::DisplayMode::TEXTURED;
+                                      ModelRenderer::dispMode == ModelRenderer::DisplayMode::TEXTURED))
+                    ModelRenderer::dispMode = ModelRenderer::DisplayMode::TEXTURED;
                 if (ImGui::MenuItemEx("Textured Shaded",
                                       "",
                                       nullptr,
-                                      *ModelRenderer::GetDisplayMode() == ModelRenderer::DisplayMode::SHADED))
-                    *ModelRenderer::GetDisplayMode() = ModelRenderer::DisplayMode::SHADED;
+                                      ModelRenderer::dispMode == ModelRenderer::DisplayMode::SHADED))
+                    ModelRenderer::dispMode = ModelRenderer::DisplayMode::SHADED;
                 if (ImGui::MenuItemEx("UV Debug",
                                       "",
                                       nullptr,
-                                      *ModelRenderer::GetDisplayMode() == ModelRenderer::DisplayMode::UV))
-                    *ModelRenderer::GetDisplayMode() = ModelRenderer::DisplayMode::UV;
+                                      ModelRenderer::dispMode == ModelRenderer::DisplayMode::UV))
+                    ModelRenderer::dispMode = ModelRenderer::DisplayMode::UV;
                 if (ImGui::MenuItemEx("Normal Debug",
                                       "",
                                       nullptr,
-                                      *ModelRenderer::GetDisplayMode() == ModelRenderer::DisplayMode::NORMAL))
-                    *ModelRenderer::GetDisplayMode() = ModelRenderer::DisplayMode::NORMAL;
+                                      ModelRenderer::dispMode == ModelRenderer::DisplayMode::NORMAL))
+                    ModelRenderer::dispMode = ModelRenderer::DisplayMode::NORMAL;
                 ImGui::EndMenu();
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItemEx("Show Unit Cube", "", nullptr, ModelRenderer::showUnitCube))
+            {
+                ModelRenderer::showUnitCube = !ModelRenderer::showUnitCube;
             }
             ImGui::EndMenu();
         }
@@ -299,11 +304,11 @@ int main()
                     if (ImGui::BeginTabItem("Display", nullptr, 0))
                     {
                         ImGui::SliderInt("LOD",
-                                         ModelRenderer::GetLOD(),
+                                         &ModelRenderer::lod,
                                          0,
                                          static_cast<int>(ModelRenderer::GetModel()->GetLodCount() - 1));
                         ImGui::SliderInt("Skin",
-                                         ModelRenderer::GetSkin(),
+                                         &ModelRenderer::skin,
                                          0,
                                          static_cast<int>(ModelRenderer::GetModel()->GetSkinCount() - 1));
                         ImGui::EndTabItem();

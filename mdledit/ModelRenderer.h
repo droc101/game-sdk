@@ -42,13 +42,12 @@ class ModelRenderer {
 
         static void ResizeWindow(GLsizei w, GLsizei h);
 
-        static int *GetLOD();
+        inline static int lod = 0;
+        inline static int skin = 0;
 
-        static int *GetSkin();
-
-        static bool *GetCullBackfaces();
-
-        static DisplayMode *GetDisplayMode();
+        inline static bool cullBackfaces = true;
+        inline static DisplayMode dispMode = DisplayMode::SHADED;
+        inline static bool showUnitCube = true;
 
     private:
         inline static ModelAsset model;
@@ -60,21 +59,19 @@ class ModelRenderer {
             std::vector<GLuint> ebos;
         };
 
+        inline static GLuint cubeVao;
+        inline static GLuint cubeVbo;
+
         inline static std::vector<GLModelLod> lods = std::vector<GLModelLod>();
         inline static std::map<std::string, GLuint> texture_buffers = std::map<std::string, GLuint>();
 
         inline static GLuint program;
+        inline static GLuint cubeProgram;
 
         inline static float pitch = 0.0f;
         inline static float yaw = 0.0f;
         inline static float distance = 1.0f;
         inline static glm::mat4 projection;
-
-        inline static int lod = 0;
-        inline static int skin = 0;
-
-        inline static bool cullBackfaces = true;
-        inline static DisplayMode dispMode = DisplayMode::SHADED;
 
         inline static GLsizei windowWidth = 800;
         inline static GLsizei windowHeight = 600;
@@ -84,7 +81,11 @@ class ModelRenderer {
 
         static GLuint CreateTexture(const char *filename);
 
+        static GLuint CreateProgram(const char *fragFilename, const char *vertFilename);
+
         static void UpdateMatrix();
+
+        static void LoadCube();
 };
 
 
