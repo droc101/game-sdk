@@ -8,6 +8,7 @@
 #include <iosfwd>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "Options.h"
 #include "libassets/TextureAsset.h"
 
 GLuint ModelRenderer::CreateShader(const char* filename, const GLenum type)
@@ -180,7 +181,7 @@ void ModelRenderer::LoadModel(const char *filepath)
             {
                 const ModelAsset::Material mat = model.GetSkin(j)[k];
                 std::string const texture = std::string(mat.texture);
-                std::string const textureFull = "/home/droc101/CLionProjects/raytracer-c/cmake-build-debug/assets/" + texture;
+                std::string const textureFull = Options::gamePath.data() + std::string("/assets/") + texture;
                 if (!texture_buffers.contains(texture))
                 {
                     const GLuint glTex = CreateTexture(textureFull.data());

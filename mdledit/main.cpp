@@ -9,9 +9,12 @@
 #include "libassets/ModelAsset.h"
 #include <GLES3/gl3.h>
 #include "ModelRenderer.h"
+#include "Options.h"
 
 static bool model_loaded = false;
 static bool dragging = false;
+
+bool options_open = false;
 
 SDL_Window *window = nullptr;
 SDL_GLContext gl_context = nullptr;
@@ -46,6 +49,13 @@ void saveGmdlCallback(void * /*userdata*/, const char *const *filelist, int  /*f
     ModelRenderer::GetModel()->SaveAsAsset(filelist[0]);
 }
 
+void gamePathCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
+{
+    if (filelist == nullptr || filelist[0] == nullptr) return;
+    strncpy(Options::gamePath.data(), filelist[0], Options::gamePath.size());
+    Options::Save();
+}
+
 void exportCallback(void * /*userdata*/, const char *const *filelist, int  /*filter*/)
 {
     if (filelist == nullptr || filelist[0] == nullptr) return;
@@ -59,6 +69,8 @@ int main()
         printf("Error: SDL_Init(): %s\n", SDL_GetError());
         return -1;
     }
+
+    Options::Load();
 
     const char* glsl_version = "#version 300 es";
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
@@ -115,7 +127,6 @@ int main()
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            // if (ImGui_ImplSDL3_ProcessEvent(&event)) continue;
             ImGui_ImplSDL3_ProcessEvent(&event);
             io = ImGui::GetIO();
             if (event.type == SDL_EVENT_QUIT)
@@ -180,7 +191,7 @@ int main()
         {
             ImGui::Begin("mdledit",
                          nullptr,
-                         ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+                         ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus);
             bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
             bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
             bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && model_loaded;
@@ -199,6 +210,19 @@ int main()
                     {
                         done = true;
                     }
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenu("View"))
+                {
+                    if (ImGui::MenuItem("Reset View"))
+                    {
+                        ModelRenderer::UpdateView(0,0,1);
+                    }
+                    ImGui::EndMenu();
+                }
+                if (ImGui::BeginMenu("Tools"))
+                {
+                    if (ImGui::MenuItem("Options")) options_open = true;
                     ImGui::EndMenu();
                 }
                 ImGui::EndMainMenuBar();
@@ -250,6 +274,26 @@ int main()
 
             ImGui::End();
         }
+
+        if (options_open)
+        {
+            ImGui::SetNextWindowSize(ImVec2(300, -1));
+            ImGui::Begin("Options", &options_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
+
+            ImGui::PushItemWidth(-40);
+            ImGui::InputTextWithHint("##gamepathinput", "GAME folder", Options::gamePath.data(), Options::gamePath.size());
+            ImGui::SameLine();
+            if (ImGui::Button("..."))
+            {
+                SDL_ShowOpenFolderDialog(gamePathCallback, nullptr, window, nullptr, false);
+            }
+
+            ImGui::Separator();
+            if (ImGui::Button("OK")) options_open = false;
+
+            ImGui::End();
+        }
+
         ImGui::Render();
         glViewport(0, 0, static_cast<GLsizei>(io.DisplaySize.x), static_cast<GLsizei>(io.DisplaySize.y));
         glClearColor(0, 0, 0, 1);
@@ -259,6 +303,8 @@ int main()
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
     }
+
+    Options::Save();
 
     ModelRenderer::Destroy();
     ImGui_ImplOpenGL3_Shutdown();

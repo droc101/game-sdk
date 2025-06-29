@@ -21,7 +21,9 @@ add_executable(mdledit main.cpp
         ../lib/imgui/backends/imgui_impl_sdl3.cpp
         ../lib/imgui/backends/imgui_impl_sdl3.h
         ModelRenderer.cpp
-        ModelRenderer.h)
+        ModelRenderer.h
+        Options.cpp
+        Options.h)
 
 find_package(SDL3 REQUIRED)
 include_directories(${SDL3_INCLUDE_DIR})
@@ -37,7 +39,7 @@ set_target_properties(mdledit PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(mdledit PRIVATE "../libassets/include")
 target_include_directories(mdledit PRIVATE "../shared")
 
-target_link_libraries(mdledit PRIVATE ${SDL3_LIBRARY} SDL3 z GLESv2 glm::glm ${CMAKE_BINARY_DIR}/libassets/libassets.a)
+target_link_libraries(mdledit PRIVATE ${SDL3_LIBRARY} SDL3 z GLESv2 glm::glm nlohmann_json::nlohmann_json ${CMAKE_BINARY_DIR}/libassets/libassets.a)
 
 add_dependencies(mdledit assets)
 

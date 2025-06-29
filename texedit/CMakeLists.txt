@@ -26,6 +26,7 @@ include_directories("../lib/imgui")
 include_directories("../lib/imgui/backends")
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
+include_directories("../lib/json/include")
 
 set_target_properties(texedit PROPERTIES LINKER_LANGUAGE CXX)
 
