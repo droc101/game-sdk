@@ -13,6 +13,15 @@
 
 class ModelRenderer {
     public:
+        enum class DisplayMode: uint8_t
+        {
+            TEXTURED,
+            SHADED,
+            UV,
+            NORMAL,
+        };
+
+
         ModelRenderer() = delete;
 
         static void Init();
@@ -39,6 +48,8 @@ class ModelRenderer {
 
         static bool *GetCullBackfaces();
 
+        static DisplayMode *GetDisplayMode();
+
     private:
         inline static ModelAsset model;
 
@@ -63,6 +74,7 @@ class ModelRenderer {
         inline static int skin = 0;
 
         inline static bool cullBackfaces = true;
+        inline static DisplayMode dispMode = DisplayMode::SHADED;
 
         inline static GLsizei windowWidth = 800;
         inline static GLsizei windowHeight = 600;

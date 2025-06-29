@@ -242,6 +242,7 @@ void ModelRenderer::Render()
     glEnableVertexAttribArray(normAttrib);
 
     glUniformMatrix4fv(glGetUniformLocation(program, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniform1i(glGetUniformLocation(program, "displayMode"), static_cast<GLint>(dispMode));
 
     for (size_t i = 0; i < model.GetMaterialCount(); i++)
     {
@@ -300,5 +301,10 @@ int *ModelRenderer::GetSkin()
 bool *ModelRenderer::GetCullBackfaces()
 {
     return &cullBackfaces;
+}
+
+ModelRenderer::DisplayMode *ModelRenderer::GetDisplayMode()
+{
+    return &dispMode;
 }
 

@@ -144,6 +144,31 @@ void HandleMenuAndShortcuts()
             {
                 *ModelRenderer::GetCullBackfaces() = !*ModelRenderer::GetCullBackfaces();
             }
+            ImGui::Separator();
+            if (ImGui::BeginMenu("Display Mode"))
+            {
+                if (ImGui::MenuItemEx("Textured Unshaded",
+                                      "",
+                                      nullptr,
+                                      *ModelRenderer::GetDisplayMode() == ModelRenderer::DisplayMode::TEXTURED))
+                    *ModelRenderer::GetDisplayMode() = ModelRenderer::DisplayMode::TEXTURED;
+                if (ImGui::MenuItemEx("Textured Shaded",
+                                      "",
+                                      nullptr,
+                                      *ModelRenderer::GetDisplayMode() == ModelRenderer::DisplayMode::SHADED))
+                    *ModelRenderer::GetDisplayMode() = ModelRenderer::DisplayMode::SHADED;
+                if (ImGui::MenuItemEx("UV Debug",
+                                      "",
+                                      nullptr,
+                                      *ModelRenderer::GetDisplayMode() == ModelRenderer::DisplayMode::UV))
+                    *ModelRenderer::GetDisplayMode() = ModelRenderer::DisplayMode::UV;
+                if (ImGui::MenuItemEx("Normal Debug",
+                                      "",
+                                      nullptr,
+                                      *ModelRenderer::GetDisplayMode() == ModelRenderer::DisplayMode::NORMAL))
+                    *ModelRenderer::GetDisplayMode() = ModelRenderer::DisplayMode::NORMAL;
+                ImGui::EndMenu();
+            }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Tools"))
@@ -276,11 +301,11 @@ int main()
                         ImGui::SliderInt("LOD",
                                          ModelRenderer::GetLOD(),
                                          0,
-                                         ModelRenderer::GetModel()->GetLodCount() - 1);
+                                         static_cast<int>(ModelRenderer::GetModel()->GetLodCount() - 1));
                         ImGui::SliderInt("Skin",
                                          ModelRenderer::GetSkin(),
                                          0,
-                                         ModelRenderer::GetModel()->GetSkinCount() - 1);
+                                         static_cast<int>(ModelRenderer::GetModel()->GetSkinCount() - 1));
                         ImGui::EndTabItem();
                     }
                     // if (ImGui::BeginTabItem("Skins", nullptr, 0))
