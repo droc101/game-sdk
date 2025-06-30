@@ -52,13 +52,13 @@ ModelAsset ModelAsset::CreateFromAsset(const char *assetPath)
             {
                 v.position.at(i) = r.ReadFloat();
             }
-            for (int i = 0; i < 3; i++)
-            {
-                v.normal.at(i) = r.ReadFloat();
-            }
             for (int i = 0; i < 2; i++)
             {
                 v.uv.at(i) = r.ReadFloat();
+            }
+            for (int i = 0; i < 3; i++)
+            {
+                v.normal.at(i) = r.ReadFloat();
             }
             l.vertices.push_back(v);
         }
@@ -110,8 +110,8 @@ uint8_t *ModelAsset::SaveToBuffer(size_t *outSize) const
         for (Vertex v: l.vertices)
         {
             w.WriteBuffer<float>(v.position.data(), 3);
-            w.WriteBuffer<float>(v.normal.data(), 3);
             w.WriteBuffer<float>(v.uv.data(), 2);
+            w.WriteBuffer<float>(v.normal.data(), 3);
         }
         w.WriteBuffer<uint32_t>(l.indexCounts.data(), l.indexCounts.size());
         for (int ii = 0; ii < skins.at(0).size(); ii++)
@@ -165,8 +165,8 @@ const uint8_t *ModelAsset::GetVertexBuffer(size_t lodIndex, size_t *size) const
     for (const Vertex v: lod.vertices)
     {
         w.WriteBuffer<const float>(v.position.data(), 3);
-        w.WriteBuffer<const float>(v.normal.data(), 3);
         w.WriteBuffer<const float>(v.uv.data(), 2);
+        w.WriteBuffer<const float>(v.normal.data(), 3);
     }
     *size = w.GetBufferSize();
     return w.GetBuffer();
@@ -216,8 +216,8 @@ ModelAsset::ModelLod ModelAsset::CreateLodFromStandardModel(const char *filePath
 
                 Vertex v;
                 const aiVector3D pos = mesh->mVertices[vi];
-                const aiVector3D uv = mesh->HasNormals() ? mesh->mNormals[vi] : aiVector3D(0, 0, 0);
-                const aiVector3D nrm = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][vi] : aiVector3D(0, 0, 0);
+                const aiVector3D nrm = mesh->HasNormals() ? mesh->mNormals[vi] : aiVector3D(0, 0, 0);
+                const aiVector3D uv = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][vi] : aiVector3D(0, 0, 0);
                 v.position = {pos.x, pos.y, pos.z};
                 v.normal = {nrm.x, nrm.y, nrm.z};
                 v.uv = {uv.x, uv.y};
@@ -278,7 +278,7 @@ ModelAsset ModelAsset::CreateFromStandardModel(const char *objPath)
         Material mat{};
         mat.color = -1u;
         mat.shader = ModelShader::SHADER_SHADED;
-        mat.texture = (char *)"texture/level_wall_test.gtex";
+        mat.texture = static_cast<char *>("texture/level_wall_test.gtex");
         skin.emplace_back(mat);
     }
     model.skins.push_back(skin);
