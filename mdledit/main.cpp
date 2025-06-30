@@ -140,13 +140,19 @@ void HandleMenuAndShortcuts()
             {
                 ModelRenderer::UpdateView(0, 0, 1);
             }
-            if (ImGui::MenuItemEx("Backface Culling", "", nullptr, ModelRenderer::cullBackfaces))
-            {
-                ModelRenderer::cullBackfaces = !ModelRenderer::cullBackfaces;
-            }
             ImGui::Separator();
             if (ImGui::BeginMenu("Display Mode"))
             {
+                if (ImGui::MenuItemEx("Unshaded",
+                                      "",
+                                      nullptr,
+                                      ModelRenderer::dispMode == ModelRenderer::DisplayMode::COLORED))
+                    ModelRenderer::dispMode = ModelRenderer::DisplayMode::COLORED;
+                if (ImGui::MenuItemEx("Shaded",
+                                      "",
+                                      nullptr,
+                                      ModelRenderer::dispMode == ModelRenderer::DisplayMode::COLORED_SHADED))
+                    ModelRenderer::dispMode = ModelRenderer::DisplayMode::COLORED_SHADED;
                 if (ImGui::MenuItemEx("Textured Unshaded",
                                       "",
                                       nullptr,
@@ -155,8 +161,8 @@ void HandleMenuAndShortcuts()
                 if (ImGui::MenuItemEx("Textured Shaded",
                                       "",
                                       nullptr,
-                                      ModelRenderer::dispMode == ModelRenderer::DisplayMode::SHADED))
-                    ModelRenderer::dispMode = ModelRenderer::DisplayMode::SHADED;
+                                      ModelRenderer::dispMode == ModelRenderer::DisplayMode::TEXTURED_SHADED))
+                    ModelRenderer::dispMode = ModelRenderer::DisplayMode::TEXTURED_SHADED;
                 if (ImGui::MenuItemEx("UV Debug",
                                       "",
                                       nullptr,
@@ -170,6 +176,10 @@ void HandleMenuAndShortcuts()
                 ImGui::EndMenu();
             }
             ImGui::Separator();
+            if (ImGui::MenuItemEx("Show Backfaces", "", nullptr, !ModelRenderer::cullBackfaces))
+            {
+                ModelRenderer::cullBackfaces = !ModelRenderer::cullBackfaces;
+            }
             if (ImGui::MenuItemEx("Show Unit Cube", "", nullptr, ModelRenderer::showUnitCube))
             {
                 ModelRenderer::showUnitCube = !ModelRenderer::showUnitCube;

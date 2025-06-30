@@ -15,8 +15,10 @@ class ModelRenderer {
     public:
         enum class DisplayMode: uint8_t
         {
+            COLORED,
+            COLORED_SHADED,
             TEXTURED,
-            SHADED,
+            TEXTURED_SHADED,
             UV,
             NORMAL,
         };
@@ -46,7 +48,7 @@ class ModelRenderer {
         inline static int skin = 0;
 
         inline static bool cullBackfaces = true;
-        inline static DisplayMode dispMode = DisplayMode::SHADED;
+        inline static DisplayMode dispMode = DisplayMode::TEXTURED_SHADED;
         inline static bool showUnitCube = true;
 
     private:

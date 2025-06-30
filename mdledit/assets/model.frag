@@ -1,9 +1,11 @@
 #version 320 es
 
-#define DISPLAY_MODE_TEXTURED 0
-#define DISPLAY_MODE_SHADED 1
-#define DISPLAY_MODE_UV 2
-#define DISPLAY_MODE_NORMAL 3
+#define DISPLAY_MODE_COLORED 0
+#define DISPLAY_MODE_COLORED_SHADED 1
+#define DISPLAY_MODE_TEXTURED 2
+#define DISPLAY_MODE_TEXTURED_SHADED 3
+#define DISPLAY_MODE_UV 4
+#define DISPLAY_MODE_NORMAL 5
 
 precision mediump float;
 
@@ -19,10 +21,20 @@ uniform int displayMode;
 
 void main()
 {
-    if (displayMode == DISPLAY_MODE_TEXTURED || displayMode == DISPLAY_MODE_SHADED) {
+    if (displayMode == DISPLAY_MODE_COLORED || displayMode == DISPLAY_MODE_COLORED_SHADED) {
+        COLOR = vec4(ALBEDO, 1.0);
+        if (COLOR.a < 0.5) discard;
+        if (displayMode == DISPLAY_MODE_COLORED_SHADED) {
+            vec3 light_dir = normalize(vec3(0.2, 0.0, 0.8));
+            float shading = dot(NORMAL, light_dir);
+            shading = shading == 1.0 ? 1.0 : 1.0 - pow(2.0, -5.0 * shading);
+            shading = max(0.6, shading);
+            COLOR.rgb *= vec3(shading);
+        }
+    } else if (displayMode == DISPLAY_MODE_TEXTURED || displayMode == DISPLAY_MODE_TEXTURED_SHADED) {
         COLOR = texture(ALBEDO_TEXTURE, UV) * vec4(ALBEDO, 1.0);
         if (COLOR.a < 0.5) discard;
-        if (displayMode == DISPLAY_MODE_SHADED) {
+        if (displayMode == DISPLAY_MODE_TEXTURED_SHADED) {
             vec3 light_dir = normalize(vec3(0.2, 0.0, 0.8));
             float shading = dot(NORMAL, light_dir);
             shading = shading == 1.0 ? 1.0 : 1.0 - pow(2.0, -5.0 * shading);
