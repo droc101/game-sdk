@@ -8,10 +8,10 @@
 #include <cstdint>
 #include <vector>
 
-class ModelAsset {
+class ModelAsset
+{
 
     public:
-
         enum ModelShader: uint32_t // NOLINT(*-enum-size)
         {
             SHADER_SKY,
@@ -24,11 +24,13 @@ class ModelAsset {
             std::array<float, 3> position = std::array<float, 3>();
             std::array<float, 3> normal = std::array<float, 3>();
             std::array<float, 2> uv = std::array<float, 2>();
+
+            bool operator==(const Vertex &o) const;
         };
 
         struct Material
         {
-            char* texture;
+            char *texture;
             uint32_t color;
             ModelShader shader;
         };
@@ -50,7 +52,9 @@ class ModelAsset {
 
         [[nodiscard]] static ModelAsset CreateFromAsset(const char *assetPath);
 
-        // [[nodiscard]] static ModelAsset CreateFromObj(const char *objPath);
+        [[nodiscard]] static ModelAsset CreateFromStandardModel(const char *objPath);
+
+        [[nodiscard]] static ModelLod CreateLodFromStandardModel(const char *filePath, float distance);
 
         [[nodiscard]] ModelLod GetLod(size_t index) const;
 
@@ -62,7 +66,7 @@ class ModelAsset {
 
         [[nodiscard]] size_t GetMaterialCount() const;
 
-        [[nodiscard]] const uint8_t *GetVertexBuffer(size_t lodIndex, size_t* size) const;
+        [[nodiscard]] const uint8_t *GetVertexBuffer(size_t lodIndex, size_t *size) const;
 
         void SaveAsAsset(const char *assetPath) const;
 
@@ -75,6 +79,9 @@ class ModelAsset {
         uint8_t *SaveToBuffer(size_t *outSize) const;
 };
 
-
+template<> struct std::hash<ModelAsset::Vertex>
+{
+    size_t operator()(const ModelAsset::Vertex &v) const noexcept;
+};
 
 #endif //MODELASSET_H

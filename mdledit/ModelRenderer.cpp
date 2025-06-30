@@ -169,10 +169,10 @@ void ModelRenderer::UnloadModel()
     lods.clear();
 }
 
-void ModelRenderer::LoadModel(const char *filepath)
+void ModelRenderer::LoadModel(ModelAsset& model)
 {
     UnloadModel();
-    model = ModelAsset::CreateFromAsset(filepath);
+    ModelRenderer::model = model;
     lod = 0;
     skin = 0;
 

@@ -32,7 +32,7 @@ class ModelRenderer {
 
         static void Render();
 
-        static void LoadModel(const char* filepath);
+        static void LoadModel(ModelAsset& model);
 
         static void UnloadModel();
 

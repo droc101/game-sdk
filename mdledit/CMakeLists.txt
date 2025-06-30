@@ -38,13 +38,15 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 find_package(glm REQUIRED)
 include_directories(${GLM_INCLUDE_DIRS})
 include_directories("../lib/json/include")
+find_package(assimp REQUIRED)
+include_directories(${ASSIMP_INCLUDE_DIRS})
 
 set_target_properties(mdledit PROPERTIES LINKER_LANGUAGE CXX)
 
 target_include_directories(mdledit PRIVATE "../libassets/include")
 target_include_directories(mdledit PRIVATE "../shared")
 
-target_link_libraries(mdledit PRIVATE ${SDL3_LIBRARY} SDL3 z GLESv2 glm::glm nlohmann_json::nlohmann_json ${CMAKE_BINARY_DIR}/libassets/libassets.a)
+target_link_libraries(mdledit PRIVATE ${SDL3_LIBRARY} SDL3 z GLESv2 glm::glm nlohmann_json::nlohmann_json assimp ${CMAKE_BINARY_DIR}/libassets/libassets.a)
 
 add_dependencies(mdledit assets)
 

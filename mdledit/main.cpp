@@ -26,7 +26,7 @@ bool savePressed = false;
 bool exportPressed = false;
 
 constexpr SDL_DialogFileFilter gmdlFilter = {"GAME model (*.gmdl)", "gmdl"};
-constexpr SDL_DialogFileFilter objFilter = {"OBJ model", "obj"};
+constexpr SDL_DialogFileFilter fbxFilter = {"3D Model", "obj;fbx"};
 
 void destroyExistingModel()
 {
@@ -37,16 +37,20 @@ void destroyExistingModel()
 
 void openGmdlCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
 {
-    destroyExistingModel();
     if (filelist == nullptr || filelist[0] == nullptr) return;
-    ModelRenderer::LoadModel(filelist[0]);
+    destroyExistingModel();
+    ModelAsset m = ModelAsset::CreateFromAsset(filelist[0]);
+    ModelRenderer::LoadModel(m);
     model_loaded = true;
 }
 
 void importCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
 {
     if (filelist == nullptr || filelist[0] == nullptr) return;
-    // TODO: implement OBJ loader in ModelAsset
+    destroyExistingModel();
+    ModelAsset m = ModelAsset::CreateFromStandardModel(filelist[0]);
+    ModelRenderer::LoadModel(m);
+    model_loaded = true;
 }
 
 void saveGmdlCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
@@ -205,13 +209,13 @@ void HandleMenuAndShortcuts()
         SDL_ShowOpenFileDialog(openGmdlCallback, nullptr, window, {&gmdlFilter}, 1, nullptr, false);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, window, {&objFilter}, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(importCallback, nullptr, window, {&fbxFilter}, 1, nullptr, false);
     } else if (savePressed)
     {
         SDL_ShowSaveFileDialog(saveGmdlCallback, nullptr, window, {&gmdlFilter}, 1, nullptr);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&objFilter}, 1, nullptr);
+        SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&fbxFilter}, 1, nullptr);
     }
 }
 
