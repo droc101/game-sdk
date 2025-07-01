@@ -8,6 +8,7 @@
 #include "libassets/ModelAsset.h"
 #include "ModelRenderer.h"
 #include "SharedMgr.h"
+#include "SkinEditWindow.h"
 
 static bool modelLoaded = false;
 static bool dragging = false;
@@ -146,7 +147,7 @@ void HandleMenuAndShortcuts()
         if (ImGui::BeginMenu("Edit", modelLoaded))
         {
             ImGui::MenuItem("LOD Editor");
-            ImGui::MenuItem("Skin Editor");
+            if (ImGui::MenuItem("Skin Editor")) SkinEditWindow::Show();
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("View", modelLoaded))
@@ -344,6 +345,7 @@ int main()
         }
 
         SharedMgr::RenderSharedUI(window);
+        SkinEditWindow::Render();
 
         ImGui::Render();
         glViewport(0, 0, static_cast<GLsizei>(io.DisplaySize.x), static_cast<GLsizei>(io.DisplaySize.y));

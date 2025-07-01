@@ -15,6 +15,8 @@ add_executable(texedit main.cpp
         ../lib/imgui/imstb_rectpack.h
         ../lib/imgui/imstb_textedit.h
         ../lib/imgui/imstb_truetype.h
+        ../lib/imgui/misc/cpp/imgui_stdlib.cpp
+        ../lib/imgui/misc/cpp/imgui_stdlib.h
         ../lib/imgui/backends/imgui_impl_sdlrenderer3.h
         ../lib/imgui/backends/imgui_impl_sdlrenderer3.cpp
         ../lib/imgui/backends/imgui_impl_sdl3.cpp

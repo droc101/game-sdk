@@ -21,14 +21,17 @@ void Options::Load()
     std::string j;
     file >> j;
     const nlohmann::json savedata = nlohmann::json::parse(j);
-    std::string p = savedata.value("game_path", std::string());
-    std::strncpy(gamePath.data(), p.data(), gamePath.size() - 1);
+    gamePath = savedata.value("game_path", std::string());
+    defaultTexture = savedata.value("default_texture", std::string("texture/level_wall_test.gtex"));
     file.close();
 }
 
 void Options::Save()
 {
-    const nlohmann::json savedata = {{"game_path", std::string(gamePath.data())}};
+    const nlohmann::json savedata = {
+        {"game_path", gamePath},
+        {"default_texture", defaultTexture},
+    };
     char *prefix = SDL_GetPrefPath("Droc101 Development", "GAME SDK");
     const std::string path = prefix + std::string("options.json");
     SDL_free(prefix);

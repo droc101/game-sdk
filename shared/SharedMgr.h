@@ -5,8 +5,6 @@
 #ifndef SHAREDUIMGR_H
 #define SHAREDUIMGR_H
 #include <SDL3/SDL_video.h>
-#include "imgui_impl_sdl3.h"
-
 
 class SharedMgr {
     public:
@@ -19,6 +17,10 @@ class SharedMgr {
         static void RenderSharedUI(SDL_Window* window);
 
         static void DestroySharedMgr();
+
+    private:
+        inline static bool metricsVisible = false;
+        inline static bool demoVisible = false;
 };
 
 

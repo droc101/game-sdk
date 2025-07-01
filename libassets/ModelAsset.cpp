@@ -11,6 +11,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include "../shared/Options.h"
 #include "include/libassets/AssetReader.h"
 #include "include/libassets/DataWriter.h"
 
@@ -42,13 +43,24 @@ ModelAsset::Vertex::Vertex(const aiMesh *mesh, const uint32_t vertexIndex)
 ModelAsset::Material::Material(DataReader &reader)
 {
     reader.ReadString(texture, 64);
-    color = reader.ReadU32();
+    const uint32_t argb = reader.ReadU32();
+    color = {
+        (static_cast<float>((argb >> 16) & 0xFF)) / 255.0f,
+        (static_cast<float>((argb >> 8) & 0xFF)) / 255.0f,
+        (static_cast<float>((argb) & 0xFF)) / 255.0f,
+        (static_cast<float>((argb >> 24) & 0xFF)) / 255.0f,
+    };
     shader = static_cast<ModelShader>(reader.ReadU32());
 }
 
 ModelAsset::Material::Material(std::string texture, const uint32_t color, const ModelShader shader):
     texture(std::move(texture)),
-    color(color),
+    color({
+        (static_cast<float>((color >> 16) & 0xFF)) / 255.0f,
+        (static_cast<float>((color >> 8) & 0xFF)) / 255.0f,
+        (static_cast<float>((color) & 0xFF)) / 255.0f,
+        (static_cast<float>((color >> 24) & 0xFF)) / 255.0f,
+    }),
     shader(shader)
 {}
 
@@ -121,7 +133,7 @@ void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
         for (const Material &material: skinMaterials)
         {
             writer.WriteBuffer<const char>(material.texture.c_str(), 64);
-            writer.Write<uint32_t>(material.color);
+            writer.WriteBuffer<const float>(material.color.data(), 4);
             writer.Write<uint32_t>(static_cast<uint32_t>(material.shader));
         }
     }
@@ -157,7 +169,7 @@ const ModelAsset::ModelLod &ModelAsset::GetLod(const size_t index) const
     return lods.at(index);
 }
 
-const ModelAsset::Material *ModelAsset::GetSkin(const size_t index) const
+ModelAsset::Material *ModelAsset::GetSkin(const size_t index)
 {
     return skins.at(index).data();
 }
@@ -175,6 +187,25 @@ size_t ModelAsset::GetSkinCount() const
 size_t ModelAsset::GetMaterialCount() const
 {
     return skins.at(0).size();
+}
+
+void ModelAsset::AddSkin()
+{
+    std::vector<Material> skin{};
+    for (size_t i = 0; i < GetMaterialCount(); i++)
+    {
+        Material m{};
+        m.texture = Options::defaultTexture;
+        m.color = {1.0f, 1.0f, 1.0f, 1.0f};
+        m.shader = ModelShader::SHADER_SHADED;
+        skin.push_back(m);
+    }
+    skins.push_back(skin);
+}
+
+void ModelAsset::RemoveSkin(const size_t index)
+{
+    skins.erase(skins.begin() + static_cast<int64_t>(index));
 }
 
 void ModelAsset::GetVertexBuffer(const size_t lodIndex, DataWriter &writer) const
@@ -283,7 +314,7 @@ void ModelAsset::CreateFromStandardModel(const char *objPath, ModelAsset &model)
     std::vector<Material> skin{};
     for (size_t _i = 0; _i < materialCount; _i++)
     {
-        skin.emplace_back("texture/level_wall_test.gtex", -1u, ModelShader::SHADER_SHADED);
+        skin.emplace_back(Options::defaultTexture, -1u, ModelShader::SHADER_SHADED);
     }
     model.skins.push_back(skin);
 }

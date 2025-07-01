@@ -138,7 +138,7 @@ void ModelRenderer::Init()
     printf("OpenGL version: %s\n", version);
 }
 
-const ModelAsset *ModelRenderer::GetModel()
+ModelAsset *ModelRenderer::GetModel()
 {
     return &model;
 }
@@ -195,7 +195,22 @@ void ModelRenderer::UnloadModel()
     lods.clear();
 }
 
-void ModelRenderer::LoadModel(const ModelAsset &newModel)
+GLuint ModelRenderer::GetTexture(const char *filename)
+{
+    if (textureBuffers.contains(filename))
+    {
+        return textureBuffers.at(std::string(filename));
+    }
+    // TODO: if the texture file does not exist return an existing missing texture instead of making a new one
+    const std::string &texturePath = Options::gamePath + std::string("/assets/") + filename;
+    const GLuint glTex = CreateTexture(texturePath.c_str());
+
+    textureBuffers.insert({filename, glTex});
+    return glTex;
+}
+
+
+void ModelRenderer::LoadModel(ModelAsset& newModel)
 {
     UnloadModel();
     model = newModel;
@@ -221,13 +236,7 @@ void ModelRenderer::LoadModel(const ModelAsset &newModel)
             for (size_t k = 0; k < newModel.GetMaterialCount(); k++)
             {
                 const ModelAsset::Material &mat = newModel.GetSkin(j)[k];
-                if (!textureBuffers.contains(mat.texture))
-                {
-                    const std::string &texturePath = Options::gamePath.data() + std::string("/assets/") + mat.texture;
-                    const GLuint glTex = CreateTexture(texturePath.c_str());
-
-                    textureBuffers.insert({mat.texture, glTex});
-                }
+                GetTexture(mat.texture.c_str()); // this just ensures it is loaded, we don't need it rn
             }
         }
 
@@ -305,17 +314,9 @@ void ModelRenderer::Render()
     for (size_t i = 0; i < model.GetMaterialCount(); i++)
     {
         const ModelAsset::Material &mat = model.GetSkin(skin)[i];
-        const uint32_t argb = mat.color;
+        glUniform3fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.data());
 
-        std::array<float, 4> color = {
-                (static_cast<float>((argb >> 16) & 0xFF)) / 255.0f,
-                (static_cast<float>((argb >> 8) & 0xFF)) / 255.0f,
-                (static_cast<float>((argb) & 0xFF)) / 255.0f,
-                (static_cast<float>((argb >> 24) & 0xFF)) / 255.0f,
-        };
-        glUniform3fv(glGetUniformLocation(program, "ALBEDO"), 1, color.data());
-
-        const GLuint texture = textureBuffers.at(mat.texture);
+        const GLuint texture = GetTexture(mat.texture.c_str());
         glBindTexture(GL_TEXTURE_2D, texture);
         glUniform1ui(glGetUniformLocation(program, "ALBEDO_TEXTURE"), texture);
 
@@ -367,7 +368,7 @@ void ModelRenderer::UpdateMatrix()
 void ModelRenderer::LoadCube()
 {
     // clang-format off
-    constexpr std::array<GLfloat, 72> cubeVerts = {
+    constexpr std::array cubeVerts = {
         // Bottom face
         -0.5f, -0.5f, -0.5f,   0.5f, -0.5f, -0.5f,
          0.5f, -0.5f, -0.5f,   0.5f,  0.5f, -0.5f,

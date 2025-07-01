@@ -15,6 +15,8 @@ add_executable(mdledit main.cpp
         ../lib/imgui/imstb_rectpack.h
         ../lib/imgui/imstb_textedit.h
         ../lib/imgui/imstb_truetype.h
+        ../lib/imgui/misc/cpp/imgui_stdlib.cpp
+        ../lib/imgui/misc/cpp/imgui_stdlib.h
         ../lib/imgui/backends/imgui_impl_opengl3.h
         ../lib/imgui/backends/imgui_impl_opengl3.cpp
         ../lib/imgui/backends/imgui_impl_opengl3_loader.h
@@ -29,7 +31,9 @@ add_executable(mdledit main.cpp
         ../shared/AboutWindow.cpp
         ../shared/AboutWindow.h
         ../shared/SharedMgr.cpp
-        ../shared/SharedMgr.h)
+        ../shared/SharedMgr.h
+        SkinEditWindow.cpp
+        SkinEditWindow.h)
 
 find_package(SDL3 REQUIRED)
 include_directories(${SDL3_INCLUDE_DIR})

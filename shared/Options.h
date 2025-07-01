@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <array>
+#include <string>
 
 class Options
 {
@@ -14,5 +14,6 @@ class Options
         static void Load();
         static void Save();
 
-        static inline std::array<char, 260> gamePath{};
+        static inline std::string gamePath;
+        static inline std::string defaultTexture;
 };

@@ -29,6 +29,14 @@ void SharedMgr::SharedMenuUI()
         }
         ImGui::EndMenu();
     }
+#ifdef BUILDSTYLE_DEBUG
+    if (ImGui::BeginMenu("Debug"))
+    {
+        if (ImGui::MenuItem("Dear ImGui Metrics")) metricsVisible = true;
+        if (ImGui::MenuItem("Dear ImGui Demo")) demoVisible = true;
+        ImGui::EndMenu();
+    }
+#endif
     if (ImGui::BeginMenu("Help"))
     {
         if (ImGui::MenuItem("Source Code"))
@@ -41,10 +49,13 @@ void SharedMgr::SharedMenuUI()
         }
         ImGui::EndMenu();
     }
+
 }
 
 void SharedMgr::RenderSharedUI(SDL_Window* window)
 {
     OptionsWindow::Render(window);
     AboutWindow::Render();
+    if (metricsVisible) ImGui::ShowMetricsWindow(&metricsVisible);
+    if (demoVisible) ImGui::ShowDemoWindow(&demoVisible);
 }

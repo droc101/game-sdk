@@ -107,7 +107,7 @@ void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     texture.SaveAsImage(fileList[0], TextureAsset::ImageFormat::IMAGE_FORMAT_PNG);
 }
 
-static inline void Render(bool &done, SDL_Window *window)
+static void Render(bool &done, SDL_Window *window)
 {
     static float zoom = 1.0f;
 

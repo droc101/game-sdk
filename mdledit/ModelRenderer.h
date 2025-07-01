@@ -31,17 +31,19 @@ class ModelRenderer
 
         static void Render();
 
-        static void LoadModel(const ModelAsset &newModel);
+        static void LoadModel(ModelAsset& newModel);
 
         static void UnloadModel();
 
-        static const ModelAsset *GetModel();
+        static ModelAsset *GetModel();
 
         static void UpdateView(float pitchDeg, float yawDeg, float distance);
 
         static void UpdateViewRel(float pitchDeg, float yawDeg, float distance);
 
         static void ResizeWindow(GLsizei width, GLsizei height);
+
+        static GLuint GetTexture(const char *filename);
 
         static inline int lod;
         static inline int skin;

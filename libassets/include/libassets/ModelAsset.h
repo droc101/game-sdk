@@ -39,10 +39,11 @@ class ModelAsset
         {
             public:
                 explicit Material(DataReader &reader);
+                Material() = default;
                 Material(std::string texture, uint32_t color, ModelShader shader);
 
                 std::string texture{};
-                uint32_t color{};
+                std::array<float, 4> color{};
                 ModelShader shader{};
         };
 
@@ -71,13 +72,17 @@ class ModelAsset
 
         [[nodiscard]] const ModelLod &GetLod(size_t index) const;
 
-        [[nodiscard]] const Material *GetSkin(size_t index) const;
+        [[nodiscard]] Material *GetSkin(size_t index);
 
         [[nodiscard]] size_t GetSkinCount() const;
 
         [[nodiscard]] size_t GetLodCount() const;
 
         [[nodiscard]] size_t GetMaterialCount() const;
+
+        void AddSkin();
+
+        void RemoveSkin(size_t index);
 
         void GetVertexBuffer(size_t lodIndex, DataWriter &writer) const;
 

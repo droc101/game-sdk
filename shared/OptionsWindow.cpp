@@ -3,10 +3,10 @@
 //
 
 #include "OptionsWindow.h"
-#include <cstring>
 #include <imgui.h>
 #include <SDL3/SDL_dialog.h>
 #include "Options.h"
+#include <misc/cpp/imgui_stdlib.h>
 
 void OptionsWindow::Show()
 {
@@ -24,7 +24,7 @@ void OptionsWindow::gamePathCallback(void *, const char *const *filelist, int)
     {
         return;
     }
-    std::strncpy(Options::gamePath.data(), filelist[0], Options::gamePath.size() - 1);
+    Options::gamePath = filelist[0];
     Options::Save();
 }
 
@@ -41,12 +41,15 @@ void OptionsWindow::Render(SDL_Window *window)
         ImGui::SameLine();
         ImGui::TextDisabled("(no trailing slash)");
         ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-        ImGui::InputText("##gamepathinput", Options::gamePath.data(), Options::gamePath.size());
+        ImGui::InputText("##gamepathinput", &Options::gamePath);
         ImGui::SameLine();
         if (ImGui::Button("...", ImVec2(40, 0)))
         {
             SDL_ShowOpenFolderDialog(gamePathCallback, nullptr, window, nullptr, false);
         }
+
+        ImGui::Text("Default Texture");
+        ImGui::InputText("##defaulttexinput", &Options::defaultTexture);
 
         ImGui::Dummy(ImVec2(0, 16));
 
