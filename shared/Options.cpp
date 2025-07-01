@@ -21,7 +21,7 @@ void Options::Load()
     std::string j;
     file >> j;
     const nlohmann::json savedata = nlohmann::json::parse(j);
-    std::string p = savedata["game_path"];
+    std::string p = savedata.value("game_path", std::string());
     std::strncpy(gamePath.data(), p.data(), gamePath.size() - 1);
     file.close();
 }

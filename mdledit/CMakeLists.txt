@@ -31,22 +31,33 @@ add_executable(mdledit main.cpp
 
 find_package(SDL3 REQUIRED)
 include_directories(${SDL3_INCLUDE_DIR})
+
 include_directories("../lib/imgui")
 include_directories("../lib/imgui/backends")
+
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
+
 find_package(glm REQUIRED)
 include_directories(${GLM_INCLUDE_DIRS})
+
 include_directories("../lib/json/include")
+
 find_package(assimp REQUIRED)
 include_directories(${ASSIMP_INCLUDE_DIRS})
 
+find_package(OpenGL REQUIRED) # Graphics
+include_directories(${OPENGL_INCLUDE_DIR})
+
+find_package(GLEW REQUIRED)
+include_directories(${GLEW_INCLUDE_DIRS})
+
+include_directories("../libassets/include")
+include_directories("../shared")
+
 set_target_properties(mdledit PROPERTIES LINKER_LANGUAGE CXX)
 
-target_include_directories(mdledit PRIVATE "../libassets/include")
-target_include_directories(mdledit PRIVATE "../shared")
-
-target_link_libraries(mdledit PRIVATE ${SDL3_LIBRARY} SDL3 z GLESv2 glm::glm nlohmann_json::nlohmann_json assimp ${CMAKE_BINARY_DIR}/libassets/libassets.a)
+target_link_libraries(mdledit PRIVATE ${SDL3_LIBRARY} SDL3 z GL GLU glm::glm nlohmann_json::nlohmann_json assimp ${OPENGL_gl_LIBRARY} ${GLEW_LIBRARIES} ${CMAKE_BINARY_DIR}/libassets/libassets.a)
 
 add_dependencies(mdledit assets)
 

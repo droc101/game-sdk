@@ -28,16 +28,18 @@ add_executable(texedit main.cpp
 
 find_package(SDL3 REQUIRED)
 include_directories(${SDL3_INCLUDE_DIR})
+
 include_directories("../lib/imgui")
 include_directories("../lib/imgui/backends")
+
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
+
 include_directories("../lib/json/include")
+include_directories("../libassets/include")
+include_directories("../shared")
 
 set_target_properties(texedit PROPERTIES LINKER_LANGUAGE CXX)
-
-target_include_directories(texedit PRIVATE "../libassets/include")
-target_include_directories(texedit PRIVATE "../shared")
 
 target_link_libraries(texedit PRIVATE ${SDL3_LIBRARY} SDL3 z nlohmann_json::nlohmann_json  ${CMAKE_BINARY_DIR}/libassets/libassets.a)
 

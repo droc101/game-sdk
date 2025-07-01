@@ -39,6 +39,7 @@ void AboutWindow::Render()
         }
         ImGui::TextLinkOpenURL("zlib", "https://zlib.net");
         ImGui::TextLinkOpenURL("JSON for Modern C++", "https://json.nlohmann.me");
+        ImGui::TextLinkOpenURL("GLEW", "https://glew.sourceforge.net");
         ImGui::Dummy(ImVec2(0.0f, 16.0f));
         ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 60, 0));
         ImGui::SameLine();

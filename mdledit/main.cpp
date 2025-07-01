@@ -1,5 +1,5 @@
 #include <array>
-#include <GLES3/gl3.h>
+#include <GL/glew.h>
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl3.h>
@@ -26,11 +26,11 @@ bool exportPressed = false;
 
 constexpr SDL_DialogFileFilter gmdlFilter = {"GAME model (*.gmdl)", "gmdl"};
 constexpr std::array modelFilters = {
-    SDL_DialogFileFilter{"3D Models (obj, fbx, gltf, dae)", "obj;fbx;gltf;dae"},
-    SDL_DialogFileFilter{"Wavefront OBJ Models", "obj"},
-    SDL_DialogFileFilter{"FBX Models", "fbx"},
-    SDL_DialogFileFilter{"glTF/glTF2.0 Models", "gltf"},
-    SDL_DialogFileFilter{"Collada Models", "dae"},
+        SDL_DialogFileFilter{"3D Models (obj, fbx, gltf, dae)", "obj;fbx;gltf;dae"},
+        SDL_DialogFileFilter{"Wavefront OBJ Models", "obj"},
+        SDL_DialogFileFilter{"FBX Models", "fbx"},
+        SDL_DialogFileFilter{"glTF/glTF2.0 Models", "gltf"},
+        SDL_DialogFileFilter{"Collada Models", "dae"},
 };
 
 
@@ -204,6 +204,10 @@ void HandleMenuAndShortcuts()
             {
                 ModelRenderer::showUnitCube = !ModelRenderer::showUnitCube;
             }
+            if (ImGui::MenuItem("Wireframe", "", ModelRenderer::wireframe))
+            {
+                ModelRenderer::wireframe = !ModelRenderer::wireframe;
+            }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Tools"))
@@ -234,7 +238,13 @@ void HandleMenuAndShortcuts()
         SDL_ShowOpenFileDialog(openGmdlCallback, nullptr, window, {&gmdlFilter}, 1, nullptr, false);
     } else if (newPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, window, modelFilters.data(), modelFilters.size(), nullptr, false);
+        SDL_ShowOpenFileDialog(importCallback,
+                               nullptr,
+                               window,
+                               modelFilters.data(),
+                               modelFilters.size(),
+                               nullptr,
+                               false);
     } else if (savePressed)
     {
         SDL_ShowSaveFileDialog(saveGmdlCallback, nullptr, window, {&gmdlFilter}, 1, nullptr);
@@ -251,11 +261,11 @@ int main()
 
     Options::Load();
 
-    const char *glslVersion = "#version 300 es";
+    const char *glslVersion = "#version 130";
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
@@ -275,6 +285,7 @@ int main()
     }
 
     SDL_GL_MakeCurrent(window, glContext);
+    ModelRenderer::Init();
     SDL_GL_SetSwapInterval(1); // Enable vsync
     SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
     SDL_ShowWindow(window);
@@ -296,7 +307,6 @@ int main()
     ImGui_ImplSDL3_InitForOpenGL(window, glContext);
     ImGui_ImplOpenGL3_Init(glslVersion);
 
-    ModelRenderer::Init();
     ModelRenderer::ResizeWindow(800, 600);
 
     // ReSharper disable once CppDFALoopConditionNotUpdated Wrong again
@@ -328,9 +338,9 @@ int main()
             ImGui::Begin("mdledit",
                          nullptr,
                          ImGuiWindowFlags_NoDecoration |
-                                 ImGuiWindowFlags_NoMove |
-                                 ImGuiWindowFlags_NoSavedSettings |
-                                 ImGuiWindowFlags_NoBringToFrontOnFocus);
+                         ImGuiWindowFlags_NoMove |
+                         ImGuiWindowFlags_NoSavedSettings |
+                         ImGuiWindowFlags_NoBringToFrontOnFocus);
 
             HandleMenuAndShortcuts();
 

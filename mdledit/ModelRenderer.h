@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <GLES3/gl3.h>
+#include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <libassets/ModelAsset.h>
 #include <string>
@@ -31,7 +31,7 @@ class ModelRenderer
 
         static void Render();
 
-        static void LoadModel(const ModelAsset & newModel);
+        static void LoadModel(const ModelAsset &newModel);
 
         static void UnloadModel();
 
@@ -49,14 +49,16 @@ class ModelRenderer
         static inline bool cullBackfaces = true;
         static inline DisplayMode displayMode = DisplayMode::TEXTURED_SHADED;
         static inline bool showUnitCube = true;
+        static inline bool wireframe = false;
 
         static constexpr int PANEL_SIZE = 100;
+
     private:
         struct GLModelLod
         {
-                GLuint vao{};
-                GLuint vbo{};
-                std::vector<GLuint> ebos{};
+            GLuint vao{};
+            GLuint vbo{};
+            std::vector<GLuint> ebos{};
         };
 
         static inline ModelAsset model;

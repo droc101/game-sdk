@@ -107,6 +107,19 @@ GLuint ModelRenderer::CreateProgram(const char *fragFilename, const char *vertFi
 
 void ModelRenderer::Init()
 {
+    glewExperimental = GL_TRUE; // Please expose OpenGL 3.x+ interfaces
+    const GLenum err = glewInit();
+    if (err != GLEW_OK)
+    {
+        throw std::runtime_error("GLEW init failure");
+    }
+
+    // Ensure we have GL 3.3 or higher
+    if (!GLEW_VERSION_3_3)
+    {
+        throw std::runtime_error("GLEW init failure -- we don't have opengl 3.0");
+    }
+
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
@@ -182,7 +195,7 @@ void ModelRenderer::UnloadModel()
     lods.clear();
 }
 
-void ModelRenderer::LoadModel(const ModelAsset & newModel)
+void ModelRenderer::LoadModel(const ModelAsset &newModel)
 {
     UnloadModel();
     model = newModel;
@@ -250,6 +263,14 @@ void ModelRenderer::Render()
         glDisable(GL_CULL_FACE);
     }
 
+    if (wireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    } else
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_SCISSOR_TEST);
 
@@ -290,10 +311,10 @@ void ModelRenderer::Render()
         const uint32_t argb = mat.color;
 
         std::array<float, 4> color = {
-            (static_cast<float>((argb >> 16) & 0xFF)) / 255.0f,
-            (static_cast<float>((argb >> 8) & 0xFF)) / 255.0f,
-            (static_cast<float>((argb) & 0xFF)) / 255.0f,
-            (static_cast<float>((argb >> 24) & 0xFF)) / 255.0f,
+                (static_cast<float>((argb >> 16) & 0xFF)) / 255.0f,
+                (static_cast<float>((argb >> 8) & 0xFF)) / 255.0f,
+                (static_cast<float>((argb) & 0xFF)) / 255.0f,
+                (static_cast<float>((argb >> 24) & 0xFF)) / 255.0f,
         };
         glUniform3fv(glGetUniformLocation(program, "ALBEDO"), 1, color.data());
 
@@ -311,6 +332,7 @@ void ModelRenderer::Render()
 
     if (showUnitCube)
     {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glUseProgram(cubeProgram);
         glBindVertexArray(cubeVao);
         glBindBuffer(GL_ARRAY_BUFFER, cubeVbo);
