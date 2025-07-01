@@ -2,20 +2,17 @@
 // Created by droc101 on 6/29/25.
 //
 
-#ifndef OPTIONS_H
-#define OPTIONS_H
+#pragma once
+
 #include <array>
 
-
-class Options {
+class Options
+{
     public:
+        Options() = delete;
 
         static void Load();
         static void Save();
 
-        inline static std::array<char, 260> gamePath{};
+        static inline std::array<char, 260> gamePath{};
 };
-
-
-
-#endif //OPTIONS_H

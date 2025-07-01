@@ -2,18 +2,18 @@
 // Created by droc101 on 6/27/25.
 //
 
-#ifndef MODELRENDERER_H
-#define MODELRENDERER_H
+#pragma once
 
-#include <map>
-#include <string>
 #include <GLES3/gl3.h>
-#include <libassets/ModelAsset.h>
 #include <glm/glm.hpp>
+#include <libassets/ModelAsset.h>
+#include <string>
+#include <unordered_map>
 
-class ModelRenderer {
+class ModelRenderer
+{
     public:
-        enum class DisplayMode: uint8_t
+        enum class DisplayMode : uint8_t
         {
             COLORED,
             COLORED_SHADED,
@@ -23,7 +23,6 @@ class ModelRenderer {
             NORMAL,
         };
 
-
         ModelRenderer() = delete;
 
         static void Init();
@@ -32,54 +31,54 @@ class ModelRenderer {
 
         static void Render();
 
-        static void LoadModel(ModelAsset& model);
+        static void LoadModel(const ModelAsset & newModel);
 
         static void UnloadModel();
 
-        static const ModelAsset* GetModel();
+        static const ModelAsset *GetModel();
 
         static void UpdateView(float pitchDeg, float yawDeg, float distance);
 
         static void UpdateViewRel(float pitchDeg, float yawDeg, float distance);
 
-        static void ResizeWindow(GLsizei w, GLsizei h);
+        static void ResizeWindow(GLsizei width, GLsizei height);
 
-        inline static int lod = 0;
-        inline static int skin = 0;
+        static inline int lod;
+        static inline int skin;
 
-        inline static bool cullBackfaces = true;
-        inline static DisplayMode dispMode = DisplayMode::TEXTURED_SHADED;
-        inline static bool showUnitCube = true;
+        static inline bool cullBackfaces = true;
+        static inline DisplayMode displayMode = DisplayMode::TEXTURED_SHADED;
+        static inline bool showUnitCube = true;
 
     private:
-        inline static ModelAsset model;
-
         struct GLModelLod
         {
-            GLuint vao;
-            GLuint vbo;
-            std::vector<GLuint> ebos;
+                GLuint vao{};
+                GLuint vbo{};
+                std::vector<GLuint> ebos{};
         };
 
-        inline static GLuint cubeVao;
-        inline static GLuint cubeVbo;
+        static inline ModelAsset model;
 
-        inline static std::vector<GLModelLod> lods = std::vector<GLModelLod>();
-        inline static std::map<std::string, GLuint> texture_buffers = std::map<std::string, GLuint>();
+        static inline GLuint cubeVao;
+        static inline GLuint cubeVbo;
 
-        inline static GLuint program;
-        inline static GLuint cubeProgram;
+        static inline std::vector<GLModelLod> lods{};
+        static inline std::unordered_map<std::string, GLuint> textureBuffers{};
 
-        inline static float pitch = 0.0f;
-        inline static float yaw = 0.0f;
-        inline static float distance = 1.0f;
-        inline static glm::mat4 projection;
+        static inline GLuint program;
+        static inline GLuint cubeProgram;
 
-        inline static GLsizei windowWidth = 800;
-        inline static GLsizei windowHeight = 600;
-        inline static float windowAspect = 4.0 / 3.0;
+        static inline float pitch;
+        static inline float yaw;
+        static inline float distance;
+        static inline glm::mat4 projection;
 
-        static GLuint CreateShader(const char* filename, GLenum type);
+        static inline GLsizei windowWidth = 800;
+        static inline GLsizei windowHeight = 600;
+        static inline float windowAspect = 4.0 / 3.0;
+
+        static GLuint CreateShader(const char *filename, GLenum type);
 
         static GLuint CreateTexture(const char *filename);
 
@@ -89,7 +88,3 @@ class ModelRenderer {
 
         static void LoadCube();
 };
-
-
-
-#endif //MODELRENDERER_H

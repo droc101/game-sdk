@@ -2,29 +2,37 @@
 // Created by droc101 on 6/26/25.
 //
 
-#ifndef DATAREADER_H
-#define DATAREADER_H
-#include <cstdint>
+#pragma once
+
+#include <cassert>
 #include <cstddef>
+#include <cstdint>
+#include <string>
+#include <vector>
+#include "AssetReader.h"
 
-class DataReader {
-
+class DataReader
+{
     public:
+        friend AssetReader::AssetType AssetReader::Decompress(std::vector<uint8_t> &, DataReader &);
 
-        /// @warning This @c DataReader will take control of @code bytes@endcode and @c delete them when it is destroyed.
-        DataReader(const uint8_t *bytes, size_t dataSize);
+        DataReader() = default;
 
-        ~DataReader();
+        explicit DataReader(size_t dataSize);
 
-        void Seek(std::ptrdiff_t offset);
+        void Seek(std::ptrdiff_t relativeOffset);
 
         void SeekAbsolute(size_t position);
+
+        [[nodiscard]] size_t TotalSize() const;
+
+        [[nodiscard]] size_t RemainingSize() const;
 
         [[nodiscard]] uint8_t ReadU8();
 
         [[nodiscard]] int8_t Read8();
 
-        [[nodiscard]] uint8_t ReadU16();
+        [[nodiscard]] uint16_t ReadU16();
 
         [[nodiscard]] int16_t Read16();
 
@@ -40,18 +48,20 @@ class DataReader {
 
         [[nodiscard]] double ReadDouble();
 
-        /// @warning The caller must @code delete[]@endcode the return value of this function
-        [[nodiscard]] char* ReadString(size_t length);
+        void ReadString(std::string &buffer, size_t characterCount);
 
-        /// @warning The caller must @code delete[]@endcode the return value of this function
-        [[nodiscard]] uint8_t *ReadBytes(size_t length);
+        template<typename T> void ReadToBuffer(std::vector<T> &buffer, const size_t numberToRead)
+        {
+            static_assert(sizeof(uint8_t) == 1);
+            assert(offset + sizeof(T) * numberToRead <= size);
+            assert(buffer.empty());
+            T *offsetData = reinterpret_cast<T *>(bytes.data() + offset);
+            buffer.insert(buffer.begin(), offsetData, offsetData + numberToRead);
+            offset += numberToRead;
+        }
 
     private:
-        const uint8_t *bytes;
-        size_t size;
-        size_t offset;
+        std::vector<uint8_t> bytes{};
+        size_t size{};
+        size_t offset{};
 };
-
-
-
-#endif //DATAREADER_H

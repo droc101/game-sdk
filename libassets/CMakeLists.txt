@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 project(assets)
 
+set(CMAKE_CXX_STANDARD 20)
+
 add_library(assets STATIC include/libassets/libassets.h
         AssetReader.cpp
         include/libassets/AssetReader.h

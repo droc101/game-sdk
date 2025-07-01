@@ -7,33 +7,37 @@
 #include <csignal>
 #include <cstdio>
 #include <cstring>
+#include <format>
 #include <stdexcept>
 #include <vector>
 #include <zlib.h>
+#include "include/libassets/DataReader.h"
 
-uint8_t *AssetReader::Decompress(uint8_t *asset, size_t *outSize, AssetType *outAssetType)
+AssetReader::AssetType AssetReader::Decompress(std::vector<uint8_t> &asset, DataReader &reader)
 {
+    assert(reader.bytes.empty());
+    reader.offset = 0;
     constexpr size_t dataOffset = sizeof(uint32_t) * 4;
-    const uint32_t *header = reinterpret_cast<const uint32_t *>(asset);
+    assert(dataOffset <= asset.size());
+    const uint32_t *header = reinterpret_cast<const uint32_t *>(asset.data());
     const uint32_t compressedSize = header[0];
-    const uint32_t decompressedSize = header[1];
+    reader.size = header[1];
     // uint32_t*3 = unused
-    *outAssetType = static_cast<AssetType>(header[3]);
+    const AssetType &assetType = static_cast<AssetType>(header[3]);
 
-    uint8_t *decompressedData = new uint8_t[decompressedSize];
+    reader.bytes.resize(reader.size);
 
-    z_stream stream = {nullptr};
+    z_stream stream{};
 
-    stream.next_in = asset + dataOffset;
+    stream.next_in = asset.data() + dataOffset;
     stream.avail_in = compressedSize;
-    stream.next_out = decompressedData;
-    stream.avail_out = decompressedSize;
+    stream.next_out = reader.bytes.data();
+    stream.avail_out = reader.size;
 
     if (inflateInit2(&stream, MAX_WBITS | 16) != Z_OK)
     {
-        printf("inflateInit2() failed with error: %s", stream.msg);
-        fflush(stdout);
-        raise(SIGABRT);
+        throw std::runtime_error(std::format("inflateInit2() failed with error: {}",
+                                             stream.msg == nullptr ? "(null)" : stream.msg));
     }
 
     int inflateReturnValue = inflate(&stream, Z_NO_FLUSH);
@@ -41,60 +45,52 @@ uint8_t *AssetReader::Decompress(uint8_t *asset, size_t *outSize, AssetType *out
     {
         if (inflateReturnValue != Z_OK)
         {
-            printf("inflate() failed with error: %s", stream.msg);
-            fflush(stdout);
-            raise(SIGABRT);
+            throw std::runtime_error(std::format("inflate() failed with error: {}",
+                                                 stream.msg == nullptr ? "(null)" : stream.msg));
         }
         inflateReturnValue = inflate(&stream, Z_NO_FLUSH);
     }
 
     if (inflateEnd(&stream) != Z_OK)
     {
-        printf("inflateEnd() failed with error: %s", stream.msg);
-        fflush(stdout);
-        raise(SIGABRT);
+        throw std::runtime_error(std::format("inflateEnd() failed with error: {}",
+                                             stream.msg == nullptr ? "(null)" : stream.msg));
     }
 
-    if (outSize != nullptr)
-    {
-        *outSize = stream.total_out;
-    }
+    assert(reader.size == stream.total_out);
 
-    return decompressedData;
+    return assetType;
 }
 
-const uint8_t *AssetReader::Compress(uint8_t *data,
-                                     const size_t data_size,
-                                     size_t *out_compressed_size,
-                                     const AssetType type)
+void AssetReader::Compress(std::vector<uint8_t> &inBuffer, std::vector<uint8_t> &outBuffer, const AssetType type)
 {
-    uint32_t *header = new uint32_t[4];
-    header[1] = data_size;
+    assert(!inBuffer.empty());
+    assert(outBuffer.empty());
+    outBuffer.resize(sizeof(uint32_t) * 4);
+    uint32_t *header = reinterpret_cast<uint32_t *>(outBuffer.data());
+    header[1] = inBuffer.size();
     header[3] = static_cast<uint32_t>(type);
 
     z_stream zs{};
     deflateInit2(&zs, Z_BEST_COMPRESSION, Z_DEFLATED, 15 | 16, 8, Z_DEFAULT_STRATEGY);
 
-    zs.next_in = data;
-    zs.avail_in = data_size;
+    zs.next_in = inBuffer.data();
+    zs.avail_in = inBuffer.size();
 
-    int ret;
+    int ret = Z_OK;
     constexpr size_t chunkSize = 16384;
-    std::vector<uint8_t> outBuffer(chunkSize);
-    std::vector<uint8_t> compressedData;
+    std::vector<uint8_t> readBuffer(chunkSize);
 
-    do
+    while (ret == Z_OK)
     {
-        zs.next_out = outBuffer.data();
-        zs.avail_out = outBuffer.size();
+        zs.next_out = readBuffer.data();
+        zs.avail_out = readBuffer.size();
 
         ret = deflate(&zs, Z_FINISH);
 
-        const size_t bytesCompressed = outBuffer.size() - zs.avail_out;
-        compressedData.insert(compressedData.end(),
-                              outBuffer.begin(),
-                              outBuffer.begin() + static_cast<int64_t>(bytesCompressed));
-    } while (ret == Z_OK);
+        const ptrdiff_t bytesCompressed = static_cast<ptrdiff_t>(readBuffer.size()) - zs.avail_out;
+        outBuffer.insert(outBuffer.end(), readBuffer.begin(), readBuffer.begin() + bytesCompressed);
+    }
 
     deflateEnd(&zs);
 
@@ -103,30 +99,23 @@ const uint8_t *AssetReader::Compress(uint8_t *data,
         throw std::runtime_error("deflate failed");
     }
 
-    header[0] = compressedData.size();
-
-    uint8_t *output = new uint8_t[(sizeof(uint32_t) * 4) + compressedData.size()];
-    memcpy(output, header, sizeof(uint32_t) * 4);
-    memcpy(output + sizeof(uint32_t) * 4, compressedData.data(), compressedData.size());
-
-    delete[] header;
-
-    *out_compressed_size = compressedData.size();
-    return output;
+    *reinterpret_cast<uint32_t *>(outBuffer.data()) = outBuffer.size() - sizeof(uint32_t) * 4;
 }
 
-void AssetReader::SaveToFile(const char *filePath, uint8_t *data, const size_t dataSize, const AssetType type)
+void AssetReader::SaveToFile(const char *filePath, std::vector<uint8_t> &data, const AssetType type)
 {
     FILE *file = fopen(filePath, "wb");
-    assert(file != nullptr);
-    size_t compressedSize;
-    const uint8_t *buffer = Compress(data, dataSize, &compressedSize, type);
-    fwrite(buffer, 1, compressedSize + 16, file);
+    if (file == nullptr)
+    {
+        throw std::runtime_error("Unable to open file for writing");
+    }
+    std::vector<uint8_t> compressedData;
+    Compress(data, compressedData, type);
+    fwrite(compressedData.data(), 1, compressedData.size(), file);
     fclose(file);
-    delete[] buffer;
 }
 
-uint8_t *AssetReader::LoadFromFile(const char *filePath, size_t *outSize, AssetType *outType)
+AssetReader::AssetType AssetReader::LoadFromFile(const char *filePath, DataReader &reader)
 {
     std::FILE *file = std::fopen(filePath, "rb");
     if (file == nullptr)
@@ -134,12 +123,11 @@ uint8_t *AssetReader::LoadFromFile(const char *filePath, size_t *outSize, AssetT
         throw std::runtime_error("Unable to open file");
     }
     fseek(file, 0, SEEK_END);
-    const size_t data_size = ftell(file);
+    const size_t dataSize = ftell(file);
+    assert(dataSize >= sizeof(uint32_t) * 4);
+    std::vector<uint8_t> compressedData(dataSize);
     fseek(file, 0, SEEK_SET);
-    uint8_t *compressedData = new uint8_t[data_size];
-    fread(compressedData, 1, data_size, file);
+    fread(compressedData.data(), 1, dataSize, file);
     fclose(file);
-    uint8_t *data = Decompress(compressedData, outSize, outType);
-    delete[] compressedData;
-    return data;
+    return Decompress(compressedData, reader);
 }

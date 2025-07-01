@@ -2,50 +2,58 @@
 // Created by droc101 on 6/26/25.
 //
 
-#ifndef DATAWRITER_H
-#define DATAWRITER_H
+#pragma once
+
+#include <algorithm>
+#include <array>
 #include <cstdint>
-#include <cstring>
 #include <vector>
 
-class DataWriter {
+template<typename T> concept Primitive = std::is_trivial_v<T> && std::is_fundamental_v<T> && std::is_arithmetic_v<T>;
 
+class DataWriter
+{
     public:
+
         DataWriter() = default;
 
         /**
          * Write a value to the buffer
          * @tparam T The type of value
-         * @warning This is only indented for primitive types like @c uint32_t
          * @param value The value to write
          */
-        template <typename T> void Write(T value)
+        template<Primitive T> void Write(T value)
         {
-            std::array<uint8_t, sizeof(T)> buf = std::array<uint8_t, sizeof(T)>();
-            std::memcpy(buf.data(), &value, sizeof(T));
-            data.insert(data.end(), buf.data(), buf.data() + sizeof(T));
+            const uint8_t *valueAsUint = reinterpret_cast<const uint8_t *>(&value);
+            data.insert(data.end(), valueAsUint, valueAsUint + sizeof(T));
         }
 
         /**
          * Write an array of same-type values to the buffer
          * @tparam T The type of value in the array
-         * @warning This is only indented for primitive types like @c uint32_t
          * @param buffer The array
          * @param length The number of elements in the array
          */
-        template <typename T> void WriteBuffer(T *buffer, size_t length)
+        template<Primitive T> void WriteBuffer(T *buffer, const size_t length)
         {
-            uint8_t *buf = new uint8_t[sizeof(T)*length];
-            std::memcpy(buf, buffer, sizeof(T)*length);
-            data.insert(data.end(), buf, buf + sizeof(T)*length);
-            delete[] buf;
+            const uint8_t *buf = reinterpret_cast<const uint8_t *>(buffer);
+            data.insert(data.end(), buf, buf + length * sizeof(T));
+        }
+        template<Primitive T> void WriteBuffer(const std::vector<T> &buffer)
+        {
+            const uint8_t *bufferData = reinterpret_cast<const uint8_t *>(buffer.data());
+            data.insert(data.end(), bufferData, bufferData + buffer.size() * sizeof(T));
+        }
+        template<Primitive T, size_t length> void WriteBuffer(const std::array<T, length> &buffer)
+        {
+            const uint8_t *bufferData = reinterpret_cast<const uint8_t *>(buffer.data());
+            data.insert(data.end(), bufferData, bufferData + length * sizeof(T));
         }
 
-        [[nodiscard]] uint8_t *GetBuffer() const;
+        void CopyToVector(std::vector<uint8_t> &vector) const;
 
         [[nodiscard]] size_t GetBufferSize() const;
-    private:
-        std::vector<uint8_t> data = std::vector<uint8_t>();
-};
 
-#endif //DATAWRITER_H
+    private:
+        std::vector<uint8_t> data{};
+};

@@ -1,23 +1,22 @@
 #include <array>
+#include <GLES3/gl3.h>
 #include <imgui.h>
-#include <imgui_impl_sdl3.h>
 #include <imgui_impl_opengl3.h>
+#include <imgui_impl_sdl3.h>
 #include <iostream>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
-#include "imgui_internal.h"
-#include "libassets/ModelAsset.h"
-#include <GLES3/gl3.h>
 #include "../shared/AboutWindow.h"
-#include "ModelRenderer.h"
 #include "../shared/Options.h"
+#include "libassets/ModelAsset.h"
+#include "ModelRenderer.h"
 #include "OptionsWindow.h"
 
-static bool model_loaded = false;
+static bool modelLoaded = false;
 static bool dragging = false;
 
 SDL_Window *window = nullptr;
-SDL_GLContext gl_context = nullptr;
+SDL_GLContext glContext = nullptr;
 ImGuiIO io;
 bool done = false;
 bool openPressed = false;
@@ -30,38 +29,55 @@ constexpr SDL_DialogFileFilter fbxFilter = {"3D Model", "obj;fbx"};
 
 void destroyExistingModel()
 {
-    if (!model_loaded) return;
+    if (!modelLoaded)
+    {
+        return;
+    }
     ModelRenderer::UnloadModel();
-    model_loaded = false;
+    modelLoaded = false;
 }
 
-void openGmdlCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
+void openGmdlCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
-    if (filelist == nullptr || filelist[0] == nullptr) return;
+    if (fileList == nullptr || fileList[0] == nullptr)
+    {
+        return;
+    }
     destroyExistingModel();
-    ModelAsset m = ModelAsset::CreateFromAsset(filelist[0]);
-    ModelRenderer::LoadModel(m);
-    model_loaded = true;
+    ModelAsset model;
+    ModelAsset::CreateFromAsset(fileList[0], model);
+    ModelRenderer::LoadModel(model);
+    modelLoaded = true;
 }
 
-void importCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
+void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
-    if (filelist == nullptr || filelist[0] == nullptr) return;
+    if (fileList == nullptr || fileList[0] == nullptr)
+    {
+        return;
+    }
     destroyExistingModel();
-    ModelAsset m = ModelAsset::CreateFromStandardModel(filelist[0]);
-    ModelRenderer::LoadModel(m);
-    model_loaded = true;
+    ModelAsset model;
+    ModelAsset::CreateFromStandardModel(fileList[0], model);
+    ModelRenderer::LoadModel(model);
+    modelLoaded = true;
 }
 
-void saveGmdlCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
+void saveGmdlCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
-    if (filelist == nullptr || filelist[0] == nullptr) return;
-    ModelRenderer::GetModel()->SaveAsAsset(filelist[0]);
+    if (fileList == nullptr || fileList[0] == nullptr)
+    {
+        return;
+    }
+    ModelRenderer::GetModel()->SaveAsAsset(fileList[0]);
 }
 
-void exportCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
+void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
-    if (filelist == nullptr || filelist[0] == nullptr) return;
+    if (fileList == nullptr || fileList[0] == nullptr)
+    {
+        return;
+    }
     // TODO: implement OBJ writer in ModelAsset
 }
 
@@ -88,7 +104,7 @@ void ProcessEvent(const SDL_Event *event)
     {
         if (event->type == SDL_EVENT_MOUSE_WHEEL)
         {
-            SDL_MouseWheelEvent const e = event->wheel;
+            const SDL_MouseWheelEvent &e = event->wheel;
             ModelRenderer::UpdateViewRel(0, 0, e.y / -10.0f);
         }
         if (event->type == SDL_EVENT_MOUSE_BUTTON_UP)
@@ -115,8 +131,8 @@ void HandleMenuAndShortcuts()
 {
     openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
-    savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && model_loaded;
-    exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && model_loaded;
+    savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && modelLoaded;
+    exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && modelLoaded;
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -124,8 +140,8 @@ void HandleMenuAndShortcuts()
         {
             openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
             importPressed |= ImGui::MenuItem("Import", "Ctrl+Shift+O");
-            savePressed |= ImGui::MenuItemEx("Save", nullptr, "Ctrl+S", false, model_loaded);
-            exportPressed |= ImGui::MenuItemEx("Export", nullptr, "Ctrl+Shift+S", false, model_loaded);
+            savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, modelLoaded);
+            exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S", false, modelLoaded);
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
@@ -133,12 +149,12 @@ void HandleMenuAndShortcuts()
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenuEx("Edit", "", model_loaded))
+        if (ImGui::BeginMenu("Edit", modelLoaded))
         {
             ImGui::MenuItem("Import LOD");
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenuEx("View", "", model_loaded))
+        if (ImGui::BeginMenu("View", modelLoaded))
         {
             if (ImGui::MenuItem("Reset View"))
             {
@@ -147,44 +163,46 @@ void HandleMenuAndShortcuts()
             ImGui::Separator();
             if (ImGui::BeginMenu("Display Mode"))
             {
-                if (ImGui::MenuItemEx("Unshaded",
-                                      "",
-                                      nullptr,
-                                      ModelRenderer::dispMode == ModelRenderer::DisplayMode::COLORED))
-                    ModelRenderer::dispMode = ModelRenderer::DisplayMode::COLORED;
-                if (ImGui::MenuItemEx("Shaded",
-                                      "",
-                                      nullptr,
-                                      ModelRenderer::dispMode == ModelRenderer::DisplayMode::COLORED_SHADED))
-                    ModelRenderer::dispMode = ModelRenderer::DisplayMode::COLORED_SHADED;
-                if (ImGui::MenuItemEx("Textured Unshaded",
-                                      "",
-                                      nullptr,
-                                      ModelRenderer::dispMode == ModelRenderer::DisplayMode::TEXTURED))
-                    ModelRenderer::dispMode = ModelRenderer::DisplayMode::TEXTURED;
-                if (ImGui::MenuItemEx("Textured Shaded",
-                                      "",
-                                      nullptr,
-                                      ModelRenderer::dispMode == ModelRenderer::DisplayMode::TEXTURED_SHADED))
-                    ModelRenderer::dispMode = ModelRenderer::DisplayMode::TEXTURED_SHADED;
-                if (ImGui::MenuItemEx("UV Debug",
-                                      "",
-                                      nullptr,
-                                      ModelRenderer::dispMode == ModelRenderer::DisplayMode::UV))
-                    ModelRenderer::dispMode = ModelRenderer::DisplayMode::UV;
-                if (ImGui::MenuItemEx("Normal Debug",
-                                      "",
-                                      nullptr,
-                                      ModelRenderer::dispMode == ModelRenderer::DisplayMode::NORMAL))
-                    ModelRenderer::dispMode = ModelRenderer::DisplayMode::NORMAL;
+                if (ImGui::MenuItem("Unshaded", "", ModelRenderer::displayMode == ModelRenderer::DisplayMode::COLORED))
+                {
+                    ModelRenderer::displayMode = ModelRenderer::DisplayMode::COLORED;
+                }
+                if (ImGui::MenuItem("Shaded",
+                                    "",
+                                    ModelRenderer::displayMode == ModelRenderer::DisplayMode::COLORED_SHADED))
+                {
+                    ModelRenderer::displayMode = ModelRenderer::DisplayMode::COLORED_SHADED;
+                }
+                if (ImGui::MenuItem("Textured Unshaded",
+                                    "",
+                                    ModelRenderer::displayMode == ModelRenderer::DisplayMode::TEXTURED))
+                {
+                    ModelRenderer::displayMode = ModelRenderer::DisplayMode::TEXTURED;
+                }
+                if (ImGui::MenuItem("Textured Shaded",
+                                    "",
+                                    ModelRenderer::displayMode == ModelRenderer::DisplayMode::TEXTURED_SHADED))
+                {
+                    ModelRenderer::displayMode = ModelRenderer::DisplayMode::TEXTURED_SHADED;
+                }
+                if (ImGui::MenuItem("UV Debug", "", ModelRenderer::displayMode == ModelRenderer::DisplayMode::UV))
+                {
+                    ModelRenderer::displayMode = ModelRenderer::DisplayMode::UV;
+                }
+                if (ImGui::MenuItem("Normal Debug",
+                                    "",
+                                    ModelRenderer::displayMode == ModelRenderer::DisplayMode::NORMAL))
+                {
+                    ModelRenderer::displayMode = ModelRenderer::DisplayMode::NORMAL;
+                }
                 ImGui::EndMenu();
             }
             ImGui::Separator();
-            if (ImGui::MenuItemEx("Show Backfaces", "", nullptr, !ModelRenderer::cullBackfaces))
+            if (ImGui::MenuItem("Show Backfaces", "", !ModelRenderer::cullBackfaces))
             {
                 ModelRenderer::cullBackfaces = !ModelRenderer::cullBackfaces;
             }
-            if (ImGui::MenuItemEx("Show Unit Cube", "", nullptr, ModelRenderer::showUnitCube))
+            if (ImGui::MenuItem("Show Unit Cube", "", ModelRenderer::showUnitCube))
             {
                 ModelRenderer::showUnitCube = !ModelRenderer::showUnitCube;
             }
@@ -192,13 +210,22 @@ void HandleMenuAndShortcuts()
         }
         if (ImGui::BeginMenu("Tools"))
         {
-            if (ImGui::MenuItem("Options")) OptionsWindow::Show();
+            if (ImGui::MenuItem("Options"))
+            {
+                OptionsWindow::Show();
+            }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Help"))
         {
-            if (ImGui::MenuItem("Source Code")) SDL_OpenURL("https://github.com/droc101/game-sdk");
-            if (ImGui::MenuItem("About")) AboutWindow::Show();
+            if (ImGui::MenuItem("Source Code"))
+            {
+                SDL_OpenURL("https://github.com/droc101/game-sdk");
+            }
+            if (ImGui::MenuItem("About"))
+            {
+                AboutWindow::Show();
+            }
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
@@ -221,7 +248,7 @@ void HandleMenuAndShortcuts()
 
 int main()
 {
-    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
+    if (!SDL_Init(SDL_INIT_VIDEO))
     {
         printf("Error: SDL_Init(): %s\n", SDL_GetError());
         return -1;
@@ -229,7 +256,7 @@ int main()
 
     Options::Load();
 
-    const char *glsl_version = "#version 300 es";
+    const char *glslVersion = "#version 300 es";
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -238,21 +265,21 @@ int main()
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
-    constexpr SDL_WindowFlags window_flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
-    window = SDL_CreateWindow("mdledit", 800, 600, window_flags);
+    constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+    window = SDL_CreateWindow("mdledit", 800, 600, windowFlags);
     if (window == nullptr)
     {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
         return -1;
     }
-    gl_context = SDL_GL_CreateContext(window);
-    if (gl_context == nullptr)
+    glContext = SDL_GL_CreateContext(window);
+    if (glContext == nullptr)
     {
         printf("Error: SDL_GL_CreateContext(): %s\n", SDL_GetError());
         return -1;
     }
 
-    SDL_GL_MakeCurrent(window, gl_context);
+    SDL_GL_MakeCurrent(window, glContext);
     SDL_GL_SetSwapInterval(1); // Enable vsync
     SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
     SDL_ShowWindow(window);
@@ -260,7 +287,6 @@ int main()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     io = ImGui::GetIO();
-    (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
@@ -272,12 +298,13 @@ int main()
         ImGui::StyleColorsLight();
     }
 
-    ImGui_ImplSDL3_InitForOpenGL(window, gl_context);
-    ImGui_ImplOpenGL3_Init(glsl_version);
+    ImGui_ImplSDL3_InitForOpenGL(window, glContext);
+    ImGui_ImplOpenGL3_Init(glslVersion);
 
     ModelRenderer::Init();
     ModelRenderer::ResizeWindow(800, 600);
 
+    // ReSharper disable once CppDFALoopConditionNotUpdated Wrong again
     while (!done)
     {
         SDL_Event event;
@@ -298,20 +325,21 @@ int main()
 
         const ImGuiViewport *viewport = ImGui::GetMainViewport();
         constexpr float modelPaneSize = 250;
-        const ImVec2 workSize = ImVec2(viewport->WorkSize.x, modelPaneSize);
-        const ImVec2 workPos = ImVec2(viewport->WorkPos.x,
-                                      (viewport->WorkPos.y + viewport->WorkSize.y) - modelPaneSize);
+        const ImVec2 workSize{viewport->WorkSize.x, modelPaneSize};
+        const ImVec2 workPos{viewport->WorkPos.x, (viewport->WorkPos.y + viewport->WorkSize.y) - modelPaneSize};
         ImGui::SetNextWindowPos(workPos);
         ImGui::SetNextWindowSize(workSize);
         {
             ImGui::Begin("mdledit",
                          nullptr,
-                         ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
-                         ImGuiWindowFlags_NoBringToFrontOnFocus);
+                         ImGuiWindowFlags_NoDecoration |
+                                 ImGuiWindowFlags_NoMove |
+                                 ImGuiWindowFlags_NoSavedSettings |
+                                 ImGuiWindowFlags_NoBringToFrontOnFocus);
 
             HandleMenuAndShortcuts();
 
-            if (model_loaded)
+            if (modelLoaded)
             {
                 if (ImGui::BeginTabBar("tabs", 0))
                 {
@@ -348,13 +376,18 @@ int main()
         }
 
         OptionsWindow::Render(window);
-        AboutWindow::Render(window);
+        AboutWindow::Render();
 
         ImGui::Render();
         glViewport(0, 0, static_cast<GLsizei>(io.DisplaySize.x), static_cast<GLsizei>(io.DisplaySize.y));
         glClearColor(0, 0, 0, 1);
-        if (model_loaded) ModelRenderer::Render();
-        else glClear(GL_COLOR_BUFFER_BIT);
+        if (modelLoaded)
+        {
+            ModelRenderer::Render();
+        } else
+        {
+            glClear(GL_COLOR_BUFFER_BIT);
+        }
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
@@ -366,7 +399,7 @@ int main()
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
-    SDL_GL_DestroyContext(gl_context);
+    SDL_GL_DestroyContext(glContext);
     SDL_DestroyWindow(window);
     SDL_Quit();
     destroyExistingModel();

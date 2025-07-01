@@ -3,7 +3,7 @@
 //
 
 #include "AboutWindow.h"
-#include "imgui.h"
+#include <imgui.h>
 #include "libassets/libassets.h"
 
 void AboutWindow::Show()
@@ -16,7 +16,7 @@ void AboutWindow::Hide()
     visible = false;
 }
 
-void AboutWindow::Render(SDL_Window *window)
+void AboutWindow::Render()
 {
     if (visible)
     {
@@ -33,18 +33,24 @@ void AboutWindow::Render(SDL_Window *window)
         ImGui::Dummy(ImVec2(0.0f, 16.0f));
         ImGui::Text("Third-Party libraries:");
         ImGui::TextLinkOpenURL("SDL3", "https://www.libsdl.org");
-        if (ImGui::TextLink("Dear ImGui")) imgui_about_visible = true;
+        if (ImGui::TextLink("Dear ImGui"))
+        {
+            imguiAboutVisible = true;
+        }
         ImGui::TextLinkOpenURL("zlib", "https://zlib.net");
         ImGui::TextLinkOpenURL("JSON for Modern C++", "https://json.nlohmann.me");
         ImGui::Dummy(ImVec2(0.0f, 16.0f));
         ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 60, 0));
         ImGui::SameLine();
-        if (ImGui::Button("OK", ImVec2(60, 0))) visible = false;
+        if (ImGui::Button("OK", ImVec2(60, 0)))
+        {
+            visible = false;
+        }
 
         ImGui::End();
     }
-    if (imgui_about_visible)
+    if (imguiAboutVisible)
     {
-        ImGui::ShowAboutWindow(&imgui_about_visible);
+        ImGui::ShowAboutWindow(&imguiAboutVisible);
     }
 }

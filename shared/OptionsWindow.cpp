@@ -4,8 +4,8 @@
 
 #include "OptionsWindow.h"
 #include <cstring>
+#include <imgui.h>
 #include <SDL3/SDL_dialog.h>
-#include "imgui.h"
 #include "Options.h"
 
 void OptionsWindow::Show()
@@ -20,8 +20,11 @@ void OptionsWindow::Hide()
 
 void OptionsWindow::gamePathCallback(void *, const char *const *filelist, int)
 {
-    if (filelist == nullptr || filelist[0] == nullptr) return;
-    strncpy(Options::gamePath.data(), filelist[0], Options::gamePath.size());
+    if (filelist == nullptr || filelist[0] == nullptr)
+    {
+        return;
+    }
+    std::strncpy(Options::gamePath.data(), filelist[0], Options::gamePath.size() - 1);
     Options::Save();
 }
 
@@ -49,9 +52,12 @@ void OptionsWindow::Render(SDL_Window *window)
 
         const float sizeX = ImGui::GetContentRegionAvail().x;
 
-        ImGui::Dummy(ImVec2(sizeX - 120 - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().WindowPadding.x,0));
+        ImGui::Dummy(ImVec2(sizeX - 120 - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().WindowPadding.x, 0));
         ImGui::SameLine();
-        if (ImGui::Button("OK", ImVec2(60, 0))) visible = false;
+        if (ImGui::Button("OK", ImVec2(60, 0)))
+        {
+            visible = false;
+        }
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(60, 0)))
         {

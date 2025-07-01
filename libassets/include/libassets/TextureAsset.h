@@ -2,15 +2,15 @@
 // Created by droc101 on 6/23/25.
 //
 
-#ifndef TEXTUREASSET_H
-#define TEXTUREASSET_H
+#pragma once
+
 #include <cstdint>
 #include <vector>
 
-class TextureAsset final {
-
+class TextureAsset final
+{
     public:
-        enum ImageFormat: uint8_t
+        enum class ImageFormat : uint8_t
         {
             IMAGE_FORMAT_PNG,
             IMAGE_FORMAT_TGA,
@@ -49,7 +49,7 @@ class TextureAsset final {
         [[nodiscard]] static TextureAsset CreateMissingTexture();
 
         /// Get the pixel data in RGBA format
-        [[nodiscard]] const uint32_t *GetPixelsRGBA() const;
+        void GetPixelsRGBA(std::vector<uint32_t> &outBuffer) const;
 
         /// Get the raw pixel data (not in RGBA)
         [[nodiscard]] const unsigned *GetPixels() const;
@@ -74,23 +74,18 @@ class TextureAsset final {
         void SaveAsAsset(const char *assetPath) const;
 
     private:
-        std::vector<uint32_t> pixels;
-        uint32_t width = 0;
-        uint32_t height = 0;
+        std::vector<uint32_t> pixels{};
+        uint32_t width{};
+        uint32_t height{};
 
         /**
          * Create the uncompressed gtex payload
-         * @param outSize Where to store the size of the payload
-         * @return The payload data
+         * @param[out] buffer The output buffer to store the payload in
          */
-        uint8_t *SaveToBuffer(size_t *outSize) const;
+        void SaveToBuffer(std::vector<uint8_t> &buffer) const;
 
         /**
          * Fix the byte order on imported pixels
          */
         void FixByteOrder();
 };
-
-
-
-#endif //TEXTUREASSET_H

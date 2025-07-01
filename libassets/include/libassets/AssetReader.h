@@ -2,15 +2,16 @@
 // Created by droc101 on 6/23/25.
 //
 
-#ifndef ASSET_H
-#define ASSET_H
-#include <cstdint>
-#include <cstddef>
+#pragma once
 
+#include <cstdint>
+#include <vector>
+
+class DataReader;
 class AssetReader
 {
     public:
-        enum AssetType: uint32_t // NOLINT(*-enum-size)
+        enum class AssetType : uint32_t // NOLINT(*-enum-size)
         {
             ASSET_TYPE_TEXTURE = 0,
             ASSET_TYPE_MP3 = 1,
@@ -31,43 +32,32 @@ class AssetReader
         /**
          * Get the uncompressed payload data of a texture
          * @param asset The complete asset file
-         * @param outSize Where to store the payload size
-         * @param outAssetType Where to store the payload type
-         * @return The payload data
+         * @param[in, out] reader The DataReader to use
+         * @return The asset type
          */
-        [[nodiscard]] static uint8_t *Decompress(uint8_t *asset, size_t *outSize, AssetType *outAssetType);
+        [[nodiscard]] static AssetType Decompress(std::vector<uint8_t> &asset, DataReader &reader);
 
         /**
          * Create an asset given the uncompressed payload
-         * @param data The payload data
-         * @param data_size The size of the payload data
-         * @param out_compressed_size Where to store the size of the resulting asset
+         * @param inBuffer The payload data to compress
+         * @param[out] outBuffer The buffer to output the compressed data into
          * @param type The asset type to store
-         * @return The asset data
          */
-        [[nodiscard]] static const uint8_t *Compress(uint8_t *data,
-                                                     size_t data_size,
-                                                     size_t *out_compressed_size,
-                                                     AssetType type);
+        static void Compress(std::vector<uint8_t> &inBuffer, std::vector<uint8_t> &outBuffer, AssetType type);
 
         /**
          * Get the data of an asset from a file
          * @param filePath The path to the file
-         * @param outSize Where to store the size of the payload
-         * @param outType Where to store the type of the asset
-         * @return The payload data
+         * @param[in, out] reader The DataReader to use
+         * @return The asset type
          */
-        [[nodiscard]] static uint8_t *LoadFromFile(const char *filePath, size_t *outSize, AssetType *outType);
+        [[nodiscard]] static AssetType LoadFromFile(const char *filePath, DataReader &reader);
 
         /**
          * Create an asset file on disk
          * @param filePath The file to save as
          * @param data The payload data
-         * @param dataSize The size of the payload data
          * @param type The type of asset
          */
-        static void SaveToFile(const char *filePath, uint8_t *data, size_t dataSize, AssetType type);
+        static void SaveToFile(const char *filePath, std::vector<uint8_t> &data, AssetType type);
 };
-
-
-#endif //ASSET_H

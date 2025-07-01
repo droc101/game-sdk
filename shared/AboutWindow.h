@@ -2,22 +2,18 @@
 // Created by droc101 on 6/29/25.
 //
 
-#ifndef ABOUTWINDOW_H
-#define ABOUTWINDOW_H
-#include <SDL3/SDL_video.h>
-
+#pragma once
 
 class AboutWindow
 {
     public:
+        AboutWindow() = delete;
+
         static void Show();
         static void Hide();
-        static void Render(SDL_Window *window);
+        static void Render();
 
     private:
-        inline static bool visible = false;
-        inline static bool imgui_about_visible = false;
+        static inline bool visible = false;
+        static inline bool imguiAboutVisible = false;
 };
-
-
-#endif //ABOUTWINDOW_H

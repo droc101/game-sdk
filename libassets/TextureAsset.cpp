@@ -4,12 +4,14 @@
 
 #include "include/libassets/TextureAsset.h"
 #include <cassert>
+#include <filesystem>
+#include "include/libassets/AssetReader.h"
+#include "include/libassets/DataReader.h"
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
-#include <filesystem>
 #include <stb_image.h>
 #include <stb_image_write.h>
-#include "include/libassets/AssetReader.h"
 
 TextureAsset TextureAsset::CreateFromImage(const char *imagePath)
 {
@@ -17,32 +19,32 @@ TextureAsset TextureAsset::CreateFromImage(const char *imagePath)
     {
         return CreateMissingTexture();
     }
-    TextureAsset t = TextureAsset();
+    TextureAsset texture;
     int width;
     int height;
     int channels;
     uint8_t *data = stbi_load(imagePath, &width, &height, &channels, STBI_rgb_alpha);
     const uint32_t *data32 = reinterpret_cast<uint32_t *>(data);
     // assert(*channels == 4); // The image MUST be RGBA.
-    t.width = width;
-    t.height = height;
-    t.pixels = std::vector<uint32_t>(width*height);
-    for (int i = 0; i < width*height; i++)
+    texture.width = width;
+    texture.height = height;
+    texture.pixels = std::vector<uint32_t>(width * height);
+    for (int i = 0; i < width * height; i++)
     {
-        t.pixels.at(i) = data32[i];
+        texture.pixels.at(i) = data32[i];
     }
     stbi_image_free(data);
-    t.FixByteOrder();
-    return t;
+    texture.FixByteOrder();
+    return texture;
 }
 
 TextureAsset TextureAsset::CreateMissingTexture()
 {
-    TextureAsset t = TextureAsset();
-    t.width = 64;
-    t.height = 64;
+    TextureAsset texture;
+    texture.width = 64;
+    texture.height = 64;
     constexpr size_t pixelDataSize = 64 * 64;
-    t.pixels = std::vector<uint32_t>(pixelDataSize);
+    texture.pixels = std::vector<uint32_t>(pixelDataSize);
 
     for (int x = 0; x < 64; x++)
     {
@@ -50,24 +52,23 @@ TextureAsset TextureAsset::CreateMissingTexture()
         {
             if ((x < 32) ^ (y < 32))
             {
-                t.pixels.at(x + y * 64) = 0x000000ff; // black
+                texture.pixels.at(x + y * 64) = 0x000000ff; // black
             } else
             {
-                t.pixels.at(x + y * 64) = 0xff00ffff; // magenta
+                texture.pixels.at(x + y * 64) = 0xff00ffff; // magenta
             }
         }
     }
-    return t;
+    return texture;
 }
 
 TextureAsset TextureAsset::CreateFromPixels(uint32_t *pixels, const uint32_t width, const uint32_t height)
 {
-    TextureAsset t;
-    t.width = width;
-    t.height = height;
-    t.pixels = std::vector<uint32_t>();
-    t.pixels.insert(t.pixels.end(), &pixels[0], &pixels[t.width * t.height]);
-    return t;
+    TextureAsset texture;
+    texture.width = width;
+    texture.height = height;
+    texture.pixels.insert(texture.pixels.begin(), pixels, pixels + texture.width * texture.height);
+    return texture;
 }
 
 TextureAsset TextureAsset::CreateFromAsset(const char *assetPath)
@@ -76,24 +77,18 @@ TextureAsset TextureAsset::CreateFromAsset(const char *assetPath)
     {
         return CreateMissingTexture();
     }
-    size_t aSz;
-    AssetReader::AssetType aTp;
-    const uint8_t *data = AssetReader::LoadFromFile(assetPath, &aSz, &aTp);
-    assert(aSz >= sizeof(uint32_t) * 4);
-    assert(aTp == AssetReader::ASSET_TYPE_TEXTURE);
-    const uint32_t *data32 = reinterpret_cast<const uint32_t*>(data);
-    TextureAsset t = TextureAsset();
-    // 0 = pixelDataSize in bytes
-    t.width = data32[1];
-    t.height = data32[2];
-    // 3 = unused (3 sucks)
-    const size_t pixelCount = t.width * t.height;
-    assert(aSz >= sizeof(uint32_t) * (4 + pixelCount));
-    t.pixels = std::vector<uint32_t>();
-    t.pixels.insert(t.pixels.end(), &data32[4], &data32[4 + pixelCount]);
-    t.FixByteOrder();
-    delete[] data;
-    return t;
+    DataReader reader;
+    [[maybe_unused]] const AssetReader::AssetType assetType = AssetReader::LoadFromFile(assetPath, reader);
+    assert(assetType == AssetReader::AssetType::ASSET_TYPE_TEXTURE);
+    TextureAsset texture;
+    reader.Seek(sizeof(uint32_t)); // 0 = pixelDataSize in bytes
+    texture.width = reader.Read32();
+    texture.height = reader.Read32();
+    reader.Seek(sizeof(uint32_t)); // 3 = unused (3 sucks)
+    const size_t pixelCount = texture.width * texture.height;
+    reader.ReadToBuffer<uint32_t>(texture.pixels, pixelCount);
+    texture.FixByteOrder();
+    return texture;
 }
 
 uint32_t TextureAsset::GetHeight() const
@@ -113,80 +108,82 @@ const unsigned *TextureAsset::GetPixels() const
 
 void TextureAsset::SaveAsImage(const char *imagePath, const ImageFormat format) const
 {
-    const uint32_t *rgba = GetPixelsRGBA();
+    std::vector<uint32_t> pixels;
+    GetPixelsRGBA(pixels);
     switch (format)
     {
+        using enum ImageFormat;
         case IMAGE_FORMAT_PNG:
-            stbi_write_png(imagePath, static_cast<int>(width), static_cast<int>(height), 4, rgba, static_cast<int>(width * sizeof(uint32_t)));
+            stbi_write_png(imagePath,
+                           static_cast<int>(width),
+                           static_cast<int>(height),
+                           4,
+                           pixels.data(),
+                           static_cast<int>(width * sizeof(uint32_t)));
             break;
         case IMAGE_FORMAT_TGA:
-            stbi_write_tga(imagePath, static_cast<int>(width), static_cast<int>(height), 4, rgba);
+            stbi_write_tga(imagePath, static_cast<int>(width), static_cast<int>(height), 4, pixels.data());
             break;
         case IMAGE_FORMAT_BMP:
-            stbi_write_bmp(imagePath, static_cast<int>(width), static_cast<int>(height), 4, rgba);
+            stbi_write_bmp(imagePath, static_cast<int>(width), static_cast<int>(height), 4, pixels.data());
             break;
         default:;
     }
-    delete[] rgba;
 }
 
 void TextureAsset::SaveAsAsset(const char *assetPath) const
 {
-    size_t size;
-    uint8_t *buffer = SaveToBuffer(&size);
-    AssetReader::SaveToFile(assetPath, buffer, size, AssetReader::ASSET_TYPE_TEXTURE);
-    delete[] buffer;
+    std::vector<uint8_t> buffer;
+    SaveToBuffer(buffer);
+    AssetReader::SaveToFile(assetPath, buffer, AssetReader::AssetType::ASSET_TYPE_TEXTURE);
 }
 
 
 void TextureAsset::FixByteOrder()
 {
-    for (int i = 0; i < this->width * this->height; i++)
+    assert(pixels.size() == width * height);
+    for (uint32_t &pixel: pixels)
     {
-        const uint32_t pixel = this->pixels.at(i);
         const uint8_t a = static_cast<uint8_t>(pixel >> 24);
         const uint8_t r = static_cast<uint8_t>(pixel >> 16);
         const uint8_t g = static_cast<uint8_t>(pixel >> 8);
         const uint8_t b = static_cast<uint8_t>(pixel);
 
-        this->pixels.at(i) = b << 24 | g << 16 | r << 8 | a;
+        pixel = b << 24 | g << 16 | r << 8 | a;
     }
 }
 
-uint8_t *TextureAsset::SaveToBuffer(size_t *outSize) const
+void TextureAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
 {
-    const size_t dataSize = sizeof(uint32_t) * (4 + (this->width * this->height));
-    uint8_t *buffer = new uint8_t[dataSize];
-    uint32_t *buffer32 = reinterpret_cast<uint32_t *>(buffer);
-    buffer32[0] = this->width * this->height * sizeof(uint32_t);
-    buffer32[1] = this->width;
-    buffer32[2] = this->height;
-    buffer32[3] = 0;
-    const uint32_t *rgba = GetPixelsRGBA();
-    memcpy(buffer32 + 4, rgba, sizeof(uint32_t) * GetWidth() * GetHeight());
-    *outSize = buffer32[0] + 16;
-    delete[] rgba;
-    return buffer;
+    assert(buffer.empty());
+    buffer.resize(sizeof(uint32_t) * 4);
+    uint32_t *bufferAsUint32 = reinterpret_cast<uint32_t *>(buffer.data());
+    bufferAsUint32[0] = width * height * sizeof(uint32_t);
+    bufferAsUint32[1] = width;
+    bufferAsUint32[2] = height;
+    bufferAsUint32[3] = 0;
+    std::vector<uint32_t> pixels;
+    GetPixelsRGBA(pixels);
+    buffer.insert(buffer.end(), pixels.begin(), pixels.end());
 }
 
-const uint32_t *TextureAsset::GetPixelsRGBA() const
+void TextureAsset::GetPixelsRGBA(std::vector<uint32_t> &outBuffer) const
 {
-    uint32_t *pixelsRGBA = new uint32_t[this->width * this->height];
-    for (int x = 0; x < this->width; x++)
+    assert(outBuffer.empty());
+    outBuffer.resize(width * height);
+    for (uint32_t x = 0; x < width; x++)
     {
-        for (int y = 0; y < this->height; y++)
+        for (uint32_t y = 0; y < height; y++)
         {
-            const size_t arrayIndex = x + y * this->width;
-            const uint32_t pixel = this->pixels.at(arrayIndex);
+            const size_t arrayIndex = x + y * width;
+            const uint32_t pixel = pixels.at(arrayIndex);
 
             const uint8_t a = static_cast<uint8_t>(pixel);
             const uint8_t r = static_cast<uint8_t>(pixel >> 8);
             const uint8_t g = static_cast<uint8_t>(pixel >> 16);
             const uint8_t b = static_cast<uint8_t>(pixel >> 24);
 
-            pixelsRGBA[arrayIndex] = a << 24 | r << 16 | g << 8 | b;
+            outBuffer.at(arrayIndex) = a << 24 | r << 16 | g << 8 | b;
         }
     }
-    return pixelsRGBA;
 }
-

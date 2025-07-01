@@ -3,25 +3,18 @@
 //
 
 #include "include/libassets/DataReader.h"
+#include <algorithm>
 #include <cassert>
-#include <cstring>
 
-DataReader::DataReader(const uint8_t *bytes, const size_t dataSize)
+DataReader::DataReader(const size_t dataSize): bytes(dataSize)
 {
-    this->bytes = bytes;
-    this->size = dataSize;
-    this->offset = 0;
+    size = dataSize;
+    offset = 0;
 }
 
-DataReader::~DataReader()
+void DataReader::Seek(const std::ptrdiff_t relativeOffset)
 {
-    delete[] bytes;
-}
-
-
-void DataReader::Seek(const std::ptrdiff_t offset)
-{
-    this->offset += offset;
+    offset += relativeOffset;
 }
 
 void DataReader::SeekAbsolute(const size_t position)
@@ -29,35 +22,45 @@ void DataReader::SeekAbsolute(const size_t position)
     offset = position;
 }
 
+size_t DataReader::TotalSize() const
+{
+    return size;
+}
+
+size_t DataReader::RemainingSize() const
+{
+    return size - offset;
+}
+
 int8_t DataReader::Read8()
 {
-    assert(offset + sizeof(int8_t) <= size);
-    const int8_t i = static_cast<int8_t>(bytes[offset]);
-    offset += sizeof(int8_t);
+    static_assert(sizeof(int8_t) == 1);
+    assert(offset < size);
+    const int8_t i = static_cast<int8_t>(bytes.at(offset));
+    offset++;
     return i;
 }
 
 uint8_t DataReader::ReadU8()
 {
-    assert(offset + sizeof(uint8_t) <= size);
-    const uint8_t i = bytes[offset];
-    offset += sizeof(uint8_t);
+    static_assert(sizeof(uint8_t) == 1);
+    assert(offset < size);
+    const uint8_t i = bytes.at(offset);
+    offset++;
     return i;
 }
 
 int16_t DataReader::Read16()
 {
     assert(offset + sizeof(int16_t) <= size);
-    int16_t i;
-    std::memcpy(&i, bytes + offset, sizeof(int16_t));
+    const int16_t i = *reinterpret_cast<const int16_t *>(&bytes.at(offset));
     offset += sizeof(int16_t);
     return i;
 }
-uint8_t DataReader::ReadU16()
+uint16_t DataReader::ReadU16()
 {
     assert(offset + sizeof(uint16_t) <= size);
-    uint16_t i;
-    std::memcpy(&i, bytes + offset, sizeof(uint16_t));
+    const uint16_t i = *reinterpret_cast<const uint16_t *>(&bytes.at(offset));
     offset += sizeof(uint16_t);
     return i;
 }
@@ -65,8 +68,7 @@ uint8_t DataReader::ReadU16()
 int32_t DataReader::Read32()
 {
     assert(offset + sizeof(int32_t) <= size);
-    int32_t i;
-    std::memcpy(&i, bytes + offset, sizeof(int32_t));
+    const int32_t i = *reinterpret_cast<const int32_t *>(&bytes.at(offset));
     offset += sizeof(int32_t);
     return i;
 }
@@ -74,8 +76,7 @@ int32_t DataReader::Read32()
 uint32_t DataReader::ReadU32()
 {
     assert(offset + sizeof(uint32_t) <= size);
-    uint32_t i;
-    std::memcpy(&i, bytes + offset, sizeof(uint32_t));
+    const uint32_t i = *reinterpret_cast<const uint32_t *>(&bytes.at(offset));
     offset += sizeof(uint32_t);
     return i;
 }
@@ -83,8 +84,7 @@ uint32_t DataReader::ReadU32()
 int64_t DataReader::Read64()
 {
     assert(offset + sizeof(int64_t) <= size);
-    int64_t i;
-    std::memcpy(&i, bytes + offset, sizeof(int64_t));
+    const int64_t i = *reinterpret_cast<const int64_t *>(&bytes.at(offset));
     offset += sizeof(int64_t);
     return i;
 }
@@ -92,8 +92,7 @@ int64_t DataReader::Read64()
 uint64_t DataReader::ReadU64()
 {
     assert(offset + sizeof(uint64_t) <= size);
-    uint64_t i;
-    std::memcpy(&i, bytes + offset, sizeof(uint64_t));
+    const uint64_t i = *reinterpret_cast<const uint64_t *>(&bytes.at(offset));
     offset += sizeof(uint64_t);
     return i;
 }
@@ -101,8 +100,7 @@ uint64_t DataReader::ReadU64()
 float DataReader::ReadFloat()
 {
     assert(offset + sizeof(float) <= size);
-    float i;
-    std::memcpy(&i, bytes + offset, sizeof(float));
+    const float i = *reinterpret_cast<const float *>(&bytes.at(offset));
     offset += sizeof(float);
     return i;
 }
@@ -110,26 +108,15 @@ float DataReader::ReadFloat()
 double DataReader::ReadDouble()
 {
     assert(offset + sizeof(double) <= size);
-    double i;
-    std::memcpy(&i, bytes + offset, sizeof(double));
+    const double i = *reinterpret_cast<const double *>(&bytes.at(offset));
     offset += sizeof(double);
     return i;
 }
 
-char *DataReader::ReadString(const size_t length)
+void DataReader::ReadString(std::string &buffer, const size_t characterCount)
 {
-    assert(offset + sizeof(char) * length <= size);
-    char *str = new char[length];
-    std::memcpy(str, bytes + offset, sizeof(char) * length);
-    offset += sizeof(char) * length;
-    return str;
-}
-
-uint8_t *DataReader::ReadBytes(size_t length)
-{
-    assert(offset + sizeof(uint8_t) * length <= size);
-    uint8_t *buf = new uint8_t[length];
-    std::memcpy(buf, bytes + offset, sizeof(uint8_t) * length);
-    offset += sizeof(uint8_t) * length;
-    return buf;
+    assert(offset + sizeof(char) * characterCount <= size);
+    assert(buffer.empty());
+    buffer.insert(buffer.begin(), &bytes.at(offset), &bytes.at(offset + characterCount - 1));
+    offset += sizeof(char) * characterCount;
 }

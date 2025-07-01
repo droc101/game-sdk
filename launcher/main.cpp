@@ -13,11 +13,8 @@ int main()
         return -1;
     }
 
-    constexpr SDL_WindowFlags window_flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
-    SDL_Window *window = SDL_CreateWindow("Game SDK",
-                                          350,
-                                          250,
-                                          window_flags);
+    constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
+    SDL_Window *window = SDL_CreateWindow("Game SDK", 350, 250, windowFlags);
     if (window == nullptr)
     {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
@@ -27,7 +24,7 @@ int main()
     SDL_SetRenderVSync(renderer, 1);
     if (renderer == nullptr)
     {
-        SDL_Log("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
+        printf("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
         return -1;
     }
     SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
@@ -36,7 +33,6 @@ int main()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
-    (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
@@ -59,9 +55,13 @@ int main()
         {
             ImGui_ImplSDL3_ProcessEvent(&event);
             if (event.type == SDL_EVENT_QUIT)
+            {
                 done = true;
+            }
             if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
+            {
                 done = true;
+            }
         }
 
         if ((SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0)
@@ -77,28 +77,38 @@ int main()
         const ImGuiViewport *viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
+
+        static size_t selectedTool = 0;
+        constexpr std::array<const char *, 6> items = {
+            "Level Editor",
+            "Model Editor",
+            "Texture Editor",
+            "Sound Editor",
+            "Source Code",
+            "Documentation",
+        };
+
+        ImGui::Begin("Game SDK",
+                     nullptr,
+                     ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+        const ImVec2 size{-1, ImGui::GetContentRegionAvail().y - 28};
+        ImGui::BeginListBox("##mainlb", size);
+        for (size_t i = 0; i < items.size(); i++)
         {
-            static int selected_tool = 0;
-            constexpr std::array<const char *, 6> items = {"Level Editor", "Model Editor", "Texture Editor",
-                                                           "Sound Editor", "Source Code", "Documentation"};
-
-
-            ImGui::Begin("Game SDK",
-                         nullptr,
-                         ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
-            const ImVec2 size = ImVec2(-1, ImGui::GetContentRegionAvail().y - 28);
-            ImGui::BeginListBox("##mainlb", size);
-            for (int i = 0; i < items.size(); i++)
+            if (ImGui::Selectable(items[i], selectedTool == i))
             {
-                if (ImGui::Selectable(items[i], selected_tool == i)) selected_tool = i;
+                selectedTool = i;
             }
-            ImGui::EndListBox();
-            ImGui::Separator();
-            if (ImGui::Button("Exit")) done = true;
-            ImGui::SameLine();
-            ImGui::Button("Launch");
-            ImGui::End();
         }
+        ImGui::EndListBox();
+        ImGui::Separator();
+        if (ImGui::Button("Exit"))
+        {
+            done = true;
+        }
+        ImGui::SameLine();
+        ImGui::Button("Launch");
+        ImGui::End();
 
         ImGui::Render();
         SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);

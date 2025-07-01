@@ -3,16 +3,15 @@
 //
 
 #include "include/libassets/DataWriter.h"
+#include <cassert>
 
-uint8_t *DataWriter::GetBuffer() const
+void DataWriter::CopyToVector(std::vector<uint8_t> &vector) const
 {
-    uint8_t *dataCopy = new uint8_t[data.size()];
-    std::memcpy(dataCopy, data.data(), data.size());
-    return dataCopy;
+    assert(vector.empty());
+    vector.insert(vector.begin(), data.begin(), data.end());
 }
 
 size_t DataWriter::GetBufferSize() const
 {
     return data.size();
 }
-
