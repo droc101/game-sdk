@@ -1,12 +1,11 @@
-#version 320 es
+#version 330
 
-precision mediump float;
-
-layout (location = 0) in vec3 VERTEX;
+in vec3 VERTEX;
 
 uniform mat4 PROJECTION;
+uniform mat4 VIEW;
 
 void main()
 {
-    gl_Position = PROJECTION * vec4(VERTEX, 1.0);
+    gl_Position = PROJECTION * VIEW * vec4(VERTEX, 1.0);
 }

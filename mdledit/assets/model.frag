@@ -1,4 +1,4 @@
-#version 320 es
+#version 330
 
 #define DISPLAY_MODE_COLORED 0
 #define DISPLAY_MODE_COLORED_SHADED 1
@@ -7,12 +7,10 @@
 #define DISPLAY_MODE_UV 4
 #define DISPLAY_MODE_NORMAL 5
 
-precision mediump float;
+in vec2 UV;
+in vec3 NORMAL;
 
-layout (location = 4) in vec2 UV;
-layout (location = 5) in vec3 NORMAL;
-
-out mediump vec4 COLOR;
+out vec4 COLOR;
 
 uniform sampler2D ALBEDO_TEXTURE;
 uniform vec3 ALBEDO;

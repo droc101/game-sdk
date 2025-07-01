@@ -75,7 +75,9 @@ class ModelRenderer
         static inline float pitch;
         static inline float yaw;
         static inline float distance;
+
         static inline glm::mat4 projection;
+        static inline glm::mat4 view;
 
         static inline GLsizei windowWidth = 800;
         static inline GLsizei windowHeight = 600;

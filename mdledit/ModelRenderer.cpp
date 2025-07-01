@@ -251,7 +251,6 @@ void ModelRenderer::LoadModel(const ModelAsset &newModel)
 
 void ModelRenderer::Render()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     if (cullBackfaces)
@@ -270,9 +269,6 @@ void ModelRenderer::Render()
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
-
-    glDisable(GL_STENCIL_TEST);
-    glDisable(GL_SCISSOR_TEST);
 
     glUseProgram(program);
     glViewport(0, PANEL_SIZE, windowWidth, windowHeight - PANEL_SIZE);
@@ -303,6 +299,7 @@ void ModelRenderer::Render()
     glEnableVertexAttribArray(normAttrib);
 
     glUniformMatrix4fv(glGetUniformLocation(program, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(glGetUniformLocation(program, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
     glUniform1i(glGetUniformLocation(program, "displayMode"), static_cast<GLint>(displayMode));
 
     for (size_t i = 0; i < model.GetMaterialCount(); i++)
@@ -340,6 +337,7 @@ void ModelRenderer::Render()
         glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
         glEnableVertexAttribArray(posAttrib);
         glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
         glDrawArrays(GL_LINES, 0, 24);
     }
 }
@@ -354,7 +352,7 @@ void ModelRenderer::ResizeWindow(const GLsizei width, const GLsizei height)
 
 void ModelRenderer::UpdateMatrix()
 {
-    const glm::mat4 &persp = glm::perspective<float>(90.0, windowAspect, 0.05f, 1000.0f);
+    const glm::mat4 &persp = glm::perspective<float>(90.0, windowAspect, 0.01f, 1000.0f);
 
     const float x = distance * cosf(pitch) * sinf(yaw);
     const float y = distance * sinf(pitch);
@@ -362,7 +360,8 @@ void ModelRenderer::UpdateMatrix()
     const glm::vec3 cameraPos{x, y, z};
     const glm::mat4 &look = glm::lookAt(cameraPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    projection = persp * look;
+    projection = persp;
+    view = look;
 }
 
 void ModelRenderer::LoadCube()
