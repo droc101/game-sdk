@@ -18,10 +18,10 @@ SDL_Surface *sdlSurface;
 constexpr SDL_DialogFileFilter gtexFilter = {"GAME texture (*.gtex)", "gtex"};
 constexpr SDL_DialogFileFilter pngFilter = {"PNG Image", "png"};
 constexpr std::array imageFilters = {
-    SDL_DialogFileFilter{"Images", "png;jpg;jpeg;tga"},
-    SDL_DialogFileFilter{"PNG Images", "png"},
-    SDL_DialogFileFilter{"JPG Images", "jpg;jepg"},
-    SDL_DialogFileFilter{"TGA Images", "tga"},
+        SDL_DialogFileFilter{"Images", "png;jpg;jpeg;tga"},
+        SDL_DialogFileFilter{"PNG Images", "png"},
+        SDL_DialogFileFilter{"JPG Images", "jpg;jepg"},
+        SDL_DialogFileFilter{"TGA Images", "tga"},
 };
 
 void destroyExistingTexture()
@@ -115,7 +115,8 @@ static inline void Render(bool &done, SDL_Window *window)
 
     ImGui::Begin("texedit",
                  nullptr,
-                 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
+                 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
+                 ImGuiWindowFlags_NoBringToFrontOnFocus);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && textureLoaded;
