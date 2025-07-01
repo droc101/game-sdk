@@ -50,6 +50,7 @@ class ModelRenderer
         static inline DisplayMode displayMode = DisplayMode::TEXTURED_SHADED;
         static inline bool showUnitCube = true;
 
+        static constexpr int PANEL_SIZE = 100;
     private:
         struct GLModelLod
         {

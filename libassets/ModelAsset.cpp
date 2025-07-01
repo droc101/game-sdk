@@ -201,7 +201,6 @@ ModelAsset::ModelLod ModelAsset::CreateLodFromStandardModel(const char *filePath
                                                      aiProcess_JoinIdenticalVertices |
                                                      aiProcess_SortByPType |
                                                      aiProcess_ValidateDataStructure |
-                                                     aiProcess_CalcTangentSpace |
                                                      aiProcess_FlipUVs |
                                                      aiProcess_GenSmoothNormals);
 

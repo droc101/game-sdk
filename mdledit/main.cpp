@@ -20,12 +20,19 @@ SDL_GLContext glContext = nullptr;
 ImGuiIO io;
 bool done = false;
 bool openPressed = false;
-bool importPressed = false;
+bool newPressed = false;
 bool savePressed = false;
 bool exportPressed = false;
 
 constexpr SDL_DialogFileFilter gmdlFilter = {"GAME model (*.gmdl)", "gmdl"};
-constexpr SDL_DialogFileFilter fbxFilter = {"3D Model", "obj;fbx"};
+constexpr std::array modelFilters = {
+    SDL_DialogFileFilter{"3D Models (obj, fbx, gltf, dae)", "obj;fbx;gltf;dae"},
+    SDL_DialogFileFilter{"Wavefront OBJ Models", "obj"},
+    SDL_DialogFileFilter{"FBX Models", "fbx"},
+    SDL_DialogFileFilter{"glTF/glTF2.0 Models", "gltf"},
+    SDL_DialogFileFilter{"Collada Models", "dae"},
+};
+
 
 void destroyExistingModel()
 {
@@ -70,15 +77,6 @@ void saveGmdlCallback(void * /*userdata*/, const char *const *fileList, int /*fi
         return;
     }
     ModelRenderer::GetModel()->SaveAsAsset(fileList[0]);
-}
-
-void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    // TODO: implement OBJ writer in ModelAsset
 }
 
 void ProcessEvent(const SDL_Event *event)
@@ -129,19 +127,18 @@ void ProcessEvent(const SDL_Event *event)
 
 void HandleMenuAndShortcuts()
 {
+    newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N);
     openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
-    importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
     savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && modelLoaded;
-    exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && modelLoaded;
 
     if (ImGui::BeginMainMenuBar())
     {
         if (ImGui::BeginMenu("File"))
         {
+            newPressed |= ImGui::MenuItem("New", "Ctrl+N");
+            ImGui::Separator();
             openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
-            importPressed |= ImGui::MenuItem("Import", "Ctrl+Shift+O");
             savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, modelLoaded);
-            exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S", false, modelLoaded);
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
@@ -151,7 +148,8 @@ void HandleMenuAndShortcuts()
         }
         if (ImGui::BeginMenu("Edit", modelLoaded))
         {
-            ImGui::MenuItem("Import LOD");
+            ImGui::MenuItem("LOD Editor");
+            ImGui::MenuItem("Skin Editor");
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("View", modelLoaded))
@@ -234,15 +232,12 @@ void HandleMenuAndShortcuts()
     if (openPressed)
     {
         SDL_ShowOpenFileDialog(openGmdlCallback, nullptr, window, {&gmdlFilter}, 1, nullptr, false);
-    } else if (importPressed)
+    } else if (newPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, window, {&fbxFilter}, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(importCallback, nullptr, window, modelFilters.data(), modelFilters.size(), nullptr, false);
     } else if (savePressed)
     {
         SDL_ShowSaveFileDialog(saveGmdlCallback, nullptr, window, {&gmdlFilter}, 1, nullptr);
-    } else if (exportPressed)
-    {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&fbxFilter}, 1, nullptr);
     }
 }
 
@@ -324,7 +319,7 @@ int main()
         ImGui::NewFrame();
 
         const ImGuiViewport *viewport = ImGui::GetMainViewport();
-        constexpr float modelPaneSize = 250;
+        constexpr float modelPaneSize = ModelRenderer::PANEL_SIZE;
         const ImVec2 workSize{viewport->WorkSize.x, modelPaneSize};
         const ImVec2 workPos{viewport->WorkPos.x, (viewport->WorkPos.y + viewport->WorkSize.y) - modelPaneSize};
         ImGui::SetNextWindowPos(workPos);
@@ -341,35 +336,20 @@ int main()
 
             if (modelLoaded)
             {
-                if (ImGui::BeginTabBar("tabs", 0))
-                {
-                    if (ImGui::BeginTabItem("Display", nullptr, 0))
-                    {
-                        ImGui::SliderInt("LOD",
-                                         &ModelRenderer::lod,
-                                         0,
-                                         static_cast<int>(ModelRenderer::GetModel()->GetLodCount() - 1));
-                        ImGui::SliderInt("Skin",
-                                         &ModelRenderer::skin,
-                                         0,
-                                         static_cast<int>(ModelRenderer::GetModel()->GetSkinCount() - 1));
-                        ImGui::EndTabItem();
-                    }
-                    // if (ImGui::BeginTabItem("Skins", nullptr, 0))
-                    // {
-                    //     ImGui::EndTabItem();
-                    // }
-                    // if (ImGui::BeginTabItem("LODs", nullptr, 0))
-                    // {
-                    //     ImGui::EndTabItem();
-                    // }
-                }
-                ImGui::EndTabBar();
-
-
+                ImGui::PushItemWidth(-1);
+                ImGui::Text("LOD");
+                ImGui::SliderInt("##LOD",
+                                 &ModelRenderer::lod,
+                                 0,
+                                 static_cast<int>(ModelRenderer::GetModel()->GetLodCount() - 1));
+                ImGui::Text("Skin");
+                ImGui::SliderInt("##Skin",
+                                 &ModelRenderer::skin,
+                                 0,
+                                 static_cast<int>(ModelRenderer::GetModel()->GetSkinCount() - 1));
             } else
             {
-                ImGui::TextDisabled("No model is open. Open or import one from the File menu.");
+                ImGui::TextDisabled("No model is open. Open or create one from the File menu.");
             }
 
             ImGui::End();

@@ -254,7 +254,7 @@ void ModelRenderer::Render()
     glDisable(GL_SCISSOR_TEST);
 
     glUseProgram(program);
-    glViewport(0, 250, windowWidth, windowHeight - 250);
+    glViewport(0, PANEL_SIZE, windowWidth, windowHeight - PANEL_SIZE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     const GLModelLod &glod = lods.at(lod);
@@ -326,7 +326,7 @@ void ModelRenderer::ResizeWindow(const GLsizei width, const GLsizei height)
 {
     windowWidth = width;
     windowHeight = height;
-    windowAspect = static_cast<float>(width) / static_cast<float>(height - 250);
+    windowAspect = static_cast<float>(width) / static_cast<float>(height - PANEL_SIZE);
     UpdateMatrix();
 }
 
