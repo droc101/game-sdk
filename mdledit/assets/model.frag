@@ -23,20 +23,22 @@ void main()
         COLOR = vec4(ALBEDO, 1.0);
         if (COLOR.a < 0.5) discard;
         if (displayMode == DISPLAY_MODE_COLORED_SHADED) {
-            vec3 light_dir = normalize(vec3(0.2, 0.0, 0.8));
-            float shading = dot(NORMAL, light_dir);
-            shading = shading == 1.0 ? 1.0 : 1.0 - pow(2.0, -5.0 * shading);
-            shading = max(0.6, shading);
+            vec3 light_dir = normalize(vec3(0.0, 0.0, 1.0));
+            float shading = dot(normalize(NORMAL), light_dir);
+            shading = (shading + 1.0) * 0.5;
+            shading = pow(shading, 1.5);
+            shading = mix(0.2, 1.0, shading);
             COLOR.rgb *= vec3(shading);
         }
     } else if (displayMode == DISPLAY_MODE_TEXTURED || displayMode == DISPLAY_MODE_TEXTURED_SHADED) {
         COLOR = texture(ALBEDO_TEXTURE, UV) * vec4(ALBEDO, 1.0);
         if (COLOR.a < 0.5) discard;
         if (displayMode == DISPLAY_MODE_TEXTURED_SHADED) {
-            vec3 light_dir = normalize(vec3(0.2, 0.0, 0.8));
-            float shading = dot(NORMAL, light_dir);
-            shading = shading == 1.0 ? 1.0 : 1.0 - pow(2.0, -5.0 * shading);
-            shading = max(0.6, shading);
+            vec3 light_dir = normalize(vec3(0.0, 0.0, 1.0));
+            float shading = dot(normalize(NORMAL), light_dir);
+            shading = (shading + 1.0) * 0.5;
+            shading = pow(shading, 1.5);
+            shading = mix(0.2, 1.0, shading);
             COLOR.rgb *= vec3(shading);
         }
     } else if (displayMode == DISPLAY_MODE_UV) {

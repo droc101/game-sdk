@@ -4,10 +4,8 @@
 #include <imgui_impl_sdlrenderer3.h>
 #include <iostream>
 #include <SDL3/SDL.h>
-#include "AboutWindow.h"
 #include "libassets/TextureAsset.h"
-#include "Options.h"
-#include "OptionsWindow.h"
+#include "SharedMgr.h"
 
 static TextureAsset texture;
 static bool textureLoaded = false;
@@ -148,26 +146,7 @@ static inline void Render(bool &done, SDL_Window *window)
             resetZoomPressed |= ImGui::MenuItem("Reset Zoom", "Ctrl+0");
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Tools"))
-        {
-            if (ImGui::MenuItem("Options"))
-            {
-                OptionsWindow::Show();
-            }
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("Help"))
-        {
-            if (ImGui::MenuItem("Source Code"))
-            {
-                SDL_OpenURL("https://github.com/droc101/game-sdk");
-            }
-            if (ImGui::MenuItem("About"))
-            {
-                AboutWindow::Show();
-            }
-            ImGui::EndMenu();
-        }
+        SharedMgr::SharedMenuUI();
         ImGui::EndMainMenuBar();
     }
 
@@ -248,7 +227,7 @@ int main()
         return -1;
     }
 
-    Options::Load();
+    SharedMgr::InitSharedMgr();
 
     constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
     SDL_Window *window = SDL_CreateWindow("texedit", 800, 600, windowFlags);
@@ -316,8 +295,7 @@ int main()
 
         Render(done, window);
 
-        OptionsWindow::Render(window);
-        AboutWindow::Render();
+        SharedMgr::RenderSharedUI(window);
 
         ImGui::Render();
         SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
@@ -327,7 +305,7 @@ int main()
         SDL_RenderPresent(renderer);
     }
 
-    Options::Save();
+    SharedMgr::DestroySharedMgr();
 
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();

@@ -5,12 +5,9 @@
 #include <imgui_impl_sdl3.h>
 #include <iostream>
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_opengl.h>
-#include "../shared/AboutWindow.h"
-#include "../shared/Options.h"
 #include "libassets/ModelAsset.h"
 #include "ModelRenderer.h"
-#include "OptionsWindow.h"
+#include "SharedMgr.h"
 
 static bool modelLoaded = false;
 static bool dragging = false;
@@ -210,26 +207,7 @@ void HandleMenuAndShortcuts()
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Tools"))
-        {
-            if (ImGui::MenuItem("Options"))
-            {
-                OptionsWindow::Show();
-            }
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("Help"))
-        {
-            if (ImGui::MenuItem("Source Code"))
-            {
-                SDL_OpenURL("https://github.com/droc101/game-sdk");
-            }
-            if (ImGui::MenuItem("About"))
-            {
-                AboutWindow::Show();
-            }
-            ImGui::EndMenu();
-        }
+        SharedMgr::SharedMenuUI();
         ImGui::EndMainMenuBar();
     }
 
@@ -259,7 +237,7 @@ int main()
         return -1;
     }
 
-    Options::Load();
+    SharedMgr::InitSharedMgr();
 
     const char *glslVersion = "#version 130";
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
@@ -365,8 +343,7 @@ int main()
             ImGui::End();
         }
 
-        OptionsWindow::Render(window);
-        AboutWindow::Render();
+        SharedMgr::RenderSharedUI(window);
 
         ImGui::Render();
         glViewport(0, 0, static_cast<GLsizei>(io.DisplaySize.x), static_cast<GLsizei>(io.DisplaySize.y));
@@ -383,7 +360,7 @@ int main()
         SDL_GL_SwapWindow(window);
     }
 
-    Options::Save();
+    SharedMgr::DestroySharedMgr();
 
     ModelRenderer::Destroy();
     ImGui_ImplOpenGL3_Shutdown();

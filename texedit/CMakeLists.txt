@@ -24,7 +24,9 @@ add_executable(texedit main.cpp
         ../shared/OptionsWindow.cpp
         ../shared/OptionsWindow.h
         ../shared/AboutWindow.cpp
-        ../shared/AboutWindow.h)
+        ../shared/AboutWindow.h
+        ../shared/SharedMgr.cpp
+        ../shared/SharedMgr.h)
 
 find_package(SDL3 REQUIRED)
 include_directories(${SDL3_INCLUDE_DIR})
