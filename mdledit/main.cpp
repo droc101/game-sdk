@@ -5,6 +5,7 @@
 #include <imgui_impl_sdl3.h>
 #include <iostream>
 #include <SDL3/SDL.h>
+#include "LodEditWindow.h"
 #include "libassets/ModelAsset.h"
 #include "ModelRenderer.h"
 #include "SharedMgr.h"
@@ -146,7 +147,7 @@ void HandleMenuAndShortcuts()
         }
         if (ImGui::BeginMenu("Edit", modelLoaded))
         {
-            ImGui::MenuItem("LOD Editor");
+            if (ImGui::MenuItem("LOD Editor")) LodEditWindow::Show();
             if (ImGui::MenuItem("Skin Editor")) SkinEditWindow::Show();
             ImGui::EndMenu();
         }
@@ -346,6 +347,7 @@ int main()
 
         SharedMgr::RenderSharedUI(window);
         SkinEditWindow::Render();
+        LodEditWindow::Render(window);
 
         ImGui::Render();
         glViewport(0, 0, static_cast<GLsizei>(io.DisplaySize.x), static_cast<GLsizei>(io.DisplaySize.y));

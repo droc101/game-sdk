@@ -33,7 +33,9 @@ add_executable(mdledit main.cpp
         ../shared/SharedMgr.cpp
         ../shared/SharedMgr.h
         SkinEditWindow.cpp
-        SkinEditWindow.h)
+        SkinEditWindow.h
+        LodEditWindow.cpp
+        LodEditWindow.h)
 
 find_package(SDL3 REQUIRED)
 include_directories(${SDL3_INCLUDE_DIR})

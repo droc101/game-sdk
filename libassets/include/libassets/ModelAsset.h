@@ -52,11 +52,14 @@ class ModelAsset
             public:
                 ModelLod() = default;
                 explicit ModelLod(DataReader &reader, uint32_t materialCount);
+                explicit ModelLod(const char *filePath, float distance);
 
                 float distance{};
                 std::vector<Vertex> vertices{};
                 std::vector<uint32_t> indexCounts{};
                 std::vector<std::vector<uint32_t>> indices{};
+
+                void Export(const char *path) const;
         };
 
         /**
@@ -68,9 +71,7 @@ class ModelAsset
 
         static void CreateFromStandardModel(const char *objPath, ModelAsset &model);
 
-        [[nodiscard]] static ModelLod CreateLodFromStandardModel(const char *filePath, float distance);
-
-        [[nodiscard]] const ModelLod &GetLod(size_t index) const;
+        [[nodiscard]] ModelLod &GetLod(size_t index);
 
         [[nodiscard]] Material *GetSkin(size_t index);
 
@@ -84,17 +85,23 @@ class ModelAsset
 
         void RemoveSkin(size_t index);
 
-        void GetVertexBuffer(size_t lodIndex, DataWriter &writer) const;
+        void SortLODs();
+
+        void AddLod(const std::string& path);
+
+        void RemoveLod(size_t index);
+
+        void GetVertexBuffer(size_t lodIndex, DataWriter &writer);
 
         void SaveAsAsset(const char *assetPath) const;
-
-        // void SaveAsObj(const char *objPath) const;
 
     private:
         std::vector<ModelLod> lods{};
         std::vector<std::vector<Material>> skins{};
 
         void SaveToBuffer(std::vector<uint8_t> &buffer) const;
+
+        static bool LODSortCompare(const ModelLod &a, const ModelLod &b);
 };
 
 template<> struct std::hash<ModelAsset::Vertex>
