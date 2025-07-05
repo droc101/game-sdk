@@ -6,6 +6,7 @@
 #include <format>
 #include <numeric>
 #include <SDL3/SDL_dialog.h>
+#include <SDL3/SDL_messagebox.h>
 #include "imgui.h"
 #include "ModelRenderer.h"
 
@@ -37,12 +38,16 @@ void LodEditWindow::Render(SDL_Window * window)
             ImGui::SeparatorText(title.c_str());
             ModelAsset::ModelLod &lod = ModelRenderer::GetModel()->GetLod(l);
             const uint tris = std::accumulate(lod.indexCounts.begin(), lod.indexCounts.end(), 0u) / 3u;
-            ImGui::Text("%ld vertices\n%d triangles", lod.vertices.size(), tris);
+            ImGui::Text("%ld vertices, %d triangles", lod.vertices.size(), tris);
+            ImGui::Dummy(ImVec2(0.0f, 2.0f));
+            ImGui::Text("Distance");
+            ImGui::PushItemWidth(-1);
             ImGui::InputFloat(std::format("##LOD_{}_Distance", l).c_str(), &lod.distance, 0.0f, 0.0f, "%.1f");
             if (ImGui::IsItemDeactivatedAfterEdit())
             {
                 ModelRenderer::GetModel()->SortLODs();
             }
+            ImGui::Dummy(ImVec2(0.0f, 2.0f));
             const ImVec2 space = ImGui::GetContentRegionAvail();
             const float btnSizeX = space.x / 2.0f;
             if (ImGui::Button(std::format("Export##{}", l).c_str(), ImVec2(btnSizeX, 0)))
@@ -86,6 +91,10 @@ void LodEditWindow::Render(SDL_Window * window)
         ImGui::SameLine();
         if (ImGui::Button("OK", ImVec2(60, 0)))
         {
+            if (!ModelRenderer::GetModel()->ValidateLodDistances())
+            {
+                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Warning", "LOD distances are invalid! Make sure that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the same distance", window);
+            }
             visible = false;
         }
 

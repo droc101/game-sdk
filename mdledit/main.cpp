@@ -227,7 +227,13 @@ void HandleMenuAndShortcuts()
                                false);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGmdlCallback, nullptr, window, {&gmdlFilter}, 1, nullptr);
+        if (!ModelRenderer::GetModel()->ValidateLodDistances())
+        {
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Invalid Model", "LOD distances are invalid! Please fix them in the LOD editor and make sure that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the same distance", window);
+        } else
+        {
+            SDL_ShowSaveFileDialog(saveGmdlCallback, nullptr, window, {&gmdlFilter}, 1, nullptr);
+        }
     }
 }
 

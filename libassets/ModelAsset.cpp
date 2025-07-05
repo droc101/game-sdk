@@ -295,10 +295,10 @@ void ModelAsset::ModelLod::Export(const char *path) const
 
     f << "\n\n";
 
-    for (int m = 0; m < indices.size(); m++)
+    for (size_t m = 0; m < indices.size(); m++)
     {
         f << std::format("usemtl mat_{}\n", m);
-        for (int i = 0; i < indexCounts.at(m) / 3; i++)
+        for (uint32_t i = 0; i < indexCounts.at(m) / 3; i++)
         {
             const uint32_t i0 = indices.at(m).at(i*3+0) + 1;
             const uint32_t i1 = indices.at(m).at(i*3+1) + 1;
@@ -370,5 +370,23 @@ void ModelAsset::AddLod(const std::string& path)
 void ModelAsset::RemoveLod(const size_t index)
 {
     lods.erase(lods.begin() + static_cast<int64_t>(index));
+}
+
+bool ModelAsset::ValidateLodDistances()
+{
+    SortLODs();
+    if (lods.at(0).distance != 0.0f) return false; // First LOD must have a distance of 0.
+    std::vector<float> distances{};
+    for (const ModelLod &l: lods)
+    {
+        if (std::ranges::find(distances, l.distance) == distances.end())
+        {
+            distances.push_back(l.distance);
+        } else
+        {
+            return false; // A distance is used by more than 1 LOD.
+        }
+    }
+    return true;
 }
 

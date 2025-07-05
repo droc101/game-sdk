@@ -95,6 +95,8 @@ class ModelAsset
 
         void SaveAsAsset(const char *assetPath) const;
 
+        bool ValidateLodDistances();
+
     private:
         std::vector<ModelLod> lods{};
         std::vector<std::vector<Material>> skins{};
