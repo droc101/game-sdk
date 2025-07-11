@@ -246,6 +246,8 @@ int main()
     }
 
     SharedMgr::InitSharedMgr();
+    SharedMgr::GetTextureId = ModelRenderer::GetTextureID;
+    SharedMgr::GetTextureSize = ModelRenderer::GetTextureSize;
 
     const char *glslVersion = "#version 130";
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);

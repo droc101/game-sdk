@@ -15,5 +15,4 @@ class AboutWindow
 
     private:
         static inline bool visible = false;
-        static inline bool imguiAboutVisible = false;
 };

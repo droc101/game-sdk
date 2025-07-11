@@ -21,10 +21,7 @@ void AboutWindow::Render()
     if (visible)
     {
         ImGui::SetNextWindowSize(ImVec2(300, -1));
-        ImGui::Begin("About the GAME SDK",
-                     &visible,
-                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
-
+        ImGui::Begin("About the GAME SDK", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
         ImGui::Text("Development & Authoring tools for");
         ImGui::SameLine();
         ImGui::TextLinkOpenURL("GAME", "https://github.com/droc101/c-game-engine");
@@ -33,13 +30,11 @@ void AboutWindow::Render()
         ImGui::Dummy(ImVec2(0.0f, 16.0f));
         ImGui::Text("Third-Party libraries:");
         ImGui::TextLinkOpenURL("SDL3", "https://www.libsdl.org");
-        if (ImGui::TextLink("Dear ImGui"))
-        {
-            imguiAboutVisible = true;
-        }
+        ImGui::TextLinkOpenURL("Dear ImGui", "https://github.com/ocornut/imgui");
         ImGui::TextLinkOpenURL("zlib", "https://zlib.net");
         ImGui::TextLinkOpenURL("JSON for Modern C++", "https://json.nlohmann.me");
         ImGui::TextLinkOpenURL("GLEW", "https://glew.sourceforge.net");
+        ImGui::TextLinkOpenURL("assimp", "https://assimp.org/");
         ImGui::Dummy(ImVec2(0.0f, 16.0f));
         ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 60, 0));
         ImGui::SameLine();
@@ -49,9 +44,5 @@ void AboutWindow::Render()
         }
 
         ImGui::End();
-    }
-    if (imguiAboutVisible)
-    {
-        ImGui::ShowAboutWindow(&imguiAboutVisible);
     }
 }

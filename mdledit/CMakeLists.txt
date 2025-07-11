@@ -35,7 +35,9 @@ add_executable(mdledit main.cpp
         SkinEditWindow.cpp
         SkinEditWindow.h
         LodEditWindow.cpp
-        LodEditWindow.h)
+        LodEditWindow.h
+        ../shared/TextureBrowserWindow.cpp
+        ../shared/TextureBrowserWindow.h)
 
 find_package(SDL3 REQUIRED)
 include_directories(${SDL3_INCLUDE_DIR})

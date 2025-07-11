@@ -9,6 +9,7 @@
 #include <libassets/ModelAsset.h>
 #include <string>
 #include <unordered_map>
+#include "imgui.h"
 
 class ModelRenderer
 {
@@ -44,6 +45,10 @@ class ModelRenderer
         static void ResizeWindow(GLsizei width, GLsizei height);
 
         static GLuint GetTexture(const char *filename);
+
+        static ImTextureID GetTextureID(const std::string& relPath);
+
+        static ImVec2 GetTextureSize(const std::string &relPath);
 
         static inline int lod;
         static inline int skin;

@@ -396,3 +396,20 @@ void ModelRenderer::LoadCube()
     glBindBuffer(GL_ARRAY_BUFFER, cubeVbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * cubeVerts.size(), cubeVerts.data(), GL_STATIC_DRAW);
 }
+
+ImTextureID ModelRenderer::GetTextureID(const std::string& relPath)
+{
+    return GetTexture(relPath.c_str());
+}
+
+ImVec2 ModelRenderer::GetTextureSize(const std::string &relPath)
+{
+    const GLuint texture = GetTexture(relPath.c_str());
+    glBindTexture(GL_TEXTURE_2D, texture);
+    int w;
+    int h;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+    return {static_cast<float>(w),static_cast<float>(h)};
+}
+

@@ -7,6 +7,7 @@
 #include <SDL3/SDL_dialog.h>
 #include "Options.h"
 #include <misc/cpp/imgui_stdlib.h>
+#include "TextureBrowserWindow.h"
 
 void OptionsWindow::Show()
 {
@@ -36,7 +37,6 @@ void OptionsWindow::Render(SDL_Window *window)
         ImGui::Begin("GAME SDK Options",
                      &visible,
                      ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
-
         ImGui::Text("Folder with GAME executable");
         ImGui::SameLine();
         ImGui::TextDisabled("(no trailing slash)");
@@ -48,8 +48,9 @@ void OptionsWindow::Render(SDL_Window *window)
             SDL_ShowOpenFolderDialog(gamePathCallback, nullptr, window, nullptr, false);
         }
 
-        ImGui::Text("Default Texture");
-        ImGui::InputText("##defaulttexinput", &Options::defaultTexture);
+        // ImGui::Text("Default Texture");
+        // ImGui::InputText("##defaulttexinput", &Options::defaultTexture);
+        TextureBrowserWindow::InputTexture("##defaulttexinput", Options::defaultTexture);
 
         ImGui::Dummy(ImVec2(0, 16));
 
@@ -69,5 +70,6 @@ void OptionsWindow::Render(SDL_Window *window)
         }
 
         ImGui::End();
+
     }
 }

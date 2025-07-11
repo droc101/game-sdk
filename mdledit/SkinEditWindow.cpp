@@ -6,6 +6,7 @@
 #include <format>
 #include "imgui.h"
 #include "ModelRenderer.h"
+#include "TextureBrowserWindow.h"
 
 void SkinEditWindow::Show()
 {
@@ -43,19 +44,19 @@ void SkinEditWindow::Render()
                 ModelAsset::Material &mat = ModelRenderer::GetModel()->GetSkin(ModelRenderer::skin)[m];
 
                 ImGui::PushItemWidth(-1);
-                char *texBuf = mat.texture.data();
                 ImGui::Text("Texture");
-                ImGui::InputText(std::format("##Texture{}", m).c_str(), texBuf, 64);
+                TextureBrowserWindow::InputTexture(std::format("##Texture{}", m).c_str(), mat.texture);
+                ImGui::PushItemWidth(-1);
 
                 ImGui::Text("Color");
                 ImGui::ColorEdit4(std::format("##Color{}", m).c_str(), mat.color.data());
 
                 ImGui::Text("Shader");
                 constexpr std::array<const char*, 3> shaders = {"Sky", "Unshaded", "Shaded"};
-                int sel = static_cast<int>(mat.shader);
+                uint32_t sel = static_cast<uint32_t>(mat.shader);
                 if (ImGui::BeginCombo(std::format("##Shader{}", m).c_str(), shaders.at(sel)))
                 {
-                    for (int i = 0; i < static_cast<int>(shaders.size()); i++)
+                    for (uint32_t i = 0; i < static_cast<uint32_t>(shaders.size()); i++)
                     {
                         const bool is_selected = (sel == i);
                         if (ImGui::Selectable(shaders[i], is_selected))
