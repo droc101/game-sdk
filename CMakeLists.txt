@@ -10,8 +10,6 @@ set(CMAKE_CXX_FLAGS_RELEASE "-g0 -O3 -s -DNDEBUG -DBUILDSTYLE_RELEASE")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -DBUILDSTYLE_DEBUG")
 
 add_subdirectory(lib/json)
-add_subdirectory(launcher)
 add_subdirectory(libassets)
 add_subdirectory(texedit)
-add_subdirectory(tex)
 add_subdirectory(mdledit)
