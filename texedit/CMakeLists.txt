@@ -28,7 +28,9 @@ add_executable(texedit main.cpp
         ../shared/AboutWindow.cpp
         ../shared/AboutWindow.h
         ../shared/SharedMgr.cpp
-        ../shared/SharedMgr.h)
+        ../shared/SharedMgr.h
+        ../shared/TextureBrowserWindow.cpp
+        ../shared/TextureBrowserWindow.h)
 
 find_package(SDL3 REQUIRED)
 include_directories(${SDL3_INCLUDE_DIR})

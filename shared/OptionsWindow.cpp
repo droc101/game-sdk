@@ -48,8 +48,7 @@ void OptionsWindow::Render(SDL_Window *window)
             SDL_ShowOpenFolderDialog(gamePathCallback, nullptr, window, nullptr, false);
         }
 
-        // ImGui::Text("Default Texture");
-        // ImGui::InputText("##defaulttexinput", &Options::defaultTexture);
+        ImGui::Text("Default Texture");
         TextureBrowserWindow::InputTexture("##defaulttexinput", Options::defaultTexture);
 
         ImGui::Dummy(ImVec2(0, 16));
