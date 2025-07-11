@@ -52,6 +52,7 @@ ImTextureID GetTextureID(const std::string& relPath)
         return -1;
     }
     SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_NEAREST);
+    SDL_DestroySurface(surface);
 
     textureBuffers.insert({relPath, tex});
     return reinterpret_cast<ImTextureID>(tex);
@@ -357,6 +358,11 @@ int main()
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
     destroyExistingTexture();
+    for (const std::pair<std::string, SDL_Texture*> p: textureBuffers)
+    {
+        SDL_DestroyTexture(p.second);
+    }
+    textureBuffers.clear();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
