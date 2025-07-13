@@ -14,7 +14,7 @@ class AssetReader
         enum class AssetType : uint32_t // NOLINT(*-enum-size)
         {
             ASSET_TYPE_TEXTURE = 0,
-            ASSET_TYPE_MP3 = 1,
+            ASSET_TYPE_MP3_DEPRECIATED_DONT_USE [[deprecated("This has been replaced fully by WAV files.")]] = 1,
             ASSET_TYPE_WAV = 2,
             ASSET_TYPE_LEVEL = 3,
             ASSET_TYPE_GLSL = 4,

@@ -13,7 +13,9 @@ add_library(assets STATIC include/libassets/libassets.h
         DataReader.cpp
         include/libassets/DataReader.h
         DataWriter.cpp
-        include/libassets/DataWriter.h)
+        include/libassets/DataWriter.h
+        SoundAsset.cpp
+        include/libassets/SoundAsset.h)
 
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
