@@ -43,7 +43,7 @@ void loadSound()
     // TODO passing soundAsset.GetData().data() directly can cause segfaults with certain wav files
     wavData = new uint8_t[soundAsset.GetDataSize()];
     memcpy(wavData, soundAsset.GetData().data(), soundAsset.GetDataSize());
-    ma_result res = ma_decoder_init_memory(wavData, soundAsset.GetDataSize(), nullptr, &decoder);
+    [[maybe_unused]] ma_result res = ma_decoder_init_memory(wavData, soundAsset.GetDataSize(), nullptr, &decoder);
     assert(res == MA_SUCCESS);
     res = ma_sound_init_from_data_source(&engine, &decoder, MA_SOUND_FLAG_DECODE, nullptr, &sound);
     assert(res == MA_SUCCESS);
@@ -211,6 +211,15 @@ static void Render(bool &done, SDL_Window *window)
                 ma_sound_stop(&sound);
             }
         }
+
+        ImGui::SameLine();
+        ImGui::PushItemWidth(100);
+        float volume = ma_engine_get_volume(&engine) * 100.0f;
+        if (ImGui::SliderFloat("##Volume", &volume, 0.0f, 100.0f, "%.0f%%"))
+        {
+            ma_engine_set_volume(&engine, volume / 100.0f);
+        }
+
         const float cursorSeconds = std::fmod(cursor, 60.0f);
         const float cursorMinutes = std::floor(cursor / 60.0f);
         const float lengthSeconds = std::fmod(length, 60.0f);
@@ -241,7 +250,7 @@ static void Render(bool &done, SDL_Window *window)
         ImGui::Text("Channels: %d", channels);
         ImGui::Text("Sample Rate: %d Hz", sampleRate);
         ImGui::Text("Length: %g:%05.2f", lengthMinutes, lengthSeconds);
-        ImGui::Text("Length (PCM frames): %ld", pcmLen);
+        ImGui::Text("Length (PCM frames): %lld", pcmLen);
 
     } else
     {

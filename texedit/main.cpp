@@ -39,7 +39,7 @@ ImTextureID GetTextureID(const std::string& relPath)
                                                  static_cast<int>(asset.GetHeight()),
                                                  SDL_PIXELFORMAT_RGBA8888,
                                                  const_cast<uint32_t *>(asset.GetPixels()),
-                                                 static_cast<int>(asset.GetWidth() * sizeof(uint)));
+                                                 static_cast<int>(asset.GetWidth() * sizeof(uint32_t)));
     if (surface == nullptr)
     {
         printf("SDL_CreateSurfaceFrom() failed: %s\n", SDL_GetError());
@@ -89,7 +89,7 @@ void openGtexCallback(void * /*userdata*/, const char *const *fileList, int /*fi
                                                  static_cast<int>(texture.GetHeight()),
                                                  SDL_PIXELFORMAT_RGBA8888,
                                                  const_cast<uint32_t *>(texture.GetPixels()),
-                                                 static_cast<int>(texture.GetWidth() * sizeof(uint)));
+                                                 static_cast<int>(texture.GetWidth() * sizeof(uint32_t)));
     if (surface == nullptr)
     {
         printf("SDL_CreateSurfaceFrom() failed: %s\n", SDL_GetError());
@@ -118,7 +118,7 @@ void importCallback(void * /*userdata*/, const char *const *fileList, int /*filt
                                                  static_cast<int>(texture.GetHeight()),
                                                  SDL_PIXELFORMAT_RGBA8888,
                                                  const_cast<uint32_t *>(texture.GetPixels()),
-                                                 static_cast<int>(texture.GetWidth() * sizeof(uint)));
+                                                 static_cast<int>(texture.GetWidth() * sizeof(uint32_t)));
     if (surface == nullptr)
     {
         printf("SDL_CreateSurfaceFrom() failed: %s\n", SDL_GetError());

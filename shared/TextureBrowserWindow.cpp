@@ -38,9 +38,9 @@ void TextureBrowserWindow::Render()
                 const float spacing = ImGui::GetStyle().ItemSpacing.x;
                 const float regionMaxX = ImGui::GetWindowPos().x + ImGui::GetContentRegionMax().x;
 
-                for (int i = 0; i < textures.size(); ++i)
+                for (uint i = 0; i < textures.size(); ++i)
                 {
-                    ImGui::PushID(i);
+                    ImGui::PushID(static_cast<int>(i));
 
                     const ImVec2 pos = ImGui::GetCursorScreenPos();
                     if (pos.x + tileSize > regionMaxX && i > 0)
