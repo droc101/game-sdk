@@ -38,7 +38,7 @@ void TextureBrowserWindow::Render()
                 const float spacing = ImGui::GetStyle().ItemSpacing.x;
                 const float regionMaxX = ImGui::GetWindowPos().x + ImGui::GetContentRegionMax().x;
 
-                for (uint i = 0; i < textures.size(); ++i)
+                for (size_t i = 0; i < textures.size(); ++i)
                 {
                     ImGui::PushID(static_cast<int>(i));
 

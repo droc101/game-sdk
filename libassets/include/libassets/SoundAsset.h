@@ -20,7 +20,7 @@ class SoundAsset {
 
         void SaveAsAsset(const char *assetPath) const;
 
-        [[nodiscard]] std::vector<uint8_t> GetData() const;
+        [[nodiscard]] const std::vector<uint8_t> &GetData() const;
         [[nodiscard]] size_t GetDataSize() const;
 
     private:
