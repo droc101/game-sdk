@@ -54,11 +54,12 @@ SoundAsset SoundAsset::CreateFromWAV(const char *wavPath)
 void SoundAsset::SaveAsWAV(const char *wavPath) const
 {
     std::ofstream file(wavPath);
-    file.write(reinterpret_cast<const std::ostream::char_type *>(wavData.data()), static_cast<std::streamsize>(wavData.size()));
+    file.write(reinterpret_cast<const std::ostream::char_type *>(wavData.data()),
+               static_cast<std::streamsize>(wavData.size()));
     file.close();
 }
 
-std::vector<uint8_t> SoundAsset::GetData() const
+const std::vector<uint8_t> &SoundAsset::GetData() const
 {
     return wavData;
 }

@@ -15,7 +15,6 @@
 SoundAsset soundAsset;
 ma_decoder decoder{};
 ma_sound sound{};
-uint8_t *wavData = nullptr;
 static bool soundLoaded = false;
 SDL_Renderer *renderer = nullptr;
 ma_engine engine{};
@@ -30,7 +29,6 @@ void destroyExistingSound()
     {
         return;
     }
-    delete[] wavData;
     ma_sound_stop(&sound);
     ma_sound_uninit(&sound);
     ma_decoder_uninit(&decoder);
@@ -40,10 +38,7 @@ void destroyExistingSound()
 void loadSound()
 {
     destroyExistingSound();
-    // TODO passing soundAsset.GetData().data() directly can cause segfaults with certain wav files
-    wavData = new uint8_t[soundAsset.GetDataSize()];
-    memcpy(wavData, soundAsset.GetData().data(), soundAsset.GetDataSize());
-    ma_result res = ma_decoder_init_memory(wavData, soundAsset.GetDataSize(), nullptr, &decoder);
+    ma_result res = ma_decoder_init_memory(soundAsset.GetData().data(), soundAsset.GetDataSize(), nullptr, &decoder);
     assert(res == MA_SUCCESS);
     res = ma_sound_init_from_data_source(&engine, &decoder, MA_SOUND_FLAG_DECODE, nullptr, &sound);
     assert(res == MA_SUCCESS);
@@ -241,7 +236,7 @@ static void Render(bool &done, SDL_Window *window)
         ImGui::Text("Channels: %d", channels);
         ImGui::Text("Sample Rate: %d Hz", sampleRate);
         ImGui::Text("Length: %g:%05.2f", lengthMinutes, lengthSeconds);
-        ImGui::Text("Length (PCM frames): %ld", pcmLen);
+        ImGui::Text("Length (PCM frames): %lld", pcmLen);
 
     } else
     {
