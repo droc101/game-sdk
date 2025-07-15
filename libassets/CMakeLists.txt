@@ -15,14 +15,14 @@ add_library(assets STATIC include/libassets/libassets.h
         DataWriter.cpp
         include/libassets/DataWriter.h
         SoundAsset.cpp
-        include/libassets/SoundAsset.h)
+        include/libassets/SoundAsset.h
+)
 
 find_package(ZLIB REQUIRED)
-include_directories(${ZLIB_INCLUDE_DIRS})
-
 find_package(assimp REQUIRED)
-include_directories(${ASSIMP_INCLUDE_DIRS})
 
+include_directories(${ZLIB_INCLUDE_DIRS})
+include_directories(${ASSIMP_INCLUDE_DIRS})
 include_directories("../lib/stb")
 
-target_link_libraries(assets z assimp)
+target_link_libraries(assets ZLIB::ZLIB assimp::assimp)

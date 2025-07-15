@@ -9,6 +9,85 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DBUILDSTYLE_DEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-g0 -O3 -s -DNDEBUG -DBUILDSTYLE_RELEASE")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -DBUILDSTYLE_DEBUG")
 
+set(IMGUI_SRC
+        ../lib/imgui/imconfig.h
+        ../lib/imgui/imgui.cpp
+        ../lib/imgui/imgui.h
+        ../lib/imgui/imgui_demo.cpp
+        ../lib/imgui/imgui_draw.cpp
+        ../lib/imgui/imgui_internal.h
+        ../lib/imgui/imgui_tables.cpp
+        ../lib/imgui/imgui_widgets.cpp
+        ../lib/imgui/imstb_rectpack.h
+        ../lib/imgui/imstb_textedit.h
+        ../lib/imgui/imstb_truetype.h
+        ../lib/imgui/misc/cpp/imgui_stdlib.cpp
+        ../lib/imgui/misc/cpp/imgui_stdlib.h
+        ../lib/imgui/backends/imgui_impl_sdl3.cpp
+        ../lib/imgui/backends/imgui_impl_sdl3.h
+)
+
+set(IMGUI_SRC_SDL3_RENDERER
+        ../lib/imgui/backends/imgui_impl_sdlrenderer3.h
+        ../lib/imgui/backends/imgui_impl_sdlrenderer3.cpp
+)
+
+set(IMGUI_SRC_OPENGL3
+        ../lib/imgui/backends/imgui_impl_opengl3.h
+        ../lib/imgui/backends/imgui_impl_opengl3.cpp
+        ../lib/imgui/backends/imgui_impl_opengl3_loader.h
+)
+
+set(SHARED_SRC
+        ../shared/Options.cpp
+        ../shared/Options.h
+        ../shared/OptionsWindow.cpp
+        ../shared/OptionsWindow.h
+        ../shared/AboutWindow.cpp
+        ../shared/AboutWindow.h
+        ../shared/SharedMgr.cpp
+        ../shared/SharedMgr.h
+        ../shared/TextureBrowserWindow.cpp
+        ../shared/TextureBrowserWindow.h
+)
+
+set(MINIAUDIO_SRC
+        ../lib/miniaudio/miniaudio.h
+        ../lib/miniaudio/miniaudio.c
+)
+
+find_package(SDL3 REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(glm REQUIRED)
+find_package(assimp REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+
+set(SHARED_INCLUDES
+        "../lib/imgui"
+        "../lib/imgui/backends"
+        "../libassets/include"
+        ${SDL3_INCLUDE_DIR}
+        ${ZLIB_INCLUDE_DIRS}
+        "../lib/json/include"
+        "../shared"
+        ${GLM_INCLUDE_DIRS}
+        ${ASSIMP_INCLUDE_DIRS}
+        ${OPENGL_INCLUDE_DIR}
+        ${GLEW_INCLUDE_DIRS}
+)
+
+set(SHARED_LIBRARIES
+        ${SDL3_LIBRARIES}
+        ${ZLIB_LIBRARIES}
+        nlohmann_json::nlohmann_json
+        ${CMAKE_BINARY_DIR}/libassets/libassets.a
+        glm::glm # TODO find variables for glm and assimp
+        assimp::assimp # ${assimp_LIBRARIES} doesn't work
+        ${OPENGL_LIBRARIES}
+        ${GLEW_LIBRARIES}
+)
+
 add_subdirectory(lib/json)
 add_subdirectory(libassets)
 add_subdirectory(texedit)
