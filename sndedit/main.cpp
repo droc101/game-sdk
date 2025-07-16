@@ -97,7 +97,7 @@ ImTextureID GetTextureID(const std::string& relPath)
                                                  static_cast<int>(asset.GetHeight()),
                                                  SDL_PIXELFORMAT_RGBA8888,
                                                  const_cast<uint32_t *>(asset.GetPixels()),
-                                                 static_cast<int>(asset.GetWidth() * sizeof(uint)));
+                                                 static_cast<int>(asset.GetWidth() * sizeof(uint32_t)));
     if (surface == nullptr)
     {
         printf("SDL_CreateSurfaceFrom() failed: %s\n", SDL_GetError());
@@ -233,7 +233,7 @@ static void Render(bool &done, SDL_Window *window)
         }
 
         ImGui::SeparatorText("Sound Information");
-        ImGui::Text("Size: %ld bytes", soundAsset.GetDataSize());
+        ImGui::Text("Size: %lld bytes", soundAsset.GetDataSize());
         ma_format fmt;
         ma_uint32 channels;
         ma_uint32 sampleRate;

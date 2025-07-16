@@ -6,8 +6,10 @@
 #include <format>
 #include <numeric>
 #include <SDL3/SDL_dialog.h>
+#include <SDL3/SDL_events.h>
 #include <SDL3/SDL_messagebox.h>
 #include "imgui.h"
+#include "imgui_impl_sdl3.h"
 #include "ModelRenderer.h"
 
 void LodEditWindow::Show()
@@ -38,7 +40,7 @@ void LodEditWindow::Render(SDL_Window * window)
             ImGui::SeparatorText(title.c_str());
             ModelAsset::ModelLod &lod = ModelRenderer::GetModel()->GetLod(l);
             const uint32_t tris = std::accumulate(lod.indexCounts.begin(), lod.indexCounts.end(), 0u) / 3u;
-            ImGui::Text("%ld vertices, %d triangles", lod.vertices.size(), tris);
+            ImGui::Text("%lld vertices, %d triangles", lod.vertices.size(), tris);
             ImGui::Dummy(ImVec2(0.0f, 2.0f));
             ImGui::Text("Distance");
             ImGui::PushItemWidth(-1);
@@ -108,9 +110,12 @@ void LodEditWindow::addLodCallback(void * /*userdata*/, const char *const *fileL
     {
         return;
     }
-    ModelAsset m = *ModelRenderer::GetModel();
-    m.AddLod(fileList[0]);
-    ModelRenderer::LoadModel(m);
+    char* path = strdup(fileList[0]);
+    SDL_Event e{};
+    e.type = ModelRenderer::EVENT_RELOAD_MODEL;
+    e.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_LOD;
+    e.user.data1 = path;
+    SDL_PushEvent(&e);
 }
 
 void LodEditWindow::saveLodCallback(void *userdata, const char *const *fileList, int /*filter*/)

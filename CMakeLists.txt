@@ -9,6 +9,43 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DBUILDSTYLE_DEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-g0 -O3 -s -DNDEBUG -DBUILDSTYLE_RELEASE")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -DBUILDSTYLE_DEBUG")
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+if (WIN32)
+    message(STATUS "Win32 detected")
+    set(CMAKE_AUTO_RCC ON)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows")
+    execute_process(
+            COMMAND cygpath -w /mingw64
+            OUTPUT_VARIABLE MINGW_PATH
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    set(DLLS
+            libstdc++-6.dll
+            libgcc_s_seh-1.dll
+            libwinpthread-1.dll
+            SDL3.dll
+            glew32.dll
+            libassimp-6.dll
+            zlib1.dll
+            libminizip-1.dll
+            libbz2-1.dll
+    )
+
+    add_custom_target(copydlls ALL
+            COMMENT "Copying DLLs to build output directory"
+    )
+
+    foreach(dll IN LISTS DLLS)
+        add_custom_command(TARGET copydlls POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${MINGW_PATH}\\bin\\${dll}"
+                "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${dll}"
+        )
+    endforeach()
+endif()
+
 set(IMGUI_SRC
         ../lib/imgui/imconfig.h
         ../lib/imgui/imgui.cpp
@@ -51,6 +88,13 @@ set(SHARED_SRC
         ../shared/TextureBrowserWindow.h
 )
 
+if (WIN32)
+    set(SHARED_SRC
+        ${SHARED_SRC}
+        ../game-sdk.rc
+    )
+endif ()
+
 set(MINIAUDIO_SRC
         ../lib/miniaudio/miniaudio.h
         ../lib/miniaudio/miniaudio.c
@@ -86,6 +130,7 @@ set(SHARED_LIBRARIES
         assimp::assimp # ${assimp_LIBRARIES} doesn't work
         ${OPENGL_LIBRARIES}
         ${GLEW_LIBRARIES}
+        opengl32
 )
 
 add_subdirectory(lib/json)

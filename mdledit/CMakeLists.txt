@@ -13,6 +13,8 @@ add_executable(mdledit main.cpp
         ${IMGUI_SRC}
         ${SHARED_SRC}
         ${IMGUI_SRC_OPENGL3}
+        GLDebug.cpp
+        GLDebug.h
 )
 
 include_directories(${SHARED_INCLUDES})
@@ -25,6 +27,10 @@ add_dependencies(mdledit assets)
 
 add_custom_target(
         copy_mdledit_assets
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/mdledit/assets ${CMAKE_BINARY_DIR}/mdledit/assets
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/mdledit/assets ${CMAKE_BINARY_DIR}/bin/assets
 )
 add_dependencies(mdledit copy_mdledit_assets)
+
+if (WIN32)
+    add_dependencies(mdledit copydlls)
+endif()

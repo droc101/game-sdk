@@ -249,7 +249,7 @@ static void Render(bool &done, SDL_Window *window)
         {
             ImGui::Text("Stats:");
             ImGui::Separator();
-            ImGui::Text("Width: %d\nHeight: %d\nMemory: %lu B",
+            ImGui::Text("Width: %d\nHeight: %d\nMemory: %llu B",
                         texture.GetWidth(),
                         texture.GetHeight(),
                         texture.GetWidth() * texture.GetHeight() * sizeof(uint32_t));

@@ -49,11 +49,12 @@ void openGmdlCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    destroyExistingModel();
-    ModelAsset model;
-    ModelAsset::CreateFromAsset(fileList[0], model);
-    ModelRenderer::LoadModel(model);
-    modelLoaded = true;
+    char* path = strdup(fileList[0]);
+    SDL_Event e{};
+    e.type = ModelRenderer::EVENT_RELOAD_MODEL;
+    e.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_GMDL;
+    e.user.data1 = path;
+    SDL_PushEvent(&e);
 }
 
 void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -62,11 +63,12 @@ void importCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     {
         return;
     }
-    destroyExistingModel();
-    ModelAsset model;
-    ModelAsset::CreateFromStandardModel(fileList[0], model);
-    ModelRenderer::LoadModel(model);
-    modelLoaded = true;
+    char* path = strdup(fileList[0]);
+    SDL_Event e{};
+    e.type = ModelRenderer::EVENT_RELOAD_MODEL;
+    e.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL;
+    e.user.data1 = path;
+    SDL_PushEvent(&e);
 }
 
 void saveGmdlCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -82,6 +84,32 @@ void ProcessEvent(const SDL_Event *event)
 {
     ImGui_ImplSDL3_ProcessEvent(event);
     io = ImGui::GetIO();
+    if (event->type == ModelRenderer::EVENT_RELOAD_MODEL)
+    {
+        destroyExistingModel();
+        ModelAsset model;
+        const char *path = static_cast<char*>(event->user.data1);
+        if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_GMDL)
+        {
+            ModelAsset::CreateFromAsset(path, model);
+        } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL)
+        {
+            ModelAsset::CreateFromStandardModel(path, model);
+        } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_LOD)
+        {
+            model = *ModelRenderer::GetModel();
+            model.AddLod(path);
+        }
+        ModelRenderer::LoadModel(model);
+        modelLoaded = true;
+        delete path;
+    }
+    if (event->type == ModelRenderer::EVENT_SAVE_MODEL)
+    {
+        const char *path = static_cast<char*>(event->user.data1);
+        ModelRenderer::GetModel()->SaveAsAsset(path);
+        delete path;
+    }
     if (event->type == SDL_EVENT_QUIT)
     {
         done = true;
@@ -272,6 +300,9 @@ int main()
         return -1;
     }
 
+    ModelRenderer::EVENT_RELOAD_MODEL = SDL_RegisterEvents(2);
+    ModelRenderer::EVENT_SAVE_MODEL = ModelRenderer::EVENT_RELOAD_MODEL + 1;
+
     SDL_GL_MakeCurrent(window, glContext);
     ModelRenderer::Init();
     SDL_GL_SetSwapInterval(1); // Enable vsync
@@ -358,7 +389,6 @@ int main()
         LodEditWindow::Render(window);
 
         ImGui::Render();
-        glViewport(0, 0, static_cast<GLsizei>(io.DisplaySize.x), static_cast<GLsizei>(io.DisplaySize.y));
         glClearColor(0, 0, 0, 1);
         if (modelLoaded)
         {

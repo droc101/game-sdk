@@ -9,8 +9,11 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iosfwd>
 #include "../shared/Options.h"
+#include "GLDebug.h"
 #include "libassets/DataWriter.h"
 #include "libassets/TextureAsset.h"
+
+// #define GL_CHECK_ERROR if (glGetError() != GL_NO_ERROR) {printf(reinterpret_cast<const char *>(glewGetErrorString(glGetError()))); fflush(stdout); __debugbreak();}
 
 GLuint ModelRenderer::CreateShader(const char *filename, const GLenum type)
 {
@@ -119,6 +122,11 @@ void ModelRenderer::Init()
     {
         throw std::runtime_error("GLEW init failure -- we don't have opengl 3.0");
     }
+
+#ifdef BUILDSTYLE_DEBUG
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(GLDebug::GL_DebugMessageCallback, nullptr);
+#endif
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -252,7 +260,7 @@ void ModelRenderer::LoadModel(ModelAsset& newModel)
             glod.ebos.push_back(ebo);
         }
 
-        lods.emplace_back(glod);
+        lods.push_back(glod);
     }
 
     UpdateView(0, 0, 1);

@@ -60,6 +60,13 @@ class ModelRenderer
 
         static constexpr int PANEL_SIZE = 100;
 
+        static inline uint32_t EVENT_RELOAD_MODEL;
+        static constexpr int32_t EVENT_RELOAD_MODEL_CODE_GMDL = 0;
+        static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL = 1;
+        static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_LOD = 2;
+
+        static inline uint32_t EVENT_SAVE_MODEL;
+
     private:
         struct GLModelLod
         {

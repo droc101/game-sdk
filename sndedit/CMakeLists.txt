@@ -17,3 +17,7 @@ set_target_properties(sndedit PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(sndedit PRIVATE ${SHARED_LIBRARIES})
 
 add_dependencies(sndedit assets)
+
+if (WIN32)
+    add_dependencies(sndedit copydlls)
+endif()

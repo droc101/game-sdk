@@ -16,3 +16,7 @@ set_target_properties(texedit PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(texedit PRIVATE ${SHARED_LIBRARIES})
 
 add_dependencies(texedit assets)
+
+if (WIN32)
+    add_dependencies(texedit copydlls)
+endif()
