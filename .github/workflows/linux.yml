@@ -18,8 +18,16 @@ jobs:
       with:
         submodules: 'true'
 
+    - name: Install SDL3
+      uses: libsdl-org/setup-sdl@main
+      id: sdl
+      with:
+        install-linux-dependencies: true
+        version: 3-latest
+        version-sdl-image: 3-latest
+
     - name: Install Packages
-      run: sudo apt-get update && sudo apt install -y libsdl3-dev libcglm-dev libglew-dev libassimp-dev
+      run: sudo apt-get update && sudo apt install -y libcglm-dev libglew-dev libassimp-dev
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
