@@ -8,22 +8,15 @@
 #include "Options.h"
 #include "libassets/TextureAsset.h"
 #include "SharedMgr.h"
+#include "libassets/LevelAsset.h"
 
-static TextureAsset texture;
-static bool textureLoaded = false;
+static LevelAsset level;
+static bool levelLoaded = false;
 SDL_Renderer *renderer;
-SDL_Texture *sdlTexture;
-SDL_Surface *sdlSurface;
 std::unordered_map<std::string, SDL_Texture*> textureBuffers{};
 
-constexpr SDL_DialogFileFilter gtexFilter = {"GAME texture (*.gtex)", "gtex"};
-constexpr SDL_DialogFileFilter pngFilter = {"PNG Image", "png"};
-constexpr std::array imageFilters = {
-        SDL_DialogFileFilter{"Images", "png;jpg;jpeg;tga"},
-        SDL_DialogFileFilter{"PNG Images", "png"},
-        SDL_DialogFileFilter{"JPG Images", "jpg;jepg"},
-        SDL_DialogFileFilter{"TGA Images", "tga"},
-};
+constexpr SDL_DialogFileFilter gmapFilter = {"Compiled GAME map (*.gmap)", "gmap"};
+constexpr SDL_DialogFileFilter binFilter = {"Raw GAME map (*.bin)", "bin"};
 
 ImTextureID GetTextureID(const std::string& relPath)
 {
@@ -68,13 +61,11 @@ ImVec2 GetTextureSize(const std::string &relPath)
 
 void destroyExistingLevel()
 {
-    if (!textureLoaded)
+    if (!levelLoaded)
     {
         return;
     }
-    SDL_DestroyTexture(sdlTexture);
-    SDL_DestroySurface(sdlSurface);
-    textureLoaded = false;
+    levelLoaded = false;
 }
 
 void openGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -84,26 +75,8 @@ void openGtexCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    texture = TextureAsset::CreateFromAsset(fileList[0]);
-    SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
-                                                 static_cast<int>(texture.GetHeight()),
-                                                 SDL_PIXELFORMAT_RGBA8888,
-                                                 const_cast<uint32_t *>(texture.GetPixels()),
-                                                 static_cast<int>(texture.GetWidth() * sizeof(uint32_t)));
-    if (surface == nullptr)
-    {
-        printf("SDL_CreateSurfaceFrom() failed: %s\n", SDL_GetError());
-        return;
-    }
-    sdlTexture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (sdlTexture == nullptr)
-    {
-        printf("SDL_CreateTextureFromSurface() failed: %s\n", SDL_GetError());
-        return;
-    }
-    SDL_SetTextureScaleMode(sdlTexture, SDL_SCALEMODE_NEAREST);
-    sdlSurface = surface;
-    textureLoaded = true;
+    level = LevelAsset::CreateFromAsset(fileList[0]);
+    levelLoaded = true;
 }
 
 void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -113,25 +86,8 @@ void importCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     {
         return;
     }
-    texture = TextureAsset::CreateFromImage(fileList[0]);
-    SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
-                                                 static_cast<int>(texture.GetHeight()),
-                                                 SDL_PIXELFORMAT_RGBA8888,
-                                                 const_cast<uint32_t *>(texture.GetPixels()),
-                                                 static_cast<int>(texture.GetWidth() * sizeof(uint32_t)));
-    if (surface == nullptr)
-    {
-        printf("SDL_CreateSurfaceFrom() failed: %s\n", SDL_GetError());
-        return;
-    }
-    sdlTexture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (sdlTexture == nullptr)
-    {
-        printf("SDL_CreateTextureFromSurface() failed: %s\n", SDL_GetError());
-        return;
-    }
-    sdlSurface = surface;
-    textureLoaded = true;
+    level = LevelAsset::CreateFromBin(fileList[0]);
+    levelLoaded = true;
 }
 
 void saveGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -140,7 +96,7 @@ void saveGtexCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    texture.SaveAsAsset(fileList[0]);
+    level.SaveAsAsset(fileList[0]);
 }
 
 void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -149,25 +105,19 @@ void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     {
         return;
     }
-    texture.SaveAsImage(fileList[0], TextureAsset::ImageFormat::IMAGE_FORMAT_PNG);
+    level.SaveAsBin(fileList[0]);
 }
 
 static void Render(bool &done, SDL_Window *window)
 {
-    static float zoom = 1.0f;
-
-    ImGui::Begin("texedit",
+    ImGui::Begin("lvledit",
                  nullptr,
                  ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
                  ImGuiWindowFlags_NoBringToFrontOnFocus);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
-    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && textureLoaded;
-    bool exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && textureLoaded;
-
-    bool zoomInPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Equal) && textureLoaded;
-    bool zoomOutPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Minus) && textureLoaded;
-    bool resetZoomPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_0) && textureLoaded;
+    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && levelLoaded;
+    bool exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && levelLoaded;
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -175,20 +125,13 @@ static void Render(bool &done, SDL_Window *window)
         {
             openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
             importPressed |= ImGui::MenuItem("Import", "Ctrl+Shift+O");
-            savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, textureLoaded);
-            exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S", false, textureLoaded);
+            savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, levelLoaded);
+            exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S", false, levelLoaded);
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
                 done = true;
             }
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("View", textureLoaded))
-        {
-            zoomInPressed |= ImGui::MenuItem("Zoom In", "Ctrl+=");
-            zoomOutPressed |= ImGui::MenuItem("Zoom Out", "Ctrl+-");
-            resetZoomPressed |= ImGui::MenuItem("Reset Zoom", "Ctrl+0");
             ImGui::EndMenu();
         }
         SharedMgr::SharedMenuUI();
@@ -197,68 +140,31 @@ static void Render(bool &done, SDL_Window *window)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGtexCallback, nullptr, window, {&gtexFilter}, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGtexCallback, nullptr, window, {&gmapFilter}, 1, nullptr, false);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, window, imageFilters.data(), 4, nullptr, false);
+        SDL_ShowOpenFileDialog(importCallback, nullptr, window, {&binFilter}, 1, nullptr, false);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGtexCallback, nullptr, window, {&gtexFilter}, 1, nullptr);
+        SDL_ShowSaveFileDialog(saveGtexCallback, nullptr, window, {&gmapFilter}, 1, nullptr);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&pngFilter}, 1, nullptr);
-    } else if (zoomInPressed)
-    {
-        zoom += 0.1;
-        if (zoom > 5.0)
-        {
-            zoom = 5.0;
-        }
-    } else if (zoomOutPressed)
-    {
-        zoom -= 0.1;
-        if (zoom < 0.1)
-        {
-            zoom = 0.1;
-        }
-    } else if (resetZoomPressed)
-    {
-        zoom = 1.0f;
+        SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&binFilter}, 1, nullptr);
     }
 
-    if (textureLoaded)
+    if (levelLoaded)
     {
-        const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
-
-        constexpr float statsWidth = 150.0f;
-        const float imageWidth = availableSize.x - statsWidth - 8.0f;
-
-        ImGui::BeginChild("ImagePane",
-                          ImVec2(imageWidth, availableSize.y),
-                          ImGuiChildFlags_Border,
-                          ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
-        {
-            const ImVec2 imageSize{static_cast<float>(texture.GetWidth()) * zoom,
-                                   static_cast<float>(texture.GetHeight()) * zoom};
-            ImGui::Image(sdlTexture, imageSize);
-        }
-        ImGui::EndChild();
+        ImGui::Text("Level Loaded\nSize: %ld bytes", level.GetDataSize());
+        ImGui::TextDisabled("You currently still have to use");
         ImGui::SameLine();
-
-        ImGui::BeginChild("StatsPane", ImVec2(statsWidth, availableSize.y));
-        {
-            ImGui::Text("Stats:");
-            ImGui::Separator();
-            ImGui::Text("Width: %d\nHeight: %d\nMemory: %lu B",
-                        texture.GetWidth(),
-                        texture.GetHeight(),
-                        texture.GetWidth() * texture.GetHeight() * sizeof(uint32_t));
-        }
-        ImGui::EndChild();
+        ImGui::TextLinkOpenURL("geditor", "https://github.com/droc101/game-editor");
+        ImGui::SameLine();
+        ImGui::TextDisabled("to actually edit the levels.");
+        ImGui::TextDisabled("This tool is only for compiling and decompiling.");
 
     } else
     {
-        ImGui::TextDisabled("No texture is open. Open or import one from the File menu.");
+        ImGui::TextDisabled("No level is open. Open or import one from the File menu.");
     }
 
     ImGui::End();
@@ -277,7 +183,7 @@ int main()
     SharedMgr::GetTextureSize = GetTextureSize;
 
     constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
-    SDL_Window *window = SDL_CreateWindow("texedit", 800, 600, windowFlags);
+    SDL_Window *window = SDL_CreateWindow("lvledit", 800, 600, windowFlags);
     if (window == nullptr)
     {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
