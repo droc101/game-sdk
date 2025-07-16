@@ -130,8 +130,14 @@ set(SHARED_LIBRARIES
         assimp::assimp # ${assimp_LIBRARIES} doesn't work
         ${OPENGL_LIBRARIES}
         ${GLEW_LIBRARIES}
-        opengl32
 )
+
+if (WIN32)
+    set(SHARED_LIBRARIES
+        ${SHARED_LIBRARIES}
+        opengl32
+    )
+endif ()
 
 add_subdirectory(lib/json)
 add_subdirectory(libassets)

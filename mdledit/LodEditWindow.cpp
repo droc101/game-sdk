@@ -40,7 +40,7 @@ void LodEditWindow::Render(SDL_Window * window)
             ImGui::SeparatorText(title.c_str());
             ModelAsset::ModelLod &lod = ModelRenderer::GetModel()->GetLod(l);
             const uint32_t tris = std::accumulate(lod.indexCounts.begin(), lod.indexCounts.end(), 0u) / 3u;
-            ImGui::Text("%lld vertices, %d triangles", lod.vertices.size(), tris);
+            ImGui::Text("%ld vertices, %d triangles", lod.vertices.size(), tris);
             ImGui::Dummy(ImVec2(0.0f, 2.0f));
             ImGui::Text("Distance");
             ImGui::PushItemWidth(-1);

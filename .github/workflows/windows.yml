@@ -1,0 +1,53 @@
+name: Windows Build
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup MSYS2
+      uses: msys2/setup-msys2@v2
+      with:
+          msystem: MINGW64
+          install: >-
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-glew
+            mingw-w64-x86_64-glm
+            mingw-w64-x86_64-sdl3
+            mingw-w64-x86_64-assimp
+          update: true
+
+    - name: Convert github.workspace to mingw path
+      shell: msys2 {0}
+      run: echo "MINGW_WORKSPACE=$(cygpath -u '${{github.workspace}}')" >> $GITHUB_ENV
+
+    - name: Configure CMake
+      shell: msys2 {0}
+      run: cmake -B "$MINGW_WORKSPACE/build" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      shell: msys2 {0}
+      run: cmake --build "$MINGW_WORKSPACE/build" --config ${{env.BUILD_TYPE}}
+
+    - name: Upload results
+      uses: actions/upload-artifact@v4
+      with:
+        name: game-sdk.windows
+        path: |
+          build/bin/
+        retention-days: 90

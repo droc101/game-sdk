@@ -233,7 +233,7 @@ static void Render(bool &done, SDL_Window *window)
         }
 
         ImGui::SeparatorText("Sound Information");
-        ImGui::Text("Size: %lld bytes", soundAsset.GetDataSize());
+        ImGui::Text("Size: %ld bytes", soundAsset.GetDataSize());
         ma_format fmt;
         ma_uint32 channels;
         ma_uint32 sampleRate;
