@@ -11,6 +11,7 @@
 #include <vector>
 #include "DataReader.h"
 #include "DataWriter.h"
+#include "../../Color.h"
 
 class ModelAsset
 {
@@ -43,7 +44,7 @@ class ModelAsset
                 Material(std::string texture, uint32_t color, ModelShader shader);
 
                 std::string texture{};
-                std::array<float, 4> color{};
+                Color color{};
                 ModelShader shader{};
         };
 

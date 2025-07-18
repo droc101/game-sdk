@@ -46,24 +46,13 @@ ModelAsset::Vertex::Vertex(const aiMesh *mesh, const uint32_t vertexIndex)
 ModelAsset::Material::Material(DataReader &reader)
 {
     reader.ReadString(texture, 64);
-    const uint32_t argb = reader.ReadU32();
-    color = {
-        (static_cast<float>((argb >> 16) & 0xFF)) / 255.0f,
-        (static_cast<float>((argb >> 8) & 0xFF)) / 255.0f,
-        (static_cast<float>((argb) & 0xFF)) / 255.0f,
-        (static_cast<float>((argb >> 24) & 0xFF)) / 255.0f,
-    };
+    color = Color(reader, false);
     shader = static_cast<ModelShader>(reader.ReadU32());
 }
 
 ModelAsset::Material::Material(std::string texture, const uint32_t color, const ModelShader shader):
     texture(std::move(texture)),
-    color({
-        (static_cast<float>((color >> 16) & 0xFF)) / 255.0f,
-        (static_cast<float>((color >> 8) & 0xFF)) / 255.0f,
-        (static_cast<float>((color) & 0xFF)) / 255.0f,
-        (static_cast<float>((color >> 24) & 0xFF)) / 255.0f,
-    }),
+    color(Color(color)),
     shader(shader)
 {}
 
@@ -136,7 +125,7 @@ void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
         for (const Material &material: skinMaterials)
         {
             writer.WriteBuffer<const char>(material.texture.c_str(), 64);
-            writer.WriteBuffer<const float>(material.color.data(), 4);
+            material.color.WriteUint32(writer);
             writer.Write<uint32_t>(static_cast<uint32_t>(material.shader));
         }
     }
@@ -199,7 +188,7 @@ void ModelAsset::AddSkin()
     {
         Material m{};
         m.texture = Options::defaultTexture;
-        m.color = {1.0f, 1.0f, 1.0f, 1.0f};
+        m.color = Color({1.0f, 1.0f, 1.0f, 1.0f});
         m.shader = ModelShader::SHADER_SHADED;
         skin.push_back(m);
     }

@@ -49,7 +49,7 @@ void SkinEditWindow::Render()
                 ImGui::PushItemWidth(-1);
 
                 ImGui::Text("Color");
-                ImGui::ColorEdit4(std::format("##Color{}", m).c_str(), mat.color.data());
+                ImGui::ColorEdit4(std::format("##Color{}", m).c_str(), mat.color.GetData());
 
                 ImGui::Text("Shader");
                 constexpr std::array<const char*, 3> shaders = {"Sky", "Unshaded", "Shaded"};

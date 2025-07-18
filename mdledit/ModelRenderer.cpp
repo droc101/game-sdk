@@ -321,8 +321,8 @@ void ModelRenderer::Render()
 
     for (size_t i = 0; i < model.GetMaterialCount(); i++)
     {
-        const ModelAsset::Material &mat = model.GetSkin(skin)[i];
-        glUniform3fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.data());
+        ModelAsset::Material &mat = model.GetSkin(skin)[i];
+        glUniform3fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetData());
 
         const GLuint texture = GetTexture(mat.texture.c_str());
         glBindTexture(GL_TEXTURE_2D, texture);
