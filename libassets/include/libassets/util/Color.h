@@ -5,8 +5,8 @@
 #ifndef COLOR_H
 #define COLOR_H
 #include <array>
-#include "include/libassets/DataReader.h"
-#include "include/libassets/DataWriter.h"
+#include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
 
 
 class Color

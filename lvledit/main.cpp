@@ -6,9 +6,9 @@
 #include <unordered_map>
 #include <SDL3/SDL.h>
 #include "Options.h"
-#include "libassets/TextureAsset.h"
+#include <libassets/asset/TextureAsset.h>
 #include "SharedMgr.h"
-#include "libassets/LevelAsset.h"
+#include <libassets/asset/LevelAsset.h>
 
 static LevelAsset level;
 static bool levelLoaded = false;

@@ -6,7 +6,7 @@
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
-#include <libassets/ModelAsset.h>
+#include <libassets/asset/ModelAsset.h>
 #include <string>
 #include <unordered_map>
 #include "imgui.h"

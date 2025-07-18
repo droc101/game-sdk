@@ -2,11 +2,11 @@
 // Created by droc101 on 7/12/25.
 //
 
-#include "include/libassets/SoundAsset.h"
+#include <libassets/asset/SoundAsset.h>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
-#include "include/libassets/DataReader.h"
+#include <libassets/util/DataReader.h>
 
 SoundAsset SoundAsset::CreateFromAsset(const char *assetPath)
 {

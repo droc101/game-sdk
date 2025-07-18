@@ -2,7 +2,7 @@
 // Created by droc101 on 6/26/25.
 //
 
-#include "include/libassets/DataWriter.h"
+#include <libassets/util/DataWriter.h>
 #include <cassert>
 
 void DataWriter::CopyToVector(std::vector<uint8_t> &vector) const

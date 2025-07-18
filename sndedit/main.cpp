@@ -7,9 +7,9 @@
 #include <unordered_map>
 #include <SDL3/SDL.h>
 #include "Options.h"
-#include "libassets/TextureAsset.h"
+#include <libassets/asset/TextureAsset.h>
 #include "SharedMgr.h"
-#include "libassets/SoundAsset.h"
+#include <libassets/asset/SoundAsset.h>
 #include "../lib/miniaudio/miniaudio.h"
 
 SoundAsset soundAsset;

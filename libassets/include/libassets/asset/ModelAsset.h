@@ -9,9 +9,9 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include "DataReader.h"
-#include "DataWriter.h"
-#include "../../Color.h"
+#include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
+#include <libassets/util/Color.h>
 
 class ModelAsset
 {

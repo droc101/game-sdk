@@ -2,12 +2,12 @@
 // Created by droc101 on 7/16/25.
 //
 
-#include "include/libassets/LevelAsset.h"
+#include <libassets/asset/LevelAsset.h>
 #include <cassert>
 #include <fstream>
 #include <ios>
-#include "include/libassets/AssetReader.h"
-#include "include/libassets/DataReader.h"
+#include <libassets/util/AssetReader.h>
+#include <libassets/util/DataReader.h>
 
 LevelAsset LevelAsset::CreateFromAsset(const char *assetPath)
 {

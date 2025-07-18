@@ -2,7 +2,7 @@
 // Created by droc101 on 6/26/25.
 //
 
-#include "include/libassets/DataReader.h"
+#include <libassets/util/DataReader.h>
 #include <algorithm>
 #include <cassert>
 

@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <SDL3/SDL.h>
 #include "Options.h"
-#include "libassets/TextureAsset.h"
+#include <libassets/asset/TextureAsset.h>
 #include "SharedMgr.h"
 
 static TextureAsset texture;

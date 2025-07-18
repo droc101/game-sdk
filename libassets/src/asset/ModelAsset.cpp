@@ -2,7 +2,7 @@
 // Created by droc101 on 6/26/25.
 //
 
-#include "include/libassets/ModelAsset.h"
+#include <libassets/asset/ModelAsset.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -14,9 +14,10 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include "../shared/Options.h"
-#include "include/libassets/AssetReader.h"
-#include "include/libassets/DataWriter.h"
+#include "../../shared/Options.h"
+#include <libassets/util/AssetReader.h>
+#include <libassets/util/DataReader.h>
+#include <libassets/util/Color.h>
 
 ModelAsset::Vertex::Vertex(DataReader &reader)
 {

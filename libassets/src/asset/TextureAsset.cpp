@@ -2,11 +2,11 @@
 // Created by droc101 on 6/23/25.
 //
 
-#include "include/libassets/TextureAsset.h"
+#include <libassets/asset/TextureAsset.h>
 #include <cassert>
 #include <filesystem>
-#include "include/libassets/AssetReader.h"
-#include "include/libassets/DataReader.h"
+#include <libassets/util/AssetReader.h>
+#include <libassets/util/DataReader.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION

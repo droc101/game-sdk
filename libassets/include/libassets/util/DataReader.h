@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include "AssetReader.h"
+#include <libassets/util/AssetReader.h>
 
 class DataReader
 {

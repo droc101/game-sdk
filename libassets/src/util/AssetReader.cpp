@@ -2,7 +2,7 @@
 // Created by droc101 on 6/23/25.
 //
 
-#include "include/libassets/AssetReader.h"
+#include <libassets/util/AssetReader.h>
 #include <cassert>
 #include <csignal>
 #include <cstdio>
@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <vector>
 #include <zlib.h>
-#include "include/libassets/DataReader.h"
+#include <libassets/util/DataReader.h>
 
 AssetReader::AssetType AssetReader::Decompress(std::vector<uint8_t> &asset, DataReader &reader)
 {

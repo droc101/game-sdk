@@ -9,7 +9,6 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_messagebox.h>
 #include "imgui.h"
-#include "imgui_impl_sdl3.h"
 #include "ModelRenderer.h"
 
 void LodEditWindow::Show()

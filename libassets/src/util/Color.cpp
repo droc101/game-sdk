@@ -2,7 +2,8 @@
 // Created by droc101 on 7/18/25.
 //
 
-#include "Color.h"
+#include <libassets/util/Color.h>
+#include <libassets/util/DataReader.h>
 
 Color::Color(DataReader &reader, const bool useFloats)
 {

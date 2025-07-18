@@ -10,8 +10,8 @@
 #include <iosfwd>
 #include "../shared/Options.h"
 #include "GLDebug.h"
-#include "libassets/DataWriter.h"
-#include "libassets/TextureAsset.h"
+#include <libassets/util/DataWriter.h>
+#include <libassets/asset/TextureAsset.h>
 
 // #define GL_CHECK_ERROR if (glGetError() != GL_NO_ERROR) {printf(reinterpret_cast<const char *>(glewGetErrorString(glGetError()))); fflush(stdout); __debugbreak();}
 

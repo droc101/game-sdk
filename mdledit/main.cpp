@@ -6,7 +6,7 @@
 #include <iostream>
 #include <SDL3/SDL.h>
 #include "LodEditWindow.h"
-#include "libassets/ModelAsset.h"
+#include <libassets/asset/ModelAsset.h>
 #include "ModelRenderer.h"
 #include "SharedMgr.h"
 #include "SkinEditWindow.h"
