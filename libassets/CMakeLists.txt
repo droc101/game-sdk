@@ -20,6 +20,7 @@ add_library(assets STATIC include/libassets/libassets.h
         include/libassets/asset/LevelAsset.h
         src/util/Color.cpp
         include/libassets/util/Color.h
+        include/libassets/util/Primitive.h
 )
 
 find_package(ZLIB REQUIRED)

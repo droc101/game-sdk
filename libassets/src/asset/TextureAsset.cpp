@@ -82,8 +82,8 @@ TextureAsset TextureAsset::CreateFromAsset(const char *assetPath)
     assert(assetType == AssetReader::AssetType::ASSET_TYPE_TEXTURE);
     TextureAsset texture;
     reader.Seek(sizeof(uint32_t)); // 0 = pixelDataSize in bytes
-    texture.width = reader.Read32();
-    texture.height = reader.Read32();
+    texture.width = reader.Read<uint32_t>();
+    texture.height = reader.Read<uint32_t>();
     reader.Seek(sizeof(uint32_t)); // 3 = unused (3 sucks)
     const size_t pixelCount = texture.width * texture.height;
     reader.ReadToBuffer<uint32_t>(texture.pixels, pixelCount);

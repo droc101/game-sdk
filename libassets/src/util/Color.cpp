@@ -9,13 +9,13 @@ Color::Color(DataReader &reader, const bool useFloats)
 {
     if (useFloats)
     {
-        color[0] = reader.ReadFloat();
-        color[1] = reader.ReadFloat();
-        color[2] = reader.ReadFloat();
-        color[3] = reader.ReadFloat();
+        color[0] = reader.Read<float>();
+        color[1] = reader.Read<float>();
+        color[2] = reader.Read<float>();
+        color[3] = reader.Read<float>();
     } else
     {
-        const uint32_t rgba = reader.ReadU32();
+        const uint32_t rgba = reader.Read<uint32_t>();
         color = {
                 // a r g b
                 (static_cast<float>((rgba >> 16) & 0xFF)) / 255.0f,

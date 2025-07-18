@@ -24,13 +24,13 @@ ModelAsset::Vertex::Vertex(DataReader &reader)
     static_assert(uv.size() == 2);
     for (float &pos: position)
     {
-        pos = reader.ReadFloat();
+        pos = reader.Read<float>();
     }
-    uv.at(0) = reader.ReadFloat();
-    uv.at(1) = reader.ReadFloat();
+    uv.at(0) = reader.Read<float>();
+    uv.at(1) = reader.Read<float>();
     for (float &norm: normal)
     {
-        norm = reader.ReadFloat();
+        norm = reader.Read<float>();
     }
 }
 
@@ -48,7 +48,7 @@ ModelAsset::Material::Material(DataReader &reader)
 {
     reader.ReadString(texture, 64);
     color = Color(reader, false);
-    shader = static_cast<ModelShader>(reader.ReadU32());
+    shader = static_cast<ModelShader>(reader.Read<uint32_t>());
 }
 
 ModelAsset::Material::Material(std::string texture, const uint32_t color, const ModelShader shader):
@@ -59,22 +59,22 @@ ModelAsset::Material::Material(std::string texture, const uint32_t color, const 
 
 ModelAsset::ModelLod::ModelLod(DataReader &reader, const uint32_t materialCount)
 {
-    distance = reader.ReadFloat();
-    const uint32_t vertexCount = reader.ReadU32();
+    distance = reader.Read<float>();
+    const uint32_t vertexCount = reader.Read<uint32_t>();
     for (uint32_t _i = 0; _i < vertexCount; _i++)
     {
         vertices.emplace_back(reader);
     }
     for (uint32_t _i = 0; _i < materialCount; _i++)
     {
-        indexCounts.push_back(reader.ReadU32());
+        indexCounts.push_back(reader.Read<uint32_t>());
     }
     for (const uint32_t indexCount: indexCounts)
     {
         std::vector<uint32_t> materialIndices;
         for (uint32_t _i = 0; _i < indexCount; _i++)
         {
-            materialIndices.push_back(reader.ReadU32());
+            materialIndices.push_back(reader.Read<uint32_t>());
         }
         indices.push_back(materialIndices);
     }
@@ -87,9 +87,9 @@ void ModelAsset::CreateFromAsset(const char *assetPath, ModelAsset &modelAsset)
     DataReader reader;
     [[maybe_unused]] const AssetReader::AssetType assetType = AssetReader::LoadFromFile(assetPath, reader);
     assert(assetType == AssetReader::AssetType::ASSET_TYPE_MODEL);
-    const uint32_t materialCount = reader.ReadU32();
-    const uint32_t skinCount = reader.ReadU32();
-    const uint32_t lodCount = reader.ReadU32();
+    const uint32_t materialCount = reader.Read<uint32_t>();
+    const uint32_t skinCount = reader.Read<uint32_t>();
+    const uint32_t lodCount = reader.Read<uint32_t>();
 
     modelAsset.skins.resize(skinCount);
     for (std::vector<Material> &skin: modelAsset.skins)

@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <libassets/util/AssetReader.h>
+#include <libassets/util/Primitive.h>
 
 class DataReader
 {
@@ -28,29 +29,17 @@ class DataReader
 
         [[nodiscard]] size_t RemainingSize() const;
 
-        [[nodiscard]] uint8_t ReadU8();
-
-        [[nodiscard]] int8_t Read8();
-
-        [[nodiscard]] uint16_t ReadU16();
-
-        [[nodiscard]] int16_t Read16();
-
-        [[nodiscard]] uint32_t ReadU32();
-
-        [[nodiscard]] int32_t Read32();
-
-        [[nodiscard]] uint64_t ReadU64();
-
-        [[nodiscard]] int64_t Read64();
-
-        [[nodiscard]] float ReadFloat();
-
-        [[nodiscard]] double ReadDouble();
-
         void ReadString(std::string &buffer, size_t characterCount);
 
-        template<typename T> void ReadToBuffer(std::vector<T> &buffer, const size_t numberToRead)
+        template <Primitive T> [[nodiscard]] T Read()
+        {
+            assert(offset + sizeof(T) <= size);
+            const T i = *reinterpret_cast<const T *>(&bytes.at(offset));
+            offset += sizeof(T);
+            return i;
+        }
+
+        template<Primitive T> void ReadToBuffer(std::vector<T> &buffer, const size_t numberToRead)
         {
             static_assert(sizeof(uint8_t) == 1);
             assert(offset + sizeof(T) * numberToRead <= size);

@@ -8,8 +8,7 @@
 #include <array>
 #include <cstdint>
 #include <vector>
-
-template<typename T> concept Primitive = std::is_trivial_v<T> && std::is_fundamental_v<T> && std::is_arithmetic_v<T>;
+#include <libassets/util/Primitive.h>
 
 class DataWriter
 {
