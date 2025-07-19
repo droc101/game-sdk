@@ -21,7 +21,7 @@ void LodEditWindow::Hide()
     visible = false;
 }
 
-void LodEditWindow::Render(SDL_Window * window)
+void LodEditWindow::Render(SDL_Window *window)
 {
     if (visible)
     {
@@ -37,7 +37,7 @@ void LodEditWindow::Render(SDL_Window * window)
         {
             const std::string title = std::format("LOD {}", l);
             ImGui::SeparatorText(title.c_str());
-            ModelAsset::ModelLod &lod = ModelRenderer::GetModel()->GetLod(l);
+            ModelLod &lod = ModelRenderer::GetModel()->GetLod(l);
             const uint32_t tris = std::accumulate(lod.indexCounts.begin(), lod.indexCounts.end(), 0u) / 3u;
             ImGui::Text("%ld vertices, %d triangles", lod.vertices.size(), tris);
             ImGui::Dummy(ImVec2(0.0f, 2.0f));
@@ -73,19 +73,19 @@ void LodEditWindow::Render(SDL_Window * window)
         if (ImGui::Button("Add", ImVec2(60, 0)))
         {
             constexpr std::array modelFilters = {
-                SDL_DialogFileFilter{"3D Models (obj, fbx, gltf, dae)", "obj;fbx;gltf;dae"},
-                SDL_DialogFileFilter{"Wavefront OBJ Models", "obj"},
-                SDL_DialogFileFilter{"FBX Models", "fbx"},
-                SDL_DialogFileFilter{"glTF/glTF2.0 Models", "gltf"},
-                SDL_DialogFileFilter{"Collada Models", "dae"},
-        };
+                    SDL_DialogFileFilter{"3D Models (obj, fbx, gltf, dae)", "obj;fbx;gltf;dae"},
+                    SDL_DialogFileFilter{"Wavefront OBJ Models", "obj"},
+                    SDL_DialogFileFilter{"FBX Models", "fbx"},
+                    SDL_DialogFileFilter{"glTF/glTF2.0 Models", "gltf"},
+                    SDL_DialogFileFilter{"Collada Models", "dae"},
+            };
             SDL_ShowOpenFileDialog(addLodCallback,
-                               nullptr,
-                               window,
-                               modelFilters.data(),
-                               modelFilters.size(),
-                               nullptr,
-                               false);
+                                   nullptr,
+                                   window,
+                                   modelFilters.data(),
+                                   modelFilters.size(),
+                                   nullptr,
+                                   false);
         }
         ImGui::SameLine();
         ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 60, 0));
@@ -94,7 +94,10 @@ void LodEditWindow::Render(SDL_Window * window)
         {
             if (!ModelRenderer::GetModel()->ValidateLodDistances())
             {
-                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Warning", "LOD distances are invalid! Make sure that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the same distance", window);
+                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING,
+                                         "Warning",
+                                         "LOD distances are invalid! Make sure that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the same distance",
+                                         window);
             }
             visible = false;
         }
@@ -109,7 +112,7 @@ void LodEditWindow::addLodCallback(void * /*userdata*/, const char *const *fileL
     {
         return;
     }
-    char* path = strdup(fileList[0]);
+    char *path = strdup(fileList[0]);
     SDL_Event e{};
     e.type = ModelRenderer::EVENT_RELOAD_MODEL;
     e.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_LOD;
@@ -123,6 +126,5 @@ void LodEditWindow::saveLodCallback(void *userdata, const char *const *fileList,
     {
         return;
     }
-    static_cast<ModelAsset::ModelLod*>(userdata)->Export(fileList[0]);
+    static_cast<ModelLod *>(userdata)->Export(fileList[0]);
 }
-

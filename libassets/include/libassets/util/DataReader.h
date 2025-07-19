@@ -4,18 +4,20 @@
 
 #pragma once
 
-#include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <format>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <libassets/util/AssetReader.h>
 #include <libassets/util/Primitive.h>
+
+class AssetReader;
 
 class DataReader
 {
     public:
-        friend AssetReader::AssetType AssetReader::Decompress(std::vector<uint8_t> &, DataReader &);
+        friend AssetReader;
 
         DataReader() = default;
 
@@ -31,9 +33,16 @@ class DataReader
 
         void ReadString(std::string &buffer, size_t characterCount);
 
-        template <Primitive T> [[nodiscard]] T Read()
+        template<Primitive T> [[nodiscard]] T Read()
         {
-            assert(offset + sizeof(T) <= size);
+            if (offset + sizeof(T) > size)
+            {
+                throw std::runtime_error(std::format(
+                        "Attempting to read past the end of a buffer (buffer size {}, cursor position {}, read size {}",
+                        size,
+                        offset,
+                        sizeof(T)));
+            }
             const T i = *reinterpret_cast<const T *>(&bytes.at(offset));
             offset += sizeof(T);
             return i;
@@ -41,15 +50,24 @@ class DataReader
 
         template<Primitive T> void ReadToBuffer(std::vector<T> &buffer, const size_t numberToRead)
         {
-            static_assert(sizeof(uint8_t) == 1);
-            assert(offset + sizeof(T) * numberToRead <= size);
-            assert(buffer.empty());
+            if (offset + sizeof(T) * numberToRead > size)
+            {
+                throw std::runtime_error(std::format(
+                        "Attempting to read past the end of a buffer (buffer size {}, cursor position {}, read size {}",
+                        size,
+                        offset,
+                        sizeof(T) * numberToRead));
+            }
+            if (!buffer.empty())
+            {
+                throw std::runtime_error("Attempting to read into a non-empty buffer!");
+            }
             T *offsetData = reinterpret_cast<T *>(bytes.data() + offset);
             buffer.insert(buffer.begin(), offsetData, offsetData + numberToRead);
             offset += numberToRead;
         }
 
-    private:
+    protected:
         std::vector<uint8_t> bytes{};
         size_t size{};
         size_t offset{};

@@ -3,7 +3,6 @@
 //
 
 #include <libassets/util/DataReader.h>
-#include <algorithm>
 #include <cassert>
 
 DataReader::DataReader(const size_t dataSize): bytes(dataSize)
@@ -34,8 +33,19 @@ size_t DataReader::RemainingSize() const
 
 void DataReader::ReadString(std::string &buffer, const size_t characterCount)
 {
-    assert(offset + sizeof(char) * characterCount <= size);
-    assert(buffer.empty());
+    if (offset + sizeof(char) * characterCount > size)
+    {
+        throw std::runtime_error(std::format(
+                "Attempting to read past the end of a buffer (buffer size {}, cursor position {}, read size {}",
+                size,
+                offset,
+                sizeof(char) * characterCount));
+    }
+    if (!buffer.empty())
+    {
+        throw std::runtime_error("Attempting to read into a non-empty buffer!");
+    }
+
     buffer.insert(buffer.begin(), &bytes.at(offset), &bytes.at(offset + characterCount - 1));
     offset += sizeof(char) * characterCount;
 }

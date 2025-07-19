@@ -9,15 +9,15 @@
 #include <libassets/util/AssetReader.h>
 #include <libassets/util/DataReader.h>
 
-LevelAsset LevelAsset::CreateFromAsset(const char *assetPath)
+Error::ErrorCode LevelAsset::CreateFromAsset(const char *assetPath, LevelAsset &level)
 {
-    DataReader reader;
-    [[maybe_unused]] const AssetReader::AssetType assetType = AssetReader::LoadFromFile(assetPath, reader);
-    assert(assetType == AssetReader::AssetType::ASSET_TYPE_LEVEL);
-    LevelAsset mus;
-    mus.levelData.reserve(reader.TotalSize());
-    reader.ReadToBuffer<uint8_t>(mus.levelData, reader.TotalSize());
-    return mus;
+    Asset asset;
+    const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
+    assert(e == Error::ErrorCode::E_OK);
+    assert(asset.type == Asset::AssetType::ASSET_TYPE_LEVEL);
+    level.levelData.reserve(asset.reader.TotalSize());
+    asset.reader.ReadToBuffer<uint8_t>(level.levelData, asset.reader.TotalSize());
+    return Error::ErrorCode::E_OK;
 }
 
 void LevelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
@@ -27,32 +27,33 @@ void LevelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     buffer.insert(buffer.begin(), levelData.begin(), levelData.end());
 }
 
-void LevelAsset::SaveAsAsset(const char *assetPath) const
+Error::ErrorCode LevelAsset::SaveAsAsset(const char *assetPath) const
 {
     std::vector<uint8_t> buffer;
     SaveToBuffer(buffer);
-    AssetReader::SaveToFile(assetPath, buffer, AssetReader::AssetType::ASSET_TYPE_LEVEL);
+    return AssetReader::SaveToFile(assetPath, buffer, Asset::AssetType::ASSET_TYPE_LEVEL);
 }
 
 
-LevelAsset LevelAsset::CreateFromBin(const char *binPath)
+Error::ErrorCode LevelAsset::CreateFromBin(const char *binPath, LevelAsset &level)
 {
     std::ifstream file(binPath, std::ios::binary | std::ios::ate);
     const std::ifstream::pos_type fileSize = file.tellg();
     file.seekg(0, std::ios::beg);
-    LevelAsset mus;
-    mus.levelData.resize(fileSize);
-    file.read(reinterpret_cast<char*>(mus.levelData.data()), fileSize);
+    level.levelData.resize(fileSize);
+    file.read(reinterpret_cast<char *>(level.levelData.data()), fileSize);
     file.close();
-    return mus;
+    return Error::ErrorCode::E_OK;
 }
 
-void LevelAsset::SaveAsBin(const char *binPath) const
+Error::ErrorCode LevelAsset::SaveAsBin(const char *binPath) const
 {
     std::ofstream file(binPath);
+    if (!file) return Error::ErrorCode::E_CANT_OPEN_FILE;
     file.write(reinterpret_cast<const std::ostream::char_type *>(levelData.data()),
                static_cast<std::streamsize>(levelData.size()));
     file.close();
+    return Error::ErrorCode::E_OK;
 }
 
 const std::vector<uint8_t> &LevelAsset::GetData() const

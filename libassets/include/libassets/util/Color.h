@@ -14,13 +14,11 @@ class Color
     public:
         Color() = default;
         constexpr Color(const Color &other) = default;
-        Color &operator=(const Color &other) = default;
-
         explicit Color(DataReader &reader, bool useFloats = false);
-
         explicit Color(uint32_t rgba);
-
         explicit Color(std::array<float, 4> rgba);
+
+        Color &operator=(const Color &other) = default;
 
         void WriteFloats(DataWriter &writer) const;
 

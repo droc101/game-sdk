@@ -32,7 +32,7 @@ class ModelRenderer
 
         static void Render();
 
-        static void LoadModel(ModelAsset& newModel);
+        static void LoadModel(ModelAsset &newModel);
 
         static void UnloadModel();
 
@@ -46,7 +46,7 @@ class ModelRenderer
 
         static GLuint GetTexture(const char *filename);
 
-        static ImTextureID GetTextureID(const std::string& relPath);
+        static ImTextureID GetTextureID(const std::string &relPath);
 
         static ImVec2 GetTextureSize(const std::string &relPath);
 

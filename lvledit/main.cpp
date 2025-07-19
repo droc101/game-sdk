@@ -3,61 +3,18 @@
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
 #include <iostream>
-#include <unordered_map>
 #include <SDL3/SDL.h>
 #include "Options.h"
-#include <libassets/asset/TextureAsset.h>
 #include "SharedMgr.h"
 #include <libassets/asset/LevelAsset.h>
+#include "SDLRendererImGuiTextureAssetCache.h"
 
 static LevelAsset level;
 static bool levelLoaded = false;
 SDL_Renderer *renderer;
-std::unordered_map<std::string, SDL_Texture*> textureBuffers{};
 
 constexpr SDL_DialogFileFilter gmapFilter = {"Compiled GAME map (*.gmap)", "gmap"};
 constexpr SDL_DialogFileFilter binFilter = {"Raw GAME map (*.bin)", "bin"};
-
-ImTextureID GetTextureID(const std::string& relPath)
-{
-    if (textureBuffers.contains(relPath))
-    {
-        return reinterpret_cast<ImTextureID>(textureBuffers.at(relPath));
-    }
-    // TODO: if the texture file does not exist return an existing missing texture instead of making a new one
-    const std::string &texturePath = Options::gamePath + std::string("/assets/") + relPath;
-
-    const TextureAsset asset = TextureAsset::CreateFromAsset(texturePath.c_str());
-    SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(asset.GetWidth()),
-                                                 static_cast<int>(asset.GetHeight()),
-                                                 SDL_PIXELFORMAT_RGBA8888,
-                                                 const_cast<uint32_t *>(asset.GetPixels()),
-                                                 static_cast<int>(asset.GetWidth() * sizeof(uint32_t)));
-    if (surface == nullptr)
-    {
-        printf("SDL_CreateSurfaceFrom() failed: %s\n", SDL_GetError());
-        return -1;
-    }
-    SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, surface);
-    if (tex == nullptr)
-    {
-        printf("SDL_CreateTextureFromSurface() failed: %s\n", SDL_GetError());
-        return -1;
-    }
-    SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_NEAREST);
-    SDL_DestroySurface(surface);
-
-    textureBuffers.insert({relPath, tex});
-    return reinterpret_cast<ImTextureID>(tex);
-}
-
-ImVec2 GetTextureSize(const std::string &relPath)
-{
-    SDL_Texture* tex = reinterpret_cast<SDL_Texture *>(GetTextureID(relPath));
-    ImVec2 sz;
-    SDL_GetTextureSize(tex, &sz.x, &sz.y);
-    return sz;
-}
 
 void destroyExistingLevel()
 {
@@ -75,7 +32,8 @@ void openGtexCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    level = LevelAsset::CreateFromAsset(fileList[0]);
+    const Error::ErrorCode e = LevelAsset::CreateFromAsset(fileList[0], level);
+    assert(e == Error::ErrorCode::E_OK);
     levelLoaded = true;
 }
 
@@ -86,7 +44,8 @@ void importCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     {
         return;
     }
-    level = LevelAsset::CreateFromBin(fileList[0]);
+    const Error::ErrorCode e = LevelAsset::CreateFromBin(fileList[0], level);
+    assert(e == Error::ErrorCode::E_OK);
     levelLoaded = true;
 }
 
@@ -96,7 +55,7 @@ void saveGtexCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    level.SaveAsAsset(fileList[0]);
+    assert(level.SaveAsAsset(fileList[0]) == Error::ErrorCode::E_OK);
 }
 
 void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -105,7 +64,7 @@ void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     {
         return;
     }
-    level.SaveAsBin(fileList[0]);
+    assert(level.SaveAsBin(fileList[0]) == Error::ErrorCode::E_OK);
 }
 
 static void Render(bool &done, SDL_Window *window)
@@ -178,10 +137,6 @@ int main()
         return -1;
     }
 
-    SharedMgr::InitSharedMgr();
-    SharedMgr::GetTextureId = GetTextureID;
-    SharedMgr::GetTextureSize = GetTextureSize;
-
     constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
     SDL_Window *window = SDL_CreateWindow("lvledit", 800, 600, windowFlags);
     if (window == nullptr)
@@ -197,6 +152,10 @@ int main()
         return -1;
     }
     SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+
+    SDLRendererImGuiTextureAssetCache cache = SDLRendererImGuiTextureAssetCache(renderer);
+    SharedMgr::InitSharedMgr(&cache);
+
     SDL_ShowWindow(window);
 
     IMGUI_CHECKVERSION();
@@ -264,11 +223,6 @@ int main()
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
     destroyExistingLevel();
-    for (const std::pair<std::string, SDL_Texture*> p: textureBuffers)
-    {
-        SDL_DestroyTexture(p.second);
-    }
-    textureBuffers.clear();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

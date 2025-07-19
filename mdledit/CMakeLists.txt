@@ -15,6 +15,7 @@ add_executable(mdledit main.cpp
         ${IMGUI_SRC_OPENGL3}
         GLDebug.cpp
         GLDebug.h
+        MdleditImGuiTextureCache.h
 )
 
 include_directories(${SHARED_INCLUDES})

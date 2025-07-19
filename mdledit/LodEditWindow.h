@@ -7,7 +7,8 @@
 #include <SDL3/SDL_video.h>
 
 
-class LodEditWindow {
+class LodEditWindow
+{
     public:
         LodEditWindow() = delete;
 
@@ -15,15 +16,15 @@ class LodEditWindow {
 
         static void Hide();
 
-        static void Render(SDL_Window * window);
+        static void Render(SDL_Window *window);
+
     private:
         static inline bool visible;
 
-        static void addLodCallback(void * userdata, const char *const *fileList, int filter);
+        static void addLodCallback(void *userdata, const char *const *fileList, int filter);
 
-        static void saveLodCallback(void * userdata, const char *const *fileList, int filter);
+        static void saveLodCallback(void *userdata, const char *const *fileList, int filter);
 };
-
 
 
 #endif //LODEDITWINDOW_H

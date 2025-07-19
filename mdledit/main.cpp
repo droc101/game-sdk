@@ -7,6 +7,7 @@
 #include <SDL3/SDL.h>
 #include "LodEditWindow.h"
 #include <libassets/asset/ModelAsset.h>
+#include "MdleditImGuiTextureCache.h"
 #include "ModelRenderer.h"
 #include "SharedMgr.h"
 #include "SkinEditWindow.h"
@@ -49,7 +50,7 @@ void openGmdlCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    char* path = strdup(fileList[0]);
+    char *path = strdup(fileList[0]);
     SDL_Event e{};
     e.type = ModelRenderer::EVENT_RELOAD_MODEL;
     e.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_GMDL;
@@ -63,7 +64,7 @@ void importCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     {
         return;
     }
-    char* path = strdup(fileList[0]);
+    char *path = strdup(fileList[0]);
     SDL_Event e{};
     e.type = ModelRenderer::EVENT_RELOAD_MODEL;
     e.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL;
@@ -77,7 +78,7 @@ void saveGmdlCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    ModelRenderer::GetModel()->SaveAsAsset(fileList[0]);
+    assert(ModelRenderer::GetModel()->SaveAsAsset(fileList[0]) == Error::ErrorCode::E_OK);
 }
 
 void ProcessEvent(const SDL_Event *event)
@@ -88,13 +89,13 @@ void ProcessEvent(const SDL_Event *event)
     {
         destroyExistingModel();
         ModelAsset model;
-        const char *path = static_cast<char*>(event->user.data1);
+        const char *path = static_cast<char *>(event->user.data1);
         if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_GMDL)
         {
-            ModelAsset::CreateFromAsset(path, model);
+            assert(ModelAsset::CreateFromAsset(path, model) == Error::ErrorCode::E_OK);
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL)
         {
-            ModelAsset::CreateFromStandardModel(path, model);
+            assert(ModelAsset::CreateFromStandardModel(path, model) == Error::ErrorCode::E_OK);
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_LOD)
         {
             model = *ModelRenderer::GetModel();
@@ -106,8 +107,8 @@ void ProcessEvent(const SDL_Event *event)
     }
     if (event->type == ModelRenderer::EVENT_SAVE_MODEL)
     {
-        const char *path = static_cast<char*>(event->user.data1);
-        ModelRenderer::GetModel()->SaveAsAsset(path);
+        const char *path = static_cast<char *>(event->user.data1);
+        assert(ModelRenderer::GetModel()->SaveAsAsset(path) == Error::ErrorCode::E_OK);
         delete path;
     }
     if (event->type == SDL_EVENT_QUIT)
@@ -257,7 +258,10 @@ void HandleMenuAndShortcuts()
     {
         if (!ModelRenderer::GetModel()->ValidateLodDistances())
         {
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Invalid Model", "LOD distances are invalid! Please fix them in the LOD editor and make sure that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the same distance", window);
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                     "Invalid Model",
+                                     "LOD distances are invalid! Please fix them in the LOD editor and make sure that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the same distance",
+                                     window);
         } else
         {
             SDL_ShowSaveFileDialog(saveGmdlCallback, nullptr, window, {&gmdlFilter}, 1, nullptr);
@@ -273,9 +277,8 @@ int main()
         return -1;
     }
 
-    SharedMgr::InitSharedMgr();
-    SharedMgr::GetTextureId = ModelRenderer::GetTextureID;
-    SharedMgr::GetTextureSize = ModelRenderer::GetTextureSize;
+    MdleditImGuiTextureCache cache = MdleditImGuiTextureCache();
+    SharedMgr::InitSharedMgr(&cache);
 
     const char *glslVersion = "#version 130";
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);

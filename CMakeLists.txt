@@ -86,6 +86,9 @@ set(SHARED_SRC
         ../shared/SharedMgr.h
         ../shared/TextureBrowserWindow.cpp
         ../shared/TextureBrowserWindow.h
+        ../shared/ImGuiTextureAssetCache.h
+        ../shared/SDLRendererImGuiTextureAssetCache.cpp
+        ../shared/SDLRendererImGuiTextureAssetCache.h
 )
 
 if (WIN32)

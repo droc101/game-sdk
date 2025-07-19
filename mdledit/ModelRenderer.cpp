@@ -48,7 +48,9 @@ GLuint ModelRenderer::CreateShader(const char *filename, const GLenum type)
 
 GLuint ModelRenderer::CreateTexture(const char *filename)
 {
-    const TextureAsset &textureAsset = TextureAsset::CreateFromAsset(filename);
+    TextureAsset textureAsset;
+    const Error::ErrorCode e = TextureAsset::CreateFromAsset(filename, textureAsset);
+    assert(e == Error::ErrorCode::E_OK);
     std::vector<uint32_t> pixels;
     textureAsset.GetPixelsRGBA(pixels);
 
@@ -190,7 +192,6 @@ void ModelRenderer::UpdateViewRel(const float pitchDeg, const float yawDeg, cons
 
 void ModelRenderer::UnloadModel()
 {
-    textureBuffers.clear();
     for (const GLModelLod &i: lods)
     {
         glDeleteVertexArrays(1, &i.vao);
@@ -218,7 +219,7 @@ GLuint ModelRenderer::GetTexture(const char *filename)
 }
 
 
-void ModelRenderer::LoadModel(ModelAsset& newModel)
+void ModelRenderer::LoadModel(ModelAsset &newModel)
 {
     UnloadModel();
     model = newModel;
@@ -227,7 +228,7 @@ void ModelRenderer::LoadModel(ModelAsset& newModel)
 
     for (size_t i = 0; i < newModel.GetLodCount(); i++)
     {
-        const ModelAsset::ModelLod &lod = newModel.GetLod(i);
+        const ModelLod &lod = newModel.GetLod(i);
         GLModelLod glod;
         glGenVertexArrays(1, &glod.vao);
         glBindVertexArray(glod.vao);
@@ -243,7 +244,7 @@ void ModelRenderer::LoadModel(ModelAsset& newModel)
         {
             for (size_t k = 0; k < newModel.GetMaterialCount(); k++)
             {
-                const ModelAsset::Material &mat = newModel.GetSkin(j)[k];
+                const Material &mat = newModel.GetSkin(j)[k];
                 GetTexture(mat.texture.c_str()); // this just ensures it is loaded, we don't need it rn
             }
         }
@@ -321,7 +322,7 @@ void ModelRenderer::Render()
 
     for (size_t i = 0; i < model.GetMaterialCount(); i++)
     {
-        ModelAsset::Material &mat = model.GetSkin(skin)[i];
+        Material &mat = model.GetSkin(skin)[i];
         glUniform3fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetData());
 
         const GLuint texture = GetTexture(mat.texture.c_str());
@@ -405,7 +406,7 @@ void ModelRenderer::LoadCube()
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * cubeVerts.size(), cubeVerts.data(), GL_STATIC_DRAW);
 }
 
-ImTextureID ModelRenderer::GetTextureID(const std::string& relPath)
+ImTextureID ModelRenderer::GetTextureID(const std::string &relPath)
 {
     return GetTexture(relPath.c_str());
 }
@@ -418,6 +419,5 @@ ImVec2 ModelRenderer::GetTextureSize(const std::string &relPath)
     int h;
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
-    return {static_cast<float>(w),static_cast<float>(h)};
+    return {static_cast<float>(w), static_cast<float>(h)};
 }
-

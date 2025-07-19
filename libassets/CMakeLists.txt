@@ -21,6 +21,15 @@ add_library(assets STATIC include/libassets/libassets.h
         src/util/Color.cpp
         include/libassets/util/Color.h
         include/libassets/util/Primitive.h
+        include/libassets/util/Asset.h
+        src/util/ModelVertex.cpp
+        include/libassets/util/ModelVertex.h
+        src/util/Material.cpp
+        include/libassets/util/Material.h
+        src/util/ModelLod.cpp
+        include/libassets/util/ModelLod.h
+        src/util/Error.cpp
+        include/libassets/util/Error.h
 )
 
 find_package(ZLIB REQUIRED)

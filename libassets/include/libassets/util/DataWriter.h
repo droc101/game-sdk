@@ -13,7 +13,6 @@
 class DataWriter
 {
     public:
-
         DataWriter() = default;
 
         /**
@@ -38,11 +37,13 @@ class DataWriter
             const uint8_t *buf = reinterpret_cast<const uint8_t *>(buffer);
             data.insert(data.end(), buf, buf + length * sizeof(T));
         }
+
         template<Primitive T> void WriteBuffer(const std::vector<T> &buffer)
         {
             const uint8_t *bufferData = reinterpret_cast<const uint8_t *>(buffer.data());
             data.insert(data.end(), bufferData, bufferData + buffer.size() * sizeof(T));
         }
+
         template<Primitive T, size_t length> void WriteBuffer(const std::array<T, length> &buffer)
         {
             const uint8_t *bufferData = reinterpret_cast<const uint8_t *>(buffer.data());

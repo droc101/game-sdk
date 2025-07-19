@@ -9,7 +9,8 @@
 #include <SDL3/SDL_video.h>
 
 
-class TextureBrowserWindow {
+class TextureBrowserWindow
+{
     public:
         TextureBrowserWindow() = delete;
 
@@ -25,7 +26,6 @@ class TextureBrowserWindow {
 
         static inline std::vector<std::string> textures;
 };
-
 
 
 #endif //TEXTUREBROWSERWINDOW_H

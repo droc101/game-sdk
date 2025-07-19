@@ -7,9 +7,9 @@
 #include <unordered_map>
 #include <SDL3/SDL.h>
 #include "Options.h"
-#include <libassets/asset/TextureAsset.h>
 #include "SharedMgr.h"
 #include <libassets/asset/SoundAsset.h>
+#include "SDLRendererImGuiTextureAssetCache.h"
 #include "../lib/miniaudio/miniaudio.h"
 
 SoundAsset soundAsset;
@@ -18,7 +18,6 @@ ma_sound sound{};
 static bool soundLoaded = false;
 SDL_Renderer *renderer = nullptr;
 ma_engine engine{};
-std::unordered_map<std::string, SDL_Texture*> textureBuffers{};
 
 constexpr SDL_DialogFileFilter gsndFilter = {"GAME sound (*.gsnd)", "gsnd"};
 constexpr SDL_DialogFileFilter wavFilter = {"WAV audio", "wav"};
@@ -51,7 +50,8 @@ void openGsndCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    soundAsset = SoundAsset::CreateFromAsset(fileList[0]);
+    const Error::ErrorCode e = SoundAsset::CreateFromAsset(fileList[0], soundAsset);
+    assert(e == Error::ErrorCode::E_OK);
     loadSound();
 }
 
@@ -61,7 +61,8 @@ void importCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     {
         return;
     }
-    soundAsset = SoundAsset::CreateFromWAV(fileList[0]);
+    const Error::ErrorCode e = SoundAsset::CreateFromWAV(fileList[0], soundAsset);
+    assert(e == Error::ErrorCode::E_OK);
     loadSound();
 }
 
@@ -71,7 +72,7 @@ void saveGsndCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    soundAsset.SaveAsAsset(fileList[0]);
+    assert(soundAsset.SaveAsAsset(fileList[0]) == Error::ErrorCode::E_OK);
 }
 
 void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -80,48 +81,7 @@ void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     {
         return;
     }
-    soundAsset.SaveAsWAV(fileList[0]);
-}
-
-ImTextureID GetTextureID(const std::string& relPath)
-{
-    if (textureBuffers.contains(relPath))
-    {
-        return reinterpret_cast<ImTextureID>(textureBuffers.at(relPath));
-    }
-    // TODO: if the texture file does not exist return an existing missing texture instead of making a new one
-    const std::string &texturePath = Options::gamePath + std::string("/assets/") + relPath;
-
-    const TextureAsset asset = TextureAsset::CreateFromAsset(texturePath.c_str());
-    SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(asset.GetWidth()),
-                                                 static_cast<int>(asset.GetHeight()),
-                                                 SDL_PIXELFORMAT_RGBA8888,
-                                                 const_cast<uint32_t *>(asset.GetPixels()),
-                                                 static_cast<int>(asset.GetWidth() * sizeof(uint32_t)));
-    if (surface == nullptr)
-    {
-        printf("SDL_CreateSurfaceFrom() failed: %s\n", SDL_GetError());
-        return -1;
-    }
-    SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, surface);
-    if (tex == nullptr)
-    {
-        printf("SDL_CreateTextureFromSurface() failed: %s\n", SDL_GetError());
-        return -1;
-    }
-    SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_NEAREST);
-    SDL_DestroySurface(surface);
-
-    textureBuffers.insert({relPath, tex});
-    return reinterpret_cast<ImTextureID>(tex);
-}
-
-ImVec2 GetTextureSize(const std::string &relPath)
-{
-    SDL_Texture* tex = reinterpret_cast<SDL_Texture *>(GetTextureID(relPath));
-    ImVec2 sz;
-    SDL_GetTextureSize(tex, &sz.x, &sz.y);
-    return sz;
+    assert(soundAsset.SaveAsWAV(fileList[0]) == Error::ErrorCode::E_OK);
 }
 
 static void Render(bool &done, SDL_Window *window)
@@ -240,7 +200,7 @@ static void Render(bool &done, SDL_Window *window)
         ma_uint64 pcmLen;
         ma_decoder_get_data_format(&decoder, &fmt, &channels, &sampleRate, nullptr, 0);
         ma_sound_get_length_in_pcm_frames(&sound, &pcmLen);
-        constexpr std::array<const char*, 6> formatNames = {"Unknown", "U8", "S16", "S24", "S32", "F32"};
+        constexpr std::array<const char *, 6> formatNames = {"Unknown", "U8", "S16", "S24", "S32", "F32"};
         ImGui::Text("Format: %s", formatNames[fmt]);
         ImGui::Text("Channels: %d", channels);
         ImGui::Text("Sample Rate: %d Hz", sampleRate);
@@ -270,10 +230,6 @@ int main()
         return -1;
     }
 
-    SharedMgr::InitSharedMgr();
-    SharedMgr::GetTextureId = GetTextureID;
-    SharedMgr::GetTextureSize = GetTextureSize;
-
     constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
     SDL_Window *window = SDL_CreateWindow("sndedit", 800, 600, windowFlags);
     if (window == nullptr)
@@ -288,6 +244,10 @@ int main()
         printf("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
         return -1;
     }
+
+    SDLRendererImGuiTextureAssetCache cache = SDLRendererImGuiTextureAssetCache(renderer);
+    SharedMgr::InitSharedMgr(&cache);
+
     SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
     SDL_ShowWindow(window);
 
@@ -355,11 +315,6 @@ int main()
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
-    for (const std::pair<std::string, SDL_Texture*> p: textureBuffers)
-    {
-        SDL_DestroyTexture(p.second);
-    }
-    textureBuffers.clear();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     ma_engine_uninit(&engine);

@@ -3,93 +3,29 @@
 //
 
 #include <libassets/asset/ModelAsset.h>
-#include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
-#include <assimp/scene.h>
-#include <assimp/Exporter.hpp>
 #include <cassert>
 #include <filesystem>
 #include <format>
-#include <fstream>
 #include <string>
-#include <unordered_map>
-#include <utility>
 #include "../../shared/Options.h"
 #include <libassets/util/AssetReader.h>
-#include <libassets/util/DataReader.h>
 #include <libassets/util/Color.h>
+#include <libassets/util/Material.h>
+#include <libassets/util/Asset.h>
+#include "libassets/util/ModelLod.h"
 
-ModelAsset::Vertex::Vertex(DataReader &reader)
-{
-    static_assert(uv.size() == 2);
-    for (float &pos: position)
-    {
-        pos = reader.Read<float>();
-    }
-    uv.at(0) = reader.Read<float>();
-    uv.at(1) = reader.Read<float>();
-    for (float &norm: normal)
-    {
-        norm = reader.Read<float>();
-    }
-}
-
-ModelAsset::Vertex::Vertex(const aiMesh *mesh, const uint32_t vertexIndex)
-{
-    const aiVector3D position = mesh->mVertices[vertexIndex];
-    const aiVector3D normal = mesh->HasNormals() ? mesh->mNormals[vertexIndex] : aiVector3D(0, 0, 0);
-    const aiVector3D uv = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][vertexIndex] : aiVector3D(0, 0, 0);
-    this->position = {position.x, position.y, position.z};
-    this->normal = {normal.x, normal.y, normal.z};
-    this->uv = {uv.x, uv.y};
-}
-
-ModelAsset::Material::Material(DataReader &reader)
-{
-    reader.ReadString(texture, 64);
-    color = Color(reader, false);
-    shader = static_cast<ModelShader>(reader.Read<uint32_t>());
-}
-
-ModelAsset::Material::Material(std::string texture, const uint32_t color, const ModelShader shader):
-    texture(std::move(texture)),
-    color(Color(color)),
-    shader(shader)
-{}
-
-ModelAsset::ModelLod::ModelLod(DataReader &reader, const uint32_t materialCount)
-{
-    distance = reader.Read<float>();
-    const uint32_t vertexCount = reader.Read<uint32_t>();
-    for (uint32_t _i = 0; _i < vertexCount; _i++)
-    {
-        vertices.emplace_back(reader);
-    }
-    for (uint32_t _i = 0; _i < materialCount; _i++)
-    {
-        indexCounts.push_back(reader.Read<uint32_t>());
-    }
-    for (const uint32_t indexCount: indexCounts)
-    {
-        std::vector<uint32_t> materialIndices;
-        for (uint32_t _i = 0; _i < indexCount; _i++)
-        {
-            materialIndices.push_back(reader.Read<uint32_t>());
-        }
-        indices.push_back(materialIndices);
-    }
-}
-
-void ModelAsset::CreateFromAsset(const char *assetPath, ModelAsset &modelAsset)
+Error::ErrorCode ModelAsset::CreateFromAsset(const char *assetPath, ModelAsset &modelAsset)
 {
     modelAsset.lods.clear();
     modelAsset.skins.clear();
-    DataReader reader;
-    [[maybe_unused]] const AssetReader::AssetType assetType = AssetReader::LoadFromFile(assetPath, reader);
-    assert(assetType == AssetReader::AssetType::ASSET_TYPE_MODEL);
-    const uint32_t materialCount = reader.Read<uint32_t>();
-    const uint32_t skinCount = reader.Read<uint32_t>();
-    const uint32_t lodCount = reader.Read<uint32_t>();
+    Asset asset;
+    const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
+    assert(e == Error::ErrorCode::E_OK);
+    assert(asset.type == Asset::AssetType::ASSET_TYPE_MODEL);
+    const uint32_t materialCount = asset.reader.Read<uint32_t>();
+    const uint32_t skinCount = asset.reader.Read<uint32_t>();
+    const uint32_t lodCount = asset.reader.Read<uint32_t>();
 
     modelAsset.skins.resize(skinCount);
     for (std::vector<Material> &skin: modelAsset.skins)
@@ -97,14 +33,15 @@ void ModelAsset::CreateFromAsset(const char *assetPath, ModelAsset &modelAsset)
         skin.reserve(materialCount);
         for (uint32_t _i = 0; _i < materialCount; _i++)
         {
-            skin.emplace_back(reader);
+            skin.emplace_back(asset.reader);
         }
     }
 
     for (uint32_t _i = 0; _i < lodCount; _i++)
     {
-        modelAsset.lods.emplace_back(reader, materialCount);
+        modelAsset.lods.emplace_back(asset.reader, materialCount);
     }
+    return Error::ErrorCode::E_OK;
 }
 
 void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
@@ -135,7 +72,7 @@ void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     {
         writer.Write<float>(lod.distance);
         writer.Write<uint32_t>(static_cast<uint32_t>(lod.vertices.size()));
-        for (const Vertex &vertex: lod.vertices)
+        for (const ModelVertex &vertex: lod.vertices)
         {
             writer.WriteBuffer<float, 3>(vertex.position);
             writer.WriteBuffer<float, 2>(vertex.uv);
@@ -150,19 +87,19 @@ void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     writer.CopyToVector(buffer);
 }
 
-void ModelAsset::SaveAsAsset(const char *assetPath) const
+Error::ErrorCode ModelAsset::SaveAsAsset(const char *assetPath) const
 {
     std::vector<uint8_t> data;
     SaveToBuffer(data);
-    AssetReader::SaveToFile(assetPath, data, AssetReader::AssetType::ASSET_TYPE_MODEL);
+    return AssetReader::SaveToFile(assetPath, data, Asset::AssetType::ASSET_TYPE_MODEL);
 }
 
-ModelAsset::ModelLod &ModelAsset::GetLod(const size_t index)
+ModelLod &ModelAsset::GetLod(const size_t index)
 {
     return lods.at(index);
 }
 
-ModelAsset::Material *ModelAsset::GetSkin(const size_t index)
+Material *ModelAsset::GetSkin(const size_t index)
 {
     return skins.at(index).data();
 }
@@ -190,7 +127,7 @@ void ModelAsset::AddSkin()
         Material m{};
         m.texture = Options::defaultTexture;
         m.color = Color({1.0f, 1.0f, 1.0f, 1.0f});
-        m.shader = ModelShader::SHADER_SHADED;
+        m.shader = Material::MaterialShader::SHADER_SHADED;
         skin.push_back(m);
     }
     skins.push_back(skin);
@@ -204,7 +141,7 @@ void ModelAsset::RemoveSkin(const size_t index)
 void ModelAsset::GetVertexBuffer(const size_t lodIndex, DataWriter &writer)
 {
     const ModelLod &lod = GetLod(lodIndex);
-    for (const Vertex &vertex: lod.vertices)
+    for (const ModelVertex &vertex: lod.vertices)
     {
         writer.WriteBuffer<float, 3>(vertex.position);
         writer.WriteBuffer<float, 2>(vertex.uv);
@@ -212,121 +149,7 @@ void ModelAsset::GetVertexBuffer(const size_t lodIndex, DataWriter &writer)
     }
 }
 
-ModelAsset::ModelLod::ModelLod(const char *filePath, const float distance)
-{
-    this->distance = distance;
-
-    std::unordered_map<Vertex, uint32_t> vertexToIndex;
-
-    Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(filePath,
-                                             aiProcess_Triangulate |
-                                                     aiProcess_JoinIdenticalVertices |
-                                                     aiProcess_SortByPType |
-                                                     aiProcess_ValidateDataStructure |
-                                                     aiProcess_FlipUVs |
-                                                     aiProcess_GenSmoothNormals);
-
-    if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
-    {
-        printf("Assimp error: %s\n", importer.GetErrorString());
-        throw std::runtime_error("assimp error, check stdout");
-    }
-
-    for (uint32_t i = 0; i < scene->mNumMeshes; i++)
-    {
-        const aiMesh *mesh = scene->mMeshes[i];
-        const uint32_t materialIndex = mesh->mMaterialIndex;
-
-        if (materialIndex >= this->indices.size())
-        {
-            this->indices.resize(materialIndex + 1);
-        }
-
-        std::vector<uint32_t> &indices = this->indices[materialIndex];
-
-        for (uint32_t j = 0; j < mesh->mNumFaces; j++)
-        {
-            const aiFace &face = mesh->mFaces[j];
-            for (uint32_t k = 0; k < face.mNumIndices; k++)
-            {
-                const uint32_t vertexIndex = face.mIndices[k];
-                const Vertex v(mesh, vertexIndex);
-                if (vertexToIndex.contains(v))
-                {
-                    indices.push_back(vertexToIndex.at(v));
-                } else
-                {
-                    indices.push_back(this->vertices.size());
-                    this->vertices.emplace_back(mesh, vertexIndex);
-                    vertexToIndex[v] = indices.back();
-                }
-            }
-        }
-    }
-
-
-    for (const std::vector<uint32_t> &i: this->indices)
-    {
-        this->indexCounts.push_back(i.size());
-    }
-}
-
-void ModelAsset::ModelLod::Export(const char *path) const
-{
-    std::ofstream f(path);
-    f << "# Generated by GAME SDK\n\n";
-    for (const Vertex &v: vertices)
-    {
-        f << std::format("v {} {} {}\n", v.position[0], v.position[1], v.position[2]);
-        f << std::format("vt {} {}\n", v.uv[0], v.uv[1]);
-        f << std::format("vn {} {} {}\n", v.normal[0], v.normal[1], v.normal[2]);
-    }
-
-    f << "\n\n";
-
-    for (size_t m = 0; m < indices.size(); m++)
-    {
-        f << std::format("usemtl mat_{}\n", m);
-        for (uint32_t i = 0; i < indexCounts.at(m) / 3; i++)
-        {
-            const uint32_t i0 = indices.at(m).at(i*3+0) + 1;
-            const uint32_t i1 = indices.at(m).at(i*3+1) + 1;
-            const uint32_t i2 = indices.at(m).at(i*3+2) + 1;
-            f << std::format("f {}/{}/{} {}/{}/{} {}/{}/{}\n", i0,i0,i0, i1,i1,i1, i2,i2,i2);
-        }
-        f << "\n";
-    }
-
-    f.close();
-}
-
-
-bool ModelAsset::Vertex::operator==(const Vertex &other) const
-{
-    return this->normal == other.normal && this->position == other.position && this->uv == other.uv;
-}
-
-std::size_t std::hash<ModelAsset::Vertex>::operator()(const ModelAsset::Vertex &vertex) const noexcept
-{
-    constexpr size_t goldenRatio = 0x9e3779b9;
-    size_t hashValue = 0;
-    for (const float position: vertex.position)
-    {
-        hashValue ^= std::hash<float>()(position) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-    }
-    for (const float normal: vertex.normal)
-    {
-        hashValue ^= std::hash<float>()(normal) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-    }
-    for (const float uv: vertex.uv)
-    {
-        hashValue ^= std::hash<float>()(uv) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-    }
-    return hashValue;
-}
-
-void ModelAsset::CreateFromStandardModel(const char *objPath, ModelAsset &model)
+Error::ErrorCode ModelAsset::CreateFromStandardModel(const char *objPath, ModelAsset &model)
 {
     const ModelLod lod(objPath, 0);
     model.lods.push_back(lod);
@@ -334,9 +157,10 @@ void ModelAsset::CreateFromStandardModel(const char *objPath, ModelAsset &model)
     std::vector<Material> skin{};
     for (size_t _i = 0; _i < materialCount; _i++)
     {
-        skin.emplace_back(Options::defaultTexture, -1u, ModelShader::SHADER_SHADED);
+        skin.emplace_back(Options::defaultTexture, -1u, Material::MaterialShader::SHADER_SHADED);
     }
     model.skins.push_back(skin);
+    return Error::ErrorCode::E_OK;
 }
 
 bool ModelAsset::LODSortCompare(const ModelLod &a, const ModelLod &b)
@@ -349,7 +173,7 @@ void ModelAsset::SortLODs()
     std::ranges::sort(lods, LODSortCompare);
 }
 
-void ModelAsset::AddLod(const std::string& path)
+void ModelAsset::AddLod(const std::string &path)
 {
     const float dist = lods.end()->distance + 5;
     const ModelLod l(path.c_str(), dist);
@@ -379,4 +203,3 @@ bool ModelAsset::ValidateLodDistances()
     }
     return true;
 }
-

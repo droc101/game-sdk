@@ -5,7 +5,8 @@
 #ifndef SKINEDITWINDOW_H
 #define SKINEDITWINDOW_H
 
-class SkinEditWindow {
+class SkinEditWindow
+{
     public:
         SkinEditWindow() = delete;
 
@@ -14,10 +15,10 @@ class SkinEditWindow {
         static void Hide();
 
         static void Render();
+
     private:
         static inline bool visible;
 };
-
 
 
 #endif //SKINEDITWINDOW_H

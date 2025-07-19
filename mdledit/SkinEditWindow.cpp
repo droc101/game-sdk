@@ -41,7 +41,7 @@ void SkinEditWindow::Render()
             const std::string title = std::format("Material {}", m);
             if (ImGui::CollapsingHeader(title.c_str()))
             {
-                ModelAsset::Material &mat = ModelRenderer::GetModel()->GetSkin(ModelRenderer::skin)[m];
+                Material &mat = ModelRenderer::GetModel()->GetSkin(ModelRenderer::skin)[m];
 
                 ImGui::PushItemWidth(-1);
                 ImGui::Text("Texture");
@@ -52,7 +52,7 @@ void SkinEditWindow::Render()
                 ImGui::ColorEdit4(std::format("##Color{}", m).c_str(), mat.color.GetData());
 
                 ImGui::Text("Shader");
-                constexpr std::array<const char*, 3> shaders = {"Sky", "Unshaded", "Shaded"};
+                constexpr std::array<const char *, 3> shaders = {"Sky", "Unshaded", "Shaded"};
                 uint32_t sel = static_cast<uint32_t>(mat.shader);
                 if (ImGui::BeginCombo(std::format("##Shader{}", m).c_str(), shaders.at(sel)))
                 {
@@ -61,7 +61,7 @@ void SkinEditWindow::Render()
                         const bool is_selected = (sel == i);
                         if (ImGui::Selectable(shaders[i], is_selected))
                             sel = i;
-                        mat.shader = static_cast<ModelAsset::ModelShader>(sel);
+                        mat.shader = static_cast<Material::MaterialShader>(sel);
                         if (is_selected)
                             ImGui::SetItemDefaultFocus();
                     }
@@ -99,4 +99,3 @@ void SkinEditWindow::Render()
         ImGui::End();
     }
 }
-

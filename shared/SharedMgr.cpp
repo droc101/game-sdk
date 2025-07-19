@@ -12,9 +12,10 @@
 #include "OptionsWindow.h"
 #include "TextureBrowserWindow.h"
 
-void SharedMgr::InitSharedMgr()
+void SharedMgr::InitSharedMgr(ImGuiTextureAssetCache *cache)
 {
     Options::Load();
+    textureCache = cache;
 }
 
 void SharedMgr::DestroySharedMgr()
@@ -55,7 +56,7 @@ void SharedMgr::SharedMenuUI()
 
 }
 
-void SharedMgr::RenderSharedUI(SDL_Window* window)
+void SharedMgr::RenderSharedUI(SDL_Window *window)
 {
     OptionsWindow::Render(window);
     AboutWindow::Render();
@@ -64,17 +65,23 @@ void SharedMgr::RenderSharedUI(SDL_Window* window)
     if (demoVisible) ImGui::ShowDemoWindow(&demoVisible);
 }
 
-std::vector<std::string> SharedMgr::ScanFolder(const std::string& directory_path, const std::string& extension) {
+std::vector<std::string> SharedMgr::ScanFolder(const std::string &directory_path, const std::string &extension)
+{
     std::vector<std::string> files;
-    try {
-        for (const auto& entry : std::filesystem::directory_iterator(directory_path)) {
-            if (entry.is_regular_file()) {
-                if (entry.path().extension() == extension) {
+    try
+    {
+        for (const auto &entry: std::filesystem::directory_iterator(directory_path))
+        {
+            if (entry.is_regular_file())
+            {
+                if (entry.path().extension() == extension)
+                {
                     files.push_back(entry.path().filename().string());
                 }
             }
         }
-    } catch (const std::filesystem::filesystem_error& ex) {
+    } catch (const std::filesystem::filesystem_error &ex)
+    {
         printf("std::filesystem_error: %s", ex.what());
     }
     return files;

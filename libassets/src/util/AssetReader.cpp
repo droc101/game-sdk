@@ -3,41 +3,46 @@
 //
 
 #include <libassets/util/AssetReader.h>
-#include <cassert>
 #include <csignal>
 #include <cstdio>
 #include <cstring>
 #include <format>
-#include <stdexcept>
 #include <vector>
 #include <zlib.h>
 #include <libassets/util/DataReader.h>
 
-AssetReader::AssetType AssetReader::Decompress(std::vector<uint8_t> &asset, DataReader &reader)
+Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &outAsset)
 {
-    assert(reader.bytes.empty());
-    reader.offset = 0;
+    if (!outAsset.reader.bytes.empty())
+    {
+        return Error::ErrorCode::E_INVALID_ARGUMENT;
+    }
+    outAsset.reader.offset = 0;
     constexpr size_t dataOffset = sizeof(uint32_t) * 4;
-    assert(dataOffset <= asset.size());
+    if (dataOffset > asset.size())
+    {
+        return Error::ErrorCode::E_INVALID_HEADER;
+    }
     const uint32_t *header = reinterpret_cast<const uint32_t *>(asset.data());
     const uint32_t compressedSize = header[0];
-    reader.size = header[1];
+    outAsset.reader.size = header[1];
     // uint32_t*3 = unused
-    const AssetType &assetType = static_cast<AssetType>(header[3]);
+    const Asset::AssetType &assetType = static_cast<Asset::AssetType>(header[3]);
 
-    reader.bytes.resize(reader.size);
+    outAsset.reader.bytes.resize(outAsset.reader.size);
 
     z_stream stream{};
 
     stream.next_in = asset.data() + dataOffset;
     stream.avail_in = compressedSize;
-    stream.next_out = reader.bytes.data();
-    stream.avail_out = reader.size;
+    stream.next_out = outAsset.reader.bytes.data();
+    stream.avail_out = outAsset.reader.size;
 
     if (inflateInit2(&stream, MAX_WBITS | 16) != Z_OK)
     {
-        throw std::runtime_error(std::format("inflateInit2() failed with error: {}",
-                                             stream.msg == nullptr ? "(null)" : stream.msg));
+        printf(std::format("inflateInit2() failed with error: {}",
+                           stream.msg == nullptr ? "(null)" : stream.msg).c_str());
+        return Error::ErrorCode::E_COMPRESSION_ERROR;
     }
 
     int inflateReturnValue = inflate(&stream, Z_NO_FLUSH);
@@ -45,27 +50,40 @@ AssetReader::AssetType AssetReader::Decompress(std::vector<uint8_t> &asset, Data
     {
         if (inflateReturnValue != Z_OK)
         {
-            throw std::runtime_error(std::format("inflate() failed with error: {}",
-                                                 stream.msg == nullptr ? "(null)" : stream.msg));
+            printf(std::format("inflate() failed with error: {}",
+                               stream.msg == nullptr ? "(null)" : stream.msg).c_str());
+            return Error::ErrorCode::E_COMPRESSION_ERROR;
         }
         inflateReturnValue = inflate(&stream, Z_NO_FLUSH);
     }
 
     if (inflateEnd(&stream) != Z_OK)
     {
-        throw std::runtime_error(std::format("inflateEnd() failed with error: {}",
-                                             stream.msg == nullptr ? "(null)" : stream.msg));
+        printf(std::format("inflateEnd() failed with error: {}",
+                           stream.msg == nullptr ? "(null)" : stream.msg).c_str());
+        return Error::ErrorCode::E_COMPRESSION_ERROR;
     }
 
-    assert(reader.size == stream.total_out);
+    if (outAsset.reader.size != stream.total_out)
+    {
+        return Error::ErrorCode::E_INVALID_BODY;
+    }
 
-    return assetType;
+    outAsset.type = assetType;
+    return Error::ErrorCode::E_OK;
 }
 
-void AssetReader::Compress(std::vector<uint8_t> &inBuffer, std::vector<uint8_t> &outBuffer, const AssetType type)
+Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer, std::vector<uint8_t> &outBuffer,
+                                       const Asset::AssetType type)
 {
-    assert(!inBuffer.empty());
-    assert(outBuffer.empty());
+    if (inBuffer.empty())
+    {
+        return Error::ErrorCode::E_INVALID_ARGUMENT;
+    }
+    if (!outBuffer.empty())
+    {
+        return Error::ErrorCode::E_INVALID_ARGUMENT;
+    }
     outBuffer.resize(sizeof(uint32_t) * 4);
     uint32_t *header = reinterpret_cast<uint32_t *>(outBuffer.data());
     header[1] = inBuffer.size();
@@ -96,38 +114,47 @@ void AssetReader::Compress(std::vector<uint8_t> &inBuffer, std::vector<uint8_t> 
 
     if (ret != Z_STREAM_END)
     {
-        throw std::runtime_error("deflate failed");
+        printf("deflate failed");
+        return Error::ErrorCode::E_COMPRESSION_ERROR;
     }
 
     *reinterpret_cast<uint32_t *>(outBuffer.data()) = outBuffer.size() - sizeof(uint32_t) * 4;
+
+    return Error::ErrorCode::E_OK;
 }
 
-void AssetReader::SaveToFile(const char *filePath, std::vector<uint8_t> &data, const AssetType type)
+Error::ErrorCode AssetReader::SaveToFile(const char *filePath, std::vector<uint8_t> &data,
+                                         const Asset::AssetType type)
 {
     FILE *file = fopen(filePath, "wb");
     if (file == nullptr)
     {
-        throw std::runtime_error("Unable to open file for writing");
+        printf("Unable to open file for writing");
+        return Error::ErrorCode::E_CANT_OPEN_FILE;
     }
     std::vector<uint8_t> compressedData;
-    Compress(data, compressedData, type);
+    const Error::ErrorCode e = Compress(data, compressedData, type);
     fwrite(compressedData.data(), 1, compressedData.size(), file);
     fclose(file);
+    return e;
 }
 
-AssetReader::AssetType AssetReader::LoadFromFile(const char *filePath, DataReader &reader)
+Error::ErrorCode AssetReader::LoadFromFile(const char *filePath, Asset &outAsset)
 {
     std::FILE *file = std::fopen(filePath, "rb");
     if (file == nullptr)
     {
-        throw std::runtime_error("Unable to open file");
+        return Error::ErrorCode::E_FILE_NOT_FOUND;
     }
     fseek(file, 0, SEEK_END);
     const size_t dataSize = ftell(file);
-    assert(dataSize >= sizeof(uint32_t) * 4);
+    if (dataSize < sizeof(uint32_t) * 4)
+    {
+        return Error::ErrorCode::E_INVALID_HEADER;
+    }
     std::vector<uint8_t> compressedData(dataSize);
     fseek(file, 0, SEEK_SET);
     fread(compressedData.data(), 1, dataSize, file);
     fclose(file);
-    return Decompress(compressedData, reader);
+    return Decompress(compressedData, outAsset);
 }

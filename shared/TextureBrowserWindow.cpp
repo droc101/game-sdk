@@ -30,8 +30,9 @@ void TextureBrowserWindow::Render()
         ImGui::OpenPopup("Choose Texture");
         ImGui::SetNextWindowSize(ImVec2(600, -1), ImGuiCond_Appearing);
         if (ImGui::BeginPopupModal("Choose Texture",
-                     &visible,
-                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoResize))
+                                   &visible,
+                                   ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings |
+                                   ImGuiWindowFlags_NoResize))
         {
             if (ImGui::BeginChild("##picker", ImVec2(-1, 400), ImGuiChildFlags_Border, 0))
             {
@@ -52,7 +53,7 @@ void TextureBrowserWindow::Render()
                     {
                         *str = "texture/" + textures[i];
                     }
-                    const ImVec2 texSize = SharedMgr::GetTextureSize("texture/" + textures[i]);
+                    const ImVec2 texSize = SharedMgr::textureCache->GetTextureSize("texture/" + textures[i]);
                     if (ImGui::BeginItemTooltip())
                     {
                         const std::string tooltip = std::format("{}\n{}x{}", textures[i], texSize.x, texSize.y);
@@ -65,25 +66,27 @@ void TextureBrowserWindow::Render()
                     ImGui::SetCursorPosX(cursor);
 
 
-
                     const float aspect = texSize.x / texSize.y;
                     float draw_width;
                     float draw_height;
-                    if (aspect > 1.0f) {
+                    if (aspect > 1.0f)
+                    {
                         draw_width = tileSize;
                         draw_height = tileSize / aspect;
-                    } else {
+                    } else
+                    {
                         draw_width = tileSize * aspect;
                         draw_height = tileSize;
                     }
 
                     const ImVec2 cursor_pos = ImGui::GetCursorPos();
                     ImGui::SetCursorPos(ImVec2(
-                        cursor_pos.x + (tileSize - draw_width) * 0.5f,
-                        cursor_pos.y + (tileSize - draw_height) * 0.5f
-                    ));
+                            cursor_pos.x + (tileSize - draw_width) * 0.5f,
+                            cursor_pos.y + (tileSize - draw_height) * 0.5f
+                            ));
 
-                    ImGui::Image(SharedMgr::GetTextureId("texture/" + textures[i]), ImVec2(draw_width, draw_height));
+                    ImGui::Image(SharedMgr::textureCache->GetTextureID("texture/" + textures[i]),
+                                 ImVec2(draw_width, draw_height));
                     ImGui::SetCursorPosX(-draw_width);
                     ImGui::SetCursorPosX(tileSize);
 

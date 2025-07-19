@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <libassets/util/AssetReader.h>
 
 class TextureAsset final
 {
@@ -25,25 +26,29 @@ class TextureAsset final
         /**
          * Create a @c TextureAsset from a .gtex asset
          * @param assetPath The path to the gtex file
+         * @param texture
          * @return @c The TextureAsset
          */
-        [[nodiscard]] static TextureAsset CreateFromAsset(const char *assetPath);
+        [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, TextureAsset &texture);
 
         /**
          * Create a @c TextureAsset from a pixel buffer
          * @param pixels The pixel data
          * @param width The width of the texture
          * @param height The height of the texture
+         * @param texture
          * @return The @c TextureAsset
          */
-        [[nodiscard]] static TextureAsset CreateFromPixels(uint32_t *pixels, uint32_t width, uint32_t height);
+        [[nodiscard]] static Error::ErrorCode CreateFromPixels(
+                uint32_t *pixels, uint32_t width, uint32_t height, TextureAsset &texture);
 
         /**
          * Create a @c TextureAsset from a conventional image file (such as PNG)
          * @param imagePath The path to the image file
+         * @param texture
          * @return The @c TextureAsset
          */
-        [[nodiscard]] static TextureAsset CreateFromImage(const char *imagePath);
+        [[nodiscard]] static Error::ErrorCode CreateFromImage(const char *imagePath, TextureAsset &texture);
 
         /// Create a TextureAsset with the "missing texture" pattern
         [[nodiscard]] static TextureAsset CreateMissingTexture();
@@ -65,13 +70,13 @@ class TextureAsset final
          * @param imagePath The path to save to
          * @param format The format to save as
          */
-        void SaveAsImage(const char *imagePath, ImageFormat format) const;
+        [[nodiscard]] Error::ErrorCode SaveAsImage(const char *imagePath, ImageFormat format) const;
 
         /**
          * Save this @c TextureAsset as a GTEX file
          * @param assetPath The path to save to
          */
-        void SaveAsAsset(const char *assetPath) const;
+        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
 
     private:
         std::vector<uint32_t> pixels{};

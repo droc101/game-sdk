@@ -13,13 +13,13 @@
 #include <stb_image.h>
 #include <stb_image_write.h>
 
-TextureAsset TextureAsset::CreateFromImage(const char *imagePath)
+Error::ErrorCode TextureAsset::CreateFromImage(const char *imagePath, TextureAsset &texture)
 {
     if (!std::filesystem::exists(imagePath))
     {
-        return CreateMissingTexture();
+        texture = CreateMissingTexture();
+        return Error::ErrorCode::E_OK;
     }
-    TextureAsset texture;
     int width;
     int height;
     int channels;
@@ -35,7 +35,7 @@ TextureAsset TextureAsset::CreateFromImage(const char *imagePath)
     }
     stbi_image_free(data);
     texture.FixByteOrder();
-    return texture;
+    return Error::ErrorCode::E_OK;
 }
 
 TextureAsset TextureAsset::CreateMissingTexture()
@@ -62,33 +62,34 @@ TextureAsset TextureAsset::CreateMissingTexture()
     return texture;
 }
 
-TextureAsset TextureAsset::CreateFromPixels(uint32_t *pixels, const uint32_t width, const uint32_t height)
+Error::ErrorCode TextureAsset::CreateFromPixels(uint32_t *pixels, const uint32_t width, const uint32_t height,
+                                                TextureAsset &texture)
 {
-    TextureAsset texture;
     texture.width = width;
     texture.height = height;
     texture.pixels.insert(texture.pixels.begin(), pixels, pixels + texture.width * texture.height);
-    return texture;
+    return Error::ErrorCode::E_OK;
 }
 
-TextureAsset TextureAsset::CreateFromAsset(const char *assetPath)
+Error::ErrorCode TextureAsset::CreateFromAsset(const char *assetPath, TextureAsset &texture)
 {
     if (!std::filesystem::exists(assetPath))
     {
-        return CreateMissingTexture();
+        texture = CreateMissingTexture();
+        return Error::ErrorCode::E_OK;
     }
-    DataReader reader;
-    [[maybe_unused]] const AssetReader::AssetType assetType = AssetReader::LoadFromFile(assetPath, reader);
-    assert(assetType == AssetReader::AssetType::ASSET_TYPE_TEXTURE);
-    TextureAsset texture;
-    reader.Seek(sizeof(uint32_t)); // 0 = pixelDataSize in bytes
-    texture.width = reader.Read<uint32_t>();
-    texture.height = reader.Read<uint32_t>();
-    reader.Seek(sizeof(uint32_t)); // 3 = unused (3 sucks)
+    Asset asset;
+    const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
+    assert(e == Error::ErrorCode::E_OK);
+    assert(asset.type == Asset::AssetType::ASSET_TYPE_TEXTURE);
+    asset.reader.Seek(sizeof(uint32_t)); // 0 = pixelDataSize in bytes
+    texture.width = asset.reader.Read<uint32_t>();
+    texture.height = asset.reader.Read<uint32_t>();
+    asset.reader.Seek(sizeof(uint32_t)); // 3 = unused (3 sucks)
     const size_t pixelCount = texture.width * texture.height;
-    reader.ReadToBuffer<uint32_t>(texture.pixels, pixelCount);
+    asset.reader.ReadToBuffer<uint32_t>(texture.pixels, pixelCount);
     texture.FixByteOrder();
-    return texture;
+    return Error::ErrorCode::E_OK;
 }
 
 uint32_t TextureAsset::GetHeight() const
@@ -106,36 +107,38 @@ const unsigned *TextureAsset::GetPixels() const
     return pixels.data();
 }
 
-void TextureAsset::SaveAsImage(const char *imagePath, const ImageFormat format) const
+Error::ErrorCode TextureAsset::SaveAsImage(const char *imagePath, const ImageFormat format) const
 {
     std::vector<uint32_t> pixels;
     GetPixelsRGBA(pixels);
+    int code = 1; // default case fails
     switch (format)
     {
-        using enum ImageFormat;
+            using enum ImageFormat;
         case IMAGE_FORMAT_PNG:
-            stbi_write_png(imagePath,
-                           static_cast<int>(width),
-                           static_cast<int>(height),
-                           4,
-                           pixels.data(),
-                           static_cast<int>(width * sizeof(uint32_t)));
+            code = stbi_write_png(imagePath,
+                                  static_cast<int>(width),
+                                  static_cast<int>(height),
+                                  4,
+                                  pixels.data(),
+                                  static_cast<int>(width * sizeof(uint32_t)));
             break;
         case IMAGE_FORMAT_TGA:
-            stbi_write_tga(imagePath, static_cast<int>(width), static_cast<int>(height), 4, pixels.data());
+            code = stbi_write_tga(imagePath, static_cast<int>(width), static_cast<int>(height), 4, pixels.data());
             break;
         case IMAGE_FORMAT_BMP:
-            stbi_write_bmp(imagePath, static_cast<int>(width), static_cast<int>(height), 4, pixels.data());
+            code = stbi_write_bmp(imagePath, static_cast<int>(width), static_cast<int>(height), 4, pixels.data());
             break;
-        default:;
+        default: ;
     }
+    return code == 0 ? Error::ErrorCode::E_OK : Error::ErrorCode::E_UNKNOWN;
 }
 
-void TextureAsset::SaveAsAsset(const char *assetPath) const
+Error::ErrorCode TextureAsset::SaveAsAsset(const char *assetPath) const
 {
     std::vector<uint8_t> buffer;
     SaveToBuffer(buffer);
-    AssetReader::SaveToFile(assetPath, buffer, AssetReader::AssetType::ASSET_TYPE_TEXTURE);
+    return AssetReader::SaveToFile(assetPath, buffer, Asset::AssetType::ASSET_TYPE_TEXTURE);
 }
 
 
