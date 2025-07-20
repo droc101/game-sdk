@@ -4,10 +4,12 @@
 
 #include <libassets/util/ModelLod.h>
 #include <fstream>
+#include <numeric>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <unordered_map>
+#include "libassets/util/DataWriter.h"
 
 ModelLod::ModelLod(DataReader &reader, const uint32_t materialCount)
 {
@@ -17,6 +19,7 @@ ModelLod::ModelLod(DataReader &reader, const uint32_t materialCount)
     {
         vertices.emplace_back(reader);
     }
+    reader.Skip<uint32_t>(); // Skips the total index count which is not needed for editing
     for (uint32_t _i = 0; _i < materialCount; _i++)
     {
         indexCounts.push_back(reader.Read<uint32_t>());
@@ -120,3 +123,23 @@ void ModelLod::Export(const char *path) const
 
     f.close();
 }
+
+void ModelLod::Write(DataWriter &writer) const
+{
+    writer.Write<float>(distance);
+    writer.Write<uint32_t>(static_cast<uint32_t>(vertices.size()));
+    for (const ModelVertex &vertex: vertices)
+    {
+        writer.WriteBuffer<float, 3>(vertex.position);
+        writer.WriteBuffer<float, 2>(vertex.uv);
+        writer.WriteBuffer<float, 3>(vertex.normal);
+    }
+    const uint32_t totalIndexCount = std::accumulate(indexCounts.begin(), indexCounts.end(), 0u);
+    writer.Write<uint32_t>(totalIndexCount);
+    writer.WriteBuffer<uint32_t>(indexCounts);
+    for (const std::vector<uint32_t> &lodIndices: indices)
+    {
+        writer.WriteBuffer<uint32_t>(lodIndices);
+    }
+}
+

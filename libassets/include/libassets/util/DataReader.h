@@ -48,6 +48,19 @@ class DataReader
             return i;
         }
 
+        template<Primitive T> void Skip()
+        {
+            if (offset + sizeof(T) > size)
+            {
+                throw std::runtime_error(std::format(
+                        "Attempting to read past the end of a buffer (buffer size {}, cursor position {}, read size {}",
+                        size,
+                        offset,
+                        sizeof(T)));
+            }
+            offset += sizeof(T);
+        }
+
         template<Primitive T> void ReadToBuffer(std::vector<T> &buffer, const size_t numberToRead)
         {
             if (offset + sizeof(T) * numberToRead > size)

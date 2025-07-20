@@ -110,19 +110,21 @@ GLuint ModelRenderer::CreateProgram(const char *fragFilename, const char *vertFi
 }
 
 
-void ModelRenderer::Init()
+bool ModelRenderer::Init()
 {
     glewExperimental = GL_TRUE; // Please expose OpenGL 3.x+ interfaces
     const GLenum err = glewInit();
     if (err != GLEW_OK)
     {
-        throw std::runtime_error("GLEW init failure");
+        printf("GLEW init failure");
+        return false;
     }
 
     // Ensure we have GL 3.3 or higher
     if (!GLEW_VERSION_3_3)
     {
-        throw std::runtime_error("GLEW init failure -- we don't have opengl 3.0");
+        printf("GLEW init failure -- we don't have opengl 3.0");
+        return false;
     }
 
 #ifdef BUILDSTYLE_DEBUG
@@ -146,6 +148,8 @@ void ModelRenderer::Init()
     const char *version = reinterpret_cast<const char *>(glGetString(GL_VERSION));
     printf("Renderer: %s\n", renderer);
     printf("OpenGL version: %s\n", version);
+
+    return true;
 }
 
 ModelAsset *ModelRenderer::GetModel()

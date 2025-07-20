@@ -8,12 +8,11 @@
 #include <filesystem>
 #include <format>
 #include <string>
-#include "../../shared/Options.h"
 #include <libassets/util/AssetReader.h>
 #include <libassets/util/Color.h>
 #include <libassets/util/Material.h>
 #include <libassets/util/Asset.h>
-#include "libassets/util/ModelLod.h"
+#include <libassets/util/ModelLod.h>
 
 Error::ErrorCode ModelAsset::CreateFromAsset(const char *assetPath, ModelAsset &modelAsset)
 {
@@ -62,27 +61,13 @@ void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     {
         for (const Material &material: skinMaterials)
         {
-            writer.WriteBuffer<const char>(material.texture.c_str(), 64);
-            material.color.WriteUint32(writer);
-            writer.Write<uint32_t>(static_cast<uint32_t>(material.shader));
+            material.Write(writer);
         }
     }
 
     for (const ModelLod &lod: lods)
     {
-        writer.Write<float>(lod.distance);
-        writer.Write<uint32_t>(static_cast<uint32_t>(lod.vertices.size()));
-        for (const ModelVertex &vertex: lod.vertices)
-        {
-            writer.WriteBuffer<float, 3>(vertex.position);
-            writer.WriteBuffer<float, 2>(vertex.uv);
-            writer.WriteBuffer<float, 3>(vertex.normal);
-        }
-        writer.WriteBuffer<uint32_t>(lod.indexCounts);
-        for (const std::vector<uint32_t> &lodIndices: lod.indices)
-        {
-            writer.WriteBuffer<uint32_t>(lodIndices);
-        }
+        lod.Write(writer);
     }
     writer.CopyToVector(buffer);
 }
@@ -119,13 +104,13 @@ size_t ModelAsset::GetMaterialCount() const
     return skins.at(0).size();
 }
 
-void ModelAsset::AddSkin()
+void ModelAsset::AddSkin(const std::string &defaultTexture)
 {
     std::vector<Material> skin{};
     for (size_t i = 0; i < GetMaterialCount(); i++)
     {
         Material m{};
-        m.texture = Options::defaultTexture;
+        m.texture = defaultTexture;
         m.color = Color({1.0f, 1.0f, 1.0f, 1.0f});
         m.shader = Material::MaterialShader::SHADER_SHADED;
         skin.push_back(m);
@@ -149,7 +134,7 @@ void ModelAsset::GetVertexBuffer(const size_t lodIndex, DataWriter &writer)
     }
 }
 
-Error::ErrorCode ModelAsset::CreateFromStandardModel(const char *objPath, ModelAsset &model)
+Error::ErrorCode ModelAsset::CreateFromStandardModel(const char *objPath, ModelAsset &model, const std::string& defaultTexture)
 {
     const ModelLod lod(objPath, 0);
     model.lods.push_back(lod);
@@ -157,7 +142,7 @@ Error::ErrorCode ModelAsset::CreateFromStandardModel(const char *objPath, ModelA
     std::vector<Material> skin{};
     for (size_t _i = 0; _i < materialCount; _i++)
     {
-        skin.emplace_back(Options::defaultTexture, -1u, Material::MaterialShader::SHADER_SHADED);
+        skin.emplace_back(defaultTexture, -1u, Material::MaterialShader::SHADER_SHADED);
     }
     model.skins.push_back(skin);
     return Error::ErrorCode::E_OK;
@@ -173,12 +158,13 @@ void ModelAsset::SortLODs()
     std::ranges::sort(lods, LODSortCompare);
 }
 
-void ModelAsset::AddLod(const std::string &path)
+bool ModelAsset::AddLod(const std::string &path)
 {
     const float dist = lods.end()->distance + 5;
     const ModelLod l(path.c_str(), dist);
-    if (l.indexCounts.size() != GetMaterialCount()) return; // todo pass error to caller
+    if (l.indexCounts.size() != GetMaterialCount()) return false;
     lods.push_back(l);
+    return true;
 }
 
 void ModelAsset::RemoveLod(const size_t index)

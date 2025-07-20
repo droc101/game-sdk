@@ -4,9 +4,10 @@
 
 #ifndef MODELLOD_H
 #define MODELLOD_H
+
 #include <libassets/util/DataReader.h>
 #include <libassets/util/ModelVertex.h>
-
+#include <libassets/util/DataWriter.h>
 
 class ModelLod
 {
@@ -21,6 +22,8 @@ class ModelLod
         std::vector<std::vector<uint32_t>> indices{};
 
         void Export(const char *path) const;
+
+        void Write(DataWriter &writer) const;
 };
 
 

@@ -22,7 +22,7 @@ class ModelAsset
 
         [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, ModelAsset &modelAsset);
 
-        [[nodiscard]] static Error::ErrorCode CreateFromStandardModel(const char *objPath, ModelAsset &model);
+        [[nodiscard]] static Error::ErrorCode CreateFromStandardModel(const char *objPath, ModelAsset &model, const std::string& defaultTexture);
 
         [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
 
@@ -36,13 +36,13 @@ class ModelAsset
 
         [[nodiscard]] size_t GetMaterialCount() const;
 
-        void AddSkin();
+        void AddSkin(const std::string &defaultTexture);
 
         void RemoveSkin(size_t index);
 
         void SortLODs();
 
-        void AddLod(const std::string &path);
+        [[nodiscard]] bool AddLod(const std::string &path);
 
         void RemoveLod(size_t index);
 

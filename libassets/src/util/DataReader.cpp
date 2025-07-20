@@ -3,7 +3,6 @@
 //
 
 #include <libassets/util/DataReader.h>
-#include <cassert>
 
 DataReader::DataReader(const size_t dataSize): bytes(dataSize)
 {
@@ -13,11 +12,19 @@ DataReader::DataReader(const size_t dataSize): bytes(dataSize)
 
 void DataReader::Seek(const std::ptrdiff_t relativeOffset)
 {
+    if (offset + relativeOffset > size) // size_t is unsigned and cannot be below zero
+    {
+        throw std::runtime_error("Attempted to seek outside of a buffer");
+    }
     offset += relativeOffset;
 }
 
 void DataReader::SeekAbsolute(const size_t position)
 {
+    if (position > size) // size_t is unsigned and cannot be below zero
+    {
+        throw std::runtime_error("Attempted to seek outside of a buffer");
+    }
     offset = position;
 }
 

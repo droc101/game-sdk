@@ -9,6 +9,7 @@
 #include <libassets/asset/ModelAsset.h>
 #include "MdleditImGuiTextureCache.h"
 #include "ModelRenderer.h"
+#include "Options.h"
 #include "SharedMgr.h"
 #include "SkinEditWindow.h"
 
@@ -95,7 +96,7 @@ void ProcessEvent(const SDL_Event *event)
             assert(ModelAsset::CreateFromAsset(path, model) == Error::ErrorCode::E_OK);
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL)
         {
-            assert(ModelAsset::CreateFromStandardModel(path, model) == Error::ErrorCode::E_OK);
+            assert(ModelAsset::CreateFromStandardModel(path, model, Options::defaultTexture) == Error::ErrorCode::E_OK);
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_LOD)
         {
             model = *ModelRenderer::GetModel();

@@ -15,3 +15,11 @@ Material::Material(std::string texture, const uint32_t color, const MaterialShad
     texture(std::move(texture)),
     color(Color(color)),
     shader(shader) {}
+
+void Material::Write(DataWriter &writer) const
+{
+    writer.WriteBuffer<const char>(texture.c_str(), 64);
+    color.WriteUint32(writer);
+    writer.Write<uint32_t>(static_cast<uint32_t>(shader));
+}
+

@@ -6,6 +6,7 @@
 #include <format>
 #include "imgui.h"
 #include "ModelRenderer.h"
+#include "Options.h"
 #include "TextureBrowserWindow.h"
 
 void SkinEditWindow::Show()
@@ -74,7 +75,7 @@ void SkinEditWindow::Render()
         ImGui::Dummy(ImVec2(0.0f, 16.0f));
         if (ImGui::Button("Add", ImVec2(60, 0)))
         {
-            ModelRenderer::GetModel()->AddSkin();
+            ModelRenderer::GetModel()->AddSkin(Options::defaultTexture);
         }
         if (ModelRenderer::GetModel()->GetSkinCount() > 1)
         {

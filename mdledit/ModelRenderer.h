@@ -26,7 +26,7 @@ class ModelRenderer
 
         ModelRenderer() = delete;
 
-        static void Init();
+        [[nodiscard]] static bool Init();
 
         static void Destroy();
 
@@ -36,7 +36,7 @@ class ModelRenderer
 
         static void UnloadModel();
 
-        static ModelAsset *GetModel();
+        [[nodiscard]] static ModelAsset *GetModel();
 
         static void UpdateView(float pitchDeg, float yawDeg, float distance);
 
@@ -46,9 +46,9 @@ class ModelRenderer
 
         static GLuint GetTexture(const char *filename);
 
-        static ImTextureID GetTextureID(const std::string &relPath);
+        [[nodiscard]] static ImTextureID GetTextureID(const std::string &relPath);
 
-        static ImVec2 GetTextureSize(const std::string &relPath);
+        [[nodiscard]] static ImVec2 GetTextureSize(const std::string &relPath);
 
         static inline int lod;
         static inline int skin;
@@ -97,11 +97,11 @@ class ModelRenderer
         static inline GLsizei windowHeight = 600;
         static inline float windowAspect = 4.0 / 3.0;
 
-        static GLuint CreateShader(const char *filename, GLenum type);
+        [[nodiscard]] static GLuint CreateShader(const char *filename, GLenum type);
 
-        static GLuint CreateTexture(const char *filename);
+        [[nodiscard]] static GLuint CreateTexture(const char *filename);
 
-        static GLuint CreateProgram(const char *fragFilename, const char *vertFilename);
+        [[nodiscard]] static GLuint CreateProgram(const char *fragFilename, const char *vertFilename);
 
         static void UpdateMatrix();
 

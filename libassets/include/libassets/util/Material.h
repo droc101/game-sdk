@@ -4,9 +4,9 @@
 
 #ifndef MATERIAL_H
 #define MATERIAL_H
+
 #include <libassets/util/Color.h>
 #include <libassets/util/DataReader.h>
-
 
 class Material
 {
@@ -21,6 +21,8 @@ class Material
         Material() = default;
         explicit Material(DataReader &reader);
         Material(std::string texture, uint32_t color, MaterialShader shader);
+
+        void Write(DataWriter &writer) const;
 
         std::string texture{};
         Color color{};
