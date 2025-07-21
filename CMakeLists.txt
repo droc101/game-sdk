@@ -37,14 +37,14 @@ if (WIN32)
             COMMENT "Copying DLLs to build output directory"
     )
 
-    foreach(dll IN LISTS DLLS)
+    foreach (dll IN LISTS DLLS)
         add_custom_command(TARGET copydlls POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "${MINGW_PATH}\\bin\\${dll}"
                 "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${dll}"
         )
-    endforeach()
-endif()
+    endforeach ()
+endif ()
 
 set(IMGUI_SRC
         ../lib/imgui/imconfig.h
@@ -93,8 +93,8 @@ set(SHARED_SRC
 
 if (WIN32)
     set(SHARED_SRC
-        ${SHARED_SRC}
-        ../game-sdk.rc
+            ${SHARED_SRC}
+            ../game-sdk.rc
     )
 endif ()
 
@@ -103,7 +103,26 @@ set(MINIAUDIO_SRC
         ../lib/miniaudio/miniaudio.c
 )
 
-find_package(SDL3 REQUIRED)
+include(FetchContent)
+find_package(Git 2.18 REQUIRED)
+if (WIN32)
+    execute_process(COMMAND powershell -command "((& '${GIT_EXECUTABLE}' -c 'versionsort.suffix=-' ls-remote --exit-code --refs --sort=version:refname --tags https://github.com/libsdl-org/SDL.git 'release-3.*.*' | Select-Object -Last 1) -Split '/')[2]" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE LATEST_RELEASE)
+else ()
+    execute_process(COMMAND ${GIT_EXECUTABLE} -c "versionsort.suffix=-" ls-remote --exit-code --refs --sort=version:refname --tags https://github.com/libsdl-org/SDL.git "release-3.*.*" COMMAND tail --lines=1 COMMAND cut --delimiter=/ --fields=3 COMMAND tr -d "\n" OUTPUT_VARIABLE LATEST_RELEASE)
+endif ()
+
+FetchContent_Declare(
+        SDL3
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+        GIT_TAG ${LATEST_RELEASE}
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+        EXCLUDE_FROM_ALL
+        SYSTEM
+        FIND_PACKAGE_ARGS CONFIG
+)
+FetchContent_MakeAvailable(SDL3)
+
 find_package(ZLIB REQUIRED)
 find_package(glm REQUIRED)
 find_package(assimp REQUIRED)
@@ -114,7 +133,6 @@ set(SHARED_INCLUDES
         "../lib/imgui"
         "../lib/imgui/backends"
         "../libassets/include"
-        ${SDL3_INCLUDE_DIR}
         ${ZLIB_INCLUDE_DIRS}
         "../lib/json/include"
         "../shared"
@@ -125,7 +143,7 @@ set(SHARED_INCLUDES
 )
 
 set(SHARED_LIBRARIES
-        ${SDL3_LIBRARIES}
+        SDL3::SDL3
         ${ZLIB_LIBRARIES}
         nlohmann_json::nlohmann_json
         ${CMAKE_BINARY_DIR}/libassets/libassets.a
@@ -137,8 +155,8 @@ set(SHARED_LIBRARIES
 
 if (WIN32)
     set(SHARED_LIBRARIES
-        ${SHARED_LIBRARIES}
-        opengl32
+            ${SHARED_LIBRARIES}
+            opengl32
     )
 endif ()
 
