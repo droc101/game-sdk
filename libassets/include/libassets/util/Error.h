@@ -21,7 +21,9 @@ class Error
             E_FILE_NOT_FOUND,
             E_CANT_OPEN_FILE,
             E_UNKNOWN,
-            E_INCORRECT_FORMAT
+            E_INCORRECT_FORMAT,
+            E_SHADER_PARSE_ERROR,
+            E_SHADER_LINK_ERROR
         };
 
         Error() = delete;

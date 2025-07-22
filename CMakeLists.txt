@@ -129,11 +129,12 @@ find_package(ZLIB REQUIRED)
 find_package(glm REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
+find_package(glslang CONFIG REQUIRED)
+find_package(Vulkan REQUIRED)
 
 set(SHARED_INCLUDES
         "../lib/imgui"
         "../lib/imgui/backends"
-        "../libassets/include"
         "../shared"
         ${OPENGL_INCLUDE_DIR}
         ${GLEW_INCLUDE_DIRS}
@@ -143,12 +144,14 @@ set(SHARED_LIBRARIES
         SDL3::SDL3
         nlohmann_json::nlohmann_json
         miniaudio
-        ${CMAKE_BINARY_DIR}/libassets/libassets.a
+        assets
         glm::glm
         assimp::assimp
         ${OPENGL_LIBRARIES}
         ${GLEW_LIBRARIES}
         ZLIB::ZLIB
+        glslang::glslang
+        Vulkan::Vulkan
 )
 
 if (WIN32)

@@ -19,7 +19,11 @@ jobs:
         submodules: 'true'
 
     - name: Install Packages
-      run: sudo apt-get update && sudo apt install -y libglm-dev libglew-dev zlib1g-dev libx11-dev libxrandr-dev
+      run: |
+        wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+        sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-noble.list https://packages.lunarg.com/vulkan/lunarg-vulkan-noble.list
+        sudo apt-get update
+        sudo apt install -y vulkan-sdk libglm-dev libglew-dev zlib1g-dev 
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}

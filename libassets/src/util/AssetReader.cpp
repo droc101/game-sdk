@@ -5,7 +5,6 @@
 #include <libassets/util/AssetReader.h>
 #include <csignal>
 #include <cstdio>
-#include <cstring>
 #include <format>
 #include <vector>
 #include <zlib.h>

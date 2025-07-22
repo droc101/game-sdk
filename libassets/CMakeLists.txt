@@ -3,6 +3,11 @@ project(assets)
 
 set(CMAKE_CXX_STANDARD 20)
 
+find_package(ZLIB REQUIRED)
+find_package(assimp REQUIRED)
+find_package(glslang CONFIG REQUIRED)
+find_package(Vulkan REQUIRED)
+
 add_library(assets STATIC include/libassets/libassets.h
         src/util/AssetReader.cpp
         include/libassets/util/AssetReader.h
@@ -30,14 +35,11 @@ add_library(assets STATIC include/libassets/libassets.h
         include/libassets/util/ModelLod.h
         src/util/Error.cpp
         include/libassets/util/Error.h
+        src/util/ShaderCompiler.cpp
+        include/libassets/util/ShaderCompiler.h
 )
 
-find_package(ZLIB REQUIRED)
-find_package(assimp REQUIRED)
+target_link_libraries(assets PRIVATE ZLIB::ZLIB assimp::assimp glslang::glslang Vulkan::Vulkan)
 
-include_directories("include")
-include_directories(${ZLIB_INCLUDE_DIRS})
-include_directories(${ASSIMP_INCLUDE_DIRS})
-include_directories("../lib/stb")
-
-target_link_libraries(assets ZLIB::ZLIB assimp::assimp)
+target_include_directories(assets PUBLIC "include")
+target_include_directories(assets PRIVATE ${ZLIB_INCLUDE_DIRS} ${ASSIMP_INCLUDE_DIRS} "../lib/stb")

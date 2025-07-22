@@ -24,6 +24,10 @@ std::string Error::ErrorString(ErrorCode e)
             return "Can't open file";
         case ErrorCode::E_INCORRECT_FORMAT:
             return "Incorrect File Format";
+        case ErrorCode::E_SHADER_PARSE_ERROR:
+            return "Shader Parse Error";
+        case ErrorCode::E_SHADER_LINK_ERROR:
+            return "Shader Link Error";
         case ErrorCode::E_UNKNOWN:
         default:
             return "Unknown Error";
