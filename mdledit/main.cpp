@@ -79,8 +79,12 @@ void saveGmdlCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    [[maybe_unused]] const Error::ErrorCode errorCode = ModelRenderer::GetModel()->SaveAsAsset(fileList[0]);
-    assert(errorCode == Error::ErrorCode::E_OK);
+    const Error::ErrorCode errorCode = ModelRenderer::GetModel()->SaveAsAsset(fileList[0]);
+    if (errorCode != Error::ErrorCode::E_OK)
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the model!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        return;
+    }
 }
 
 void ProcessEvent(const SDL_Event *event)
@@ -94,16 +98,31 @@ void ProcessEvent(const SDL_Event *event)
         const char *path = static_cast<char *>(event->user.data1);
         if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_GMDL)
         {
-            [[maybe_unused]] const Error::ErrorCode errorCode = ModelAsset::CreateFromAsset(path, model);
-            assert(errorCode == Error::ErrorCode::E_OK);
+            const Error::ErrorCode errorCode = ModelAsset::CreateFromAsset(path, model);
+            if (errorCode != Error::ErrorCode::E_OK)
+            {
+                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to open the model!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+                delete path;
+                return;
+            }
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL)
         {
-            [[maybe_unused]] const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(path, model, Options::defaultTexture);
-            assert(errorCode == Error::ErrorCode::E_OK);
+            const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(path, model, Options::defaultTexture);
+            if (errorCode != Error::ErrorCode::E_OK)
+            {
+                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to import the model!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+                delete path;
+                return;
+            }
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_LOD)
         {
             model = *ModelRenderer::GetModel();
-            model.AddLod(path);
+            if (!model.AddLod(path))
+            {
+                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to import model LOD!").c_str(), window);
+                delete path;
+                return;
+            }
         }
         ModelRenderer::LoadModel(model);
         modelLoaded = true;
@@ -112,9 +131,13 @@ void ProcessEvent(const SDL_Event *event)
     if (event->type == ModelRenderer::EVENT_SAVE_MODEL)
     {
         const char *path = static_cast<char *>(event->user.data1);
-        [[maybe_unused]] const Error::ErrorCode errorCode = ModelRenderer::GetModel()->SaveAsAsset(path);
-        assert(errorCode == Error::ErrorCode::E_OK);
-        delete path;
+        const Error::ErrorCode errorCode = ModelRenderer::GetModel()->SaveAsAsset(path);
+        if (errorCode != Error::ErrorCode::E_OK)
+        {
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the model!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+            delete path;
+            return;
+        }
     }
     if (event->type == SDL_EVENT_QUIT)
     {
@@ -312,7 +335,11 @@ int main()
     ModelRenderer::EVENT_SAVE_MODEL = ModelRenderer::EVENT_RELOAD_MODEL + 1;
 
     SDL_GL_MakeCurrent(window, glContext);
-    ModelRenderer::Init();
+    if (!ModelRenderer::Init())
+    {
+        printf("Failed to start renderer!\n");
+        return -1;
+    }
     SDL_GL_SetSwapInterval(1); // Enable vsync
     SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
     SDL_ShowWindow(window);

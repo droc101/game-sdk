@@ -12,11 +12,12 @@
 static LevelAsset level;
 static bool levelLoaded = false;
 SDL_Renderer *renderer;
+SDL_Window *window;
 
 constexpr SDL_DialogFileFilter gmapFilter = {"Compiled GAME map (*.gmap)", "gmap"};
 constexpr SDL_DialogFileFilter binFilter = {"Raw GAME map (*.bin)", "bin"};
 
-void destroyExistingLevel()
+void destroyExistingTexture()
 {
     if (!levelLoaded)
     {
@@ -27,25 +28,33 @@ void destroyExistingLevel()
 
 void openGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
-    destroyExistingLevel();
+    destroyExistingTexture();
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
     const Error::ErrorCode e = LevelAsset::CreateFromAsset(fileList[0], level);
-    assert(e == Error::ErrorCode::E_OK);
+    if (e != Error::ErrorCode::E_OK)
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to open the level!\n{}", Error::ErrorString(e)).c_str(), window);
+        return;
+    }
     levelLoaded = true;
 }
 
 void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
-    destroyExistingLevel();
+    destroyExistingTexture();
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
     const Error::ErrorCode e = LevelAsset::CreateFromBin(fileList[0], level);
-    assert(e == Error::ErrorCode::E_OK);
+    if (e != Error::ErrorCode::E_OK)
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to import the level!\n{}", Error::ErrorString(e)).c_str(), window);
+        return;
+    }
     levelLoaded = true;
 }
 
@@ -55,8 +64,12 @@ void saveGtexCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    [[maybe_unused]] const Error::ErrorCode errorCode = level.SaveAsAsset(fileList[0]);
-    assert(errorCode == Error::ErrorCode::E_OK);
+    const Error::ErrorCode errorCode = level.SaveAsAsset(fileList[0]);
+    if (errorCode != Error::ErrorCode::E_OK)
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the level!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        return;
+    }
 }
 
 void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -65,8 +78,12 @@ void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     {
         return;
     }
-    [[maybe_unused]] const Error::ErrorCode errorCode = level.SaveAsBin(fileList[0]);
-    assert(errorCode == Error::ErrorCode::E_OK);
+    const Error::ErrorCode errorCode = level.SaveAsBin(fileList[0]);
+    if (errorCode != Error::ErrorCode::E_OK)
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to export the level!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        return;
+    }
 }
 
 static void Render(bool &done, SDL_Window *window)
@@ -140,7 +157,7 @@ int main()
     }
 
     constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
-    SDL_Window *window = SDL_CreateWindow("lvledit", 800, 600, windowFlags);
+    window = SDL_CreateWindow("lvledit", 800, 600, windowFlags);
     if (window == nullptr)
     {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
@@ -224,7 +241,7 @@ int main()
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
-    destroyExistingLevel();
+    destroyExistingTexture();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

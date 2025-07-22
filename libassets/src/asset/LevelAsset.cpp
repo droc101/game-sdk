@@ -13,8 +13,8 @@ Error::ErrorCode LevelAsset::CreateFromAsset(const char *assetPath, LevelAsset &
 {
     Asset asset;
     const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
-    assert(e == Error::ErrorCode::E_OK);
-    assert(asset.type == Asset::AssetType::ASSET_TYPE_LEVEL);
+    if (e != Error::ErrorCode::E_OK) return e;
+    if (asset.type != Asset::AssetType::ASSET_TYPE_LEVEL) return Error::ErrorCode::E_INCORRECT_FORMAT;
     level.levelData.reserve(asset.reader.TotalSize());
     asset.reader.ReadToBuffer<uint8_t>(level.levelData, asset.reader.TotalSize());
     return Error::ErrorCode::E_OK;

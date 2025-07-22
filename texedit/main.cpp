@@ -12,6 +12,7 @@
 static TextureAsset texture;
 static bool textureLoaded = false;
 SDL_Renderer *renderer;
+SDL_Window *window;
 SDL_Texture *sdlTexture;
 SDL_Surface *sdlSurface;
 
@@ -24,7 +25,7 @@ constexpr std::array imageFilters = {
         SDL_DialogFileFilter{"TGA Images", "tga"},
 };
 
-void destroyExistingLevel()
+void destroyExistingTexture()
 {
     if (!textureLoaded)
     {
@@ -35,63 +36,66 @@ void destroyExistingLevel()
     textureLoaded = false;
 }
 
+bool loadTexture()
+{
+    destroyExistingTexture();
+    SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
+                                                 static_cast<int>(texture.GetHeight()),
+                                                 SDL_PIXELFORMAT_RGBA8888,
+                                                 const_cast<uint32_t *>(texture.GetPixels()),
+                                                 static_cast<int>(texture.GetWidth() * sizeof(uint32_t)));
+    if (surface == nullptr)
+    {
+        return false;
+    }
+    sdlTexture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (sdlTexture == nullptr)
+    {
+        return false;
+    }
+    SDL_SetTextureScaleMode(sdlTexture, SDL_SCALEMODE_NEAREST);
+    sdlSurface = surface;
+    textureLoaded = true;
+    return true;
+
+}
+
 void openGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
-    destroyExistingLevel();
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
     const Error::ErrorCode e = TextureAsset::CreateFromAsset(fileList[0], texture);
-    assert(e == Error::ErrorCode::E_OK);
-    SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
-                                                 static_cast<int>(texture.GetHeight()),
-                                                 SDL_PIXELFORMAT_RGBA8888,
-                                                 const_cast<uint32_t *>(texture.GetPixels()),
-                                                 static_cast<int>(texture.GetWidth() * sizeof(uint32_t)));
-    if (surface == nullptr)
+    if (e != Error::ErrorCode::E_OK)
     {
-        printf("SDL_CreateSurfaceFrom() failed: %s\n", SDL_GetError());
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to open the texture!\n{}", Error::ErrorString(e)).c_str(), window);
         return;
     }
-    sdlTexture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (sdlTexture == nullptr)
+    if (!loadTexture())
     {
-        printf("SDL_CreateTextureFromSurface() failed: %s\n", SDL_GetError());
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the texture!\n{}", SDL_GetError()).c_str(), window);
         return;
     }
-    SDL_SetTextureScaleMode(sdlTexture, SDL_SCALEMODE_NEAREST);
-    sdlSurface = surface;
-    textureLoaded = true;
 }
 
 void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
-    destroyExistingLevel();
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
     const Error::ErrorCode e = TextureAsset::CreateFromImage(fileList[0], texture);
-    assert(e == Error::ErrorCode::E_OK);
-    SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
-                                                 static_cast<int>(texture.GetHeight()),
-                                                 SDL_PIXELFORMAT_RGBA8888,
-                                                 const_cast<uint32_t *>(texture.GetPixels()),
-                                                 static_cast<int>(texture.GetWidth() * sizeof(uint32_t)));
-    if (surface == nullptr)
+    if (e != Error::ErrorCode::E_OK)
     {
-        printf("SDL_CreateSurfaceFrom() failed: %s\n", SDL_GetError());
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to import the texture!\n{}", Error::ErrorString(e)).c_str(), window);
         return;
     }
-    sdlTexture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (sdlTexture == nullptr)
+    if (!loadTexture())
     {
-        printf("SDL_CreateTextureFromSurface() failed: %s\n", SDL_GetError());
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the texture!\n{}", SDL_GetError()).c_str(), window);
         return;
     }
-    sdlSurface = surface;
-    textureLoaded = true;
 }
 
 void saveGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -100,8 +104,12 @@ void saveGtexCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    [[maybe_unused]] const Error::ErrorCode errorCode = texture.SaveAsAsset(fileList[0]);
-    assert(errorCode == Error::ErrorCode::E_OK);
+    const Error::ErrorCode errorCode = texture.SaveAsAsset(fileList[0]);
+    if (errorCode != Error::ErrorCode::E_OK)
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the texture!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        return;
+    }
 }
 
 void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -110,8 +118,12 @@ void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     {
         return;
     }
-    [[maybe_unused]] const Error::ErrorCode errorCode = texture.SaveAsImage(fileList[0], TextureAsset::ImageFormat::IMAGE_FORMAT_PNG);
-    assert(errorCode == Error::ErrorCode::E_OK);
+    const Error::ErrorCode errorCode = texture.SaveAsImage(fileList[0], TextureAsset::ImageFormat::IMAGE_FORMAT_PNG);
+    if (errorCode != Error::ErrorCode::E_OK)
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to export the texture!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        return;
+    }
 }
 
 static void Render(bool &done, SDL_Window *window)
@@ -235,7 +247,7 @@ int main()
     }
 
     constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
-    SDL_Window *window = SDL_CreateWindow("texedit", 800, 600, windowFlags);
+    window = SDL_CreateWindow("texedit", 800, 600, windowFlags);
     if (window == nullptr)
     {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
@@ -319,7 +331,7 @@ int main()
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
-    destroyExistingLevel();
+    destroyExistingTexture();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

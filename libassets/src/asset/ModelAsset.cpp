@@ -20,8 +20,8 @@ Error::ErrorCode ModelAsset::CreateFromAsset(const char *assetPath, ModelAsset &
     modelAsset.skins.clear();
     Asset asset;
     const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
-    assert(e == Error::ErrorCode::E_OK);
-    assert(asset.type == Asset::AssetType::ASSET_TYPE_MODEL);
+    if (e != Error::ErrorCode::E_OK) return e;
+    if (asset.type != Asset::AssetType::ASSET_TYPE_MODEL) return Error::ErrorCode::E_INCORRECT_FORMAT;
     const uint32_t materialCount = asset.reader.Read<uint32_t>();
     const uint32_t skinCount = asset.reader.Read<uint32_t>();
     const uint32_t lodCount = asset.reader.Read<uint32_t>();

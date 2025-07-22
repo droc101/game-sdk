@@ -15,13 +15,12 @@
 
 // #define GL_CHECK_ERROR if (glGetError() != GL_NO_ERROR) {printf(reinterpret_cast<const char *>(glewGetErrorString(glGetError()))); fflush(stdout); __debugbreak();}
 
-GLuint ModelRenderer::CreateShader(const char *filename, const GLenum type)
+Error::ErrorCode ModelRenderer::CreateShader(const char *filename, const GLenum type, GLuint &out)
 {
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
     if (!file.is_open())
     {
-        printf("Could not open file %s\n", filename);
-        return -1;
+        return Error::ErrorCode::E_CANT_OPEN_FILE;
     }
     const std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
@@ -40,17 +39,17 @@ GLuint ModelRenderer::CreateShader(const char *filename, const GLenum type)
         glGetShaderInfoLog(shader, 512, nullptr, infoLog.data());
         fprintf(stderr, "Shader compile failed: %s\n", infoLog.data());
         glDeleteShader(shader);
-        assert(success != 0);
-        return -1;
+        return Error::ErrorCode::E_UNKNOWN;
     }
-    return shader;
+    out = shader;
+    return Error::ErrorCode::E_OK;
 }
 
-GLuint ModelRenderer::CreateTexture(const char *filename)
+Error::ErrorCode ModelRenderer::CreateTexture(const char *filename, GLuint &outTexture)
 {
     TextureAsset textureAsset;
     const Error::ErrorCode e = TextureAsset::CreateFromAsset(filename, textureAsset);
-    assert(e == Error::ErrorCode::E_OK);
+    if (e != Error::ErrorCode::E_OK) return e;
     std::vector<uint32_t> pixels;
     textureAsset.GetPixelsRGBA(pixels);
 
@@ -71,20 +70,22 @@ GLuint ModelRenderer::CreateTexture(const char *filename)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    return glTexture;
+    outTexture = glTexture;
+    return Error::ErrorCode::E_OK;
 }
 
-GLuint ModelRenderer::CreateProgram(const char *fragFilename, const char *vertFilename)
+Error::ErrorCode ModelRenderer::CreateProgram(const char *fragFilename, const char *vertFilename, GLuint &outProgram)
 {
-    const GLuint vertexShader = CreateShader(vertFilename, GL_VERTEX_SHADER);
-    const GLuint fragmentShader = CreateShader(fragFilename, GL_FRAGMENT_SHADER);
-    if (vertexShader == -1u || fragmentShader == -1u)
+    GLuint vertexShader;
+    GLuint fragmentShader;
+    const Error::ErrorCode ve = CreateShader(vertFilename, GL_VERTEX_SHADER, vertexShader);
+    const Error::ErrorCode fe = CreateShader(fragFilename, GL_FRAGMENT_SHADER, fragmentShader);
+    if (ve != Error::ErrorCode::E_OK || fe != Error::ErrorCode::E_OK)
     {
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
         printf("Could not create shader program\n");
-        assert(vertexShader != -1u || fragmentShader != -1u);
-        return -1;
+        return Error::ErrorCode::E_UNKNOWN;
     }
 
     const GLuint program = glCreateProgram();
@@ -99,14 +100,14 @@ GLuint ModelRenderer::CreateProgram(const char *fragFilename, const char *vertFi
         glGetProgramInfoLog(program, 512, nullptr, infoLog.data());
         fprintf(stderr, "Program link failed: %s\n", infoLog.data());
         glDeleteProgram(program);
-        assert(success != 0);
-        return -1;
+        return Error::ErrorCode::E_UNKNOWN;
     }
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    return program;
+    outProgram = program;
+    return Error::ErrorCode::E_OK;
 }
 
 
@@ -137,8 +138,9 @@ bool ModelRenderer::Init()
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    program = CreateProgram("assets/model.frag", "assets/model.vert");
-    cubeProgram = CreateProgram("assets/cube.frag", "assets/cube.vert");
+    const Error::ErrorCode me = CreateProgram("assets/model.frag", "assets/model.vert", program);
+    const Error::ErrorCode ce = CreateProgram("assets/cube.frag", "assets/cube.vert", cubeProgram);
+    if (me != Error::ErrorCode::E_OK || ce != Error::ErrorCode::E_OK) return false;
 
     LoadCube();
 
@@ -208,18 +210,21 @@ void ModelRenderer::UnloadModel()
     lods.clear();
 }
 
-GLuint ModelRenderer::GetTexture(const char *filename)
+bool ModelRenderer::GetTexture(const char *filename, GLuint &outTexture)
 {
     if (textureBuffers.contains(filename))
     {
-        return textureBuffers.at(std::string(filename));
+        outTexture = textureBuffers.at(std::string(filename));
+        return true;
     }
     // TODO: if the texture file does not exist return an existing missing texture instead of making a new one
     const std::string &texturePath = Options::gamePath + std::string("/assets/") + filename;
-    const GLuint glTex = CreateTexture(texturePath.c_str());
-
+    GLuint glTex;
+    const Error::ErrorCode e = CreateTexture(texturePath.c_str(), glTex);
+    if (e != Error::ErrorCode::E_OK) return false;
     textureBuffers.insert({filename, glTex});
-    return glTex;
+    outTexture = glTex;
+    return true;
 }
 
 
@@ -249,7 +254,8 @@ void ModelRenderer::LoadModel(ModelAsset &newModel)
             for (size_t k = 0; k < newModel.GetMaterialCount(); k++)
             {
                 const Material &mat = newModel.GetSkin(j)[k];
-                GetTexture(mat.texture.c_str()); // this just ensures it is loaded, we don't need it rn
+                GLuint _;
+                GetTexture(mat.texture.c_str(), _); // this just ensures it is loaded, we don't need it rn
             }
         }
 
@@ -329,7 +335,8 @@ void ModelRenderer::Render()
         Material &mat = model.GetSkin(skin)[i];
         glUniform3fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetData());
 
-        const GLuint texture = GetTexture(mat.texture.c_str());
+        GLuint texture;
+        if (!GetTexture(mat.texture.c_str(), texture)) continue;
         glBindTexture(GL_TEXTURE_2D, texture);
         glUniform1ui(glGetUniformLocation(program, "ALBEDO_TEXTURE"), texture);
 
@@ -412,12 +419,15 @@ void ModelRenderer::LoadCube()
 
 ImTextureID ModelRenderer::GetTextureID(const std::string &relPath)
 {
-    return GetTexture(relPath.c_str());
+    GLuint t; // TODO support fail cases here
+    GetTexture(relPath.c_str(), t);
+    return t;
 }
 
 ImVec2 ModelRenderer::GetTextureSize(const std::string &relPath)
 {
-    const GLuint texture = GetTexture(relPath.c_str());
+    GLuint texture; // TODO support fail cases here
+    GetTexture(relPath.c_str(), texture);
     glBindTexture(GL_TEXTURE_2D, texture);
     int w;
     int h;

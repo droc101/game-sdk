@@ -20,7 +20,8 @@ class Error
             E_INVALID_ARGUMENT,
             E_FILE_NOT_FOUND,
             E_CANT_OPEN_FILE,
-            E_UNKNOWN
+            E_UNKNOWN,
+            E_INCORRECT_FORMAT
         };
 
         Error() = delete;

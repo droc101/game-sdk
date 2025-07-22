@@ -17,6 +17,7 @@ ma_decoder decoder{};
 ma_sound sound{};
 static bool soundLoaded = false;
 SDL_Renderer *renderer = nullptr;
+SDL_Window *window;
 ma_engine engine{};
 
 constexpr SDL_DialogFileFilter gsndFilter = {"GAME sound (*.gsnd)", "gsnd"};
@@ -34,14 +35,15 @@ void destroyExistingSound()
     soundLoaded = false;
 }
 
-void loadSound()
+bool loadSound()
 {
     destroyExistingSound();
     ma_result res = ma_decoder_init_memory(soundAsset.GetData().data(), soundAsset.GetDataSize(), nullptr, &decoder);
-    assert(res == MA_SUCCESS);
+    if (res == MA_SUCCESS) return false;
     res = ma_sound_init_from_data_source(&engine, &decoder, MA_SOUND_FLAG_DECODE, nullptr, &sound);
-    assert(res == MA_SUCCESS);
+    if (res == MA_SUCCESS) return false;
     soundLoaded = true;
+    return true;
 }
 
 void openGsndCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -51,8 +53,16 @@ void openGsndCallback(void * /*userdata*/, const char *const *fileList, int /*fi
         return;
     }
     const Error::ErrorCode e = SoundAsset::CreateFromAsset(fileList[0], soundAsset);
-    assert(e == Error::ErrorCode::E_OK);
-    loadSound();
+    if (e != Error::ErrorCode::E_OK)
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to open the sound!\n{}", Error::ErrorString(e)).c_str(), window);
+        return;
+    }
+    if (!loadSound())
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the sound!\n{}", Error::ErrorString(Error::ErrorCode::E_UNKNOWN)).c_str(), window);
+        return;
+    }
 }
 
 void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -62,8 +72,16 @@ void importCallback(void * /*userdata*/, const char *const *fileList, int /*filt
         return;
     }
     const Error::ErrorCode e = SoundAsset::CreateFromWAV(fileList[0], soundAsset);
-    assert(e == Error::ErrorCode::E_OK);
-    loadSound();
+    if (e != Error::ErrorCode::E_OK)
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to import the sound!\n{}", Error::ErrorString(e)).c_str(), window);
+        return;
+    }
+    if (!loadSound())
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the sound!\n{}", Error::ErrorString(Error::ErrorCode::E_UNKNOWN)).c_str(), window);
+        return;
+    }
 }
 
 void saveGsndCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -72,8 +90,12 @@ void saveGsndCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    [[maybe_unused]] const Error::ErrorCode errorCode = soundAsset.SaveAsAsset(fileList[0]);
-    assert(errorCode == Error::ErrorCode::E_OK);
+    const Error::ErrorCode errorCode = soundAsset.SaveAsAsset(fileList[0]);
+    if (errorCode != Error::ErrorCode::E_OK)
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the sound!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        return;
+    }
 }
 
 void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -82,8 +104,12 @@ void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     {
         return;
     }
-    [[maybe_unused]] const Error::ErrorCode errorCode = soundAsset.SaveAsWAV(fileList[0]);
-    assert(errorCode == Error::ErrorCode::E_OK);
+    const Error::ErrorCode errorCode = soundAsset.SaveAsWAV(fileList[0]);
+    if (errorCode != Error::ErrorCode::E_OK)
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to export the sound!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        return;
+    }
 }
 
 static void Render(bool &done, SDL_Window *window)
@@ -235,7 +261,7 @@ int main()
     }
 
     constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
-    SDL_Window *window = SDL_CreateWindow("sndedit", 800, 600, windowFlags);
+    window = SDL_CreateWindow("sndedit", 800, 600, windowFlags);
     if (window == nullptr)
     {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());

@@ -44,7 +44,7 @@ class ModelRenderer
 
         static void ResizeWindow(GLsizei width, GLsizei height);
 
-        static GLuint GetTexture(const char *filename);
+        static bool GetTexture(const char *filename, GLuint &outTexture);
 
         [[nodiscard]] static ImTextureID GetTextureID(const std::string &relPath);
 
@@ -97,11 +97,13 @@ class ModelRenderer
         static inline GLsizei windowHeight = 600;
         static inline float windowAspect = 4.0 / 3.0;
 
-        [[nodiscard]] static GLuint CreateShader(const char *filename, GLenum type);
+        [[nodiscard]] static Error::ErrorCode CreateShader(const char *filename, GLenum type, GLuint &out);
 
-        [[nodiscard]] static GLuint CreateTexture(const char *filename);
+        [[nodiscard]] static Error::ErrorCode CreateTexture(const char *filename, GLuint &outTexture);
 
-        [[nodiscard]] static GLuint CreateProgram(const char *fragFilename, const char *vertFilename);
+        [[nodiscard]] static Error::ErrorCode CreateProgram(const char *fragFilename,
+                                                            const char *vertFilename,
+                                                            GLuint &outProgram);
 
         static void UpdateMatrix();
 

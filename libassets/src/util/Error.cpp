@@ -22,6 +22,8 @@ std::string Error::ErrorString(ErrorCode e)
             return "File not found";
         case ErrorCode::E_CANT_OPEN_FILE:
             return "Can't open file";
+        case ErrorCode::E_INCORRECT_FORMAT:
+            return "Incorrect File Format";
         case ErrorCode::E_UNKNOWN:
         default:
             return "Unknown Error";

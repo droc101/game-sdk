@@ -33,7 +33,7 @@ ImTextureID SDLRendererImGuiTextureAssetCache::GetTextureID(const std::string &r
     const std::string &texturePath = Options::gamePath + std::string("/assets/") + relPath;
 
     TextureAsset asset;
-    const Error::ErrorCode e = TextureAsset::CreateFromAsset(texturePath.c_str(), asset);
+    [[maybe_unused]] const Error::ErrorCode e = TextureAsset::CreateFromAsset(texturePath.c_str(), asset);
     assert(e == Error::ErrorCode::E_OK);
     SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(asset.GetWidth()),
                                                  static_cast<int>(asset.GetHeight()),

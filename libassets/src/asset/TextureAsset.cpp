@@ -80,8 +80,8 @@ Error::ErrorCode TextureAsset::CreateFromAsset(const char *assetPath, TextureAss
     }
     Asset asset;
     const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
-    assert(e == Error::ErrorCode::E_OK);
-    assert(asset.type == Asset::AssetType::ASSET_TYPE_TEXTURE);
+    if (e != Error::ErrorCode::E_OK) return e;
+    if (asset.type != Asset::AssetType::ASSET_TYPE_TEXTURE) return Error::ErrorCode::E_INCORRECT_FORMAT;
     asset.reader.Seek(sizeof(uint32_t)); // 0 = pixelDataSize in bytes
     texture.width = asset.reader.Read<uint32_t>();
     texture.height = asset.reader.Read<uint32_t>();

@@ -14,8 +14,8 @@ Error::ErrorCode SoundAsset::CreateFromAsset(const char *assetPath, SoundAsset &
 {
     Asset asset;
     const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
-    assert(e == Error::ErrorCode::E_OK);
-    assert(asset.type == Asset::AssetType::ASSET_TYPE_WAV);
+    if (e != Error::ErrorCode::E_OK) return e;
+    if (asset.type != Asset::AssetType::ASSET_TYPE_WAV) return Error::ErrorCode::E_INCORRECT_FORMAT;
     const uint32_t payloadSize = asset.reader.TotalSize() - (sizeof(uint32_t) * 4);
     sound.wavData.reserve(payloadSize);
     asset.reader.ReadToBuffer<uint8_t>(sound.wavData, payloadSize);
