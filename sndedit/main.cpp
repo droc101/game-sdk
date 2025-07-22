@@ -4,13 +4,13 @@
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
 #include <iostream>
-#include <unordered_map>
-#include <SDL3/SDL.h>
-#include "Options.h"
-#include "SharedMgr.h"
 #include <libassets/asset/SoundAsset.h>
+#include <miniaudio.h>
+#include <SDL3/SDL.h>
+#include <unordered_map>
+#include "Options.h"
 #include "SDLRendererImGuiTextureAssetCache.h"
-#include "../lib/miniaudio/miniaudio.h"
+#include "SharedMgr.h"
 
 SoundAsset soundAsset;
 ma_decoder decoder{};
@@ -88,8 +88,10 @@ static void Render(bool &done, SDL_Window *window)
 {
     ImGui::Begin("sndedit",
                  nullptr,
-                 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
-                 ImGuiWindowFlags_NoBringToFrontOnFocus);
+                 ImGuiWindowFlags_NoDecoration |
+                         ImGuiWindowFlags_NoMove |
+                         ImGuiWindowFlags_NoSavedSettings |
+                         ImGuiWindowFlags_NoBringToFrontOnFocus);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && soundLoaded;

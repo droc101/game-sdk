@@ -98,34 +98,15 @@ if (WIN32)
     )
 endif ()
 
-set(MINIAUDIO_SRC
-        ../lib/miniaudio/miniaudio.h
-        ../lib/miniaudio/miniaudio.c
-)
+include(cmake/FindOrFetchPackage.cmake)
 
-include(FetchContent)
-find_package(Git 2.18 REQUIRED)
-if (WIN32)
-    execute_process(COMMAND powershell -command "((& '${GIT_EXECUTABLE}' -c 'versionsort.suffix=-' ls-remote --exit-code --refs --sort=version:refname --tags https://github.com/libsdl-org/SDL.git 'release-3.*.*' | Select-Object -Last 1) -Split '/')[2]" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE LATEST_RELEASE)
-else ()
-    execute_process(COMMAND ${GIT_EXECUTABLE} -c "versionsort.suffix=-" ls-remote --exit-code --refs --sort=version:refname --tags https://github.com/libsdl-org/SDL.git "release-3.*.*" COMMAND tail --lines=1 COMMAND cut --delimiter=/ --fields=3 COMMAND tr -d "\n" OUTPUT_VARIABLE LATEST_RELEASE)
-endif ()
-
-FetchContent_Declare(
-        SDL3
-        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-        GIT_TAG ${LATEST_RELEASE}
-        GIT_SHALLOW TRUE
-        GIT_PROGRESS TRUE
-        EXCLUDE_FROM_ALL
-        SYSTEM
-        FIND_PACKAGE_ARGS CONFIG
-)
-FetchContent_MakeAvailable(SDL3)
+findOrFetchPackage(https://github.com/libsdl-org/SDL.git release-3.*.* SDL3 CONFIG)
+fetchPackage(https://github.com/nlohmann/json.git v3.*.* JSON)
+fetchPackage(https://github.com/mackron/miniaudio.git 0.*.* miniaudio)
+findOrFetchPackage(https://github.com/assimp/assimp.git v6.*.* assimp 6.0.0...<7.0.0)
 
 find_package(ZLIB REQUIRED)
 find_package(glm REQUIRED)
-find_package(assimp REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
@@ -133,25 +114,21 @@ set(SHARED_INCLUDES
         "../lib/imgui"
         "../lib/imgui/backends"
         "../libassets/include"
-        ${ZLIB_INCLUDE_DIRS}
-        "../lib/json/include"
         "../shared"
-        ${GLM_INCLUDE_DIRS}
-        ${ASSIMP_INCLUDE_DIRS}
         ${OPENGL_INCLUDE_DIR}
         ${GLEW_INCLUDE_DIRS}
 )
 
 set(SHARED_LIBRARIES
         SDL3::SDL3
-        ${ZLIB_LIBRARIES}
         nlohmann_json::nlohmann_json
+        miniaudio
         ${CMAKE_BINARY_DIR}/libassets/libassets.a
-        glm::glm # TODO find variables for glm and assimp
-        assimp::assimp # ${assimp_LIBRARIES} doesn't work
+        glm::glm
+        assimp::assimp
         ${OPENGL_LIBRARIES}
         ${GLEW_LIBRARIES}
-        z
+        ZLIB::ZLIB
 )
 
 if (WIN32)
@@ -161,7 +138,6 @@ if (WIN32)
     )
 endif ()
 
-add_subdirectory(lib/json)
 add_subdirectory(libassets)
 add_subdirectory(texedit)
 add_subdirectory(mdledit)

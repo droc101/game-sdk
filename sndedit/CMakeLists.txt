@@ -7,7 +7,6 @@ add_executable(sndedit main.cpp
         ${IMGUI_SRC}
         ${IMGUI_SRC_SDL3_RENDERER}
         ${SHARED_SRC}
-        ${MINIAUDIO_SRC}
 )
 
 include_directories(${SHARED_INCLUDES})
