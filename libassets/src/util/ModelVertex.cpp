@@ -6,7 +6,6 @@
 
 ModelVertex::ModelVertex(DataReader &reader)
 {
-    static_assert(uv.size() == 2);
     for (float &pos: position)
     {
         pos = reader.Read<float>();

@@ -151,6 +151,7 @@ set(SHARED_LIBRARIES
         assimp::assimp # ${assimp_LIBRARIES} doesn't work
         ${OPENGL_LIBRARIES}
         ${GLEW_LIBRARIES}
+        z
 )
 
 if (WIN32)
