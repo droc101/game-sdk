@@ -9,7 +9,6 @@
 #include <libassets/asset/ModelAsset.h>
 #include <string>
 #include <unordered_map>
-#include "imgui.h"
 
 class ModelRenderer
 {
@@ -44,12 +43,6 @@ class ModelRenderer
 
         static void ResizeWindow(GLsizei width, GLsizei height);
 
-        static bool GetTexture(const char *filename, GLuint &outTexture);
-
-        [[nodiscard]] static ImTextureID GetTextureID(const std::string &relPath);
-
-        [[nodiscard]] static ImVec2 GetTextureSize(const std::string &relPath);
-
         static inline int lod;
         static inline int skin;
 
@@ -81,7 +74,6 @@ class ModelRenderer
         static inline GLuint cubeVbo;
 
         static inline std::vector<GLModelLod> lods{};
-        static inline std::unordered_map<std::string, GLuint> textureBuffers{};
 
         static inline GLuint program;
         static inline GLuint cubeProgram;
@@ -98,8 +90,6 @@ class ModelRenderer
         static inline float windowAspect = 4.0 / 3.0;
 
         [[nodiscard]] static Error::ErrorCode CreateShader(const char *filename, GLenum type, GLuint &out);
-
-        [[nodiscard]] static Error::ErrorCode CreateTexture(const char *filename, GLuint &outTexture);
 
         [[nodiscard]] static Error::ErrorCode CreateProgram(const char *fragFilename,
                                                             const char *vertFilename,

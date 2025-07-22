@@ -8,6 +8,7 @@
 #include <string>
 #include <unordered_map>
 #include "imgui.h"
+#include <libassets/util/Error.h>
 
 class ImGuiTextureAssetCache
 {
@@ -16,12 +17,12 @@ class ImGuiTextureAssetCache
 
         virtual ~ImGuiTextureAssetCache() = default;
 
-        virtual ImTextureID GetTextureID(const std::string & /*relPath*/)
+        virtual Error::ErrorCode GetTextureID(const std::string & /*relPath*/, ImTextureID &/*outTexture*/)
         {
             throw std::runtime_error("Invalid use of ImGuiTextureAssetCache");
         };
 
-        virtual ImVec2 GetTextureSize(const std::string &/*relPath*/)
+        virtual Error::ErrorCode GetTextureSize(const std::string &/*relPath*/, ImVec2 &/*outSize*/)
         {
             throw std::runtime_error("Invalid use of ImGuiTextureAssetCache");
         };
@@ -29,6 +30,8 @@ class ImGuiTextureAssetCache
     protected:
         std::unordered_map<std::string, ImTextureID> textureBuffers{};
         ImTextureID missingTexture{};
+
+
 };
 
 

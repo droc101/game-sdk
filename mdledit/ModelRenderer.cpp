@@ -12,6 +12,8 @@
 #include "GLDebug.h"
 #include <libassets/util/DataWriter.h>
 #include <libassets/asset/TextureAsset.h>
+#include "OpenGLImGuiTextureAssetCache.h"
+#include "SharedMgr.h"
 
 // #define GL_CHECK_ERROR if (glGetError() != GL_NO_ERROR) {printf(reinterpret_cast<const char *>(glewGetErrorString(glGetError()))); fflush(stdout); __debugbreak();}
 
@@ -42,35 +44,6 @@ Error::ErrorCode ModelRenderer::CreateShader(const char *filename, const GLenum 
         return Error::ErrorCode::E_UNKNOWN;
     }
     out = shader;
-    return Error::ErrorCode::E_OK;
-}
-
-Error::ErrorCode ModelRenderer::CreateTexture(const char *filename, GLuint &outTexture)
-{
-    TextureAsset textureAsset;
-    const Error::ErrorCode e = TextureAsset::CreateFromAsset(filename, textureAsset);
-    if (e != Error::ErrorCode::E_OK) return e;
-    std::vector<uint32_t> pixels;
-    textureAsset.GetPixelsRGBA(pixels);
-
-    GLuint glTexture;
-    glGenTextures(1, &glTexture);
-    glBindTexture(GL_TEXTURE_2D, glTexture);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGBA,
-                 static_cast<GLsizei>(textureAsset.GetWidth()),
-                 static_cast<GLsizei>(textureAsset.GetHeight()),
-                 0,
-                 GL_RGBA,
-                 GL_UNSIGNED_BYTE,
-                 pixels.data());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    outTexture = glTexture;
     return Error::ErrorCode::E_OK;
 }
 
@@ -163,11 +136,6 @@ void ModelRenderer::Destroy()
 {
     UnloadModel();
     glDeleteProgram(program);
-    for (const std::pair<std::string, GLuint> tex: textureBuffers)
-    {
-        glDeleteTextures(1, &tex.second);
-    }
-    textureBuffers.clear();
 }
 
 void ModelRenderer::UpdateView(const float pitchDeg, const float yawDeg, const float distance)
@@ -210,24 +178,6 @@ void ModelRenderer::UnloadModel()
     lods.clear();
 }
 
-bool ModelRenderer::GetTexture(const char *filename, GLuint &outTexture)
-{
-    if (textureBuffers.contains(filename))
-    {
-        outTexture = textureBuffers.at(std::string(filename));
-        return true;
-    }
-    // TODO: if the texture file does not exist return an existing missing texture instead of making a new one
-    const std::string &texturePath = Options::gamePath + std::string("/assets/") + filename;
-    GLuint glTex;
-    const Error::ErrorCode e = CreateTexture(texturePath.c_str(), glTex);
-    if (e != Error::ErrorCode::E_OK) return false;
-    textureBuffers.insert({filename, glTex});
-    outTexture = glTex;
-    return true;
-}
-
-
 void ModelRenderer::LoadModel(ModelAsset &newModel)
 {
     UnloadModel();
@@ -254,8 +204,10 @@ void ModelRenderer::LoadModel(ModelAsset &newModel)
             for (size_t k = 0; k < newModel.GetMaterialCount(); k++)
             {
                 const Material &mat = newModel.GetSkin(j)[k];
+                // this just ensures it is loaded, we don't need it rn
                 GLuint _;
-                GetTexture(mat.texture.c_str(), _); // this just ensures it is loaded, we don't need it rn
+                [[maybe_unused]] const Error::ErrorCode _e = dynamic_cast<OpenGLImGuiTextureAssetCache *>(
+                    SharedMgr::textureCache)->GetTextureGLuint(mat.texture, _);
             }
         }
 
@@ -336,7 +288,9 @@ void ModelRenderer::Render()
         glUniform3fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetData());
 
         GLuint texture;
-        if (!GetTexture(mat.texture.c_str(), texture)) continue;
+        const Error::ErrorCode e = dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache)->
+                GetTextureGLuint(mat.texture, texture);
+        if (e != Error::ErrorCode::E_OK) continue;
         glBindTexture(GL_TEXTURE_2D, texture);
         glUniform1ui(glGetUniformLocation(program, "ALBEDO_TEXTURE"), texture);
 
@@ -415,23 +369,4 @@ void ModelRenderer::LoadCube()
     glGenBuffers(1, &cubeVbo);
     glBindBuffer(GL_ARRAY_BUFFER, cubeVbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * cubeVerts.size(), cubeVerts.data(), GL_STATIC_DRAW);
-}
-
-ImTextureID ModelRenderer::GetTextureID(const std::string &relPath)
-{
-    GLuint t; // TODO support fail cases here
-    GetTexture(relPath.c_str(), t);
-    return t;
-}
-
-ImVec2 ModelRenderer::GetTextureSize(const std::string &relPath)
-{
-    GLuint texture; // TODO support fail cases here
-    GetTexture(relPath.c_str(), texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    int w;
-    int h;
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
-    return {static_cast<float>(w), static_cast<float>(h)};
 }

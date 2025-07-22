@@ -6,6 +6,8 @@
 #define SDLRENDERERIMGUITEXTUREASSETCACHE_H
 #include <SDL3/SDL_render.h>
 #include "ImGuiTextureAssetCache.h"
+#include "libassets/asset/TextureAsset.h"
+#include "libassets/util/Error.h"
 
 class SDLRendererImGuiTextureAssetCache final: public ImGuiTextureAssetCache
 {
@@ -14,12 +16,14 @@ class SDLRendererImGuiTextureAssetCache final: public ImGuiTextureAssetCache
 
         ~SDLRendererImGuiTextureAssetCache() override;
 
-        ImTextureID GetTextureID(const std::string &relPath) override;
+        [[nodiscard]] Error::ErrorCode GetTextureID(const std::string &relPath, ImTextureID &outTexture) override;
 
-        ImVec2 GetTextureSize(const std::string &relPath) override;
+        [[nodiscard]] Error::ErrorCode GetTextureSize(const std::string &relPath, ImVec2 &outSize) override;
 
     private:
         SDL_Renderer *renderer = nullptr;
+
+        [[nodiscard]] bool CreateSDLTexture(const TextureAsset& texture, SDL_Texture *&tex) const;
 
 };
 

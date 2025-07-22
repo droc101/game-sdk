@@ -7,8 +7,8 @@
 #include <SDL3/SDL.h>
 #include "LodEditWindow.h"
 #include <libassets/asset/ModelAsset.h>
-#include "MdleditImGuiTextureCache.h"
 #include "ModelRenderer.h"
+#include "OpenGLImGuiTextureAssetCache.h"
 #include "Options.h"
 #include "SharedMgr.h"
 #include "SkinEditWindow.h"
@@ -305,7 +305,7 @@ int main()
         return -1;
     }
 
-    MdleditImGuiTextureCache cache = MdleditImGuiTextureCache();
+    OpenGLImGuiTextureAssetCache cache = OpenGLImGuiTextureAssetCache();
     SharedMgr::InitSharedMgr(&cache);
 
     const char *glslVersion = "#version 130";

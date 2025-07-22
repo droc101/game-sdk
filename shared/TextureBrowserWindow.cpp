@@ -7,6 +7,7 @@
 #include "imgui.h"
 #include "Options.h"
 #include "SharedMgr.h"
+#include "libassets/util/Error.h"
 #include "misc/cpp/imgui_stdlib.h"
 
 constexpr float tileSize = 128;
@@ -53,7 +54,8 @@ void TextureBrowserWindow::Render()
                     {
                         *str = "texture/" + textures[i];
                     }
-                    const ImVec2 texSize = SharedMgr::textureCache->GetTextureSize("texture/" + textures[i]);
+                    ImVec2 texSize;
+                    if (SharedMgr::textureCache->GetTextureSize("texture/" + textures[i], texSize) != Error::ErrorCode::E_OK) continue;
                     if (ImGui::BeginItemTooltip())
                     {
                         const std::string tooltip = std::format("{}\n{}x{}", textures[i], texSize.x, texSize.y);
@@ -85,8 +87,9 @@ void TextureBrowserWindow::Render()
                             cursor_pos.y + (tileSize - draw_height) * 0.5f
                             ));
 
-                    ImGui::Image(SharedMgr::textureCache->GetTextureID("texture/" + textures[i]),
-                                 ImVec2(draw_width, draw_height));
+                    ImTextureID tex;
+                    if (SharedMgr::textureCache->GetTextureID("texture/" + textures[i], tex) != Error::ErrorCode::E_OK) continue;
+                    ImGui::Image(tex, ImVec2(draw_width, draw_height));
                     ImGui::SetCursorPosX(-draw_width);
                     ImGui::SetCursorPosX(tileSize);
 

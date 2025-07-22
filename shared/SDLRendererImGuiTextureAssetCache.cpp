@@ -3,6 +3,7 @@
 //
 
 #include "SDLRendererImGuiTextureAssetCache.h"
+#include <filesystem>
 #include <ranges>
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_surface.h>
@@ -12,6 +13,9 @@
 SDLRendererImGuiTextureAssetCache::SDLRendererImGuiTextureAssetCache(SDL_Renderer *renderer): ImGuiTextureAssetCache()
 {
     this->renderer = renderer;
+    SDL_Texture *sdlMissingTexture;
+    if (!CreateSDLTexture(TextureAsset::CreateMissingTexture(), sdlMissingTexture)) throw std::runtime_error("Failed to create missing texture!");
+    this->missingTexture = reinterpret_cast<ImTextureID>(sdlMissingTexture);
 }
 
 SDLRendererImGuiTextureAssetCache::~SDLRendererImGuiTextureAssetCache()
@@ -23,45 +27,63 @@ SDLRendererImGuiTextureAssetCache::~SDLRendererImGuiTextureAssetCache()
     }
 }
 
-ImTextureID SDLRendererImGuiTextureAssetCache::GetTextureID(const std::string &relPath)
+Error::ErrorCode SDLRendererImGuiTextureAssetCache::GetTextureID(const std::string &relPath, ImTextureID &outTexture)
 {
     if (textureBuffers.contains(relPath))
     {
-        return textureBuffers.at(relPath);
+        outTexture = textureBuffers.at(relPath);
+        return Error::ErrorCode::E_OK;
     }
-    // TODO: if the texture file does not exist return an existing missing texture instead of making a new one
     const std::string &texturePath = Options::gamePath + std::string("/assets/") + relPath;
+    if (!std::filesystem::exists(texturePath))
+    {
+        outTexture = missingTexture;
+        return Error::ErrorCode::E_OK;
+    }
 
     TextureAsset asset;
-    [[maybe_unused]] const Error::ErrorCode e = TextureAsset::CreateFromAsset(texturePath.c_str(), asset);
-    assert(e == Error::ErrorCode::E_OK);
-    SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(asset.GetWidth()),
-                                                 static_cast<int>(asset.GetHeight()),
+    const Error::ErrorCode e = TextureAsset::CreateFromAsset(texturePath.c_str(), asset);
+    if (e != Error::ErrorCode::E_OK) return e;
+    SDL_Texture *tex;
+    if (!CreateSDLTexture(asset, tex))
+    {
+        return Error::ErrorCode::E_UNKNOWN;
+    }
+
+    textureBuffers.insert({relPath, reinterpret_cast<ImTextureID>(tex)});
+    outTexture = reinterpret_cast<ImTextureID>(tex);
+    return Error::ErrorCode::E_OK;
+}
+
+Error::ErrorCode SDLRendererImGuiTextureAssetCache::GetTextureSize(const std::string &relPath, ImVec2 &outSize)
+{
+    ImTextureID tex;
+    const Error::ErrorCode e = GetTextureID(relPath, tex);
+    if (e != Error::ErrorCode::E_OK) return e;
+    SDL_GetTextureSize(reinterpret_cast<SDL_Texture *>(tex), &outSize.x, &outSize.y);
+    return Error::ErrorCode::E_OK;
+}
+
+bool SDLRendererImGuiTextureAssetCache::CreateSDLTexture(const TextureAsset& texture, SDL_Texture *&tex) const
+{
+    SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
+                                                 static_cast<int>(texture.GetHeight()),
                                                  SDL_PIXELFORMAT_RGBA8888,
-                                                 const_cast<uint32_t *>(asset.GetPixels()),
-                                                 static_cast<int>(asset.GetWidth() * sizeof(uint32_t)));
+                                                 const_cast<uint32_t *>(texture.GetPixels()),
+                                                 static_cast<int>(texture.GetWidth() * sizeof(uint32_t)));
     if (surface == nullptr)
     {
         printf("SDL_CreateSurfaceFrom() failed: %s\n", SDL_GetError());
-        return -1;
+        return false;
     }
-    SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, surface);
+    tex = SDL_CreateTextureFromSurface(renderer, surface);
     if (tex == nullptr)
     {
         printf("SDL_CreateTextureFromSurface() failed: %s\n", SDL_GetError());
-        return -1;
+        return false;
     }
     SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_NEAREST);
     SDL_DestroySurface(surface);
-
-    textureBuffers.insert({relPath, reinterpret_cast<ImTextureID>(tex)});
-    return reinterpret_cast<ImTextureID>(tex);
+    return true;
 }
 
-ImVec2 SDLRendererImGuiTextureAssetCache::GetTextureSize(const std::string &relPath)
-{
-    SDL_Texture *tex = reinterpret_cast<SDL_Texture *>(GetTextureID(relPath));
-    ImVec2 sz;
-    SDL_GetTextureSize(tex, &sz.x, &sz.y);
-    return sz;
-}

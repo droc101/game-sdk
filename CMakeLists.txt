@@ -89,6 +89,8 @@ set(SHARED_SRC
         ../shared/ImGuiTextureAssetCache.h
         ../shared/SDLRendererImGuiTextureAssetCache.cpp
         ../shared/SDLRendererImGuiTextureAssetCache.h
+        ../shared/OpenGLImGuiTextureAssetCache.cpp
+        ../shared/OpenGLImGuiTextureAssetCache.h
 )
 
 if (WIN32)
