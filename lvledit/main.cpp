@@ -55,7 +55,8 @@ void saveGtexCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    assert(level.SaveAsAsset(fileList[0]) == Error::ErrorCode::E_OK);
+    [[maybe_unused]] const Error::ErrorCode errorCode = level.SaveAsAsset(fileList[0]);
+    assert(errorCode == Error::ErrorCode::E_OK);
 }
 
 void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -64,7 +65,8 @@ void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     {
         return;
     }
-    assert(level.SaveAsBin(fileList[0]) == Error::ErrorCode::E_OK);
+    [[maybe_unused]] const Error::ErrorCode errorCode = level.SaveAsBin(fileList[0]);
+    assert(errorCode == Error::ErrorCode::E_OK);
 }
 
 static void Render(bool &done, SDL_Window *window)

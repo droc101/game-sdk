@@ -72,7 +72,8 @@ void saveGsndCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    assert(soundAsset.SaveAsAsset(fileList[0]) == Error::ErrorCode::E_OK);
+    [[maybe_unused]] const Error::ErrorCode errorCode = soundAsset.SaveAsAsset(fileList[0]);
+    assert(errorCode == Error::ErrorCode::E_OK);
 }
 
 void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -81,7 +82,8 @@ void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     {
         return;
     }
-    assert(soundAsset.SaveAsWAV(fileList[0]) == Error::ErrorCode::E_OK);
+    [[maybe_unused]] const Error::ErrorCode errorCode = soundAsset.SaveAsWAV(fileList[0]);
+    assert(errorCode == Error::ErrorCode::E_OK);
 }
 
 static void Render(bool &done, SDL_Window *window)

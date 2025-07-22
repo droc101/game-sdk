@@ -79,7 +79,8 @@ void saveGmdlCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    assert(ModelRenderer::GetModel()->SaveAsAsset(fileList[0]) == Error::ErrorCode::E_OK);
+    [[maybe_unused]] const Error::ErrorCode errorCode = ModelRenderer::GetModel()->SaveAsAsset(fileList[0]);
+    assert(errorCode == Error::ErrorCode::E_OK);
 }
 
 void ProcessEvent(const SDL_Event *event)
@@ -93,10 +94,12 @@ void ProcessEvent(const SDL_Event *event)
         const char *path = static_cast<char *>(event->user.data1);
         if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_GMDL)
         {
-            assert(ModelAsset::CreateFromAsset(path, model) == Error::ErrorCode::E_OK);
+            [[maybe_unused]] const Error::ErrorCode errorCode = ModelAsset::CreateFromAsset(path, model);
+            assert(errorCode == Error::ErrorCode::E_OK);
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL)
         {
-            assert(ModelAsset::CreateFromStandardModel(path, model, Options::defaultTexture) == Error::ErrorCode::E_OK);
+            [[maybe_unused]] const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(path, model, Options::defaultTexture);
+            assert(errorCode == Error::ErrorCode::E_OK);
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_LOD)
         {
             model = *ModelRenderer::GetModel();
@@ -109,7 +112,8 @@ void ProcessEvent(const SDL_Event *event)
     if (event->type == ModelRenderer::EVENT_SAVE_MODEL)
     {
         const char *path = static_cast<char *>(event->user.data1);
-        assert(ModelRenderer::GetModel()->SaveAsAsset(path) == Error::ErrorCode::E_OK);
+        [[maybe_unused]] const Error::ErrorCode errorCode = ModelRenderer::GetModel()->SaveAsAsset(path);
+        assert(errorCode == Error::ErrorCode::E_OK);
         delete path;
     }
     if (event->type == SDL_EVENT_QUIT)

@@ -100,7 +100,8 @@ void saveGtexCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     {
         return;
     }
-    assert(texture.SaveAsAsset(fileList[0]) == Error::ErrorCode::E_OK);
+    [[maybe_unused]] const Error::ErrorCode errorCode = texture.SaveAsAsset(fileList[0]);
+    assert(errorCode == Error::ErrorCode::E_OK);
 }
 
 void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -109,7 +110,8 @@ void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     {
         return;
     }
-    assert(texture.SaveAsImage(fileList[0], TextureAsset::ImageFormat::IMAGE_FORMAT_PNG) == Error::ErrorCode::E_OK);
+    [[maybe_unused]] const Error::ErrorCode errorCode = texture.SaveAsImage(fileList[0], TextureAsset::ImageFormat::IMAGE_FORMAT_PNG);
+    assert(errorCode == Error::ErrorCode::E_OK);
 }
 
 static void Render(bool &done, SDL_Window *window)
