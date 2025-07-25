@@ -65,7 +65,7 @@ void SharedMgr::RenderSharedUI(SDL_Window *window)
     if (demoVisible) ImGui::ShowDemoWindow(&demoVisible);
 }
 
-std::vector<std::string> SharedMgr::ScanFolder(const std::string &directory_path, const std::string &extension)
+std::vector<std::string> SharedMgr::ScanFolder(const std::string &directory_path, const std::string &extension, const bool isRoot)
 {
     std::vector<std::string> files;
     try
@@ -76,13 +76,24 @@ std::vector<std::string> SharedMgr::ScanFolder(const std::string &directory_path
             {
                 if (entry.path().extension() == extension)
                 {
-                    files.push_back(entry.path().filename().string());
+                    files.push_back(entry.path().string());
                 }
+            } else if (entry.is_directory())
+            {
+                const std::vector<std::string> subfolderFiles = ScanFolder(entry.path().string(), extension, false);
+                files.insert(files.end(), subfolderFiles.begin(), subfolderFiles.end());
             }
         }
     } catch (const std::filesystem::filesystem_error &ex)
     {
         printf("std::filesystem_error: %s", ex.what());
+    }
+    if (isRoot)
+    {
+        for (std::string &file: files)
+        {
+            file = file.substr(directory_path.length() + 1);
+        }
     }
     return files;
 }

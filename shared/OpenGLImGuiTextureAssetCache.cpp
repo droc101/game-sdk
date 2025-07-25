@@ -5,6 +5,7 @@
 #include "OpenGLImGuiTextureAssetCache.h"
 #include <filesystem>
 #include "Options.h"
+#include <SDL3/SDL_endian.h>
 
 OpenGLImGuiTextureAssetCache::OpenGLImGuiTextureAssetCache()
 {
@@ -26,6 +27,10 @@ GLuint OpenGLImGuiTextureAssetCache::CreateTexture(const TextureAsset &textureAs
 {
     std::vector<uint32_t> pixels;
     textureAsset.GetPixelsRGBA(pixels);
+    for (uint32_t &pixel: pixels)
+    {
+        pixel = SDL_Swap32BE(pixel);
+    }
 
     GLuint glTexture;
     glGenTextures(1, &glTexture);

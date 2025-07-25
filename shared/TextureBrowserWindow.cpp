@@ -20,7 +20,7 @@ void TextureBrowserWindow::Hide()
 void TextureBrowserWindow::Show(std::string &texture)
 {
     str = &texture;
-    textures = SharedMgr::ScanFolder(Options::gamePath + "/assets/texture", ".gtex");
+    textures = SharedMgr::ScanFolder(Options::gamePath + "/assets/texture", ".gtex", true);
     visible = true;
 }
 

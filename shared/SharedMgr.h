@@ -22,7 +22,7 @@ class SharedMgr
 
         static void DestroySharedMgr();
 
-        static std::vector<std::string> ScanFolder(const std::string &directory_path, const std::string &extension);
+        static std::vector<std::string> ScanFolder(const std::string &directory_path, const std::string &extension, bool isRoot);
 
         inline static ImGuiTextureAssetCache *textureCache = nullptr;
 
