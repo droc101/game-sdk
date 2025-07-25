@@ -26,6 +26,8 @@ class SoundAsset
         [[nodiscard]] const std::vector<uint8_t> &GetData() const;
         [[nodiscard]] size_t GetDataSize() const;
 
+        static constexpr uint8_t SOUND_ASSET_VERSION = 1;
+
     private:
         std::vector<uint8_t> wavData;
 

@@ -78,10 +78,16 @@ class TextureAsset final
          */
         [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
 
+        static constexpr uint8_t TEXTURE_ASSET_VERSION = 1;
+
+        bool filter = false;
+        bool repeat = true;
+        bool mipmaps = true;
+
     private:
         std::vector<uint32_t> pixels{};
-        uint32_t width{};
-        uint32_t height{};
+        size_t width{};
+        size_t height{};
 
         /**
          * Create the uncompressed gtex payload

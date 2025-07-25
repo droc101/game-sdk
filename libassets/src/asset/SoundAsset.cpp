@@ -16,6 +16,8 @@ Error::ErrorCode SoundAsset::CreateFromAsset(const char *assetPath, SoundAsset &
     const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
     if (e != Error::ErrorCode::E_OK) return e;
     if (asset.type != Asset::AssetType::ASSET_TYPE_WAV) return Error::ErrorCode::E_INCORRECT_FORMAT;
+    if (asset.typeVersion != SOUND_ASSET_VERSION) return Error::ErrorCode::E_INCORRECT_VERSION;
+    sound = SoundAsset();
     const uint32_t payloadSize = asset.reader.TotalSize() - (sizeof(uint32_t) * 4);
     sound.wavData.reserve(payloadSize);
     asset.reader.ReadToBuffer<uint8_t>(sound.wavData, payloadSize);
@@ -37,12 +39,13 @@ Error::ErrorCode SoundAsset::SaveAsAsset(const char *assetPath) const
 {
     std::vector<uint8_t> buffer;
     SaveToBuffer(buffer);
-    return AssetReader::SaveToFile(assetPath, buffer, Asset::AssetType::ASSET_TYPE_WAV);
+    return AssetReader::SaveToFile(assetPath, buffer, Asset::AssetType::ASSET_TYPE_WAV, SOUND_ASSET_VERSION);
 }
 
 
 Error::ErrorCode SoundAsset::CreateFromWAV(const char *wavPath, SoundAsset &sound)
 {
+    sound = SoundAsset();
     std::ifstream file(wavPath, std::ios::binary | std::ios::ate);
     const std::ifstream::pos_type fileSize = file.tellg();
     file.seekg(0, std::ios::beg);

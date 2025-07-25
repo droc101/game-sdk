@@ -12,9 +12,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <stb_image_write.h>
+#include <libassets/util/DataWriter.h>
 
 Error::ErrorCode TextureAsset::CreateFromImage(const char *imagePath, TextureAsset &texture)
 {
+    texture = TextureAsset();
     if (!std::filesystem::exists(imagePath))
     {
         texture = CreateMissingTexture();
@@ -65,6 +67,7 @@ TextureAsset TextureAsset::CreateMissingTexture()
 Error::ErrorCode TextureAsset::CreateFromPixels(uint32_t *pixels, const uint32_t width, const uint32_t height,
                                                 TextureAsset &texture)
 {
+    texture = TextureAsset();
     texture.width = width;
     texture.height = height;
     texture.pixels.insert(texture.pixels.begin(), pixels, pixels + texture.width * texture.height);
@@ -82,13 +85,15 @@ Error::ErrorCode TextureAsset::CreateFromAsset(const char *assetPath, TextureAss
     const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
     if (e != Error::ErrorCode::E_OK) return e;
     if (asset.type != Asset::AssetType::ASSET_TYPE_TEXTURE) return Error::ErrorCode::E_INCORRECT_FORMAT;
-    asset.reader.Seek(sizeof(uint32_t)); // 0 = pixelDataSize in bytes
-    texture.width = asset.reader.Read<uint32_t>();
-    texture.height = asset.reader.Read<uint32_t>();
-    asset.reader.Seek(sizeof(uint32_t)); // 3 = unused (3 sucks)
+    if (asset.typeVersion != TEXTURE_ASSET_VERSION) return Error::ErrorCode::E_INCORRECT_VERSION;
+    texture = TextureAsset();
+    texture.width = asset.reader.Read<size_t>();
+    texture.height = asset.reader.Read<size_t>();
+    texture.filter = asset.reader.Read<uint8_t>() != 0;
+    texture.repeat = asset.reader.Read<uint8_t>() != 0;
+    texture.mipmaps = asset.reader.Read<uint8_t>() != 0;
     const size_t pixelCount = texture.width * texture.height;
     asset.reader.ReadToBuffer<uint32_t>(texture.pixels, pixelCount);
-    texture.FixByteOrder();
     return Error::ErrorCode::E_OK;
 }
 
@@ -138,9 +143,27 @@ Error::ErrorCode TextureAsset::SaveAsAsset(const char *assetPath) const
 {
     std::vector<uint8_t> buffer;
     SaveToBuffer(buffer);
-    return AssetReader::SaveToFile(assetPath, buffer, Asset::AssetType::ASSET_TYPE_TEXTURE);
+    return AssetReader::SaveToFile(assetPath, buffer, Asset::AssetType::ASSET_TYPE_TEXTURE, TEXTURE_ASSET_VERSION);
 }
 
+void TextureAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
+{
+    DataWriter writer{};
+    writer.Write<size_t>(width);
+    writer.Write<size_t>(height);
+    writer.Write<uint8_t>(filter ? 1 : 0);
+    writer.Write<uint8_t>(repeat ? 1 : 0);
+    writer.Write<uint8_t>(mipmaps ? 1 : 0);
+    std::vector<uint32_t> pixels;
+    GetPixelsRGBA(pixels);
+    writer.WriteBuffer<uint32_t>(pixels);
+    writer.CopyToVector(buffer);
+}
+
+void TextureAsset::GetPixelsRGBA(std::vector<uint32_t> &outBuffer) const
+{
+    outBuffer = pixels;
+}
 
 void TextureAsset::FixByteOrder()
 {
@@ -156,37 +179,3 @@ void TextureAsset::FixByteOrder()
     }
 }
 
-void TextureAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
-{
-    assert(buffer.empty());
-    buffer.resize(sizeof(uint32_t) * 4);
-    uint32_t *bufferAsUint32 = reinterpret_cast<uint32_t *>(buffer.data());
-    bufferAsUint32[0] = width * height * sizeof(uint32_t);
-    bufferAsUint32[1] = width;
-    bufferAsUint32[2] = height;
-    bufferAsUint32[3] = 0;
-    std::vector<uint32_t> pixels;
-    GetPixelsRGBA(pixels);
-    buffer.insert(buffer.end(), pixels.begin(), pixels.end());
-}
-
-void TextureAsset::GetPixelsRGBA(std::vector<uint32_t> &outBuffer) const
-{
-    assert(outBuffer.empty());
-    outBuffer.resize(width * height);
-    for (uint32_t x = 0; x < width; x++)
-    {
-        for (uint32_t y = 0; y < height; y++)
-        {
-            const size_t arrayIndex = x + y * width;
-            const uint32_t pixel = pixels.at(arrayIndex);
-
-            const uint8_t a = static_cast<uint8_t>(pixel);
-            const uint8_t r = static_cast<uint8_t>(pixel >> 8);
-            const uint8_t g = static_cast<uint8_t>(pixel >> 16);
-            const uint8_t b = static_cast<uint8_t>(pixel >> 24);
-
-            outBuffer.at(arrayIndex) = a << 24 | r << 16 | g << 8 | b;
-        }
-    }
-}

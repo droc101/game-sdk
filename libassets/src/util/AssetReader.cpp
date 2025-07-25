@@ -2,13 +2,14 @@
 // Created by droc101 on 6/23/25.
 //
 
-#include <libassets/util/AssetReader.h>
 #include <csignal>
 #include <cstdio>
 #include <format>
+#include <libassets/util/AssetReader.h>
+#include <libassets/util/DataReader.h>
 #include <vector>
 #include <zlib.h>
-#include <libassets/util/DataReader.h>
+#include "libassets/util/DataWriter.h"
 
 Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &outAsset)
 {
@@ -17,22 +18,28 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
         return Error::ErrorCode::E_INVALID_ARGUMENT;
     }
     outAsset.reader.offset = 0;
-    constexpr size_t dataOffset = sizeof(uint32_t) * 4;
-    if (dataOffset > asset.size())
+    if (Asset::ASSET_HEADER_SIZE > asset.size())
     {
         return Error::ErrorCode::E_INVALID_HEADER;
     }
-    const uint32_t *header = reinterpret_cast<const uint32_t *>(asset.data());
-    const uint32_t compressedSize = header[0];
-    outAsset.reader.size = header[1];
-    // uint32_t*3 = unused
-    const Asset::AssetType &assetType = static_cast<Asset::AssetType>(header[3]);
+
+    DataReader reader = DataReader(asset);
+    const uint32_t magic = reader.Read<uint32_t>();
+    if (magic != Asset::ASSET_CONTAINER_MAGIC) return Error::ErrorCode::E_INVALID_HEADER;
+    const uint8_t version = reader.Read<uint8_t>();
+    if (version != Asset::ASSET_CONTAINER_VERSION) return Error::ErrorCode::E_INCORRECT_VERSION;
+    outAsset.type = static_cast<Asset::AssetType>(reader.Read<uint8_t>());
+    outAsset.typeVersion = reader.Read<uint8_t>();
+    const size_t decompressedSize = reader.Read<size_t>();
+    const size_t compressedSize = reader.Read<size_t>();
+
+    outAsset.reader.size = decompressedSize;
 
     outAsset.reader.bytes.resize(outAsset.reader.size);
 
     z_stream stream{};
 
-    stream.next_in = asset.data() + dataOffset;
+    stream.next_in = asset.data() + Asset::ASSET_HEADER_SIZE;
     stream.avail_in = compressedSize;
     stream.next_out = outAsset.reader.bytes.data();
     stream.avail_out = outAsset.reader.size;
@@ -67,13 +74,13 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
     {
         return Error::ErrorCode::E_INVALID_BODY;
     }
-
-    outAsset.type = assetType;
     return Error::ErrorCode::E_OK;
 }
 
-Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer, std::vector<uint8_t> &outBuffer,
-                                       const Asset::AssetType type)
+Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
+                                       std::vector<uint8_t> &outBuffer,
+                                       const Asset::AssetType type,
+                                       uint8_t typeVersion)
 {
     if (inBuffer.empty())
     {
@@ -83,10 +90,13 @@ Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer, std::vect
     {
         return Error::ErrorCode::E_INVALID_ARGUMENT;
     }
-    outBuffer.resize(sizeof(uint32_t) * 4);
-    uint32_t *header = reinterpret_cast<uint32_t *>(outBuffer.data());
-    header[1] = inBuffer.size();
-    header[3] = static_cast<uint32_t>(type);
+
+    DataWriter writer{};
+    writer.Write<uint32_t>(Asset::ASSET_CONTAINER_MAGIC);
+    writer.Write<uint8_t>(Asset::ASSET_CONTAINER_VERSION);
+    writer.Write<uint8_t>(static_cast<uint8_t>(type));
+    writer.Write<uint8_t>(typeVersion);
+    writer.Write<size_t>(inBuffer.size());
 
     z_stream zs{};
     deflateInit2(&zs, Z_BEST_COMPRESSION, Z_DEFLATED, 15 | 16, 8, Z_DEFAULT_STRATEGY);
@@ -97,6 +107,7 @@ Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer, std::vect
     int ret = Z_OK;
     constexpr size_t chunkSize = 16384;
     std::vector<uint8_t> readBuffer(chunkSize);
+    std::vector<uint8_t> compressedData{};
 
     while (ret == Z_OK)
     {
@@ -106,7 +117,7 @@ Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer, std::vect
         ret = deflate(&zs, Z_FINISH);
 
         const ptrdiff_t bytesCompressed = static_cast<ptrdiff_t>(readBuffer.size()) - zs.avail_out;
-        outBuffer.insert(outBuffer.end(), readBuffer.begin(), readBuffer.begin() + bytesCompressed);
+        compressedData.insert(compressedData.end(), readBuffer.begin(), readBuffer.begin() + bytesCompressed);
     }
 
     deflateEnd(&zs);
@@ -117,13 +128,17 @@ Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer, std::vect
         return Error::ErrorCode::E_COMPRESSION_ERROR;
     }
 
-    *reinterpret_cast<uint32_t *>(outBuffer.data()) = outBuffer.size() - sizeof(uint32_t) * 4;
+    writer.Write<size_t>(compressedData.size());
+    writer.WriteBuffer<uint8_t>(compressedData);
+    writer.CopyToVector(outBuffer);
 
     return Error::ErrorCode::E_OK;
 }
 
-Error::ErrorCode AssetReader::SaveToFile(const char *filePath, std::vector<uint8_t> &data,
-                                         const Asset::AssetType type)
+Error::ErrorCode AssetReader::SaveToFile(const char *filePath,
+                                         std::vector<uint8_t> &data,
+                                         const Asset::AssetType type,
+                                         uint8_t typeVersion)
 {
     FILE *file = fopen(filePath, "wb");
     if (file == nullptr)
@@ -132,7 +147,7 @@ Error::ErrorCode AssetReader::SaveToFile(const char *filePath, std::vector<uint8
         return Error::ErrorCode::E_CANT_OPEN_FILE;
     }
     std::vector<uint8_t> compressedData;
-    const Error::ErrorCode e = Compress(data, compressedData, type);
+    const Error::ErrorCode e = Compress(data, compressedData, type, typeVersion);
     fwrite(compressedData.data(), 1, compressedData.size(), file);
     fclose(file);
     return e;

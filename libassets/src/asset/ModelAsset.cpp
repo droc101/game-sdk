@@ -22,6 +22,8 @@ Error::ErrorCode ModelAsset::CreateFromAsset(const char *assetPath, ModelAsset &
     const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
     if (e != Error::ErrorCode::E_OK) return e;
     if (asset.type != Asset::AssetType::ASSET_TYPE_MODEL) return Error::ErrorCode::E_INCORRECT_FORMAT;
+    if (asset.typeVersion != MODEL_ASSET_VERSION) return Error::ErrorCode::E_INCORRECT_VERSION;
+    modelAsset = ModelAsset();
     const uint32_t materialCount = asset.reader.Read<uint32_t>();
     const uint32_t skinCount = asset.reader.Read<uint32_t>();
     const uint32_t lodCount = asset.reader.Read<uint32_t>();
@@ -76,7 +78,7 @@ Error::ErrorCode ModelAsset::SaveAsAsset(const char *assetPath) const
 {
     std::vector<uint8_t> data;
     SaveToBuffer(data);
-    return AssetReader::SaveToFile(assetPath, data, Asset::AssetType::ASSET_TYPE_MODEL);
+    return AssetReader::SaveToFile(assetPath, data, Asset::AssetType::ASSET_TYPE_MODEL, MODEL_ASSET_VERSION);
 }
 
 ModelLod &ModelAsset::GetLod(const size_t index)
@@ -136,6 +138,7 @@ void ModelAsset::GetVertexBuffer(const size_t lodIndex, DataWriter &writer)
 
 Error::ErrorCode ModelAsset::CreateFromStandardModel(const char *objPath, ModelAsset &model, const std::string& defaultTexture)
 {
+    model = ModelAsset();
     const ModelLod lod(objPath, 0);
     model.lods.push_back(lod);
     const size_t materialCount = lod.indexCounts.size();

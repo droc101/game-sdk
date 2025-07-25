@@ -163,8 +163,15 @@ if (WIN32)
     )
 endif ()
 
+add_custom_target(
+        copy_assets
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/bin/assets
+)
+
 add_subdirectory(libassets)
 add_subdirectory(texedit)
 add_subdirectory(mdledit)
 add_subdirectory(sndedit)
 add_subdirectory(lvledit)
+add_subdirectory(shdedit)
+add_subdirectory(fonedit)

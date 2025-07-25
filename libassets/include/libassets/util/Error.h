@@ -23,7 +23,8 @@ class Error
             E_UNKNOWN,
             E_INCORRECT_FORMAT,
             E_SHADER_PARSE_ERROR,
-            E_SHADER_LINK_ERROR
+            E_SHADER_LINK_ERROR,
+            E_INCORRECT_VERSION
         };
 
         Error() = delete;

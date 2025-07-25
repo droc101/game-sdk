@@ -10,6 +10,14 @@ DataReader::DataReader(const size_t dataSize): bytes(dataSize)
     offset = 0;
 }
 
+DataReader::DataReader(const std::vector<uint8_t> &data)
+{
+    bytes = data;
+    size = data.size();
+    offset = 0;
+}
+
+
 void DataReader::Seek(const std::ptrdiff_t relativeOffset)
 {
     if (offset + relativeOffset > size) // size_t is unsigned and cannot be below zero

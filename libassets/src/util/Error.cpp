@@ -28,6 +28,8 @@ std::string Error::ErrorString(ErrorCode e)
             return "Shader Parse Error";
         case ErrorCode::E_SHADER_LINK_ERROR:
             return "Shader Link Error";
+        case ErrorCode::E_INCORRECT_VERSION:
+            return "Incorrect Version";
         case ErrorCode::E_UNKNOWN:
         default:
             return "Unknown Error";

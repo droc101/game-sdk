@@ -25,11 +25,7 @@ target_link_libraries(mdledit PRIVATE ${SHARED_LIBRARIES})
 
 add_dependencies(mdledit assets)
 
-add_custom_target(
-        copy_mdledit_assets
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/mdledit/assets ${CMAKE_BINARY_DIR}/bin/assets
-)
-add_dependencies(mdledit copy_mdledit_assets)
+add_dependencies(mdledit copy_assets)
 
 if (WIN32)
     add_dependencies(mdledit copydlls)

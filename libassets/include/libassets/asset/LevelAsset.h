@@ -27,6 +27,8 @@ class LevelAsset
 
         [[nodiscard]] size_t GetDataSize() const;
 
+        static constexpr uint8_t LEVEL_ASSET_VERSION = 1;
+
     private:
         std::vector<uint8_t> levelData;
 

@@ -37,6 +37,10 @@ add_library(assets STATIC include/libassets/libassets.h
         include/libassets/util/Error.h
         src/util/ShaderCompiler.cpp
         include/libassets/util/ShaderCompiler.h
+        src/asset/ShaderAsset.cpp
+        include/libassets/asset/ShaderAsset.h
+        src/asset/FontAsset.cpp
+        include/libassets/asset/FontAsset.h
 )
 
 target_link_libraries(assets PRIVATE ZLIB::ZLIB assimp::assimp glslang::glslang Vulkan::Vulkan)

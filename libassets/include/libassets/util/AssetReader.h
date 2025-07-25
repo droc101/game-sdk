@@ -24,9 +24,12 @@ class AssetReader
          * @param inBuffer The payload data to compress
          * @param[out] outBuffer The buffer to output the compressed data into
          * @param type The asset type to store
+         * @param typeVersion
          */
-        [[nodiscard]] static Error::ErrorCode Compress(std::vector<uint8_t> &inBuffer, std::vector<uint8_t> &outBuffer,
-                                                       Asset::AssetType type);
+        [[nodiscard]] static Error::ErrorCode Compress(std::vector<uint8_t> &inBuffer,
+                                                       std::vector<uint8_t> &outBuffer,
+                                                       Asset::AssetType type,
+                                                       uint8_t typeVersion);
 
         [[nodiscard]] static Error::ErrorCode LoadFromFile(const char *filePath, Asset &outAsset);
 
@@ -35,7 +38,10 @@ class AssetReader
          * @param filePath The file to save as
          * @param data The payload data
          * @param type The type of asset
+         * @param typeVersion
          */
-        [[nodiscard]] static Error::ErrorCode SaveToFile(const char *filePath, std::vector<uint8_t> &data,
-                                                         Asset::AssetType type);
+        [[nodiscard]] static Error::ErrorCode SaveToFile(const char *filePath,
+                                                         std::vector<uint8_t> &data,
+                                                         Asset::AssetType type,
+                                                         uint8_t typeVersion);
 };

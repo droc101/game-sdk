@@ -39,9 +39,9 @@ bool loadSound()
 {
     destroyExistingSound();
     ma_result res = ma_decoder_init_memory(soundAsset.GetData().data(), soundAsset.GetDataSize(), nullptr, &decoder);
-    if (res == MA_SUCCESS) return false;
+    if (res != MA_SUCCESS) return false;
     res = ma_sound_init_from_data_source(&engine, &decoder, MA_SOUND_FLAG_DECODE, nullptr, &sound);
-    if (res == MA_SUCCESS) return false;
+    if (res != MA_SUCCESS) return false;
     soundLoaded = true;
     return true;
 }

@@ -50,6 +50,8 @@ class ModelAsset
 
         bool ValidateLodDistances();
 
+        static constexpr uint8_t MODEL_ASSET_VERSION = 1;
+
     private:
         std::vector<ModelLod> lods{};
         std::vector<std::vector<Material>> skins{};

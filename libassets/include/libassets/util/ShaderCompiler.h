@@ -16,7 +16,7 @@ class ShaderCompiler
         ShaderCompiler(const std::string &glslSource, VkShaderStageFlagBits shaderStage);
         ShaderCompiler(const std::string &glslSource, VkShaderStageFlagBits shaderStage, glslang::EShTargetClientVersion targetVulkanVersion);
 
-        Error::ErrorCode Compile(std::vector<uint32_t> &outputSpirv) const;
+        [[nodiscard]] Error::ErrorCode Compile(std::vector<uint32_t> &outputSpirv) const;
 
         void SetTargetVersions(glslang::EShTargetClientVersion targetVulkanVersion, glslang::EShTargetLanguageVersion targetSpirvVersion);
 

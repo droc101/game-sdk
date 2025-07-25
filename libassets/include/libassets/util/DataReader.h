@@ -23,6 +23,8 @@ class DataReader
 
         explicit DataReader(size_t dataSize);
 
+        explicit DataReader(const std::vector<uint8_t> &data);
+
         void Seek(std::ptrdiff_t relativeOffset);
 
         void SeekAbsolute(size_t position);
