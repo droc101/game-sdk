@@ -48,7 +48,8 @@ ModelLod::ModelLod(const char *filePath, const float distance)
                                              aiProcess_SortByPType |
                                              aiProcess_ValidateDataStructure |
                                              aiProcess_FlipUVs |
-                                             aiProcess_GenSmoothNormals);
+                                             aiProcess_GenSmoothNormals |
+                                             aiProcess_RemoveRedundantMaterials);
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {

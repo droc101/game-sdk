@@ -21,10 +21,24 @@ void Options::Load()
     std::string j;
     file >> j;
     const nlohmann::json savedata = nlohmann::json::parse(j);
-    gamePath = savedata.value("game_path", std::string());
-    defaultTexture = savedata.value("default_texture", std::string("texture/level_wall_test.gtex"));
+    if (savedata.is_discarded())
+    {
+        printf("Failed to parse options JSON, loading defaults.");
+        LoadDefault();
+    } else
+    {
+        gamePath = savedata.value("game_path", std::string());
+        defaultTexture = savedata.value("default_texture", std::string("texture/level/wall_test.gtex"));
+    }
     file.close();
 }
+
+void Options::LoadDefault()
+{
+    gamePath = std::string();
+    defaultTexture = "texture/level/wall_test.gtex";
+}
+
 
 void Options::Save()
 {
