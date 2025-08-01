@@ -79,6 +79,8 @@ void MaterialEditWindow::Render()
         {
             Material mat{};
             mat.texture = Options::defaultTexture;
+            mat.color = Color({1.0f, 1.0f, 1.0f, 1.0f});
+            mat.shader = Material::MaterialShader::SHADER_SHADED;
             ModelRenderer::GetModel()->AddMaterial(mat);
         }
         ImGui::SameLine();

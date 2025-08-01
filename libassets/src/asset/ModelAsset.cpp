@@ -226,5 +226,15 @@ void ModelAsset::AddMaterial(const Material &mat)
 void ModelAsset::RemoveMaterial(const size_t index)
 {
     materials.erase(materials.begin() + static_cast<int64_t>(index));
+    for (std::vector<size_t> &skin: skins)
+    {
+        for (size_t &mat: skin)
+        {
+            if (mat > GetMaterialCount() - 1)
+            {
+                mat = GetMaterialCount() - 1;
+            }
+        }
+    }
 }
 
