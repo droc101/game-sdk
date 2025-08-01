@@ -22,14 +22,14 @@ ModelLod::ModelLod(DataReader &reader, const uint32_t materialCount)
     reader.Skip<uint32_t>(); // Skips the total index count which is not needed for editing
     for (uint32_t _i = 0; _i < materialCount; _i++)
     {
-        indexCounts.push_back(reader.Read<size_t>());
+        indexCounts.push_back(reader.Read<uint32_t>());
     }
     for (const uint32_t indexCount: indexCounts)
     {
         std::vector<uint32_t> materialIndices;
         for (size_t _i = 0; _i < indexCount; _i++)
         {
-            materialIndices.push_back(reader.Read<size_t>());
+            materialIndices.push_back(reader.Read<uint32_t>());
         }
         indices.push_back(materialIndices);
     }

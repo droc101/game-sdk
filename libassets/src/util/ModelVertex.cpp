@@ -13,11 +13,11 @@ ModelVertex::ModelVertex(DataReader &reader)
     }
     uv.at(0) = reader.Read<float>();
     uv.at(1) = reader.Read<float>();
+    color = Color(reader, true);
     for (float &norm: normal)
     {
         norm = reader.Read<float>();
     }
-    color = Color(reader, true);
 }
 
 ModelVertex::ModelVertex(const aiMesh *mesh, const uint32_t vertexIndex)
@@ -27,8 +27,8 @@ ModelVertex::ModelVertex(const aiMesh *mesh, const uint32_t vertexIndex)
     const aiVector3D uv = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][vertexIndex] : aiVector3D(0, 0, 0);
     const aiColor4D color = mesh->HasVertexColors(0) ? mesh->mColors[0][vertexIndex] : aiColor4D(1, 1, 1, 1);
     this->position = {position.x, position.y, position.z};
-    this->normal = {normal.x, normal.y, normal.z};
     this->uv = {uv.x, uv.y};
+    this->normal = {normal.x, normal.y, normal.z};
     this->color = Color({color.r, color.g, color.b, color.a});
 }
 

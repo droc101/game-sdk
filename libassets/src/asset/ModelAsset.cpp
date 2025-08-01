@@ -40,13 +40,13 @@ Error::ErrorCode ModelAsset::CreateFromAsset(const char *assetPath, ModelAsset &
     for (std::vector<size_t> &skin: modelAsset.skins)
     {
         skin.reserve(materialsPerSkin);
-        for (uint32_t _i = 0; _i < materialsPerSkin; _i++)
+        for (size_t _i = 0; _i < materialsPerSkin; _i++)
         {
             skin.emplace_back(asset.reader.Read<size_t>());
         }
     }
 
-    for (uint32_t _i = 0; _i < lodCount; _i++)
+    for (size_t _i = 0; _i < lodCount; _i++)
     {
         modelAsset.lods.emplace_back(asset.reader, materialCount);
     }
