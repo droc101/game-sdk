@@ -19,6 +19,7 @@ class Color
         explicit Color(std::array<float, 4> rgba);
 
         Color &operator=(const Color &other) = default;
+        bool operator==(const Color &) const = default;
 
         void WriteFloats(DataWriter &writer) const;
 
@@ -26,9 +27,10 @@ class Color
 
         float *GetData();
 
+        [[nodiscard]] std::array<float, 4> CopyData() const;
+
     private:
         std::array<float, 4> color = {1.0f, 1.0f, 1.0f, 1.0f};
 };
-
 
 #endif //COLOR_H

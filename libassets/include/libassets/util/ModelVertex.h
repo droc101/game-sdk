@@ -6,6 +6,7 @@
 #define MODELVERTEX_H
 #include <assimp/mesh.h>
 #include <libassets/util/DataReader.h>
+#include "Color.h"
 
 
 class ModelVertex
@@ -18,8 +19,9 @@ class ModelVertex
         bool operator==(const ModelVertex &other) const;
 
         std::array<float, 3> position{};
-        std::array<float, 3> normal{};
         std::array<float, 2> uv{};
+        Color color{};
+        std::array<float, 3> normal{};
 };
 
 template<> struct std::hash<ModelVertex>

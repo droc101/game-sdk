@@ -24,17 +24,25 @@ Error::ErrorCode ModelAsset::CreateFromAsset(const char *assetPath, ModelAsset &
     if (asset.type != Asset::AssetType::ASSET_TYPE_MODEL) return Error::ErrorCode::E_INCORRECT_FORMAT;
     if (asset.typeVersion != MODEL_ASSET_VERSION) return Error::ErrorCode::E_INCORRECT_VERSION;
     modelAsset = ModelAsset();
-    const uint32_t materialCount = asset.reader.Read<uint32_t>();
-    const uint32_t skinCount = asset.reader.Read<uint32_t>();
-    const uint32_t lodCount = asset.reader.Read<uint32_t>();
+    const size_t materialCount = asset.reader.Read<size_t>();
+    const size_t materialsPerSkin = asset.reader.Read<size_t>();
+    const size_t skinCount = asset.reader.Read<size_t>();
+    const size_t lodCount = asset.reader.Read<size_t>();
+    modelAsset.collisionModelType = static_cast<CollisionModelType>(asset.reader.Read<uint8_t>());
+
+    modelAsset.materials.reserve(materialCount);
+    for (size_t i = 0; i < materialCount; i++)
+    {
+        modelAsset.materials.emplace_back(asset.reader);
+    }
 
     modelAsset.skins.resize(skinCount);
-    for (std::vector<Material> &skin: modelAsset.skins)
+    for (std::vector<size_t> &skin: modelAsset.skins)
     {
-        skin.reserve(materialCount);
-        for (uint32_t _i = 0; _i < materialCount; _i++)
+        skin.reserve(materialsPerSkin);
+        for (uint32_t _i = 0; _i < materialsPerSkin; _i++)
         {
-            skin.emplace_back(asset.reader);
+            skin.emplace_back(asset.reader.Read<size_t>());
         }
     }
 
@@ -55,15 +63,22 @@ void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     assert(lods.at(0).vertices.size() >= 3); // triangle required
 
     DataWriter writer;
-    writer.Write<uint32_t>(static_cast<uint32_t>(skins.at(0).size()));
-    writer.Write<uint32_t>(static_cast<uint32_t>(skins.size()));
-    writer.Write<uint32_t>(static_cast<uint32_t>(lods.size()));
+    writer.Write<size_t>(materials.size());
+    writer.Write<size_t>(skins.at(0).size());
+    writer.Write<size_t>(skins.size());
+    writer.Write<size_t>(lods.size());
+    writer.Write<uint8_t>(static_cast<uint8_t>(collisionModelType));
 
-    for (const std::vector<Material> &skinMaterials: skins)
+    for (const Material &mat: materials)
     {
-        for (const Material &material: skinMaterials)
+        mat.Write(writer);
+    }
+
+    for (const std::vector<size_t> &skinMaterialIndices: skins)
+    {
+        for (const size_t &materialIndex: skinMaterialIndices)
         {
-            material.Write(writer);
+            writer.Write<size_t>(materialIndex);
         }
     }
 
@@ -86,7 +101,7 @@ ModelLod &ModelAsset::GetLod(const size_t index)
     return lods.at(index);
 }
 
-Material *ModelAsset::GetSkin(const size_t index)
+size_t *ModelAsset::GetSkin(const size_t index)
 {
     return skins.at(index).data();
 }
@@ -101,21 +116,17 @@ size_t ModelAsset::GetSkinCount() const
     return skins.size();
 }
 
-size_t ModelAsset::GetMaterialCount() const
+size_t ModelAsset::GetMaterialsPerSkin() const
 {
     return skins.at(0).size();
 }
 
-void ModelAsset::AddSkin(const std::string &defaultTexture)
+void ModelAsset::AddSkin()
 {
-    std::vector<Material> skin{};
-    for (size_t i = 0; i < GetMaterialCount(); i++)
+    std::vector<size_t> skin{};
+    for (size_t i = 0; i < GetMaterialsPerSkin(); i++)
     {
-        Material m{};
-        m.texture = defaultTexture;
-        m.color = Color({1.0f, 1.0f, 1.0f, 1.0f});
-        m.shader = Material::MaterialShader::SHADER_SHADED;
-        skin.push_back(m);
+        skin.push_back(0);
     }
     skins.push_back(skin);
 }
@@ -132,6 +143,7 @@ void ModelAsset::GetVertexBuffer(const size_t lodIndex, DataWriter &writer)
     {
         writer.WriteBuffer<float, 3>(vertex.position);
         writer.WriteBuffer<float, 2>(vertex.uv);
+        vertex.color.WriteFloats(writer);
         writer.WriteBuffer<float, 3>(vertex.normal);
     }
 }
@@ -142,12 +154,15 @@ Error::ErrorCode ModelAsset::CreateFromStandardModel(const char *objPath, ModelA
     const ModelLod lod(objPath, 0);
     model.lods.push_back(lod);
     const size_t materialCount = lod.indexCounts.size();
-    std::vector<Material> skin{};
+    std::vector<size_t> skin{};
     for (size_t _i = 0; _i < materialCount; _i++)
     {
-        skin.emplace_back(defaultTexture, -1u, Material::MaterialShader::SHADER_SHADED);
+        skin.emplace_back(0);
     }
     model.skins.push_back(skin);
+    model.materials = {
+        Material(defaultTexture, -1u, Material::MaterialShader::SHADER_SHADED)
+    };
     return Error::ErrorCode::E_OK;
 }
 
@@ -165,7 +180,7 @@ bool ModelAsset::AddLod(const std::string &path)
 {
     const float dist = lods.end()->distance + 5;
     const ModelLod l(path.c_str(), dist);
-    if (l.indexCounts.size() != GetMaterialCount()) return false;
+    if (l.indexCounts.size() != GetMaterialsPerSkin()) return false;
     lods.push_back(l);
     return true;
 }
@@ -192,3 +207,24 @@ bool ModelAsset::ValidateLodDistances()
     }
     return true;
 }
+
+Material &ModelAsset::GetMaterial(const size_t index)
+{
+    return materials.at(index);
+}
+
+size_t ModelAsset::GetMaterialCount() const
+{
+    return materials.size();
+}
+
+void ModelAsset::AddMaterial(const Material &mat)
+{
+    materials.push_back(mat);
+}
+
+void ModelAsset::RemoveMaterial(const size_t index)
+{
+    materials.erase(materials.begin() + static_cast<int64_t>(index));
+}
+

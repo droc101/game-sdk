@@ -62,3 +62,9 @@ Color::Color(const std::array<float, 4> rgba)
 {
     color = rgba;
 }
+
+std::array<float, 4> Color::CopyData() const
+{
+    return color;
+}
+

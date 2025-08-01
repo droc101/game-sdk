@@ -15,6 +15,13 @@
 class ModelAsset
 {
     public:
+        enum class CollisionModelType: uint8_t
+        {
+            NONE,
+            STATIC_SINGLE_CONCAVE, /// NOT YET IMPLEMENTED! DO NOT USE!
+            DYNAMIC_MULTIPLE_CONVEX /// NOT YET IMPLEMENTED! DO NOT USE!
+        };
+
         /**
          * Please use @c ModelAsset::Create* instead.
          */
@@ -26,19 +33,8 @@ class ModelAsset
 
         [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
 
+
         [[nodiscard]] ModelLod &GetLod(size_t index);
-
-        [[nodiscard]] Material *GetSkin(size_t index);
-
-        [[nodiscard]] size_t GetSkinCount() const;
-
-        [[nodiscard]] size_t GetLodCount() const;
-
-        [[nodiscard]] size_t GetMaterialCount() const;
-
-        void AddSkin(const std::string &defaultTexture);
-
-        void RemoveSkin(size_t index);
 
         void SortLODs();
 
@@ -46,15 +42,41 @@ class ModelAsset
 
         void RemoveLod(size_t index);
 
-        void GetVertexBuffer(size_t lodIndex, DataWriter &writer);
+        [[nodiscard]] size_t GetLodCount() const;
 
-        bool ValidateLodDistances();
+        [[nodiscard]] bool ValidateLodDistances();
+
+
+        [[nodiscard]] size_t *GetSkin(size_t index);
+
+        [[nodiscard]] size_t GetSkinCount() const;
+
+        void AddSkin();
+
+        void RemoveSkin(size_t index);
+
+        [[nodiscard]] size_t GetMaterialsPerSkin() const;
+
+
+
+        [[nodiscard]] Material &GetMaterial(size_t index);
+
+        [[nodiscard]] size_t GetMaterialCount() const;
+
+        void AddMaterial(const Material &mat);
+
+        void RemoveMaterial(size_t index);
+
+
+        void GetVertexBuffer(size_t lodIndex, DataWriter &writer);
 
         static constexpr uint8_t MODEL_ASSET_VERSION = 1;
 
     private:
+        std::vector<Material> materials{};
+        std::vector<std::vector<size_t>> skins{};
         std::vector<ModelLod> lods{};
-        std::vector<std::vector<Material>> skins{};
+        CollisionModelType collisionModelType = CollisionModelType::NONE;
 
         void SaveToBuffer(std::vector<uint8_t> &buffer) const;
 

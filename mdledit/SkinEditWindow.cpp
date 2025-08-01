@@ -6,8 +6,6 @@
 #include <format>
 #include "imgui.h"
 #include "ModelRenderer.h"
-#include "Options.h"
-#include "TextureBrowserWindow.h"
 
 void SkinEditWindow::Show()
 {
@@ -37,37 +35,17 @@ void SkinEditWindow::Render()
 
         constexpr float panelHeight = 250.0f;
         ImGui::BeginChild("ScrollableRegion", ImVec2(0, panelHeight), ImGuiChildFlags_AutoResizeY);
-        for (size_t m = 0; m < ModelRenderer::GetModel()->GetMaterialCount(); m++)
+        for (size_t m = 0; m < ModelRenderer::GetModel()->GetMaterialsPerSkin(); m++)
         {
-            const std::string title = std::format("Material {}", m);
-            if (ImGui::CollapsingHeader(title.c_str()))
+            int index = static_cast<int>(ModelRenderer::GetModel()->GetSkin(ModelRenderer::skin)[m]);
+
+            ImGui::Text(std::format("Slot {}", m).c_str());
+            ImGui::SameLine();
+            ImGui::TextDisabled(std::format("{} triangles", ModelRenderer::GetModel()->GetLod(ModelRenderer::lod).indexCounts[m] / 3).c_str());
+            ImGui::PushItemWidth(-1);
+            if (ImGui::SliderInt(std::format("##index_{}", m).c_str(), &index, 0, static_cast<int>(ModelRenderer::GetModel()->GetMaterialCount() - 1)))
             {
-                Material &mat = ModelRenderer::GetModel()->GetSkin(ModelRenderer::skin)[m];
-
-                ImGui::PushItemWidth(-1);
-                ImGui::Text("Texture");
-                TextureBrowserWindow::InputTexture(std::format("##Texture{}", m).c_str(), mat.texture);
-                ImGui::PushItemWidth(-1);
-
-                ImGui::Text("Color");
-                ImGui::ColorEdit4(std::format("##Color{}", m).c_str(), mat.color.GetData());
-
-                ImGui::Text("Shader");
-                constexpr std::array<const char *, 3> shaders = {"Sky", "Unshaded", "Shaded"};
-                uint32_t sel = static_cast<uint32_t>(mat.shader);
-                if (ImGui::BeginCombo(std::format("##Shader{}", m).c_str(), shaders.at(sel)))
-                {
-                    for (uint32_t i = 0; i < static_cast<uint32_t>(shaders.size()); i++)
-                    {
-                        const bool is_selected = (sel == i);
-                        if (ImGui::Selectable(shaders[i], is_selected))
-                            sel = i;
-                        mat.shader = static_cast<Material::MaterialShader>(sel);
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
-                    }
-                    ImGui::EndCombo();
-                }
+                ModelRenderer::GetModel()->GetSkin(ModelRenderer::skin)[m] = index;
             }
         }
         ImGui::EndChild();
@@ -75,7 +53,7 @@ void SkinEditWindow::Render()
         ImGui::Dummy(ImVec2(0.0f, 16.0f));
         if (ImGui::Button("Add", ImVec2(60, 0)))
         {
-            ModelRenderer::GetModel()->AddSkin(Options::defaultTexture);
+            ModelRenderer::GetModel()->AddSkin();
         }
         if (ModelRenderer::GetModel()->GetSkinCount() > 1)
         {

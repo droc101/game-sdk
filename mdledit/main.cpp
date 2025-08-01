@@ -7,6 +7,7 @@
 #include <SDL3/SDL.h>
 #include "LodEditWindow.h"
 #include <libassets/asset/ModelAsset.h>
+#include "MaterialEditWindow.h"
 #include "ModelRenderer.h"
 #include "OpenGLImGuiTextureAssetCache.h"
 #include "Options.h"
@@ -205,6 +206,7 @@ void HandleMenuAndShortcuts()
         if (ImGui::BeginMenu("Edit", modelLoaded))
         {
             if (ImGui::MenuItem("LOD Editor")) LodEditWindow::Show();
+            if (ImGui::MenuItem("Material Editor")) MaterialEditWindow::Show();
             if (ImGui::MenuItem("Skin Editor")) SkinEditWindow::Show();
             ImGui::EndMenu();
         }
@@ -422,6 +424,7 @@ int main()
         SharedMgr::RenderSharedUI(window);
         SkinEditWindow::Render();
         LodEditWindow::Render(window);
+        MaterialEditWindow::Render();
 
         ImGui::Render();
         glClearColor(0, 0, 0, 1);

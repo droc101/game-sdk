@@ -201,9 +201,10 @@ void ModelRenderer::LoadModel(ModelAsset &newModel)
 
         for (size_t j = 0; j < newModel.GetSkinCount(); j++)
         {
-            for (size_t k = 0; k < newModel.GetMaterialCount(); k++)
+            for (size_t k = 0; k < newModel.GetMaterialsPerSkin(); k++)
             {
-                const Material &mat = newModel.GetSkin(j)[k];
+                const size_t matIndex = newModel.GetSkin(j)[k];
+                const Material &mat = newModel.GetMaterial(matIndex);
                 // this just ensures it is loaded, we don't need it rn
                 GLuint _;
                 [[maybe_unused]] const Error::ErrorCode _e = dynamic_cast<OpenGLImGuiTextureAssetCache *>(
@@ -211,7 +212,7 @@ void ModelRenderer::LoadModel(ModelAsset &newModel)
             }
         }
 
-        for (size_t j = 0; j < newModel.GetMaterialCount(); j++)
+        for (size_t j = 0; j < newModel.GetMaterialsPerSkin(); j++)
         {
             GLuint ebo;
             glGenBuffers(1, &ebo);
@@ -260,31 +261,40 @@ void ModelRenderer::Render()
     glBindBuffer(GL_ARRAY_BUFFER, glod.vbo);
     GLint posAttrib = glGetAttribLocation(program, "VERTEX");
     const GLint uvAttrib = glGetAttribLocation(program, "VERTEX_UV");
+    const GLint colorAttrib = glGetAttribLocation(program, "VERTEX_COLOR");
     const GLint normAttrib = glGetAttribLocation(program, "VERTEX_NORMAL");
-    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), nullptr);
     glVertexAttribPointer(uvAttrib,
                           2,
                           GL_FLOAT,
                           GL_FALSE,
-                          8 * sizeof(float),
+                          12 * sizeof(float),
                           reinterpret_cast<void *>(3 * sizeof(float)));
+    glVertexAttribPointer(colorAttrib,
+                          4,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          12 * sizeof(float),
+                          reinterpret_cast<void *>(5 * sizeof(float)));
     glVertexAttribPointer(normAttrib,
                           3,
                           GL_FLOAT,
                           GL_FALSE,
-                          8 * sizeof(float),
-                          reinterpret_cast<void *>(5 * sizeof(float)));
+                          12 * sizeof(float),
+                          reinterpret_cast<void *>(9 * sizeof(float)));
     glEnableVertexAttribArray(posAttrib);
     glEnableVertexAttribArray(uvAttrib);
+    glEnableVertexAttribArray(colorAttrib);
     glEnableVertexAttribArray(normAttrib);
 
     glUniformMatrix4fv(glGetUniformLocation(program, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(glGetUniformLocation(program, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
     glUniform1i(glGetUniformLocation(program, "displayMode"), static_cast<GLint>(displayMode));
 
-    for (size_t i = 0; i < model.GetMaterialCount(); i++)
+    for (size_t i = 0; i < model.GetMaterialsPerSkin(); i++)
     {
-        Material &mat = model.GetSkin(skin)[i];
+        const size_t matIndex = model.GetSkin(skin)[i];
+        Material &mat = model.GetMaterial(matIndex);
         glUniform3fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetData());
 
         GLuint texture;

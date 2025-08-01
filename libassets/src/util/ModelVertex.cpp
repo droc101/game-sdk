@@ -3,6 +3,7 @@
 //
 
 #include <libassets/util/ModelVertex.h>
+#include "libassets/util/Color.h"
 
 ModelVertex::ModelVertex(DataReader &reader)
 {
@@ -16,6 +17,7 @@ ModelVertex::ModelVertex(DataReader &reader)
     {
         norm = reader.Read<float>();
     }
+    color = Color(reader, true);
 }
 
 ModelVertex::ModelVertex(const aiMesh *mesh, const uint32_t vertexIndex)
@@ -23,14 +25,16 @@ ModelVertex::ModelVertex(const aiMesh *mesh, const uint32_t vertexIndex)
     const aiVector3D position = mesh->mVertices[vertexIndex];
     const aiVector3D normal = mesh->HasNormals() ? mesh->mNormals[vertexIndex] : aiVector3D(0, 0, 0);
     const aiVector3D uv = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][vertexIndex] : aiVector3D(0, 0, 0);
+    const aiColor4D color = mesh->HasVertexColors(0) ? mesh->mColors[0][vertexIndex] : aiColor4D(1, 1, 1, 1);
     this->position = {position.x, position.y, position.z};
     this->normal = {normal.x, normal.y, normal.z};
     this->uv = {uv.x, uv.y};
+    this->color = Color({color.r, color.g, color.b, color.a});
 }
 
 bool ModelVertex::operator==(const ModelVertex &other) const
 {
-    return this->normal == other.normal && this->position == other.position && this->uv == other.uv;
+    return this->normal == other.normal && this->position == other.position && this->uv == other.uv && this->color == other.color;
 }
 
 std::size_t std::hash<ModelVertex>::operator()(const ModelVertex &vertex) const noexcept
@@ -48,6 +52,14 @@ std::size_t std::hash<ModelVertex>::operator()(const ModelVertex &vertex) const 
     for (const float uv: vertex.uv)
     {
         hashValue ^= std::hash<float>()(uv) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
+    }
+    for (const float uv: vertex.uv)
+    {
+        hashValue ^= std::hash<float>()(uv) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
+    }
+    for (const float color: vertex.color.CopyData())
+    {
+        hashValue ^= std::hash<float>()(color) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
     }
     return hashValue;
 }
