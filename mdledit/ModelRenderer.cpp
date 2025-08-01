@@ -297,12 +297,12 @@ void ModelRenderer::Render()
         Material &mat = model.GetMaterial(matIndex);
         glUniform3fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetData());
 
-        GLuint texture;
+        GLuint texture = 0;
         const Error::ErrorCode e = dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache)->
                 GetTextureGLuint(mat.texture, texture);
         if (e != Error::ErrorCode::E_OK) continue;
         glBindTexture(GL_TEXTURE_2D, texture);
-        glUniform1ui(glGetUniformLocation(program, "ALBEDO_TEXTURE"), texture);
+        glUniform1i(glGetUniformLocation(program, "ALBEDO_TEXTURE"), 0);
 
         const GLuint ebo = glod.ebos.at(i);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
