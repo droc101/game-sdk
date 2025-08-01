@@ -1,7 +1,8 @@
 # GAME SDK
-[![Windows Build](https://github.com/droc101/game-sdk/actions/workflows/windows.yml/badge.svg)](https://github.com/droc101/game-sdk/actions/workflows/windows.yml)
+[![Windows Build](https://github.com/droc101/game-sdk/actions/workflows/windows.yml/badge.svg)](https://github.com/droc101/game-sdk/actions/workflows/windows.yml) [![Linux Build](https://github.com/droc101/game-sdk/actions/workflows/linux.yml/badge.svg)](https://github.com/droc101/game-sdk/actions/workflows/linux.yml)
 
 Asset editing tools for [GAME](https://github.com/droc101/c-game-engine)
+
 Runs on Windows and Linux
 
 ### Building
