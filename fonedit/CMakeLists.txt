@@ -3,7 +3,7 @@ project(fonedit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(fonedit main.cpp
+add_executable(fonedit fonedit.cpp
         ${IMGUI_SRC}
         ${IMGUI_SRC_SDL3_RENDERER}
         ${SHARED_SRC}

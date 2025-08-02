@@ -84,7 +84,6 @@ void saveGmdlCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     if (errorCode != Error::ErrorCode::E_OK)
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the model!\n{}", Error::ErrorString(errorCode)).c_str(), window);
-        return;
     }
 }
 

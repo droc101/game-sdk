@@ -7,8 +7,6 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <libassets/asset/ModelAsset.h>
-#include <string>
-#include <unordered_map>
 
 class ModelRenderer
 {

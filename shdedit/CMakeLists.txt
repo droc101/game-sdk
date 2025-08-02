@@ -3,7 +3,7 @@ project(shdedit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(shdedit main.cpp
+add_executable(shdedit shdedit.cpp
         ${IMGUI_SRC}
         ${IMGUI_SRC_SDL3_RENDERER}
         ${SHARED_SRC}

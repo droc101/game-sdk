@@ -50,7 +50,7 @@ void TextureBrowserWindow::Render()
 
                     const float cursor = ImGui::GetCursorPosX();
 
-                    if (ImGui::Selectable("##tile", ("texture/" + textures[i]) == *str, 0, ImVec2(tileSize, tileSize)))
+                    if (ImGui::Selectable("##tile", "texture/" + textures[i] == *str, 0, ImVec2(tileSize, tileSize)))
                     {
                         *str = "texture/" + textures[i];
                     }

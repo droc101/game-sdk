@@ -3,7 +3,7 @@ project(texedit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(texedit main.cpp
+add_executable(texedit texedit.cpp
         ${IMGUI_SRC}
         ${IMGUI_SRC_SDL3_RENDERER}
         ${SHARED_SRC}

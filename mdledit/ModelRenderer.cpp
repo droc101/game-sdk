@@ -8,7 +8,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iosfwd>
-#include "../shared/Options.h"
 #include "GLDebug.h"
 #include <libassets/util/DataWriter.h>
 #include <libassets/asset/TextureAsset.h>

@@ -16,8 +16,8 @@ SDL_Window *window;
 SDL_Texture *sdlTexture;
 SDL_Surface *sdlSurface;
 
-constexpr SDL_DialogFileFilter gshdFilter = {"GAME texture (*.gtex)", "gtex"};
-constexpr SDL_DialogFileFilter glslFilter = {"PNG Image", "png"};
+constexpr SDL_DialogFileFilter gtexFilter = {"GAME texture (*.gtex)", "gtex"};
+constexpr SDL_DialogFileFilter pngFilter = {"PNG Image", "png"};
 constexpr std::array imageFilters = {
         SDL_DialogFileFilter{"Images", "png;jpg;jpeg;tga"},
         SDL_DialogFileFilter{"PNG Images", "png"},
@@ -25,7 +25,7 @@ constexpr std::array imageFilters = {
         SDL_DialogFileFilter{"TGA Images", "tga"},
 };
 
-void destroyExistingFont()
+void destroyExistingTexture()
 {
     if (!textureLoaded)
     {
@@ -36,9 +36,9 @@ void destroyExistingFont()
     textureLoaded = false;
 }
 
-bool loadFont()
+bool loadTexture()
 {
-    destroyExistingFont();
+    destroyExistingTexture();
     SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
                                                  static_cast<int>(texture.GetHeight()),
                                                  SDL_PIXELFORMAT_RGBA8888,
@@ -60,7 +60,7 @@ bool loadFont()
 
 }
 
-void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+void openGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
@@ -72,10 +72,9 @@ void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*fi
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to open the texture!\n{}", Error::ErrorString(e)).c_str(), window);
         return;
     }
-    if (!loadFont())
+    if (!loadTexture())
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the texture!\n{}", SDL_GetError()).c_str(), window);
-        return;
     }
 }
 
@@ -91,14 +90,13 @@ void importCallback(void * /*userdata*/, const char *const *fileList, int /*filt
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to import the texture!\n{}", Error::ErrorString(e)).c_str(), window);
         return;
     }
-    if (!loadFont())
+    if (!loadTexture())
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the texture!\n{}", SDL_GetError()).c_str(), window);
-        return;
     }
 }
 
-void saveGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+void saveGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
@@ -108,7 +106,6 @@ void saveGfonCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     if (errorCode != Error::ErrorCode::E_OK)
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the texture!\n{}", Error::ErrorString(errorCode)).c_str(), window);
-        return;
     }
 }
 
@@ -122,7 +119,6 @@ void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     if (errorCode != Error::ErrorCode::E_OK)
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to export the texture!\n{}", Error::ErrorString(errorCode)).c_str(), window);
-        return;
     }
 }
 
@@ -171,16 +167,16 @@ static void Render(bool &done, SDL_Window *window)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGfonCallback, nullptr, window, {&gshdFilter}, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGtexCallback, nullptr, window, {&gtexFilter}, 1, nullptr, false);
     } else if (importPressed)
     {
         SDL_ShowOpenFileDialog(importCallback, nullptr, window, imageFilters.data(), 4, nullptr, false);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGfonCallback, nullptr, window, {&gshdFilter}, 1, nullptr);
+        SDL_ShowSaveFileDialog(saveGtexCallback, nullptr, window, {&gtexFilter}, 1, nullptr);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&glslFilter}, 1, nullptr);
+        SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&pngFilter}, 1, nullptr);
     } else if (zoomInPressed)
     {
         zoom += 0.1;
@@ -334,7 +330,7 @@ int main()
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
-    destroyExistingFont();
+    destroyExistingTexture();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

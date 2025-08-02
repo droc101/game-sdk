@@ -15,7 +15,7 @@
 #include "SharedMgr.h"
 
 static ShaderAsset shader;
-static bool fontLoaded = false;
+static bool shaderLoaded = false;
 SDL_Renderer *renderer;
 SDL_Window *window;
 
@@ -26,22 +26,6 @@ constexpr std::array glslFilters = {
     SDL_DialogFileFilter{"GLSL fragment (*.frag)", "frag"},
     SDL_DialogFileFilter{"GLSL vertex (*.vert)", "vert"},
 };
-
-void destroyExistingFont()
-{
-    if (!fontLoaded)
-    {
-        return;
-    }
-    fontLoaded = false;
-}
-
-bool loadFont()
-{
-    destroyExistingFont();
-    fontLoaded = true;
-    return true;
-}
 
 void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
@@ -55,11 +39,7 @@ void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*fi
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to open the shader!\n{}", Error::ErrorString(e)).c_str(), window);
         return;
     }
-    if (!loadFont())
-    {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the shader!\n{}", SDL_GetError()).c_str(), window);
-        return;
-    }
+    shaderLoaded = true;
 }
 
 void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -74,11 +54,7 @@ void importCallback(void * /*userdata*/, const char *const *fileList, int /*filt
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to import the shader!\n{}", Error::ErrorString(e)).c_str(), window);
         return;
     }
-    if (!loadFont())
-    {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the shader!\n{}", SDL_GetError()).c_str(), window);
-        return;
-    }
+    shaderLoaded = true;
 }
 
 void saveGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -91,7 +67,6 @@ void saveGfonCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     if (errorCode != Error::ErrorCode::E_OK)
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the shader!\n{}", Error::ErrorString(errorCode)).c_str(), window);
-        return;
     }
 }
 
@@ -105,7 +80,6 @@ void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     if (errorCode != Error::ErrorCode::E_OK)
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to export the shader!\n{}", Error::ErrorString(errorCode)).c_str(), window);
-        return;
     }
 }
 
@@ -118,8 +92,8 @@ static void Render(bool &done, SDL_Window *window)
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
-    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && fontLoaded;
-    bool exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && fontLoaded;
+    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && shaderLoaded;
+    bool exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && shaderLoaded;
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -129,8 +103,8 @@ static void Render(bool &done, SDL_Window *window)
             ImGui::Separator();
             openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
             importPressed |= ImGui::MenuItem("Import", "Ctrl+Shift+O");
-            savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, fontLoaded);
-            exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S", false, fontLoaded);
+            savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, shaderLoaded);
+            exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S", false, shaderLoaded);
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
@@ -157,10 +131,10 @@ static void Render(bool &done, SDL_Window *window)
     } else if (newPressed)
     {
         shader = ShaderAsset();
-        loadFont();
+        shaderLoaded = true;
     }
 
-    if (fontLoaded)
+    if (shaderLoaded)
     {
         const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
 
@@ -289,7 +263,6 @@ int main()
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
-    destroyExistingFont();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

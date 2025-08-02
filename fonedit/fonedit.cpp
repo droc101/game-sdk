@@ -11,15 +11,11 @@
 #include <iostream>
 #include <libassets/asset/TextureAsset.h>
 #include <misc/cpp/imgui_stdlib.h>
-#include <ranges>
 #include <SDL3/SDL.h>
 #include "libassets/asset/FontAsset.h"
-#include "libassets/asset/ShaderAsset.h"
-#include "Options.h"
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 #include "TextureBrowserWindow.h"
-#include <misc/cpp/imgui_stdlib.h>
 
 static FontAsset font;
 static bool fontLoaded = false;
@@ -28,22 +24,6 @@ SDL_Window *window;
 std::vector<std::string> charDisplayList;
 
 constexpr SDL_DialogFileFilter gfonFilter = {"GAME font (*.gfon)", "gfon"};
-
-void destroyExistingFont()
-{
-    if (!fontLoaded)
-    {
-        return;
-    }
-    fontLoaded = false;
-}
-
-bool loadFont()
-{
-    destroyExistingFont();
-    fontLoaded = true;
-    return true;
-}
 
 void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
@@ -57,11 +37,7 @@ void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*fi
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to open the font!\n{}", Error::ErrorString(e)).c_str(), window);
         return;
     }
-    if (!loadFont())
-    {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the font!\n{}", SDL_GetError()).c_str(), window);
-        return;
-    }
+    fontLoaded = true;
 }
 
 void saveGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -74,11 +50,10 @@ void saveGfonCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     if (errorCode != Error::ErrorCode::E_OK)
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the font!\n{}", Error::ErrorString(errorCode)).c_str(), window);
-        return;
     }
 }
 
-bool ComboGetter(void* data, int idx, const char** out_text) {
+bool ComboGetter(void* data, const int idx, const char** out_text) {
     const auto& items = *static_cast<std::vector<std::string>*>(data);
     if (idx < 0 || idx >= static_cast<int>(items.size())) return false;
     *out_text = items[idx].c_str();
@@ -137,7 +112,7 @@ static void Render(bool &done, SDL_Window *window)
     } else if (newPressed)
     {
         font = FontAsset();
-        loadFont();
+        fontLoaded = true;
     }
 
     if (fontLoaded)
@@ -370,7 +345,6 @@ int main()
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
-    destroyExistingFont();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

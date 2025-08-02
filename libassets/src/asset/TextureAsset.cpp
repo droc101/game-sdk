@@ -136,7 +136,7 @@ Error::ErrorCode TextureAsset::SaveAsImage(const char *imagePath, const ImageFor
             break;
         default: ;
     }
-    return code == 0 ? Error::ErrorCode::E_OK : Error::ErrorCode::E_UNKNOWN;
+    return code != 0 ? Error::ErrorCode::E_OK : Error::ErrorCode::E_UNKNOWN;
 }
 
 Error::ErrorCode TextureAsset::SaveAsAsset(const char *assetPath) const

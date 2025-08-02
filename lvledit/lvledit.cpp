@@ -17,7 +17,7 @@ SDL_Window *window;
 constexpr SDL_DialogFileFilter gmapFilter = {"Compiled GAME map (*.gmap)", "gmap"};
 constexpr SDL_DialogFileFilter binFilter = {"Raw GAME map (*.bin)", "bin"};
 
-void destroyExistingFont()
+void destroyExistingLevel()
 {
     if (!levelLoaded)
     {
@@ -26,9 +26,9 @@ void destroyExistingFont()
     levelLoaded = false;
 }
 
-void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+void openGmapCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
-    destroyExistingFont();
+    destroyExistingLevel();
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
@@ -44,7 +44,7 @@ void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*fi
 
 void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
-    destroyExistingFont();
+    destroyExistingLevel();
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
@@ -58,7 +58,7 @@ void importCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     levelLoaded = true;
 }
 
-void saveGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+void saveGmapCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
@@ -68,7 +68,6 @@ void saveGfonCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     if (errorCode != Error::ErrorCode::E_OK)
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the level!\n{}", Error::ErrorString(errorCode)).c_str(), window);
-        return;
     }
 }
 
@@ -82,7 +81,6 @@ void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     if (errorCode != Error::ErrorCode::E_OK)
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to export the level!\n{}", Error::ErrorString(errorCode)).c_str(), window);
-        return;
     }
 }
 
@@ -118,13 +116,13 @@ static void Render(bool &done, SDL_Window *window)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGfonCallback, nullptr, window, {&gmapFilter}, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGmapCallback, nullptr, window, {&gmapFilter}, 1, nullptr, false);
     } else if (importPressed)
     {
         SDL_ShowOpenFileDialog(importCallback, nullptr, window, {&binFilter}, 1, nullptr, false);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGfonCallback, nullptr, window, {&gmapFilter}, 1, nullptr);
+        SDL_ShowSaveFileDialog(saveGmapCallback, nullptr, window, {&gmapFilter}, 1, nullptr);
     } else if (exportPressed)
     {
         SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&binFilter}, 1, nullptr);
@@ -241,7 +239,7 @@ int main()
     ImGui_ImplSDLRenderer3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
-    destroyExistingFont();
+    destroyExistingLevel();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

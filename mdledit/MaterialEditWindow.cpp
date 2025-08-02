@@ -52,7 +52,7 @@ void MaterialEditWindow::Render()
                 {
                     for (uint32_t i = 0; i < static_cast<uint32_t>(shaders.size()); i++)
                     {
-                        const bool is_selected = (sel == i);
+                        const bool is_selected = sel == i;
                         if (ImGui::Selectable(shaders[i], is_selected))
                             sel = i;
                         mat.shader = static_cast<Material::MaterialShader>(sel);

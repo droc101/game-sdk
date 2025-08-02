@@ -6,8 +6,6 @@
 #define TEXTUREBROWSERWINDOW_H
 #include <string>
 #include <vector>
-#include <SDL3/SDL_video.h>
-
 
 class TextureBrowserWindow
 {

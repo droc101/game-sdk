@@ -80,7 +80,7 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
 Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
                                        std::vector<uint8_t> &outBuffer,
                                        const Asset::AssetType type,
-                                       uint8_t typeVersion)
+                                       const uint8_t typeVersion)
 {
     if (inBuffer.empty())
     {
@@ -138,7 +138,7 @@ Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
 Error::ErrorCode AssetReader::SaveToFile(const char *filePath,
                                          std::vector<uint8_t> &data,
                                          const Asset::AssetType type,
-                                         uint8_t typeVersion)
+                                         const uint8_t typeVersion)
 {
     FILE *file = fopen(filePath, "wb");
     if (file == nullptr)

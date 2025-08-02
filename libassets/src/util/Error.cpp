@@ -4,7 +4,7 @@
 
 #include <libassets/util/Error.h>
 
-std::string Error::ErrorString(ErrorCode e)
+std::string Error::ErrorString(const ErrorCode e)
 {
     switch (e)
     {

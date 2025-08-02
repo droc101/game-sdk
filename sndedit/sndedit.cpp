@@ -61,7 +61,6 @@ void openGsndCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     if (!loadSound())
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the sound!\n{}", Error::ErrorString(Error::ErrorCode::E_UNKNOWN)).c_str(), window);
-        return;
     }
 }
 
@@ -80,7 +79,6 @@ void importCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     if (!loadSound())
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the sound!\n{}", Error::ErrorString(Error::ErrorCode::E_UNKNOWN)).c_str(), window);
-        return;
     }
 }
 
@@ -94,7 +92,6 @@ void saveGsndCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     if (errorCode != Error::ErrorCode::E_OK)
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the sound!\n{}", Error::ErrorString(errorCode)).c_str(), window);
-        return;
     }
 }
 
@@ -108,7 +105,6 @@ void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filt
     if (errorCode != Error::ErrorCode::E_OK)
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to export the sound!\n{}", Error::ErrorString(errorCode)).c_str(), window);
-        return;
     }
 }
 

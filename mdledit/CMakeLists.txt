@@ -3,7 +3,7 @@ project(mdledit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(mdledit main.cpp
+add_executable(mdledit mdledit.cpp
         ModelRenderer.cpp
         ModelRenderer.h
         SkinEditWindow.cpp
