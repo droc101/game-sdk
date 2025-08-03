@@ -4,9 +4,9 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl3.h>
 #include <iostream>
+#include <libassets/asset/ModelAsset.h>
 #include <SDL3/SDL.h>
 #include "LodEditWindow.h"
-#include <libassets/asset/ModelAsset.h>
 #include "MaterialEditWindow.h"
 #include "ModelRenderer.h"
 #include "OpenGLImGuiTextureAssetCache.h"

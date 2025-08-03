@@ -54,7 +54,7 @@ void saveGfonCallback(void * /*userdata*/, const char *const *fileList, int /*fi
 }
 
 bool ComboGetter(void* data, const int idx, const char** out_text) {
-    const auto& items = *static_cast<std::vector<std::string>*>(data);
+    const std::vector<std::string> &items = *static_cast<std::vector<std::string>*>(data);
     if (idx < 0 || idx >= static_cast<int>(items.size())) return false;
     *out_text = items[idx].c_str();
     return true;
@@ -131,7 +131,7 @@ static void Render(bool &done, SDL_Window *window)
             {
                 if (!font.chars.empty())
                 {
-                    font.chars.push_back(font.chars.back() + 1);
+                    font.chars.push_back(static_cast<char>(font.chars.back() + 1));
                 } else
                 {
                     font.chars.push_back('a');
@@ -155,7 +155,7 @@ static void Render(bool &done, SDL_Window *window)
                     ImGui::TableNextColumn();
                     int char_index = static_cast<int>(std::string(FontAsset::FONT_VALID_CHARS).find(font.chars.at(i)));
                     ImGui::PushItemWidth(-1);
-                    if (ImGui::Combo(std::format("##Char_{}", i).c_str(), &char_index, ComboGetter, &charDisplayList, charDisplayList.size()))
+                    if (ImGui::Combo(std::format("##Char_{}", i).c_str(), &char_index, ComboGetter, &charDisplayList, static_cast<int>(charDisplayList.size())))
                     {
                         font.chars.at(i) = FontAsset::FONT_VALID_CHARS[char_index];
                     }
@@ -181,8 +181,8 @@ static void Render(bool &done, SDL_Window *window)
                     ImGui::SameLine();
                     if (ImGui::Button(std::format("Del##{}", i).c_str(), ImVec2(40, 0)))
                     {
-                        font.char_widths.erase(font.char_widths.begin() + i);
-                        font.chars.erase(font.chars.begin() + i);
+                        font.char_widths.erase(font.char_widths.begin() + static_cast<ptrdiff_t>(i));
+                        font.chars.erase(font.chars.begin() + static_cast<ptrdiff_t>(i));
                     }
                 }
                 ImGui::EndTable();
@@ -252,7 +252,7 @@ static void Render(bool &done, SDL_Window *window)
 
 int main()
 {
-    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
+    if (!SDL_Init(SDL_INIT_VIDEO))
     {
         printf("Error: SDL_Init(): %s\n", SDL_GetError());
         return -1;

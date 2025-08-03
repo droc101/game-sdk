@@ -3,9 +3,9 @@
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
 #include <iostream>
+#include <libassets/asset/TextureAsset.h>
 #include <SDL3/SDL.h>
 #include "Options.h"
-#include <libassets/asset/TextureAsset.h>
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 
@@ -239,7 +239,7 @@ static void Render(bool &done, SDL_Window *window)
 
 int main()
 {
-    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
+    if (!SDL_Init(SDL_INIT_VIDEO))
     {
         printf("Error: SDL_Init(): %s\n", SDL_GetError());
         return -1;

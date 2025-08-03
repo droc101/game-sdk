@@ -27,7 +27,6 @@ Error::ErrorCode TextureAsset::CreateFromImage(const char *imagePath, TextureAss
     int channels;
     uint8_t *data = stbi_load(imagePath, &width, &height, &channels, STBI_rgb_alpha);
     const uint32_t *data32 = reinterpret_cast<uint32_t *>(data);
-    // assert(*channels == 4); // The image MUST be RGBA.
     texture.width = width;
     texture.height = height;
     texture.pixels = std::vector<uint32_t>(width * height);
