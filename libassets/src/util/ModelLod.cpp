@@ -14,6 +14,7 @@
 ModelLod::ModelLod(DataReader &reader, const uint32_t materialCount)
 {
     distance = reader.Read<float>();
+    reader.Skip<float>();
     const size_t vertexCount = reader.Read<size_t>();
     for (size_t _i = 0; _i < vertexCount; _i++)
     {
@@ -139,6 +140,7 @@ void ModelLod::Export(const char *path) const
 void ModelLod::Write(DataWriter &writer) const
 {
     writer.Write<float>(distance);
+    writer.Write<float>(distance * distance);
     writer.Write<size_t>(vertices.size());
     for (const ModelVertex &vertex: vertices)
     {
