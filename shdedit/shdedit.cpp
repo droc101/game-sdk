@@ -35,7 +35,10 @@ void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*fi
     const Error::ErrorCode e = ShaderAsset::CreateFromAsset(fileList[0], shader);
     if (e != Error::ErrorCode::E_OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to open the shader!\n{}", Error::ErrorString(e)).c_str(), window);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                 "Error",
+                                 std::format("Failed to open the shader!\n{}", Error::ErrorString(e)).c_str(),
+                                 window);
         return;
     }
     shaderLoaded = true;
@@ -111,7 +114,7 @@ static void Render(bool &done, SDL_Window *window)
             }
             ImGui::EndMenu();
         }
-        SharedMgr::SharedMenuUI();
+        SharedMgr::SharedMenuUI("shdedit");
         ImGui::EndMainMenuBar();
     }
 

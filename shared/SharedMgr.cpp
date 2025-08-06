@@ -23,7 +23,7 @@ void SharedMgr::DestroySharedMgr()
     Options::Save();
 }
 
-void SharedMgr::SharedMenuUI()
+void SharedMgr::SharedMenuUI(const std::string& programName)
 {
     if (ImGui::BeginMenu("Tools"))
     {
@@ -43,6 +43,14 @@ void SharedMgr::SharedMenuUI()
 #endif
     if (ImGui::BeginMenu("Help"))
     {
+        if (ImGui::MenuItem(("Wiki page for " + programName).c_str()))
+        {
+            SDL_OpenURL(("https://wiki.droc101.dev/index.php/" + programName).c_str());
+        }
+        if (ImGui::MenuItem("Wiki page for GAME SDK"))
+        {
+            SDL_OpenURL("https://wiki.droc101.dev/index.php/GAME_SDK");
+        }
         if (ImGui::MenuItem("Source Code"))
         {
             SDL_OpenURL("https://github.com/droc101/game-sdk");

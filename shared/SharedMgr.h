@@ -16,7 +16,7 @@ class SharedMgr
 
         static void InitSharedMgr(ImGuiTextureAssetCache *cache);
 
-        static void SharedMenuUI();
+        static void SharedMenuUI(const std::string& programName);
 
         static void RenderSharedUI(SDL_Window *window);
 

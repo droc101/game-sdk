@@ -161,7 +161,7 @@ static void Render(bool &done, SDL_Window *window)
             resetZoomPressed |= ImGui::MenuItem("Reset Zoom", "Ctrl+0");
             ImGui::EndMenu();
         }
-        SharedMgr::SharedMenuUI();
+        SharedMgr::SharedMenuUI("texedit");
         ImGui::EndMainMenuBar();
     }
 

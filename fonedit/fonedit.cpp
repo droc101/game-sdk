@@ -99,7 +99,7 @@ static void Render(bool &done, SDL_Window *window)
             }
             ImGui::EndMenu();
         }
-        SharedMgr::SharedMenuUI();
+        SharedMgr::SharedMenuUI("fonedit");
         ImGui::EndMainMenuBar();
     }
 

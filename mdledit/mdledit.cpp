@@ -267,7 +267,7 @@ void HandleMenuAndShortcuts()
             }
             ImGui::EndMenu();
         }
-        SharedMgr::SharedMenuUI();
+        SharedMgr::SharedMenuUI("mdledit");
         ImGui::EndMainMenuBar();
     }
 
