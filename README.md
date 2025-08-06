@@ -6,7 +6,7 @@ Asset editing tools for [GAME](https://github.com/droc101/c-game-engine)
 Runs on Windows and Linux
 
 ### Building
-See [Docs/BUILDING.WINDOWS.md](Docs/BUILDING.WINDOWS.md) for Windows and [Docs/BUILDING.LINUX.md](Docs/BUILDING.LINUX.md) for Linux.
+See [the wiki page](https://wiki.droc101.dev/index.php/Building_GAME_SDK) instructions on building
 
 ### Tested on
 - Windows 11
