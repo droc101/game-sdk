@@ -136,7 +136,7 @@ target_sources(shared INTERFACE
         shared/SDLRendererImGuiTextureAssetCache.h
         shared/OpenGLImGuiTextureAssetCache.cpp
         shared/OpenGLImGuiTextureAssetCache.h
-        $<$<BOOL:${WIN32}>:game-sdk.rc>
+        $<$<BOOL:${WIN32}>:${CMAKE_SOURCE_DIR}/game-sdk.rc>
 )
 target_link_libraries(shared INTERFACE
         SDL3::SDL3
