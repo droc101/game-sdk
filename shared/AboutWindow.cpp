@@ -3,8 +3,9 @@
 //
 
 #include "AboutWindow.h"
+#include <format>
 #include <imgui.h>
-#include "libassets/libassets.h"
+#include <libassets/libassets.h>
 
 void AboutWindow::Show()
 {
@@ -24,13 +25,13 @@ void AboutWindow::Render()
         ImGui::Begin("About the GAME SDK",
                      &visible,
                      ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
-        ImGui::Text("Development & Authoring tools for");
+        ImGui::TextUnformatted("Development & Authoring tools for");
         ImGui::SameLine();
         ImGui::TextLinkOpenURL("GAME", "https://github.com/droc101/c-game-engine");
-        ImGui::Text("Version %s", LIBASSETS_VERSION_STRING);
+        ImGui::TextUnformatted(std::format("Version {}", LIBASSETS_VERSION_STRING).c_str());
 
         ImGui::Dummy(ImVec2(0.0f, 16.0f));
-        ImGui::Text("Third-Party libraries:");
+        ImGui::TextUnformatted("Third-Party libraries:");
         ImGui::TextLinkOpenURL("SDL3", "https://www.libsdl.org");
         ImGui::TextLinkOpenURL("Dear ImGui", "https://github.com/ocornut/imgui");
         ImGui::TextLinkOpenURL("zlib", "https://zlib.net");

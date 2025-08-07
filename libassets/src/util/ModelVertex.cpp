@@ -2,8 +2,13 @@
 // Created by droc101 on 7/18/25.
 //
 
+#include <assimp/color4.h>
+#include <assimp/mesh.h>
+#include <assimp/vector3.h>
+#include <cstdint>
+#include <libassets/util/Color.h>
+#include <libassets/util/DataReader.h>
 #include <libassets/util/ModelVertex.h>
-#include "libassets/util/Color.h"
 
 ModelVertex::ModelVertex(DataReader &reader)
 {
@@ -29,37 +34,13 @@ ModelVertex::ModelVertex(const aiMesh *mesh, const uint32_t vertexIndex)
     this->position = {position.x, position.y, position.z};
     this->uv = {uv.x, uv.y};
     this->normal = {normal.x, normal.y, normal.z};
-    this->color = Color({color.r, color.g, color.b, color.a});
+    this->color = Color(color.r, color.g, color.b, color.a);
 }
 
 bool ModelVertex::operator==(const ModelVertex &other) const
 {
-    return this->normal == other.normal && this->position == other.position && this->uv == other.uv && this->color == other.color;
-}
-
-std::size_t std::hash<ModelVertex>::operator()(const ModelVertex &vertex) const noexcept
-{
-    constexpr size_t goldenRatio = 0x9e3779b9;
-    size_t hashValue = 0;
-    for (const float position: vertex.position)
-    {
-        hashValue ^= std::hash<float>()(position) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-    }
-    for (const float normal: vertex.normal)
-    {
-        hashValue ^= std::hash<float>()(normal) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-    }
-    for (const float uv: vertex.uv)
-    {
-        hashValue ^= std::hash<float>()(uv) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-    }
-    for (const float uv: vertex.uv)
-    {
-        hashValue ^= std::hash<float>()(uv) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-    }
-    for (const float color: vertex.color.CopyData())
-    {
-        hashValue ^= std::hash<float>()(color) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-    }
-    return hashValue;
+    return this->normal == other.normal &&
+           this->position == other.position &&
+           this->uv == other.uv &&
+           this->color == other.color;
 }

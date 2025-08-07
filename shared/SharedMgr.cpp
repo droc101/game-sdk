@@ -3,27 +3,24 @@
 //
 
 #include "SharedMgr.h"
+#include <cstdio>
 #include <filesystem>
-#include <vector>
+#include <imgui.h>
 #include <SDL3/SDL_misc.h>
+#include <SDL3/SDL_video.h>
+#include <string>
+#include <vector>
 #include "AboutWindow.h"
-#include "imgui.h"
 #include "Options.h"
 #include "OptionsWindow.h"
 #include "TextureBrowserWindow.h"
-
-void SharedMgr::InitSharedMgr(ImGuiTextureAssetCache *cache)
-{
-    Options::Load();
-    textureCache = cache;
-}
 
 void SharedMgr::DestroySharedMgr()
 {
     Options::Save();
 }
 
-void SharedMgr::SharedMenuUI(const std::string& programName)
+void SharedMgr::SharedMenuUI(const std::string &programName)
 {
     if (ImGui::BeginMenu("Tools"))
     {
@@ -36,8 +33,14 @@ void SharedMgr::SharedMenuUI(const std::string& programName)
 #ifdef BUILDSTYLE_DEBUG
     if (ImGui::BeginMenu("Debug"))
     {
-        if (ImGui::MenuItem("Dear ImGui Metrics")) metricsVisible = true;
-        if (ImGui::MenuItem("Dear ImGui Demo")) demoVisible = true;
+        if (ImGui::MenuItem("Dear ImGui Metrics"))
+        {
+            metricsVisible = true;
+        }
+        if (ImGui::MenuItem("Dear ImGui Demo"))
+        {
+            demoVisible = true;
+        }
         ImGui::EndMenu();
     }
 #endif
@@ -45,15 +48,15 @@ void SharedMgr::SharedMenuUI(const std::string& programName)
     {
         if (ImGui::MenuItem(("Wiki page for " + programName).c_str()))
         {
-            SDL_OpenURL(("https://wiki.droc101.dev/index.php/" + programName).c_str());
+            (void)SDL_OpenURL(("https://wiki.droc101.dev/index.php/" + programName).c_str());
         }
         if (ImGui::MenuItem("Wiki page for GAME SDK"))
         {
-            SDL_OpenURL("https://wiki.droc101.dev/index.php/GAME_SDK");
+            (void)SDL_OpenURL("https://wiki.droc101.dev/index.php/GAME_SDK");
         }
         if (ImGui::MenuItem("Source Code"))
         {
-            SDL_OpenURL("https://github.com/droc101/game-sdk");
+            (void)SDL_OpenURL("https://github.com/droc101/game-sdk");
         }
         if (ImGui::MenuItem("About"))
         {
@@ -61,7 +64,6 @@ void SharedMgr::SharedMenuUI(const std::string& programName)
         }
         ImGui::EndMenu();
     }
-
 }
 
 void SharedMgr::RenderSharedUI(SDL_Window *window)
@@ -69,16 +71,24 @@ void SharedMgr::RenderSharedUI(SDL_Window *window)
     OptionsWindow::Render(window);
     AboutWindow::Render();
     TextureBrowserWindow::Render();
-    if (metricsVisible) ImGui::ShowMetricsWindow(&metricsVisible);
-    if (demoVisible) ImGui::ShowDemoWindow(&demoVisible);
+    if (metricsVisible)
+    {
+        ImGui::ShowMetricsWindow(&metricsVisible);
+    }
+    if (demoVisible)
+    {
+        ImGui::ShowDemoWindow(&demoVisible);
+    }
 }
 
-std::vector<std::string> SharedMgr::ScanFolder(const std::string &directory_path, const std::string &extension, const bool isRoot)
+std::vector<std::string> SharedMgr::ScanFolder(const std::string &directoryPath,
+                                               const std::string &extension,
+                                               const bool isRoot)
 {
     std::vector<std::string> files;
     try
     {
-        for (const auto &entry: std::filesystem::directory_iterator(directory_path))
+        for (const std::filesystem::directory_entry &entry: std::filesystem::directory_iterator(directoryPath))
         {
             if (entry.is_regular_file())
             {
@@ -92,15 +102,15 @@ std::vector<std::string> SharedMgr::ScanFolder(const std::string &directory_path
                 files.insert(files.end(), subfolderFiles.begin(), subfolderFiles.end());
             }
         }
-    } catch (const std::filesystem::filesystem_error &ex)
+    } catch (const std::filesystem::filesystem_error &exception)
     {
-        printf("std::filesystem_error: %s", ex.what());
+        printf("std::filesystem_error: %s", exception.what());
     }
     if (isRoot)
     {
         for (std::string &file: files)
         {
-            file = file.substr(directory_path.length() + 1);
+            file = file.substr(directoryPath.length() + 1);
         }
     }
     return files;

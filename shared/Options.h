@@ -12,9 +12,12 @@ class Options
         Options() = delete;
 
         static void Load();
+
         static void LoadDefault();
+
         static void Save();
 
         static inline std::string gamePath;
+
         static inline std::string defaultTexture;
 };

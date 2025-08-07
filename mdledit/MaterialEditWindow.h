@@ -2,12 +2,10 @@
 // Created by droc101 on 7/31/25.
 //
 
-#ifndef MATERIALEDITWINDOW_H
-#define MATERIALEDITWINDOW_H
+#pragma once
 
-
-
-class MaterialEditWindow {
+class MaterialEditWindow
+{
     public:
         MaterialEditWindow() = delete;
 
@@ -20,7 +18,3 @@ class MaterialEditWindow {
     private:
         static inline bool visible;
 };
-
-
-
-#endif //MATERIALEDITWINDOW_H

@@ -2,24 +2,39 @@
 // Created by droc101 on 7/16/25.
 //
 
-#include <libassets/asset/LevelAsset.h>
 #include <cassert>
+#include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <ios>
+#include <libassets/asset/LevelAsset.h>
+#include <libassets/util/Asset.h>
 #include <libassets/util/AssetReader.h>
 #include <libassets/util/DataReader.h>
+#include <libassets/util/Error.h>
+#include <ostream>
+#include <vector>
 
 Error::ErrorCode LevelAsset::CreateFromAsset(const char *assetPath, LevelAsset &level)
 {
     Asset asset;
-    const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
-    if (e != Error::ErrorCode::E_OK) return e;
-    if (asset.type != Asset::AssetType::ASSET_TYPE_LEVEL) return Error::ErrorCode::E_INCORRECT_FORMAT;
-    if (asset.typeVersion != LEVEL_ASSET_VERSION) return Error::ErrorCode::E_INCORRECT_VERSION;
+    const Error::ErrorCode error = AssetReader::LoadFromFile(assetPath, asset);
+    if (error != Error::ErrorCode::OK)
+    {
+        return error;
+    }
+    if (asset.type != Asset::AssetType::ASSET_TYPE_LEVEL)
+    {
+        return Error::ErrorCode::INCORRECT_FORMAT;
+    }
+    if (asset.typeVersion != LEVEL_ASSET_VERSION)
+    {
+        return Error::ErrorCode::INCORRECT_VERSION;
+    }
     level = LevelAsset();
     level.levelData.reserve(asset.reader.TotalSize());
     asset.reader.ReadToBuffer<uint8_t>(level.levelData, asset.reader.TotalSize());
-    return Error::ErrorCode::E_OK;
+    return Error::ErrorCode::OK;
 }
 
 void LevelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
@@ -46,17 +61,20 @@ Error::ErrorCode LevelAsset::CreateFromBin(const char *binPath, LevelAsset &leve
     level.levelData.resize(fileSize);
     file.read(reinterpret_cast<char *>(level.levelData.data()), fileSize);
     file.close();
-    return Error::ErrorCode::E_OK;
+    return Error::ErrorCode::OK;
 }
 
 Error::ErrorCode LevelAsset::SaveAsBin(const char *binPath) const
 {
     std::ofstream file(binPath);
-    if (!file) return Error::ErrorCode::E_CANT_OPEN_FILE;
+    if (!file)
+    {
+        return Error::ErrorCode::CANT_OPEN_FILE;
+    }
     file.write(reinterpret_cast<const std::ostream::char_type *>(levelData.data()),
                static_cast<std::streamsize>(levelData.size()));
     file.close();
-    return Error::ErrorCode::E_OK;
+    return Error::ErrorCode::OK;
 }
 
 const std::vector<uint8_t> &LevelAsset::GetData() const

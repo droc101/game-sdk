@@ -2,10 +2,12 @@
 // Created by droc101 on 7/18/25.
 //
 
-#ifndef ASSET_H
-#define ASSET_H
-#include <libassets/util/DataReader.h>
+#pragma once
 
+#include <cstddef>
+#include <cstdint>
+#include <libassets/util/DataReader.h>
+#include "libassets/libassets.h"
 
 class Asset
 {
@@ -21,17 +23,22 @@ class Asset
         };
 
         static constexpr uint8_t ASSET_CONTAINER_VERSION = 2;
+
         static constexpr uint32_t ASSET_CONTAINER_MAGIC = 0x454D4147; // "GAME"
+
         static constexpr size_t ASSET_HEADER_SIZE = sizeof(uint32_t) + (sizeof(uint8_t) * 3) + (sizeof(size_t) * 2);
 
         Asset() = default;
 
+
+
         uint8_t containerVersion{};
+
         AssetType type{};
+
         uint8_t typeVersion{};
+
         size_t size{};
+
         DataReader reader{};
 };
-
-
-#endif //ASSET_H

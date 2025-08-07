@@ -1,22 +1,31 @@
 //
 // Created by droc101 on 7/23/25.
 //
+
 #include <array>
+#include <cstdio>
+#include <format>
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
-#include <iostream>
-#include <libassets/asset/TextureAsset.h>
+#include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
-#include <SDL3/SDL.h>
+#include <SDL3/SDL_dialog.h>
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_messagebox.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_video.h>
 #include "libassets/asset/ShaderAsset.h"
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 
-static ShaderAsset shader;
+static ShaderAsset shader{};
 static bool shaderLoaded = false;
-SDL_Renderer *renderer;
-SDL_Window *window;
+static SDL_Renderer *renderer = nullptr;
+static SDL_Window *window = nullptr;
 
 constexpr SDL_DialogFileFilter gshdFilter = {"GAME shader (*.gshd)", "gshd"};
 constexpr std::array glslFilters = {
@@ -26,71 +35,94 @@ constexpr std::array glslFilters = {
     SDL_DialogFileFilter{"GLSL vertex (*.vert)", "vert"},
 };
 
-void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
-    const Error::ErrorCode e = ShaderAsset::CreateFromAsset(fileList[0], shader);
-    if (e != Error::ErrorCode::E_OK)
+    const Error::ErrorCode errorCode = ShaderAsset::CreateFromAsset(fileList[0], shader);
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                 "Error",
-                                 std::format("Failed to open the shader!\n{}", Error::ErrorString(e)).c_str(),
-                                 window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to open the shader!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
         return;
     }
     shaderLoaded = true;
 }
 
-void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
-    const Error::ErrorCode e = ShaderAsset::CreateFromGlsl(fileList[0], shader);
-    if (e != Error::ErrorCode::E_OK)
+    const Error::ErrorCode errorCode = ShaderAsset::CreateFromGlsl(fileList[0], shader);
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to import the shader!\n{}", Error::ErrorString(e)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to import the shader!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
         return;
     }
     shaderLoaded = true;
 }
 
-void saveGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void saveGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
     const Error::ErrorCode errorCode = shader.SaveAsAsset(fileList[0]);
-    if (errorCode != Error::ErrorCode::E_OK)
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the shader!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to save the shader!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
     }
 }
 
-void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
     const Error::ErrorCode errorCode = shader.SaveAsGlsl(fileList[0]);
-    if (errorCode != Error::ErrorCode::E_OK)
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to export the shader!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to export the shader!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
     }
 }
 
-static void Render(bool &done, SDL_Window *window)
+static void Render(bool &done, SDL_Window *sdlWindow)
 {
     ImGui::Begin("shdedit",
                  nullptr,
-                 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
-                 ImGuiWindowFlags_NoBringToFrontOnFocus);
+                 ImGuiWindowFlags_NoDecoration |
+                         ImGuiWindowFlags_NoMove |
+                         ImGuiWindowFlags_NoSavedSettings |
+                         ImGuiWindowFlags_NoBringToFrontOnFocus);
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
@@ -120,16 +152,16 @@ static void Render(bool &done, SDL_Window *window)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGfonCallback, nullptr, window, {&gshdFilter}, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGfonCallback, nullptr, sdlWindow, &gshdFilter, 1, nullptr, false);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, window, glslFilters.data(), 4, nullptr, false);
+        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, glslFilters.data(), 4, nullptr, false);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGfonCallback, nullptr, window, {&gshdFilter}, 1, nullptr);
+        SDL_ShowSaveFileDialog(saveGfonCallback, nullptr, sdlWindow, &gshdFilter, 1, nullptr);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, window, glslFilters.data(), 4, nullptr);
+        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, glslFilters.data(), 4, nullptr);
     } else if (newPressed)
     {
         shader = ShaderAsset();
@@ -155,13 +187,25 @@ static void Render(bool &done, SDL_Window *window)
 
         ImGui::BeginChild("StatsPane", ImVec2(statsWidth, availableSize.y));
         {
-            ImGui::Text("Platform");
-            if (ImGui::RadioButton("Vulkan", shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_VULKAN)) shader.platform = ShaderAsset::ShaderPlatform::PLATFORM_VULKAN;
-            if (ImGui::RadioButton("OpenGL", shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_OPENGL)) shader.platform = ShaderAsset::ShaderPlatform::PLATFORM_OPENGL;
+            ImGui::TextUnformatted("Platform");
+            if (ImGui::RadioButton("Vulkan", shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_VULKAN))
+            {
+                shader.platform = ShaderAsset::ShaderPlatform::PLATFORM_VULKAN;
+            }
+            if (ImGui::RadioButton("OpenGL", shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_OPENGL))
+            {
+                shader.platform = ShaderAsset::ShaderPlatform::PLATFORM_OPENGL;
+            }
 
-            ImGui::Text("Type");
-            if (ImGui::RadioButton("Fragment", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAG)) shader.type = ShaderAsset::ShaderType::SHADER_TYPE_FRAG;
-            if (ImGui::RadioButton("Vertex", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_VERT)) shader.type = ShaderAsset::ShaderType::SHADER_TYPE_VERT;
+            ImGui::TextUnformatted("Type");
+            if (ImGui::RadioButton("Fragment", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAG))
+            {
+                shader.type = ShaderAsset::ShaderType::SHADER_TYPE_FRAG;
+            }
+            if (ImGui::RadioButton("Vertex", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_VERT))
+            {
+                shader.type = ShaderAsset::ShaderType::SHADER_TYPE_VERT;
+            }
         }
         ImGui::EndChild();
     } else
@@ -188,18 +232,27 @@ int main()
         return -1;
     }
     renderer = SDL_CreateRenderer(window, nullptr);
-    SDL_SetRenderVSync(renderer, 1);
+    if (!SDL_SetRenderVSync(renderer, 1))
+    {
+        printf("Error: SDL_SetRenderVSync(): %s\n", SDL_GetError());
+    }
     if (renderer == nullptr)
     {
         printf("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
         return -1;
     }
 
-    SDLRendererImGuiTextureAssetCache cache = SDLRendererImGuiTextureAssetCache(renderer);
-    SharedMgr::InitSharedMgr(&cache);
+    SharedMgr::InitSharedMgr<SDLRendererImGuiTextureAssetCache>(renderer);
 
-    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-    SDL_ShowWindow(window);
+    if (!SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED))
+    {
+        printf("Error: SDL_SetWindowPosition(): %s\n", SDL_GetError());
+    }
+    if (!SDL_ShowWindow(window))
+    {
+        printf("Error: SDL_ShowWindow(): %s\n", SDL_GetError());
+        return -1;
+    }
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -253,11 +306,23 @@ int main()
         SharedMgr::RenderSharedUI(window);
 
         ImGui::Render();
-        SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
-        SDL_SetRenderDrawColorFloat(renderer, 0, 0, 0, 1);
-        SDL_RenderClear(renderer);
+        if (!SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y))
+        {
+            printf("Error: SDL_SetRenderScale(): %s\n", SDL_GetError());
+        }
+        if (!SDL_SetRenderDrawColorFloat(renderer, 0, 0, 0, 1))
+        {
+            printf("Error: SDL_SetRenderDrawColorFloat(): %s\n", SDL_GetError());
+        }
+        if (!SDL_RenderClear(renderer))
+        {
+            printf("Error: SDL_RenderClear(): %s\n", SDL_GetError());
+        }
         ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
-        SDL_RenderPresent(renderer);
+        if (!SDL_RenderPresent(renderer))
+        {
+            printf("Error: SDL_RenderPresent(): %s\n", SDL_GetError());
+        }
     }
 
     SharedMgr::DestroySharedMgr();

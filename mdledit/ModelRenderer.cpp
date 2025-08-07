@@ -3,25 +3,35 @@
 //
 
 #include "ModelRenderer.h"
+#include <array>
+#include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <fstream>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <ios>
 #include <iosfwd>
-#include "GLDebug.h"
+#include <libassets/asset/ModelAsset.h>
 #include <libassets/util/DataWriter.h>
-#include <libassets/asset/TextureAsset.h>
+#include <libassets/util/Error.h>
+#include <libassets/util/Material.h>
+#include <libassets/util/ModelLod.h>
+#include <memory>
+#include <utility>
+#include <vector>
+#include "GLDebug.h"
 #include "OpenGLImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 
 // #define GL_CHECK_ERROR if (glGetError() != GL_NO_ERROR) {printf(reinterpret_cast<const char *>(glewGetErrorString(glGetError()))); fflush(stdout); __debugbreak();}
 
-Error::ErrorCode ModelRenderer::CreateShader(const char *filename, const GLenum type, GLuint &out)
+Error::ErrorCode ModelRenderer::CreateShader(const char *filename, const GLenum type, GLuint &outShader)
 {
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
     if (!file.is_open())
     {
-        return Error::ErrorCode::E_CANT_OPEN_FILE;
+        return Error::ErrorCode::CANT_OPEN_FILE;
     }
     const std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
@@ -32,7 +42,7 @@ Error::ErrorCode ModelRenderer::CreateShader(const char *filename, const GLenum 
     const char *shaderSourceData = shaderSource.data();
     glShaderSource(shader, 1, &shaderSourceData, nullptr);
     glCompileShader(shader);
-    GLint success;
+    GLint success = 0;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
     if (success == 0)
     {
@@ -40,46 +50,48 @@ Error::ErrorCode ModelRenderer::CreateShader(const char *filename, const GLenum 
         glGetShaderInfoLog(shader, 512, nullptr, infoLog.data());
         fprintf(stderr, "Shader compile failed: %s\n", infoLog.data());
         glDeleteShader(shader);
-        return Error::ErrorCode::E_UNKNOWN;
+        return Error::ErrorCode::UNKNOWN;
     }
-    out = shader;
-    return Error::ErrorCode::E_OK;
+    outShader = shader;
+    return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode ModelRenderer::CreateProgram(const char *fragFilename, const char *vertFilename, GLuint &outProgram)
+Error::ErrorCode ModelRenderer::CreateProgram(const char *fragmentFilename,
+                                              const char *vertexFilename,
+                                              GLuint &outProgram)
 {
-    GLuint vertexShader;
-    GLuint fragmentShader;
-    const Error::ErrorCode ve = CreateShader(vertFilename, GL_VERTEX_SHADER, vertexShader);
-    const Error::ErrorCode fe = CreateShader(fragFilename, GL_FRAGMENT_SHADER, fragmentShader);
-    if (ve != Error::ErrorCode::E_OK || fe != Error::ErrorCode::E_OK)
+    GLuint vertexShader = 0;
+    GLuint fragmentShader = 0;
+    const Error::ErrorCode vertexShaderErrorCode = CreateShader(vertexFilename, GL_VERTEX_SHADER, vertexShader);
+    const Error::ErrorCode fragmentShaderErrorCode = CreateShader(fragmentFilename, GL_FRAGMENT_SHADER, fragmentShader);
+    if (vertexShaderErrorCode != Error::ErrorCode::OK || fragmentShaderErrorCode != Error::ErrorCode::OK)
     {
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
         printf("Could not create shader program\n");
-        return Error::ErrorCode::E_UNKNOWN;
+        return Error::ErrorCode::UNKNOWN;
     }
 
-    const GLuint program = glCreateProgram();
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
-    glLinkProgram(program);
-    GLint success;
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    const GLuint newProgram = glCreateProgram();
+    glAttachShader(newProgram, vertexShader);
+    glAttachShader(newProgram, fragmentShader);
+    glLinkProgram(newProgram);
+    GLint success = 0;
+    glGetProgramiv(newProgram, GL_LINK_STATUS, &success);
     if (success == 0)
     {
         std::array<char, 512> infoLog{};
-        glGetProgramInfoLog(program, 512, nullptr, infoLog.data());
+        glGetProgramInfoLog(newProgram, 512, nullptr, infoLog.data());
         fprintf(stderr, "Program link failed: %s\n", infoLog.data());
-        glDeleteProgram(program);
-        return Error::ErrorCode::E_UNKNOWN;
+        glDeleteProgram(newProgram);
+        return Error::ErrorCode::UNKNOWN;
     }
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    outProgram = program;
-    return Error::ErrorCode::E_OK;
+    outProgram = newProgram;
+    return Error::ErrorCode::OK;
 }
 
 
@@ -110,9 +122,12 @@ bool ModelRenderer::Init()
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    const Error::ErrorCode me = CreateProgram("assets/model.frag", "assets/model.vert", program);
-    const Error::ErrorCode ce = CreateProgram("assets/cube.frag", "assets/cube.vert", cubeProgram);
-    if (me != Error::ErrorCode::E_OK || ce != Error::ErrorCode::E_OK) return false;
+    const Error::ErrorCode modelProgramErrorCode = CreateProgram("assets/model.frag", "assets/model.vert", program);
+    const Error::ErrorCode cubeProgramErrorCode = CreateProgram("assets/cube.frag", "assets/cube.vert", cubeProgram);
+    if (modelProgramErrorCode != Error::ErrorCode::OK || cubeProgramErrorCode != Error::ErrorCode::OK)
+    {
+        return false;
+    }
 
     LoadCube();
 
@@ -126,9 +141,9 @@ bool ModelRenderer::Init()
     return true;
 }
 
-ModelAsset *ModelRenderer::GetModel()
+ModelAsset &ModelRenderer::GetModel()
 {
-    return &model;
+    return model;
 }
 
 void ModelRenderer::Destroy()
@@ -137,27 +152,27 @@ void ModelRenderer::Destroy()
     glDeleteProgram(program);
 }
 
-void ModelRenderer::UpdateView(const float pitchDeg, const float yawDeg, const float distance)
+void ModelRenderer::UpdateView(const float pitchDegrees, const float yawDegrees, const float cameraDistance)
 {
-    pitch = glm::radians(pitchDeg);
-    yaw = glm::radians(yawDeg);
-    ModelRenderer::distance = distance;
-    if (ModelRenderer::distance < 0.1)
+    pitch = glm::radians(pitchDegrees);
+    yaw = glm::radians(yawDegrees);
+    distance = cameraDistance;
+    if (distance < 0.1)
     {
-        ModelRenderer::distance = 0.1;
+        distance = 0.1;
     }
     pitch = glm::clamp<float>(pitch, -90, 90);
     UpdateMatrix();
 }
 
-void ModelRenderer::UpdateViewRel(const float pitchDeg, const float yawDeg, const float distance)
+void ModelRenderer::UpdateViewRel(const float pitchDegrees, const float yawDegrees, const float cameraDistance)
 {
-    pitch += glm::radians(pitchDeg);
-    yaw += glm::radians(yawDeg);
-    ModelRenderer::distance += distance;
-    if (ModelRenderer::distance < 0.1)
+    pitch += glm::radians(pitchDegrees);
+    yaw += glm::radians(yawDegrees);
+    distance += cameraDistance;
+    if (distance < 0.1)
     {
-        ModelRenderer::distance = 0.1;
+        distance = 0.1;
     }
     pitch = glm::clamp<float>(pitch, -90, 90);
     UpdateMatrix();
@@ -165,11 +180,11 @@ void ModelRenderer::UpdateViewRel(const float pitchDeg, const float yawDeg, cons
 
 void ModelRenderer::UnloadModel()
 {
-    for (const GLModelLod &i: lods)
+    for (const GLModelLod &lod: lods)
     {
-        glDeleteVertexArrays(1, &i.vao);
-        glDeleteBuffers(1, &i.vbo);
-        for (const GLuint buffer: i.ebos)
+        glDeleteVertexArrays(1, &lod.vao);
+        glDeleteBuffers(1, &lod.vbo);
+        for (const GLuint &buffer: lod.ebos)
         {
             glDeleteBuffers(1, &buffer);
         }
@@ -177,48 +192,45 @@ void ModelRenderer::UnloadModel()
     lods.clear();
 }
 
-void ModelRenderer::LoadModel(ModelAsset &newModel)
+void ModelRenderer::LoadModel(ModelAsset &&newModel)
 {
     UnloadModel();
-    model = newModel;
-    lod = 0;
-    skin = 0;
+    model = std::move(newModel);
+    lodIndex = 0;
+    skinIndex = 0;
 
-    for (size_t i = 0; i < newModel.GetLodCount(); i++)
+    for (size_t i = 0; i < model.GetLodCount(); i++)
     {
-        const ModelLod &lod = newModel.GetLod(i);
+        const ModelLod &lod = model.GetLod(i);
         GLModelLod glod;
         glGenVertexArrays(1, &glod.vao);
         glBindVertexArray(glod.vao);
         glGenBuffers(1, &glod.vbo);
         glBindBuffer(GL_ARRAY_BUFFER, glod.vbo);
         DataWriter writer;
-        newModel.GetVertexBuffer(i, writer);
+        model.GetVertexBuffer(i, writer);
         std::vector<uint8_t> buffer;
         writer.CopyToVector(buffer);
         glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(writer.GetBufferSize()), buffer.data(), GL_STATIC_DRAW);
 
-        for (size_t j = 0; j < newModel.GetSkinCount(); j++)
+        for (size_t j = 0; j < model.GetSkinCount(); j++)
         {
-            for (size_t k = 0; k < newModel.GetMaterialsPerSkin(); k++)
+            for (size_t k = 0; k < model.GetMaterialsPerSkin(); k++)
             {
-                const size_t matIndex = newModel.GetSkin(j)[k];
-                const Material &mat = newModel.GetMaterial(matIndex);
-                // this just ensures it is loaded, we don't need it rn
-                GLuint _;
-                [[maybe_unused]] const Error::ErrorCode _e = dynamic_cast<OpenGLImGuiTextureAssetCache *>(
-                    SharedMgr::textureCache)->GetTextureGLuint(mat.texture, _);
+                const size_t matIndex = model.GetSkin(j)[k];
+                const Material &mat = model.GetMaterial(matIndex);
+                (void)SharedMgr::textureCache<OpenGLImGuiTextureAssetCache>->LoadTexture(mat.texture);
             }
         }
 
-        for (size_t j = 0; j < newModel.GetMaterialsPerSkin(); j++)
+        for (size_t j = 0; j < model.GetMaterialsPerSkin(); j++)
         {
-            GLuint ebo;
+            GLuint ebo = 0;
             glGenBuffers(1, &ebo);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                          static_cast<GLsizeiptr>(lod.indexCounts.at(j) * sizeof(uint32_t)),
-                         lod.indices.at(j).data(),
+                         lod.materialIndices.at(j).data(),
                          GL_STATIC_DRAW);
             glod.ebos.push_back(ebo);
         }
@@ -254,7 +266,7 @@ void ModelRenderer::Render()
     glViewport(0, PANEL_SIZE, windowWidth, windowHeight - PANEL_SIZE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    const GLModelLod &glod = lods.at(lod);
+    const GLModelLod &glod = lods.at(lodIndex);
     glBindVertexArray(glod.vao);
 
     glBindBuffer(GL_ARRAY_BUFFER, glod.vbo);
@@ -292,21 +304,25 @@ void ModelRenderer::Render()
 
     for (size_t i = 0; i < model.GetMaterialsPerSkin(); i++)
     {
-        const size_t matIndex = model.GetSkin(skin)[i];
+        const size_t matIndex = model.GetSkin(skinIndex)[i];
         Material &mat = model.GetMaterial(matIndex);
-        glUniform3fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetData());
+        glUniform3fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetDataPointer());
 
         GLuint texture = 0;
-        const Error::ErrorCode e = dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache)->
-                GetTextureGLuint(mat.texture, texture);
-        if (e != Error::ErrorCode::E_OK) continue;
+        using textureCacheUniquePtrT = std::unique_ptr<OpenGLImGuiTextureAssetCache>; // Typedef for line length
+        const textureCacheUniquePtrT &textureCache = SharedMgr::textureCache<OpenGLImGuiTextureAssetCache>;
+        const Error::ErrorCode code = textureCache->GetTextureGLuint(mat.texture, texture);
+        if (code != Error::ErrorCode::OK)
+        {
+            continue;
+        }
         glBindTexture(GL_TEXTURE_2D, texture);
         glUniform1i(glGetUniformLocation(program, "ALBEDO_TEXTURE"), 0);
 
         const GLuint ebo = glod.ebos.at(i);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glDrawElements(GL_TRIANGLES,
-                       static_cast<GLsizei>(model.GetLod(lod).indexCounts.at(i)),
+                       static_cast<GLsizei>(model.GetLod(lodIndex).indexCounts.at(i)),
                        GL_UNSIGNED_INT,
                        nullptr);
     }
@@ -338,9 +354,9 @@ void ModelRenderer::UpdateMatrix()
 {
     const glm::mat4 &persp = glm::perspective<float>(90.0, windowAspect, 0.01f, 1000.0f);
 
-    const float x = distance * cosf(pitch) * sinf(yaw);
-    const float y = distance * sinf(pitch);
-    const float z = distance * cosf(pitch) * cosf(yaw);
+    const float x = distance * std::cosf(pitch) * std::sinf(yaw);
+    const float y = distance * std::sinf(pitch);
+    const float z = distance * std::cosf(pitch) * std::cosf(yaw);
     const glm::vec3 cameraPos{x, y, z};
     const glm::mat4 &look = glm::lookAt(cameraPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 

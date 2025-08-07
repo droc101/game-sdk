@@ -2,7 +2,13 @@
 // Created by droc101 on 6/26/25.
 //
 
+#include <cstddef>
+#include <cstdint>
+#include <format>
 #include <libassets/util/DataReader.h>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 DataReader::DataReader(const size_t dataSize): bytes(dataSize)
 {
@@ -50,11 +56,11 @@ void DataReader::ReadString(std::string &buffer, const size_t characterCount)
 {
     if (offset + sizeof(char) * characterCount > size)
     {
-        throw std::runtime_error(std::format(
-                "Attempting to read past the end of a buffer (buffer size {}, cursor position {}, read size {}",
-                size,
-                offset,
-                sizeof(char) * characterCount));
+        throw std::runtime_error(std::format("Attempting to read past the end of a buffer (buffer size {}, cursor "
+                                             "position {}, read size {}",
+                                             size,
+                                             offset,
+                                             sizeof(char) * characterCount));
     }
     if (!buffer.empty())
     {

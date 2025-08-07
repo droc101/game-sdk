@@ -2,29 +2,33 @@
 // Created by droc101 on 7/18/25.
 //
 
-#ifndef MODELLOD_H
-#define MODELLOD_H
+#pragma once
 
+#include <cstdint>
 #include <libassets/util/DataReader.h>
-#include <libassets/util/ModelVertex.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/ModelVertex.h>
+#include <string>
+#include <vector>
 
 class ModelLod
 {
     public:
         ModelLod() = default;
-        explicit ModelLod(DataReader &reader, uint32_t materialCount);
-        explicit ModelLod(const char *filePath, float distance);
 
-        float distance{};
-        std::vector<ModelVertex> vertices{};
-        std::vector<uint32_t> indexCounts{};
-        std::vector<std::vector<uint32_t>> indices{};
+        explicit ModelLod(DataReader &reader, uint32_t materialCount);
+
+        explicit ModelLod(const std::string &filePath, float distance);
 
         void Export(const char *path) const;
 
         void Write(DataWriter &writer) const;
+
+        float distance{};
+
+        std::vector<ModelVertex> vertices{};
+
+        std::vector<uint32_t> indexCounts{};
+
+        std::vector<std::vector<uint32_t>> materialIndices{};
 };
-
-
-#endif //MODELLOD_H

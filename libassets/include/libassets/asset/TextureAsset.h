@@ -4,9 +4,11 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
-#include <vector>
 #include <libassets/util/AssetReader.h>
+#include <libassets/util/Error.h>
+#include <vector>
 
 class TextureAsset final
 {
@@ -39,8 +41,10 @@ class TextureAsset final
          * @param texture
          * @return The @c TextureAsset
          */
-        [[nodiscard]] static Error::ErrorCode CreateFromPixels(
-                uint32_t *pixels, uint32_t width, uint32_t height, TextureAsset &texture);
+        [[nodiscard]] static Error::ErrorCode CreateFromPixels(uint32_t *pixels,
+                                                               uint32_t width,
+                                                               uint32_t height,
+                                                               TextureAsset &texture);
 
         /**
          * Create a @c TextureAsset from a conventional image file (such as PNG)
@@ -51,13 +55,13 @@ class TextureAsset final
         [[nodiscard]] static Error::ErrorCode CreateFromImage(const char *imagePath, TextureAsset &texture);
 
         /// Create a TextureAsset with the "missing texture" pattern
-        [[nodiscard]] static TextureAsset CreateMissingTexture();
+        static void CreateMissingTexture(TextureAsset &texture);
 
         /// Get the pixel data in RGBA format
         void GetPixelsRGBA(std::vector<uint32_t> &outBuffer) const;
 
         /// Get the raw pixel data (not in RGBA)
-        [[nodiscard]] const unsigned *GetPixels() const;
+        [[nodiscard]] unsigned *GetPixels();
 
         /// Get the width of the texture
         [[nodiscard]] uint32_t GetWidth() const;

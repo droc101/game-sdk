@@ -3,9 +3,12 @@
 //
 
 #include "Options.h"
+#include <cstdio>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <SDL3/SDL_filesystem.h>
+#include <SDL3/SDL_stdinc.h>
+#include <string>
 
 void Options::Load()
 {
@@ -39,12 +42,11 @@ void Options::LoadDefault()
     defaultTexture = "texture/level/wall_test.gtex";
 }
 
-
 void Options::Save()
 {
     const nlohmann::json savedata = {
-            {"game_path", gamePath},
-            {"default_texture", defaultTexture},
+        {"game_path", gamePath},
+        {"default_texture", defaultTexture},
     };
     char *prefix = SDL_GetPrefPath("Droc101 Development", "GAME SDK");
     const std::string path = prefix + std::string("options.json");

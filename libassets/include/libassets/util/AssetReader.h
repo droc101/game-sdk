@@ -5,9 +5,9 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 #include <libassets/util/Asset.h>
 #include <libassets/util/Error.h>
+#include <vector>
 
 class AssetReader
 {

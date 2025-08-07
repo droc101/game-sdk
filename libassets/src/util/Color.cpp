@@ -2,8 +2,11 @@
 // Created by droc101 on 7/18/25.
 //
 
+#include <array>
+#include <cstdint>
 #include <libassets/util/Color.h>
 #include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
 
 Color::Color(DataReader &reader, const bool useFloats)
 {
@@ -17,16 +20,16 @@ Color::Color(DataReader &reader, const bool useFloats)
     {
         const uint32_t rgba = reader.Read<uint32_t>();
         color = {
-                // a r g b
-                (static_cast<float>((rgba >> 24) & 0xFF)) / 255.0f,
-                (static_cast<float>((rgba >> 16) & 0xFF)) / 255.0f,
-                (static_cast<float>((rgba >> 8) & 0xFF)) / 255.0f,
-                (static_cast<float>((rgba >> 0) & 0xFF)) / 255.0f,
+            // a r g b
+            (static_cast<float>((rgba >> 24) & 0xFF)) / 255.0f,
+            (static_cast<float>((rgba >> 16) & 0xFF)) / 255.0f,
+            (static_cast<float>((rgba >> 8) & 0xFF)) / 255.0f,
+            (static_cast<float>((rgba >> 0) & 0xFF)) / 255.0f,
         };
     }
 }
 
-float *Color::GetData()
+float *Color::GetDataPointer()
 {
     return color.data();
 }
@@ -51,20 +54,22 @@ void Color::WriteUint32(DataWriter &writer) const
 Color::Color(const uint32_t rgba)
 {
     color = {
-            (static_cast<float>((rgba >> 24) & 0xFF)) / 255.0f,
-            (static_cast<float>((rgba >> 16) & 0xFF)) / 255.0f,
-            (static_cast<float>((rgba >> 8) & 0xFF)) / 255.0f,
-            (static_cast<float>((rgba >> 0) & 0xFF)) / 255.0f,
+        (static_cast<float>((rgba >> 24) & 0xFF)) / 255.0f,
+        (static_cast<float>((rgba >> 16) & 0xFF)) / 255.0f,
+        (static_cast<float>((rgba >> 8) & 0xFF)) / 255.0f,
+        (static_cast<float>((rgba >> 0) & 0xFF)) / 255.0f,
     };
 }
 
-Color::Color(const std::array<float, 4> rgba)
+Color::Color(const float r, const float g, const float b, const float a)
 {
-    color = rgba;
+    color[0] = r;
+    color[1] = g;
+    color[2] = b;
+    color[3] = a;
 }
 
 std::array<float, 4> Color::CopyData() const
 {
     return color;
 }
-

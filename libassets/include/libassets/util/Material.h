@@ -2,11 +2,13 @@
 // Created by droc101 on 7/18/25.
 //
 
-#ifndef MATERIAL_H
-#define MATERIAL_H
+#pragma once
 
+#include <cstdint>
 #include <libassets/util/Color.h>
 #include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
+#include <string>
 
 class Material
 {
@@ -19,15 +21,16 @@ class Material
         };
 
         Material() = default;
+
         explicit Material(DataReader &reader);
-        Material(std::string texture, uint32_t color, MaterialShader shader);
+
+        Material(const std::string &texture, uint32_t color, MaterialShader shader);
 
         void Write(DataWriter &writer) const;
 
         std::string texture{};
+
         Color color{};
+
         MaterialShader shader{};
 };
-
-
-#endif //MATERIAL_H

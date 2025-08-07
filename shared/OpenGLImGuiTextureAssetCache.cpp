@@ -3,21 +3,29 @@
 //
 
 #include "OpenGLImGuiTextureAssetCache.h"
+#include <cstdint>
 #include <filesystem>
-#include "Options.h"
+#include <imgui.h>
+#include <libassets/asset/TextureAsset.h>
+#include <libassets/util/Error.h>
+#include <ranges>
 #include <SDL3/SDL_endian.h>
+#include <string>
+#include <vector>
+#include "Options.h"
 
 OpenGLImGuiTextureAssetCache::OpenGLImGuiTextureAssetCache()
 {
-    const GLuint glMissingTexture = CreateTexture(TextureAsset::CreateMissingTexture());
-    this->missingTexture = static_cast<ImTextureID>(glMissingTexture);
+    const TextureAsset texture;
+    this->missingTexture = static_cast<ImTextureID>(CreateTexture(texture));
 }
 
 OpenGLImGuiTextureAssetCache::~OpenGLImGuiTextureAssetCache()
 {
-    for (const std::pair<std::string, GLuint> tex: textureBuffers)
+    for (const ImTextureID &textureId: textureBuffers | std::views::values)
     {
-        glDeleteTextures(1, &tex.second);
+        const GLuint &tex = textureId;
+        glDeleteTextures(1, &tex);
     }
     textureBuffers.clear();
 }
@@ -32,7 +40,7 @@ GLuint OpenGLImGuiTextureAssetCache::CreateTexture(const TextureAsset &textureAs
         pixel = SDL_Swap32BE(pixel);
     }
 
-    GLuint glTexture;
+    GLuint glTexture = 0;
     glGenTextures(1, &glTexture);
     glBindTexture(GL_TEXTURE_2D, glTexture);
     glTexImage2D(GL_TEXTURE_2D,
@@ -57,42 +65,57 @@ Error::ErrorCode OpenGLImGuiTextureAssetCache::GetTextureID(const std::string &r
     if (textureBuffers.contains(relPath))
     {
         outTexture = textureBuffers.at(std::string(relPath));
-        return Error::ErrorCode::E_OK;
+        return Error::ErrorCode::OK;
     }
-    const std::string &texturePath = Options::gamePath + std::string("/assets/") + relPath;
+    const std::string texturePath = Options::gamePath + std::string("/assets/") + relPath;
     if (!std::filesystem::exists(texturePath))
     {
         outTexture = missingTexture;
-        return Error::ErrorCode::E_OK;
+        return Error::ErrorCode::OK;
     }
     TextureAsset asset;
-    const Error::ErrorCode e = TextureAsset::CreateFromAsset(texturePath.c_str(), asset);
-    if (e != Error::ErrorCode::E_OK) return e;
+    const Error::ErrorCode error = TextureAsset::CreateFromAsset(texturePath.c_str(), asset);
+    if (error != Error::ErrorCode::OK)
+    {
+        return error;
+    }
     const GLuint glTex = CreateTexture(asset);
     textureBuffers.insert({relPath, glTex});
     outTexture = glTex;
-    return Error::ErrorCode::E_OK;
+    return Error::ErrorCode::OK;
 }
 
 Error::ErrorCode OpenGLImGuiTextureAssetCache::GetTextureSize(const std::string &relPath, ImVec2 &outSize)
 {
-    ImTextureID t;
-    const Error::ErrorCode e = GetTextureID(relPath, t);
-    if (e != Error::ErrorCode::E_OK) return e;
-    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(t));
-    int w;
-    int h;
+    ImTextureID texture = 0;
+    const Error::ErrorCode error = GetTextureID(relPath, texture);
+    if (error != Error::ErrorCode::OK)
+    {
+        return error;
+    }
+    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(texture));
+    int w = 0;
+    int h = 0;
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
     outSize = {static_cast<float>(w), static_cast<float>(h)};
-    return Error::ErrorCode::E_OK;
+    return Error::ErrorCode::OK;
 }
 
 Error::ErrorCode OpenGLImGuiTextureAssetCache::GetTextureGLuint(const std::string &relPath, GLuint &outTexture)
 {
-    ImTextureID t;
-    const Error::ErrorCode e = GetTextureID(relPath, t);
-    if (e != Error::ErrorCode::E_OK) return e;
-    outTexture = static_cast<GLuint>(t);
-    return Error::ErrorCode::E_OK;
+    ImTextureID texture = 0;
+    const Error::ErrorCode error = GetTextureID(relPath, texture);
+    if (error != Error::ErrorCode::OK)
+    {
+        return error;
+    }
+    outTexture = static_cast<GLuint>(texture);
+    return Error::ErrorCode::OK;
+}
+
+Error::ErrorCode OpenGLImGuiTextureAssetCache::LoadTexture(const std::string &relPath)
+{
+    ImTextureID unused = 0;
+    return GetTextureID(relPath, unused);
 }

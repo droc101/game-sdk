@@ -2,12 +2,12 @@
 // Created by droc101 on 7/18/25.
 //
 
-#ifndef SDLRENDERERIMGUITEXTUREASSETCACHE_H
-#define SDLRENDERERIMGUITEXTUREASSETCACHE_H
+#pragma once
+
+#include <libassets/asset/TextureAsset.h>
+#include <libassets/util/Error.h>
 #include <SDL3/SDL_render.h>
 #include "ImGuiTextureAssetCache.h"
-#include "libassets/asset/TextureAsset.h"
-#include "libassets/util/Error.h"
 
 class SDLRendererImGuiTextureAssetCache final: public ImGuiTextureAssetCache
 {
@@ -23,9 +23,5 @@ class SDLRendererImGuiTextureAssetCache final: public ImGuiTextureAssetCache
     private:
         SDL_Renderer *renderer = nullptr;
 
-        [[nodiscard]] bool CreateSDLTexture(const TextureAsset& texture, SDL_Texture *&tex) const;
-
+        [[nodiscard]] bool CreateSDLTexture(TextureAsset &texture, SDL_Texture *&sdlTexture) const;
 };
-
-
-#endif //SDLRENDERERIMGUITEXTUREASSETCACHE_H

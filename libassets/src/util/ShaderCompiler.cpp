@@ -2,17 +2,27 @@
 // Created by droc101 on 7/22/25.
 //
 
-#include <libassets/util/ShaderCompiler.h>
-#include <iostream>
+#include <cstdint>
+#include <cstdio>
+#include <glslang/Include/ResourceLimits.h>
+#include <glslang/MachineIndependent/Versions.h>
+#include <glslang/Public/ShaderLang.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
+#include <libassets/util/Error.h>
+#include <libassets/util/ShaderCompiler.h>
+#include <string>
+#include <vector>
+#include <vulkan/vulkan_enums.hpp>
 
-ShaderCompiler::ShaderCompiler(const std::string &glslSource, const VkShaderStageFlagBits shaderStage)
+ShaderCompiler::ShaderCompiler(const std::string &glslSource, const vk::ShaderStageFlagBits shaderStage)
 {
     this->glslSource = glslSource;
     this->shaderStage = shaderStage;
 }
 
-ShaderCompiler::ShaderCompiler(const std::string &glslSource, const VkShaderStageFlagBits shaderStage, const glslang::EShTargetClientVersion targetVulkanVersion)
+ShaderCompiler::ShaderCompiler(const std::string &glslSource,
+                               const vk::ShaderStageFlagBits shaderStage,
+                               const glslang::EShTargetClientVersion targetVulkanVersion)
 {
     this->glslSource = glslSource;
     this->shaderStage = shaderStage;
@@ -23,9 +33,12 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv) con
 {
     if (!outputSpirv.empty())
     {
-        return Error::ErrorCode::E_INVALID_ARGUMENT;
+        return Error::ErrorCode::INVALID_ARGUMENT;
     }
-    glslang::InitializeProcess();
+    if (!glslang::InitializeProcess())
+    {
+        return Error::ErrorCode::UNKNOWN;
+    }
 
     const EShLanguage shaderType = FindShaderLanguage(shaderStage);
     glslang::TShader shader(shaderType);
@@ -41,8 +54,8 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv) con
 
     if (!shader.parse(&resources, 100, ECoreProfile, false, false, messages))
     {
-        std::cerr << "GLSL Parsing Failed:\n" << shader.getInfoLog() << std::endl;
-        return Error::ErrorCode::E_SHADER_PARSE_ERROR;
+        printf("GLSL Parsing Failed:\n %s", shader.getInfoLog());
+        return Error::ErrorCode::SHADER_PARSE_ERROR;
     }
 
     glslang::TProgram program;
@@ -50,36 +63,37 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv) con
 
     if (!program.link(messages))
     {
-        std::cerr << "GLSL Linking Failed:\n" << program.getInfoLog() << std::endl;
-        return Error::ErrorCode::E_SHADER_LINK_ERROR;
+        printf("GLSL Linking Failed:\n %s", program.getInfoLog());
+        return Error::ErrorCode::SHADER_LINK_ERROR;
     }
 
     glslang::GlslangToSpv(*program.getIntermediate(shaderType), outputSpirv);
     glslang::FinalizeProcess();
 
-    return Error::ErrorCode::E_OK;
+    return Error::ErrorCode::OK;
 }
 
-void ShaderCompiler::SetTargetVersions(const glslang::EShTargetClientVersion targetVulkanVersion, const glslang::EShTargetLanguageVersion targetSpirvVersion)
+void ShaderCompiler::SetTargetVersions(const glslang::EShTargetClientVersion targetVulkanVersion,
+                                       const glslang::EShTargetLanguageVersion targetSpirvVersion)
 {
     this->targetVulkanVersion = targetVulkanVersion;
     this->targetSpirvVersion = targetSpirvVersion;
 }
 
 
-EShLanguage ShaderCompiler::FindShaderLanguage(const VkShaderStageFlagBits stage)
+EShLanguage ShaderCompiler::FindShaderLanguage(const vk::ShaderStageFlagBits stage)
 {
     switch (stage)
     {
-        case VK_SHADER_STAGE_VERTEX_BIT:
+        case vk::ShaderStageFlagBits::eVertex:
             return EShLangVertex;
-        case VK_SHADER_STAGE_FRAGMENT_BIT:
+        case vk::ShaderStageFlagBits::eFragment:
             return EShLangFragment;
-        case VK_SHADER_STAGE_COMPUTE_BIT:
+        case vk::ShaderStageFlagBits::eCompute:
             return EShLangCompute;
-        case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:
+        case vk::ShaderStageFlagBits::eTessellationControl:
             return EShLangTessControl;
-        case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
+        case vk::ShaderStageFlagBits::eTessellationEvaluation:
             return EShLangTessEvaluation;
         default:
             return EShLangCount;

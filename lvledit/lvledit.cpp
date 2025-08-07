@@ -1,23 +1,30 @@
-#include <array>
+#include <cstdio>
+#include <format>
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
-#include <iostream>
 #include <libassets/asset/LevelAsset.h>
-#include <SDL3/SDL.h>
-#include "Options.h"
+#include <libassets/util/Error.h>
+#include <SDL3/SDL_dialog.h>
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_messagebox.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_video.h>
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 
-static LevelAsset level;
+static LevelAsset level{};
 static bool levelLoaded = false;
-SDL_Renderer *renderer;
-SDL_Window *window;
+static SDL_Renderer *renderer = nullptr;
+static SDL_Window *window = nullptr;
 
 constexpr SDL_DialogFileFilter gmapFilter = {"Compiled GAME map (*.gmap)", "gmap"};
 constexpr SDL_DialogFileFilter binFilter = {"Raw GAME map (*.bin)", "bin"};
 
-void destroyExistingLevel()
+static void destroyExistingLevel()
 {
     if (!levelLoaded)
     {
@@ -26,73 +33,96 @@ void destroyExistingLevel()
     levelLoaded = false;
 }
 
-void openGmapCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void openGmapCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     destroyExistingLevel();
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
-    const Error::ErrorCode e = LevelAsset::CreateFromAsset(fileList[0], level);
-    if (e != Error::ErrorCode::E_OK)
+    const Error::ErrorCode errorCode = LevelAsset::CreateFromAsset(fileList[0], level);
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                 "Error",
-                                 std::format("Failed to open the level!\n{}", Error::ErrorString(e)).c_str(),
-                                 window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to open the level!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
         return;
     }
     levelLoaded = true;
 }
 
-void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     destroyExistingLevel();
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
-    const Error::ErrorCode e = LevelAsset::CreateFromBin(fileList[0], level);
-    if (e != Error::ErrorCode::E_OK)
+    const Error::ErrorCode errorCode = LevelAsset::CreateFromBin(fileList[0], level);
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to import the level!\n{}", Error::ErrorString(e)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to import the level!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
         return;
     }
     levelLoaded = true;
 }
 
-void saveGmapCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void saveGmapCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
     const Error::ErrorCode errorCode = level.SaveAsAsset(fileList[0]);
-    if (errorCode != Error::ErrorCode::E_OK)
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the level!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to save the level!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
     }
 }
 
-void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
     const Error::ErrorCode errorCode = level.SaveAsBin(fileList[0]);
-    if (errorCode != Error::ErrorCode::E_OK)
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to export the level!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to export the level!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
     }
 }
 
-static void Render(bool &done, SDL_Window *window)
+static void Render(bool &done, SDL_Window *sdlWindow)
 {
     ImGui::Begin("lvledit",
                  nullptr,
-                 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
-                 ImGuiWindowFlags_NoBringToFrontOnFocus);
+                 ImGuiWindowFlags_NoDecoration |
+                         ImGuiWindowFlags_NoMove |
+                         ImGuiWindowFlags_NoSavedSettings |
+                         ImGuiWindowFlags_NoBringToFrontOnFocus);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && levelLoaded;
@@ -119,21 +149,21 @@ static void Render(bool &done, SDL_Window *window)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGmapCallback, nullptr, window, {&gmapFilter}, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGmapCallback, nullptr, sdlWindow, &gmapFilter, 1, nullptr, false);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, window, {&binFilter}, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, &binFilter, 1, nullptr, false);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGmapCallback, nullptr, window, {&gmapFilter}, 1, nullptr);
+        SDL_ShowSaveFileDialog(saveGmapCallback, nullptr, sdlWindow, &gmapFilter, 1, nullptr);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&binFilter}, 1, nullptr);
+        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, &binFilter, 1, nullptr);
     }
 
     if (levelLoaded)
     {
-        ImGui::Text("Level Loaded\nSize: %ld bytes", level.GetDataSize());
+        ImGui::TextUnformatted(std::format("Level Loaded\nSize: {} bytes", level.GetDataSize()).c_str());
         ImGui::TextDisabled("You currently still have to use");
         ImGui::SameLine();
         ImGui::TextLinkOpenURL("geditor", "https://github.com/droc101/game-editor");
@@ -165,18 +195,27 @@ int main()
         return -1;
     }
     renderer = SDL_CreateRenderer(window, nullptr);
-    SDL_SetRenderVSync(renderer, 1);
+    if (!SDL_SetRenderVSync(renderer, 1))
+    {
+        printf("Error: SDL_SetRenderVSync(): %s\n", SDL_GetError());
+    }
     if (renderer == nullptr)
     {
         printf("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
         return -1;
     }
-    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+    if (!SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED))
+    {
+        printf("Error: SDL_SetWindowPosition(): %s\n", SDL_GetError());
+    }
 
-    SDLRendererImGuiTextureAssetCache cache = SDLRendererImGuiTextureAssetCache(renderer);
-    SharedMgr::InitSharedMgr(&cache);
+    SharedMgr::InitSharedMgr<SDLRendererImGuiTextureAssetCache>(renderer);
 
-    SDL_ShowWindow(window);
+    if (!SDL_ShowWindow(window))
+    {
+        printf("Error: SDL_ShowWindow(): %s\n", SDL_GetError());
+        return -1;
+    }
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -230,11 +269,23 @@ int main()
         SharedMgr::RenderSharedUI(window);
 
         ImGui::Render();
-        SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
-        SDL_SetRenderDrawColorFloat(renderer, 0, 0, 0, 1);
-        SDL_RenderClear(renderer);
+        if (!SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y))
+        {
+            printf("Error: SDL_SetRenderScale(): %s\n", SDL_GetError());
+        }
+        if (!SDL_SetRenderDrawColorFloat(renderer, 0, 0, 0, 1))
+        {
+            printf("Error: SDL_SetRenderDrawColorFloat(): %s\n", SDL_GetError());
+        }
+        if (!SDL_RenderClear(renderer))
+        {
+            printf("Error: SDL_RenderClear(): %s\n", SDL_GetError());
+        }
         ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
-        SDL_RenderPresent(renderer);
+        if (!SDL_RenderPresent(renderer))
+        {
+            printf("Error: SDL_RenderPresent(): %s\n", SDL_GetError());
+        }
     }
 
     SharedMgr::DestroySharedMgr();

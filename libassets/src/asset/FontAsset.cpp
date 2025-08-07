@@ -2,18 +2,33 @@
 // Created by droc101 on 7/23/25.
 //
 
+#include <cstddef>
+#include <cstdint>
+#include <format>
 #include <libassets/asset/FontAsset.h>
-#include "libassets/util/Asset.h"
-#include "libassets/util/AssetReader.h"
-#include "libassets/util/DataWriter.h"
+#include <libassets/util/Asset.h>
+#include <libassets/util/AssetReader.h>
+#include <libassets/util/DataWriter.h>
+#include <libassets/util/Error.h>
+#include <string>
+#include <vector>
 
 Error::ErrorCode FontAsset::CreateFromAsset(const char *assetPath, FontAsset &font)
 {
     Asset asset;
-    const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
-    if (e != Error::ErrorCode::E_OK) return e;
-    if (asset.type != Asset::AssetType::ASSET_TYPE_FONT) return Error::ErrorCode::E_INCORRECT_FORMAT;
-    if (asset.typeVersion != FONT_ASSET_VERSION) return Error::ErrorCode::E_INCORRECT_VERSION;
+    const Error::ErrorCode error = AssetReader::LoadFromFile(assetPath, asset);
+    if (error != Error::ErrorCode::OK)
+    {
+        return error;
+    }
+    if (asset.type != Asset::AssetType::ASSET_TYPE_FONT)
+    {
+        return Error::ErrorCode::INCORRECT_FORMAT;
+    }
+    if (asset.typeVersion != FONT_ASSET_VERSION)
+    {
+        return Error::ErrorCode::INCORRECT_VERSION;
+    }
     font = FontAsset();
     font.charWidth = asset.reader.Read<uint8_t>();
     font.textureHeight = asset.reader.Read<uint8_t>();
@@ -26,16 +41,19 @@ Error::ErrorCode FontAsset::CreateFromAsset(const char *assetPath, FontAsset &fo
     const size_t textureLength = asset.reader.Read<size_t>();
     asset.reader.ReadString(font.texture, textureLength);
     const uint8_t charCount = asset.reader.Read<uint8_t>();
-    if (charCount > FONT_MAX_SYMBOLS) return Error::ErrorCode::E_INVALID_BODY;
+    if (charCount > FONT_MAX_SYMBOLS)
+    {
+        return Error::ErrorCode::INVALID_BODY;
+    }
     for (uint8_t i = 0; i < charCount; i++)
     {
         const char character = asset.reader.Read<char>();
         const uint8_t width = asset.reader.Read<uint8_t>();
         font.chars.push_back(character);
-        font.char_widths.push_back(width);
+        font.charWidths.push_back(width);
     }
 
-    return Error::ErrorCode::E_OK;
+    return Error::ErrorCode::OK;
 }
 
 Error::ErrorCode FontAsset::SaveAsAsset(const char *assetPath) const
@@ -63,7 +81,7 @@ void FontAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     for (size_t i = 0; i < chars.size(); i++)
     {
         writer.Write<char>(chars.at(i));
-        writer.Write<uint8_t>(char_widths.at(i));
+        writer.Write<uint8_t>(charWidths.at(i));
     }
     writer.CopyToVector(buffer);
 }
@@ -78,4 +96,3 @@ std::vector<std::string> FontAsset::GetCharListForDisplay()
     }
     return list;
 }
-

@@ -2,14 +2,25 @@
 // Created by droc101 on 7/18/25.
 //
 
-#include <libassets/util/ModelLod.h>
-#include <fstream>
-#include <numeric>
+#include <array>
 #include <assimp/Importer.hpp>
+#include <assimp/mesh.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <format>
+#include <fstream>
+#include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
+#include <libassets/util/ModelLod.h>
+#include <libassets/util/ModelVertex.h>
+#include <numeric>
+#include <stdexcept>
+#include <string>
 #include <unordered_map>
-#include "libassets/util/DataWriter.h"
+#include <vector>
 
 ModelLod::ModelLod(DataReader &reader, const uint32_t materialCount)
 {
@@ -27,16 +38,16 @@ ModelLod::ModelLod(DataReader &reader, const uint32_t materialCount)
     }
     for (const uint32_t indexCount: indexCounts)
     {
-        std::vector<uint32_t> materialIndices;
+        std::vector<uint32_t> indices;
         for (size_t _i = 0; _i < indexCount; _i++)
         {
-            materialIndices.push_back(reader.Read<uint32_t>());
+            indices.push_back(reader.Read<uint32_t>());
         }
-        indices.push_back(materialIndices);
+        materialIndices.push_back(indices);
     }
 }
 
-ModelLod::ModelLod(const char *filePath, const float distance)
+ModelLod::ModelLod(const std::string &filePath, const float distance)
 {
     this->distance = distance;
 
@@ -45,11 +56,11 @@ ModelLod::ModelLod(const char *filePath, const float distance)
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(filePath,
                                              aiProcess_Triangulate |
-                                             aiProcess_JoinIdenticalVertices |
-                                             aiProcess_SortByPType |
-                                             aiProcess_ValidateDataStructure |
-                                             aiProcess_FlipUVs |
-                                             aiProcess_GenSmoothNormals);
+                                                     aiProcess_JoinIdenticalVertices |
+                                                     aiProcess_SortByPType |
+                                                     aiProcess_ValidateDataStructure |
+                                                     aiProcess_FlipUVs |
+                                                     aiProcess_GenSmoothNormals);
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
@@ -62,12 +73,12 @@ ModelLod::ModelLod(const char *filePath, const float distance)
         const aiMesh *mesh = scene->mMeshes[i];
         const uint32_t materialIndex = mesh->mMaterialIndex;
 
-        if (materialIndex >= this->indices.size())
+        if (materialIndex >= materialIndices.size())
         {
-            this->indices.resize(materialIndex + 1);
+            materialIndices.resize(materialIndex + 1);
         }
 
-        std::vector<uint32_t> &indices = this->indices[materialIndex];
+        std::vector<uint32_t> &indices = materialIndices[materialIndex];
 
         for (uint32_t j = 0; j < mesh->mNumFaces; j++)
         {
@@ -75,66 +86,73 @@ ModelLod::ModelLod(const char *filePath, const float distance)
             for (uint32_t k = 0; k < face.mNumIndices; k++)
             {
                 const uint32_t vertexIndex = face.mIndices[k];
-                const ModelVertex v(mesh, vertexIndex);
-                if (vertexToIndex.contains(v))
+                const ModelVertex vertex(mesh, vertexIndex);
+                if (vertexToIndex.contains(vertex))
                 {
-                    indices.push_back(vertexToIndex.at(v));
+                    indices.push_back(vertexToIndex.at(vertex));
                 } else
                 {
                     indices.push_back(this->vertices.size());
-                    this->vertices.emplace_back(mesh, vertexIndex);
-                    vertexToIndex[v] = indices.back();
+                    this->vertices.push_back(vertex);
+                    vertexToIndex[vertex] = indices.back();
                 }
             }
         }
     }
 
     std::vector<int64_t> toErase{};
-    for (uint32_t i = 0; i < this->indices.size(); i++)
+    for (uint32_t i = 0; i < materialIndices.size(); i++)
     {
-        const std::vector<uint32_t> &is = this->indices[i];
-        if (is.size() < 3) // check for materials with no triangles
+        const std::vector<uint32_t> &indices = materialIndices[i];
+        if (indices.size() < 3) // check for materials with no triangles
         {
             toErase.push_back(i);
         }
-        this->indexCounts.push_back(is.size());
+        indexCounts.push_back(indices.size());
     }
 
-    for (const int64_t &i: toErase)
+    for (const int64_t &index: toErase)
     {
-        this->indices.erase(this->indices.begin() + i);
-        this->indexCounts.erase(this->indexCounts.begin() + i);
+        materialIndices.erase(materialIndices.begin() + index);
+        indexCounts.erase(indexCounts.begin() + index);
     }
 }
 
 void ModelLod::Export(const char *path) const
 {
-    std::ofstream f(path);
-    f << "# Generated by GAME SDK\n\n";
-    for (const ModelVertex &v: vertices)
+    std::ofstream file(path);
+    file << "# Generated by GAME SDK\n\n";
+    for (const ModelVertex &vertex: vertices)
     {
-        std::array<float, 4> color = v.color.CopyData();
-        f << std::format("v {} {} {} {} {} {} {}\n", v.position[0], v.position[1], v.position[2], color[0], color[1], color[2], color[3]);
-        f << std::format("vt {} {}\n", v.uv[0], v.uv[1]);
-        f << std::format("vn {} {} {}\n", v.normal[0], v.normal[1], v.normal[2]);
+        std::array<float, 4> color = vertex.color.CopyData();
+        file << std::format("v {} {} {} {} {} {} {}\n",
+                            vertex.position[0],
+                            vertex.position[1],
+                            vertex.position[2],
+                            color[0],
+                            color[1],
+                            color[2],
+                            color[3]);
+        file << std::format("vt {} {}\n", vertex.uv[0], vertex.uv[1]);
+        file << std::format("vn {} {} {}\n", vertex.normal[0], vertex.normal[1], vertex.normal[2]);
     }
 
-    f << "\n\n";
+    file << "\n\n";
 
-    for (size_t m = 0; m < indices.size(); m++)
+    for (size_t m = 0; m < materialIndices.size(); m++)
     {
-        f << std::format("usemtl mat_{}\n", m);
-        for (uint32_t i = 0; i < indexCounts.at(m) / 3; i++)
+        file << std::format("usemtl mat_{}\n", m);
+        for (uint32_t i = 0; i < indexCounts.at(m); i += 3)
         {
-            const uint32_t i0 = indices.at(m).at(i * 3 + 0) + 1;
-            const uint32_t i1 = indices.at(m).at(i * 3 + 1) + 1;
-            const uint32_t i2 = indices.at(m).at(i * 3 + 2) + 1;
-            f << std::format("f {}/{}/{} {}/{}/{} {}/{}/{}\n", i0, i0, i0, i1, i1, i1, i2, i2, i2);
+            const uint32_t index0 = materialIndices.at(m).at(i + 0) + 1;
+            const uint32_t index1 = materialIndices.at(m).at(i + 1) + 1;
+            const uint32_t index2 = materialIndices.at(m).at(i + 2) + 1;
+            file << std::format("f {0}/{0}/{0} {1}/{1}/{1} {2}/{2}/{2}\n", index0, index1, index2);
         }
-        f << "\n";
+        file << "\n";
     }
 
-    f.close();
+    file.close();
 }
 
 void ModelLod::Write(DataWriter &writer) const
@@ -152,9 +170,8 @@ void ModelLod::Write(DataWriter &writer) const
     const uint32_t totalIndexCount = std::accumulate(indexCounts.begin(), indexCounts.end(), 0ul);
     writer.Write<uint32_t>(totalIndexCount);
     writer.WriteBuffer<uint32_t>(indexCounts);
-    for (const std::vector<uint32_t> &lodIndices: indices)
+    for (const std::vector<uint32_t> &lodIndices: materialIndices)
     {
         writer.WriteBuffer<uint32_t>(lodIndices);
     }
 }
-

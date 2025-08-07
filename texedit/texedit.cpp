@@ -1,31 +1,43 @@
 #include <array>
+#include <cstdint>
+#include <cstdio>
+#include <format>
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
-#include <iostream>
 #include <libassets/asset/TextureAsset.h>
-#include <SDL3/SDL.h>
-#include "Options.h"
+#include <libassets/util/Error.h>
+#include <SDL3/SDL_dialog.h>
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_messagebox.h>
+#include <SDL3/SDL_pixels.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_surface.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_video.h>
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 
-static TextureAsset texture;
+static TextureAsset texture{};
 static bool textureLoaded = false;
-SDL_Renderer *renderer;
-SDL_Window *window;
-SDL_Texture *sdlTexture;
-SDL_Surface *sdlSurface;
+static SDL_Renderer *renderer = nullptr;
+static SDL_Window *window = nullptr;
+static SDL_Texture *sdlTexture = nullptr;
+static SDL_Surface *sdlSurface = nullptr;
+static float zoom = 1.0f;
 
 constexpr SDL_DialogFileFilter gtexFilter = {"GAME texture (*.gtex)", "gtex"};
 constexpr SDL_DialogFileFilter pngFilter = {"PNG Image", "png"};
 constexpr std::array imageFilters = {
-        SDL_DialogFileFilter{"Images", "png;jpg;jpeg;tga"},
-        SDL_DialogFileFilter{"PNG Images", "png"},
-        SDL_DialogFileFilter{"JPG Images", "jpg;jepg"},
-        SDL_DialogFileFilter{"TGA Images", "tga"},
+    SDL_DialogFileFilter{"Images", "png;jpg;jpeg;tga"},
+    SDL_DialogFileFilter{"PNG Images", "png"},
+    SDL_DialogFileFilter{"JPG Images", "jpg;jepg"},
+    SDL_DialogFileFilter{"TGA Images", "tga"},
 };
 
-void destroyExistingTexture()
+static inline void destroyExistingTexture()
 {
     if (!textureLoaded)
     {
@@ -36,13 +48,13 @@ void destroyExistingTexture()
     textureLoaded = false;
 }
 
-bool loadTexture()
+static inline bool loadTexture()
 {
     destroyExistingTexture();
     SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
                                                  static_cast<int>(texture.GetHeight()),
                                                  SDL_PIXELFORMAT_RGBA8888,
-                                                 const_cast<uint32_t *>(texture.GetPixels()),
+                                                 texture.GetPixels(),
                                                  static_cast<int>(texture.GetWidth() * sizeof(uint32_t)));
     if (surface == nullptr)
     {
@@ -53,83 +65,121 @@ bool loadTexture()
     {
         return false;
     }
-    SDL_SetTextureScaleMode(sdlTexture, SDL_SCALEMODE_NEAREST);
+    if (!SDL_SetTextureScaleMode(sdlTexture, SDL_SCALEMODE_NEAREST))
+    {
+        printf("Error: SDL_SetTextureScaleMode(): %s\n", SDL_GetError());
+        return false;
+    }
     sdlSurface = surface;
     textureLoaded = true;
     return true;
-
 }
 
-void openGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void openGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
-    const Error::ErrorCode e = TextureAsset::CreateFromAsset(fileList[0], texture);
-    if (e != Error::ErrorCode::E_OK)
+    const Error::ErrorCode errorCode = TextureAsset::CreateFromAsset(fileList[0], texture);
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to open the texture!\n{}", Error::ErrorString(e)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to open the texture!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
         return;
     }
     if (!loadTexture())
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the texture!\n{}", SDL_GetError()).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to load the texture!\n{}", SDL_GetError()).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
     }
 }
 
-void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
-    const Error::ErrorCode e = TextureAsset::CreateFromImage(fileList[0], texture);
-    if (e != Error::ErrorCode::E_OK)
+    const Error::ErrorCode errorCode = TextureAsset::CreateFromImage(fileList[0], texture);
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to import the texture!\n{}", Error::ErrorString(e)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to import the texture!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
         return;
     }
     if (!loadTexture())
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the texture!\n{}", SDL_GetError()).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to load the texture!\n{}", SDL_GetError()).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
     }
 }
 
-void saveGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void saveGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
     const Error::ErrorCode errorCode = texture.SaveAsAsset(fileList[0]);
-    if (errorCode != Error::ErrorCode::E_OK)
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the texture!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to save the texture!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
     }
 }
 
-void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
     const Error::ErrorCode errorCode = texture.SaveAsImage(fileList[0], TextureAsset::ImageFormat::IMAGE_FORMAT_PNG);
-    if (errorCode != Error::ErrorCode::E_OK)
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to export the texture!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to export the texture!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
     }
 }
 
-static void Render(bool &done, SDL_Window *window)
+static void Render(bool &done, SDL_Window *sdlWindow)
 {
-    static float zoom = 1.0f;
-
-    ImGui::Begin("texedit",
-                 nullptr,
-                 ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
-                 ImGuiWindowFlags_NoBringToFrontOnFocus);
+    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
+                                             ImGuiWindowFlags_NoMove |
+                                             ImGuiWindowFlags_NoSavedSettings |
+                                             ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::Begin("texedit", nullptr, windowFlags);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && textureLoaded;
@@ -167,16 +217,16 @@ static void Render(bool &done, SDL_Window *window)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGtexCallback, nullptr, window, {&gtexFilter}, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGtexCallback, nullptr, sdlWindow, &gtexFilter, 1, nullptr, false);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, window, imageFilters.data(), 4, nullptr, false);
+        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, imageFilters.data(), 4, nullptr, false);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGtexCallback, nullptr, window, {&gtexFilter}, 1, nullptr);
+        SDL_ShowSaveFileDialog(saveGtexCallback, nullptr, sdlWindow, &gtexFilter, 1, nullptr);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&pngFilter}, 1, nullptr);
+        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, &pngFilter, 1, nullptr);
     } else if (zoomInPressed)
     {
         zoom += 0.1;
@@ -217,10 +267,11 @@ static void Render(bool &done, SDL_Window *window)
 
         ImGui::BeginChild("StatsPane", ImVec2(statsWidth, availableSize.y));
         {
-            ImGui::Text("Width: %d\nHeight: %d\nMemory: %lu B",
-                        texture.GetWidth(),
-                        texture.GetHeight(),
-                        texture.GetWidth() * texture.GetHeight() * sizeof(uint32_t));
+            ImGui::TextUnformatted(std::format("Width: {}\nHeight: {}\nMemory: {} B",
+                                               texture.GetWidth(),
+                                               texture.GetHeight(),
+                                               texture.GetWidth() * texture.GetHeight() * sizeof(uint32_t))
+                                           .c_str());
 
             ImGui::Separator();
             ImGui::Checkbox("Filter", &texture.filter); // TODO live update
@@ -253,18 +304,27 @@ int main()
         return -1;
     }
     renderer = SDL_CreateRenderer(window, nullptr);
-    SDL_SetRenderVSync(renderer, 1);
+    if (!SDL_SetRenderVSync(renderer, 1))
+    {
+        printf("Error: SDL_SetRenderVSync(): %s\n", SDL_GetError());
+    }
     if (renderer == nullptr)
     {
         printf("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
         return -1;
     }
 
-    SDLRendererImGuiTextureAssetCache cache = SDLRendererImGuiTextureAssetCache(renderer);
-    SharedMgr::InitSharedMgr(&cache);
+    SharedMgr::InitSharedMgr<SDLRendererImGuiTextureAssetCache>(renderer);
 
-    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-    SDL_ShowWindow(window);
+    if (!SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED))
+    {
+        printf("Error: SDL_SetWindowPosition(): %s\n", SDL_GetError());
+    }
+    if (!SDL_ShowWindow(window))
+    {
+        printf("Error: SDL_ShowWindow(): %s\n", SDL_GetError());
+        return -1;
+    }
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -318,11 +378,23 @@ int main()
         SharedMgr::RenderSharedUI(window);
 
         ImGui::Render();
-        SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
-        SDL_SetRenderDrawColorFloat(renderer, 0, 0, 0, 1);
-        SDL_RenderClear(renderer);
+        if (!SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y))
+        {
+            printf("Error: SDL_SetRenderScale(): %s\n", SDL_GetError());
+        }
+        if (!SDL_SetRenderDrawColorFloat(renderer, 0, 0, 0, 1))
+        {
+            printf("Error: SDL_SetRenderDrawColorFloat(): %s\n", SDL_GetError());
+        }
+        if (!SDL_RenderClear(renderer))
+        {
+            printf("Error: SDL_RenderClear(): %s\n", SDL_GetError());
+        }
         ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
-        SDL_RenderPresent(renderer);
+        if (!SDL_RenderPresent(renderer))
+        {
+            printf("Error: SDL_RenderPresent(): %s\n", SDL_GetError());
+        }
     }
 
     SharedMgr::DestroySharedMgr();

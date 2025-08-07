@@ -2,8 +2,7 @@
 // Created by droc101 on 7/1/25.
 //
 
-#ifndef SKINEDITWINDOW_H
-#define SKINEDITWINDOW_H
+#pragma once
 
 class SkinEditWindow
 {
@@ -19,6 +18,3 @@ class SkinEditWindow
     private:
         static inline bool visible;
 };
-
-
-#endif //SKINEDITWINDOW_H

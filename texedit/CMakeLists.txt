@@ -3,17 +3,11 @@ project(texedit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(texedit texedit.cpp
-        ${IMGUI_SRC}
-        ${IMGUI_SRC_SDL3_RENDERER}
-        ${SHARED_SRC}
-)
-
-include_directories(${SHARED_INCLUDES})
+add_executable(texedit texedit.cpp)
 
 set_target_properties(texedit PROPERTIES LINKER_LANGUAGE CXX)
 
-target_link_libraries(texedit PRIVATE ${SHARED_LIBRARIES})
+target_link_libraries(texedit PRIVATE shared imgui_sdl3_renderer)
 
 add_dependencies(texedit assets)
 

@@ -2,8 +2,11 @@
 // Created by droc101 on 6/26/25.
 //
 
-#include <libassets/util/DataWriter.h>
 #include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <libassets/util/DataWriter.h>
+#include <vector>
 
 void DataWriter::CopyToVector(std::vector<uint8_t> &vector) const
 {

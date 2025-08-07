@@ -2,15 +2,14 @@
 // Created by droc101 on 7/12/25.
 //
 
-#ifndef MUSICASSET_H
-#define MUSICASSET_H
+#pragma once
 
 #include <cstdint>
-#include <vector>
 #include <libassets/util/AssetReader.h>
+#include <libassets/util/Error.h>
+#include <vector>
 
-
-class SoundAsset
+class SoundAsset final
 {
     public:
         SoundAsset() = default;
@@ -33,6 +32,3 @@ class SoundAsset
 
         void SaveToBuffer(std::vector<uint8_t> &buffer) const;
 };
-
-
-#endif //MUSICASSET_H

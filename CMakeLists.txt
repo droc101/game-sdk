@@ -46,60 +46,6 @@ if (WIN32)
     endforeach ()
 endif ()
 
-set(IMGUI_SRC
-        ../lib/imgui/imconfig.h
-        ../lib/imgui/imgui.cpp
-        ../lib/imgui/imgui.h
-        ../lib/imgui/imgui_demo.cpp
-        ../lib/imgui/imgui_draw.cpp
-        ../lib/imgui/imgui_internal.h
-        ../lib/imgui/imgui_tables.cpp
-        ../lib/imgui/imgui_widgets.cpp
-        ../lib/imgui/imstb_rectpack.h
-        ../lib/imgui/imstb_textedit.h
-        ../lib/imgui/imstb_truetype.h
-        ../lib/imgui/misc/cpp/imgui_stdlib.cpp
-        ../lib/imgui/misc/cpp/imgui_stdlib.h
-        ../lib/imgui/backends/imgui_impl_sdl3.cpp
-        ../lib/imgui/backends/imgui_impl_sdl3.h
-)
-
-set(IMGUI_SRC_SDL3_RENDERER
-        ../lib/imgui/backends/imgui_impl_sdlrenderer3.h
-        ../lib/imgui/backends/imgui_impl_sdlrenderer3.cpp
-)
-
-set(IMGUI_SRC_OPENGL3
-        ../lib/imgui/backends/imgui_impl_opengl3.h
-        ../lib/imgui/backends/imgui_impl_opengl3.cpp
-        ../lib/imgui/backends/imgui_impl_opengl3_loader.h
-)
-
-set(SHARED_SRC
-        ../shared/Options.cpp
-        ../shared/Options.h
-        ../shared/OptionsWindow.cpp
-        ../shared/OptionsWindow.h
-        ../shared/AboutWindow.cpp
-        ../shared/AboutWindow.h
-        ../shared/SharedMgr.cpp
-        ../shared/SharedMgr.h
-        ../shared/TextureBrowserWindow.cpp
-        ../shared/TextureBrowserWindow.h
-        ../shared/ImGuiTextureAssetCache.h
-        ../shared/SDLRendererImGuiTextureAssetCache.cpp
-        ../shared/SDLRendererImGuiTextureAssetCache.h
-        ../shared/OpenGLImGuiTextureAssetCache.cpp
-        ../shared/OpenGLImGuiTextureAssetCache.h
-)
-
-if (WIN32)
-    set(SHARED_SRC
-            ${SHARED_SRC}
-            ../game-sdk.rc
-    )
-endif ()
-
 include(cmake/FindOrFetchPackage.cmake)
 
 set(SDL_AUDIO_DEFAULT OFF)
@@ -134,15 +80,65 @@ find_package(GLEW REQUIRED)
 find_package(glslang CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 
-set(SHARED_INCLUDES
-        "../lib/imgui"
-        "../lib/imgui/backends"
-        "../shared"
-        ${OPENGL_INCLUDE_DIR}
-        ${GLEW_INCLUDE_DIRS}
+
+add_library(imgui INTERFACE)
+target_sources(imgui INTERFACE
+        lib/imgui/imconfig.h
+        lib/imgui/imgui.cpp
+        lib/imgui/imgui.h
+        lib/imgui/imgui_demo.cpp
+        lib/imgui/imgui_draw.cpp
+        lib/imgui/imgui_internal.h
+        lib/imgui/imgui_tables.cpp
+        lib/imgui/imgui_widgets.cpp
+        lib/imgui/imstb_rectpack.h
+        lib/imgui/imstb_textedit.h
+        lib/imgui/imstb_truetype.h
+        lib/imgui/misc/cpp/imgui_stdlib.cpp
+        lib/imgui/misc/cpp/imgui_stdlib.h
+        lib/imgui/backends/imgui_impl_sdl3.cpp
+        lib/imgui/backends/imgui_impl_sdl3.h
+)
+target_include_directories(imgui INTERFACE
+        lib/imgui
+        lib/imgui/backends
 )
 
-set(SHARED_LIBRARIES
+add_library(imgui_sdl3_renderer INTERFACE)
+target_link_libraries(imgui_sdl3_renderer INTERFACE imgui)
+target_sources(imgui_sdl3_renderer INTERFACE
+        lib/imgui/backends/imgui_impl_sdlrenderer3.h
+        lib/imgui/backends/imgui_impl_sdlrenderer3.cpp
+)
+
+add_library(imgui_opengl3 INTERFACE)
+target_link_libraries(imgui_opengl3 INTERFACE imgui)
+target_sources(imgui_opengl3 INTERFACE
+        lib/imgui/backends/imgui_impl_opengl3.h
+        lib/imgui/backends/imgui_impl_opengl3.cpp
+        lib/imgui/backends/imgui_impl_opengl3_loader.h
+)
+
+add_library(shared INTERFACE)
+target_sources(shared INTERFACE
+        shared/Options.cpp
+        shared/Options.h
+        shared/OptionsWindow.cpp
+        shared/OptionsWindow.h
+        shared/AboutWindow.cpp
+        shared/AboutWindow.h
+        shared/SharedMgr.cpp
+        shared/SharedMgr.h
+        shared/TextureBrowserWindow.cpp
+        shared/TextureBrowserWindow.h
+        shared/ImGuiTextureAssetCache.h
+        shared/SDLRendererImGuiTextureAssetCache.cpp
+        shared/SDLRendererImGuiTextureAssetCache.h
+        shared/OpenGLImGuiTextureAssetCache.cpp
+        shared/OpenGLImGuiTextureAssetCache.h
+        $<$<BOOL:${WIN32}>:game-sdk.rc>
+)
+target_link_libraries(shared INTERFACE
         SDL3::SDL3
         nlohmann_json::nlohmann_json
         miniaudio
@@ -154,14 +150,13 @@ set(SHARED_LIBRARIES
         ZLIB::ZLIB
         glslang::glslang
         Vulkan::Vulkan
+        $<$<BOOL:${WIN32}>:opengl32>
 )
-
-if (WIN32)
-    set(SHARED_LIBRARIES
-            ${SHARED_LIBRARIES}
-            opengl32
-    )
-endif ()
+target_include_directories(shared INTERFACE
+        shared
+        ${OPENGL_INCLUDE_DIR}
+        ${GLEW_INCLUDE_DIRS}
+)
 
 add_custom_target(
         copy_assets
