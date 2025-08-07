@@ -4,18 +4,19 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-#include <libassets/util/DataReader.h>
+#include <cstddef>
+#include <cstdint>
 #include <libassets/util/DataWriter.h>
-#include <libassets/util/AssetReader.h>
+#include <libassets/util/Error.h>
 #include <libassets/util/Material.h>
 #include <libassets/util/ModelLod.h>
+#include <string>
+#include <vector>
 
-class ModelAsset
+class ModelAsset final
 {
     public:
-        enum class CollisionModelType: uint8_t
+        enum class CollisionModelType : uint8_t
         {
             NONE,
             STATIC_SINGLE_CONCAVE, /// NOT YET IMPLEMENTED! DO NOT USE!
@@ -27,11 +28,13 @@ class ModelAsset
          */
         ModelAsset() = default;
 
-        [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, ModelAsset &modelAsset);
+        [[nodiscard]] static Error::ErrorCode CreateFromAsset(const std::string &assetPath, ModelAsset &modelAsset);
 
-        [[nodiscard]] static Error::ErrorCode CreateFromStandardModel(const char *objPath, ModelAsset &model, const std::string& defaultTexture);
+        [[nodiscard]] static Error::ErrorCode CreateFromStandardModel(const std::string &modelPath,
+                                                                      ModelAsset &model,
+                                                                      const std::string &defaultTexture);
 
-        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
+        [[nodiscard]] Error::ErrorCode SaveAsAsset(const std::string &assetPath) const;
 
 
         [[nodiscard]] ModelLod &GetLod(size_t index);
@@ -47,7 +50,7 @@ class ModelAsset
         [[nodiscard]] bool ValidateLodDistances();
 
 
-        [[nodiscard]] size_t *GetSkin(size_t index);
+        [[nodiscard]] std::vector<size_t> &GetSkin(size_t index);
 
         [[nodiscard]] size_t GetSkinCount() const;
 
@@ -56,7 +59,6 @@ class ModelAsset
         void RemoveSkin(size_t index);
 
         [[nodiscard]] size_t GetMaterialsPerSkin() const;
-
 
 
         [[nodiscard]] Material &GetMaterial(size_t index);

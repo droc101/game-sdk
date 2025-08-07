@@ -7,10 +7,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
+#include <libassets/util/Primitive.h>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <libassets/util/Primitive.h>
+#include "libassets/libassets.h"
 
 class AssetReader;
 
@@ -39,11 +40,11 @@ class DataReader
         {
             if (offset + sizeof(T) > size)
             {
-                throw std::runtime_error(std::format(
-                        "Attempting to read past the end of a buffer (buffer size {}, cursor position {}, read size {}",
-                        size,
-                        offset,
-                        sizeof(T)));
+                throw std::runtime_error(std::format("Attempting to read past the end of a buffer (buffer size {}, "
+                                                     "cursor position {}, read size {}",
+                                                     size,
+                                                     offset,
+                                                     sizeof(T)));
             }
             const T i = *reinterpret_cast<const T *>(&bytes.at(offset));
             offset += sizeof(T);
@@ -54,11 +55,11 @@ class DataReader
         {
             if (offset + sizeof(T) > size)
             {
-                throw std::runtime_error(std::format(
-                        "Attempting to read past the end of a buffer (buffer size {}, cursor position {}, read size {}",
-                        size,
-                        offset,
-                        sizeof(T)));
+                throw std::runtime_error(std::format("Attempting to read past the end of a buffer (buffer size {}, "
+                                                     "cursor position {}, read size {}",
+                                                     size,
+                                                     offset,
+                                                     sizeof(T)));
             }
             offset += sizeof(T);
         }
@@ -67,11 +68,11 @@ class DataReader
         {
             if (offset + sizeof(T) * numberToRead > size)
             {
-                throw std::runtime_error(std::format(
-                        "Attempting to read past the end of a buffer (buffer size {}, cursor position {}, read size {}",
-                        size,
-                        offset,
-                        sizeof(T) * numberToRead));
+                throw std::runtime_error(std::format("Attempting to read past the end of a buffer (buffer size {}, "
+                                                     "cursor position {}, read size {}",
+                                                     size,
+                                                     offset,
+                                                     sizeof(T) * numberToRead));
             }
             if (!buffer.empty())
             {
@@ -84,6 +85,8 @@ class DataReader
 
     protected:
         std::vector<uint8_t> bytes{};
+
         size_t size{};
+
         size_t offset{};
 };

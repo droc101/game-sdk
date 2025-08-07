@@ -2,10 +2,9 @@
 // Created by droc101 on 7/4/25.
 //
 
-#ifndef LODEDITWINDOW_H
-#define LODEDITWINDOW_H
-#include <SDL3/SDL_video.h>
+#pragma once
 
+#include <SDL3/SDL_video.h>
 
 class LodEditWindow
 {
@@ -25,6 +24,3 @@ class LodEditWindow
 
         static void saveLodCallback(void *userdata, const char *const *fileList, int filter);
 };
-
-
-#endif //LODEDITWINDOW_H

@@ -2,15 +2,17 @@
 // Created by droc101 on 7/23/25.
 //
 
-#ifndef FONTASSET_H
-#define FONTASSET_H
+#pragma once
 
-#include <cstring>
+#include <cstddef>
+#include <cstdint>
+#include <libassets/util/Error.h>
+#include <string>
+#include <string_view>
 #include <vector>
-#include "libassets/util/Error.h"
 
-
-class FontAsset {
+class FontAsset final
+{
     public:
         FontAsset() = default;
 
@@ -18,9 +20,13 @@ class FontAsset {
 
         [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
 
+        static std::vector<std::string> GetCharListForDisplay();
+
         static constexpr uint8_t FONT_ASSET_VERSION = 1;
-        static constexpr const char* FONT_VALID_CHARS = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-        static constexpr size_t FONT_MAX_SYMBOLS = strlen(FONT_VALID_CHARS);
+        static constexpr std::string_view FONT_VALID_CHARS = "!\"#$%&'()*+,-./"
+                                                             "0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`"
+                                                             "abcdefghijklmnopqrstuvwxyz{|}~";
+        static constexpr size_t FONT_MAX_SYMBOLS = FONT_VALID_CHARS.length();
 
         uint8_t textureHeight = 1;
         uint8_t baseline = 1;
@@ -32,14 +38,8 @@ class FontAsset {
         bool uppercaseOnly{};
         std::string texture{};
         std::vector<char> chars{};
-        std::vector<uint8_t> char_widths{};
-
-        static std::vector<std::string> GetCharListForDisplay();
+        std::vector<uint8_t> charWidths{};
 
     private:
         void SaveToBuffer(std::vector<uint8_t> &buffer) const;
 };
-
-
-
-#endif //FONTASSET_H

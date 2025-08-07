@@ -3,25 +3,38 @@
 //
 
 #include <cassert>
-#include <libassets/asset/SoundAsset.h>
-#include <filesystem>
+#include <cstddef>
+#include <cstdint>
 #include <fstream>
-#include <iterator>
-#include <libassets/util/DataReader.h>
+#include <ios>
+#include <libassets/asset/SoundAsset.h>
+#include <libassets/util/Asset.h>
 #include <libassets/util/AssetReader.h>
+#include <libassets/util/DataReader.h>
+#include <libassets/util/Error.h>
+#include <ostream>
+#include <vector>
 
 Error::ErrorCode SoundAsset::CreateFromAsset(const char *assetPath, SoundAsset &sound)
 {
     Asset asset;
-    const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
-    if (e != Error::ErrorCode::E_OK) return e;
-    if (asset.type != Asset::AssetType::ASSET_TYPE_WAV) return Error::ErrorCode::E_INCORRECT_FORMAT;
-    if (asset.typeVersion != SOUND_ASSET_VERSION) return Error::ErrorCode::E_INCORRECT_VERSION;
+    const Error::ErrorCode error = AssetReader::LoadFromFile(assetPath, asset);
+    if (error != Error::ErrorCode::OK)
+    {
+        return error;
+    }
+    if (asset.type != Asset::AssetType::ASSET_TYPE_WAV)
+    {
+        return Error::ErrorCode::INCORRECT_FORMAT;
+    }
+    if (asset.typeVersion != SOUND_ASSET_VERSION)
+    {
+        return Error::ErrorCode::INCORRECT_VERSION;
+    }
     sound = SoundAsset();
-    const uint32_t payloadSize = asset.reader.TotalSize() - (sizeof(uint32_t) * 4);
-    sound.wavData.reserve(payloadSize);
-    asset.reader.ReadToBuffer<uint8_t>(sound.wavData, payloadSize);
-    return Error::ErrorCode::E_OK;
+    sound.wavData.reserve(asset.reader.TotalSize());
+    asset.reader.ReadToBuffer<uint8_t>(sound.wavData, asset.reader.TotalSize());
+    return Error::ErrorCode::OK;
 }
 
 void SoundAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
@@ -29,10 +42,6 @@ void SoundAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     assert(buffer.empty());
     buffer.resize(wavData.size());
     buffer.insert(buffer.begin(), wavData.begin(), wavData.end());
-    buffer.push_back(wavData.size());
-    buffer.push_back(0);
-    buffer.push_back(0);
-    buffer.push_back(0);
 }
 
 Error::ErrorCode SoundAsset::SaveAsAsset(const char *assetPath) const
@@ -52,7 +61,7 @@ Error::ErrorCode SoundAsset::CreateFromWAV(const char *wavPath, SoundAsset &soun
     sound.wavData.resize(fileSize);
     file.read(reinterpret_cast<char *>(sound.wavData.data()), fileSize);
     file.close();
-    return Error::ErrorCode::E_OK;
+    return Error::ErrorCode::OK;
 }
 
 Error::ErrorCode SoundAsset::SaveAsWAV(const char *wavPath) const
@@ -60,12 +69,12 @@ Error::ErrorCode SoundAsset::SaveAsWAV(const char *wavPath) const
     std::ofstream file(wavPath);
     if (!file)
     {
-        return Error::ErrorCode::E_CANT_OPEN_FILE;
+        return Error::ErrorCode::CANT_OPEN_FILE;
     }
     file.write(reinterpret_cast<const std::ostream::char_type *>(wavData.data()),
                static_cast<std::streamsize>(wavData.size()));
     file.close();
-    return Error::ErrorCode::E_OK;
+    return Error::ErrorCode::OK;
 }
 
 const std::vector<uint8_t> &SoundAsset::GetData() const

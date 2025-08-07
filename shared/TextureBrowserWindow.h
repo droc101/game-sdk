@@ -2,8 +2,8 @@
 // Created by droc101 on 7/6/25.
 //
 
-#ifndef TEXTUREBROWSERWINDOW_H
-#define TEXTUREBROWSERWINDOW_H
+#pragma once
+
 #include <string>
 #include <vector>
 
@@ -24,6 +24,3 @@ class TextureBrowserWindow
 
         static inline std::vector<std::string> textures;
 };
-
-
-#endif //TEXTUREBROWSERWINDOW_H

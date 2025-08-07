@@ -4,11 +4,12 @@
 
 #pragma once
 
-#include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstdint>
-#include <vector>
 #include <libassets/util/Primitive.h>
+#include <vector>
+#include "libassets/libassets.h"
 
 class DataWriter
 {

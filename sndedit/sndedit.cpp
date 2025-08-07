@@ -1,29 +1,36 @@
 #include <array>
 #include <cmath>
+#include <cstdio>
+#include <format>
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
-#include <iostream>
 #include <libassets/asset/SoundAsset.h>
+#include <libassets/util/Error.h>
 #include <miniaudio.h>
-#include <SDL3/SDL.h>
-#include <unordered_map>
-#include "Options.h"
+#include <SDL3/SDL_dialog.h>
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_messagebox.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_video.h>
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 
-SoundAsset soundAsset;
-ma_decoder decoder{};
-ma_sound sound{};
+static SoundAsset soundAsset{};
+static ma_decoder decoder{};
+static ma_sound sound{};
 static bool soundLoaded = false;
-SDL_Renderer *renderer = nullptr;
-SDL_Window *window;
-ma_engine engine{};
+static SDL_Renderer *renderer{};
+static SDL_Window *window{};
+static ma_engine engine{};
 
 constexpr SDL_DialogFileFilter gsndFilter = {"GAME sound (*.gsnd)", "gsnd"};
 constexpr SDL_DialogFileFilter wavFilter = {"WAV audio", "wav"};
 
-void destroyExistingSound()
+static inline void destroyExistingSound()
 {
     if (!soundLoaded)
     {
@@ -35,87 +42,128 @@ void destroyExistingSound()
     soundLoaded = false;
 }
 
-bool loadSound()
+static inline bool loadSound()
 {
     destroyExistingSound();
-    ma_result res = ma_decoder_init_memory(soundAsset.GetData().data(), soundAsset.GetDataSize(), nullptr, &decoder);
-    if (res != MA_SUCCESS) return false;
-    res = ma_sound_init_from_data_source(&engine, &decoder, MA_SOUND_FLAG_DECODE, nullptr, &sound);
-    if (res != MA_SUCCESS) return false;
+    ma_result result = ma_decoder_init_memory(soundAsset.GetData().data(), soundAsset.GetDataSize(), nullptr, &decoder);
+    if (result != MA_SUCCESS)
+    {
+        return false;
+    }
+    result = ma_sound_init_from_data_source(&engine, &decoder, MA_SOUND_FLAG_DECODE, nullptr, &sound);
+    if (result != MA_SUCCESS)
+    {
+        return false;
+    }
     soundLoaded = true;
     return true;
 }
 
-void openGsndCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void openGsndCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
-    const Error::ErrorCode e = SoundAsset::CreateFromAsset(fileList[0], soundAsset);
-    if (e != Error::ErrorCode::E_OK)
+    const Error::ErrorCode errorCode = SoundAsset::CreateFromAsset(fileList[0], soundAsset);
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to open the sound!\n{}", Error::ErrorString(e)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to open the sound!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
         return;
     }
     if (!loadSound())
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the sound!\n{}", Error::ErrorString(Error::ErrorCode::E_UNKNOWN)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
     }
 }
 
-void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
-    const Error::ErrorCode e = SoundAsset::CreateFromWAV(fileList[0], soundAsset);
-    if (e != Error::ErrorCode::E_OK)
+    const Error::ErrorCode errorCode = SoundAsset::CreateFromWAV(fileList[0], soundAsset);
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to import the sound!\n{}", Error::ErrorString(e)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to import the sound!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
         return;
     }
     if (!loadSound())
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to load the sound!\n{}", Error::ErrorString(Error::ErrorCode::E_UNKNOWN)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
     }
 }
 
-void saveGsndCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void saveGsndCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
     const Error::ErrorCode errorCode = soundAsset.SaveAsAsset(fileList[0]);
-    if (errorCode != Error::ErrorCode::E_OK)
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to save the sound!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to save the sound!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
     }
 }
 
-void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
     const Error::ErrorCode errorCode = soundAsset.SaveAsWAV(fileList[0]);
-    if (errorCode != Error::ErrorCode::E_OK)
+    if (errorCode != Error::ErrorCode::OK)
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", std::format("Failed to export the sound!\n{}", Error::ErrorString(errorCode)).c_str(), window);
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to export the sound!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
     }
 }
 
-static void Render(bool &done, SDL_Window *window)
+static void Render(bool &done, SDL_Window *sdlWindow)
 {
-    ImGui::Begin("sndedit",
-                 nullptr,
-                 ImGuiWindowFlags_NoDecoration |
-                         ImGuiWindowFlags_NoMove |
-                         ImGuiWindowFlags_NoSavedSettings |
-                         ImGuiWindowFlags_NoBringToFrontOnFocus);
+    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
+                                             ImGuiWindowFlags_NoMove |
+                                             ImGuiWindowFlags_NoSavedSettings |
+                                             ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::Begin("sndedit", nullptr, windowFlags);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && soundLoaded;
@@ -142,16 +190,16 @@ static void Render(bool &done, SDL_Window *window)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGsndCallback, nullptr, window, {&gsndFilter}, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGsndCallback, nullptr, sdlWindow, &gsndFilter, 1, nullptr, false);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, window, {&wavFilter}, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, &wavFilter, 1, nullptr, false);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGsndCallback, nullptr, window, {&gsndFilter}, 1, nullptr);
+        SDL_ShowSaveFileDialog(saveGsndCallback, nullptr, sdlWindow, &gsndFilter, 1, nullptr);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, window, {&wavFilter}, 1, nullptr);
+        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, &wavFilter, 1, nullptr);
     }
 
     if (soundLoaded)
@@ -215,23 +263,24 @@ static void Render(bool &done, SDL_Window *window)
         ImGui::SetCursorPosX(availWidth - checkboxWidth);
         if (ImGui::Checkbox("Loop", &isLooping))
         {
+            // ReSharper disable once CppRedundantCastExpression
             ma_sound_set_looping(&sound, static_cast<ma_bool32>(isLooping));
         }
 
         ImGui::SeparatorText("Sound Information");
-        ImGui::Text("Size: %ld bytes", soundAsset.GetDataSize());
-        ma_format fmt;
-        ma_uint32 channels;
-        ma_uint32 sampleRate;
-        ma_uint64 pcmLen;
+        ImGui::TextUnformatted(std::format("Size: {} bytes", soundAsset.GetDataSize()).c_str());
+        ma_format fmt{};
+        ma_uint32 channels = 0;
+        ma_uint32 sampleRate = 0;
+        ma_uint64 pcmLen = 0;
         ma_decoder_get_data_format(&decoder, &fmt, &channels, &sampleRate, nullptr, 0);
         ma_sound_get_length_in_pcm_frames(&sound, &pcmLen);
         constexpr std::array<const char *, 6> formatNames = {"Unknown", "U8", "S16", "S24", "S32", "F32"};
-        ImGui::Text("Format: %s", formatNames[fmt]);
-        ImGui::Text("Channels: %d", channels);
-        ImGui::Text("Sample Rate: %d Hz", sampleRate);
+        ImGui::TextUnformatted(std::format("Format: {}", formatNames.at(fmt)).c_str());
+        ImGui::TextUnformatted(std::format("Channels: {}", channels).c_str());
+        ImGui::TextUnformatted(std::format("Sample Rate: {} Hz", sampleRate).c_str());
         ImGui::Text("Length: %g:%05.2f", lengthMinutes, lengthSeconds);
-        ImGui::Text("Length (PCM frames): %lld", pcmLen);
+        ImGui::TextUnformatted(std::format("Length (PCM frames): {}", pcmLen).c_str());
 
     } else
     {
@@ -252,7 +301,7 @@ int main()
     const ma_result res = ma_engine_init(nullptr, &engine);
     if (res != MA_SUCCESS)
     {
-        printf("Error: ma_engine_init failed: %d\n", res);
+        printf("Error: ma_engine_init(): %d\n", res);
         return -1;
     }
 
@@ -264,18 +313,27 @@ int main()
         return -1;
     }
     renderer = SDL_CreateRenderer(window, nullptr);
-    SDL_SetRenderVSync(renderer, 1);
+    if (!SDL_SetRenderVSync(renderer, 1))
+    {
+        printf("Error: SDL_SetRenderVSync(): %s\n", SDL_GetError());
+    }
     if (renderer == nullptr)
     {
         printf("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
         return -1;
     }
 
-    SDLRendererImGuiTextureAssetCache cache = SDLRendererImGuiTextureAssetCache(renderer);
-    SharedMgr::InitSharedMgr(&cache);
+    SharedMgr::InitSharedMgr<SDLRendererImGuiTextureAssetCache>(renderer);
 
-    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-    SDL_ShowWindow(window);
+    if (!SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED))
+    {
+        printf("Error: SDL_SetWindowPosition(): %s\n", SDL_GetError());
+    }
+    if (!SDL_ShowWindow(window))
+    {
+        printf("Error: SDL_ShowWindow(): %s\n", SDL_GetError());
+        return -1;
+    }
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -329,11 +387,23 @@ int main()
         SharedMgr::RenderSharedUI(window);
 
         ImGui::Render();
-        SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
-        SDL_SetRenderDrawColorFloat(renderer, 0, 0, 0, 1);
-        SDL_RenderClear(renderer);
+        if (!SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y))
+        {
+            printf("Error: SDL_SetRenderScale(): %s\n", SDL_GetError());
+        }
+        if (!SDL_SetRenderDrawColorFloat(renderer, 0, 0, 0, 1))
+        {
+            printf("Error: SDL_SetRenderDrawColorFloat(): %s\n", SDL_GetError());
+        }
+        if (!SDL_RenderClear(renderer))
+        {
+            printf("Error: SDL_RenderClear(): %s\n", SDL_GetError());
+        }
         ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
-        SDL_RenderPresent(renderer);
+        if (!SDL_RenderPresent(renderer))
+        {
+            printf("Error: SDL_RenderPresent(): %s\n", SDL_GetError());
+        }
     }
 
     SharedMgr::DestroySharedMgr();

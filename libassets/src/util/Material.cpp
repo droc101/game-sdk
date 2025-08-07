@@ -2,7 +2,12 @@
 // Created by droc101 on 7/18/25.
 //
 
+#include <cstddef>
+#include <cstdint>
+#include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
 #include <libassets/util/Material.h>
+#include <string>
 
 Material::Material(DataReader &reader)
 {
@@ -12,10 +17,12 @@ Material::Material(DataReader &reader)
     shader = static_cast<MaterialShader>(reader.Read<uint32_t>());
 }
 
-Material::Material(std::string texture, const uint32_t color, const MaterialShader shader):
-    texture(std::move(texture)),
-    color(Color(color)),
-    shader(shader) {}
+Material::Material(const std::string &texture, const uint32_t color, const MaterialShader shader)
+{
+    this->texture = texture;
+    this->color = Color(color);
+    this->shader = shader;
+}
 
 void Material::Write(DataWriter &writer) const
 {
@@ -25,4 +32,3 @@ void Material::Write(DataWriter &writer) const
     color.WriteFloats(writer);
     writer.Write<uint32_t>(static_cast<uint32_t>(shader));
 }
-

@@ -3,17 +3,11 @@ project(fonedit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(fonedit fonedit.cpp
-        ${IMGUI_SRC}
-        ${IMGUI_SRC_SDL3_RENDERER}
-        ${SHARED_SRC}
-)
-
-include_directories(${SHARED_INCLUDES})
+add_executable(fonedit fonedit.cpp)
 
 set_target_properties(fonedit PROPERTIES LINKER_LANGUAGE CXX)
 
-target_link_libraries(fonedit PRIVATE ${SHARED_LIBRARIES})
+target_link_libraries(fonedit PRIVATE shared imgui_sdl3_renderer)
 
 add_dependencies(fonedit assets)
 

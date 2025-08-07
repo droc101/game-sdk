@@ -12,7 +12,9 @@ class OptionsWindow
         OptionsWindow() = delete;
 
         static void Show();
+
         static void Hide();
+
         static void Render(SDL_Window *window);
 
     private:

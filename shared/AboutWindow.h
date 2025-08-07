@@ -10,7 +10,9 @@ class AboutWindow
         AboutWindow() = delete;
 
         static void Show();
+
         static void Hide();
+
         static void Render();
 
     private:

@@ -10,20 +10,15 @@ add_executable(mdledit mdledit.cpp
         SkinEditWindow.h
         LodEditWindow.cpp
         LodEditWindow.h
-        ${IMGUI_SRC}
-        ${SHARED_SRC}
-        ${IMGUI_SRC_OPENGL3}
         GLDebug.cpp
         GLDebug.h
         MaterialEditWindow.cpp
         MaterialEditWindow.h
 )
 
-include_directories(${SHARED_INCLUDES})
-
 set_target_properties(mdledit PROPERTIES LINKER_LANGUAGE CXX)
 
-target_link_libraries(mdledit PRIVATE ${SHARED_LIBRARIES})
+target_link_libraries(mdledit PRIVATE shared imgui_opengl3)
 
 add_dependencies(mdledit assets)
 

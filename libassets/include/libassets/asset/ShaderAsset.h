@@ -2,21 +2,22 @@
 // Created by droc101 on 7/23/25.
 //
 
-#ifndef SHADERASSET_H
-#define SHADERASSET_H
+#pragma once
 
-#include <vector>
+#include <cstdint>
 #include <libassets/util/Error.h>
+#include <vector>
 
-class ShaderAsset {
+class ShaderAsset final
+{
     public:
-        enum class ShaderPlatform: uint8_t
+        enum class ShaderPlatform : uint8_t
         {
             PLATFORM_OPENGL,
             PLATFORM_VULKAN
         };
 
-        enum class ShaderType: uint8_t
+        enum class ShaderType : uint8_t
         {
             SHADER_TYPE_FRAG,
             SHADER_TYPE_VERT
@@ -44,7 +45,3 @@ class ShaderAsset {
 
         [[nodiscard]] Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer) const;
 };
-
-
-
-#endif //SHADERASSET_H

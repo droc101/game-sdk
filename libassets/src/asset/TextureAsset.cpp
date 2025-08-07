@@ -2,29 +2,34 @@
 // Created by droc101 on 6/23/25.
 //
 
-#include <libassets/asset/TextureAsset.h>
 #include <cassert>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
+#include <libassets/asset/TextureAsset.h>
+#include <libassets/util/Asset.h>
 #include <libassets/util/AssetReader.h>
 #include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
+#include <libassets/util/Error.h>
+#include <vector>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <stb_image_write.h>
-#include <libassets/util/DataWriter.h>
 
 Error::ErrorCode TextureAsset::CreateFromImage(const char *imagePath, TextureAsset &texture)
 {
     texture = TextureAsset();
     if (!std::filesystem::exists(imagePath))
     {
-        texture = CreateMissingTexture();
-        return Error::ErrorCode::E_OK;
+        CreateMissingTexture(texture);
+        return Error::ErrorCode::OK;
     }
-    int width;
-    int height;
-    int channels;
+    int width = 0;
+    int height = 0;
+    int channels = 0;
     uint8_t *data = stbi_load(imagePath, &width, &height, &channels, STBI_rgb_alpha);
     const uint32_t *data32 = reinterpret_cast<uint32_t *>(data);
     texture.width = width;
@@ -36,12 +41,12 @@ Error::ErrorCode TextureAsset::CreateFromImage(const char *imagePath, TextureAss
     }
     stbi_image_free(data);
     texture.FixByteOrder();
-    return Error::ErrorCode::E_OK;
+    return Error::ErrorCode::OK;
 }
 
-TextureAsset TextureAsset::CreateMissingTexture()
+void TextureAsset::CreateMissingTexture(TextureAsset &texture)
 {
-    TextureAsset texture;
+    texture = TextureAsset();
     texture.width = 64;
     texture.height = 64;
     constexpr size_t pixelDataSize = 64 * 64;
@@ -60,31 +65,42 @@ TextureAsset TextureAsset::CreateMissingTexture()
             }
         }
     }
-    return texture;
 }
 
-Error::ErrorCode TextureAsset::CreateFromPixels(uint32_t *pixels, const uint32_t width, const uint32_t height,
+Error::ErrorCode TextureAsset::CreateFromPixels(uint32_t *pixels,
+                                                const uint32_t width,
+                                                const uint32_t height,
                                                 TextureAsset &texture)
 {
     texture = TextureAsset();
     texture.width = width;
     texture.height = height;
     texture.pixels.insert(texture.pixels.begin(), pixels, pixels + texture.width * texture.height);
-    return Error::ErrorCode::E_OK;
+    return Error::ErrorCode::OK;
 }
 
 Error::ErrorCode TextureAsset::CreateFromAsset(const char *assetPath, TextureAsset &texture)
 {
+    texture = TextureAsset();
     if (!std::filesystem::exists(assetPath))
     {
-        texture = CreateMissingTexture();
-        return Error::ErrorCode::E_OK;
+        CreateMissingTexture(texture);
+        return Error::ErrorCode::OK;
     }
     Asset asset;
     const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
-    if (e != Error::ErrorCode::E_OK) return e;
-    if (asset.type != Asset::AssetType::ASSET_TYPE_TEXTURE) return Error::ErrorCode::E_INCORRECT_FORMAT;
-    if (asset.typeVersion != TEXTURE_ASSET_VERSION) return Error::ErrorCode::E_INCORRECT_VERSION;
+    if (e != Error::ErrorCode::OK)
+    {
+        return e;
+    }
+    if (asset.type != Asset::AssetType::ASSET_TYPE_TEXTURE)
+    {
+        return Error::ErrorCode::INCORRECT_FORMAT;
+    }
+    if (asset.typeVersion != TEXTURE_ASSET_VERSION)
+    {
+        return Error::ErrorCode::INCORRECT_VERSION;
+    }
     texture = TextureAsset();
     texture.width = asset.reader.Read<size_t>();
     texture.height = asset.reader.Read<size_t>();
@@ -93,7 +109,7 @@ Error::ErrorCode TextureAsset::CreateFromAsset(const char *assetPath, TextureAss
     texture.mipmaps = asset.reader.Read<uint8_t>() != 0;
     const size_t pixelCount = texture.width * texture.height;
     asset.reader.ReadToBuffer<uint32_t>(texture.pixels, pixelCount);
-    return Error::ErrorCode::E_OK;
+    return Error::ErrorCode::OK;
 }
 
 uint32_t TextureAsset::GetHeight() const
@@ -106,7 +122,7 @@ uint32_t TextureAsset::GetWidth() const
     return width;
 }
 
-const unsigned *TextureAsset::GetPixels() const
+unsigned *TextureAsset::GetPixels()
 {
     return pixels.data();
 }
@@ -118,7 +134,7 @@ Error::ErrorCode TextureAsset::SaveAsImage(const char *imagePath, const ImageFor
     int code = 1; // default case fails
     switch (format)
     {
-            using enum ImageFormat;
+        using enum ImageFormat;
         case IMAGE_FORMAT_PNG:
             code = stbi_write_png(imagePath,
                                   static_cast<int>(width),
@@ -133,9 +149,9 @@ Error::ErrorCode TextureAsset::SaveAsImage(const char *imagePath, const ImageFor
         case IMAGE_FORMAT_BMP:
             code = stbi_write_bmp(imagePath, static_cast<int>(width), static_cast<int>(height), 4, pixels.data());
             break;
-        default: ;
+        default:;
     }
-    return code != 0 ? Error::ErrorCode::E_OK : Error::ErrorCode::E_UNKNOWN;
+    return code != 0 ? Error::ErrorCode::OK : Error::ErrorCode::UNKNOWN;
 }
 
 Error::ErrorCode TextureAsset::SaveAsAsset(const char *assetPath) const
@@ -177,4 +193,3 @@ void TextureAsset::FixByteOrder()
         pixel = b << 24 | g << 16 | r << 8 | a;
     }
 }
-

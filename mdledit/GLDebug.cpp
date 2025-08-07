@@ -3,8 +3,8 @@
 //
 
 #include "GLDebug.h"
-#include <csignal>
 #include <cstdio>
+#include <GL/glew.h>
 #include <string>
 
 // #define BREAK_ON_ERROR
@@ -17,9 +17,9 @@ void GLDebug::GL_DebugMessageCallback(const GLenum source,
                                       const GLchar *msg,
                                       const void * /*data*/)
 {
-    std::string _source;
-    std::string _type;
-    std::string _severity;
+    std::string sourceString;
+    std::string typeString;
+    std::string severityString;
 
     if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
     {
@@ -29,101 +29,106 @@ void GLDebug::GL_DebugMessageCallback(const GLenum source,
     switch (source)
     {
         case GL_DEBUG_SOURCE_API:
-            _source = "API";
+            sourceString = "API";
             break;
 
         case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-            _source = "WINDOW SYSTEM";
+            sourceString = "WINDOW SYSTEM";
             break;
 
         case GL_DEBUG_SOURCE_SHADER_COMPILER:
-            _source = "SHADER COMPILER";
+            sourceString = "SHADER COMPILER";
             break;
 
         case GL_DEBUG_SOURCE_THIRD_PARTY:
-            _source = "THIRD PARTY";
+            sourceString = "THIRD PARTY";
             break;
 
         case GL_DEBUG_SOURCE_APPLICATION:
-            _source = "APPLICATION";
+            sourceString = "APPLICATION";
             break;
 
         case GL_DEBUG_SOURCE_OTHER:
         default:
-            _source = "UNKNOWN";
+            sourceString = "UNKNOWN";
             break;
     }
 
     switch (type)
     {
         case GL_DEBUG_TYPE_ERROR:
-            _type = "ERROR";
+            typeString = "ERROR";
             break;
 
         case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-            _type = "DEPRECATED BEHAVIOR";
+            typeString = "DEPRECATED BEHAVIOR";
             break;
 
         case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-            _type = "UNDEFINED BEHAVIOR";
+            typeString = "UNDEFINED BEHAVIOR";
             break;
 
         case GL_DEBUG_TYPE_PORTABILITY:
-            _type = "PORTABILITY";
+            typeString = "PORTABILITY";
             break;
 
         case GL_DEBUG_TYPE_PERFORMANCE:
-            _type = "PERFORMANCE";
+            typeString = "PERFORMANCE";
             break;
 
         case GL_DEBUG_TYPE_OTHER:
-            _type = "OTHER";
+            typeString = "OTHER";
             break;
 
         case GL_DEBUG_TYPE_MARKER:
-            _type = "MARKER";
+            typeString = "MARKER";
             break;
 
         default:
-            _type = "UNKNOWN";
+            typeString = "UNKNOWN";
             break;
     }
 
     switch (severity)
     {
         case GL_DEBUG_SEVERITY_HIGH:
-            _severity = "HIGH";
+            severityString = "HIGH";
             break;
 
         case GL_DEBUG_SEVERITY_MEDIUM:
-            _severity = "MEDIUM";
+            severityString = "MEDIUM";
             break;
 
         case GL_DEBUG_SEVERITY_LOW:
-            _severity = "LOW";
+            severityString = "LOW";
             break;
 
         // ReSharper disable once CppDFAUnreachableCode
         case GL_DEBUG_SEVERITY_NOTIFICATION:
-            _severity = "NOTIFICATION";
+            severityString = "NOTIFICATION";
             break;
 
         default:
-            _severity = "UNKNOWN";
+            severityString = "UNKNOWN";
             break;
     }
 
-    printf("%d: %s of %s severity, raised from %s: %s\n", id, _type.c_str(), _severity.c_str(), _source.c_str(), msg);
+    printf("%d: %s of %s severity, raised from %s: %s\n",
+           id,
+           typeString.c_str(),
+           severityString.c_str(),
+           sourceString.c_str(),
+           msg);
     fflush(stdout);
 
 #ifdef BREAK_ON_ERROR
-	// If you hit this "breakpoint", an OpenGL error has been printed to the console,
-	// and the corresponding GL call should be on the call stack.
+    // If you hit this "breakpoint", an OpenGL error has been printed to the console,
+    // and the corresponding GL call should be on the call stack.
     asm("nop"); // you can also breakpoint this
 #ifdef WIN32
     __debugbreak();
 #else
-	raise(SIGABRT);
+    raise(SIGABRT);
 #endif
 #endif
 }

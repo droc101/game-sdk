@@ -2,27 +2,40 @@
 // Created by droc101 on 6/26/25.
 //
 
-#include <libassets/asset/ModelAsset.h>
-#include <assimp/postprocess.h>
+#include <algorithm>
 #include <cassert>
-#include <filesystem>
-#include <format>
-#include <string>
+#include <cstddef>
+#include <cstdint>
+#include <libassets/asset/ModelAsset.h>
+#include <libassets/util/Asset.h>
 #include <libassets/util/AssetReader.h>
 #include <libassets/util/Color.h>
+#include <libassets/util/DataWriter.h>
+#include <libassets/util/Error.h>
 #include <libassets/util/Material.h>
-#include <libassets/util/Asset.h>
 #include <libassets/util/ModelLod.h>
+#include <libassets/util/ModelVertex.h>
+#include <string>
+#include <vector>
 
-Error::ErrorCode ModelAsset::CreateFromAsset(const char *assetPath, ModelAsset &modelAsset)
+Error::ErrorCode ModelAsset::CreateFromAsset(const std::string &assetPath, ModelAsset &modelAsset)
 {
     modelAsset.lods.clear();
     modelAsset.skins.clear();
     Asset asset;
-    const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath, asset);
-    if (e != Error::ErrorCode::E_OK) return e;
-    if (asset.type != Asset::AssetType::ASSET_TYPE_MODEL) return Error::ErrorCode::E_INCORRECT_FORMAT;
-    if (asset.typeVersion != MODEL_ASSET_VERSION) return Error::ErrorCode::E_INCORRECT_VERSION;
+    const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath.c_str(), asset);
+    if (e != Error::ErrorCode::OK)
+    {
+        return e;
+    }
+    if (asset.type != Asset::AssetType::ASSET_TYPE_MODEL)
+    {
+        return Error::ErrorCode::INCORRECT_FORMAT;
+    }
+    if (asset.typeVersion != MODEL_ASSET_VERSION)
+    {
+        return Error::ErrorCode::INCORRECT_VERSION;
+    }
     modelAsset = ModelAsset();
     const size_t materialCount = asset.reader.Read<size_t>();
     const size_t materialsPerSkin = asset.reader.Read<size_t>();
@@ -50,7 +63,7 @@ Error::ErrorCode ModelAsset::CreateFromAsset(const char *assetPath, ModelAsset &
     {
         modelAsset.lods.emplace_back(asset.reader, materialCount);
     }
-    return Error::ErrorCode::E_OK;
+    return Error::ErrorCode::OK;
 }
 
 void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
@@ -69,9 +82,9 @@ void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     writer.Write<size_t>(lods.size());
     writer.Write<uint8_t>(static_cast<uint8_t>(collisionModelType));
 
-    for (const Material &mat: materials)
+    for (const Material &material: materials)
     {
-        mat.Write(writer);
+        material.Write(writer);
     }
 
     for (const std::vector<size_t> &skinMaterialIndices: skins)
@@ -89,11 +102,11 @@ void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     writer.CopyToVector(buffer);
 }
 
-Error::ErrorCode ModelAsset::SaveAsAsset(const char *assetPath) const
+Error::ErrorCode ModelAsset::SaveAsAsset(const std::string &assetPath) const
 {
     std::vector<uint8_t> data;
     SaveToBuffer(data);
-    return AssetReader::SaveToFile(assetPath, data, Asset::AssetType::ASSET_TYPE_MODEL, MODEL_ASSET_VERSION);
+    return AssetReader::SaveToFile(assetPath.c_str(), data, Asset::AssetType::ASSET_TYPE_MODEL, MODEL_ASSET_VERSION);
 }
 
 ModelLod &ModelAsset::GetLod(const size_t index)
@@ -101,9 +114,9 @@ ModelLod &ModelAsset::GetLod(const size_t index)
     return lods.at(index);
 }
 
-size_t *ModelAsset::GetSkin(const size_t index)
+std::vector<size_t> &ModelAsset::GetSkin(const size_t index)
 {
-    return skins.at(index).data();
+    return skins.at(index);
 }
 
 size_t ModelAsset::GetLodCount() const
@@ -148,22 +161,17 @@ void ModelAsset::GetVertexBuffer(const size_t lodIndex, DataWriter &writer)
     }
 }
 
-Error::ErrorCode ModelAsset::CreateFromStandardModel(const char *objPath, ModelAsset &model, const std::string& defaultTexture)
+Error::ErrorCode ModelAsset::CreateFromStandardModel(const std::string &modelPath,
+                                                     ModelAsset &model,
+                                                     const std::string &defaultTexture)
 {
     model = ModelAsset();
-    const ModelLod lod(objPath, 0);
-    model.lods.push_back(lod);
+    model.lods.emplace_back(modelPath, 0);
+    const ModelLod &lod = model.lods.back();
     const size_t materialCount = lod.indexCounts.size();
-    std::vector<size_t> skin{};
-    for (size_t _i = 0; _i < materialCount; _i++)
-    {
-        skin.emplace_back(0);
-    }
-    model.skins.push_back(skin);
-    model.materials = {
-        Material(defaultTexture, -1u, Material::MaterialShader::SHADER_SHADED)
-    };
-    return Error::ErrorCode::E_OK;
+    model.skins.emplace_back(materialCount);
+    model.materials = {Material(defaultTexture, -1u, Material::MaterialShader::SHADER_SHADED)};
+    return Error::ErrorCode::OK;
 }
 
 bool ModelAsset::LODSortCompare(const ModelLod &a, const ModelLod &b)
@@ -179,9 +187,12 @@ void ModelAsset::SortLODs()
 bool ModelAsset::AddLod(const std::string &path)
 {
     const float dist = lods.end()->distance + 5;
-    const ModelLod l(path.c_str(), dist);
-    if (l.indexCounts.size() != GetMaterialsPerSkin()) return false;
-    lods.push_back(l);
+    const ModelLod lod(path, dist);
+    if (lod.indexCounts.size() != GetMaterialsPerSkin())
+    {
+        return false;
+    }
+    lods.push_back(lod);
     return true;
 }
 
@@ -193,7 +204,10 @@ void ModelAsset::RemoveLod(const size_t index)
 bool ModelAsset::ValidateLodDistances()
 {
     SortLODs();
-    if (lods.at(0).distance != 0.0f) return false; // First LOD must have a distance of 0.
+    if (lods.at(0).distance != 0.0f)
+    {
+        return false; // First LOD must have a distance of 0.
+    }
     std::vector<float> distances{};
     for (const ModelLod &l: lods)
     {
@@ -228,13 +242,12 @@ void ModelAsset::RemoveMaterial(const size_t index)
     materials.erase(materials.begin() + static_cast<int64_t>(index));
     for (std::vector<size_t> &skin: skins)
     {
-        for (size_t &mat: skin)
+        for (size_t &material: skin)
         {
-            if (mat > GetMaterialCount() - 1)
+            if (material > GetMaterialCount() - 1)
             {
-                mat = GetMaterialCount() - 1;
+                material = GetMaterialCount() - 1;
             }
         }
     }
 }
-

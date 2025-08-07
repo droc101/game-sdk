@@ -3,8 +3,13 @@
 //
 
 #include "MaterialEditWindow.h"
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <format>
-#include "imgui.h"
+#include <imgui.h>
+#include <libassets/util/Material.h>
+#include <string>
 #include "ModelRenderer.h"
 #include "Options.h"
 #include "TextureBrowserWindow.h"
@@ -24,50 +29,50 @@ void MaterialEditWindow::Render()
     if (visible)
     {
         ImGui::SetNextWindowSize(ImVec2(300, -1));
-        ImGui::Begin("Material Editor",
-                     &visible,
-                     ImGuiWindowFlags_NoCollapse);
+        ImGui::Begin("Material Editor", &visible, ImGuiWindowFlags_NoCollapse);
 
         constexpr float panelHeight = 250.0f;
         ImGui::BeginChild("ScrollableRegion", ImVec2(0, panelHeight), ImGuiChildFlags_AutoResizeY);
-        for (size_t m = 0; m < ModelRenderer::GetModel()->GetMaterialCount(); m++)
+        for (size_t m = 0; m < ModelRenderer::GetModel().GetMaterialCount(); m++)
         {
             const std::string title = std::format("Material {}", m);
             if (ImGui::CollapsingHeader(title.c_str()))
             {
-                Material &mat = ModelRenderer::GetModel()->GetMaterial(m);
+                Material &mat = ModelRenderer::GetModel().GetMaterial(m);
 
                 ImGui::PushItemWidth(-1);
-                ImGui::Text("Texture");
+                ImGui::TextUnformatted("Texture");
                 TextureBrowserWindow::InputTexture(std::format("##Texture{}", m).c_str(), mat.texture);
                 ImGui::PushItemWidth(-1);
 
-                ImGui::Text("Color");
-                ImGui::ColorEdit4(std::format("##Color{}", m).c_str(), mat.color.GetData());
+                ImGui::TextUnformatted("Color");
+                ImGui::ColorEdit4(std::format("##Color{}", m).c_str(), mat.color.GetDataPointer());
 
-                ImGui::Text("Shader");
+                ImGui::TextUnformatted("Shader");
                 constexpr std::array<const char *, 3> shaders = {"Sky", "Unshaded", "Shaded"};
-                uint32_t sel = static_cast<uint32_t>(mat.shader);
+                size_t sel = static_cast<uint32_t>(mat.shader);
                 if (ImGui::BeginCombo(std::format("##Shader{}", m).c_str(), shaders.at(sel)))
                 {
-                    for (uint32_t i = 0; i < static_cast<uint32_t>(shaders.size()); i++)
+                    for (size_t i = 0; i < shaders.size(); i++)
                     {
                         const bool is_selected = sel == i;
-                        if (ImGui::Selectable(shaders[i], is_selected))
+                        if (ImGui::Selectable(shaders.at(i), is_selected))
+                        {
                             sel = i;
+                        }
                         mat.shader = static_cast<Material::MaterialShader>(sel);
                         if (is_selected)
+                        {
                             ImGui::SetItemDefaultFocus();
+                        }
                     }
                     ImGui::EndCombo();
                 }
-                if (ModelRenderer::GetModel()->GetMaterialCount() != 1)
+                if (ModelRenderer::GetModel().GetMaterialCount() != 1)
                 {
                     if (ImGui::Button(std::format("Delete##{}", m).c_str(), ImVec2(-1, 0)))
                     {
-                        ModelAsset mdl = *ModelRenderer::GetModel();
-                        mdl.RemoveMaterial(m);
-                        ModelRenderer::LoadModel(mdl);
+                        ModelRenderer::GetModel().RemoveMaterial(m);
                     }
                 }
             }
@@ -79,9 +84,9 @@ void MaterialEditWindow::Render()
         {
             Material mat{};
             mat.texture = Options::defaultTexture;
-            mat.color = Color({1.0f, 1.0f, 1.0f, 1.0f});
+            mat.color = Color(1.0f, 1.0f, 1.0f, 1.0f);
             mat.shader = Material::MaterialShader::SHADER_SHADED;
-            ModelRenderer::GetModel()->AddMaterial(mat);
+            ModelRenderer::GetModel().AddMaterial(mat);
         }
         ImGui::SameLine();
         ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 60, 0));
