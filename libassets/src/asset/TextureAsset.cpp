@@ -16,7 +16,6 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
-#include <SDL3/SDL_endian.h>
 #include <stb_image.h>
 #include <stb_image_write.h>
 
@@ -186,6 +185,11 @@ void TextureAsset::FixByteOrder()
     assert(pixels.size() == width * height);
     for (uint32_t &pixel: pixels)
     {
-        pixel = SDL_Swap32BE(pixel);
+        const uint8_t a = static_cast<uint8_t>(pixel >> 24);
+        const uint8_t r = static_cast<uint8_t>(pixel >> 16);
+        const uint8_t g = static_cast<uint8_t>(pixel >> 8);
+        const uint8_t b = static_cast<uint8_t>(pixel);
+
+        pixel = b << 24 | g << 16 | r << 8 | a;
     }
 }
