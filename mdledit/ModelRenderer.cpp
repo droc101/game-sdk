@@ -219,7 +219,8 @@ void ModelRenderer::LoadModel(ModelAsset &&newModel)
             {
                 const size_t matIndex = model.GetSkin(j)[k];
                 const Material &mat = model.GetMaterial(matIndex);
-                (void)SharedMgr::textureCache<OpenGLImGuiTextureAssetCache>->LoadTexture(mat.texture);
+                (void)dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache.get())
+                        ->LoadTexture(mat.texture);
             }
         }
 
@@ -309,9 +310,8 @@ void ModelRenderer::Render()
         glUniform3fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetDataPointer());
 
         GLuint texture = 0;
-        using textureCacheUniquePtrT = std::unique_ptr<OpenGLImGuiTextureAssetCache>; // Typedef for line length
-        const textureCacheUniquePtrT &textureCache = SharedMgr::textureCache<OpenGLImGuiTextureAssetCache>;
-        const Error::ErrorCode code = textureCache->GetTextureGLuint(mat.texture, texture);
+        const Error::ErrorCode code = dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache.get())
+                                              ->GetTextureGLuint(mat.texture, texture);
         if (code != Error::ErrorCode::OK)
         {
             continue;

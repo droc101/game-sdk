@@ -59,8 +59,7 @@ void TextureBrowserWindow::Render()
                         *str = "texture/" + textures[i];
                     }
                     ImVec2 texSize;
-                    if (SharedMgr::textureCache<ImGuiTextureAssetCache>->GetTextureSize("texture/" + textures[i],
-                                                                                        texSize) !=
+                    if (SharedMgr::textureCache->GetTextureSize("texture/" + textures[i], texSize) !=
                         Error::ErrorCode::OK)
                     {
                         continue;
@@ -95,8 +94,7 @@ void TextureBrowserWindow::Render()
                                                cursorPos.y + (tileSize - drawHeight) * 0.5f));
 
                     ImTextureID tex = 0;
-                    if (SharedMgr::textureCache<ImGuiTextureAssetCache>->GetTextureID("texture/" + textures[i], tex) !=
-                        Error::ErrorCode::OK)
+                    if (SharedMgr::textureCache->GetTextureID("texture/" + textures[i], tex) != Error::ErrorCode::OK)
                     {
                         continue;
                     }

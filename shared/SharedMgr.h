@@ -19,7 +19,7 @@ class SharedMgr
         template<typename T, typename... Args> static void InitSharedMgr(Args... args)
         {
             Options::Load();
-            textureCache<T> = std::make_unique<T>(args...);
+            textureCache = std::make_unique<T>(args...);
         }
 
         static void SharedMenuUI(const std::string &programName);
@@ -32,7 +32,7 @@ class SharedMgr
                                                    const std::string &extension,
                                                    bool isRoot);
 
-        template<typename T> static inline std::unique_ptr<T> textureCache{};
+        static inline std::unique_ptr<ImGuiTextureAssetCache> textureCache{};
 
     private:
         static inline bool metricsVisible = false;
