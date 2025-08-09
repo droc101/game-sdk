@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <vector>
 
-ModelLod::ModelLod(DataReader &reader, const uint32_t materialCount)
+ModelLod::ModelLod(DataReader &reader, const uint32_t materialsPerSkin)
 {
     distance = reader.Read<float>();
     reader.Skip<float>();
@@ -32,7 +32,7 @@ ModelLod::ModelLod(DataReader &reader, const uint32_t materialCount)
         vertices.emplace_back(reader);
     }
     reader.Skip<uint32_t>(); // Skips the total index count which is not needed for editing
-    for (uint32_t _i = 0; _i < materialCount; _i++)
+    for (uint32_t _i = 0; _i < materialsPerSkin; _i++)
     {
         indexCounts.push_back(reader.Read<uint32_t>());
     }

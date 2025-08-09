@@ -61,7 +61,7 @@ Error::ErrorCode ModelAsset::CreateFromAsset(const std::string &assetPath, Model
 
     for (size_t _i = 0; _i < lodCount; _i++)
     {
-        modelAsset.lods.emplace_back(asset.reader, materialCount);
+        modelAsset.lods.emplace_back(asset.reader, materialsPerSkin);
     }
     return Error::ErrorCode::OK;
 }

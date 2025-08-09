@@ -16,7 +16,7 @@ class ModelLod
     public:
         ModelLod() = default;
 
-        explicit ModelLod(DataReader &reader, uint32_t materialCount);
+        explicit ModelLod(DataReader &reader, uint32_t materialsPerSkin);
 
         explicit ModelLod(const std::string &filePath, float distance);
 
