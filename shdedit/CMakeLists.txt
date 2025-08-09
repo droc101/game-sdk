@@ -3,7 +3,11 @@ project(shdedit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(shdedit shdedit.cpp)
+add_executable(shdedit shdedit.cpp
+        BatchCompileWindow.cpp
+        BatchCompileWindow.h
+        BatchDecompileWindow.cpp
+        BatchDecompileWindow.h)
 
 set_target_properties(shdedit PROPERTIES LINKER_LANGUAGE CXX)
 

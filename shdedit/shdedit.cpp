@@ -18,7 +18,9 @@
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
-#include "libassets/asset/ShaderAsset.h"
+#include "BatchCompileWindow.h"
+#include "BatchDecompileWindow.h"
+#include <libassets/asset/ShaderAsset.h>
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 
@@ -139,6 +141,9 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             importPressed |= ImGui::MenuItem("Import", "Ctrl+Shift+O");
             savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, shaderLoaded);
             exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S", false, shaderLoaded);
+            ImGui::Separator();
+            if (ImGui::MenuItem("Batch Compile")) { BatchCompileWindow::Show(); }
+            if (ImGui::MenuItem("Batch Decompile")) { BatchDecompileWindow::Show(); }
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
@@ -304,6 +309,8 @@ int main()
         Render(done, window);
 
         SharedMgr::RenderSharedUI(window);
+        BatchCompileWindow::Render(window);
+        BatchDecompileWindow::Render(window);
 
         ImGui::Render();
         if (!SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y))

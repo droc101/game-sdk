@@ -27,7 +27,8 @@ class Error
             INCORRECT_FORMAT,
             SHADER_PARSE_ERROR,
             SHADER_LINK_ERROR,
-            INCORRECT_VERSION
+            INCORRECT_VERSION,
+            INVALID_DIRECTORY
         };
 
         Error() = delete;
@@ -58,6 +59,8 @@ class Error
                     return "Shader Link Error";
                 case ErrorCode::INCORRECT_VERSION:
                     return "Incorrect Version";
+                case ErrorCode::INVALID_DIRECTORY:
+                    return "Invalid Directory Path";
                 case ErrorCode::UNKNOWN:
                 default:
                     return "Unknown Error";
