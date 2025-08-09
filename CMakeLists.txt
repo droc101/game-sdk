@@ -11,6 +11,17 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -DBUILDSTYLE_DEBUG")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+if (CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT result)
+    if (result)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+        message(STATUS "IPO/LTO is supported")
+    else ()
+        message(WARNING "IPO/LTO is not supported")
+    endif ()
+endif ()
+
 if (WIN32)
     message(STATUS "Win32 detected")
     set(CMAKE_AUTO_RCC ON)
