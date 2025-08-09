@@ -354,9 +354,9 @@ void ModelRenderer::UpdateMatrix()
 {
     const glm::mat4 &persp = glm::perspective<float>(90.0, windowAspect, 0.01f, 1000.0f);
 
-    const float x = distance * cosf(pitch) * sinf(yaw);
+    const float x = distance * cosf(pitch) * -sinf(yaw);
     const float y = distance * sinf(pitch);
-    const float z = distance * cosf(pitch) * cosf(yaw);
+    const float z = distance * cosf(pitch) * -cosf(yaw);
     const glm::vec3 cameraPos{x, y, z};
     const glm::mat4 &look = glm::lookAt(cameraPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
