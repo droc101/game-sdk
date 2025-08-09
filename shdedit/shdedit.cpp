@@ -142,13 +142,17 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, shaderLoaded);
             exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S", false, shaderLoaded);
             ImGui::Separator();
-            if (ImGui::MenuItem("Batch Compile")) { BatchCompileWindow::Show(); }
-            if (ImGui::MenuItem("Batch Decompile")) { BatchDecompileWindow::Show(); }
-            ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
                 done = true;
             }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Tools"))
+        {
+            if (ImGui::MenuItem("Batch Compile")) { BatchCompileWindow::Show(); }
+            if (ImGui::MenuItem("Batch Decompile")) { BatchDecompileWindow::Show(); }
+            ImGui::Separator();
             ImGui::EndMenu();
         }
         SharedMgr::SharedMenuUI("shdedit");
