@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 project(game-sdk)
 
+option(GAME_SDK_BUILD_PLUGINS "Builds GAME SDK plugins" OFF)
+
 set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_CXX_FLAGS "-Wpedantic -Wall -Wextra -Wno-missing-field-initializers")
@@ -10,6 +12,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-g0 -O3 -s -DNDEBUG -DBUILDSTYLE_RELEASE")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -DBUILDSTYLE_DEBUG")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/plugin)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
     include(CheckIPOSupported)
@@ -181,3 +184,9 @@ add_subdirectory(sndedit)
 add_subdirectory(lvledit)
 add_subdirectory(shdedit)
 add_subdirectory(fonedit)
+
+if (GAME_SDK_BUILD_PLUGINS)
+    if (UNIX)
+        add_subdirectory(plugins/gtex_thumbs)
+    endif ()
+endif ()

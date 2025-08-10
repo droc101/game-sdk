@@ -1,0 +1,11 @@
+{
+  "CacheThumbnail": false,
+  "HandleSequences": true,
+  "IgnoreMaximumSize": true,
+  "KPlugin": {
+    "MimeTypes": [
+      "image/x-gtex"
+    ],
+    "Name": "GAME textures (GTEX)"
+  }
+}

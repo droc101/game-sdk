@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+    <mime-type type="image/x-gtex">
+        <comment>GAME Texture File</comment>
+        <glob-deleteall/>
+        <glob pattern="*.gtex"/>
+        <glob pattern="*.GTEX"/>
+    </mime-type>
+    <mime-type type="application/x-gshd">
+        <comment>GAME Shader File</comment>
+        <glob-deleteall/>
+        <glob pattern="*.gshd"/>
+        <glob pattern="*.GSHD"/>
+    </mime-type>
+    <mime-type type="application/x-gfon">
+        <comment>GAME Font File</comment>
+        <glob-deleteall/>
+        <glob pattern="*.gfon"/>
+        <glob pattern="*.GFON"/>
+    </mime-type>
+    <mime-type type="application/x-gmap">
+        <comment>GAME Map File</comment>
+        <glob-deleteall/>
+        <glob pattern="*.gmap"/>
+        <glob pattern="*.GMAP"/>
+    </mime-type>
+    <mime-type type="model/x-gmdl">
+        <comment>GAME Model File</comment>
+        <glob-deleteall/>
+        <glob pattern="*.gmdl"/>
+        <glob pattern="*.GMDL"/>
+    </mime-type>
+    <mime-type type="audio/x-gsnd">
+        <comment>GAME Audio File</comment>
+        <glob-deleteall/>
+        <glob pattern="*.gsnd"/>
+        <glob pattern="*.GSND"/>
+    </mime-type>
+</mime-info>

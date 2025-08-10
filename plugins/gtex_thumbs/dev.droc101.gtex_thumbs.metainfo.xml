@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component type="addon">
+    <id>dev.droc101.gtex_thumbs</id>
+    <extends>org.kde.dolphin.desktop</extends>
+    <name>GTEX Thumbnailer</name>
+    <categories>
+        <category>Image</category>
+    </categories>
+    <icon type="stock">image-x-generic</icon>
+</component>

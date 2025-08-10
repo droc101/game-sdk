@@ -8,6 +8,8 @@ find_package(assimp REQUIRED)
 find_package(glslang CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+
 add_library(assets STATIC include/libassets/libassets.h
         src/util/AssetReader.cpp
         include/libassets/util/AssetReader.h
