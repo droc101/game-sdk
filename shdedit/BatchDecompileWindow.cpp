@@ -64,7 +64,8 @@ Error::ErrorCode BatchDecompileWindow::Execute()
         ShaderAsset shd;
         Error::ErrorCode e = ShaderAsset::CreateFromAsset(file.c_str(), shd);
         if (e != Error::ErrorCode::OK) { return e; }
-        e = shd.SaveAsGlsl((outputFolder + "/" + path.stem().string() + ".glsl").c_str());
+        const std::string suffix = shd.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAG ? ".frag" : ".vert";
+        e = shd.SaveAsGlsl((outputFolder + "/" + path.stem().string() + suffix).c_str());
         if (e != Error::ErrorCode::OK) { return e; }
     }
 
@@ -92,7 +93,7 @@ void BatchDecompileWindow::Render(SDL_Window *window)
                 SDL_ShowOpenFolderDialog(outPathCallback, nullptr, window, nullptr, false);
             }
 
-            ImGui::Text("Source Files");
+            ImGui::Text("Compiled Shader Files");
             ImGui::SameLine();
             const float sz = ImGui::GetContentRegionAvail().x;
             ImGui::Dummy(ImVec2(sz - 60 - ImGui::GetStyle().WindowPadding.x, 0));
