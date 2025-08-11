@@ -37,46 +37,46 @@ class ModelAsset final
         [[nodiscard]] Error::ErrorCode SaveAsAsset(const std::string &assetPath) const;
 
 
-        [[nodiscard]] ModelLod &GetLod(size_t index);
+        [[nodiscard]] ModelLod &GetLod(uint32_t index);
 
         void SortLODs();
 
         [[nodiscard]] bool AddLod(const std::string &path);
 
-        void RemoveLod(size_t index);
+        void RemoveLod(uint32_t index);
 
-        [[nodiscard]] size_t GetLodCount() const;
+        [[nodiscard]] uint32_t GetLodCount() const;
 
         [[nodiscard]] bool ValidateLodDistances();
 
 
-        [[nodiscard]] std::vector<size_t> &GetSkin(size_t index);
+        [[nodiscard]] std::vector<uint32_t> &GetSkin(uint32_t index);
 
-        [[nodiscard]] size_t GetSkinCount() const;
+        [[nodiscard]] uint32_t GetSkinCount() const;
 
         void AddSkin();
 
-        void RemoveSkin(size_t index);
+        void RemoveSkin(uint32_t index);
 
-        [[nodiscard]] size_t GetMaterialsPerSkin() const;
-
-
-        [[nodiscard]] Material &GetMaterial(size_t index);
-
-        [[nodiscard]] size_t GetMaterialCount() const;
-
-        void AddMaterial(const Material &mat);
-
-        void RemoveMaterial(size_t index);
+        [[nodiscard]] uint32_t GetMaterialsPerSkin() const;
 
 
-        void GetVertexBuffer(size_t lodIndex, DataWriter &writer);
+        [[nodiscard]] Material &GetMaterial(uint32_t index);
+
+        [[nodiscard]] uint32_t GetMaterialCount() const;
+
+        void AddMaterial(const Material &material);
+
+        void RemoveMaterial(uint32_t index);
+
+
+        void GetVertexBuffer(uint32_t lodIndex, DataWriter &writer);
 
         static constexpr uint8_t MODEL_ASSET_VERSION = 1;
 
     private:
         std::vector<Material> materials{};
-        std::vector<std::vector<size_t>> skins{};
+        std::vector<std::vector<uint32_t>> skins{};
         std::vector<ModelLod> lods{};
         CollisionModelType collisionModelType = CollisionModelType::NONE;
 

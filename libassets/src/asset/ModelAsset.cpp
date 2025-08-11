@@ -37,29 +37,29 @@ Error::ErrorCode ModelAsset::CreateFromAsset(const std::string &assetPath, Model
         return Error::ErrorCode::INCORRECT_VERSION;
     }
     modelAsset = ModelAsset();
-    const size_t materialCount = asset.reader.Read<size_t>();
-    const size_t materialsPerSkin = asset.reader.Read<size_t>();
-    const size_t skinCount = asset.reader.Read<size_t>();
-    const size_t lodCount = asset.reader.Read<size_t>();
+    const uint32_t materialCount = asset.reader.Read<uint32_t>();
+    const uint32_t materialsPerSkin = asset.reader.Read<uint32_t>();
+    const uint32_t skinCount = asset.reader.Read<uint32_t>();
+    const uint32_t lodCount = asset.reader.Read<uint32_t>();
     modelAsset.collisionModelType = static_cast<CollisionModelType>(asset.reader.Read<uint8_t>());
 
     modelAsset.materials.reserve(materialCount);
-    for (size_t i = 0; i < materialCount; i++)
+    for (uint32_t i = 0; i < materialCount; i++)
     {
         modelAsset.materials.emplace_back(asset.reader);
     }
 
     modelAsset.skins.resize(skinCount);
-    for (std::vector<size_t> &skin: modelAsset.skins)
+    for (std::vector<uint32_t> &skin: modelAsset.skins)
     {
         skin.reserve(materialsPerSkin);
-        for (size_t _i = 0; _i < materialsPerSkin; _i++)
+        for (uint32_t _i = 0; _i < materialsPerSkin; _i++)
         {
-            skin.emplace_back(asset.reader.Read<size_t>());
+            skin.emplace_back(asset.reader.Read<uint32_t>());
         }
     }
 
-    for (size_t _i = 0; _i < lodCount; _i++)
+    for (uint32_t _i = 0; _i < lodCount; _i++)
     {
         modelAsset.lods.emplace_back(asset.reader, materialsPerSkin);
     }
@@ -76,10 +76,10 @@ void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     assert(lods.at(0).vertices.size() >= 3); // triangle required
 
     DataWriter writer;
-    writer.Write<size_t>(materials.size());
-    writer.Write<size_t>(skins.at(0).size());
-    writer.Write<size_t>(skins.size());
-    writer.Write<size_t>(lods.size());
+    writer.Write<uint32_t>(materials.size());
+    writer.Write<uint32_t>(skins.at(0).size());
+    writer.Write<uint32_t>(skins.size());
+    writer.Write<uint32_t>(lods.size());
     writer.Write<uint8_t>(static_cast<uint8_t>(collisionModelType));
 
     for (const Material &material: materials)
@@ -87,11 +87,11 @@ void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
         material.Write(writer);
     }
 
-    for (const std::vector<size_t> &skinMaterialIndices: skins)
+    for (const std::vector<uint32_t> &skinMaterialIndices: skins)
     {
-        for (const size_t &materialIndex: skinMaterialIndices)
+        for (const uint32_t &materialIndex: skinMaterialIndices)
         {
-            writer.Write<size_t>(materialIndex);
+            writer.Write<uint32_t>(materialIndex);
         }
     }
 
@@ -109,47 +109,47 @@ Error::ErrorCode ModelAsset::SaveAsAsset(const std::string &assetPath) const
     return AssetReader::SaveToFile(assetPath.c_str(), data, Asset::AssetType::ASSET_TYPE_MODEL, MODEL_ASSET_VERSION);
 }
 
-ModelLod &ModelAsset::GetLod(const size_t index)
+ModelLod &ModelAsset::GetLod(uint32_t index)
 {
     return lods.at(index);
 }
 
-std::vector<size_t> &ModelAsset::GetSkin(const size_t index)
+std::vector<uint32_t> &ModelAsset::GetSkin(uint32_t index)
 {
     return skins.at(index);
 }
 
-size_t ModelAsset::GetLodCount() const
+uint32_t ModelAsset::GetLodCount() const
 {
     return lods.size();
 }
 
-size_t ModelAsset::GetSkinCount() const
+uint32_t ModelAsset::GetSkinCount() const
 {
     return skins.size();
 }
 
-size_t ModelAsset::GetMaterialsPerSkin() const
+uint32_t ModelAsset::GetMaterialsPerSkin() const
 {
     return skins.at(0).size();
 }
 
 void ModelAsset::AddSkin()
 {
-    std::vector<size_t> skin{};
-    for (size_t i = 0; i < GetMaterialsPerSkin(); i++)
+    std::vector<uint32_t> skin;
+    for (uint32_t i = 0; i < GetMaterialsPerSkin(); i++)
     {
         skin.push_back(0);
     }
     skins.push_back(skin);
 }
 
-void ModelAsset::RemoveSkin(const size_t index)
+void ModelAsset::RemoveSkin(const uint32_t index)
 {
-    skins.erase(skins.begin() + static_cast<int64_t>(index));
+    skins.erase(skins.begin() + index);
 }
 
-void ModelAsset::GetVertexBuffer(const size_t lodIndex, DataWriter &writer)
+void ModelAsset::GetVertexBuffer(const uint32_t lodIndex, DataWriter &writer)
 {
     const ModelLod &lod = GetLod(lodIndex);
     for (const ModelVertex &vertex: lod.vertices)
@@ -168,7 +168,7 @@ Error::ErrorCode ModelAsset::CreateFromStandardModel(const std::string &modelPat
     model = ModelAsset();
     model.lods.emplace_back(modelPath, 0);
     const ModelLod &lod = model.lods.back();
-    const size_t materialCount = lod.indexCounts.size();
+    const uint32_t materialCount = lod.indexCounts.size();
     model.skins.emplace_back(materialCount);
     model.materials = {Material(defaultTexture, -1u, Material::MaterialShader::SHADER_SHADED)};
     return Error::ErrorCode::OK;
@@ -196,7 +196,7 @@ bool ModelAsset::AddLod(const std::string &path)
     return true;
 }
 
-void ModelAsset::RemoveLod(const size_t index)
+void ModelAsset::RemoveLod(const uint32_t index)
 {
     lods.erase(lods.begin() + static_cast<int64_t>(index));
 }
@@ -222,27 +222,27 @@ bool ModelAsset::ValidateLodDistances()
     return true;
 }
 
-Material &ModelAsset::GetMaterial(const size_t index)
+Material &ModelAsset::GetMaterial(const uint32_t index)
 {
     return materials.at(index);
 }
 
-size_t ModelAsset::GetMaterialCount() const
+uint32_t ModelAsset::GetMaterialCount() const
 {
     return materials.size();
 }
 
-void ModelAsset::AddMaterial(const Material &mat)
+void ModelAsset::AddMaterial(const Material &material)
 {
-    materials.push_back(mat);
+    materials.push_back(material);
 }
 
-void ModelAsset::RemoveMaterial(const size_t index)
+void ModelAsset::RemoveMaterial(const uint32_t index)
 {
-    materials.erase(materials.begin() + static_cast<int64_t>(index));
-    for (std::vector<size_t> &skin: skins)
+    materials.erase(materials.begin() + index);
+    for (std::vector<uint32_t> &skin: skins)
     {
-        for (size_t &material: skin)
+        for (uint32_t &material: skin)
         {
             if (material > GetMaterialCount() - 1)
             {
