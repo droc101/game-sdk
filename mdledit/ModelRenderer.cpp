@@ -307,7 +307,7 @@ void ModelRenderer::Render()
     {
         const size_t matIndex = model.GetSkin(skinIndex)[i];
         Material &mat = model.GetMaterial(matIndex);
-        glUniform3fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetDataPointer());
+        glUniform4fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetDataPointer());
 
         GLuint texture = 0;
         const Error::ErrorCode code = dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache.get())

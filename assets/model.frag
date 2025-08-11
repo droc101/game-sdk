@@ -14,7 +14,7 @@ in vec4 COLOR;
 out vec4 PIXEL;
 
 uniform sampler2D ALBEDO_TEXTURE;
-uniform vec3 ALBEDO;
+uniform vec4 ALBEDO;
 
 uniform int displayMode;
 
@@ -36,7 +36,7 @@ bool check_alpha_discard(float fade_alpha) {
 void main()
 {
     if (displayMode == DISPLAY_MODE_COLORED || displayMode == DISPLAY_MODE_COLORED_SHADED) {
-        PIXEL = vec4(ALBEDO, 1.0) * COLOR;
+        PIXEL = ALBEDO * COLOR;
         if (check_alpha_discard(PIXEL.a)) discard;
         PIXEL.a = 1.0;
         if (displayMode == DISPLAY_MODE_COLORED_SHADED) {
@@ -44,7 +44,7 @@ void main()
             PIXEL.rgb *= vec3(shading);
         }
     } else if (displayMode == DISPLAY_MODE_TEXTURED || displayMode == DISPLAY_MODE_TEXTURED_SHADED) {
-        PIXEL = texture(ALBEDO_TEXTURE, UV) * vec4(ALBEDO, 1.0) * COLOR;
+        PIXEL = texture(ALBEDO_TEXTURE, UV) * ALBEDO * COLOR;
         if (check_alpha_discard(PIXEL.a)) discard;
         PIXEL.a = 1.0;
         if (displayMode == DISPLAY_MODE_TEXTURED_SHADED) {
