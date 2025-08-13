@@ -82,7 +82,8 @@ Error::ErrorCode BatchCompileWindow::Execute()
         if (e != Error::ErrorCode::OK) { return e; }
         shd.platform = plat;
         shd.type = type;
-        const std::string suffix = type == ShaderAsset::ShaderType::SHADER_TYPE_FRAG ? "_f" : "_v";
+        std::string suffix = type == ShaderAsset::ShaderType::SHADER_TYPE_FRAG ? "_f" : "_v";
+        if (path.stem().string().ends_with("_f") || path.stem().string().ends_with("_v")) {suffix = "";}
         e = shd.SaveAsAsset((outputFolder + "/" + path.stem().string() + suffix + ".gshd").c_str());
         if (e != Error::ErrorCode::OK) { return e; }
     }
