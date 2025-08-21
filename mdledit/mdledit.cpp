@@ -17,6 +17,7 @@
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <utility>
+#include "CollisionEditWindow.h"
 #include "LodEditWindow.h"
 #include "MaterialEditWindow.h"
 #include "ModelRenderer.h"
@@ -37,11 +38,11 @@ static bool savePressed = false;
 
 constexpr SDL_DialogFileFilter gmdlFilter = {"GAME model (*.gmdl)", "gmdl"};
 constexpr std::array modelFilters = {
-    SDL_DialogFileFilter{"3D Models (obj, fbx, gltf, dae)", "obj;fbx;gltf;dae"},
-    SDL_DialogFileFilter{"Wavefront OBJ Models", "obj"},
-    SDL_DialogFileFilter{"FBX Models", "fbx"},
-    SDL_DialogFileFilter{"glTF/glTF2.0 Models", "gltf"},
-    SDL_DialogFileFilter{"Collada Models", "dae"},
+        SDL_DialogFileFilter{"3D Models (obj, fbx, gltf, dae)", "obj;fbx;gltf;dae"},
+        SDL_DialogFileFilter{"Wavefront OBJ Models", "obj"},
+        SDL_DialogFileFilter{"FBX Models", "fbx"},
+        SDL_DialogFileFilter{"glTF/glTF2.0 Models", "gltf"},
+        SDL_DialogFileFilter{"Collada Models", "dae"},
 };
 
 
@@ -133,8 +134,8 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL)
         {
             const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(*path,
-                                                                                   model,
-                                                                                   Options::defaultTexture);
+                model,
+                Options::defaultTexture);
             if (errorCode != Error::ErrorCode::OK)
             {
                 if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
@@ -265,6 +266,10 @@ static void HandleMenuAndShortcuts()
             {
                 SkinEditWindow::Show();
             }
+            if (ImGui::MenuItem("Collision Editor"))
+            {
+                CollisionEditWindow::Show();
+            }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("View", modelLoaded))
@@ -322,6 +327,11 @@ static void HandleMenuAndShortcuts()
             if (ImGui::MenuItem("Wireframe", "", ModelRenderer::wireframe))
             {
                 ModelRenderer::wireframe = !ModelRenderer::wireframe;
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Show Bounding Box", "", ModelRenderer::showBoundingBox))
+            {
+                ModelRenderer::showBoundingBox = !ModelRenderer::showBoundingBox;
             }
             ImGui::EndMenu();
         }
@@ -490,9 +500,9 @@ int main()
             ImGui::Begin("mdledit",
                          nullptr,
                          ImGuiWindowFlags_NoDecoration |
-                                 ImGuiWindowFlags_NoMove |
-                                 ImGuiWindowFlags_NoSavedSettings |
-                                 ImGuiWindowFlags_NoBringToFrontOnFocus);
+                         ImGuiWindowFlags_NoMove |
+                         ImGuiWindowFlags_NoSavedSettings |
+                         ImGuiWindowFlags_NoBringToFrontOnFocus);
 
             HandleMenuAndShortcuts();
 
@@ -521,6 +531,7 @@ int main()
         SkinEditWindow::Render();
         LodEditWindow::Render(window);
         MaterialEditWindow::Render();
+        CollisionEditWindow::Render(window);
 
         ImGui::Render();
         glClearColor(0, 0, 0, 1);

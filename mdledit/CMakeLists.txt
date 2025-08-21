@@ -14,6 +14,8 @@ add_executable(mdledit mdledit.cpp
         GLDebug.h
         MaterialEditWindow.cpp
         MaterialEditWindow.h
+        CollisionEditWindow.cpp
+        CollisionEditWindow.h
 )
 
 set_target_properties(mdledit PROPERTIES LINKER_LANGUAGE CXX)

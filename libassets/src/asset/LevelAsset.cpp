@@ -33,7 +33,7 @@ Error::ErrorCode LevelAsset::CreateFromAsset(const char *assetPath, LevelAsset &
     }
     level = LevelAsset();
     level.levelData.reserve(asset.reader.TotalSize());
-    asset.reader.ReadToBuffer<uint8_t>(level.levelData, asset.reader.TotalSize());
+    asset.reader.ReadToVector<uint8_t>(level.levelData, asset.reader.TotalSize());
     return Error::ErrorCode::OK;
 }
 

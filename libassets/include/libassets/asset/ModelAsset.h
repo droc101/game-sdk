@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
@@ -12,6 +11,7 @@
 #include <libassets/util/ModelLod.h>
 #include <string>
 #include <vector>
+#include <libassets/util/BoundingBox.h>
 
 class ModelAsset final
 {
@@ -72,6 +72,8 @@ class ModelAsset final
 
         void GetVertexBuffer(uint32_t lodIndex, DataWriter &writer);
 
+        BoundingBox &GetBoundingBox();
+
         static constexpr uint8_t MODEL_ASSET_VERSION = 1;
 
     private:
@@ -79,6 +81,7 @@ class ModelAsset final
         std::vector<std::vector<uint32_t>> skins{};
         std::vector<ModelLod> lods{};
         CollisionModelType collisionModelType = CollisionModelType::NONE;
+        BoundingBox boundingBox{};
 
         void SaveToBuffer(std::vector<uint8_t> &buffer) const;
 

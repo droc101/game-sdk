@@ -33,7 +33,7 @@ Error::ErrorCode SoundAsset::CreateFromAsset(const char *assetPath, SoundAsset &
     }
     sound = SoundAsset();
     sound.wavData.reserve(asset.reader.TotalSize());
-    asset.reader.ReadToBuffer<uint8_t>(sound.wavData, asset.reader.TotalSize());
+    asset.reader.ReadToVector<uint8_t>(sound.wavData, asset.reader.TotalSize());
     return Error::ErrorCode::OK;
 }
 

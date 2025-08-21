@@ -17,6 +17,7 @@
 #include <libassets/util/ModelVertex.h>
 #include <string>
 #include <vector>
+#include <libassets/util/BoundingBox.h>
 
 Error::ErrorCode ModelAsset::CreateFromAsset(const std::string &assetPath, ModelAsset &modelAsset)
 {
@@ -63,6 +64,9 @@ Error::ErrorCode ModelAsset::CreateFromAsset(const std::string &assetPath, Model
     {
         modelAsset.lods.emplace_back(asset.reader, materialsPerSkin);
     }
+
+    modelAsset.boundingBox = BoundingBox(asset.reader);
+
     return Error::ErrorCode::OK;
 }
 
@@ -99,6 +103,9 @@ void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     {
         lod.Write(writer);
     }
+
+    boundingBox.Write(writer);
+
     writer.CopyToVector(buffer);
 }
 
@@ -109,12 +116,12 @@ Error::ErrorCode ModelAsset::SaveAsAsset(const std::string &assetPath) const
     return AssetReader::SaveToFile(assetPath.c_str(), data, Asset::AssetType::ASSET_TYPE_MODEL, MODEL_ASSET_VERSION);
 }
 
-ModelLod &ModelAsset::GetLod(uint32_t index)
+ModelLod &ModelAsset::GetLod(const uint32_t index)
 {
     return lods.at(index);
 }
 
-std::vector<uint32_t> &ModelAsset::GetSkin(uint32_t index)
+std::vector<uint32_t> &ModelAsset::GetSkin(const uint32_t index)
 {
     return skins.at(index);
 }
@@ -250,4 +257,9 @@ void ModelAsset::RemoveMaterial(const uint32_t index)
             }
         }
     }
+}
+
+BoundingBox &ModelAsset::GetBoundingBox()
+{
+    return boundingBox;
 }

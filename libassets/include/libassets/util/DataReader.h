@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <format>
@@ -11,7 +12,6 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include "libassets/libassets.h"
 
 class AssetReader;
 
@@ -64,7 +64,7 @@ class DataReader
             offset += sizeof(T);
         }
 
-        template<Primitive T> void ReadToBuffer(std::vector<T> &buffer, const size_t numberToRead)
+        template<Primitive T> void ReadToVector(std::vector<T> &buffer, const size_t numberToRead)
         {
             if (offset + sizeof(T) * numberToRead > size)
             {

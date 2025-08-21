@@ -123,13 +123,15 @@ bool ModelRenderer::Init()
     glCullFace(GL_BACK);
 
     const Error::ErrorCode modelProgramErrorCode = CreateProgram("assets/model.frag", "assets/model.vert", program);
-    const Error::ErrorCode cubeProgramErrorCode = CreateProgram("assets/cube.frag", "assets/cube.vert", cubeProgram);
+    const Error::ErrorCode cubeProgramErrorCode = CreateProgram("assets/cube.frag", "assets/cube.vert", linesProgram);
     if (modelProgramErrorCode != Error::ErrorCode::OK || cubeProgramErrorCode != Error::ErrorCode::OK)
     {
         return false;
     }
 
     LoadCube();
+
+    LoadBBox();
 
     UpdateView(0, 0, 1);
 
@@ -140,6 +142,32 @@ bool ModelRenderer::Init()
 
     return true;
 }
+
+void ModelRenderer::LoadBBox()
+{
+    glGenVertexArrays(1, &bboxVao);
+    glBindVertexArray(bboxVao);
+
+    glGenBuffers(1, &bboxVbo);
+    glGenBuffers(1, &bboxEbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bboxEbo);
+    const std::array<GLuint, 36> indices = {
+            // x- face
+            0, 1, 3, 0, 3, 2,
+            // x+ face
+            4, 7, 5, 4, 6, 7,
+            // y- face (bottom)
+            0, 5, 1, 0, 4, 5,
+            // y+ face (top)
+            2, 3, 7, 2, 7, 6,
+            // z- face (back)
+            0, 2, 6, 0, 6, 4,
+            // z+ face (front)
+            1, 7, 3, 1, 5, 7
+    };
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices.size(), indices.data(), GL_STATIC_DRAW);
+}
+
 
 ModelAsset &ModelRenderer::GetModel()
 {
@@ -311,7 +339,7 @@ void ModelRenderer::Render()
 
         GLuint texture = 0;
         const Error::ErrorCode code = dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache.get())
-                                              ->GetTextureGLuint(mat.texture, texture);
+                ->GetTextureGLuint(mat.texture, texture);
         if (code != Error::ErrorCode::OK)
         {
             continue;
@@ -330,15 +358,46 @@ void ModelRenderer::Render()
     if (showUnitCube)
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glUseProgram(cubeProgram);
+        glUseProgram(linesProgram);
         glBindVertexArray(cubeVao);
         glBindBuffer(GL_ARRAY_BUFFER, cubeVbo);
-        posAttrib = glGetAttribLocation(cubeProgram, "VERTEX");
+        posAttrib = glGetAttribLocation(linesProgram, "VERTEX");
         glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
         glEnableVertexAttribArray(posAttrib);
-        glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(linesProgram, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(linesProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 0.1f, 0.1f, 0.1f, 1.0f);
         glDrawArrays(GL_LINES, 0, 24);
+    }
+
+    if (showBoundingBox)
+    {
+        glDisable(GL_CULL_FACE);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bboxEbo);
+        glBindBuffer(GL_ARRAY_BUFFER, bboxVbo);
+        const std::array<float, 24> points = model.GetBoundingBox().GetPointsFlat();
+        glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * points.size(), points.data(), GL_STATIC_DRAW);
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glUseProgram(linesProgram);
+        glBindVertexArray(bboxVao);
+        posAttrib = glGetAttribLocation(linesProgram, "VERTEX");
+        glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+        glEnableVertexAttribArray(posAttrib);
+        glUniformMatrix4fv(glGetUniformLocation(linesProgram, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(linesProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 0.1f, 0.5f, 0.8f, 0.25f);
+        glDrawElements(GL_TRIANGLES,
+                       36,
+                       GL_UNSIGNED_INT,
+                       nullptr);
+
+        glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 0.1f, 0.5f, 0.8f, 1.0f);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glDrawElements(GL_TRIANGLES,
+                       36,
+                       GL_UNSIGNED_INT,
+                       nullptr);
     }
 }
 

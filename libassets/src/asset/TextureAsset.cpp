@@ -108,7 +108,7 @@ Error::ErrorCode TextureAsset::CreateFromAsset(const char *assetPath, TextureAss
     texture.repeat = asset.reader.Read<uint8_t>() != 0;
     texture.mipmaps = asset.reader.Read<uint8_t>() != 0;
     const size_t pixelCount = texture.width * texture.height;
-    asset.reader.ReadToBuffer<uint32_t>(texture.pixels, pixelCount);
+    asset.reader.ReadToVector<uint32_t>(texture.pixels, pixelCount);
     return Error::ErrorCode::OK;
 }
 
@@ -134,7 +134,7 @@ Error::ErrorCode TextureAsset::SaveAsImage(const char *imagePath, const ImageFor
     int code = 1; // default case fails
     switch (format)
     {
-        using enum ImageFormat;
+            using enum ImageFormat;
         case IMAGE_FORMAT_PNG:
             code = stbi_write_png(imagePath,
                                   static_cast<int>(width),
@@ -149,7 +149,7 @@ Error::ErrorCode TextureAsset::SaveAsImage(const char *imagePath, const ImageFor
         case IMAGE_FORMAT_BMP:
             code = stbi_write_bmp(imagePath, static_cast<int>(width), static_cast<int>(height), 4, pixels.data());
             break;
-        default:;
+        default: ;
     }
     return code != 0 ? Error::ErrorCode::OK : Error::ErrorCode::UNKNOWN;
 }

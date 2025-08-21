@@ -51,6 +51,7 @@ class ModelRenderer
         static inline DisplayMode displayMode = DisplayMode::TEXTURED_SHADED;
         static inline bool showUnitCube = true;
         static inline bool wireframe = false;
+        static inline bool showBoundingBox = false;
 
         static constexpr int PANEL_SIZE = 100;
 
@@ -64,9 +65,9 @@ class ModelRenderer
     private:
         struct GLModelLod
         {
-                GLuint vao{};
-                GLuint vbo{};
-                std::vector<GLuint> ebos{};
+            GLuint vao{};
+            GLuint vbo{};
+            std::vector<GLuint> ebos{};
         };
 
         static inline ModelAsset model{};
@@ -74,10 +75,14 @@ class ModelRenderer
         static inline GLuint cubeVao = 0;
         static inline GLuint cubeVbo = 0;
 
+        static inline GLuint bboxVao = 0;
+        static inline GLuint bboxVbo = 0;
+        static inline GLuint bboxEbo = 0;
+
         static inline std::vector<GLModelLod> lods{};
 
         static inline GLuint program = 0;
-        static inline GLuint cubeProgram = 0;
+        static inline GLuint linesProgram = 0;
 
         static inline float pitch = 0;
         static inline float yaw = 0;
@@ -99,4 +104,6 @@ class ModelRenderer
         static void UpdateMatrix();
 
         static void LoadCube();
+
+        static void LoadBBox();
 };
