@@ -151,20 +151,48 @@ void ModelRenderer::LoadBBox()
     glGenBuffers(1, &bboxVbo);
     glGenBuffers(1, &bboxEbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bboxEbo);
-    const std::array<GLuint, 36> indices = {
-            // x- face
-            0, 1, 3, 0, 3, 2,
-            // x+ face
-            4, 7, 5, 4, 6, 7,
-            // y- face (bottom)
-            0, 5, 1, 0, 4, 5,
-            // y+ face (top)
-            2, 3, 7, 2, 7, 6,
-            // z- face (back)
-            0, 2, 6, 0, 6, 4,
-            // z+ face (front)
-            1, 7, 3, 1, 5, 7
-    };
+    const std::array<GLuint, 36> indices = {// x- face
+                                            0,
+                                            1,
+                                            3,
+                                            0,
+                                            3,
+                                            2,
+                                            // x+ face
+                                            4,
+                                            7,
+                                            5,
+                                            4,
+                                            6,
+                                            7,
+                                            // y- face (bottom)
+                                            0,
+                                            5,
+                                            1,
+                                            0,
+                                            4,
+                                            5,
+                                            // y+ face (top)
+                                            2,
+                                            3,
+                                            7,
+                                            2,
+                                            7,
+                                            6,
+                                            // z- face (back)
+                                            0,
+                                            2,
+                                            6,
+                                            0,
+                                            6,
+                                            4,
+                                            // z+ face (front)
+                                            1,
+                                            7,
+                                            3,
+                                            1,
+                                            5,
+                                            7};
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices.size(), indices.data(), GL_STATIC_DRAW);
 }
 
@@ -267,6 +295,8 @@ void ModelRenderer::LoadModel(ModelAsset &&newModel)
         lods.push_back(glod);
     }
 
+    LoadHulls();
+
     UpdateView(0, 0, 1);
 }
 
@@ -339,7 +369,7 @@ void ModelRenderer::Render()
 
         GLuint texture = 0;
         const Error::ErrorCode code = dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache.get())
-                ->GetTextureGLuint(mat.texture, texture);
+                                              ->GetTextureGLuint(mat.texture, texture);
         if (code != Error::ErrorCode::OK)
         {
             continue;
@@ -370,6 +400,25 @@ void ModelRenderer::Render()
         glDrawArrays(GL_LINES, 0, 24);
     }
 
+    if (showCollisionModel)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glUseProgram(linesProgram);
+        glUniformMatrix4fv(glGetUniformLocation(linesProgram, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(linesProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 1.0f, 0.5f, 0.5f, 1.0f);
+        for (const GLHull &hull: hulls)
+        {
+            glBindVertexArray(hull.vao);
+            glBindBuffer(GL_ARRAY_BUFFER, hull.vbo);
+            posAttrib = glGetAttribLocation(linesProgram, "VERTEX");
+            glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+            glEnableVertexAttribArray(posAttrib);
+            glPointSize(3.0);
+            glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(hull.elements));
+        }
+    }
+
     if (showBoundingBox)
     {
         glDisable(GL_CULL_FACE);
@@ -387,17 +436,11 @@ void ModelRenderer::Render()
         glUniformMatrix4fv(glGetUniformLocation(linesProgram, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(projection));
         glUniformMatrix4fv(glGetUniformLocation(linesProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
         glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 0.1f, 0.5f, 0.8f, 0.25f);
-        glDrawElements(GL_TRIANGLES,
-                       36,
-                       GL_UNSIGNED_INT,
-                       nullptr);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
         glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 0.1f, 0.5f, 0.8f, 1.0f);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDrawElements(GL_TRIANGLES,
-                       36,
-                       GL_UNSIGNED_INT,
-                       nullptr);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
     }
 }
 
@@ -453,4 +496,26 @@ void ModelRenderer::LoadCube()
     glGenBuffers(1, &cubeVbo);
     glBindBuffer(GL_ARRAY_BUFFER, cubeVbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * cubeVerts.size(), cubeVerts.data(), GL_STATIC_DRAW);
+}
+
+void ModelRenderer::LoadHulls()
+{
+    for (const GLHull &hull: hulls)
+    {
+        glDeleteBuffers(1, &hull.vbo);
+        glDeleteVertexArrays(1, &hull.vao);
+    }
+    hulls.clear();
+
+    for (size_t i = 0; i < model.GetNumHulls(); i++)
+    {
+        GLHull glHull;
+        glGenVertexArrays(1, &glHull.vao);
+        glGenBuffers(1, &glHull.vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, glHull.vbo);
+        std::vector<float> points = model.GetHull(i).GetPointsForRender();
+        glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * points.size(), points.data(), GL_STATIC_DRAW);
+        glHull.elements = points.size() / 3;
+        hulls.push_back(glHull);
+    }
 }

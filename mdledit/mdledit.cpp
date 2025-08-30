@@ -6,6 +6,7 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl3.h>
 #include <libassets/asset/ModelAsset.h>
+#include <libassets/util/ConvexHull.h>
 #include <libassets/util/Error.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
@@ -38,11 +39,11 @@ static bool savePressed = false;
 
 constexpr SDL_DialogFileFilter gmdlFilter = {"GAME model (*.gmdl)", "gmdl"};
 constexpr std::array modelFilters = {
-        SDL_DialogFileFilter{"3D Models (obj, fbx, gltf, dae)", "obj;fbx;gltf;dae"},
-        SDL_DialogFileFilter{"Wavefront OBJ Models", "obj"},
-        SDL_DialogFileFilter{"FBX Models", "fbx"},
-        SDL_DialogFileFilter{"glTF/glTF2.0 Models", "gltf"},
-        SDL_DialogFileFilter{"Collada Models", "dae"},
+    SDL_DialogFileFilter{"3D Models (obj, fbx, gltf, dae)", "obj;fbx;gltf;dae"},
+    SDL_DialogFileFilter{"Wavefront OBJ Models", "obj"},
+    SDL_DialogFileFilter{"FBX Models", "fbx"},
+    SDL_DialogFileFilter{"glTF/glTF2.0 Models", "gltf"},
+    SDL_DialogFileFilter{"Collada Models", "dae"},
 };
 
 
@@ -134,8 +135,8 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL)
         {
             const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(*path,
-                model,
-                Options::defaultTexture);
+                                                                                   model,
+                                                                                   Options::defaultTexture);
             if (errorCode != Error::ErrorCode::OK)
             {
                 if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
@@ -163,6 +164,11 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
                 delete path;
                 return;
             }
+        } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_HULL)
+        {
+            model = ModelRenderer::GetModel();
+            const ConvexHull hull = ConvexHull(*path);
+            model.AddHull(hull);
         }
         ModelRenderer::LoadModel(std::move(model));
         modelLoaded = true;
@@ -333,6 +339,10 @@ static void HandleMenuAndShortcuts()
             {
                 ModelRenderer::showBoundingBox = !ModelRenderer::showBoundingBox;
             }
+            if (ImGui::MenuItem("Show Collision Model", "", ModelRenderer::showCollisionModel))
+            {
+                ModelRenderer::showCollisionModel = !ModelRenderer::showCollisionModel;
+            }
             ImGui::EndMenu();
         }
         SharedMgr::SharedMenuUI("mdledit");
@@ -500,9 +510,9 @@ int main()
             ImGui::Begin("mdledit",
                          nullptr,
                          ImGuiWindowFlags_NoDecoration |
-                         ImGuiWindowFlags_NoMove |
-                         ImGuiWindowFlags_NoSavedSettings |
-                         ImGuiWindowFlags_NoBringToFrontOnFocus);
+                                 ImGuiWindowFlags_NoMove |
+                                 ImGuiWindowFlags_NoSavedSettings |
+                                 ImGuiWindowFlags_NoBringToFrontOnFocus);
 
             HandleMenuAndShortcuts();
 

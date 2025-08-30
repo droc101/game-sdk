@@ -9,7 +9,9 @@
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/util/Asset.h>
 #include <libassets/util/AssetReader.h>
+#include <libassets/util/BoundingBox.h>
 #include <libassets/util/Color.h>
+#include <libassets/util/ConvexHull.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Material.h>
@@ -17,7 +19,6 @@
 #include <libassets/util/ModelVertex.h>
 #include <string>
 #include <vector>
-#include <libassets/util/BoundingBox.h>
 
 Error::ErrorCode ModelAsset::CreateFromAsset(const std::string &assetPath, ModelAsset &modelAsset)
 {
@@ -67,6 +68,16 @@ Error::ErrorCode ModelAsset::CreateFromAsset(const std::string &assetPath, Model
 
     modelAsset.boundingBox = BoundingBox(asset.reader);
 
+    if (modelAsset.collisionModelType == CollisionModelType::DYNAMIC_MULTIPLE_CONVEX)
+    {
+        const size_t hullCount = asset.reader.Read<size_t>();
+        for (size_t i = 0; i < hullCount; i++)
+        {
+            const ConvexHull hull = ConvexHull(asset.reader);
+            modelAsset.convexHulls.push_back(hull);
+        }
+    }
+
     return Error::ErrorCode::OK;
 }
 
@@ -105,6 +116,15 @@ void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     }
 
     boundingBox.Write(writer);
+
+    if (collisionModelType == CollisionModelType::DYNAMIC_MULTIPLE_CONVEX)
+    {
+        writer.Write<size_t>(convexHulls.size());
+        for (const ConvexHull &hull: convexHulls)
+        {
+            hull.Write(writer);
+        }
+    }
 
     writer.CopyToVector(buffer);
 }
@@ -262,4 +282,29 @@ void ModelAsset::RemoveMaterial(const uint32_t index)
 BoundingBox &ModelAsset::GetBoundingBox()
 {
     return boundingBox;
+}
+
+ModelAsset::CollisionModelType &ModelAsset::GetCollisionModelType()
+{
+    return collisionModelType;
+}
+
+size_t ModelAsset::GetNumHulls() const
+{
+    return convexHulls.size();
+}
+
+ConvexHull &ModelAsset::GetHull(const size_t index)
+{
+    return convexHulls.at(index);
+}
+
+void ModelAsset::AddHull(const ConvexHull &hull)
+{
+    convexHulls.push_back(hull);
+}
+
+void ModelAsset::RemoveHull(const size_t index)
+{
+    convexHulls.erase(convexHulls.begin() + static_cast<int64_t>(index));
 }

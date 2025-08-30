@@ -45,6 +45,8 @@ add_library(assets STATIC include/libassets/libassets.h
         include/libassets/util/VectorMove.h
         src/util/BoundingBox.cpp
         include/libassets/util/BoundingBox.h
+        src/util/ConvexHull.cpp
+        include/libassets/util/ConvexHull.h
 )
 
 target_link_libraries(assets PRIVATE ZLIB::ZLIB assimp::assimp glslang::glslang Vulkan::Vulkan)

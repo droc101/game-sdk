@@ -18,5 +18,9 @@ class CollisionEditWindow
         static void Render(SDL_Window *window);
 
     private:
-        inline static bool visible = false;
+        static inline bool visible = false;
+
+        static void RenderCHullUI(SDL_Window *window);
+
+        static void addHullCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/);
 };

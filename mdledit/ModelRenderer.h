@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -44,6 +45,8 @@ class ModelRenderer
 
         static void ResizeWindow(GLsizei width, GLsizei height);
 
+        static void LoadHulls();
+
         static inline int lodIndex = 0;
         static inline int skinIndex = 0;
 
@@ -52,6 +55,7 @@ class ModelRenderer
         static inline bool showUnitCube = true;
         static inline bool wireframe = false;
         static inline bool showBoundingBox = false;
+        static inline bool showCollisionModel = false;
 
         static constexpr int PANEL_SIZE = 100;
 
@@ -59,15 +63,23 @@ class ModelRenderer
         static constexpr int32_t EVENT_RELOAD_MODEL_CODE_GMDL = 0;
         static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL = 1;
         static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_LOD = 2;
+        static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_HULL = 3;
 
         static inline uint32_t EVENT_SAVE_MODEL;
 
     private:
         struct GLModelLod
         {
-            GLuint vao{};
-            GLuint vbo{};
-            std::vector<GLuint> ebos{};
+                GLuint vao{};
+                GLuint vbo{};
+                std::vector<GLuint> ebos{};
+        };
+
+        struct GLHull
+        {
+                GLuint vao{};
+                GLuint vbo{};
+                size_t elements{};
         };
 
         static inline ModelAsset model{};
@@ -78,6 +90,8 @@ class ModelRenderer
         static inline GLuint bboxVao = 0;
         static inline GLuint bboxVbo = 0;
         static inline GLuint bboxEbo = 0;
+
+        static inline std::vector<GLHull> hulls{};
 
         static inline std::vector<GLModelLod> lods{};
 

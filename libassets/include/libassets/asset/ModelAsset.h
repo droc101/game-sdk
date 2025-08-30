@@ -5,13 +5,14 @@
 #pragma once
 
 #include <cstdint>
+#include <libassets/util/BoundingBox.h>
+#include <libassets/util/ConvexHull.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Material.h>
 #include <libassets/util/ModelLod.h>
 #include <string>
 #include <vector>
-#include <libassets/util/BoundingBox.h>
 
 class ModelAsset final
 {
@@ -20,7 +21,7 @@ class ModelAsset final
         {
             NONE,
             STATIC_SINGLE_CONCAVE, /// NOT YET IMPLEMENTED! DO NOT USE!
-            DYNAMIC_MULTIPLE_CONVEX /// NOT YET IMPLEMENTED! DO NOT USE!
+            DYNAMIC_MULTIPLE_CONVEX
         };
 
         /**
@@ -74,14 +75,26 @@ class ModelAsset final
 
         BoundingBox &GetBoundingBox();
 
+        CollisionModelType &GetCollisionModelType();
+
+        size_t GetNumHulls() const;
+
+        ConvexHull &GetHull(size_t index);
+
+        void AddHull(const ConvexHull &hull);
+
+        void RemoveHull(size_t index);
+
         static constexpr uint8_t MODEL_ASSET_VERSION = 1;
 
     private:
         std::vector<Material> materials{};
         std::vector<std::vector<uint32_t>> skins{};
         std::vector<ModelLod> lods{};
+
         CollisionModelType collisionModelType = CollisionModelType::NONE;
         BoundingBox boundingBox{};
+        std::vector<ConvexHull> convexHulls{};
 
         void SaveToBuffer(std::vector<uint8_t> &buffer) const;
 
