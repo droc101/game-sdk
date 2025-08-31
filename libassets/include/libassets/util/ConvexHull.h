@@ -20,8 +20,11 @@ class ConvexHull
 
         std::vector<std::array<float, 3>> &GetPoints();
 
-        std::vector<float> GetPointsForRender() const;
+        [[nodiscard]] std::vector<float> GetPointsForRender() const;
 
     private:
+        std::array<float, 3> offset{};
         std::vector<std::array<float, 3>> points{};
+
+        void CalculateOffset();
 };

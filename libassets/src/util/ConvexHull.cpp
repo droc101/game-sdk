@@ -18,10 +18,14 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include "libassets/util/BoundingBox.h"
 
 ConvexHull::ConvexHull(DataReader &reader)
 {
     const size_t numPoints = reader.Read<size_t>();
+    offset.at(0) = reader.Read<float>();
+    offset.at(1) = reader.Read<float>();
+    offset.at(2) = reader.Read<float>();
     for (size_t i = 0; i < numPoints; i++)
     {
         std::array<float, 3> point{};
@@ -64,12 +68,17 @@ ConvexHull::ConvexHull(const std::string &objPath)
             points.push_back(point);
         }
     }
+
+    CalculateOffset();
 }
 
 
 void ConvexHull::Write(DataWriter &writer) const
 {
     writer.Write<size_t>(points.size());
+    writer.Write<float>(offset.at(0));
+    writer.Write<float>(offset.at(1));
+    writer.Write<float>(offset.at(2));
     for (const std::array<float, 3> &point: points)
     {
         writer.WriteBuffer<float>(point);
@@ -86,9 +95,22 @@ std::vector<float> ConvexHull::GetPointsForRender() const
     std::vector<float> buffer{};
     for (const std::array<float, 3> &point: points)
     {
-        buffer.push_back(point.at(0));
-        buffer.push_back(point.at(1));
-        buffer.push_back(point.at(2));
+        buffer.push_back(point.at(0));// + offset.at(0));
+        buffer.push_back(point.at(1));// + offset.at(1));
+        buffer.push_back(point.at(2));// + offset.at(2));
     }
     return buffer;
 }
+
+void ConvexHull::CalculateOffset()
+{
+    const BoundingBox bb = BoundingBox(points);
+    offset = bb.origin;
+    // for (std::array<float, 3> &point: points)
+    // {
+    //     point.at(0) -= offset.at(0);
+    //     point.at(1) -= offset.at(1);
+    //     point.at(2) -= offset.at(2);
+    // }
+}
+

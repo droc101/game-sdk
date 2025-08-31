@@ -40,6 +40,12 @@ class BoundingBox
         explicit BoundingBox(const std::vector<ModelVertex> &verts);
 
         /**
+         * Create a bounding box of the given vertices
+         * @param verts The vertices to create a box for
+         */
+        explicit BoundingBox(const std::vector<std::array<float, 3>> &verts);
+
+        /**
          * Create a bounding box from a DataReader
          * @param reader The DataReader to read from
          */
