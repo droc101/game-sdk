@@ -16,6 +16,7 @@
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
+#include "DialogFilters.h"
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 
@@ -26,9 +27,6 @@ static bool soundLoaded = false;
 static SDL_Renderer *renderer{};
 static SDL_Window *window{};
 static ma_engine engine{};
-
-constexpr SDL_DialogFileFilter gsndFilter = {"GAME sound (*.gsnd)", "gsnd"};
-constexpr SDL_DialogFileFilter wavFilter = {"WAV audio", "wav"};
 
 static inline void destroyExistingSound()
 {
@@ -190,16 +188,16 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGsndCallback, nullptr, sdlWindow, &gsndFilter, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGsndCallback, nullptr, sdlWindow, DialogFilters::gsndFilters.data(), 1, nullptr, false);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, &wavFilter, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, DialogFilters::wavFilters.data(), 1, nullptr, false);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGsndCallback, nullptr, sdlWindow, &gsndFilter, 1, nullptr);
+        SDL_ShowSaveFileDialog(saveGsndCallback, nullptr, sdlWindow, DialogFilters::gsndFilters.data(), 1, nullptr);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, &wavFilter, 1, nullptr);
+        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, DialogFilters::wavFilters.data(), 1, nullptr);
     }
 
     if (soundLoaded)

@@ -11,6 +11,7 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_video.h>
 #include <string>
+#include "DialogFilters.h"
 #include "ModelRenderer.h"
 
 void CollisionEditWindow::Show()
@@ -72,9 +73,6 @@ void CollisionEditWindow::Render(SDL_Window *window)
         {
             RenderCHullUI(window);
         }
-
-        ImGui::PushItemWidth(-1);
-        ImGui::Dummy(ImVec2(0.0f, 16.0f));
         ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 60, 0));
         ImGui::SameLine();
         if (ImGui::Button("OK", ImVec2(60, 0)))
@@ -90,18 +88,23 @@ void CollisionEditWindow::RenderCHullUI(SDL_Window *window)
 {
     if (ImGui::Button("Import Hull"))
     {
-        constexpr std::array modelFilters = {
-            SDL_DialogFileFilter{"3D Models (obj, fbx, gltf, dae)", "obj;fbx;gltf;dae"},
-            SDL_DialogFileFilter{"Wavefront OBJ Models", "obj"},
-            SDL_DialogFileFilter{"FBX Models", "fbx"},
-            SDL_DialogFileFilter{"glTF/glTF2.0 Models", "gltf"},
-            SDL_DialogFileFilter{"Collada Models", "dae"},
-        };
-        SDL_ShowOpenFileDialog(addHullCallback,
+
+        SDL_ShowOpenFileDialog(AddSingleHullCallback,
                                nullptr,
                                window,
-                               modelFilters.data(),
-                               modelFilters.size(),
+                               DialogFilters::modelFilters.data(),
+                               DialogFilters::modelFilters.size(),
+                               nullptr,
+                               false);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Import Hulls"))
+    {
+        SDL_ShowOpenFileDialog(AddMultipleHullsCallback,
+                               nullptr,
+                               window,
+                               DialogFilters::modelFilters.data(),
+                               DialogFilters::modelFilters.size(),
                                nullptr,
                                false);
     }
@@ -125,7 +128,7 @@ void CollisionEditWindow::RenderCHullUI(SDL_Window *window)
     ImGui::EndChild();
 }
 
-void CollisionEditWindow::addHullCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+void CollisionEditWindow::AddSingleHullCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
@@ -134,6 +137,22 @@ void CollisionEditWindow::addHullCallback(void * /*userdata*/, const char *const
     SDL_Event event;
     event.type = ModelRenderer::EVENT_RELOAD_MODEL;
     event.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_HULL;
+    event.user.data1 = new std::string(fileList[0]);
+    if (!SDL_PushEvent(&event))
+    {
+        printf("Error: SDL_PushEvent(): %s\n", SDL_GetError());
+    }
+}
+
+void CollisionEditWindow::AddMultipleHullsCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+{
+    if (fileList == nullptr || fileList[0] == nullptr)
+    {
+        return;
+    }
+    SDL_Event event;
+    event.type = ModelRenderer::EVENT_RELOAD_MODEL;
+    event.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_HULL_MULTI;
     event.user.data1 = new std::string(fileList[0]);
     if (!SDL_PushEvent(&event))
     {

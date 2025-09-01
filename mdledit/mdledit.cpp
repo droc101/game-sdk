@@ -19,6 +19,7 @@
 #include <string>
 #include <utility>
 #include "CollisionEditWindow.h"
+#include "DialogFilters.h"
 #include "LodEditWindow.h"
 #include "MaterialEditWindow.h"
 #include "ModelRenderer.h"
@@ -36,16 +37,6 @@ static bool done = false;
 static bool openPressed = false;
 static bool newPressed = false;
 static bool savePressed = false;
-
-constexpr SDL_DialogFileFilter gmdlFilter = {"GAME model (*.gmdl)", "gmdl"};
-constexpr std::array modelFilters = {
-    SDL_DialogFileFilter{"3D Models (obj, fbx, gltf, dae)", "obj;fbx;gltf;dae"},
-    SDL_DialogFileFilter{"Wavefront OBJ Models", "obj"},
-    SDL_DialogFileFilter{"FBX Models", "fbx"},
-    SDL_DialogFileFilter{"glTF/glTF2.0 Models", "gltf"},
-    SDL_DialogFileFilter{"Collada Models", "dae"},
-};
-
 
 static inline void destroyExistingModel()
 {
@@ -169,6 +160,10 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
             model = ModelRenderer::GetModel();
             const ConvexHull hull = ConvexHull(*path);
             model.AddHull(hull);
+        } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_HULL_MULTI)
+        {
+            model = ModelRenderer::GetModel();
+            model.AddHulls(*path);
         }
         ModelRenderer::LoadModel(std::move(model));
         modelLoaded = true;
@@ -351,14 +346,14 @@ static void HandleMenuAndShortcuts()
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGmdlCallback, nullptr, window, &gmdlFilter, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGmdlCallback, nullptr, window, DialogFilters::gmdlFilters.data(), 1, nullptr, false);
     } else if (newPressed)
     {
         SDL_ShowOpenFileDialog(importCallback,
                                nullptr,
                                window,
-                               modelFilters.data(),
-                               modelFilters.size(),
+                               DialogFilters::modelFilters.data(),
+                               DialogFilters::modelFilters.size(),
                                nullptr,
                                false);
     } else if (savePressed)
@@ -376,7 +371,7 @@ static void HandleMenuAndShortcuts()
             }
         } else
         {
-            SDL_ShowSaveFileDialog(saveGmdlCallback, nullptr, window, &gmdlFilter, 1, nullptr);
+            SDL_ShowSaveFileDialog(saveGmdlCallback, nullptr, window, DialogFilters::gmdlFilters.data(), 1, nullptr);
         }
     }
 }

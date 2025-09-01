@@ -72,6 +72,20 @@ ConvexHull::ConvexHull(const std::string &objPath)
     CalculateOffset();
 }
 
+ConvexHull::ConvexHull(const aiMesh *mesh)
+{
+    for (size_t v = 0; v < mesh->mNumVertices; v++)
+    {
+        const aiVector3d vert = mesh->mVertices[v];
+        const std::array<float, 3> point = {static_cast<float>(vert.x),
+                                            static_cast<float>(vert.y),
+                                            static_cast<float>(vert.z)};
+        points.push_back(point);
+    }
+    CalculateOffset();
+}
+
+
 
 void ConvexHull::Write(DataWriter &writer) const
 {
@@ -95,9 +109,9 @@ std::vector<float> ConvexHull::GetPointsForRender() const
     std::vector<float> buffer{};
     for (const std::array<float, 3> &point: points)
     {
-        buffer.push_back(point.at(0));// + offset.at(0));
-        buffer.push_back(point.at(1));// + offset.at(1));
-        buffer.push_back(point.at(2));// + offset.at(2));
+        buffer.push_back(point.at(0));
+        buffer.push_back(point.at(1));
+        buffer.push_back(point.at(2));
     }
     return buffer;
 }
@@ -106,11 +120,31 @@ void ConvexHull::CalculateOffset()
 {
     const BoundingBox bb = BoundingBox(points);
     offset = bb.origin;
-    // for (std::array<float, 3> &point: points)
-    // {
-    //     point.at(0) -= offset.at(0);
-    //     point.at(1) -= offset.at(1);
-    //     point.at(2) -= offset.at(2);
-    // }
 }
+
+void ConvexHull::ImportMultiple(const std::string &path, std::vector<ConvexHull> &output)
+{
+    Assimp::Importer importer;
+    importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, // NOLINT(*-unused-return-value)
+                                aiComponent_NORMALS |
+                                        aiComponent_COLORS |
+                                        aiComponent_TEXCOORDS);
+    const aiScene *scene = importer.ReadFile(path,
+                                             aiProcess_JoinIdenticalVertices |
+                                                     aiProcess_ValidateDataStructure |
+                                                     aiProcess_DropNormals |
+                                                     aiProcess_RemoveComponent);
+
+    if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
+    {
+        printf("Assimp error: %s\n", importer.GetErrorString());
+        throw std::runtime_error("assimp error, check stdout");
+    }
+
+    for (uint32_t i = 0; i < scene->mNumMeshes; i++)
+    {
+        output.emplace_back(scene->mMeshes[i]);
+    }
+}
+
 

@@ -17,6 +17,7 @@
 #include <SDL3/SDL_surface.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
+#include "DialogFilters.h"
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 
@@ -28,14 +29,7 @@ static SDL_Texture *sdlTexture = nullptr;
 static SDL_Surface *sdlSurface = nullptr;
 static float zoom = 1.0f;
 
-constexpr SDL_DialogFileFilter gtexFilter = {"GAME texture (*.gtex)", "gtex"};
-constexpr SDL_DialogFileFilter pngFilter = {"PNG Image", "png"};
-constexpr std::array imageFilters = {
-    SDL_DialogFileFilter{"Images", "png;jpg;jpeg;tga"},
-    SDL_DialogFileFilter{"PNG Images", "png"},
-    SDL_DialogFileFilter{"JPG Images", "jpg;jepg"},
-    SDL_DialogFileFilter{"TGA Images", "tga"},
-};
+
 
 static inline void destroyExistingTexture()
 {
@@ -217,16 +211,16 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGtexCallback, nullptr, sdlWindow, &gtexFilter, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGtexCallback, nullptr, sdlWindow, DialogFilters::gtexFilters.data(), 1, nullptr, false);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, imageFilters.data(), 4, nullptr, false);
+        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, DialogFilters::imageFilters.data(), 4, nullptr, false);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGtexCallback, nullptr, sdlWindow, &gtexFilter, 1, nullptr);
+        SDL_ShowSaveFileDialog(saveGtexCallback, nullptr, sdlWindow, DialogFilters::gtexFilters.data(), 1, nullptr);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, &pngFilter, 1, nullptr);
+        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, DialogFilters::pngFilters.data(), 1, nullptr);
     } else if (zoomInPressed)
     {
         zoom += 0.1;

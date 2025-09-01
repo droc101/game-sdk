@@ -24,6 +24,7 @@
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <vector>
+#include "DialogFilters.h"
 #include "libassets/util/VectorMove.h"
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
@@ -34,8 +35,6 @@ static bool fontLoaded = false;
 static SDL_Renderer *renderer = nullptr;
 static SDL_Window *window = nullptr;
 static std::vector<std::string> charDisplayList{};
-
-constexpr SDL_DialogFileFilter gfonFilter = {"GAME font (*.gfon)", "gfon"};
 
 static void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
@@ -120,10 +119,10 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGfonCallback, nullptr, sdlWindow, &gfonFilter, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGfonCallback, nullptr, sdlWindow, DialogFilters::gfonFilters.data(), 1, nullptr, false);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGfonCallback, nullptr, sdlWindow, &gfonFilter, 1, nullptr);
+        SDL_ShowSaveFileDialog(saveGfonCallback, nullptr, sdlWindow, DialogFilters::gfonFilters.data(), 1, nullptr);
     } else if (newPressed)
     {
         font = FontAsset();

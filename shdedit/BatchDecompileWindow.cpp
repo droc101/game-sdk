@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <string>
 #include <SDL3/SDL_messagebox.h>
+#include "DialogFilters.h"
 
 void BatchDecompileWindow::Show()
 {
@@ -100,11 +101,10 @@ void BatchDecompileWindow::Render(SDL_Window *window)
             ImGui::SameLine();
             if (ImGui::Button("Add", ImVec2(60, 0)))
             {
-                constexpr SDL_DialogFileFilter gshdFilter = {"GAME shader (*.gshd)", "gshd"};
                 SDL_ShowOpenFileDialog(selectCallback,
                                        nullptr,
                                        window,
-                                       &gshdFilter,
+                                       DialogFilters::gshdFilters.data(),
                                        1,
                                        nullptr,
                                        true);

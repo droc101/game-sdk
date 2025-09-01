@@ -13,6 +13,7 @@
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
+#include "DialogFilters.h"
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 
@@ -20,9 +21,6 @@ static LevelAsset level{};
 static bool levelLoaded = false;
 static SDL_Renderer *renderer = nullptr;
 static SDL_Window *window = nullptr;
-
-constexpr SDL_DialogFileFilter gmapFilter = {"Compiled GAME map (*.gmap)", "gmap"};
-constexpr SDL_DialogFileFilter binFilter = {"Raw GAME map (*.bin)", "bin"};
 
 static void destroyExistingLevel()
 {
@@ -149,16 +147,16 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGmapCallback, nullptr, sdlWindow, &gmapFilter, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGmapCallback, nullptr, sdlWindow, DialogFilters::gmapFilters.data(), 1, nullptr, false);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, &binFilter, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, DialogFilters::binFilters.data(), 1, nullptr, false);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGmapCallback, nullptr, sdlWindow, &gmapFilter, 1, nullptr);
+        SDL_ShowSaveFileDialog(saveGmapCallback, nullptr, sdlWindow, DialogFilters::gmapFilters.data(), 1, nullptr);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, &binFilter, 1, nullptr);
+        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, DialogFilters::binFilters.data(), 1, nullptr);
     }
 
     if (levelLoaded)

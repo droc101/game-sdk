@@ -133,7 +133,8 @@ target_sources(imgui_opengl3 INTERFACE
         lib/imgui/backends/imgui_impl_opengl3_loader.h
 )
 
-add_library(shared INTERFACE)
+add_library(shared INTERFACE
+        shared/DialogFilters.h)
 target_sources(shared INTERFACE
         shared/Options.cpp
         shared/Options.h

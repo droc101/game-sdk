@@ -21,6 +21,7 @@
 #include "BatchCompileWindow.h"
 #include "BatchDecompileWindow.h"
 #include <libassets/asset/ShaderAsset.h>
+#include "DialogFilters.h"
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 
@@ -28,14 +29,6 @@ static ShaderAsset shader{};
 static bool shaderLoaded = false;
 static SDL_Renderer *renderer = nullptr;
 static SDL_Window *window = nullptr;
-
-constexpr SDL_DialogFileFilter gshdFilter = {"GAME shader (*.gshd)", "gshd"};
-constexpr std::array glslFilters = {
-    SDL_DialogFileFilter{"GLSL source files (*.glsl, *.vert, *.frag)", "glsl;vert;frag"},
-    SDL_DialogFileFilter{"GLSL source (*.glsl)", "glsl"},
-    SDL_DialogFileFilter{"GLSL fragment (*.frag)", "frag"},
-    SDL_DialogFileFilter{"GLSL vertex (*.vert)", "vert"},
-};
 
 static void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
@@ -161,16 +154,16 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGfonCallback, nullptr, sdlWindow, &gshdFilter, 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGfonCallback, nullptr, sdlWindow, DialogFilters::gshdFilters.data(), 1, nullptr, false);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, glslFilters.data(), 4, nullptr, false);
+        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, DialogFilters::glslFilters.data(), 4, nullptr, false);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGfonCallback, nullptr, sdlWindow, &gshdFilter, 1, nullptr);
+        SDL_ShowSaveFileDialog(saveGfonCallback, nullptr, sdlWindow, DialogFilters::gshdFilters.data(), 1, nullptr);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, glslFilters.data(), 4, nullptr);
+        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, DialogFilters::glslFilters.data(), 4, nullptr);
     } else if (newPressed)
     {
         shader = ShaderAsset();

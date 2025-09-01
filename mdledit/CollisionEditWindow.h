@@ -22,5 +22,7 @@ class CollisionEditWindow
 
         static void RenderCHullUI(SDL_Window *window);
 
-        static void addHullCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/);
+        static void AddSingleHullCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/);
+
+        static void AddMultipleHullsCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/);
 };

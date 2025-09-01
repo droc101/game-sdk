@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <string>
 #include <SDL3/SDL_messagebox.h>
+#include "DialogFilters.h"
 
 void BatchCompileWindow::Show()
 {
@@ -130,17 +131,11 @@ void BatchCompileWindow::Render(SDL_Window *window)
             ImGui::SameLine();
             if (ImGui::Button("Add", ImVec2(60, 0)))
             {
-                constexpr std::array glslFilters = {
-                        SDL_DialogFileFilter{"GLSL source files (*.glsl, *.vert, *.frag)", "glsl;vert;frag"},
-                        SDL_DialogFileFilter{"GLSL source (*.glsl)", "glsl"},
-                        SDL_DialogFileFilter{"GLSL fragment (*.frag)", "frag"},
-                        SDL_DialogFileFilter{"GLSL vertex (*.vert)", "vert"},
-                };
                 SDL_ShowOpenFileDialog(selectCallback,
                                        nullptr,
                                        window,
-                                       glslFilters.data(),
-                                       glslFilters.size(),
+                                       DialogFilters::glslFilters.data(),
+                                       DialogFilters::glslFilters.size(),
                                        nullptr,
                                        true);
             }

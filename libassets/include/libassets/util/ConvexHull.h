@@ -9,18 +9,22 @@
 #include <libassets/util/DataWriter.h>
 #include <string>
 #include <vector>
+#include <assimp/mesh.h>
 
 class ConvexHull
 {
     public:
         explicit ConvexHull(const std::string &objPath);
         explicit ConvexHull(DataReader &reader);
+        explicit ConvexHull(const aiMesh *mesh);
 
         void Write(DataWriter &writer) const;
 
         std::vector<std::array<float, 3>> &GetPoints();
 
         [[nodiscard]] std::vector<float> GetPointsForRender() const;
+
+        static void ImportMultiple(const std::string &path, std::vector<ConvexHull> &output);
 
     private:
         std::array<float, 3> offset{};

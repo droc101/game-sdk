@@ -17,6 +17,7 @@
 #include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
 #include <string>
+#include "DialogFilters.h"
 #include "ModelRenderer.h"
 
 void LodEditWindow::Show()
@@ -59,8 +60,7 @@ void LodEditWindow::Render(SDL_Window *window)
             const float buttonWidth = space.x / 2.0f;
             if (ImGui::Button(std::format("Export##{}", lodIndex).c_str(), ImVec2(buttonWidth, 0)))
             {
-                constexpr SDL_DialogFileFilter objFilter = {"Wavefront OBJ Model", "obj"};
-                SDL_ShowSaveFileDialog(saveLodCallback, &lod, window, &objFilter, 1, nullptr);
+                SDL_ShowSaveFileDialog(saveLodCallback, &lod, window, DialogFilters::objFilters.data(), 1, nullptr);
             }
             if (ModelRenderer::GetModel().GetLodCount() != 1)
             {
@@ -76,18 +76,11 @@ void LodEditWindow::Render(SDL_Window *window)
         ImGui::Dummy(ImVec2(0.0f, 16.0f));
         if (ImGui::Button("Add", ImVec2(60, 0)))
         {
-            constexpr std::array modelFilters = {
-                SDL_DialogFileFilter{"3D Models (obj, fbx, gltf, dae)", "obj;fbx;gltf;dae"},
-                SDL_DialogFileFilter{"Wavefront OBJ Models", "obj"},
-                SDL_DialogFileFilter{"FBX Models", "fbx"},
-                SDL_DialogFileFilter{"glTF/glTF2.0 Models", "gltf"},
-                SDL_DialogFileFilter{"Collada Models", "dae"},
-            };
             SDL_ShowOpenFileDialog(addLodCallback,
                                    nullptr,
                                    window,
-                                   modelFilters.data(),
-                                   modelFilters.size(),
+                                   DialogFilters::modelFilters.data(),
+                                   DialogFilters::modelFilters.size(),
                                    nullptr,
                                    false);
         }

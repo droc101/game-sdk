@@ -64,6 +64,7 @@ class ModelRenderer
         static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL = 1;
         static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_LOD = 2;
         static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_HULL = 3;
+        static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_HULL_MULTI = 4;
 
         static inline uint32_t EVENT_SAVE_MODEL;
 

@@ -304,6 +304,12 @@ void ModelAsset::AddHull(const ConvexHull &hull)
     convexHulls.push_back(hull);
 }
 
+void ModelAsset::AddHulls(const std::string &path)
+{
+    ConvexHull::ImportMultiple(path, convexHulls);
+}
+
+
 void ModelAsset::RemoveHull(const size_t index)
 {
     convexHulls.erase(convexHulls.begin() + static_cast<int64_t>(index));
