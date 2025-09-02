@@ -47,6 +47,8 @@ class ModelRenderer
 
         static void LoadHulls();
 
+        static void LoadStaticCollision();
+
         static inline int lodIndex = 0;
         static inline int skinIndex = 0;
 
@@ -65,22 +67,23 @@ class ModelRenderer
         static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_LOD = 2;
         static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_HULL = 3;
         static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_HULL_MULTI = 4;
+        static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_STATIC_COLLIDER = 5;
 
         static inline uint32_t EVENT_SAVE_MODEL;
 
     private:
         struct GLModelLod
         {
-                GLuint vao{};
-                GLuint vbo{};
-                std::vector<GLuint> ebos{};
+            GLuint vao{};
+            GLuint vbo{};
+            std::vector<GLuint> ebos{};
         };
 
         struct GLHull
         {
-                GLuint vao{};
-                GLuint vbo{};
-                size_t elements{};
+            GLuint vao{};
+            GLuint vbo{};
+            size_t elements{};
         };
 
         static inline ModelAsset model{};
@@ -91,6 +94,9 @@ class ModelRenderer
         static inline GLuint bboxVao = 0;
         static inline GLuint bboxVbo = 0;
         static inline GLuint bboxEbo = 0;
+
+        static inline GLuint staticCollisionVao = 0;
+        static inline GLuint staticCollisionVbo = 0;
 
         static inline std::vector<GLHull> hulls{};
 

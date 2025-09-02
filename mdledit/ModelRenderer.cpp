@@ -133,6 +133,11 @@ bool ModelRenderer::Init()
 
     LoadBBox();
 
+    glGenVertexArrays(1, &staticCollisionVao);
+    glBindVertexArray(staticCollisionVao);
+
+    glGenBuffers(1, &staticCollisionVbo);
+
     UpdateView(0, 0, 1);
 
     const char *renderer = reinterpret_cast<const char *>(glGetString(GL_RENDERER));
@@ -151,48 +156,8 @@ void ModelRenderer::LoadBBox()
     glGenBuffers(1, &bboxVbo);
     glGenBuffers(1, &bboxEbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bboxEbo);
-    const std::array<GLuint, 36> indices = {// x- face
-                                            0,
-                                            1,
-                                            3,
-                                            0,
-                                            3,
-                                            2,
-                                            // x+ face
-                                            4,
-                                            7,
-                                            5,
-                                            4,
-                                            6,
-                                            7,
-                                            // y- face (bottom)
-                                            0,
-                                            5,
-                                            1,
-                                            0,
-                                            4,
-                                            5,
-                                            // y+ face (top)
-                                            2,
-                                            3,
-                                            7,
-                                            2,
-                                            7,
-                                            6,
-                                            // z- face (back)
-                                            0,
-                                            2,
-                                            6,
-                                            0,
-                                            6,
-                                            4,
-                                            // z+ face (front)
-                                            1,
-                                            7,
-                                            3,
-                                            1,
-                                            5,
-                                            7};
+    const std::array<GLuint, 36> indices = {0, 1, 3, 0, 3, 2, 4, 7, 5, 4, 6, 7, 0, 5, 1, 0, 4, 5, 2, 3, 7, 2, 7, 6, 0,
+                                            2, 6, 0, 6, 4, 1, 7, 3, 1, 5, 7};
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices.size(), indices.data(), GL_STATIC_DRAW);
 }
 
@@ -296,6 +261,7 @@ void ModelRenderer::LoadModel(ModelAsset &&newModel)
     }
 
     LoadHulls();
+    LoadStaticCollision();
 
     UpdateView(0, 0, 1);
 }
@@ -369,7 +335,7 @@ void ModelRenderer::Render()
 
         GLuint texture = 0;
         const Error::ErrorCode code = dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache.get())
-                                              ->GetTextureGLuint(mat.texture, texture);
+                ->GetTextureGLuint(mat.texture, texture);
         if (code != Error::ErrorCode::OK)
         {
             continue;
@@ -402,20 +368,48 @@ void ModelRenderer::Render()
 
     if (showCollisionModel)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glUseProgram(linesProgram);
-        glUniformMatrix4fv(glGetUniformLocation(linesProgram, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(glGetUniformLocation(linesProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 1.0f, 0.5f, 0.5f, 1.0f);
-        for (const GLHull &hull: hulls)
+        if (model.GetCollisionModelType() == ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX)
         {
-            glBindVertexArray(hull.vao);
-            glBindBuffer(GL_ARRAY_BUFFER, hull.vbo);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glUseProgram(linesProgram);
+            glUniformMatrix4fv(glGetUniformLocation(linesProgram, "PROJECTION"),
+                               1,
+                               GL_FALSE,
+                               glm::value_ptr(projection));
+            glUniformMatrix4fv(glGetUniformLocation(linesProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
+            glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 1.0f, 0.5f, 0.5f, 1.0f);
+            for (const GLHull &hull: hulls)
+            {
+                glBindVertexArray(hull.vao);
+                glBindBuffer(GL_ARRAY_BUFFER, hull.vbo);
+                posAttrib = glGetAttribLocation(linesProgram, "VERTEX");
+                glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+                glEnableVertexAttribArray(posAttrib);
+                glPointSize(3.0);
+                glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(hull.elements));
+            }
+        } else
+        {
+            glDisable(GL_CULL_FACE);
+            glBindBuffer(GL_ARRAY_BUFFER, staticCollisionVbo);
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glUseProgram(linesProgram);
+            glBindVertexArray(staticCollisionVao);
             posAttrib = glGetAttribLocation(linesProgram, "VERTEX");
             glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
             glEnableVertexAttribArray(posAttrib);
-            glPointSize(3.0);
-            glDrawArrays(GL_POINTS, 0, static_cast<GLsizei>(hull.elements));
+            glUniformMatrix4fv(glGetUniformLocation(linesProgram, "PROJECTION"),
+                               1,
+                               GL_FALSE,
+                               glm::value_ptr(projection));
+            glUniformMatrix4fv(glGetUniformLocation(linesProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
+            glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 1.0f, 0.5f, 0.5f, 0.25f);
+            glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(model.GetStaticCollisionMesh().GetNumTriangles()) * 3);
+
+            glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 1.0f, 0.5f, 0.5f, 1.0f);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(model.GetStaticCollisionMesh().GetNumTriangles()) * 3);
         }
     }
 
@@ -514,8 +508,16 @@ void ModelRenderer::LoadHulls()
         glGenBuffers(1, &glHull.vbo);
         glBindBuffer(GL_ARRAY_BUFFER, glHull.vbo);
         std::vector<float> points = model.GetHull(i).GetPointsForRender();
-        glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * points.size(), points.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(GLfloat) * points.size()), points.data(), GL_STATIC_DRAW);
         glHull.elements = points.size() / 3;
         hulls.push_back(glHull);
     }
+}
+
+void ModelRenderer::LoadStaticCollision()
+{
+    glBindVertexArray(staticCollisionVao);
+    glBindBuffer(GL_ARRAY_BUFFER, staticCollisionVbo);
+    std::vector<float> verts = model.GetStaticCollisionMesh().GetVerticesForRender();
+    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(GLfloat) * verts.size()), verts.data(), GL_STATIC_DRAW);
 }

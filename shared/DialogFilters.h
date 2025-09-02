@@ -9,6 +9,8 @@
 class DialogFilters
 {
     public:
+        DialogFilters() = delete;
+
         // fonedit
         static constexpr std::array<SDL_DialogFileFilter, 1> gfonFilters = {
             SDL_DialogFileFilter{"GAME font (*.gfon)", "gfon"}

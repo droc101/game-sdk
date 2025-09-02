@@ -44,34 +44,37 @@ void CollisionEditWindow::Render(SDL_Window *window)
         {
             model.GetCollisionModelType() = ModelAsset::CollisionModelType::NONE;
         }
-        // ImGui::SameLine();
-        // if (ImGui::RadioButton("Static",
-        //                        model.GetCollisionModelType() == ModelAsset::CollisionModelType::STATIC_SINGLE_CONCAVE))
-        // {
-        //     model.GetCollisionModelType() = ModelAsset::CollisionModelType::STATIC_SINGLE_CONCAVE;
-        // }
-        // if (ImGui::IsItemHovered())
-        // {
-        //     ImGui::SetTooltip("Static collision models are a single arbitrary mesh that is allowed to be "
-        //                       "concave.\nThis model type can not be used on moving actors.");
-        // }
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Static",
+                               model.GetCollisionModelType() == ModelAsset::CollisionModelType::STATIC_SINGLE_CONCAVE))
+        {
+            model.GetCollisionModelType() = ModelAsset::CollisionModelType::STATIC_SINGLE_CONCAVE;
+        }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::SetTooltip("Static collision models are a single arbitrary mesh that is allowed to be "
+                    "concave.\nThis model type can not be used on moving actors.");
+        }
         ImGui::SameLine();
         if (ImGui::RadioButton("Dynamic",
                                model.GetCollisionModelType() ==
-                                       ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX))
+                               ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX))
         {
             model.GetCollisionModelType() = ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX;
         }
         if (ImGui::IsItemHovered())
         {
             ImGui::SetTooltip("Dynamic collision models are a collection of convex hulls.\nConcave shapes can only be "
-                              "created using multiple hulls.\nIt is up to you to ensure the imported hulls are "
-                              "actually convex.");
+                    "created using multiple hulls.\nIt is up to you to ensure the imported hulls are "
+                    "actually convex.");
         }
 
         if (model.GetCollisionModelType() == ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX)
         {
             RenderCHullUI(window);
+        } else if (model.GetCollisionModelType() == ModelAsset::CollisionModelType::STATIC_SINGLE_CONCAVE)
+        {
+            RenderStaticMeshUI(window);
         }
         ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 60, 0));
         ImGui::SameLine();
@@ -83,6 +86,24 @@ void CollisionEditWindow::Render(SDL_Window *window)
         ImGui::End();
     }
 }
+
+void CollisionEditWindow::RenderStaticMeshUI(SDL_Window *window)
+{
+    ModelAsset &model = ModelRenderer::GetModel();
+    if (ImGui::Button("Import Collision Mesh"))
+    {
+
+        SDL_ShowOpenFileDialog(ImportStaticMeshCallback,
+                               nullptr,
+                               window,
+                               DialogFilters::modelFilters.data(),
+                               DialogFilters::modelFilters.size(),
+                               nullptr,
+                               false);
+    }
+    ImGui::Text("%zu triangles", model.GetStaticCollisionMesh().GetNumTriangles());
+}
+
 
 void CollisionEditWindow::RenderCHullUI(SDL_Window *window)
 {
@@ -126,6 +147,22 @@ void CollisionEditWindow::RenderCHullUI(SDL_Window *window)
         }
     }
     ImGui::EndChild();
+}
+
+void CollisionEditWindow::ImportStaticMeshCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+{
+    if (fileList == nullptr || fileList[0] == nullptr)
+    {
+        return;
+    }
+    SDL_Event event;
+    event.type = ModelRenderer::EVENT_RELOAD_MODEL;
+    event.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_STATIC_COLLIDER;
+    event.user.data1 = new std::string(fileList[0]);
+    if (!SDL_PushEvent(&event))
+    {
+        printf("Error: SDL_PushEvent(): %s\n", SDL_GetError());
+    }
 }
 
 void CollisionEditWindow::AddSingleHullCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)

@@ -76,6 +76,9 @@ Error::ErrorCode ModelAsset::CreateFromAsset(const std::string &assetPath, Model
             const ConvexHull hull = ConvexHull(asset.reader);
             modelAsset.convexHulls.push_back(hull);
         }
+    } else if (modelAsset.collisionModelType == CollisionModelType::STATIC_SINGLE_CONCAVE)
+    {
+        modelAsset.staticCollisionMesh = StaticCollisionMesh(asset.reader);
     }
 
     return Error::ErrorCode::OK;
@@ -124,6 +127,9 @@ void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
         {
             hull.Write(writer);
         }
+    } else if (collisionModelType == CollisionModelType::STATIC_SINGLE_CONCAVE)
+    {
+        staticCollisionMesh.Write(writer);
     }
 
     writer.CopyToVector(buffer);
@@ -309,8 +315,17 @@ void ModelAsset::AddHulls(const std::string &path)
     ConvexHull::ImportMultiple(path, convexHulls);
 }
 
-
 void ModelAsset::RemoveHull(const size_t index)
 {
     convexHulls.erase(convexHulls.begin() + static_cast<int64_t>(index));
+}
+
+StaticCollisionMesh &ModelAsset::GetStaticCollisionMesh()
+{
+    return staticCollisionMesh;
+}
+
+void ModelAsset::SetStaticCollisionMesh(const StaticCollisionMesh &mesh)
+{
+    staticCollisionMesh = mesh;
 }

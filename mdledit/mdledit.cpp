@@ -126,8 +126,8 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL)
         {
             const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(*path,
-                                                                                   model,
-                                                                                   Options::defaultTexture);
+                model,
+                Options::defaultTexture);
             if (errorCode != Error::ErrorCode::OK)
             {
                 if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
@@ -164,6 +164,10 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
         {
             model = ModelRenderer::GetModel();
             model.AddHulls(*path);
+        } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_STATIC_COLLIDER)
+        {
+            model = ModelRenderer::GetModel();
+            model.SetStaticCollisionMesh(StaticCollisionMesh(*path));
         }
         ModelRenderer::LoadModel(std::move(model));
         modelLoaded = true;
@@ -505,9 +509,9 @@ int main()
             ImGui::Begin("mdledit",
                          nullptr,
                          ImGuiWindowFlags_NoDecoration |
-                                 ImGuiWindowFlags_NoMove |
-                                 ImGuiWindowFlags_NoSavedSettings |
-                                 ImGuiWindowFlags_NoBringToFrontOnFocus);
+                         ImGuiWindowFlags_NoMove |
+                         ImGuiWindowFlags_NoSavedSettings |
+                         ImGuiWindowFlags_NoBringToFrontOnFocus);
 
             HandleMenuAndShortcuts();
 

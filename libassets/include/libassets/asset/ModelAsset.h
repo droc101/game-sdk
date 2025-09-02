@@ -13,6 +13,7 @@
 #include <libassets/util/ModelLod.h>
 #include <string>
 #include <vector>
+#include "libassets/util/StaticCollisionMesh.h"
 
 class ModelAsset final
 {
@@ -20,7 +21,7 @@ class ModelAsset final
         enum class CollisionModelType : uint8_t
         {
             NONE,
-            STATIC_SINGLE_CONCAVE, /// NOT YET IMPLEMENTED! DO NOT USE!
+            STATIC_SINGLE_CONCAVE,
             DYNAMIC_MULTIPLE_CONVEX
         };
 
@@ -77,7 +78,7 @@ class ModelAsset final
 
         CollisionModelType &GetCollisionModelType();
 
-        size_t GetNumHulls() const;
+        [[nodiscard]] size_t GetNumHulls() const;
 
         ConvexHull &GetHull(size_t index);
 
@@ -86,6 +87,10 @@ class ModelAsset final
         void AddHulls(const std::string &path);
 
         void RemoveHull(size_t index);
+
+        StaticCollisionMesh &GetStaticCollisionMesh();
+
+        void SetStaticCollisionMesh(const StaticCollisionMesh &mesh);
 
         static constexpr uint8_t MODEL_ASSET_VERSION = 1;
 
@@ -97,6 +102,7 @@ class ModelAsset final
         CollisionModelType collisionModelType = CollisionModelType::NONE;
         BoundingBox boundingBox{};
         std::vector<ConvexHull> convexHulls{};
+        StaticCollisionMesh staticCollisionMesh{};
 
         void SaveToBuffer(std::vector<uint8_t> &buffer) const;
 
