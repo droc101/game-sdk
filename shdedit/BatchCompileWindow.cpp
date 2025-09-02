@@ -71,22 +71,33 @@ Error::ErrorCode BatchCompileWindow::Execute()
         return Error::ErrorCode::INVALID_DIRECTORY;
     }
 
-    const ShaderAsset::ShaderPlatform plat = targetOpenGL ? ShaderAsset::ShaderPlatform::PLATFORM_OPENGL : ShaderAsset::ShaderPlatform::PLATFORM_VULKAN;
+    const ShaderAsset::ShaderPlatform plat = targetOpenGL
+                                                 ? ShaderAsset::ShaderPlatform::PLATFORM_OPENGL
+                                                 : ShaderAsset::ShaderPlatform::PLATFORM_VULKAN;
 
     for (size_t i = 0; i < files.size(); i++)
     {
-        const std::string& file = files.at(i);
+        const std::string &file = files.at(i);
         const std::filesystem::path path = std::filesystem::path(file);
         const ShaderAsset::ShaderType type = types.at(i);
         ShaderAsset shd;
         Error::ErrorCode e = ShaderAsset::CreateFromGlsl(file.c_str(), shd);
-        if (e != Error::ErrorCode::OK) { return e; }
+        if (e != Error::ErrorCode::OK)
+        {
+            return e;
+        }
         shd.platform = plat;
         shd.type = type;
         std::string suffix = type == ShaderAsset::ShaderType::SHADER_TYPE_FRAG ? "_f" : "_v";
-        if (path.stem().string().ends_with("_f") || path.stem().string().ends_with("_v")) {suffix = "";}
+        if (path.stem().string().ends_with("_f") || path.stem().string().ends_with("_v"))
+        {
+            suffix = "";
+        }
         e = shd.SaveAsAsset((outputFolder + "/" + path.stem().string() + suffix + ".gshd").c_str());
-        if (e != Error::ErrorCode::OK) { return e; }
+        if (e != Error::ErrorCode::OK)
+        {
+            return e;
+        }
     }
 
     return Error::ErrorCode::OK;
@@ -186,7 +197,7 @@ void BatchCompileWindow::Render(SDL_Window *window)
 
             const float sizeX = ImGui::GetContentRegionAvail().x;
 
-            ImGui::Dummy(ImVec2(sizeX - 120 - ImGui::GetStyle().WindowPadding.x*2, 0));
+            ImGui::Dummy(ImVec2(sizeX - 120 - ImGui::GetStyle().WindowPadding.x * 2, 0));
             ImGui::SameLine();
             if (ImGui::Button("OK", ImVec2(60, 0)))
             {
@@ -197,9 +208,9 @@ void BatchCompileWindow::Render(SDL_Window *window)
                 } else
                 {
                     if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to compile shaders!\n{}", e).c_str(),
-                                      window))
+                                                  "Error",
+                                                  std::format("Failed to compile shaders!\n{}", e).c_str(),
+                                                  window))
                     {
                         printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
                     }

@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <libassets/util/Primitive.h>
 #include <vector>
-#include "libassets/libassets.h"
+#include <libassets/libassets.h>
 
 class DataWriter
 {

@@ -15,8 +15,8 @@
 #include <assimp/scene.h>
 #include <assimp/vector3.h>
 #include <stdexcept>
-#include "libassets/util/DataReader.h"
-#include "libassets/util/DataWriter.h"
+#include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
 #include <string>
 #include <vector>
 

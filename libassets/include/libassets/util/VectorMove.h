@@ -7,7 +7,7 @@
 #include <vector>
 #include <cstddef>
 
-template<typename T> static inline void MoveBack(std::vector<T> &vector, size_t index)
+template<typename T> static void MoveBack(std::vector<T> &vector, size_t index)
 {
     if (index > 0)
     {
@@ -15,7 +15,7 @@ template<typename T> static inline void MoveBack(std::vector<T> &vector, size_t 
     }
 }
 
-template<typename T> static inline void MoveForward(std::vector<T> &vec, size_t index)
+template<typename T> static void MoveForward(std::vector<T> &vec, size_t index)
 {
     if (index + 1 < vec.size())
     {

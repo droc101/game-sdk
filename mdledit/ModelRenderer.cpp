@@ -508,7 +508,10 @@ void ModelRenderer::LoadHulls()
         glGenBuffers(1, &glHull.vbo);
         glBindBuffer(GL_ARRAY_BUFFER, glHull.vbo);
         std::vector<float> points = model.GetHull(i).GetPointsForRender();
-        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(GLfloat) * points.size()), points.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER,
+                     static_cast<GLsizeiptr>(sizeof(GLfloat) * points.size()),
+                     points.data(),
+                     GL_STATIC_DRAW);
         glHull.elements = points.size() / 3;
         hulls.push_back(glHull);
     }
@@ -518,6 +521,9 @@ void ModelRenderer::LoadStaticCollision()
 {
     glBindVertexArray(staticCollisionVao);
     glBindBuffer(GL_ARRAY_BUFFER, staticCollisionVbo);
-    std::vector<float> verts = model.GetStaticCollisionMesh().GetVerticesForRender();
-    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(GLfloat) * verts.size()), verts.data(), GL_STATIC_DRAW);
+    const std::vector<float> verts = model.GetStaticCollisionMesh().GetVerticesForRender();
+    glBufferData(GL_ARRAY_BUFFER,
+                 static_cast<GLsizeiptr>(sizeof(GLfloat) * verts.size()),
+                 verts.data(),
+                 GL_STATIC_DRAW);
 }

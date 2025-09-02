@@ -33,30 +33,30 @@ class ModelVertex
 
 template<> struct std::hash<ModelVertex>
 {
-        size_t operator()(const ModelVertex &vertex) const noexcept
+    size_t operator()(const ModelVertex &vertex) const noexcept
+    {
+        constexpr size_t goldenRatio = 0x9e3779b9;
+        size_t hashValue = 0;
+        for (const float position: vertex.position)
         {
-            constexpr size_t goldenRatio = 0x9e3779b9;
-            size_t hashValue = 0;
-            for (const float position: vertex.position)
-            {
-                hashValue ^= std::hash<float>()(position) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-            }
-            for (const float normal: vertex.normal)
-            {
-                hashValue ^= std::hash<float>()(normal) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-            }
-            for (const float uv: vertex.uv)
-            {
-                hashValue ^= std::hash<float>()(uv) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-            }
-            for (const float uv: vertex.uv)
-            {
-                hashValue ^= std::hash<float>()(uv) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-            }
-            for (const float color: vertex.color.CopyData())
-            {
-                hashValue ^= std::hash<float>()(color) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-            }
-            return hashValue;
+            hashValue ^= std::hash<float>()(position) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
         }
+        for (const float normal: vertex.normal)
+        {
+            hashValue ^= std::hash<float>()(normal) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
+        }
+        for (const float uv: vertex.uv)
+        {
+            hashValue ^= std::hash<float>()(uv) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
+        }
+        for (const float uv: vertex.uv)
+        {
+            hashValue ^= std::hash<float>()(uv) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
+        }
+        for (const float color: vertex.color.CopyData())
+        {
+            hashValue ^= std::hash<float>()(color) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
+        }
+        return hashValue;
+    }
 };

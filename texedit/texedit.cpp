@@ -30,7 +30,6 @@ static SDL_Surface *sdlSurface = nullptr;
 static float zoom = 1.0f;
 
 
-
 static inline void destroyExistingTexture()
 {
     if (!textureLoaded)
@@ -211,10 +210,22 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGtexCallback, nullptr, sdlWindow, DialogFilters::gtexFilters.data(), 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGtexCallback,
+                               nullptr,
+                               sdlWindow,
+                               DialogFilters::gtexFilters.data(),
+                               1,
+                               nullptr,
+                               false);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, DialogFilters::imageFilters.data(), 4, nullptr, false);
+        SDL_ShowOpenFileDialog(importCallback,
+                               nullptr,
+                               sdlWindow,
+                               DialogFilters::imageFilters.data(),
+                               4,
+                               nullptr,
+                               false);
     } else if (savePressed)
     {
         SDL_ShowSaveFileDialog(saveGtexCallback, nullptr, sdlWindow, DialogFilters::gtexFilters.data(), 1, nullptr);
@@ -265,7 +276,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                                                texture.GetWidth(),
                                                texture.GetHeight(),
                                                texture.GetWidth() * texture.GetHeight() * sizeof(uint32_t))
-                                           .c_str());
+                    .c_str());
 
             ImGui::Separator();
             ImGui::Checkbox("Filter", &texture.filter); // TODO live update

@@ -9,7 +9,7 @@
 
 class gtex_thumbs final: public KIO::ThumbnailCreator
 {
-        Q_OBJECT
+    Q_OBJECT
 
     public:
         using ThumbnailCreator::ThumbnailCreator;

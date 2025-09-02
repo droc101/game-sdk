@@ -19,10 +19,16 @@ K_PLUGIN_CLASS_WITH_JSON(gtex_thumbs, "gtex_thumbs.json")
 
 KIO::ThumbnailResult gtex_thumbs::create(const KIO::ThumbnailRequest &request)
 {
-    if (!request.url().isLocalFile()) { return KIO::ThumbnailResult::fail(); }
+    if (!request.url().isLocalFile())
+    {
+        return KIO::ThumbnailResult::fail();
+    }
     TextureAsset t;
     const Error::ErrorCode e = TextureAsset::CreateFromAsset(request.url().toLocalFile().toUtf8().data(), t);
-    if (e != Error::ErrorCode::OK) { return KIO::ThumbnailResult::fail(); }
+    if (e != Error::ErrorCode::OK)
+    {
+        return KIO::ThumbnailResult::fail();
+    }
     std::vector<uint32_t> pixels;
     t.GetPixelsRGBA(pixels);
     for (uint32_t &pixel: pixels)
@@ -33,6 +39,9 @@ KIO::ThumbnailResult gtex_thumbs::create(const KIO::ThumbnailRequest &request)
                                 t.GetWidth(),
                                 t.GetHeight(),
                                 QImage::Format_RGBA8888).convertToFormat(QImage::Format_ARGB32_Premultiplied);
-    if (texture.isNull()) { return KIO::ThumbnailResult::fail(); }
+    if (texture.isNull())
+    {
+        return KIO::ThumbnailResult::fail();
+    }
     return KIO::ThumbnailResult::pass(texture);
 }

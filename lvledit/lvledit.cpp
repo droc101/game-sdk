@@ -118,9 +118,9 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     ImGui::Begin("lvledit",
                  nullptr,
                  ImGuiWindowFlags_NoDecoration |
-                         ImGuiWindowFlags_NoMove |
-                         ImGuiWindowFlags_NoSavedSettings |
-                         ImGuiWindowFlags_NoBringToFrontOnFocus);
+                 ImGuiWindowFlags_NoMove |
+                 ImGuiWindowFlags_NoSavedSettings |
+                 ImGuiWindowFlags_NoBringToFrontOnFocus);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && levelLoaded;
@@ -147,7 +147,13 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGmapCallback, nullptr, sdlWindow, DialogFilters::gmapFilters.data(), 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGmapCallback,
+                               nullptr,
+                               sdlWindow,
+                               DialogFilters::gmapFilters.data(),
+                               1,
+                               nullptr,
+                               false);
     } else if (importPressed)
     {
         SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, DialogFilters::binFilters.data(), 1, nullptr, false);

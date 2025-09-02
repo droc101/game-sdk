@@ -111,15 +111,15 @@ BoundingBox::BoundingBox(const std::vector<std::array<float, 3>> &verts)
     }
 
     origin = {
-        (minPoint.at(0) + maxPoint.at(0)) * 0.5f,
-        (minPoint.at(1) + maxPoint.at(1)) * 0.5f,
-        (minPoint.at(2) + maxPoint.at(2)) * 0.5f
-};
+            (minPoint.at(0) + maxPoint.at(0)) * 0.5f,
+            (minPoint.at(1) + maxPoint.at(1)) * 0.5f,
+            (minPoint.at(2) + maxPoint.at(2)) * 0.5f
+    };
     extents = {
-        (maxPoint.at(0) - minPoint.at(0)) * 0.5f,
-        (maxPoint.at(1) - minPoint.at(1)) * 0.5f,
-        (maxPoint.at(2) - minPoint.at(2)) * 0.5f
-};
+            (maxPoint.at(0) - minPoint.at(0)) * 0.5f,
+            (maxPoint.at(1) - minPoint.at(1)) * 0.5f,
+            (maxPoint.at(2) - minPoint.at(2)) * 0.5f
+    };
 }
 
 

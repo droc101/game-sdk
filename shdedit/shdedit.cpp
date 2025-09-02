@@ -115,9 +115,9 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     ImGui::Begin("shdedit",
                  nullptr,
                  ImGuiWindowFlags_NoDecoration |
-                         ImGuiWindowFlags_NoMove |
-                         ImGuiWindowFlags_NoSavedSettings |
-                         ImGuiWindowFlags_NoBringToFrontOnFocus);
+                 ImGuiWindowFlags_NoMove |
+                 ImGuiWindowFlags_NoSavedSettings |
+                 ImGuiWindowFlags_NoBringToFrontOnFocus);
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
@@ -143,8 +143,14 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         }
         if (ImGui::BeginMenu("Tools"))
         {
-            if (ImGui::MenuItem("Batch Compile")) { BatchCompileWindow::Show(); }
-            if (ImGui::MenuItem("Batch Decompile")) { BatchDecompileWindow::Show(); }
+            if (ImGui::MenuItem("Batch Compile"))
+            {
+                BatchCompileWindow::Show();
+            }
+            if (ImGui::MenuItem("Batch Decompile"))
+            {
+                BatchDecompileWindow::Show();
+            }
             ImGui::Separator();
             ImGui::EndMenu();
         }
@@ -154,10 +160,22 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGfonCallback, nullptr, sdlWindow, DialogFilters::gshdFilters.data(), 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGfonCallback,
+                               nullptr,
+                               sdlWindow,
+                               DialogFilters::gshdFilters.data(),
+                               1,
+                               nullptr,
+                               false);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, DialogFilters::glslFilters.data(), 4, nullptr, false);
+        SDL_ShowOpenFileDialog(importCallback,
+                               nullptr,
+                               sdlWindow,
+                               DialogFilters::glslFilters.data(),
+                               4,
+                               nullptr,
+                               false);
     } else if (savePressed)
     {
         SDL_ShowSaveFileDialog(saveGfonCallback, nullptr, sdlWindow, DialogFilters::gshdFilters.data(), 1, nullptr);

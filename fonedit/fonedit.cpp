@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 #include "DialogFilters.h"
-#include "libassets/util/VectorMove.h"
+#include <libassets/util/VectorMove.h>
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 #include "TextureBrowserWindow.h"
@@ -119,7 +119,13 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGfonCallback, nullptr, sdlWindow, DialogFilters::gfonFilters.data(), 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGfonCallback,
+                               nullptr,
+                               sdlWindow,
+                               DialogFilters::gfonFilters.data(),
+                               1,
+                               nullptr,
+                               false);
     } else if (savePressed)
     {
         SDL_ShowSaveFileDialog(saveGfonCallback, nullptr, sdlWindow, DialogFilters::gfonFilters.data(), 1, nullptr);

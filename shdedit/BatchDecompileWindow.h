@@ -16,7 +16,8 @@ class BatchDecompileWindow
 
         static void Show();
 
-        static void Render(SDL_Window* window);
+        static void Render(SDL_Window *window);
+
     private:
         inline static bool visible = false;
         inline static std::vector<std::string> files;

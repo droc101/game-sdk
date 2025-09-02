@@ -59,15 +59,21 @@ Error::ErrorCode BatchDecompileWindow::Execute()
         return Error::ErrorCode::INVALID_DIRECTORY;
     }
 
-    for (const std::string& file : files)
+    for (const std::string &file: files)
     {
         const std::filesystem::path path = std::filesystem::path(file);
         ShaderAsset shd;
         Error::ErrorCode e = ShaderAsset::CreateFromAsset(file.c_str(), shd);
-        if (e != Error::ErrorCode::OK) { return e; }
+        if (e != Error::ErrorCode::OK)
+        {
+            return e;
+        }
         const std::string suffix = shd.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAG ? ".frag" : ".vert";
         e = shd.SaveAsGlsl((outputFolder + "/" + path.stem().string() + suffix).c_str());
-        if (e != Error::ErrorCode::OK) { return e; }
+        if (e != Error::ErrorCode::OK)
+        {
+            return e;
+        }
     }
 
     return Error::ErrorCode::OK;
@@ -141,7 +147,7 @@ void BatchDecompileWindow::Render(SDL_Window *window)
 
             const float sizeX = ImGui::GetContentRegionAvail().x;
 
-            ImGui::Dummy(ImVec2(sizeX - 120 - ImGui::GetStyle().WindowPadding.x*2, 0));
+            ImGui::Dummy(ImVec2(sizeX - 120 - ImGui::GetStyle().WindowPadding.x * 2, 0));
             ImGui::SameLine();
             if (ImGui::Button("OK", ImVec2(60, 0)))
             {
@@ -152,9 +158,9 @@ void BatchDecompileWindow::Render(SDL_Window *window)
                 } else
                 {
                     if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to decompile shaders!\n{}", e).c_str(),
-                                      window))
+                                                  "Error",
+                                                  std::format("Failed to decompile shaders!\n{}", e).c_str(),
+                                                  window))
                     {
                         printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
                     }

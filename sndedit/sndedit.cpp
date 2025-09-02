@@ -28,7 +28,7 @@ static SDL_Renderer *renderer{};
 static SDL_Window *window{};
 static ma_engine engine{};
 
-static inline void destroyExistingSound()
+static void destroyExistingSound()
 {
     if (!soundLoaded)
     {
@@ -40,7 +40,7 @@ static inline void destroyExistingSound()
     soundLoaded = false;
 }
 
-static inline bool loadSound()
+static bool loadSound()
 {
     destroyExistingSound();
     ma_result result = ma_decoder_init_memory(soundAsset.GetData().data(), soundAsset.GetDataSize(), nullptr, &decoder);
@@ -188,7 +188,13 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGsndCallback, nullptr, sdlWindow, DialogFilters::gsndFilters.data(), 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGsndCallback,
+                               nullptr,
+                               sdlWindow,
+                               DialogFilters::gsndFilters.data(),
+                               1,
+                               nullptr,
+                               false);
     } else if (importPressed)
     {
         SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, DialogFilters::wavFilters.data(), 1, nullptr, false);

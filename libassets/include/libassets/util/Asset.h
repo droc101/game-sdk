@@ -7,7 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <libassets/util/DataReader.h>
-#include "libassets/libassets.h"
+#include <libassets/libassets.h>
 
 class Asset
 {
@@ -29,7 +29,6 @@ class Asset
         static constexpr size_t ASSET_HEADER_SIZE = sizeof(uint32_t) + (sizeof(uint8_t) * 3) + (sizeof(size_t) * 2);
 
         Asset() = default;
-
 
 
         uint8_t containerVersion{};

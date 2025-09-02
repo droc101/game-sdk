@@ -18,7 +18,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include "libassets/util/BoundingBox.h"
+#include <libassets/util/BoundingBox.h>
 
 ConvexHull::ConvexHull(DataReader &reader)
 {
@@ -39,15 +39,16 @@ ConvexHull::ConvexHull(DataReader &reader)
 ConvexHull::ConvexHull(const std::string &objPath)
 {
     Assimp::Importer importer;
-    importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, // NOLINT(*-unused-return-value)
+    importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
+                                // NOLINT(*-unused-return-value)
                                 aiComponent_NORMALS |
-                                        aiComponent_COLORS |
-                                        aiComponent_TEXCOORDS);
+                                aiComponent_COLORS |
+                                aiComponent_TEXCOORDS);
     const aiScene *scene = importer.ReadFile(objPath,
                                              aiProcess_JoinIdenticalVertices |
-                                                     aiProcess_ValidateDataStructure |
-                                                     aiProcess_DropNormals |
-                                                     aiProcess_RemoveComponent);
+                                             aiProcess_ValidateDataStructure |
+                                             aiProcess_DropNormals |
+                                             aiProcess_RemoveComponent);
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
@@ -84,7 +85,6 @@ ConvexHull::ConvexHull(const aiMesh *mesh)
     }
     CalculateOffset();
 }
-
 
 
 void ConvexHull::Write(DataWriter &writer) const
@@ -125,15 +125,16 @@ void ConvexHull::CalculateOffset()
 void ConvexHull::ImportMultiple(const std::string &path, std::vector<ConvexHull> &output)
 {
     Assimp::Importer importer;
-    importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, // NOLINT(*-unused-return-value)
+    importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
+                                // NOLINT(*-unused-return-value)
                                 aiComponent_NORMALS |
-                                        aiComponent_COLORS |
-                                        aiComponent_TEXCOORDS);
+                                aiComponent_COLORS |
+                                aiComponent_TEXCOORDS);
     const aiScene *scene = importer.ReadFile(path,
                                              aiProcess_JoinIdenticalVertices |
-                                                     aiProcess_ValidateDataStructure |
-                                                     aiProcess_DropNormals |
-                                                     aiProcess_RemoveComponent);
+                                             aiProcess_ValidateDataStructure |
+                                             aiProcess_DropNormals |
+                                             aiProcess_RemoveComponent);
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
@@ -146,5 +147,3 @@ void ConvexHull::ImportMultiple(const std::string &path, std::vector<ConvexHull>
         output.emplace_back(scene->mMeshes[i]);
     }
 }
-
-

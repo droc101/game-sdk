@@ -13,7 +13,7 @@
 #include <libassets/util/ModelLod.h>
 #include <string>
 #include <vector>
-#include "libassets/util/StaticCollisionMesh.h"
+#include <libassets/util/StaticCollisionMesh.h>
 
 class ModelAsset final
 {
