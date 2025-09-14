@@ -320,13 +320,7 @@ int main()
     ImGuiIO &io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-    if (SDL_GetSystemTheme() == SDL_SYSTEM_THEME_DARK)
-    {
-        ImGui::StyleColorsDark();
-    } else
-    {
-        ImGui::StyleColorsLight();
-    }
+    SharedMgr::ApplyTheme();
 
     ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer3_Init(renderer);

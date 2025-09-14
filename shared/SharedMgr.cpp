@@ -115,3 +115,24 @@ std::vector<std::string> SharedMgr::ScanFolder(const std::string &directoryPath,
     }
     return files;
 }
+
+void SharedMgr::ApplyTheme()
+{
+    if (Options::theme == Options::Theme::SYSTEM)
+    {
+        if (SDL_GetSystemTheme() == SDL_SYSTEM_THEME_DARK)
+        {
+            ImGui::StyleColorsDark();
+        } else
+        {
+            ImGui::StyleColorsLight();
+        }
+    } else if (Options::theme == Options::Theme::LIGHT)
+    {
+        ImGui::StyleColorsLight();
+    } else
+    {
+        ImGui::StyleColorsDark();
+    }
+}
+

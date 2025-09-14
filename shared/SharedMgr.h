@@ -28,6 +28,8 @@ class SharedMgr
 
         static void DestroySharedMgr();
 
+        static void ApplyTheme();
+
         static std::vector<std::string> ScanFolder(const std::string &directoryPath,
                                                    const std::string &extension,
                                                    bool isRoot);

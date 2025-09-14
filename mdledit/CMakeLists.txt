@@ -10,8 +10,6 @@ add_executable(mdledit mdledit.cpp
         SkinEditWindow.h
         LodEditWindow.cpp
         LodEditWindow.h
-        GLDebug.cpp
-        GLDebug.h
         MaterialEditWindow.cpp
         MaterialEditWindow.h
         CollisionEditWindow.cpp

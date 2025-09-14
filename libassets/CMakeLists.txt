@@ -49,6 +49,16 @@ add_library(assets STATIC include/libassets/libassets.h
         include/libassets/util/ConvexHull.h
         src/util/StaticCollisionMesh.cpp
         include/libassets/util/StaticCollisionMesh.h
+        src/util/Sector.cpp
+        include/libassets/util/Sector.h
+        src/util/WallMaterial.cpp
+        include/libassets/util/WallMaterial.h
+        src/util/Param.cpp
+        include/libassets/util/Param.h
+        src/util/Actor.cpp
+        include/libassets/util/Actor.h
+        src/util/IOConnection.cpp
+        include/libassets/util/IOConnection.h
 )
 
 target_link_libraries(assets PRIVATE ZLIB::ZLIB assimp::assimp glslang::glslang Vulkan::Vulkan)

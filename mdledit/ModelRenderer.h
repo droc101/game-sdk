@@ -116,12 +116,6 @@ class ModelRenderer
         static inline GLsizei windowHeight = 600;
         static inline float windowAspect = 4.0 / 3.0;
 
-        [[nodiscard]] static Error::ErrorCode CreateShader(const char *filename, GLenum type, GLuint &outShader);
-
-        [[nodiscard]] static Error::ErrorCode CreateProgram(const char *fragmentFilename,
-                                                            const char *vertexFilename,
-                                                            GLuint &outProgram);
-
         static void UpdateMatrix();
 
         static void LoadCube();

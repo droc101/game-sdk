@@ -32,6 +32,7 @@ void Options::Load()
     {
         gamePath = savedata.value("game_path", std::string());
         defaultTexture = savedata.value("default_texture", std::string("texture/level/wall_test.gtex"));
+        theme = savedata.value("theme", Theme::SYSTEM);
     }
     file.close();
 }
@@ -40,6 +41,7 @@ void Options::LoadDefault()
 {
     gamePath = std::string();
     defaultTexture = "texture/level/wall_test.gtex";
+    theme = Theme::SYSTEM;
 }
 
 void Options::Save()
@@ -47,6 +49,7 @@ void Options::Save()
     const nlohmann::json savedata = {
             {"game_path", gamePath},
             {"default_texture", defaultTexture},
+            {"theme", theme},
     };
     char *prefix = SDL_GetPrefPath("Droc101 Development", "GAME SDK");
     const std::string path = prefix + std::string("options.json");

@@ -133,8 +133,7 @@ target_sources(imgui_opengl3 INTERFACE
         lib/imgui/backends/imgui_impl_opengl3_loader.h
 )
 
-add_library(shared INTERFACE
-        shared/DialogFilters.h)
+add_library(shared INTERFACE)
 target_sources(shared INTERFACE
         shared/Options.cpp
         shared/Options.h
@@ -151,6 +150,11 @@ target_sources(shared INTERFACE
         shared/SDLRendererImGuiTextureAssetCache.h
         shared/OpenGLImGuiTextureAssetCache.cpp
         shared/OpenGLImGuiTextureAssetCache.h
+        shared/GLHelper.cpp
+        shared/GLHelper.h
+        shared/GLDebug.cpp
+        shared/GLDebug.h
+        shared/DialogFilters.h
         $<$<BOOL:${WIN32}>:${CMAKE_SOURCE_DIR}/game-sdk.rc>
 )
 target_link_libraries(shared INTERFACE

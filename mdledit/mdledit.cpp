@@ -467,13 +467,7 @@ int main()
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-    if (SDL_GetSystemTheme() == SDL_SYSTEM_THEME_DARK)
-    {
-        ImGui::StyleColorsDark();
-    } else
-    {
-        ImGui::StyleColorsLight();
-    }
+    SharedMgr::ApplyTheme();
 
     ImGui_ImplSDL3_InitForOpenGL(window, glContext);
     ImGui_ImplOpenGL3_Init(glslVersion);

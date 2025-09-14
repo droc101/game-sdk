@@ -26,9 +26,7 @@ Material::Material(const std::string &texture, const uint32_t color, const Mater
 
 void Material::Write(DataWriter &writer) const
 {
-    const size_t strLength = texture.length() + 1;
-    writer.Write<size_t>(strLength);
-    writer.WriteBuffer<const char>(texture.c_str(), strLength);
+    writer.WriteString(texture);
     color.WriteFloats(writer);
     writer.Write<uint32_t>(static_cast<uint32_t>(shader));
 }

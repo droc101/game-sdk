@@ -20,110 +20,22 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "GLDebug.h"
+#include "GLHelper.h"
+#include "../shared/GLDebug.h"
 #include "OpenGLImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 
 // #define GL_CHECK_ERROR if (glGetError() != GL_NO_ERROR) {printf(reinterpret_cast<const char *>(glewGetErrorString(glGetError()))); fflush(stdout); __debugbreak();}
 
-Error::ErrorCode ModelRenderer::CreateShader(const char *filename, const GLenum type, GLuint &outShader)
-{
-    std::ifstream file(filename, std::ios::binary | std::ios::ate);
-    if (!file.is_open())
-    {
-        return Error::ErrorCode::CANT_OPEN_FILE;
-    }
-    const std::streamsize size = file.tellg();
-    file.seekg(0, std::ios::beg);
-    std::vector<char> shaderSource(size + 1);
-    file.read(shaderSource.data(), size);
-    file.close();
-    const GLuint shader = glCreateShader(type);
-    const char *shaderSourceData = shaderSource.data();
-    glShaderSource(shader, 1, &shaderSourceData, nullptr);
-    glCompileShader(shader);
-    GLint success = 0;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (success == 0)
-    {
-        std::array<char, 512> infoLog{};
-        glGetShaderInfoLog(shader, 512, nullptr, infoLog.data());
-        fprintf(stderr, "Shader compile failed: %s\n", infoLog.data());
-        glDeleteShader(shader);
-        return Error::ErrorCode::UNKNOWN;
-    }
-    outShader = shader;
-    return Error::ErrorCode::OK;
-}
-
-Error::ErrorCode ModelRenderer::CreateProgram(const char *fragmentFilename,
-                                              const char *vertexFilename,
-                                              GLuint &outProgram)
-{
-    GLuint vertexShader = 0;
-    GLuint fragmentShader = 0;
-    const Error::ErrorCode vertexShaderErrorCode = CreateShader(vertexFilename, GL_VERTEX_SHADER, vertexShader);
-    const Error::ErrorCode fragmentShaderErrorCode = CreateShader(fragmentFilename, GL_FRAGMENT_SHADER, fragmentShader);
-    if (vertexShaderErrorCode != Error::ErrorCode::OK || fragmentShaderErrorCode != Error::ErrorCode::OK)
-    {
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-        printf("Could not create shader program\n");
-        return Error::ErrorCode::UNKNOWN;
-    }
-
-    const GLuint newProgram = glCreateProgram();
-    glAttachShader(newProgram, vertexShader);
-    glAttachShader(newProgram, fragmentShader);
-    glLinkProgram(newProgram);
-    GLint success = 0;
-    glGetProgramiv(newProgram, GL_LINK_STATUS, &success);
-    if (success == 0)
-    {
-        std::array<char, 512> infoLog{};
-        glGetProgramInfoLog(newProgram, 512, nullptr, infoLog.data());
-        fprintf(stderr, "Program link failed: %s\n", infoLog.data());
-        glDeleteProgram(newProgram);
-        return Error::ErrorCode::UNKNOWN;
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    outProgram = newProgram;
-    return Error::ErrorCode::OK;
-}
-
-
 bool ModelRenderer::Init()
 {
-    glewExperimental = GL_TRUE; // Please expose OpenGL 3.x+ interfaces
-    const GLenum err = glewInit();
-    if (err != GLEW_OK)
+    if (!GLHelper::Init())
     {
-        printf("GLEW init failure");
         return false;
     }
 
-    // Ensure we have GL 3.3 or higher
-    if (!GLEW_VERSION_3_3)
-    {
-        printf("GLEW init failure -- we don't have opengl 3.3");
-        return false;
-    }
-
-#ifdef BUILDSTYLE_DEBUG
-    glEnable(GL_DEBUG_OUTPUT);
-    glDebugMessageCallback(GLDebug::GL_DebugMessageCallback, nullptr);
-#endif
-
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-
-    const Error::ErrorCode modelProgramErrorCode = CreateProgram("assets/model.frag", "assets/model.vert", program);
-    const Error::ErrorCode cubeProgramErrorCode = CreateProgram("assets/cube.frag", "assets/cube.vert", linesProgram);
+    const Error::ErrorCode modelProgramErrorCode = GLHelper::CreateProgram("assets/model.frag", "assets/model.vert", program);
+    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/cube.frag", "assets/cube.vert", linesProgram);
     if (modelProgramErrorCode != Error::ErrorCode::OK || cubeProgramErrorCode != Error::ErrorCode::OK)
     {
         return false;
@@ -139,11 +51,6 @@ bool ModelRenderer::Init()
     glGenBuffers(1, &staticCollisionVbo);
 
     UpdateView(0, 0, 1);
-
-    const char *renderer = reinterpret_cast<const char *>(glGetString(GL_RENDERER));
-    const char *version = reinterpret_cast<const char *>(glGetString(GL_VERSION));
-    printf("Renderer: %s\n", renderer);
-    printf("OpenGL version: %s\n", version);
 
     return true;
 }

@@ -53,6 +53,8 @@ class DataWriter
 
         void CopyToVector(std::vector<uint8_t> &vector) const;
 
+        void WriteString(const std::string &str);
+
         [[nodiscard]] size_t GetBufferSize() const;
 
     private:
