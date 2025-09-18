@@ -24,7 +24,7 @@ class Sector
         /// Expensive!
         bool IsValid();
 
-        std::array<float, 4> CalculateBBox();
+        std::array<float, 4> CalculateBBox() const;
 
         static Sector CreateExample();
     private:

@@ -124,7 +124,7 @@ bool Sector::CheckIntersection(const std::array<float, 2> &segmentAStart, const 
     return false;
 }
 
-std::array<float, 4> Sector::CalculateBBox()
+std::array<float, 4> Sector::CalculateBBox() const
 {
     std::array<float, 2> minPoint = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
     std::array<float, 2> maxPoint = {std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()};
