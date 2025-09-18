@@ -17,14 +17,12 @@ Sector Sector::CreateExample()
     s.floorMaterial = WallMaterial("level/floor_test");
     s.ceilingMaterial = WallMaterial("level/ceiling_test");
     s.points = {
-        {-7, -5},
+        {-5, -5},
         {-5, 5},
-        {5, 7},
-        {7, -9},
-        {2, -2}
+        {5, 5},
+        {5, -5},
     };
     s.wallMaterials = {
-        WallMaterial("level/wall_test"),
         WallMaterial("level/wall_test"),
         WallMaterial("level/wall_test"),
         WallMaterial("level/wall_test"),
@@ -125,3 +123,27 @@ bool Sector::CheckIntersection(const std::array<float, 2> &segmentAStart, const 
     }
     return false;
 }
+
+std::array<float, 4> Sector::CalculateBBox()
+{
+    std::array<float, 2> minPoint = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
+    std::array<float, 2> maxPoint = {std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()};
+
+    for (const std::array<float, 2> &vert: points)
+    {
+        for (uint8_t i = 0; i < 2; i++)
+        {
+            const float &val = vert.at(i);
+            if (val < minPoint.at(i))
+            {
+                minPoint.at(i) = val;
+            }
+            if (val > maxPoint.at(i))
+            {
+                maxPoint.at(i) = val;
+            }
+        }
+    }
+    return {minPoint.at(0), minPoint.at(1), maxPoint.at(0), maxPoint.at(1)};
+}
+

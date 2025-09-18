@@ -11,8 +11,8 @@ add_executable(lvledit lvledit.cpp
         LevelEditor.cpp
         LevelEditor.h
         tools/EditorTool.h
-        tools/TestTool.cpp
-        tools/TestTool.h)
+        tools/VertexTool.cpp
+        tools/VertexTool.h)
 
 set_target_properties(lvledit PROPERTIES LINKER_LANGUAGE CXX)
 

@@ -7,8 +7,8 @@
 #include <cstdint>
 #include <memory>
 #include "libassets/asset/LevelAsset.h"
-#include "tools/TestTool.h"
 #include "tools/EditorTool.h"
+#include "tools/VertexTool.h"
 
 
 class LevelEditor
@@ -39,7 +39,7 @@ class LevelEditor
             0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0
         };
 
-        inline static std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new TestTool());
+        inline static std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new VertexTool());
 
         static float SnapToGrid(float f);
 

@@ -2,18 +2,18 @@
 // Created by droc101 on 9/7/25.
 //
 
-#include "TestTool.h"
 #include <array>
 #include <cstddef>
 #include <imgui.h>
-#include "Options.h"
 #include "../LevelEditor.h"
 #include "../LevelRenderer.h"
 #include "../Viewport.h"
 #include "libassets/util/Color.h"
 #include "libassets/util/Sector.h"
+#include "Options.h"
+#include "VertexTool.h"
 
-void TestTool::RenderViewport(Viewport &vp)
+void VertexTool::RenderViewport(Viewport &vp)
 {
     LevelRenderer::RenderViewport(vp);
     glm::mat4 matrix = vp.GetMatrix();
@@ -24,8 +24,6 @@ void TestTool::RenderViewport(Viewport &vp)
 
     if (ImGui::IsWindowFocused())
     {
-        ImGui::Text("active viewport");
-
         isHovered = ImGui::IsWindowHovered();
         if (isHovered)
         {
@@ -37,7 +35,7 @@ void TestTool::RenderViewport(Viewport &vp)
 
     if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
     {
-        if (draggingVertex && isHovered)
+        if (dragType == DragType::VERTEX && isHovered)
         {
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
@@ -48,7 +46,35 @@ void TestTool::RenderViewport(Viewport &vp)
                 sector.points[vertexIndex][1] = snapped.z;
             } else
             {
-                draggingVertex = false;
+                dragType = DragType::NONE;
+            }
+        }
+    } else
+    {
+        // TODO prevent putting ceiling below floor / floor above ceiling
+        if (dragType == DragType::CEILING && isHovered)
+        {
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            {
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+                Sector &sector = LevelEditor::level.sectors.at(sectorIndex);
+                const glm::vec3 snapped = LevelEditor::SnapToGrid(worldSpaceHover);
+                sector.ceilingHeight = snapped.y;
+            } else
+            {
+                dragType = DragType::NONE;
+            }
+        } else if (dragType == DragType::FLOOR && isHovered)
+        {
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            {
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+                Sector &sector = LevelEditor::level.sectors.at(sectorIndex);
+                const glm::vec3 snapped = LevelEditor::SnapToGrid(worldSpaceHover);
+                sector.floorHeight = snapped.y;
+            } else
+            {
+                dragType = DragType::NONE;
             }
         }
     }
@@ -56,6 +82,48 @@ void TestTool::RenderViewport(Viewport &vp)
     for (size_t s = 0; s < LevelEditor::level.sectors.size(); s++)
     {
         Sector &sector = LevelEditor::level.sectors.at(s);
+        if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ && dragType == DragType::NONE)
+        {
+            const std::array<float, 4> sectorBB = sector.CalculateBBox();
+            float ceilingDistance = FLT_MAX;
+            float floorDistance = FLT_MAX;
+            if (vp.GetType() == Viewport::ViewportType::FRONT_XY)
+            {
+                const glm::vec3 ceilingA = glm::vec3(sectorBB.at(0), sector.ceilingHeight, 0);
+                const glm::vec3 ceilingB = glm::vec3(sectorBB.at(2), sector.ceilingHeight,0);
+                ceilingDistance = LevelEditor::VecDistanceToLine2D(vp.WorldToScreenPos(ceilingA), vp.WorldToScreenPos(ceilingB), screenSpaceHover);
+                const glm::vec3 floorA = glm::vec3(sectorBB.at(0), sector.floorHeight, 0);
+                const glm::vec3 floorB = glm::vec3(sectorBB.at(2), sector.floorHeight,0);
+                floorDistance = LevelEditor::VecDistanceToLine2D(vp.WorldToScreenPos(floorA), vp.WorldToScreenPos(floorB), screenSpaceHover);
+            } else if (vp.GetType() == Viewport::ViewportType::SIDE_YZ)
+            {
+                const glm::vec3 ceilingA = glm::vec3(0, sector.ceilingHeight, sectorBB.at(1));
+                const glm::vec3 ceilingB = glm::vec3(0, sector.ceilingHeight,sectorBB.at(3));
+                ceilingDistance = LevelEditor::VecDistanceToLine2D(vp.WorldToScreenPos(ceilingA), vp.WorldToScreenPos(ceilingB), screenSpaceHover);
+                const glm::vec3 floorA = glm::vec3(0, sector.floorHeight, sectorBB.at(1));
+                const glm::vec3 floorB = glm::vec3(0, sector.floorHeight,sectorBB.at(3));
+                floorDistance = LevelEditor::VecDistanceToLine2D(vp.WorldToScreenPos(floorA), vp.WorldToScreenPos(floorB), screenSpaceHover);
+            }
+
+            if (ceilingDistance <= 5)
+            {
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+                if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                {
+                    sectorIndex = s;
+                    dragType = DragType::CEILING;
+                }
+            } else if (floorDistance <= 5)
+            {
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+                if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                {
+                    sectorIndex = s;
+                    dragType = DragType::FLOOR;
+                }
+            }
+        }
+
         for (size_t i = 0; i < sector.points.size(); i++)
         {
             const std::array<float, 2> &start2 = sector.points[i];
@@ -70,7 +138,7 @@ void TestTool::RenderViewport(Viewport &vp)
             Color c = Color(1,0,0,1);
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                if (!draggingVertex)
+                if (dragType == DragType::NONE)
                 {
                     if (distance(vertexScreenSpace, screenSpaceHover) <= 5)
                     {
@@ -78,14 +146,14 @@ void TestTool::RenderViewport(Viewport &vp)
                         c = Color(1,0.5,.5,1);
                         if (ImGui::BeginTooltip())
                         {
-                            ImGui::Text("%.2f, %.2f", start_ceiling.x, start_ceiling.z);
+                            ImGui::Text("Sector %ld vertex %ld\n%.2f, %.2f", s, i, start_ceiling.x, start_ceiling.z);
                             ImGui::EndTooltip();
                         }
                         if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                         {
                             vertexIndex = i;
                             sectorIndex = s;
-                            draggingVertex = true;
+                            dragType = DragType::VERTEX;
                         } else if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right) && sector.points.size() > 3)
                         {
                             sector.points.erase(sector.points.begin() + i);
@@ -93,20 +161,14 @@ void TestTool::RenderViewport(Viewport &vp)
                     } else if (LevelEditor::VecDistanceToLine2D(vertexScreenSpace, endVertexScreenSpace, screenSpaceHover) <= 5 && distance(endVertexScreenSpace, screenSpaceHover) > 5)
                     {
                         ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-                        if (ImGui::BeginTooltip())
-                        {
-                            const WallMaterial &mat = sector.wallMaterials.at(i);
-                            ImGui::Text("%s", mat.texture.c_str());
-                            ImGui::EndTooltip();
-                        }
-                        if (isHovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                        if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                         {
                             const glm::vec2 newVertexPos = LevelEditor::SnapToGrid(worldSpaceHover);
                             sector.points.insert(sector.points.begin() + i + 1, {newVertexPos.x, newVertexPos.y});
                             sector.wallMaterials.insert(sector.wallMaterials.begin() + i + 1, sector.wallMaterials.at(i));
                             vertexIndex = i+1;
                             sectorIndex = s;
-                            draggingVertex = true;
+                            dragType = DragType::VERTEX;
                         }
                     }
                 }
@@ -127,7 +189,7 @@ void TestTool::RenderViewport(Viewport &vp)
     }
 }
 
-void TestTool::RenderToolWindow()
+void VertexTool::RenderToolWindow()
 {
 
 }
