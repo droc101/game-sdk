@@ -108,6 +108,11 @@ void VertexTool::RenderViewport(Viewport &vp)
             if (ceilingDistance <= 5)
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+                if (ImGui::BeginTooltip())
+                {
+                    ImGui::Text("Sector %lu ceiling: %.2f units", s, sector.ceilingHeight);
+                    ImGui::EndTooltip();
+                }
                 if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                 {
                     sectorIndex = s;
@@ -116,6 +121,11 @@ void VertexTool::RenderViewport(Viewport &vp)
             } else if (floorDistance <= 5)
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+                if (ImGui::BeginTooltip())
+                {
+                    ImGui::Text("Sector %lu floor: %.2f units", s, sector.floorHeight);
+                    ImGui::EndTooltip();
+                }
                 if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                 {
                     sectorIndex = s;
