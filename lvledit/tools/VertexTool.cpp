@@ -15,9 +15,10 @@
 
 void VertexTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {
+    if (!isHovered) { return; }
     if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
     {
-        if (dragType == DragType::VERTEX && isHovered)
+        if (dragType == DragType::VERTEX)
         {
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
@@ -30,11 +31,30 @@ void VertexTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             {
                 dragType = DragType::NONE;
             }
+        } else if (dragType == DragType::LINE)
+        {
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            {
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+                Sector &sector = LevelEditor::level.sectors.at(sectorIndex);
+                const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
+                const glm::vec2 startPos = worldHover2D - lineDragModeMouseOffset;
+                const glm::vec2 endPos = startPos - lineDragModeSecondVertexOffset;
+                const glm::vec3 startSnapped = LevelEditor::SnapToGrid(glm::vec3(startPos.x, 0, startPos.y));
+                const glm::vec3 endSnapped = LevelEditor::SnapToGrid(glm::vec3(endPos.x, 0, endPos.y));
+                sector.points[vertexIndex][0] = startSnapped.x;
+                sector.points[vertexIndex][1] = startSnapped.z;
+                sector.points[(vertexIndex+1)%sector.points.size()][0] = endSnapped.x;
+                sector.points[(vertexIndex+1)%sector.points.size()][1] = endSnapped.z;
+            } else
+            {
+                dragType = DragType::NONE;
+            }
         }
     } else
     {
         // TODO prevent putting ceiling below floor / floor above ceiling
-        if (dragType == DragType::CEILING && isHovered)
+        if (dragType == DragType::CEILING)
         {
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
@@ -46,7 +66,7 @@ void VertexTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             {
                 dragType = DragType::NONE;
             }
-        } else if (dragType == DragType::FLOOR && isHovered)
+        } else if (dragType == DragType::FLOOR)
         {
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
@@ -157,15 +177,31 @@ void VertexTool::ProcessVertexHover(const Viewport &vp, const glm::vec2 vertexSc
             } else if (LevelEditor::VecDistanceToLine2D(vertexScreenSpace, endVertexScreenSpace, screenSpaceHover) <= 5
                        && distance(endVertexScreenSpace, screenSpaceHover) > 5)
             {
-                ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+                const bool addPointMode = ImGui::IsKeyDown(ImGuiKey_LeftShift);
+                ImGui::SetMouseCursor(addPointMode ? ImGuiMouseCursor_Hand : ImGuiMouseCursor_ResizeAll);
                 if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                 {
-                    const glm::vec2 newVertexPos = LevelEditor::SnapToGrid(worldSpaceHover);
-                    sector.points.insert(sector.points.begin() + i + 1, {newVertexPos.x, newVertexPos.y});
-                    sector.wallMaterials.insert(sector.wallMaterials.begin() + i + 1, sector.wallMaterials.at(i));
-                    vertexIndex = i + 1;
-                    sectorIndex = s;
-                    dragType = DragType::VERTEX;
+                    if (addPointMode)
+                    {
+                        const glm::vec2 newVertexPos = LevelEditor::SnapToGrid(worldSpaceHover);
+                        sector.points.insert(sector.points.begin() + i + 1, {newVertexPos.x, newVertexPos.y});
+                        sector.wallMaterials.insert(sector.wallMaterials.begin() + i + 1, sector.wallMaterials.at(i));
+                        vertexIndex = i + 1;
+                        sectorIndex = s;
+                        dragType = DragType::VERTEX;
+                    } else
+                    {
+                        vertexIndex = i;
+                        sectorIndex = s;
+                        const glm::vec2 startPoint = glm::vec2(sector.points.at(i).at(0), sector.points.at(i).at(1));
+                        const glm::vec2 endPoint = glm::vec2(sector.points.at((i + 1) % sector.points.size()).at(0),
+                                                             sector.points.at((i + 1) % sector.points.size()).at(1));
+                        const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
+                        lineDragModeSecondVertexOffset = startPoint - endPoint;
+                        lineDragModeMouseOffset = worldHover2D - startPoint;
+                        dragType = DragType::LINE;
+                    }
+
                 }
             }
         }
