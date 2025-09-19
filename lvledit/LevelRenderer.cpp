@@ -8,6 +8,7 @@
 #include "GLHelper.h"
 #include "imgui.h"
 #include "LevelEditor.h"
+#include "libassets/util/Color.h"
 #include "libassets/util/Error.h"
 #include "Viewport.h"
 
@@ -48,7 +49,10 @@ bool LevelRenderer::Init()
             0, 0, 512, 0, 0, 1,
     };
     GLHelper::BindBuffer(axisHelperBuffer);
-    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(float) * axisHelperVerts.size()), axisHelperVerts.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER,
+                 static_cast<GLsizeiptr>(sizeof(float) * axisHelperVerts.size()),
+                 axisHelperVerts.data(),
+                 GL_STATIC_DRAW);
 
     worldBorderBuffer = GLHelper::CreateBuffer();
     const std::vector<float> verts = {
@@ -169,7 +173,7 @@ void LevelRenderer::RenderViewport(const Viewport &vp)
     glDisable(GL_CULL_FACE);
 }
 
-void LevelRenderer::RenderLine(glm::vec3 start, glm::vec3 end, Color color, glm::mat4 &matrix, float thickness)
+void LevelRenderer::RenderLine(const glm::vec3 start, const glm::vec3 end, Color color, glm::mat4 &matrix, const float thickness)
 {
     glUseProgram(genericProgram);
 
@@ -179,12 +183,15 @@ void LevelRenderer::RenderLine(glm::vec3 start, glm::vec3 end, Color color, glm:
     glUniformMatrix4fv(glGetUniformLocation(genericProgram, "MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
 
     const std::vector<float> vertices = {
-        start.x, start.y, start.z,
-        end.x, end.y, end.z,
+            start.x, start.y, start.z,
+            end.x, end.y, end.z,
     };
 
     GLHelper::BindBuffer(workBufferNonIndexed);
-    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)), vertices.data(), GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER,
+                 static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)),
+                 vertices.data(),
+                 GL_STREAM_DRAW);
     const GLint posAttrLoc = glGetAttribLocation(genericProgram, "VERTEX");
     glVertexAttribPointer(posAttrLoc, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
     glEnableVertexAttribArray(posAttrLoc);
@@ -201,14 +208,16 @@ void LevelRenderer::RenderBillboardPoint(glm::vec3 position, float pointSize, Co
     glUniformMatrix4fv(glGetUniformLocation(genericProgram, "MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
 
     const std::vector<float> vertices = {
-        position.x, position.y, position.z
+            position.x, position.y, position.z
     };
 
     GLHelper::BindBuffer(workBufferNonIndexed);
-    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)), vertices.data(), GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER,
+                 static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)),
+                 vertices.data(),
+                 GL_STREAM_DRAW);
     const GLint posAttrLoc = glGetAttribLocation(genericProgram, "VERTEX");
     glVertexAttribPointer(posAttrLoc, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
     glEnableVertexAttribArray(posAttrLoc);
     glDrawArrays(GL_POINTS, 0, 1);
 }
-

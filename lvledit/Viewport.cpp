@@ -183,7 +183,6 @@ glm::vec2 Viewport::WorldToScreenPos(const glm::vec3 worldPos) const
 }
 
 
-
 glm::mat4 Viewport::GetMatrix() const
 {
     ImVec2 WindowSize;
@@ -279,5 +278,3 @@ glm::vec3 Viewport::GetWorldSpaceMousePos() const
 {
     return ScreenToWorldPos(GetLocalMousePos());
 }
-
-

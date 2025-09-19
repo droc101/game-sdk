@@ -24,12 +24,12 @@ class VertexTool final: public EditorTool
         void HandleDrag(const Viewport &vp, bool isHovered, glm::vec3 worldSpaceHover);
 
         void ProcessSectorHover(const Viewport &vp, const Sector &sector, bool isHovered,
-                                glm::vec2 screenSpaceHover, size_t s);
+                                glm::vec2 screenSpaceHover, size_t sectorIndex);
 
-        void ProcessVertexHover(const Viewport &vp, glm::vec2 vertexScreenSpace, glm::vec2 screenSpaceHover,
+        void ProcessVertexHover(const Viewport &viewport, glm::vec2 vertexScreenSpace, glm::vec2 screenSpaceHover,
                                 bool isHovered, Sector &sector, glm::vec2 endVertexScreenSpace,
-                                glm::vec3 worldSpaceHover, size_t i, size_t s,
-                                Color &c, glm::vec3 start_ceiling);
+                                glm::vec3 worldSpaceHover, size_t vertexIndex, size_t sectorIndex,
+                                Color &vertexColor, glm::vec3 startCeiling);
 
     private:
         enum class DragType: uint8_t
@@ -42,8 +42,8 @@ class VertexTool final: public EditorTool
         };
 
         DragType dragType = DragType::NONE;
-        size_t sectorIndex = 0;
-        size_t vertexIndex = 0;
+        size_t dragSectorIndex = 0;
+        size_t dragVertexIndex = 0;
         /// The difference from the first vertex to the 2nd vertex (firstVertex + lineDragModeSecondVertexOffset = secondVertex)
         glm::vec2 lineDragModeSecondVertexOffset{};
         /// The difference from the mouse to the 1st vertex (worldSpaceMouse - lineDragModeMouseOffset = firstVertex)

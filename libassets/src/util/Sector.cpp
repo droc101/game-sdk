@@ -13,20 +13,20 @@ Sector Sector::CreateExample()
     Sector s{};
     s.ceilingHeight = 1;
     s.floorHeight = -1;
-    s.lightColor = Color(1,1,1,1);
+    s.lightColor = Color(1, 1, 1, 1);
     s.floorMaterial = WallMaterial("level/floor_test");
     s.ceilingMaterial = WallMaterial("level/ceiling_test");
     s.points = {
-        {-5, -5},
-        {-5, 5},
-        {5, 5},
-        {5, -5},
+            {-5, -5},
+            {-5, 5},
+            {5, 5},
+            {5, -5},
     };
     s.wallMaterials = {
-        WallMaterial("level/wall_test"),
-        WallMaterial("level/wall_test"),
-        WallMaterial("level/wall_test"),
-        WallMaterial("level/wall_test")
+            WallMaterial("level/wall_test"),
+            WallMaterial("level/wall_test"),
+            WallMaterial("level/wall_test"),
+            WallMaterial("level/wall_test")
     };
     return s;
 }
@@ -49,12 +49,12 @@ bool Sector::IsValid()
     {
         const std::array<float, 2> &edge1_start = points[i];
         const std::array<float, 2> &edge1_end = points[(i + 1) % points.size()];
-        for (size_t j = i+1; j < points.size(); j++)
+        for (size_t j = i + 1; j < points.size(); j++)
         {
             const std::array<float, 2> &edge2_start = points[j];
             const std::array<float, 2> &edge2_end = points[(j + 1) % points.size()];
 
-            if (j == i || (j+1) % points.size() == i || (i + 1) % points.size() == j)
+            if (j == i || (j + 1) % points.size() == i || (i + 1) % points.size() == j)
             {
                 continue;
             }
@@ -146,4 +146,3 @@ std::array<float, 4> Sector::CalculateBBox() const
     }
     return {minPoint.at(0), minPoint.at(1), maxPoint.at(0), maxPoint.at(1)};
 }
-

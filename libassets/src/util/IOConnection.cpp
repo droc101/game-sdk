@@ -11,4 +11,3 @@ void IOConnection::Write(DataWriter &writer) const
     writer.WriteString(targetInput);
     // TODO write param
 }
-

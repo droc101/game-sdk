@@ -14,6 +14,7 @@
 #include <libassets/util/Error.h>
 #include <ostream>
 #include <vector>
+
 void LevelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
 {
     assert(buffer.empty());

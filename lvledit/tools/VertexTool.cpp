@@ -15,7 +15,10 @@
 
 void VertexTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {
-    if (!isHovered) { return; }
+    if (!isHovered)
+    {
+        return;
+    }
     if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
     {
         if (dragType == DragType::VERTEX)
@@ -23,10 +26,10 @@ void VertexTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                Sector &sector = LevelEditor::level.sectors.at(sectorIndex);
+                Sector &sector = LevelEditor::level.sectors.at(dragSectorIndex);
                 const glm::vec3 snapped = LevelEditor::SnapToGrid(worldSpaceHover);
-                sector.points[vertexIndex][0] = snapped.x;
-                sector.points[vertexIndex][1] = snapped.z;
+                sector.points[dragVertexIndex][0] = snapped.x;
+                sector.points[dragVertexIndex][1] = snapped.z;
             } else
             {
                 dragType = DragType::NONE;
@@ -36,16 +39,16 @@ void VertexTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                Sector &sector = LevelEditor::level.sectors.at(sectorIndex);
+                Sector &sector = LevelEditor::level.sectors.at(dragSectorIndex);
                 const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
                 const glm::vec2 startPos = worldHover2D - lineDragModeMouseOffset;
                 const glm::vec2 endPos = startPos - lineDragModeSecondVertexOffset;
                 const glm::vec3 startSnapped = LevelEditor::SnapToGrid(glm::vec3(startPos.x, 0, startPos.y));
                 const glm::vec3 endSnapped = LevelEditor::SnapToGrid(glm::vec3(endPos.x, 0, endPos.y));
-                sector.points[vertexIndex][0] = startSnapped.x;
-                sector.points[vertexIndex][1] = startSnapped.z;
-                sector.points[(vertexIndex+1)%sector.points.size()][0] = endSnapped.x;
-                sector.points[(vertexIndex+1)%sector.points.size()][1] = endSnapped.z;
+                sector.points[dragVertexIndex][0] = startSnapped.x;
+                sector.points[dragVertexIndex][1] = startSnapped.z;
+                sector.points[(dragVertexIndex + 1) % sector.points.size()][0] = endSnapped.x;
+                sector.points[(dragVertexIndex + 1) % sector.points.size()][1] = endSnapped.z;
             } else
             {
                 dragType = DragType::NONE;
@@ -59,7 +62,7 @@ void VertexTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-                Sector &sector = LevelEditor::level.sectors.at(sectorIndex);
+                Sector &sector = LevelEditor::level.sectors.at(dragSectorIndex);
                 const glm::vec3 snapped = LevelEditor::SnapToGrid(worldSpaceHover);
                 sector.ceilingHeight = snapped.y;
             } else
@@ -71,7 +74,7 @@ void VertexTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-                Sector &sector = LevelEditor::level.sectors.at(sectorIndex);
+                Sector &sector = LevelEditor::level.sectors.at(dragSectorIndex);
                 const glm::vec3 snapped = LevelEditor::SnapToGrid(worldSpaceHover);
                 sector.floorHeight = snapped.y;
             } else
@@ -83,7 +86,7 @@ void VertexTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
 }
 
 void VertexTool::ProcessSectorHover(const Viewport &vp, const Sector &sector, const bool isHovered,
-                                    const glm::vec2 screenSpaceHover, const size_t s)
+                                    const glm::vec2 screenSpaceHover, const size_t sectorIndex)
 {
     if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ && dragType == DragType::NONE)
     {
@@ -121,12 +124,12 @@ void VertexTool::ProcessSectorHover(const Viewport &vp, const Sector &sector, co
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
             if (ImGui::BeginTooltip())
             {
-                ImGui::Text("Sector %lu ceiling: %.2f units", s, sector.ceilingHeight);
+                ImGui::Text("Sector %lu ceiling: %.2f units", sectorIndex, sector.ceilingHeight);
                 ImGui::EndTooltip();
             }
             if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
-                sectorIndex = s;
+                dragSectorIndex = sectorIndex;
                 dragType = DragType::CEILING;
             }
         } else if (floorDistance <= 5)
@@ -134,45 +137,49 @@ void VertexTool::ProcessSectorHover(const Viewport &vp, const Sector &sector, co
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
             if (ImGui::BeginTooltip())
             {
-                ImGui::Text("Sector %lu floor: %.2f units", s, sector.floorHeight);
+                ImGui::Text("Sector %lu floor: %.2f units", sectorIndex, sector.floorHeight);
                 ImGui::EndTooltip();
             }
             if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
-                sectorIndex = s;
+                dragSectorIndex = sectorIndex;
                 dragType = DragType::FLOOR;
             }
         }
     }
 }
 
-void VertexTool::ProcessVertexHover(const Viewport &vp, const glm::vec2 vertexScreenSpace,
-                                    const glm::vec2 screenSpaceHover, const bool isHovered, Sector &
-                                    sector, const glm::vec2 endVertexScreenSpace, const glm::vec3 worldSpaceHover,
-                                    const size_t i, const size_t s, Color &c, const
-                                    glm::vec3 start_ceiling)
+void VertexTool::ProcessVertexHover(const Viewport &viewport, const glm::vec2 vertexScreenSpace,
+                                    const glm::vec2 screenSpaceHover, bool isHovered, Sector &sector,
+                                    const glm::vec2 endVertexScreenSpace, const glm::vec3 worldSpaceHover,
+                                    const size_t vertexIndex, const size_t sectorIndex, Color &vertexColor,
+                                    const glm::vec3 startCeiling)
 {
-    if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+    if (viewport.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
     {
         if (dragType == DragType::NONE)
         {
             if (distance(vertexScreenSpace, screenSpaceHover) <= 5)
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                c = Color(1, 0.5, .5, 1);
+                vertexColor = Color(1, 0.5, .5, 1);
                 if (ImGui::BeginTooltip())
                 {
-                    ImGui::Text("Sector %ld vertex %ld\n%.2f, %.2f", s, i, start_ceiling.x, start_ceiling.z);
+                    ImGui::Text("Sector %ld vertex %ld\n%.2f, %.2f",
+                                sectorIndex,
+                                vertexIndex,
+                                startCeiling.x,
+                                startCeiling.z);
                     ImGui::EndTooltip();
                 }
                 if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                 {
-                    vertexIndex = i;
-                    sectorIndex = s;
+                    dragVertexIndex = vertexIndex;
+                    dragSectorIndex = sectorIndex;
                     dragType = DragType::VERTEX;
                 } else if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right) && sector.points.size() > 3)
                 {
-                    sector.points.erase(sector.points.begin() + i);
+                    sector.points.erase(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex));
                 }
             } else if (LevelEditor::VecDistanceToLine2D(vertexScreenSpace, endVertexScreenSpace, screenSpaceHover) <= 5
                        && distance(endVertexScreenSpace, screenSpaceHover) > 5)
@@ -184,18 +191,21 @@ void VertexTool::ProcessVertexHover(const Viewport &vp, const glm::vec2 vertexSc
                     if (addPointMode)
                     {
                         const glm::vec2 newVertexPos = LevelEditor::SnapToGrid(worldSpaceHover);
-                        sector.points.insert(sector.points.begin() + i + 1, {newVertexPos.x, newVertexPos.y});
-                        sector.wallMaterials.insert(sector.wallMaterials.begin() + i + 1, sector.wallMaterials.at(i));
-                        vertexIndex = i + 1;
-                        sectorIndex = s;
+                        sector.points.insert(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex) + 1, {newVertexPos.x, newVertexPos.y});
+                        sector.wallMaterials.insert(sector.wallMaterials.begin() + static_cast<ptrdiff_t>(vertexIndex) + 1,
+                                                    sector.wallMaterials.at(vertexIndex));
+                        dragVertexIndex = vertexIndex + 1;
+                        dragSectorIndex = sectorIndex;
                         dragType = DragType::VERTEX;
                     } else
                     {
-                        vertexIndex = i;
-                        sectorIndex = s;
-                        const glm::vec2 startPoint = glm::vec2(sector.points.at(i).at(0), sector.points.at(i).at(1));
-                        const glm::vec2 endPoint = glm::vec2(sector.points.at((i + 1) % sector.points.size()).at(0),
-                                                             sector.points.at((i + 1) % sector.points.size()).at(1));
+                        dragVertexIndex = vertexIndex;
+                        dragSectorIndex = sectorIndex;
+                        const glm::vec2 startPoint = glm::vec2(sector.points.at(vertexIndex).at(0),
+                                                               sector.points.at(vertexIndex).at(1));
+                        const glm::vec2 endPoint = glm::vec2(
+                                sector.points.at((vertexIndex + 1) % sector.points.size()).at(0),
+                                sector.points.at((vertexIndex + 1) % sector.points.size()).at(1));
                         const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
                         lineDragModeSecondVertexOffset = startPoint - endPoint;
                         lineDragModeMouseOffset = worldHover2D - startPoint;
@@ -231,22 +241,22 @@ void VertexTool::RenderViewport(Viewport &vp)
 
     HandleDrag(vp, isHovered, worldSpaceHover);
 
-    for (size_t s = 0; s < LevelEditor::level.sectors.size(); s++)
+    for (size_t sectorIndex = 0; sectorIndex < LevelEditor::level.sectors.size(); sectorIndex++)
     {
-        Sector &sector = LevelEditor::level.sectors.at(s);
-        ProcessSectorHover(vp, sector, isHovered, screenSpaceHover, s);
+        Sector &sector = LevelEditor::level.sectors.at(sectorIndex);
+        ProcessSectorHover(vp, sector, isHovered, screenSpaceHover, sectorIndex);
 
-        for (size_t i = 0; i < sector.points.size(); i++)
+        for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
         {
-            const std::array<float, 2> &start2 = sector.points[i];
-            const std::array<float, 2> &end2 = sector.points[(i + 1) % sector.points.size()];
-            const glm::vec3 start_ceiling = glm::vec3(start2.at(0), sector.ceilingHeight, start2.at(1));
-            const glm::vec3 end_ceiling = glm::vec3(end2.at(0), sector.ceilingHeight, end2.at(1));
-            const glm::vec3 start_floor = glm::vec3(start2.at(0), sector.floorHeight, start2.at(1));
-            const glm::vec3 end_floor = glm::vec3(end2.at(0), sector.floorHeight, end2.at(1));
+            const std::array<float, 2> &start2 = sector.points[vertexIndex];
+            const std::array<float, 2> &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
+            const glm::vec3 startCeiling = glm::vec3(start2.at(0), sector.ceilingHeight, start2.at(1));
+            const glm::vec3 endCeiling = glm::vec3(end2.at(0), sector.ceilingHeight, end2.at(1));
+            const glm::vec3 startFloor = glm::vec3(start2.at(0), sector.floorHeight, start2.at(1));
+            const glm::vec3 endFloor = glm::vec3(end2.at(0), sector.floorHeight, end2.at(1));
 
-            const glm::vec2 vertexScreenSpace = vp.WorldToScreenPos(start_ceiling);
-            const glm::vec2 endVertexScreenSpace = vp.WorldToScreenPos(end_ceiling);
+            const glm::vec2 vertexScreenSpace = vp.WorldToScreenPos(startCeiling);
+            const glm::vec2 endVertexScreenSpace = vp.WorldToScreenPos(endCeiling);
             Color c = Color(1, 0, 0, 1);
             ProcessVertexHover(vp,
                                vertexScreenSpace,
@@ -255,22 +265,22 @@ void VertexTool::RenderViewport(Viewport &vp)
                                sector,
                                endVertexScreenSpace,
                                worldSpaceHover,
-                               i,
-                               s,
+                               vertexIndex,
+                               sectorIndex,
                                c,
-                               start_ceiling);
+                               startCeiling);
 
 
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderBillboardPoint(start_ceiling + glm::vec3(0, 0.1, 0), 10, c, matrix);
+                LevelRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), 10, c, matrix);
             } else
             {
-                LevelRenderer::RenderLine(start_floor, end_floor, Color(1, 1, 1, 1), matrix, 4);
-                LevelRenderer::RenderLine(start_ceiling, start_floor, Color(.6, .6, .6, 1), matrix, 4);
+                LevelRenderer::RenderLine(startFloor, endFloor, Color(1, 1, 1, 1), matrix, 4);
+                LevelRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
             }
 
-            LevelRenderer::RenderLine(start_ceiling, end_ceiling, Color(1, 1, 1, 1), matrix, 4);
+            LevelRenderer::RenderLine(startCeiling, endCeiling, Color(1, 1, 1, 1), matrix, 4);
         }
     }
 }

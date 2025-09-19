@@ -36,7 +36,7 @@ class LevelEditor
         inline static bool snapToGrid = true;
 
         static constexpr std::array<float, 9> gridSpacingValues = {
-            0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0
+                0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0
         };
 
         inline static std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new VertexTool());
@@ -46,9 +46,6 @@ class LevelEditor
         [[nodiscard]] static glm::vec3 SnapToGrid(glm::vec3 v);
 
         [[nodiscard]] static bool IsPointInBounds(glm::vec3 p);
-
-        /// NOT IMPLEMENTED
-        [[nodiscard]] static float VecDistanceToLine3D(glm::vec3 lineStart, glm::vec3 lineEnd, glm::vec3 testPoint);
 
         [[nodiscard]] static float VecDistanceToLine2D(glm::vec2 lineStart, glm::vec2 lineEnd, glm::vec2 testPoint);
 };

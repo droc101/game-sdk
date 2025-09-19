@@ -4,11 +4,13 @@
 
 #include "LevelEditor.h"
 #include <cmath>
-#include "tools/EditorTool.h"
 
 float LevelEditor::SnapToGrid(const float f)
 {
-    if (!snapToGrid) { return f; }
+    if (!snapToGrid)
+    {
+        return f;
+    }
     const float gridSize = gridSpacingValues.at(gridSpacingIndex);
     const float nf = f / gridSize;
     const float fs = std::round(nf);
@@ -38,8 +40,8 @@ float LevelEditor::VecDistanceToLine2D(const glm::vec2 lineStart, const glm::vec
     }
 
     const float u = (((testPoint.x - lineStart.x) * (lineEnd.x - lineStart.x)) +
-                      ((testPoint.y - lineStart.y) * (lineEnd.y - lineStart.y))) /
-                     (lineMag * lineMag);
+                     ((testPoint.y - lineStart.y) * (lineEnd.y - lineStart.y))) /
+                    (lineMag * lineMag);
 
     if (u < 0.0)
     {
@@ -56,11 +58,3 @@ float LevelEditor::VecDistanceToLine2D(const glm::vec2 lineStart, const glm::vec
 
     return distance(testPoint, intersection);
 }
-
-float LevelEditor::VecDistanceToLine3D(glm::vec3 /*lineStart*/, glm::vec3 /*lineEnd*/, glm::vec3  /*testPoint*/)
-{
-    // TODO
-    return FLT_MAX;
-}
-
-

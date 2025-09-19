@@ -8,4 +8,3 @@ WallMaterial::WallMaterial(const std::string &texture)
 {
     this->texture = texture;
 }
-

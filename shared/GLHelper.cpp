@@ -80,8 +80,8 @@ Error::ErrorCode GLHelper::CreateShader(const char *filename, const GLenum type,
 }
 
 Error::ErrorCode GLHelper::CreateProgram(const char *fragmentFilename,
-                                              const char *vertexFilename,
-                                              GLuint &outProgram)
+                                         const char *vertexFilename,
+                                         GLuint &outProgram)
 {
     GLuint vertexShader = 0;
     GLuint fragmentShader = 0;
@@ -174,4 +174,3 @@ glm::vec2 GLHelper::ScreenToNDC(const glm::vec2 screenPos, const glm::vec2 scree
 {
     return {screenPos.x / screenSize.x * 2.0f - 1.0f, 1.0f - screenPos.y / screenSize.y * 2.0f};
 }
-

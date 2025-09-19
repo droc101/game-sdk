@@ -135,4 +135,3 @@ void SharedMgr::ApplyTheme()
         ImGui::StyleColorsDark();
     }
 }
-

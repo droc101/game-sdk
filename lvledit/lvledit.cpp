@@ -287,7 +287,8 @@ int main()
         printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
     }
 
-    constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED;
+    constexpr SDL_WindowFlags windowFlags =
+            SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED;
     window = SDL_CreateWindow("lvledit (beta)", 1366, 778, windowFlags);
     if (window == nullptr)
     {
