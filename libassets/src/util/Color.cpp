@@ -20,11 +20,11 @@ Color::Color(DataReader &reader, const bool useFloats)
     {
         const uint32_t rgba = reader.Read<uint32_t>();
         color = {
-                // a r g b
-                (static_cast<float>((rgba >> 24) & 0xFF)) / 255.0f,
-                (static_cast<float>((rgba >> 16) & 0xFF)) / 255.0f,
-                (static_cast<float>((rgba >> 8) & 0xFF)) / 255.0f,
-                (static_cast<float>((rgba >> 0) & 0xFF)) / 255.0f,
+            // a r g b
+            (static_cast<float>((rgba >> 24) & 0xFF)) / 255.0f,
+            (static_cast<float>((rgba >> 16) & 0xFF)) / 255.0f,
+            (static_cast<float>((rgba >> 8) & 0xFF)) / 255.0f,
+            (static_cast<float>((rgba >> 0) & 0xFF)) / 255.0f,
         };
     }
 }
@@ -54,10 +54,10 @@ void Color::WriteUint32(DataWriter &writer) const
 Color::Color(const uint32_t rgba)
 {
     color = {
-            (static_cast<float>((rgba >> 24) & 0xFF)) / 255.0f,
-            (static_cast<float>((rgba >> 16) & 0xFF)) / 255.0f,
-            (static_cast<float>((rgba >> 8) & 0xFF)) / 255.0f,
-            (static_cast<float>((rgba >> 0) & 0xFF)) / 255.0f,
+        (static_cast<float>((rgba >> 24) & 0xFF)) / 255.0f,
+        (static_cast<float>((rgba >> 16) & 0xFF)) / 255.0f,
+        (static_cast<float>((rgba >> 8) & 0xFF)) / 255.0f,
+        (static_cast<float>((rgba >> 0) & 0xFF)) / 255.0f,
     };
 }
 

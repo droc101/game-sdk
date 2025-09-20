@@ -3,36 +3,33 @@
 //
 
 #include <array>
-#include <cassert>
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
-#include <libassets/util/StaticCollisionMesh.h>
 #include <assimp/config.h>
 #include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <assimp/vector3.h>
-#include <stdexcept>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/StaticCollisionMesh.h>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath)
 {
-    Assimp::Importer importer;
-    importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
-                                // NOLINT(*-unused-return-value)
-                                aiComponent_NORMALS |
-                                aiComponent_COLORS |
-                                aiComponent_TEXCOORDS);
-    const aiScene *scene = importer.ReadFile(objPath,
-                                             aiProcess_JoinIdenticalVertices |
-                                             aiProcess_ValidateDataStructure |
-                                             aiProcess_DropNormals |
-                                             aiProcess_RemoveComponent);
+    Assimp::Importer importer{};
+    (void)importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
+                                      aiComponent_NORMALS | aiComponent_COLORS | aiComponent_TEXCOORDS);
+    constexpr uint32_t importerFlags = aiProcess_JoinIdenticalVertices |
+                                       aiProcess_ValidateDataStructure |
+                                       aiProcess_DropNormals |
+                                       aiProcess_RemoveComponent;
+    const aiScene *scene = importer.ReadFile(objPath, importerFlags);
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
@@ -68,9 +65,9 @@ StaticCollisionMesh::StaticCollisionMesh(DataReader &reader)
         for (int v = 0; v < 3; v++)
         {
             const std::array<float, 3> vertex = {
-                    reader.Read<float>(),
-                    reader.Read<float>(),
-                    reader.Read<float>()
+                reader.Read<float>(),
+                reader.Read<float>(),
+                reader.Read<float>(),
             };
             vertices.push_back(vertex);
         }

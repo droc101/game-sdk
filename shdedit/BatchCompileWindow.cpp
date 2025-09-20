@@ -3,21 +3,21 @@
 //
 
 #include "BatchCompileWindow.h"
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_video.h>
+#include <algorithm>
+#include <array>
+#include <cstddef>
 #include <cstdio>
+#include <filesystem>
 #include <format>
 #include <imgui.h>
+#include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
-#include <cstddef>
 #include <SDL3/SDL_dialog.h>
-#include <array>
-#include <libassets/asset/ShaderAsset.h>
-#include <algorithm>
-#include <filesystem>
-#include <string>
+#include <SDL3/SDL_error.h>
 #include <SDL3/SDL_messagebox.h>
+#include <SDL3/SDL_video.h>
+#include <string>
 #include "DialogFilters.h"
 
 void BatchCompileWindow::Show()
@@ -71,9 +71,8 @@ Error::ErrorCode BatchCompileWindow::Execute()
         return Error::ErrorCode::INVALID_DIRECTORY;
     }
 
-    const ShaderAsset::ShaderPlatform plat = targetOpenGL
-                                                 ? ShaderAsset::ShaderPlatform::PLATFORM_OPENGL
-                                                 : ShaderAsset::ShaderPlatform::PLATFORM_VULKAN;
+    const ShaderAsset::ShaderPlatform plat = targetOpenGL ? ShaderAsset::ShaderPlatform::PLATFORM_OPENGL
+                                                          : ShaderAsset::ShaderPlatform::PLATFORM_VULKAN;
 
     for (size_t i = 0; i < files.size(); i++)
     {
@@ -187,7 +186,6 @@ void BatchCompileWindow::Render(SDL_Window *window)
                             types.erase(types.begin() + static_cast<ptrdiff_t>(i));
                             types.erase(types.begin() + static_cast<ptrdiff_t>(i));
                         }
-
                     }
                     ImGui::EndTable();
                 }

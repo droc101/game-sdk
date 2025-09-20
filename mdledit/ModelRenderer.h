@@ -74,16 +74,16 @@ class ModelRenderer
     private:
         struct GLModelLod
         {
-            GLuint vao{};
-            GLuint vbo{};
-            std::vector<GLuint> ebos{};
+                GLuint vao{};
+                GLuint vbo{};
+                std::vector<GLuint> ebos{};
         };
 
         struct GLHull
         {
-            GLuint vao{};
-            GLuint vbo{};
-            size_t elements{};
+                GLuint vao{};
+                GLuint vbo{};
+                size_t elements{};
         };
 
         static inline ModelAsset model{};

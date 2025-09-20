@@ -11,9 +11,9 @@
 #include <libassets/util/Error.h>
 #include <libassets/util/Material.h>
 #include <libassets/util/ModelLod.h>
+#include <libassets/util/StaticCollisionMesh.h>
 #include <string>
 #include <vector>
-#include <libassets/util/StaticCollisionMesh.h>
 
 class ModelAsset final
 {

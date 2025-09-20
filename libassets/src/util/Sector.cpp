@@ -17,16 +17,16 @@ Sector Sector::CreateExample()
     s.floorMaterial = WallMaterial("level/floor_test");
     s.ceilingMaterial = WallMaterial("level/ceiling_test");
     s.points = {
-            {-5, -5},
-            {-5, 5},
-            {5, 5},
-            {5, -5},
+        {-5, -5},
+        {-5, 5},
+        {5, 5},
+        {5, -5},
     };
     s.wallMaterials = {
-            WallMaterial("level/wall_test"),
-            WallMaterial("level/wall_test"),
-            WallMaterial("level/wall_test"),
-            WallMaterial("level/wall_test")
+        WallMaterial("level/wall_test"),
+        WallMaterial("level/wall_test"),
+        WallMaterial("level/wall_test"),
+        WallMaterial("level/wall_test"),
     };
     return s;
 }
@@ -73,8 +73,8 @@ Sector::SegmentOrientation Sector::GetOrientation(const std::array<float, 2> &po
                                                   const std::array<float, 2> &pointB,
                                                   const std::array<float, 2> &pointC)
 {
-    const float cross = ((pointB[1] - pointA[1]) * (pointC[0] - pointB[0]) - (pointB[0] - pointA[0]) * (
-                             pointC[1] - pointB[1]));
+    const float cross = ((pointB[1] - pointA[1]) * (pointC[0] - pointB[0]) -
+                         (pointB[0] - pointA[0]) * (pointC[1] - pointB[1]));
     if (cross == 0)
     {
         return SegmentOrientation::COLINEAR;
@@ -82,7 +82,8 @@ Sector::SegmentOrientation Sector::GetOrientation(const std::array<float, 2> &po
     return cross > 0 ? SegmentOrientation::CLOCKWISE : SegmentOrientation::COUNTERCLOCKWISE;
 }
 
-bool Sector::OnSegment(const std::array<float, 2> &segment_start, const std::array<float, 2> &point,
+bool Sector::OnSegment(const std::array<float, 2> &segment_start,
+                       const std::array<float, 2> &point,
                        const std::array<float, 2> &segment_end)
 {
     const bool xBoundsCheckA = std::min(segment_start[0], segment_end[0]) <= point[0];
@@ -92,8 +93,10 @@ bool Sector::OnSegment(const std::array<float, 2> &segment_start, const std::arr
     return xBoundsCheckA && xBoundsCheckB && yBoundsCheckA && yBoundsCheckB;
 }
 
-bool Sector::CheckIntersection(const std::array<float, 2> &segmentAStart, const std::array<float, 2> &segmentAEnd,
-                               const std::array<float, 2> &segmentBStart, const std::array<float, 2> &segmentBEnd)
+bool Sector::CheckIntersection(const std::array<float, 2> &segmentAStart,
+                               const std::array<float, 2> &segmentAEnd,
+                               const std::array<float, 2> &segmentBStart,
+                               const std::array<float, 2> &segmentBEnd)
 {
     const SegmentOrientation orientationA = GetOrientation(segmentAStart, segmentAEnd, segmentBStart);
     const SegmentOrientation orientationB = GetOrientation(segmentAStart, segmentAEnd, segmentBEnd);

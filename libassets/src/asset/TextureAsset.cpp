@@ -134,8 +134,7 @@ Error::ErrorCode TextureAsset::SaveAsImage(const char *imagePath, const ImageFor
     int code = 1; // default case fails
     switch (format)
     {
-            using enum ImageFormat;
-        case IMAGE_FORMAT_PNG:
+        case ImageFormat::IMAGE_FORMAT_PNG:
             code = stbi_write_png(imagePath,
                                   static_cast<int>(width),
                                   static_cast<int>(height),
@@ -143,13 +142,13 @@ Error::ErrorCode TextureAsset::SaveAsImage(const char *imagePath, const ImageFor
                                   pixels.data(),
                                   static_cast<int>(width * sizeof(uint32_t)));
             break;
-        case IMAGE_FORMAT_TGA:
+        case ImageFormat::IMAGE_FORMAT_TGA:
             code = stbi_write_tga(imagePath, static_cast<int>(width), static_cast<int>(height), 4, pixels.data());
             break;
-        case IMAGE_FORMAT_BMP:
+        case ImageFormat::IMAGE_FORMAT_BMP:
             code = stbi_write_bmp(imagePath, static_cast<int>(width), static_cast<int>(height), 4, pixels.data());
             break;
-        default: ;
+        default:;
     }
     return code != 0 ? Error::ErrorCode::OK : Error::ErrorCode::UNKNOWN;
 }

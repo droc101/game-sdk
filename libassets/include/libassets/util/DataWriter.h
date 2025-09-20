@@ -7,9 +7,9 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <libassets/libassets.h>
 #include <libassets/util/Primitive.h>
 #include <vector>
-#include <libassets/libassets.h>
 
 class DataWriter
 {

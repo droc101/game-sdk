@@ -4,10 +4,10 @@
 
 #pragma once
 #include <array>
-#include <libassets/util/ModelVertex.h>
-#include <vector>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/ModelVertex.h>
+#include <vector>
 
 /**
  * This is basically an AABB, but in-engine it is not axis-locked, so it isn't called AABB here to avoid confusion.

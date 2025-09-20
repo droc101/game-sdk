@@ -11,7 +11,7 @@
 class Param
 {
     public:
-        enum class ParamType: uint8_t
+        enum class ParamType : uint8_t
         {
             PARAM_TYPE_BYTE,
             PARAM_TYPE_INTEGER,

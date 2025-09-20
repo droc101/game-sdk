@@ -6,8 +6,8 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <libassets/util/DataReader.h>
 #include <libassets/libassets.h>
+#include <libassets/util/DataReader.h>
 
 class Asset
 {

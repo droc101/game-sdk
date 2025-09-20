@@ -5,8 +5,8 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <string>
 #include <libassets/util/DataWriter.h>
+#include <string>
 #include <vector>
 
 void DataWriter::CopyToVector(std::vector<uint8_t> &vector) const

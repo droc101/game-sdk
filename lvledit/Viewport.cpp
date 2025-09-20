@@ -4,9 +4,9 @@
 
 #include "Viewport.h"
 #include <cassert>
-#include <string>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <string>
 #include "GLHelper.h"
 #include "imgui.h"
 #include "LevelEditor.h"
@@ -60,24 +60,24 @@ void Viewport::RenderImGui()
     ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetColorU32(ImGuiCol_WindowBg));
     ImGui::PushStyleColor(ImGuiCol_WindowBg, 0);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 4);
-    ImGui::Begin(("##_" + title).c_str(),
-                 nullptr,
-                 ImGuiWindowFlags_NoCollapse |
-                 ImGuiWindowFlags_NoResize |
-                 ImGuiWindowFlags_NoMove |
-                 ImGuiWindowFlags_NoSavedSettings |
-                 ImGuiWindowFlags_NoBringToFrontOnFocus |
-                 ImGuiWindowFlags_NoDocking |
-                 ImGuiWindowFlags_NoDecoration);
+    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
+                                             ImGuiWindowFlags_NoResize |
+                                             ImGuiWindowFlags_NoMove |
+                                             ImGuiWindowFlags_NoSavedSettings |
+                                             ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                             ImGuiWindowFlags_NoDocking |
+                                             ImGuiWindowFlags_NoDecoration;
+    ImGui::Begin(("##_" + title).c_str(), nullptr, windowFlags);
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetColorU32(ImGuiCol_WindowBg));
 
-    if (ImGui::BeginChild("_vp_stats",
-                          ImVec2(0, 0),
-                          ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeX | ImGuiChildFlags_AutoResizeY |
-                          ImGuiChildFlags_Border))
+    constexpr ImGuiChildFlags childFlags = ImGuiChildFlags_AlwaysAutoResize |
+                                           ImGuiChildFlags_AutoResizeX |
+                                           ImGuiChildFlags_AutoResizeY |
+                                           ImGuiChildFlags_Border;
+    if (ImGui::BeginChild("_vp_stats", ImVec2(0, 0), childFlags))
     {
         ImGui::TextUnformatted(title.c_str());
         if (LevelEditor::drawViewportInfo)
@@ -86,16 +86,16 @@ void Viewport::RenderImGui()
                         scrollCenterPos.x,
                         scrollCenterPos.y,
                         zoom,
-                        LevelEditor::gridSpacingValues.at(LevelEditor::gridSpacingIndex));
+                        LevelEditor::GRID_SPACING_VALUES.at(LevelEditor::gridSpacingIndex));
         }
         ImGui::EndChild();
     }
     ImGui::PopStyleColor();
     ImGui::PopStyleVar();
 
-    if (ImGui::IsWindowHovered() && !(ImGui::IsMouseDown(ImGuiMouseButton_Left)
-                                      || ImGui::IsMouseDown(ImGuiMouseButton_Right) || ImGui::IsMouseDown(
-                                              ImGuiMouseButton_Middle)))
+    if (ImGui::IsWindowHovered() && !(ImGui::IsMouseDown(ImGuiMouseButton_Left) ||
+                                      ImGui::IsMouseDown(ImGuiMouseButton_Right) ||
+                                      ImGui::IsMouseDown(ImGuiMouseButton_Middle)))
     {
         ImGui::SetWindowFocus();
     }
@@ -146,8 +146,8 @@ glm::vec3 Viewport::ScreenToWorldPos(ImVec2 localScreenPos) const
     ImVec2 WindowSize;
     ImVec2 WindowPos;
     GetWindowRect(WindowPos, WindowSize);
-    const glm::vec2 ndcPos2d =
-            GLHelper::ScreenToNDC({localScreenPos.x, localScreenPos.y}, {WindowSize.x, WindowSize.y});
+    const glm::vec2 ndcPos2d = GLHelper::ScreenToNDC({localScreenPos.x, localScreenPos.y},
+                                                     {WindowSize.x, WindowSize.y});
     const glm::mat4 matrix = GetMatrix();
     const glm::mat4 invMatrix = glm::inverse(matrix);
     const glm::vec4 clipPos = glm::vec4(ndcPos2d, 0.0f, 1.0f);

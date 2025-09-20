@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <vector>
 #include <cstddef>
+#include <vector>
 
 template<typename T> static void MoveBack(std::vector<T> &vector, size_t index)
 {

@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include <libassets/util/Error.h>
+#include <SDL3/SDL_video.h>
 #include <string>
 #include <vector>
-#include <SDL3/SDL_video.h>
-#include <libassets/util/Error.h>
 
 class BatchDecompileWindow
 {
@@ -19,9 +19,9 @@ class BatchDecompileWindow
         static void Render(SDL_Window *window);
 
     private:
-        inline static bool visible = false;
-        inline static std::vector<std::string> files;
-        inline static std::string outputFolder;
+        static inline bool visible = false;
+        static inline std::vector<std::string> files;
+        static inline std::string outputFolder;
 
         static void selectCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/);
         static void outPathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/);

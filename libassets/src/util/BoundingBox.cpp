@@ -8,9 +8,9 @@
 #include <libassets/util/BoundingBox.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/ModelVertex.h>
 #include <limits>
 #include <vector>
-#include <libassets/util/ModelVertex.h>
 
 BoundingBox::BoundingBox(DataReader &reader)
 {
@@ -49,10 +49,16 @@ BoundingBox::BoundingBox(const std::vector<ModelVertex> &verts)
         printf("WARN: Tried to create AABB with 0 points!");
         return;
     }
-    std::array<float, 3> minPoint = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max(),
-                                     std::numeric_limits<float>::max()};
-    std::array<float, 3> maxPoint = {std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(),
-                                     std::numeric_limits<float>::lowest()};
+    std::array<float, 3> minPoint = {
+        std::numeric_limits<float>::max(),
+        std::numeric_limits<float>::max(),
+        std::numeric_limits<float>::max(),
+    };
+    std::array<float, 3> maxPoint = {
+        std::numeric_limits<float>::lowest(),
+        std::numeric_limits<float>::lowest(),
+        std::numeric_limits<float>::lowest(),
+    };
 
     for (const ModelVertex &vert: verts)
     {
@@ -71,14 +77,14 @@ BoundingBox::BoundingBox(const std::vector<ModelVertex> &verts)
     }
 
     origin = {
-            (minPoint.at(0) + maxPoint.at(0)) * 0.5f,
-            (minPoint.at(1) + maxPoint.at(1)) * 0.5f,
-            (minPoint.at(2) + maxPoint.at(2)) * 0.5f
+        (minPoint.at(0) + maxPoint.at(0)) * 0.5f,
+        (minPoint.at(1) + maxPoint.at(1)) * 0.5f,
+        (minPoint.at(2) + maxPoint.at(2)) * 0.5f,
     };
     extents = {
-            (maxPoint.at(0) - minPoint.at(0)) * 0.5f,
-            (maxPoint.at(1) - minPoint.at(1)) * 0.5f,
-            (maxPoint.at(2) - minPoint.at(2)) * 0.5f
+        (maxPoint.at(0) - minPoint.at(0)) * 0.5f,
+        (maxPoint.at(1) - minPoint.at(1)) * 0.5f,
+        (maxPoint.at(2) - minPoint.at(2)) * 0.5f,
     };
 }
 
@@ -89,9 +95,11 @@ BoundingBox::BoundingBox(const std::vector<std::array<float, 3>> &verts)
         printf("WARN: Tried to create AABB with 0 points!");
         return;
     }
-    std::array<float, 3> minPoint = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max(),
+    std::array<float, 3> minPoint = {std::numeric_limits<float>::max(),
+                                     std::numeric_limits<float>::max(),
                                      std::numeric_limits<float>::max()};
-    std::array<float, 3> maxPoint = {std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(),
+    std::array<float, 3> maxPoint = {std::numeric_limits<float>::lowest(),
+                                     std::numeric_limits<float>::lowest(),
                                      std::numeric_limits<float>::lowest()};
 
     for (const std::array<float, 3> &vert: verts)
@@ -111,14 +119,14 @@ BoundingBox::BoundingBox(const std::vector<std::array<float, 3>> &verts)
     }
 
     origin = {
-            (minPoint.at(0) + maxPoint.at(0)) * 0.5f,
-            (minPoint.at(1) + maxPoint.at(1)) * 0.5f,
-            (minPoint.at(2) + maxPoint.at(2)) * 0.5f
+        (minPoint.at(0) + maxPoint.at(0)) * 0.5f,
+        (minPoint.at(1) + maxPoint.at(1)) * 0.5f,
+        (minPoint.at(2) + maxPoint.at(2)) * 0.5f,
     };
     extents = {
-            (maxPoint.at(0) - minPoint.at(0)) * 0.5f,
-            (maxPoint.at(1) - minPoint.at(1)) * 0.5f,
-            (maxPoint.at(2) - minPoint.at(2)) * 0.5f
+        (maxPoint.at(0) - minPoint.at(0)) * 0.5f,
+        (maxPoint.at(1) - minPoint.at(1)) * 0.5f,
+        (maxPoint.at(2) - minPoint.at(2)) * 0.5f,
     };
 }
 
@@ -136,9 +144,9 @@ std::array<std::array<float, 3>, 8> BoundingBox::GetPoints() const
             for (const int dz: {-1, 1})
             {
                 points.at(i) = {
-                        origin.at(0) + static_cast<float>(dx) * extents.at(0),
-                        origin.at(1) + static_cast<float>(dy) * extents.at(1),
-                        origin.at(2) + static_cast<float>(dz) * extents.at(2)
+                    origin.at(0) + static_cast<float>(dx) * extents.at(0),
+                    origin.at(1) + static_cast<float>(dy) * extents.at(1),
+                    origin.at(2) + static_cast<float>(dz) * extents.at(2),
                 };
                 i++;
             }

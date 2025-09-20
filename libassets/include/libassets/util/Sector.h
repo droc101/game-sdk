@@ -36,10 +36,12 @@ class Sector
             COUNTERCLOCKWISE = 2
         };
 
-        static SegmentOrientation GetOrientation(const std::array<float, 2> &pointA, const std::array<float, 2> &pointB,
+        static SegmentOrientation GetOrientation(const std::array<float, 2> &pointA,
+                                                 const std::array<float, 2> &pointB,
                                                  const std::array<float, 2> &pointC);
 
-        static bool OnSegment(const std::array<float, 2> &segment_start, const std::array<float, 2> &point,
+        static bool OnSegment(const std::array<float, 2> &segment_start,
+                              const std::array<float, 2> &point,
                               const std::array<float, 2> &segment_end);
 
         static bool CheckIntersection(const std::array<float, 2> &segmentAStart,

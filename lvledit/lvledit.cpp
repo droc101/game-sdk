@@ -1,8 +1,8 @@
 #include <cstdio>
 #include <format>
 #include <imgui.h>
-#include <imgui_impl_sdl3.h>
 #include <imgui_impl_opengl3.h>
+#include <imgui_impl_sdl3.h>
 #include <libassets/asset/LevelAsset.h>
 #include <libassets/util/Error.h>
 #include <SDL3/SDL_dialog.h>
@@ -32,12 +32,17 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     if (ImGui::Shortcut(ImGuiKey_RightBracket, ImGuiInputFlags_RouteGlobal))
     {
         LevelEditor::gridSpacingIndex += 1;
-        if (LevelEditor::gridSpacingIndex >= LevelEditor::gridSpacingValues.size())
-            LevelEditor::gridSpacingIndex = LevelEditor::gridSpacingValues.size() - 1;
+        if (LevelEditor::gridSpacingIndex >= LevelEditor::GRID_SPACING_VALUES.size())
+        {
+            LevelEditor::gridSpacingIndex = LevelEditor::GRID_SPACING_VALUES.size() - 1;
+        }
     } else if (ImGui::Shortcut(ImGuiKey_LeftBracket, ImGuiInputFlags_RouteGlobal))
     {
         LevelEditor::gridSpacingIndex -= 1;
-        if (LevelEditor::gridSpacingIndex < 0) LevelEditor::gridSpacingIndex = 0;
+        if (LevelEditor::gridSpacingIndex < 0)
+        {
+            LevelEditor::gridSpacingIndex = 0;
+        }
     } else if (ImGui::Shortcut(ImGuiKey_Backslash, ImGuiInputFlags_RouteGlobal))
     {
         LevelEditor::gridSpacingIndex = 2;
@@ -105,9 +110,9 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             if (ImGui::MenuItem("Larger Grid", "]"))
             {
                 LevelEditor::gridSpacingIndex += 1;
-                if (LevelEditor::gridSpacingIndex >= LevelEditor::gridSpacingValues.size())
+                if (LevelEditor::gridSpacingIndex >= LevelEditor::GRID_SPACING_VALUES.size())
                 {
-                    LevelEditor::gridSpacingIndex = LevelEditor::gridSpacingValues.size() - 1;
+                    LevelEditor::gridSpacingIndex = LevelEditor::GRID_SPACING_VALUES.size() - 1;
                 }
             }
             if (ImGui::MenuItem("Reset Grid", "\\"))
@@ -181,13 +186,18 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             if (ImGui::MenuItem("Smaller Grid", "["))
             {
                 LevelEditor::gridSpacingIndex -= 1;
-                if (LevelEditor::gridSpacingIndex < 0) LevelEditor::gridSpacingIndex = 0;
+                if (LevelEditor::gridSpacingIndex < 0)
+                {
+                    LevelEditor::gridSpacingIndex = 0;
+                }
             }
             if (ImGui::MenuItem("Larger Grid", "]"))
             {
                 LevelEditor::gridSpacingIndex += 1;
-                if (LevelEditor::gridSpacingIndex >= LevelEditor::gridSpacingValues.size())
-                    LevelEditor::gridSpacingIndex = LevelEditor::gridSpacingValues.size() - 1;
+                if (LevelEditor::gridSpacingIndex >= LevelEditor::GRID_SPACING_VALUES.size())
+                {
+                    LevelEditor::gridSpacingIndex = LevelEditor::GRID_SPACING_VALUES.size() - 1;
+                }
             }
             if (ImGui::MenuItem("Reset Grid", "\\"))
             {
@@ -216,13 +226,12 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     const ImVec2 workPos{viewport->WorkPos.x, viewport->WorkPos.y};
     ImGui::SetNextWindowPos(workPos);
     ImGui::SetNextWindowSize(workSize);
-    ImGui::Begin("toolbar",
-                 nullptr,
-                 ImGuiWindowFlags_NoDecoration |
-                 ImGuiWindowFlags_NoMove |
-                 ImGuiWindowFlags_NoSavedSettings |
-                 ImGuiWindowFlags_NoBringToFrontOnFocus |
-                 ImGuiWindowFlags_NoDocking);
+    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
+                                             ImGuiWindowFlags_NoMove |
+                                             ImGuiWindowFlags_NoSavedSettings |
+                                             ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                             ImGuiWindowFlags_NoDocking;
+    ImGui::Begin("toolbar", nullptr, windowFlags);
     // static int tool = static_cast<int>(LevelEditor::tool);
     // ImGui::RadioButton("Select", &tool, 0);
     // ImGui::SameLine();
@@ -287,8 +296,10 @@ int main()
         printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
     }
 
-    constexpr SDL_WindowFlags windowFlags =
-            SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED;
+    constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN |
+                                            SDL_WINDOW_OPENGL |
+                                            SDL_WINDOW_RESIZABLE |
+                                            SDL_WINDOW_MAXIMIZED;
     window = SDL_CreateWindow("lvledit (beta)", 1366, 778, windowFlags);
     if (window == nullptr)
     {

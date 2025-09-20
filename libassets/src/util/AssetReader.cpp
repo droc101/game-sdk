@@ -57,7 +57,7 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
     if (inflateInit2(&zStream, MAX_WBITS | 16) != Z_OK)
     {
         printf(std::format("inflateInit2() failed with error: {}", zStream.msg == nullptr ? "(null)" : zStream.msg)
-                .c_str());
+                       .c_str());
         return Error::ErrorCode::COMPRESSION_ERROR;
     }
 
@@ -67,7 +67,7 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
         if (inflateReturnValue != Z_OK)
         {
             printf(std::format("inflate() failed with error: {}", zStream.msg == nullptr ? "(null)" : zStream.msg)
-                    .c_str());
+                           .c_str());
             return Error::ErrorCode::COMPRESSION_ERROR;
         }
         inflateReturnValue = inflate(&zStream, Z_NO_FLUSH);
@@ -76,7 +76,7 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
     if (inflateEnd(&zStream) != Z_OK)
     {
         printf(std::format("inflateEnd() failed with error: {}", zStream.msg == nullptr ? "(null)" : zStream.msg)
-                .c_str());
+                       .c_str());
         return Error::ErrorCode::COMPRESSION_ERROR;
     }
 

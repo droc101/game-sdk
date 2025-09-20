@@ -15,5 +15,4 @@ class EditorTool
         virtual void RenderViewport(Viewport &vp) = 0;
 
         virtual void RenderToolWindow() = 0;
-
 };

@@ -11,7 +11,7 @@ float LevelEditor::SnapToGrid(const float f)
     {
         return f;
     }
-    const float gridSize = gridSpacingValues.at(gridSpacingIndex);
+    const float gridSize = GRID_SPACING_VALUES.at(gridSpacingIndex);
     const float nf = f / gridSize;
     const float fs = std::round(nf);
     return fs * gridSize;

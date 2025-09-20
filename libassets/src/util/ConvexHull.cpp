@@ -12,13 +12,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <libassets/util/BoundingBox.h>
 #include <libassets/util/ConvexHull.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <libassets/util/BoundingBox.h>
 
 ConvexHull::ConvexHull(DataReader &reader)
 {
@@ -38,17 +38,14 @@ ConvexHull::ConvexHull(DataReader &reader)
 
 ConvexHull::ConvexHull(const std::string &objPath)
 {
-    Assimp::Importer importer;
-    importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
-                                // NOLINT(*-unused-return-value)
-                                aiComponent_NORMALS |
-                                aiComponent_COLORS |
-                                aiComponent_TEXCOORDS);
+    Assimp::Importer importer{};
+    (void)importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
+                                      aiComponent_NORMALS | aiComponent_COLORS | aiComponent_TEXCOORDS);
     const aiScene *scene = importer.ReadFile(objPath,
                                              aiProcess_JoinIdenticalVertices |
-                                             aiProcess_ValidateDataStructure |
-                                             aiProcess_DropNormals |
-                                             aiProcess_RemoveComponent);
+                                                     aiProcess_ValidateDataStructure |
+                                                     aiProcess_DropNormals |
+                                                     aiProcess_RemoveComponent);
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
@@ -125,16 +122,13 @@ void ConvexHull::CalculateOffset()
 void ConvexHull::ImportMultiple(const std::string &path, std::vector<ConvexHull> &output)
 {
     Assimp::Importer importer;
-    importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
-                                // NOLINT(*-unused-return-value)
-                                aiComponent_NORMALS |
-                                aiComponent_COLORS |
-                                aiComponent_TEXCOORDS);
+    (void)importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
+                                      aiComponent_NORMALS | aiComponent_COLORS | aiComponent_TEXCOORDS);
     const aiScene *scene = importer.ReadFile(path,
                                              aiProcess_JoinIdenticalVertices |
-                                             aiProcess_ValidateDataStructure |
-                                             aiProcess_DropNormals |
-                                             aiProcess_RemoveComponent);
+                                                     aiProcess_ValidateDataStructure |
+                                                     aiProcess_DropNormals |
+                                                     aiProcess_RemoveComponent);
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {

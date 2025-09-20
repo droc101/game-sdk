@@ -84,9 +84,8 @@ Error::ErrorCode ShaderAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     if (platform == ShaderPlatform::PLATFORM_VULKAN)
     {
         std::vector<uint32_t> spirv;
-        const vk::ShaderStageFlagBits stage = type == ShaderType::SHADER_TYPE_VERT
-                                                  ? vk::ShaderStageFlagBits::eVertex
-                                                  : vk::ShaderStageFlagBits::eFragment;
+        const vk::ShaderStageFlagBits stage = type == ShaderType::SHADER_TYPE_VERT ? vk::ShaderStageFlagBits::eVertex
+                                                                                   : vk::ShaderStageFlagBits::eFragment;
         ShaderCompiler compiler = ShaderCompiler(glsl, stage);
         compiler.SetTargetVersions(glslang::EShTargetClientVersion::EShTargetVulkan_1_2,
                                    glslang::EShTargetLanguageVersion::EShTargetSpv_1_0);

@@ -3,14 +3,14 @@
 //
 
 #include "gtex_thumbs.h"
+#include <cstdint>
+#include <kio/thumbnailcreator.h>
+#include <KPluginFactory>
+#include <libassets/asset/TextureAsset.h>
+#include <libassets/util/Error.h>
 #include <QFile>
 #include <QImage>
-#include <KPluginFactory>
-#include <kio/thumbnailcreator.h>
-#include <libassets/asset/TextureAsset.h>
 #include <vector>
-#include <libassets/util/Error.h>
-#include <cstdint>
 
 K_PLUGIN_CLASS_WITH_JSON(gtex_thumbs, "gtex_thumbs.json")
 
@@ -35,10 +35,11 @@ KIO::ThumbnailResult gtex_thumbs::create(const KIO::ThumbnailRequest &request)
     {
         pixel = __builtin_bswap32(pixel);
     }
-    const auto texture = QImage(reinterpret_cast<const uint8_t *>(pixels.data()),
-                                t.GetWidth(),
-                                t.GetHeight(),
-                                QImage::Format_RGBA8888).convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    const QImage texture = QImage(reinterpret_cast<const uint8_t *>(pixels.data()),
+                                  t.GetWidth(),
+                                  t.GetHeight(),
+                                  QImage::Format_RGBA8888)
+                                   .convertToFormat(QImage::Format_ARGB32_Premultiplied);
     if (texture.isNull())
     {
         return KIO::ThumbnailResult::fail();

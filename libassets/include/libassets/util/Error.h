@@ -7,9 +7,9 @@
 #include <algorithm>
 #include <cstdint>
 #include <format>
+#include <libassets/libassets.h>
 #include <string>
 #include <utility>
-#include <libassets/libassets.h>
 
 class Error
 {
@@ -70,14 +70,14 @@ class Error
 
 template<> struct std::formatter<Error::ErrorCode, char>
 {
-    template<class ParseContext> constexpr ParseContext::iterator parse(ParseContext &context)
-    {
-        return context.begin();
-    }
+        template<class ParseContext> constexpr ParseContext::iterator parse(ParseContext &context)
+        {
+            return context.begin();
+        }
 
-    template<class FormatContext> FormatContext::iterator format(const Error::ErrorCode errorCode,
-                                                                 FormatContext &context) const
-    {
-        return std::ranges::copy(std::move(Error::ErrorString(errorCode)), context.out()).out;
-    }
+        template<class FormatContext> FormatContext::iterator format(const Error::ErrorCode errorCode,
+                                                                     FormatContext &context) const
+        {
+            return std::ranges::copy(std::move(Error::ErrorString(errorCode)), context.out()).out;
+        }
 };

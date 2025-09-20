@@ -6,8 +6,8 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include "GLHelper.h"
-#include "Viewport.h"
 #include "libassets/util/Color.h"
+#include "Viewport.h"
 
 class LevelRenderer
 {
@@ -28,9 +28,9 @@ class LevelRenderer
         static inline GLuint lineProgram = 0;
         static inline GLuint gridProgram = 0;
 
-        inline static GLHelper::GL_Buffer axisHelperBuffer{};
-        inline static GLHelper::GL_Buffer worldBorderBuffer{};
+        static inline GLHelper::GL_Buffer axisHelperBuffer{};
+        static inline GLHelper::GL_Buffer worldBorderBuffer{};
 
-        inline static GLHelper::GL_IndexedBuffer workBuffer{};
-        inline static GLHelper::GL_Buffer workBufferNonIndexed{};
+        static inline GLHelper::GL_IndexedBuffer workBuffer{};
+        static inline GLHelper::GL_Buffer workBufferNonIndexed{};
 };

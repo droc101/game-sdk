@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include <string>
 #include <cstdint>
+#include <string>
 
 class Options
 {
     public:
-        enum class Theme: uint8_t
+        enum class Theme : uint8_t
         {
             SYSTEM,
             LIGHT,

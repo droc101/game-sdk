@@ -24,8 +24,8 @@ class FontAsset final
 
         static constexpr uint8_t FONT_ASSET_VERSION = 1;
         static constexpr std::string_view FONT_VALID_CHARS = "!\"#$%&'()*+,-./"
-                "0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`"
-                "abcdefghijklmnopqrstuvwxyz{|}~";
+                                                             "0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`"
+                                                             "abcdefghijklmnopqrstuvwxyz{|}~";
         static constexpr size_t FONT_MAX_SYMBOLS = FONT_VALID_CHARS.length();
 
         uint8_t textureHeight = 1;

@@ -53,20 +53,20 @@ void CollisionEditWindow::Render(SDL_Window *window)
         if (ImGui::IsItemHovered())
         {
             ImGui::SetTooltip("Static collision models are a single arbitrary mesh that is allowed to be "
-                    "concave.\nThis model type can not be used on moving actors.");
+                              "concave.\nThis model type can not be used on moving actors.");
         }
         ImGui::SameLine();
         if (ImGui::RadioButton("Dynamic",
                                model.GetCollisionModelType() ==
-                               ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX))
+                                       ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX))
         {
             model.GetCollisionModelType() = ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX;
         }
         if (ImGui::IsItemHovered())
         {
             ImGui::SetTooltip("Dynamic collision models are a collection of convex hulls.\nConcave shapes can only be "
-                    "created using multiple hulls.\nIt is up to you to ensure the imported hulls are "
-                    "actually convex.");
+                              "created using multiple hulls.\nIt is up to you to ensure the imported hulls are "
+                              "actually convex.");
         }
 
         if (model.GetCollisionModelType() == ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX)
@@ -92,7 +92,6 @@ void CollisionEditWindow::RenderStaticMeshUI(SDL_Window *window)
     ModelAsset &model = ModelRenderer::GetModel();
     if (ImGui::Button("Import Collision Mesh"))
     {
-
         SDL_ShowOpenFileDialog(ImportStaticMeshCallback,
                                nullptr,
                                window,
@@ -109,7 +108,6 @@ void CollisionEditWindow::RenderCHullUI(SDL_Window *window)
 {
     if (ImGui::Button("Import Hull"))
     {
-
         SDL_ShowOpenFileDialog(AddSingleHullCallback,
                                nullptr,
                                window,

@@ -47,9 +47,9 @@ void Options::LoadDefault()
 void Options::Save()
 {
     const nlohmann::json savedata = {
-            {"game_path", gamePath},
-            {"default_texture", defaultTexture},
-            {"theme", theme},
+        {"game_path", gamePath},
+        {"default_texture", defaultTexture},
+        {"theme", theme},
     };
     char *prefix = SDL_GetPrefPath("Droc101 Development", "GAME SDK");
     const std::string path = prefix + std::string("options.json");

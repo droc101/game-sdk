@@ -16,7 +16,7 @@ class LevelEditor
     public:
         LevelEditor() = delete;
 
-        enum class EditorToolType: uint8_t
+        enum class EditorToolType : uint8_t
         {
             SELECT,
             ADD_SECTOR,
@@ -24,22 +24,21 @@ class LevelEditor
             EDIT_SECTOR
         };
 
-        inline static EditorToolType toolType = EditorToolType::SELECT;
+        static inline EditorToolType toolType = EditorToolType::SELECT;
 
-        inline static LevelAsset level{};
+        static inline LevelAsset level{};
 
-        inline static int gridSpacingIndex = 2;
-        inline static bool drawGrid = true;
-        inline static bool drawAxisHelper = true;
-        inline static bool drawWorldBorder = true;
-        inline static bool drawViewportInfo = true;
-        inline static bool snapToGrid = true;
+        static inline int gridSpacingIndex = 2;
+        static inline bool drawGrid = true;
+        static inline bool drawAxisHelper = true;
+        static inline bool drawWorldBorder = true;
+        static inline bool drawViewportInfo = true;
+        static inline bool snapToGrid = true;
 
-        static constexpr std::array<float, 9> gridSpacingValues = {
-                0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0
-        };
+        static constexpr size_t HOVER_DISTANCE_PIXELS = 5;
+        static constexpr std::array<float, 9> GRID_SPACING_VALUES = {0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0};
 
-        inline static std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new VertexTool());
+        static inline std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new VertexTool());
 
         static float SnapToGrid(float f);
 

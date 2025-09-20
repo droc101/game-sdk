@@ -14,6 +14,7 @@
 #include <imgui_impl_sdlrenderer3.h>
 #include <libassets/asset/FontAsset.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/VectorMove.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
@@ -25,7 +26,6 @@
 #include <string>
 #include <vector>
 #include "DialogFilters.h"
-#include <libassets/util/VectorMove.h>
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 #include "TextureBrowserWindow.h"

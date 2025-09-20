@@ -5,11 +5,11 @@
 #pragma once
 
 #include <array>
+#include <assimp/mesh.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <string>
 #include <vector>
-#include <assimp/mesh.h>
 
 class ConvexHull
 {

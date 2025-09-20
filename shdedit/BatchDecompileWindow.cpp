@@ -3,20 +3,20 @@
 //
 
 #include "BatchDecompileWindow.h"
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_video.h>
+#include <algorithm>
+#include <cstddef>
 #include <cstdio>
+#include <filesystem>
 #include <format>
 #include <imgui.h>
+#include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
-#include <cstddef>
 #include <SDL3/SDL_dialog.h>
-#include <libassets/asset/ShaderAsset.h>
-#include <algorithm>
-#include <filesystem>
-#include <string>
+#include <SDL3/SDL_error.h>
 #include <SDL3/SDL_messagebox.h>
+#include <SDL3/SDL_video.h>
+#include <string>
 #include "DialogFilters.h"
 
 void BatchDecompileWindow::Show()
@@ -137,7 +137,6 @@ void BatchDecompileWindow::Render(SDL_Window *window)
                             files.erase(files.begin() + static_cast<ptrdiff_t>(i));
                             files.erase(files.begin() + static_cast<ptrdiff_t>(i));
                         }
-
                     }
                     ImGui::EndTable();
                 }

@@ -6,10 +6,9 @@
 #include <array>
 #include <cstdio>
 #include <fstream>
-#include <fstream>
-#include <vector>
-#include <ios>
 #include <glm/vec2.hpp>
+#include <ios>
+#include <vector>
 #include "GLDebug.h"
 #include "libassets/util/Error.h"
 
@@ -79,9 +78,7 @@ Error::ErrorCode GLHelper::CreateShader(const char *filename, const GLenum type,
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode GLHelper::CreateProgram(const char *fragmentFilename,
-                                         const char *vertexFilename,
-                                         GLuint &outProgram)
+Error::ErrorCode GLHelper::CreateProgram(const char *fragmentFilename, const char *vertexFilename, GLuint &outProgram)
 {
     GLuint vertexShader = 0;
     GLuint fragmentShader = 0;

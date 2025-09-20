@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <vector>
-#include <array>
 #include "libassets/util/Actor.h"
 #include "libassets/util/Error.h"
 #include "libassets/util/Sector.h"

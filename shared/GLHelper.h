@@ -3,9 +3,9 @@
 //
 
 #pragma once
-#include "libassets/util/Error.h"
 #include <GL/glew.h>
 #include <glm/vec2.hpp>
+#include "libassets/util/Error.h"
 
 
 class GLHelper
@@ -13,15 +13,15 @@ class GLHelper
     public:
         struct GL_IndexedBuffer
         {
-            GLuint vao;
-            GLuint vbo;
-            GLuint ebo;
+                GLuint vao;
+                GLuint vbo;
+                GLuint ebo;
         };
 
         struct GL_Buffer
         {
-            GLuint vao;
-            GLuint vbo;
+                GLuint vao;
+                GLuint vbo;
         };
 
 

@@ -11,7 +11,7 @@
 class Viewport
 {
     public:
-        enum class ViewportType: uint8_t
+        enum class ViewportType : uint8_t
         {
             TOP_DOWN_XZ,
             FRONT_XY,

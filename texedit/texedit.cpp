@@ -276,7 +276,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                                                texture.GetWidth(),
                                                texture.GetHeight(),
                                                texture.GetWidth() * texture.GetHeight() * sizeof(uint32_t))
-                    .c_str());
+                                           .c_str());
 
             ImGui::Separator();
             ImGui::Checkbox("Filter", &texture.filter); // TODO live update

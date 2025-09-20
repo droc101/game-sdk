@@ -3,13 +3,13 @@
 //
 
 #pragma once
+#include <array>
 #include <cstddef>
 #include <cstdint>
-#include <vector>
-#include <array>
-#include <string>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <string>
+#include <vector>
 
 class StaticCollisionMesh
 {
@@ -26,5 +26,4 @@ class StaticCollisionMesh
 
     private:
         std::vector<std::array<float, 3>> vertices{};
-
 };

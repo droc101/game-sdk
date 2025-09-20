@@ -53,14 +53,14 @@ ModelLod::ModelLod(const std::string &filePath, const float distance)
 
     std::unordered_map<ModelVertex, uint32_t> vertexToIndex;
 
-    Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(filePath,
-                                             aiProcess_Triangulate |
-                                             aiProcess_JoinIdenticalVertices |
-                                             aiProcess_SortByPType |
-                                             aiProcess_ValidateDataStructure |
-                                             aiProcess_FlipUVs |
-                                             aiProcess_GenSmoothNormals);
+    Assimp::Importer importer{};
+    constexpr uint32_t importFlags = aiProcess_Triangulate |
+                                     aiProcess_JoinIdenticalVertices |
+                                     aiProcess_SortByPType |
+                                     aiProcess_ValidateDataStructure |
+                                     aiProcess_FlipUVs |
+                                     aiProcess_GenSmoothNormals;
+    const aiScene *scene = importer.ReadFile(filePath, importFlags);
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {

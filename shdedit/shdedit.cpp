@@ -8,6 +8,7 @@
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
+#include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_dialog.h>
@@ -20,7 +21,6 @@
 #include <SDL3/SDL_video.h>
 #include "BatchCompileWindow.h"
 #include "BatchDecompileWindow.h"
-#include <libassets/asset/ShaderAsset.h>
 #include "DialogFilters.h"
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
@@ -112,12 +112,11 @@ static void exportCallback(void * /*userdata*/, const char *const *fileList, int
 
 static void Render(bool &done, SDL_Window *sdlWindow)
 {
-    ImGui::Begin("shdedit",
-                 nullptr,
-                 ImGuiWindowFlags_NoDecoration |
-                 ImGuiWindowFlags_NoMove |
-                 ImGuiWindowFlags_NoSavedSettings |
-                 ImGuiWindowFlags_NoBringToFrontOnFocus);
+    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
+                                             ImGuiWindowFlags_NoMove |
+                                             ImGuiWindowFlags_NoSavedSettings |
+                                             ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::Begin("shdedit", nullptr, windowFlags);
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);

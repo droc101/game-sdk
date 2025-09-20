@@ -19,35 +19,35 @@ bool LevelRenderer::Init()
         return false;
     }
 
-    const Error::ErrorCode linesProgramErrorCode = GLHelper::CreateProgram(
-            "assets/basicVertexColor.frag",
-            "assets/basicVertexColor.vert",
-            lineProgram);
+    const Error::ErrorCode linesProgramErrorCode = GLHelper::CreateProgram("assets/basicVertexColor.frag",
+                                                                           "assets/basicVertexColor.vert",
+                                                                           lineProgram);
 
-    const Error::ErrorCode gridProgramErrorCode = GLHelper::CreateProgram(
-            "assets/grid.frag",
-            "assets/grid.vert",
-            gridProgram);
+    const Error::ErrorCode gridProgramErrorCode = GLHelper::CreateProgram("assets/grid.frag",
+                                                                          "assets/grid.vert",
+                                                                          gridProgram);
 
-    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram(
-            "assets/lvleditgeneric.frag",
-            "assets/lvleditgeneric.vert",
-            genericProgram);
-    if (cubeProgramErrorCode != Error::ErrorCode::OK || linesProgramErrorCode != Error::ErrorCode::OK ||
+    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/lvleditgeneric.frag",
+                                                                          "assets/lvleditgeneric.vert",
+                                                                          genericProgram);
+    if (cubeProgramErrorCode != Error::ErrorCode::OK ||
+        linesProgramErrorCode != Error::ErrorCode::OK ||
         gridProgramErrorCode != Error::ErrorCode::OK)
     {
         return false;
     }
 
     axisHelperBuffer = GLHelper::CreateBuffer();
+    // clang-format off
     const std::vector<float> axisHelperVerts = {
-            0, -512, 0, 0, 1, 0,
-            0, 512, 0, 0, 1, 0,
-            -512, 0, 0, 1, 0, 0,
-            512, 0, 0, 1, 0, 0,
-            0, 0, -512, 0, 0, 1,
-            0, 0, 512, 0, 0, 1,
+        0, -512, 0, 0, 1, 0,
+        0, 512, 0, 0, 1, 0,
+        -512, 0, 0, 1, 0, 0,
+        512, 0, 0, 1, 0, 0,
+        0, 0, -512, 0, 0, 1,
+        0, 0, 512, 0, 0, 1,
     };
+    // clang-format on
     GLHelper::BindBuffer(axisHelperBuffer);
     glBufferData(GL_ARRAY_BUFFER,
                  static_cast<GLsizeiptr>(sizeof(float) * axisHelperVerts.size()),
@@ -55,32 +55,34 @@ bool LevelRenderer::Init()
                  GL_STATIC_DRAW);
 
     worldBorderBuffer = GLHelper::CreateBuffer();
+    // clang-format off
     const std::vector<float> verts = {
-            -512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
-            512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
-            512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
-            512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
-            512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
-            -512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
-            -512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
-            -512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
-            -512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
-            512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
-            512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
-            512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
-            512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
-            -512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
-            -512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
-            -512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
-            -512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
-            -512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
-            512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
-            512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
-            512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
-            512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
-            -512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
-            -512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
+        -512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
+        512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
+        512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
+        512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
+        512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
+        -512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
+        -512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
+        -512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
+        -512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
+        512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
+        512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
+        512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
+        512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
+        -512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
+        -512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
+        -512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
+        -512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
+        -512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
+        512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
+        512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
+        512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
+        512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
+        -512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
+        -512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
     };
+    // clang-format on
     GLHelper::BindBuffer(worldBorderBuffer);
     glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(float) * verts.size()), verts.data(), GL_STATIC_DRAW);
 
@@ -123,7 +125,7 @@ void LevelRenderer::RenderViewport(const Viewport &vp)
 
     if (LevelEditor::drawGrid)
     {
-        const float gridSpacing = LevelEditor::gridSpacingValues.at(LevelEditor::gridSpacingIndex);
+        const float gridSpacing = LevelEditor::GRID_SPACING_VALUES.at(LevelEditor::gridSpacingIndex);
         const int numInstances = static_cast<int>(2048.0f / gridSpacing);
 
         glUseProgram(gridProgram);
@@ -173,7 +175,11 @@ void LevelRenderer::RenderViewport(const Viewport &vp)
     glDisable(GL_CULL_FACE);
 }
 
-void LevelRenderer::RenderLine(const glm::vec3 start, const glm::vec3 end, Color color, glm::mat4 &matrix, const float thickness)
+void LevelRenderer::RenderLine(const glm::vec3 start,
+                               const glm::vec3 end,
+                               Color color,
+                               glm::mat4 &matrix,
+                               const float thickness)
 {
     glUseProgram(genericProgram);
 
@@ -183,8 +189,12 @@ void LevelRenderer::RenderLine(const glm::vec3 start, const glm::vec3 end, Color
     glUniformMatrix4fv(glGetUniformLocation(genericProgram, "MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
 
     const std::vector<float> vertices = {
-            start.x, start.y, start.z,
-            end.x, end.y, end.z,
+        start.x,
+        start.y,
+        start.z,
+        end.x,
+        end.y,
+        end.z,
     };
 
     GLHelper::BindBuffer(workBufferNonIndexed);
@@ -207,9 +217,7 @@ void LevelRenderer::RenderBillboardPoint(glm::vec3 position, float pointSize, Co
     glUniform4fv(glGetUniformLocation(genericProgram, "alb"), 1, color.GetDataPointer());
     glUniformMatrix4fv(glGetUniformLocation(genericProgram, "MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
 
-    const std::vector<float> vertices = {
-            position.x, position.y, position.z
-    };
+    const std::vector<float> vertices = {position.x, position.y, position.z};
 
     GLHelper::BindBuffer(workBufferNonIndexed);
     glBufferData(GL_ARRAY_BUFFER,

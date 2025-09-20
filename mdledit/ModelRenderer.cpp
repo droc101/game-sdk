@@ -20,8 +20,8 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "GLHelper.h"
 #include "../shared/GLDebug.h"
+#include "GLHelper.h"
 #include "OpenGLImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 
@@ -34,14 +34,12 @@ bool ModelRenderer::Init()
         return false;
     }
 
-    const Error::ErrorCode modelProgramErrorCode = GLHelper::CreateProgram(
-            "assets/model.frag",
-            "assets/model.vert",
-            program);
-    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram(
-            "assets/cube.frag",
-            "assets/cube.vert",
-            linesProgram);
+    const Error::ErrorCode modelProgramErrorCode = GLHelper::CreateProgram("assets/model.frag",
+                                                                           "assets/model.vert",
+                                                                           program);
+    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/cube.frag",
+                                                                          "assets/cube.vert",
+                                                                          linesProgram);
     if (modelProgramErrorCode != Error::ErrorCode::OK || cubeProgramErrorCode != Error::ErrorCode::OK)
     {
         return false;
@@ -69,8 +67,9 @@ void ModelRenderer::LoadBBox()
     glGenBuffers(1, &bboxVbo);
     glGenBuffers(1, &bboxEbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bboxEbo);
-    const std::array<GLuint, 36> indices = {0, 1, 3, 0, 3, 2, 4, 7, 5, 4, 6, 7, 0, 5, 1, 0, 4, 5, 2, 3, 7, 2, 7, 6, 0,
-                                            2, 6, 0, 6, 4, 1, 7, 3, 1, 5, 7};
+    const std::array<GLuint, 36> indices = {
+        0, 1, 3, 0, 3, 2, 4, 7, 5, 4, 6, 7, 0, 5, 1, 0, 4, 5, 2, 3, 7, 2, 7, 6, 0, 2, 6, 0, 6, 4, 1, 7, 3, 1, 5, 7,
+    };
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices.size(), indices.data(), GL_STATIC_DRAW);
 }
 
@@ -248,7 +247,7 @@ void ModelRenderer::Render()
 
         GLuint texture = 0;
         const Error::ErrorCode code = dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache.get())
-                ->GetTextureGLuint(mat.texture, texture);
+                                              ->GetTextureGLuint(mat.texture, texture);
         if (code != Error::ErrorCode::OK)
         {
             continue;

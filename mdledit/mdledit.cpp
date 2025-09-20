@@ -126,8 +126,8 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL)
         {
             const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(*path,
-                model,
-                Options::defaultTexture);
+                                                                                   model,
+                                                                                   Options::defaultTexture);
             if (errorCode != Error::ErrorCode::OK)
             {
                 if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
@@ -420,8 +420,8 @@ int main()
         printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
     }
 
-    constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
-    window = SDL_CreateWindow("mdledit", 800, 600, windowFlags);
+    constexpr SDL_WindowFlags sdlWindowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+    window = SDL_CreateWindow("mdledit", 800, 600, sdlWindowFlags);
     if (window == nullptr)
     {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
@@ -500,12 +500,11 @@ int main()
         ImGui::SetNextWindowPos(workPos);
         ImGui::SetNextWindowSize(workSize);
         {
-            ImGui::Begin("mdledit",
-                         nullptr,
-                         ImGuiWindowFlags_NoDecoration |
-                         ImGuiWindowFlags_NoMove |
-                         ImGuiWindowFlags_NoSavedSettings |
-                         ImGuiWindowFlags_NoBringToFrontOnFocus);
+            constexpr ImGuiWindowFlags imGuiWindowFlags = ImGuiWindowFlags_NoDecoration |
+                                                          ImGuiWindowFlags_NoMove |
+                                                          ImGuiWindowFlags_NoSavedSettings |
+                                                          ImGuiWindowFlags_NoBringToFrontOnFocus;
+            ImGui::Begin("mdledit", nullptr, imGuiWindowFlags);
 
             HandleMenuAndShortcuts();
 
