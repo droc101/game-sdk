@@ -40,6 +40,8 @@ class ShaderAsset final
 
         static constexpr uint8_t SHADER_ASSET_VERSION = 1;
 
+        static constexpr std::string SHADER_ASSET_EXTENSION = "gshd";
+
     private:
         std::string glsl;
 

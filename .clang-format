@@ -129,7 +129,7 @@ EmptyLineBeforeAccessModifier: LogicalBlock
 FixNamespaceComments: true
 #ForEachMacros:
 #IfMacros:
-IncludeBlocks: Merge
+IncludeBlocks: Preserve
 IncludeCategories:
   - Regex: '^<.*'
     Priority: 1
@@ -142,7 +142,7 @@ IncludeIsMainRegex: '([-_](test|unittest))?$'
 IndentAccessModifiers: true
 IndentCaseBlocks: false
 IndentCaseLabels: true
-IndentExternBlock: NoIndent
+IndentExternBlock: Indent
 IndentGotoLabels: false
 IndentPPDirectives: None
 IndentRequiresClause: false

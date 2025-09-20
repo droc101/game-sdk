@@ -8,6 +8,7 @@
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
+#include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_dialog.h>
@@ -20,7 +21,6 @@
 #include <SDL3/SDL_video.h>
 #include "BatchCompileWindow.h"
 #include "BatchDecompileWindow.h"
-#include <libassets/asset/ShaderAsset.h>
 #include "DialogFilters.h"
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
