@@ -1,0 +1,216 @@
+//
+// Created by droc101 on 9/21/25.
+//
+
+#include "AddPrimitiveTool.h"
+#include <cmath>
+#include <imgui.h>
+#include <vector>
+
+#include "../LevelEditor.h"
+#include "../LevelRenderer.h"
+#include "Options.h"
+
+void AddPrimitiveTool::RenderViewport(Viewport &vp)
+{
+    LevelRenderer::RenderViewport(vp);
+
+    glm::mat4 matrix = vp.GetMatrix();
+
+    bool isHovered = false;
+    glm::vec3 worldSpaceHover{};
+    glm::vec2 screenSpaceHover{};
+
+    if (ImGui::IsWindowFocused())
+    {
+        isHovered = ImGui::IsWindowHovered();
+        if (isHovered)
+        {
+            worldSpaceHover = vp.GetWorldSpaceMousePos();
+            const ImVec2 localMouse = Viewport::GetLocalMousePos();
+            screenSpaceHover = glm::vec2(localMouse.x, localMouse.y);
+        }
+
+        if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+        {
+            if (!isDragging && ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            {
+                shapeStart = LevelEditor::SnapToGrid(worldSpaceHover);
+                shapeStart.y = ceiling;
+                shapeEnd = LevelEditor::SnapToGrid(worldSpaceHover);
+                shapeEnd.y = ceiling;
+                isDragging = true;
+                hasDrawnShape = true;
+            } else if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            {
+                shapeEnd = LevelEditor::SnapToGrid(worldSpaceHover);
+                shapeEnd.y = ceiling;
+            } else
+            {
+                isDragging = false;
+            }
+        }
+    }
+
+    for (size_t sectorIndex = 0; sectorIndex < LevelEditor::level.sectors.size(); sectorIndex++)
+    {
+        Sector &sector = LevelEditor::level.sectors.at(sectorIndex);
+        for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
+        {
+            const std::array<float, 2> &start2 = sector.points[vertexIndex];
+            const std::array<float, 2> &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
+            const glm::vec3 startCeiling = glm::vec3(start2.at(0), sector.ceilingHeight, start2.at(1));
+            const glm::vec3 endCeiling = glm::vec3(end2.at(0), sector.ceilingHeight, end2.at(1));
+            const glm::vec3 startFloor = glm::vec3(start2.at(0), sector.floorHeight, start2.at(1));
+            const glm::vec3 endFloor = glm::vec3(end2.at(0), sector.floorHeight, end2.at(1));
+
+            if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
+            {
+                LevelRenderer::RenderLine(startFloor, endFloor, Color(0.7, .7, .7, 1), matrix, 4);
+                LevelRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
+            }
+
+            LevelRenderer::RenderLine(startCeiling, endCeiling, Color(0.7, .7, .7, 1), matrix, 4);
+        }
+    }
+
+    if (hasDrawnShape)
+    {
+        const std::array<glm::vec3, 4> boxPoints = {
+            shapeStart,
+            glm::vec3(shapeStart.x, 0, shapeEnd.z),
+            shapeEnd,
+            glm::vec3(shapeEnd.x, 0, shapeStart.z),
+        };
+        for (size_t i = 0; i < boxPoints.size(); i++)
+        {
+            const size_t nextIndex = (i + 1) % boxPoints.size();
+            const glm::vec3 startPointCeil = glm::vec3(boxPoints.at(i).x, ceiling, boxPoints.at(i).z);
+            const glm::vec3 startPointFloor = glm::vec3(boxPoints.at(i).x, floor, boxPoints.at(i).z);
+            const glm::vec3 endPointCeil = glm::vec3(boxPoints.at(nextIndex).x, ceiling, boxPoints.at(nextIndex).z);
+            const glm::vec3 endPointFloor = glm::vec3(boxPoints.at(nextIndex).x, floor, boxPoints.at(nextIndex).z);
+            LevelRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 0, 1), matrix, 2);
+            if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
+            {
+                LevelRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 0, 1), matrix, 2);
+                LevelRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, 0, 1), matrix, 1);
+            }
+        }
+
+        std::vector<glm::vec2> points = buildNgon(sides,
+                                                  glm::vec2(shapeStart.x, shapeStart.z),
+                                                  glm::vec2(shapeEnd.x, shapeEnd.z));
+        for (size_t i = 0; i < points.size(); i++)
+        {
+            const size_t nextIndex = (i + 1) % points.size();
+            const glm::vec3 startPointCeil = glm::vec3(points.at(i).x, ceiling, points.at(i).y);
+            const glm::vec3 startPointFloor = glm::vec3(points.at(i).x, floor, points.at(i).y);
+            const glm::vec3 endPointCeil = glm::vec3(points.at(nextIndex).x, ceiling, points.at(nextIndex).y);
+            const glm::vec3 endPointFloor = glm::vec3(points.at(nextIndex).x, floor, points.at(nextIndex).y);
+            LevelRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 1, 1), matrix, 4);
+            if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
+            {
+                LevelRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 1, 1), matrix, 4);
+                LevelRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, .6, 1), matrix, 2);
+            }
+        }
+
+        if (ImGui::Shortcut(ImGuiKey_Enter))
+        {
+            Sector s = Sector();
+            WallMaterial mat = WallMaterial(Options::defaultTexture);
+            s.ceilingMaterial = mat;
+            s.floorMaterial = mat;
+            s.floorHeight = floor;
+            s.ceilingHeight = ceiling;
+            s.lightColor = Color(1, 1, 1, 1);
+            for (const glm::vec2 &glmPoint: points)
+            {
+                std::array<float, 2> point = {glmPoint.x, glmPoint.y};
+                s.points.push_back(point);
+                s.wallMaterials.push_back(mat);
+            }
+            LevelEditor::level.sectors.push_back(s);
+            hasDrawnShape = false;
+        }
+    }
+}
+
+void AddPrimitiveTool::RenderToolWindow()
+{
+    // TODO move tool windows to sidebar to prevent focus bugs (one already exists)
+    ImGui::SetNextWindowSize(ImVec2(250, -1));
+    ImGui::Begin("Primitive Tool");
+    ImGui::Text("Sides");
+    ImGui::PushItemWidth(-1);
+    ImGui::SliderInt("##sides", &sides, 3, 32);
+    ImGui::Separator();
+    const ImVec2 buttonSize = {(ImGui::GetContentRegionAvail().x / 3) - 6, 0}; // TODO obtain 6 without using magic
+
+    if (ImGui::Button("Square", buttonSize))
+    {
+        sides = 4;
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Triangle", buttonSize))
+    {
+        sides = 3;
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Cylinder", buttonSize))
+    {
+        sides = 16;
+    }
+    ImGui::End();
+}
+
+std::vector<glm::vec2> AddPrimitiveTool::buildNgon(int n,
+                                                   const glm::vec2 &p0,
+                                                   const glm::vec2 &p1,
+                                                   const float startAngleRadians)
+{
+    std::vector<glm::vec2> pts;
+    if (n <= 0)
+    {
+        return pts;
+    }
+
+    const float left = std::min(p0.x, p1.x);
+    const float right = std::max(p0.x, p1.x);
+    const float top = std::min(p0.y, p1.y);
+    const float bottom = std::max(p0.y, p1.y);
+
+    const float cx = (left + right) * 0.5f;
+    const float cy = (top + bottom) * 0.5f;
+
+    if (n == 4)
+    { // rectangle
+        pts.emplace_back(left, top);
+        pts.emplace_back(right, top);
+        pts.emplace_back(right, bottom);
+        pts.emplace_back(left, bottom);
+        return pts;
+    } else if (n == 3)
+    { // triangle
+        pts.emplace_back(cx, bottom);
+        pts.emplace_back(right, top);
+        pts.emplace_back(left, top);
+        return pts;
+    }
+
+    const float boxWidth = right - left;
+    const float boxHeight = bottom - top;
+
+    const float rx = std::max(0.0f, boxWidth * 0.5f);
+    const float ry = std::max(0.0f, boxHeight * 0.5f);
+
+    pts.reserve(n);
+    for (int i = 0; i < n; i++)
+    {
+        const float theta = startAngleRadians + 1 * (2.0f * M_PIf * i / n);
+        const float x = cx + rx * std::cos(theta);
+        const float y = cy + ry * std::sin(theta);
+        pts.emplace_back(x, y);
+    }
+    return pts;
+}

@@ -19,12 +19,13 @@ class LevelEditor
         enum class EditorToolType : uint8_t
         {
             SELECT,
-            ADD_SECTOR,
+            ADD_PRIMITIVE,
+            ADD_POLYGON,
             ADD_ACTOR,
             EDIT_SECTOR
         };
 
-        static inline EditorToolType toolType = EditorToolType::SELECT;
+        static inline EditorToolType toolType = EditorToolType::EDIT_SECTOR;
 
         static inline LevelAsset level{};
 

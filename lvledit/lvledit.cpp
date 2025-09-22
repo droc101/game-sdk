@@ -18,6 +18,9 @@
 #include "LevelRenderer.h"
 #include "OpenGLImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
+#include "tools/AddPolygonTool.h"
+#include "tools/AddPrimitiveTool.h"
+#include "tools/EditorTool.h"
 #include "Viewport.h"
 
 static SDL_Window *window = nullptr;
@@ -232,16 +235,23 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                                              ImGuiWindowFlags_NoBringToFrontOnFocus |
                                              ImGuiWindowFlags_NoDocking;
     ImGui::Begin("toolbar", nullptr, windowFlags);
-    // static int tool = static_cast<int>(LevelEditor::tool);
-    // ImGui::RadioButton("Select", &tool, 0);
+    static int tool = static_cast<int>(LevelEditor::toolType);
+    if (ImGui::RadioButton("Sector Editor", &tool, static_cast<int>(LevelEditor::EditorToolType::EDIT_SECTOR)))
+    {
+        LevelEditor::tool = std::unique_ptr<EditorTool>(new VertexTool());
+    }
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Add Primitive", &tool, static_cast<int>(LevelEditor::EditorToolType::ADD_PRIMITIVE)))
+    {
+        LevelEditor::tool = std::unique_ptr<EditorTool>(new AddPrimitiveTool());
+    }
     // ImGui::SameLine();
-    // ImGui::RadioButton("Add Sector", &tool, 1);
-    // ImGui::SameLine();
-    // ImGui::RadioButton("Add Actor", &tool, 2);
-    // ImGui::SameLine();
-    // ImGui::RadioButton("Sector Editor", &tool, 3);
-    // ImGui::SameLine();
-    // LevelEditor::tool = static_cast<LevelEditor::EditorTool>(tool);
+    // if (ImGui::RadioButton("Add Polygon", &tool, static_cast<int>(LevelEditor::EditorToolType::ADD_POLYGON)))
+    // {
+    //     LevelEditor::tool = std::unique_ptr<EditorTool>(new AddPolygonTool());
+    // }
+    ImGui::SameLine();
+    LevelEditor::toolType = static_cast<LevelEditor::EditorToolType>(tool);
     ImGui::End();
 
     vpTopDown.RenderImGui();
