@@ -23,16 +23,36 @@ class AddPrimitiveTool final: public EditorTool
 
         void RenderToolWindow() override;
     private:
+        enum class PrimitiveType: uint8_t
+        {
+            RECTANGLE,
+            TRIANGLE,
+            NGON
+        };
+
+        static constexpr std::array<const char *, 3> PRIMITIVE_NAMES = {
+            "Rectangle",
+            "Triangle",
+            "Ngon",
+        };
+
         bool hasDrawnShape = false;
         bool isDragging = false;
         glm::vec3 shapeStart;
         glm::vec3 shapeEnd;
-        int32_t sides = 4;
         float ceiling = 1;
         float floor = -1;
+
+        inline static int32_t ngonSides = 16;
+        inline static float ngonStartAngle = 0;
+        inline static PrimitiveType primitive = PrimitiveType::RECTANGLE;
 
         static std::vector<glm::vec2> buildNgon(int n,
                                                 const glm::vec2 &p0,
                                                 const glm::vec2 &p1,
                                                 float startAngleRadians = M_PI_2f);
+
+        static std::vector<glm::vec2> buildRect(const glm::vec2 &p0, const glm::vec2 &p1);
+
+        static std::vector<glm::vec2> buildTri(const glm::vec2 &p0, const glm::vec2 &p1);
 };

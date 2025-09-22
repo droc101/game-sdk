@@ -5,10 +5,12 @@
 #include "AddPrimitiveTool.h"
 #include <cmath>
 #include <imgui.h>
+#include <iosfwd>
 #include <vector>
 
 #include "../LevelEditor.h"
 #include "../LevelRenderer.h"
+#include "AddPolygonTool.h"
 #include "Options.h"
 
 void AddPrimitiveTool::RenderViewport(Viewport &vp)
@@ -97,28 +99,39 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             }
         }
 
-        std::vector<glm::vec2> points = buildNgon(32,
-                                                  glm::vec2(shapeStart.x, shapeStart.z),
-                                                  glm::vec2(shapeEnd.x, shapeEnd.z));
-        for (size_t i = 0; i < points.size(); i++)
+        std::vector<glm::vec2> points{};
+
+        if (primitive == PrimitiveType::NGON)
         {
-            const size_t nextIndex = (i + 1) % points.size();
-            const glm::vec3 startPointCeil = glm::vec3(points.at(i).x, ceiling, points.at(i).y);
-            const glm::vec3 startPointFloor = glm::vec3(points.at(i).x, floor, points.at(i).y);
-            const glm::vec3 endPointCeil = glm::vec3(points.at(nextIndex).x, ceiling, points.at(nextIndex).y);
-            const glm::vec3 endPointFloor = glm::vec3(points.at(nextIndex).x, floor, points.at(nextIndex).y);
-            LevelRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 0, 1), matrix, 4);
-            if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
+            points = buildNgon(32, glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
+            for (size_t i = 0; i < points.size(); i++)
             {
-                LevelRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 0, 1), matrix, 4);
-                LevelRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, 0, 1), matrix, 2);
+                const size_t nextIndex = (i + 1) % points.size();
+                const glm::vec3 startPointCeil = glm::vec3(points.at(i).x, ceiling, points.at(i).y);
+                const glm::vec3 startPointFloor = glm::vec3(points.at(i).x, floor, points.at(i).y);
+                const glm::vec3 endPointCeil = glm::vec3(points.at(nextIndex).x, ceiling, points.at(nextIndex).y);
+                const glm::vec3 endPointFloor = glm::vec3(points.at(nextIndex).x, floor, points.at(nextIndex).y);
+                LevelRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 0, 1), matrix, 4);
+                if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
+                {
+                    LevelRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 0, 1), matrix, 4);
+                    LevelRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, 0, 1), matrix, 2);
+                }
             }
+
+
+            points = buildNgon(ngonSides,
+                               glm::vec2(shapeStart.x, shapeStart.z),
+                               glm::vec2(shapeEnd.x, shapeEnd.z),
+                               ngonStartAngle);
+        } else if (primitive == PrimitiveType::TRIANGLE)
+        {
+            points = buildTri(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
+        } else if (primitive == PrimitiveType::RECTANGLE)
+        {
+            points = buildRect(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
         }
 
-
-        points = buildNgon(sides,
-                                                  glm::vec2(shapeStart.x, shapeStart.z),
-                                                  glm::vec2(shapeEnd.x, shapeEnd.z));
         for (size_t i = 0; i < points.size(); i++)
         {
             const size_t nextIndex = (i + 1) % points.size();
@@ -133,6 +146,7 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
                 LevelRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, .6, 1), matrix, 2);
             }
         }
+
 
         if (ImGui::Shortcut(ImGuiKey_Enter))
         {
@@ -160,25 +174,39 @@ void AddPrimitiveTool::RenderToolWindow()
     // TODO move tool windows to sidebar to prevent focus bugs (one already exists)
     ImGui::SetNextWindowSize(ImVec2(250, -1));
     ImGui::Begin("Primitive Tool");
-    ImGui::Text("Sides");
     ImGui::PushItemWidth(-1);
-    ImGui::SliderInt("##sides", &sides, 3, 32);
-    ImGui::Separator();
-    const ImVec2 buttonSize = {(ImGui::GetContentRegionAvail().x / 3) - 6, 0}; // TODO obtain 6 without using magic
 
-    if (ImGui::Button("Square", buttonSize))
+    ImGui::Text("Primitive Type");
+    int type = static_cast<int>(primitive);
+    if (ImGui::Combo("##primType", &type, PRIMITIVE_NAMES.data(), PRIMITIVE_NAMES.size()))
     {
-        sides = 4;
+        primitive = static_cast<PrimitiveType>(type);
     }
-    ImGui::SameLine();
-    if (ImGui::Button("Triangle", buttonSize))
+
+    if (primitive == PrimitiveType::NGON)
     {
-        sides = 3;
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Cylinder", buttonSize))
-    {
-        sides = 16;
+        ImGui::Separator();
+        ImGui::Text("Ngon Sides");
+        ImGui::SliderInt("##sides", &ngonSides, 3, 32);
+        ImGui::Text("Ngon Angle");
+        ImGui::SliderAngle("##ngonAngle", &ngonStartAngle);
+        ImGui::Separator();
+        const ImVec2 buttonSize = {(ImGui::GetContentRegionAvail().x / 3) - 6, 0}; // TODO obtain 6 without using magic
+
+        if (ImGui::Button("Hexagon", buttonSize))
+        {
+            ngonSides = 6;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Octagon", buttonSize))
+        {
+            ngonSides = 8;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cylinder", buttonSize))
+        {
+            ngonSides = 16;
+        }
     }
     ImGui::End();
 }
@@ -202,21 +230,6 @@ std::vector<glm::vec2> AddPrimitiveTool::buildNgon(int n,
     const float cx = (left + right) * 0.5f;
     const float cy = (top + bottom) * 0.5f;
 
-    if (n == 4)
-    { // rectangle
-        pts.emplace_back(left, top);
-        pts.emplace_back(right, top);
-        pts.emplace_back(right, bottom);
-        pts.emplace_back(left, bottom);
-        return pts;
-    } else if (n == 3)
-    { // triangle
-        pts.emplace_back(cx, bottom);
-        pts.emplace_back(right, top);
-        pts.emplace_back(left, top);
-        return pts;
-    }
-
     const float boxWidth = right - left;
     const float boxHeight = bottom - top;
 
@@ -231,5 +244,39 @@ std::vector<glm::vec2> AddPrimitiveTool::buildNgon(int n,
         const float y = cy + ry * std::sin(theta);
         pts.emplace_back(x, y);
     }
+    return pts;
+}
+
+std::vector<glm::vec2> AddPrimitiveTool::buildRect(const glm::vec2 &p0, const glm::vec2 &p1)
+{
+    std::vector<glm::vec2> pts;
+
+    const float left = std::min(p0.x, p1.x);
+    const float right = std::max(p0.x, p1.x);
+    const float top = std::min(p0.y, p1.y);
+    const float bottom = std::max(p0.y, p1.y);
+
+    pts.emplace_back(left, top);
+    pts.emplace_back(right, top);
+    pts.emplace_back(right, bottom);
+    pts.emplace_back(left, bottom);
+    return pts;
+}
+
+std::vector<glm::vec2> AddPrimitiveTool::buildTri(const glm::vec2 &p0, const glm::vec2 &p1)
+{
+    std::vector<glm::vec2> pts;
+
+    const float left = std::min(p0.x, p1.x);
+    const float right = std::max(p0.x, p1.x);
+    const float top = std::min(p0.y, p1.y);
+    const float bottom = std::max(p0.y, p1.y);
+
+    const float cx = (left + right) * 0.5f;
+    const float cy = (top + bottom) * 0.5f;
+
+    pts.emplace_back(cx, bottom);
+    pts.emplace_back(right, top);
+    pts.emplace_back(left, top);
     return pts;
 }
