@@ -6,6 +6,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <vector>
+
 #include "../Viewport.h"
 #include "EditorTool.h"
 

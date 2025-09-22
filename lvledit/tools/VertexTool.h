@@ -10,8 +10,6 @@
 #include "../Viewport.h"
 #include "EditorTool.h"
 
-#include "libassets/util/Sector.h"
-
 /**
  * This tool is used to edit the vertices & height of sectors.
  */

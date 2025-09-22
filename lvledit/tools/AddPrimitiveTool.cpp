@@ -5,12 +5,10 @@
 #include "AddPrimitiveTool.h"
 #include <cmath>
 #include <imgui.h>
-#include <iosfwd>
 #include <vector>
-
 #include "../LevelEditor.h"
 #include "../LevelRenderer.h"
-#include "AddPolygonTool.h"
+#include "../Viewport.h"
 #include "Options.h"
 
 void AddPrimitiveTool::RenderViewport(Viewport &vp)
@@ -273,7 +271,6 @@ std::vector<glm::vec2> AddPrimitiveTool::buildTri(const glm::vec2 &p0, const glm
     const float bottom = std::max(p0.y, p1.y);
 
     const float cx = (left + right) * 0.5f;
-    const float cy = (top + bottom) * 0.5f;
 
     pts.emplace_back(cx, bottom);
     pts.emplace_back(right, top);

@@ -12,7 +12,6 @@
 #include "../Viewport.h"
 #include "libassets/util/Color.h"
 #include "libassets/util/Sector.h"
-#include "VertexTool.h"
 
 void VertexTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {
