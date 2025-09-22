@@ -17,6 +17,7 @@
 #include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
 #include <string>
+#include <SDL3/SDL_messagebox.h>
 #include "DialogFilters.h"
 
 void BatchDecompileWindow::Show()
@@ -61,15 +62,22 @@ Error::ErrorCode BatchDecompileWindow::Execute()
 
     for (const std::string &file: files)
     {
-        const std::filesystem::path path = std::filesystem::path(file);
+        const std::string filename = std::filesystem::path(file).filename().string();
         ShaderAsset shd;
         Error::ErrorCode e = ShaderAsset::CreateFromAsset(file.c_str(), shd);
         if (e != Error::ErrorCode::OK)
         {
             return e;
         }
-        const std::string suffix = shd.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAG ? ".frag" : ".vert";
-        e = shd.SaveAsGlsl((outputFolder + "/" + path.stem().string() + suffix).c_str());
+        if (shd.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAG)
+        {
+            const size_t suffixPosition = filename.rfind("_f." + ShaderAsset::SHADER_ASSET_EXTENSION);
+            e = shd.SaveAsGlsl(std::format("{}/{}.frag", outputFolder, filename.substr(0, suffixPosition)).c_str());
+        } else
+        {
+            const size_t suffixPosition = filename.rfind("_v." + ShaderAsset::SHADER_ASSET_EXTENSION);
+            e = shd.SaveAsGlsl(std::format("{}/{}.vert", outputFolder, filename.substr(0, suffixPosition)).c_str());
+        }
         if (e != Error::ErrorCode::OK)
         {
             return e;

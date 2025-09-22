@@ -16,9 +16,9 @@
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_messagebox.h>
+#include "DialogFilters.h"
 #include <SDL3/SDL_video.h>
 #include <string>
-#include "DialogFilters.h"
 
 void BatchCompileWindow::Show()
 {
@@ -71,28 +71,28 @@ Error::ErrorCode BatchCompileWindow::Execute()
         return Error::ErrorCode::INVALID_DIRECTORY;
     }
 
-    const ShaderAsset::ShaderPlatform plat = targetOpenGL ? ShaderAsset::ShaderPlatform::PLATFORM_OPENGL
-                                                          : ShaderAsset::ShaderPlatform::PLATFORM_VULKAN;
+    const ShaderAsset::ShaderPlatform platform = targetOpenGL ? ShaderAsset::ShaderPlatform::PLATFORM_OPENGL
+                                                              : ShaderAsset::ShaderPlatform::PLATFORM_VULKAN;
 
     for (size_t i = 0; i < files.size(); i++)
     {
         const std::string &file = files.at(i);
-        const std::filesystem::path path = std::filesystem::path(file);
+        const std::string filename = std::filesystem::path(file).stem().string();
         const ShaderAsset::ShaderType type = types.at(i);
-        ShaderAsset shd;
-        Error::ErrorCode e = ShaderAsset::CreateFromGlsl(file.c_str(), shd);
+        ShaderAsset shader;
+        Error::ErrorCode e = ShaderAsset::CreateFromGlsl(file.c_str(), shader);
         if (e != Error::ErrorCode::OK)
         {
             return e;
         }
-        shd.platform = plat;
-        shd.type = type;
-        std::string suffix = type == ShaderAsset::ShaderType::SHADER_TYPE_FRAG ? "_f" : "_v";
-        if (path.stem().string().ends_with("_f") || path.stem().string().ends_with("_v"))
-        {
-            suffix = "";
-        }
-        e = shd.SaveAsAsset((outputFolder + "/" + path.stem().string() + suffix + ".gshd").c_str());
+        shader.platform = platform;
+        shader.type = type;
+        e = shader.SaveAsAsset(std::format("{}/{}_{}.{}",
+                                           outputFolder,
+                                           filename,
+                                           shader.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAG ? "f" : "v",
+                                           ShaderAsset::SHADER_ASSET_EXTENSION)
+                                       .c_str());
         if (e != Error::ErrorCode::OK)
         {
             return e;

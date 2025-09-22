@@ -129,8 +129,17 @@ unsigned *TextureAsset::GetPixels()
 
 Error::ErrorCode TextureAsset::SaveAsImage(const char *imagePath, const ImageFormat format) const
 {
-    std::vector<uint32_t> pixels;
-    GetPixelsRGBA(pixels);
+    std::vector<uint32_t> texturePixels;
+    GetPixelsRGBA(texturePixels);
+    for (uint32_t &pixel: texturePixels)
+    {
+        const uint8_t a = static_cast<uint8_t>(pixel >> 24);
+        const uint8_t r = static_cast<uint8_t>(pixel >> 16);
+        const uint8_t g = static_cast<uint8_t>(pixel >> 8);
+        const uint8_t b = static_cast<uint8_t>(pixel);
+
+        pixel = b << 24 | g << 16 | r << 8 | a;
+    }
     int code = 1; // default case fails
     switch (format)
     {
@@ -139,7 +148,7 @@ Error::ErrorCode TextureAsset::SaveAsImage(const char *imagePath, const ImageFor
                                   static_cast<int>(width),
                                   static_cast<int>(height),
                                   4,
-                                  pixels.data(),
+                                  texturePixels.data(),
                                   static_cast<int>(width * sizeof(uint32_t)));
             break;
         case ImageFormat::IMAGE_FORMAT_TGA:

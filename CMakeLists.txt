@@ -45,6 +45,9 @@ if (WIN32)
             zlib1.dll
             libminizip-1.dll
             libbz2-1.dll
+            glslang.dll
+            libSPIRV-Tools-opt.dll
+            libSPIRV-Tools.dll
     )
 
     add_custom_target(copydlls ALL
