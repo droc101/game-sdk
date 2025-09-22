@@ -89,15 +89,34 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             const glm::vec3 startPointFloor = glm::vec3(boxPoints.at(i).x, floor, boxPoints.at(i).z);
             const glm::vec3 endPointCeil = glm::vec3(boxPoints.at(nextIndex).x, ceiling, boxPoints.at(nextIndex).z);
             const glm::vec3 endPointFloor = glm::vec3(boxPoints.at(nextIndex).x, floor, boxPoints.at(nextIndex).z);
-            LevelRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 0, 1), matrix, 2);
+            LevelRenderer::RenderLine(startPointCeil, endPointCeil, Color(.6, 6, 0, 1), matrix, 2);
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 0, 1), matrix, 2);
-                LevelRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, 0, 1), matrix, 1);
+                LevelRenderer::RenderLine(startPointFloor, endPointFloor, Color(.6, .6, 0, 1), matrix, 2);
+                LevelRenderer::RenderLine(startPointCeil, startPointFloor, Color(.3, .3, 0, 1), matrix, 1);
             }
         }
 
-        std::vector<glm::vec2> points = buildNgon(sides,
+        std::vector<glm::vec2> points = buildNgon(32,
+                                                  glm::vec2(shapeStart.x, shapeStart.z),
+                                                  glm::vec2(shapeEnd.x, shapeEnd.z));
+        for (size_t i = 0; i < points.size(); i++)
+        {
+            const size_t nextIndex = (i + 1) % points.size();
+            const glm::vec3 startPointCeil = glm::vec3(points.at(i).x, ceiling, points.at(i).y);
+            const glm::vec3 startPointFloor = glm::vec3(points.at(i).x, floor, points.at(i).y);
+            const glm::vec3 endPointCeil = glm::vec3(points.at(nextIndex).x, ceiling, points.at(nextIndex).y);
+            const glm::vec3 endPointFloor = glm::vec3(points.at(nextIndex).x, floor, points.at(nextIndex).y);
+            LevelRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 0, 1), matrix, 4);
+            if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
+            {
+                LevelRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 0, 1), matrix, 4);
+                LevelRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, 0, 1), matrix, 2);
+            }
+        }
+
+
+        points = buildNgon(sides,
                                                   glm::vec2(shapeStart.x, shapeStart.z),
                                                   glm::vec2(shapeEnd.x, shapeEnd.z));
         for (size_t i = 0; i < points.size(); i++)
