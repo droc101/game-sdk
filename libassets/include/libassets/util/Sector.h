@@ -26,8 +26,6 @@ class Sector
 
         std::array<float, 4> CalculateBBox() const;
 
-        static Sector CreateExample();
-
     private:
         enum class SegmentOrientation : uint8_t
         {

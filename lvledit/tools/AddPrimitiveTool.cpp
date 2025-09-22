@@ -171,9 +171,10 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
 
 void AddPrimitiveTool::RenderToolWindow()
 {
-    // TODO move tool windows to sidebar to prevent focus bugs (one already exists)
-    ImGui::SetNextWindowSize(ImVec2(250, -1));
-    ImGui::Begin("Primitive Tool");
+    if (!ImGui::CollapsingHeader("Primitive Tool", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        return;
+    }
     ImGui::PushItemWidth(-1);
 
     ImGui::Text("Primitive Type");
@@ -208,7 +209,6 @@ void AddPrimitiveTool::RenderToolWindow()
             ngonSides = 16;
         }
     }
-    ImGui::End();
 }
 
 std::vector<glm::vec2> AddPrimitiveTool::buildNgon(int n,

@@ -211,6 +211,10 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             {
                 vpTopDown.ToggleFullscreen();
             }
+            if (ImGui::MenuItem("Show Sidebar", "", LevelEditor::showSidebar))
+            {
+                LevelEditor::showSidebar = !LevelEditor::showSidebar;
+            }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Tools"))
@@ -254,20 +258,30 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     LevelEditor::toolType = static_cast<LevelEditor::EditorToolType>(tool);
     ImGui::End();
 
+    if (LevelEditor::showSidebar)
+    {
+        ImGui::SetNextWindowPos(ImVec2(0, viewport->WorkPos.y + 32));
+        ImGui::SetNextWindowSize(ImVec2(250, viewport->WorkSize.y - 32));
+        ImGui::Begin("Tools",
+                     nullptr,
+                     ImGuiWindowFlags_NoMove |
+                             ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoCollapse |
+                             ImGuiWindowFlags_NoDecoration);
+        LevelEditor::tool->RenderToolWindow();
+        ImGui::End();
+    }
+
     vpTopDown.RenderImGui();
     if (!vpTopDown.IsFullscreen())
     {
         vpFront.RenderImGui();
         vpSide.RenderImGui();
     }
-
-    LevelEditor::tool->RenderToolWindow();
 }
 
 int main()
 {
-    LevelEditor::level.sectors.push_back(Sector::CreateExample());
-
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
         printf("Error: SDL_Init(): %s\n", SDL_GetError());

@@ -8,30 +8,6 @@
 #include <libassets/util/Sector.h>
 #include <vector>
 
-Sector Sector::CreateExample()
-{
-    Sector s{};
-    s.ceilingHeight = 1;
-    s.floorHeight = -1;
-    s.lightColor = Color(1, 1, 1, 1);
-    s.floorMaterial = WallMaterial("level/floor_test");
-    s.ceilingMaterial = WallMaterial("level/ceiling_test");
-    s.points = {
-        {-5, -5},
-        {-5, 5},
-        {5, 5},
-        {5, -5},
-    };
-    s.wallMaterials = {
-        WallMaterial("level/wall_test"),
-        WallMaterial("level/wall_test"),
-        WallMaterial("level/wall_test"),
-        WallMaterial("level/wall_test"),
-    };
-    return s;
-}
-
-
 bool Sector::IsValid()
 {
     if (points.size() < 3)

@@ -305,4 +305,12 @@ void VertexTool::RenderViewport(Viewport &vp)
     }
 }
 
-void VertexTool::RenderToolWindow() {}
+void VertexTool::RenderToolWindow()
+{
+    if (!ImGui::CollapsingHeader("Sector Editor", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        return;
+    }
+    ImGui::PushItemWidth(-1);
+    ImGui::Text("No Options");
+}
