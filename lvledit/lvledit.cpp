@@ -74,6 +74,16 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         vpSide.GetZoom() = 20;
     }
 
+    if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_R, ImGuiInputFlags_RouteGlobal))
+    {
+        vpTopDown.GetZoom() = 20;
+        vpFront.GetZoom() = 20;
+        vpSide.GetZoom() = 20;
+        vpTopDown.CenterPosition(glm::vec3(0));
+        vpFront.CenterPosition(glm::vec3(0));
+        vpSide.CenterPosition(glm::vec3(0));
+    }
+
     if (ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_V, ImGuiInputFlags_RouteGlobal))
     {
         vpTopDown.ToggleFullscreen();
