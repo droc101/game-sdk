@@ -64,6 +64,10 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             const glm::vec3 startFloor = glm::vec3(start2.at(0), sector.floorHeight, start2.at(1));
             const glm::vec3 endFloor = glm::vec3(end2.at(0), sector.floorHeight, end2.at(1));
 
+            if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+            {
+                LevelRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), 10, Color(1, 0.7, 0.7, 1), matrix);
+            }
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
                 LevelRenderer::RenderLine(startFloor, endFloor, Color(0.7, .7, .7, 1), matrix, 4);
@@ -137,6 +141,10 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             const glm::vec3 startPointFloor = glm::vec3(points.at(i).x, floor, points.at(i).y);
             const glm::vec3 endPointCeil = glm::vec3(points.at(nextIndex).x, ceiling, points.at(nextIndex).y);
             const glm::vec3 endPointFloor = glm::vec3(points.at(nextIndex).x, floor, points.at(nextIndex).y);
+            if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+            {
+                LevelRenderer::RenderBillboardPoint(startPointCeil + glm::vec3(0, 0.1, 0), 10, Color(1, 0, 0, 1), matrix);
+            }
             LevelRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 1, 1), matrix, 4);
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {

@@ -116,6 +116,10 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
             const glm::vec3 startFloor = glm::vec3(start2.at(0), sector.floorHeight, start2.at(1));
             const glm::vec3 endFloor = glm::vec3(end2.at(0), sector.floorHeight, end2.at(1));
 
+            if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+            {
+                LevelRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), 10, Color(1, 0.7, 0.7, 1), matrix);
+            }
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
                 LevelRenderer::RenderLine(startFloor, endFloor, Color(0.7, .7, .7, 1), matrix, 4);
@@ -141,6 +145,10 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
             const glm::vec3 startFloor = glm::vec3(start2.x, floor, start2.y);
             const glm::vec3 endFloor = glm::vec3(end2.x, floor, end2.y);
 
+            if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+            {
+                LevelRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), 10, Color(1, 0, 0, 1), matrix);
+            }
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
                 LevelRenderer::RenderLine(startFloor, endFloor, Color(1, 1, 1, 1), matrix, 4);
