@@ -53,7 +53,7 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
             ceiling = 1;
             floor = -1;
             isDrawing = true;
-        } else if (isDrawing && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        } else if (isDrawing)
         {
             const glm::vec2 firstPoint = points.at(0);
             const glm::vec3 worldSpaceFirstPoint = glm::vec3(firstPoint.x, worldSpaceHover.y, firstPoint.y);
@@ -74,26 +74,33 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                         ImGui::Text("Close Sector");
                         ImGui::EndTooltip();
                     }
-                    isDrawing = false;
-                    Sector s = Sector();
-                    const WallMaterial mat = WallMaterial(Options::defaultTexture);
-                    s.ceilingMaterial = mat;
-                    s.floorMaterial = mat;
-                    s.floorHeight = floor;
-                    s.ceilingHeight = ceiling;
-                    s.lightColor = Color(1, 1, 1, 1);
-                    for (const glm::vec2 &glmPoint: points)
+                    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                     {
-                        const std::array<float, 2> point = {glmPoint.x, glmPoint.y};
-                        s.points.push_back(point);
-                        s.wallMaterials.push_back(mat);
+                        isDrawing = false;
+                        Sector s = Sector();
+                        const WallMaterial mat = WallMaterial(Options::defaultTexture);
+                        s.ceilingMaterial = mat;
+                        s.floorMaterial = mat;
+                        s.floorHeight = floor;
+                        s.ceilingHeight = ceiling;
+                        s.lightColor = Color(1, 1, 1, 1);
+                        for (const glm::vec2 &glmPoint: points)
+                        {
+                            const std::array<float, 2> point = {glmPoint.x, glmPoint.y};
+                            s.points.push_back(point);
+                            s.wallMaterials.push_back(mat);
+                        }
+                        LevelEditor::level.sectors.push_back(s);
                     }
-                    LevelEditor::level.sectors.push_back(s);
                 }
             } else
             {
                 const glm::vec2 worldSpacePoint = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
-                points.push_back(LevelEditor::SnapToGrid(worldSpacePoint));
+                // TODO don't allow placing the same point twice
+                if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                {
+                    points.push_back(LevelEditor::SnapToGrid(worldSpacePoint));
+                }
             }
         }
     }
@@ -131,16 +138,16 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
             }
             const glm::vec3 startCeiling = glm::vec3(start2.x, ceiling, start2.y);
             const glm::vec3 endCeiling = glm::vec3(end2.x, ceiling, end2.y);
-            const glm::vec3 startFloor = glm::vec3(start2.y, floor, start2.y);
-            const glm::vec3 endFloor = glm::vec3(end2.y, floor, end2.y);
+            const glm::vec3 startFloor = glm::vec3(start2.x, floor, start2.y);
+            const glm::vec3 endFloor = glm::vec3(end2.x, floor, end2.y);
 
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderLine(startFloor, endFloor, Color(0.7, .7, .7, 1), matrix, 4);
+                LevelRenderer::RenderLine(startFloor, endFloor, Color(1, 1, 1, 1), matrix, 4);
                 LevelRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
             }
 
-            LevelRenderer::RenderLine(startCeiling, endCeiling, Color(0.7, .7, .7, 1), matrix, 4);
+            LevelRenderer::RenderLine(startCeiling, endCeiling, Color(1, 1, 1, 1), matrix, 4);
         }
     }
 }
