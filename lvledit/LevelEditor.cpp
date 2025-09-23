@@ -22,6 +22,12 @@ glm::vec3 LevelEditor::SnapToGrid(const glm::vec3 v)
     return {SnapToGrid(v.x), SnapToGrid(v.y), SnapToGrid(v.z)};
 }
 
+glm::vec2 LevelEditor::SnapToGrid(glm::vec2 v)
+{
+    return {SnapToGrid(v.x), SnapToGrid(v.y)};
+}
+
+
 bool LevelEditor::IsPointInBounds(glm::vec3 p)
 {
     const bool x = p.x >= -512 && p.x <= 512;

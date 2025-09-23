@@ -249,11 +249,11 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     {
         LevelEditor::tool = std::unique_ptr<EditorTool>(new AddPrimitiveTool());
     }
-    // ImGui::SameLine();
-    // if (ImGui::RadioButton("Add Polygon", &tool, static_cast<int>(LevelEditor::EditorToolType::ADD_POLYGON)))
-    // {
-    //     LevelEditor::tool = std::unique_ptr<EditorTool>(new AddPolygonTool());
-    // }
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Add Polygon", &tool, static_cast<int>(LevelEditor::EditorToolType::ADD_POLYGON)))
+    {
+        LevelEditor::tool = std::unique_ptr<EditorTool>(new AddPolygonTool());
+    }
     ImGui::SameLine();
     LevelEditor::toolType = static_cast<LevelEditor::EditorToolType>(tool);
     ImGui::End();

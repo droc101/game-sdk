@@ -43,9 +43,11 @@ class LevelEditor
 
         static inline std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new VertexTool());
 
-        static float SnapToGrid(float f);
+        [[nodiscard]] static float SnapToGrid(float f);
 
         [[nodiscard]] static glm::vec3 SnapToGrid(glm::vec3 v);
+
+        [[nodiscard]] static glm::vec2 SnapToGrid(glm::vec2 v);
 
         [[nodiscard]] static bool IsPointInBounds(glm::vec3 p);
 
