@@ -11,8 +11,8 @@
 #include "../Viewport.h"
 #include "libassets/util/Color.h"
 #include "libassets/util/Sector.h"
-#include "Options.h"
 #include "libassets/util/WallMaterial.h"
+#include "Options.h"
 
 void AddPolygonTool::RenderToolWindow()
 {
@@ -55,57 +55,64 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
             isDrawing = true;
         } else if (isDrawing)
         {
-            const glm::vec2 firstPoint = points.at(0);
-            const glm::vec3 worldSpaceFirstPoint = glm::vec3(firstPoint.x, worldSpaceHover.y, firstPoint.y);
-            const glm::vec2 screenSpaceFirstPoint = vp.WorldToScreenPos(worldSpaceFirstPoint);
-            if (distance(screenSpaceHover, screenSpaceFirstPoint) < 5 || LevelEditor::SnapToGrid(worldSpaceHover) == worldSpaceFirstPoint)
+            if (ImGui::Shortcut(ImGuiKey_Escape))
             {
-                if (points.size() < 3)
+                isDrawing = false;
+            } else
+            {
+                const glm::vec2 firstPoint = points.at(0);
+                const glm::vec3 worldSpaceFirstPoint = glm::vec3(firstPoint.x, worldSpaceHover.y, firstPoint.y);
+                const glm::vec2 screenSpaceFirstPoint = vp.WorldToScreenPos(worldSpaceFirstPoint);
+                if (distance(screenSpaceHover, screenSpaceFirstPoint) < 5 ||
+                    LevelEditor::SnapToGrid(worldSpaceHover) == worldSpaceFirstPoint)
                 {
-                    if (ImGui::BeginTooltip())
+                    if (points.size() < 3)
                     {
-                        ImGui::Text("Cannot create sector with less than 3 points");
-                        ImGui::EndTooltip();
+                        if (ImGui::BeginTooltip())
+                        {
+                            ImGui::Text("Cannot create sector with less than 3 points");
+                            ImGui::EndTooltip();
+                        }
+                    } else
+                    {
+                        if (ImGui::BeginTooltip())
+                        {
+                            ImGui::Text("Close Sector");
+                            ImGui::EndTooltip();
+                        }
+                        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                        {
+                            isDrawing = false;
+                            Sector s = Sector();
+                            const WallMaterial mat = WallMaterial(Options::defaultTexture);
+                            s.ceilingMaterial = mat;
+                            s.floorMaterial = mat;
+                            s.floorHeight = floor;
+                            s.ceilingHeight = ceiling;
+                            s.lightColor = Color(1, 1, 1, 1);
+                            for (const glm::vec2 &glmPoint: points)
+                            {
+                                const std::array<float, 2> point = {glmPoint.x, glmPoint.y};
+                                s.points.push_back(point);
+                                s.wallMaterials.push_back(mat);
+                            }
+                            LevelEditor::level.sectors.push_back(s);
+                        }
                     }
                 } else
                 {
-                    if (ImGui::BeginTooltip())
-                    {
-                        ImGui::Text("Close Sector");
-                        ImGui::EndTooltip();
-                    }
+                    const glm::vec2 worldSpacePoint = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
+                    // TODO don't allow placing the same point twice
                     if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                     {
-                        isDrawing = false;
-                        Sector s = Sector();
-                        const WallMaterial mat = WallMaterial(Options::defaultTexture);
-                        s.ceilingMaterial = mat;
-                        s.floorMaterial = mat;
-                        s.floorHeight = floor;
-                        s.ceilingHeight = ceiling;
-                        s.lightColor = Color(1, 1, 1, 1);
-                        for (const glm::vec2 &glmPoint: points)
-                        {
-                            const std::array<float, 2> point = {glmPoint.x, glmPoint.y};
-                            s.points.push_back(point);
-                            s.wallMaterials.push_back(mat);
-                        }
-                        LevelEditor::level.sectors.push_back(s);
+                        points.push_back(LevelEditor::SnapToGrid(worldSpacePoint));
                     }
-                }
-            } else
-            {
-                const glm::vec2 worldSpacePoint = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
-                // TODO don't allow placing the same point twice
-                if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-                {
-                    points.push_back(LevelEditor::SnapToGrid(worldSpacePoint));
                 }
             }
         }
     }
 
-    for (auto & sector : LevelEditor::level.sectors)
+    for (auto &sector: LevelEditor::level.sectors)
     {
         for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
         {
@@ -118,7 +125,10 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
 
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), 10, Color(1, 0.7, 0.7, 1), matrix);
+                LevelRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
+                                                    10,
+                                                    Color(1, 0.7, 0.7, 1),
+                                                    matrix);
             }
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
