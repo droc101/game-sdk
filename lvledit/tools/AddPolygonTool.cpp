@@ -21,7 +21,10 @@ void AddPolygonTool::RenderToolWindow()
         return;
     }
     ImGui::PushItemWidth(-1);
-    ImGui::Text("No Options");
+    ImGui::Text("Ceiling");
+    ImGui::InputFloat("##ceilHeight", &ceiling);
+    ImGui::Text("Floor");
+    ImGui::InputFloat("##floorHeight", &floor);
 }
 
 void AddPolygonTool::RenderViewport(Viewport &vp)

@@ -215,6 +215,12 @@ void AddPrimitiveTool::RenderToolWindow()
             ngonSides = 16;
         }
     }
+
+    ImGui::Separator();
+    ImGui::Text("Ceiling");
+    ImGui::InputFloat("##ceilHeight", &ceiling);
+    ImGui::Text("Floor");
+    ImGui::InputFloat("##floorHeight", &floor);
 }
 
 std::vector<glm::vec2> AddPrimitiveTool::buildNgon(int n,

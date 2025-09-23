@@ -23,7 +23,7 @@ class AddPolygonTool final: public EditorTool
         void RenderToolWindow() override;
     private:
         bool isDrawing = false;
-        std::vector<glm::vec2> points;
-        float floor;
-        float ceiling;
+        std::vector<glm::vec2> points{};
+        float floor = 1.0f;
+        float ceiling = -1.0f;
 };
