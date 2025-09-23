@@ -64,3 +64,42 @@ float LevelEditor::VecDistanceToLine2D(const glm::vec2 lineStart, const glm::vec
 
     return distance(testPoint, intersection);
 }
+
+std::array<float, 4> LevelEditor::CalculateBBox(const std::vector<std::array<float, 2>> &points)
+{
+    std::vector<glm::vec2> glmPoints{};
+    for (const std::array<float, 2> &point: points)
+    {
+        glmPoints.emplace_back(point.at(0), point.at(1));
+    }
+    return CalculateBBox(glmPoints);
+}
+
+
+std::array<float, 4> LevelEditor::CalculateBBox(const std::vector<glm::vec2> &points)
+{
+    glm::vec2 minPoint = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
+    glm::vec2 maxPoint = {std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()};
+
+    for (const glm::vec2 &vert: points)
+    {
+        if (vert.x < minPoint.x)
+        {
+            minPoint.x = vert.x;
+        }
+        if (vert.x > maxPoint.x)
+        {
+            maxPoint.x = vert.x;
+        }
+
+        if (vert.y < minPoint.y)
+        {
+            minPoint.y = vert.y;
+        }
+        if (vert.y > maxPoint.y)
+        {
+            maxPoint.y = vert.y;
+        }
+    }
+    return {minPoint.x, minPoint.y, maxPoint.x, maxPoint.y};
+}

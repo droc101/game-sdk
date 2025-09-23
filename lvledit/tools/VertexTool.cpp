@@ -93,7 +93,7 @@ void VertexTool::ProcessSectorHover(const Viewport &vp,
 {
     if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ && dragType == DragType::NONE)
     {
-        const std::array<float, 4> sectorBB = sector.CalculateBBox();
+        const std::array<float, 4> sectorBB = LevelEditor::CalculateBBox(sector.points);
         float ceilingDistance = FLT_MAX;
         float floorDistance = FLT_MAX;
         if (vp.GetType() == Viewport::ViewportType::FRONT_XY)

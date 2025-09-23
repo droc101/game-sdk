@@ -52,4 +52,8 @@ class LevelEditor
         [[nodiscard]] static bool IsPointInBounds(glm::vec3 p);
 
         [[nodiscard]] static float VecDistanceToLine2D(glm::vec2 lineStart, glm::vec2 lineEnd, glm::vec2 testPoint);
+
+        static std::array<float, 4> CalculateBBox(const std::vector<glm::vec2> &points);
+
+        static std::array<float, 4> CalculateBBox(const std::vector<std::array<float, 2>> &points);
 };

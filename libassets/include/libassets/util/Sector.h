@@ -24,8 +24,6 @@ class Sector
         /// Expensive!
         bool IsValid();
 
-        std::array<float, 4> CalculateBBox() const;
-
     private:
         enum class SegmentOrientation : uint8_t
         {
