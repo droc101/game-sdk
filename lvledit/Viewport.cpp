@@ -197,25 +197,25 @@ glm::mat4 Viewport::GetMatrix() const
     const float right = scrollCenterPos.x + halfWidth;
     const float top = scrollCenterPos.y + halfHeight;
     const float bottom = scrollCenterPos.y - halfHeight;
-    const glm::mat4 ortho = glm::ortho(left, right, bottom, top, 0.01f, 1100.0f);
+    const glm::mat4 ortho = glm::ortho(left, right, bottom, top, 0.01f, LevelEditor::LEVEL_SIZE + 100);
 
     glm::vec3 up;
     glm::vec3 eye;
     glm::vec3 target;
     if (type == ViewportType::TOP_DOWN_XZ)
     {
-        target = glm::vec3(0, 520, 0);
-        eye = glm::vec3(0, 530, 0);
+        target = glm::vec3(0, LevelEditor::LEVEL_HALF_SIZE + 8, 0);
+        eye = glm::vec3(0, LevelEditor::LEVEL_HALF_SIZE + 18, 0);
         up = glm::vec3(0, 0, 1);
     } else if (type == ViewportType::SIDE_YZ)
     {
-        target = glm::vec3(520, 0, 0);
-        eye = glm::vec3(530, 0, 0);
+        target = glm::vec3(LevelEditor::LEVEL_HALF_SIZE + 8, 0, 0);
+        eye = glm::vec3(LevelEditor::LEVEL_HALF_SIZE + 18, 0, 0);
         up = glm::vec3(0, 1, 0);
     } else
     {
-        target = glm::vec3(0, 0, 520);
-        eye = glm::vec3(0, 0, 530);
+        target = glm::vec3(0, 0, LevelEditor::LEVEL_HALF_SIZE + 8);
+        eye = glm::vec3(0, 0, LevelEditor::LEVEL_HALF_SIZE + 18);
         up = glm::vec3(0, 1, 0);
     }
 
@@ -252,9 +252,9 @@ void Viewport::ClampZoom()
     {
         zoom = 5;
     }
-    if (zoom > 1500)
+    if (zoom > LevelEditor::LEVEL_SIZE + 500)
     {
-        zoom = 1500;
+        zoom = LevelEditor::LEVEL_SIZE + 500;
     }
 }
 

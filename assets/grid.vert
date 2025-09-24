@@ -9,7 +9,7 @@ uniform mat4 matrix;
 #define PLANE_YZ 2
 
 #define LEVEL_HALF_SIZE 512
-#define LEVEL_SIZE 1024
+#define LEVEL_SIZE (LEVEL_HALF_SIZE * 2)
 
 out vec3 lineColor;
 

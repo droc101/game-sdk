@@ -40,12 +40,12 @@ bool LevelRenderer::Init()
     axisHelperBuffer = GLHelper::CreateBuffer();
     // clang-format off
     const std::vector<float> axisHelperVerts = {
-        0, -512, 0, 0, 1, 0,
-        0, 512, 0, 0, 1, 0,
-        -512, 0, 0, 1, 0, 0,
-        512, 0, 0, 1, 0, 0,
-        0, 0, -512, 0, 0, 1,
-        0, 0, 512, 0, 0, 1,
+        0, -LevelEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0,
+        0, LevelEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0,
+        -LevelEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0, 0,
+        LevelEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0, 0,
+        0, 0, -LevelEditor::LEVEL_HALF_SIZE, 0, 0, 1,
+        0, 0, LevelEditor::LEVEL_HALF_SIZE, 0, 0, 1,
     };
     // clang-format on
     GLHelper::BindBuffer(axisHelperBuffer);
@@ -57,30 +57,30 @@ bool LevelRenderer::Init()
     worldBorderBuffer = GLHelper::CreateBuffer();
     // clang-format off
     const std::vector<float> verts = {
-        -512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
-        512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
-        512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
-        512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
-        512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
-        -512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
-        -512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
-        -512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
-        -512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
-        512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
-        512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
-        512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
-        512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
-        -512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
-        -512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
-        -512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
-        -512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
-        -512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
-        512.0f, -512.0f, -512.0f, 0.5, 0.5, 0.5,
-        512.0f, -512.0f, 512.0f, 0.5, 0.5, 0.5,
-        512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
-        512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
-        -512.0f, 512.0f, -512.0f, 0.5, 0.5, 0.5,
-        -512.0f, 512.0f, 512.0f, 0.5, 0.5, 0.5,
+        -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
     };
     // clang-format on
     GLHelper::BindBuffer(worldBorderBuffer);
@@ -126,7 +126,7 @@ void LevelRenderer::RenderViewport(const Viewport &vp)
     if (LevelEditor::drawGrid)
     {
         const float gridSpacing = LevelEditor::GRID_SPACING_VALUES.at(LevelEditor::gridSpacingIndex);
-        const int numInstances = static_cast<int>(2048.0f / gridSpacing);
+        const int numInstances = static_cast<int>(LevelEditor::LEVEL_SIZE * 2 / gridSpacing);
 
         glUseProgram(gridProgram);
         glUniformMatrix4fv(glGetUniformLocation(gridProgram, "matrix"), 1, GL_FALSE, glm::value_ptr(view));
