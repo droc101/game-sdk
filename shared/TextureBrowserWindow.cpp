@@ -12,7 +12,8 @@
 #include "Options.h"
 #include "SharedMgr.h"
 
-constexpr float tileSize = 128;
+constexpr int tileSize = 128;
+std::string filter = "";
 
 void TextureBrowserWindow::Hide()
 {
@@ -31,19 +32,37 @@ void TextureBrowserWindow::Render()
     if (visible)
     {
         ImGui::OpenPopup("Choose Texture");
-        ImGui::SetNextWindowSize(ImVec2(600, -1), ImGuiCond_Appearing);
+        ImGui::SetNextWindowSize(ImVec2(600, 500), ImGuiCond_Appearing);
+        ImGui::SetNextWindowSizeConstraints(ImVec2(192, 192), ImVec2(FLT_MAX, FLT_MAX));
         constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
-                                                 ImGuiWindowFlags_NoSavedSettings |
-                                                 ImGuiWindowFlags_NoResize;
+                                                 ImGuiWindowFlags_NoSavedSettings;
         if (ImGui::BeginPopupModal("Choose Texture", &visible, windowFlags))
         {
-            if (ImGui::BeginChild("##picker", ImVec2(-1, 400), ImGuiChildFlags_Border, 0))
+            ImGui::PushItemWidth(-1);
+            ImGui::InputTextWithHint("##search", "Filter", &filter);
+            ImGui::Dummy({0,4});
+            if (ImGui::BeginChild("##picker", ImVec2(-1, -32), ImGuiChildFlags_Border, 0))
             {
                 const float spacing = ImGui::GetStyle().ItemSpacing.x;
                 const float regionMaxX = ImGui::GetWindowPos().x + ImGui::GetContentRegionMax().x;
+                bool foundResults = false;
 
                 for (size_t i = 0; i < textures.size(); i++)
                 {
+                    if (textures.at(i).find(filter) == std::string::npos) {continue;}
+
+                    ImVec2 texSize;
+                    if (SharedMgr::textureCache->GetTextureSize("texture/" + textures[i], texSize) !=
+                        Error::ErrorCode::OK)
+                    {
+                        continue;
+                    }
+                    ImTextureID tex = 0;
+                    if (SharedMgr::textureCache->GetTextureID("texture/" + textures[i], tex) != Error::ErrorCode::OK)
+                    {
+                        continue;
+                    }
+
                     ImGui::PushID(static_cast<int>(i));
 
                     const ImVec2 pos = ImGui::GetCursorScreenPos();
@@ -57,12 +76,6 @@ void TextureBrowserWindow::Render()
                     if (ImGui::Selectable("##tile", "texture/" + textures[i] == *str, 0, ImVec2(tileSize, tileSize)))
                     {
                         *str = "texture/" + textures[i];
-                    }
-                    ImVec2 texSize;
-                    if (SharedMgr::textureCache->GetTextureSize("texture/" + textures[i], texSize) !=
-                        Error::ErrorCode::OK)
-                    {
-                        continue;
                     }
                     if (ImGui::BeginItemTooltip())
                     {
@@ -89,25 +102,30 @@ void TextureBrowserWindow::Render()
                         drawHeight = tileSize;
                     }
 
-                    const ImVec2 cursorPos = ImGui::GetCursorPos();
+                    ImVec2 cursorPos = ImGui::GetCursorPos();
                     ImGui::SetCursorPos(ImVec2(cursorPos.x + (tileSize - drawWidth) * 0.5f,
                                                cursorPos.y + (tileSize - drawHeight) * 0.5f));
 
-                    ImTextureID tex = 0;
-                    if (SharedMgr::textureCache->GetTextureID("texture/" + textures[i], tex) != Error::ErrorCode::OK)
-                    {
-                        continue;
-                    }
                     ImGui::Image(tex, ImVec2(drawWidth, drawHeight));
-                    ImGui::SetCursorPosX(-drawWidth);
-                    ImGui::SetCursorPosX(tileSize);
+                    cursorPos = ImGui::GetCursorPos();
 
                     ImGui::SameLine(0.0f, spacing);
+                    ImGui::SetCursorPosX(cursor + tileSize + spacing);
+                    ImGui::Dummy(ImVec2(0,0));
+                    ImGui::SameLine(0,0);
                     ImGui::PopID();
+
+                    foundResults = true;
+                }
+
+                if (!foundResults)
+                {
+                    ImGui::Text("No results");
                 }
 
                 ImGui::EndChild();
             }
+            ImGui::Dummy({0,4});
 
             const float sizeX = ImGui::GetContentRegionAvail().x;
 
@@ -117,11 +135,6 @@ void TextureBrowserWindow::Render()
             {
                 visible = false;
             }
-            // ImGui::SameLine();
-            // if (ImGui::Button("Cancel", ImVec2(60, 0)))
-            // {
-            //     visible = false;
-            // }
 
             ImGui::EndPopup();
         }
