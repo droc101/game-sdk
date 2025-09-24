@@ -50,12 +50,22 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
 
     if (isHovered && vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
     {
-        if (!isDrawing && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        if (!isDrawing)
         {
-            points = {LevelEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z))};
-            ceiling = 1;
-            floor = -1;
-            isDrawing = true;
+            const glm::vec2 pt = LevelEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            {
+                points = {pt};
+                ceiling = 1;
+                floor = -1;
+                isDrawing = true;
+            } else
+            {
+                LevelRenderer::RenderBillboardPoint(glm::vec3(pt.x, 0.1, pt.y),
+                                                    10,
+                                                    Color(1, 0.7, 0.7, 1),
+                                                    matrix);
+            }
         } else if (isDrawing)
         {
             if (ImGui::Shortcut(ImGuiKey_Escape))
