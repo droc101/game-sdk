@@ -240,7 +240,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     }
 
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
-    const ImVec2 workSize{viewport->WorkSize.x, 32};
+    const ImVec2 workSize{viewport->WorkSize.x, LevelEditor::TOOLBAR_HEIGHT};
     const ImVec2 workPos{viewport->WorkPos.x, viewport->WorkPos.y};
     ImGui::SetNextWindowPos(workPos);
     ImGui::SetNextWindowSize(workSize);
@@ -271,8 +271,8 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
     if (LevelEditor::showSidebar)
     {
-        ImGui::SetNextWindowPos(ImVec2(0, viewport->WorkPos.y + 32));
-        ImGui::SetNextWindowSize(ImVec2(250, viewport->WorkSize.y - 32));
+        ImGui::SetNextWindowPos(ImVec2(0, viewport->WorkPos.y + LevelEditor::TOOLBAR_HEIGHT));
+        ImGui::SetNextWindowSize(ImVec2(LevelEditor::SIDEBAR_WIDTH, viewport->WorkSize.y - LevelEditor::TOOLBAR_HEIGHT));
         ImGui::Begin("Tools",
                      nullptr,
                      ImGuiWindowFlags_NoMove |

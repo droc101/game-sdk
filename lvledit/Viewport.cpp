@@ -25,9 +25,9 @@ Viewport::Viewport(const ImVec2 gridPos, const ImVec2 gridSize, const ViewportTy
 void Viewport::GetWindowRect(ImVec2 &pos, ImVec2 &size) const
 {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
-    const float sidebarSize = LevelEditor::showSidebar ? 250 : 0;
-    const ImVec2 GridTopLeft = ImVec2(viewport->WorkPos.x + sidebarSize, viewport->WorkPos.y + 32);
-    const ImVec2 GridCellSize = ImVec2((viewport->WorkSize.x - sidebarSize) / 2, (viewport->WorkSize.y - 32) / 2);
+    const float sidebarSize = LevelEditor::showSidebar ? LevelEditor::SIDEBAR_WIDTH : 0;
+    const ImVec2 GridTopLeft = ImVec2(viewport->WorkPos.x + sidebarSize, viewport->WorkPos.y + LevelEditor::TOOLBAR_HEIGHT);
+    const ImVec2 GridCellSize = ImVec2((viewport->WorkSize.x - sidebarSize) / 2, (viewport->WorkSize.y - LevelEditor::TOOLBAR_HEIGHT) / 2);
     if (fullscreen)
     {
         pos = ImVec2(GridTopLeft.x, GridTopLeft.y);
