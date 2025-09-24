@@ -43,6 +43,8 @@ class LevelEditor
 
         static inline std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new VertexTool());
 
+        static inline std::string texture = "";
+
         [[nodiscard]] static float SnapToGrid(float f);
 
         [[nodiscard]] static glm::vec3 SnapToGrid(glm::vec3 v);

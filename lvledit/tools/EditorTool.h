@@ -15,4 +15,13 @@ class EditorTool
         virtual void RenderViewport(Viewport &vp) = 0;
 
         virtual void RenderToolWindow() = 0;
+    protected:
+        enum class DragType : uint8_t
+        {
+            NONE,
+            VERTEX,
+            LINE,
+            CEILING,
+            FLOOR
+        };
 };

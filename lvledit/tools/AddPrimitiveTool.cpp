@@ -3,13 +3,18 @@
 //
 
 #include "AddPrimitiveTool.h"
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstddef>
 #include <imgui.h>
 #include <vector>
 #include "../LevelEditor.h"
 #include "../LevelRenderer.h"
 #include "../Viewport.h"
 #include "Options.h"
+#include "libassets/util/Sector.h"
+#include "libassets/util/WallMaterial.h"
 
 void AddPrimitiveTool::RenderViewport(Viewport &vp)
 {
@@ -52,9 +57,8 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
         }
     }
 
-    for (size_t sectorIndex = 0; sectorIndex < LevelEditor::level.sectors.size(); sectorIndex++)
+    for (Sector &sector : LevelEditor::level.sectors)
     {
-        Sector &sector = LevelEditor::level.sectors.at(sectorIndex);
         for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
         {
             const std::array<float, 2> &start2 = sector.points[vertexIndex];
@@ -154,10 +158,10 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
         }
 
 
-        if (ImGui::Shortcut(ImGuiKey_Enter))
+        if (ImGui::Shortcut(ImGuiKey_Enter) || ImGui::Shortcut(ImGuiKey_KeypadEnter))
         {
             Sector s = Sector();
-            WallMaterial mat = WallMaterial(Options::defaultTexture);
+            const WallMaterial mat = WallMaterial(LevelEditor::texture);
             s.ceilingMaterial = mat;
             s.floorMaterial = mat;
             s.floorHeight = floor;
@@ -165,7 +169,7 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             s.lightColor = Color(1, 1, 1, 1);
             for (const glm::vec2 &glmPoint: points)
             {
-                std::array<float, 2> point = {glmPoint.x, glmPoint.y};
+                const std::array<float, 2> point = {glmPoint.x, glmPoint.y};
                 s.points.push_back(point);
                 s.wallMaterials.push_back(mat);
             }
@@ -194,9 +198,15 @@ void AddPrimitiveTool::RenderToolWindow()
     {
         ImGui::Separator();
         ImGui::Text("Ngon Sides");
-        ImGui::SliderInt("##sides", &ngonSides, 3, 32);
+        ImGui::InputInt("##sides", &ngonSides);
+        ngonSides = std::ranges::clamp(ngonSides, 3, 128);
         ImGui::Text("Ngon Angle");
-        ImGui::SliderAngle("##ngonAngle", &ngonStartAngle);
+        float deg = glm::degrees(ngonStartAngle);
+        if (ImGui::InputFloat("##ngonAngle", &deg, 22.5f, 0, "%.2fdeg"))
+        {
+            deg = std::ranges::clamp(deg, -360.0f, 360.0f);
+            ngonStartAngle = glm::radians(deg);
+        }
         ImGui::Separator();
         const ImVec2 buttonSize = {(ImGui::GetContentRegionAvail().x / 3) - 6, 0}; // TODO obtain 6 without using magic
 

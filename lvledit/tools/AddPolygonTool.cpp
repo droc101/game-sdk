@@ -87,7 +87,7 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                         {
                             isDrawing = false;
                             Sector s = Sector();
-                            const WallMaterial mat = WallMaterial(Options::defaultTexture);
+                            const WallMaterial mat = WallMaterial(LevelEditor::texture);
                             s.ceilingMaterial = mat;
                             s.floorMaterial = mat;
                             s.floorHeight = floor;

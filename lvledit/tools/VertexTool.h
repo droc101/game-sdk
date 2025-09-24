@@ -44,15 +44,6 @@ class VertexTool final: public EditorTool
                                 glm::vec3 startCeiling);
 
     private:
-        enum class DragType : uint8_t
-        {
-            NONE,
-            VERTEX,
-            LINE,
-            CEILING,
-            FLOOR
-        };
-
         DragType dragType = DragType::NONE;
         size_t dragSectorIndex = 0;
         size_t dragVertexIndex = 0;
