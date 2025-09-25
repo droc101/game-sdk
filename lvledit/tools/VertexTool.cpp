@@ -127,7 +127,7 @@ void VertexTool::ProcessSectorHover(const Viewport &vp,
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
             if (ImGui::BeginTooltip())
             {
-                ImGui::Text("Sector %lu ceiling: %.2f units", sectorIndex, sector.ceilingHeight);
+                ImGui::Text("Sector %lu ceiling: %.2f units", sectorIndex+1, sector.ceilingHeight);
                 ImGui::EndTooltip();
             }
             if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
@@ -140,7 +140,7 @@ void VertexTool::ProcessSectorHover(const Viewport &vp,
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
             if (ImGui::BeginTooltip())
             {
-                ImGui::Text("Sector %lu floor: %.2f units", sectorIndex, sector.floorHeight);
+                ImGui::Text("Sector %lu floor: %.2f units", sectorIndex+1, sector.floorHeight);
                 ImGui::EndTooltip();
             }
             if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
@@ -175,8 +175,8 @@ void VertexTool::ProcessVertexHover(const Viewport &viewport,
                 if (ImGui::BeginTooltip())
                 {
                     ImGui::Text("Sector %ld vertex %ld\n%.2f, %.2f",
-                                sectorIndex,
-                                vertexIndex,
+                                sectorIndex+1,
+                                vertexIndex+1,
                                 startCeiling.x,
                                 startCeiling.z);
                     ImGui::EndTooltip();
@@ -186,7 +186,7 @@ void VertexTool::ProcessVertexHover(const Viewport &viewport,
                     dragVertexIndex = vertexIndex;
                     dragSectorIndex = sectorIndex;
                     dragType = DragType::VERTEX;
-                } else if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right) && sector.points.size() > 3)
+                } else if (isHovered && (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::Shortcut(ImGuiKey_Delete, ImGuiInputFlags_RouteGlobal)) && sector.points.size() > 3)
                 {
                     sector.points.erase(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex));
                 }
@@ -198,7 +198,7 @@ void VertexTool::ProcessVertexHover(const Viewport &viewport,
             if (distanceToLine <= LevelEditor::HOVER_DISTANCE_PIXELS &&
                 glm::distance(endVertexScreenSpace, screenSpaceHover) > LevelEditor::HOVER_DISTANCE_PIXELS)
             {
-                const bool addPointMode = ImGui::IsKeyDown(ImGuiKey_LeftShift);
+                const bool addPointMode = ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
                 ImGui::SetMouseCursor(addPointMode ? ImGuiMouseCursor_Hand : ImGuiMouseCursor_ResizeAll);
                 if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                 {
