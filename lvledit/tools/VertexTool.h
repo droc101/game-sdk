@@ -17,6 +17,7 @@ class VertexTool final: public EditorTool
 {
     public:
         VertexTool() = default;
+        VertexTool(size_t sectorIndex);
         ~VertexTool() override = default;
 
         void RenderViewport(Viewport &vp) override;
@@ -44,11 +45,14 @@ class VertexTool final: public EditorTool
                                 glm::vec3 startCeiling);
 
     private:
-        DragType dragType = DragType::NONE;
-        size_t dragSectorIndex = 0;
-        size_t dragVertexIndex = 0;
+        ItemType selectionType = ItemType::NONE;
+        size_t selectionSectorIndex = 0;
+        size_t selectionVertexIndex = 0;
         /// The difference from the first vertex to the 2nd vertex (firstVertex + lineDragModeSecondVertexOffset = secondVertex)
         glm::vec2 lineDragModeSecondVertexOffset{};
         /// The difference from the mouse to the 1st vertex (worldSpaceMouse - lineDragModeMouseOffset = firstVertex)
         glm::vec2 lineDragModeMouseOffset{};
+
+        bool sectorLock = false;
+        size_t sectorLockIndex = 0;
 };

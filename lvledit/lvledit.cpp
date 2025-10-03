@@ -5,6 +5,7 @@
 #include <imgui_impl_sdl3.h>
 #include <libassets/asset/LevelAsset.h>
 #include <libassets/util/Error.h>
+#include <memory>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
@@ -22,6 +23,8 @@
 #include "tools/AddPolygonTool.h"
 #include "tools/AddPrimitiveTool.h"
 #include "tools/EditorTool.h"
+#include "tools/SelectTool.h"
+#include "tools/VertexTool.h"
 #include "Viewport.h"
 
 static SDL_Window *window = nullptr;
@@ -251,6 +254,11 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                                              ImGuiWindowFlags_NoDocking;
     ImGui::Begin("toolbar", nullptr, windowFlags);
     static int tool = static_cast<int>(LevelEditor::toolType);
+    if (ImGui::RadioButton("Select", &tool, static_cast<int>(LevelEditor::EditorToolType::SELECT)))
+    {
+        LevelEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+    }
+    ImGui::SameLine();
     if (ImGui::RadioButton("Sector Editor", &tool, static_cast<int>(LevelEditor::EditorToolType::EDIT_SECTOR)))
     {
         LevelEditor::tool = std::unique_ptr<EditorTool>(new VertexTool());
@@ -272,7 +280,8 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     if (LevelEditor::showSidebar)
     {
         ImGui::SetNextWindowPos(ImVec2(0, viewport->WorkPos.y + LevelEditor::TOOLBAR_HEIGHT));
-        ImGui::SetNextWindowSize(ImVec2(LevelEditor::SIDEBAR_WIDTH, viewport->WorkSize.y - LevelEditor::TOOLBAR_HEIGHT));
+        ImGui::SetNextWindowSize(ImVec2(LevelEditor::SIDEBAR_WIDTH,
+                                        viewport->WorkSize.y - LevelEditor::TOOLBAR_HEIGHT));
         ImGui::Begin("Tools",
                      nullptr,
                      ImGuiWindowFlags_NoMove |
@@ -294,7 +303,11 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                 const float scale = std::ranges::min(scales.x, scales.y);
 
                 imageSize = {imageSize.x * scale, imageSize.y * scale};
-                if (ImGui::BeginChild("##imageBox", {sz.x, imagePanelHeight + 16}, ImGuiChildFlags_Border, ImGuiWindowFlags_NoResize)) {
+                if (ImGui::BeginChild("##imageBox",
+                                      {sz.x, imagePanelHeight + 16},
+                                      ImGuiChildFlags_Border,
+                                      ImGuiWindowFlags_NoResize))
+                {
                     sz = ImGui::GetContentRegionAvail();
                     ImVec2 pos = ImGui::GetCursorPos();
                     pos.x += (sz.x - imageSize.x) * 0.5f;

@@ -102,3 +102,24 @@ bool Sector::CheckIntersection(const std::array<float, 2> &segmentAStart,
     }
     return false;
 }
+
+bool Sector::ContainsPoint(const std::array<float, 2> point) const
+{
+    bool inside = false;
+    const size_t n = points.size();
+    for (size_t i = 0; i < n; i++)
+    {
+        const size_t j = (i + n - 1) % n;
+        const std::array<float, 2> &pi = points[i];
+        const std::array<float, 2> &pj = points[j];
+
+        const bool intersect = ((pi[1] > point[1]) != (pj[1] > point[1])) &&
+                               (point[0] < (pj[0] - pi[0]) * (point[1] - pi[1]) / (pj[1] - pi[1]) + pi[0]);
+
+        if (intersect)
+        {
+            inside = !inside;
+        }
+    }
+    return inside;
+}

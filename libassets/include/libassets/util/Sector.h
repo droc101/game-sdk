@@ -24,6 +24,8 @@ class Sector
         /// Expensive!
         bool IsValid();
 
+        bool ContainsPoint(std::array<float, 2> point) const;
+
     private:
         enum class SegmentOrientation : uint8_t
         {

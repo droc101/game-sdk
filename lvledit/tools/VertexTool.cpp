@@ -13,6 +13,12 @@
 #include "libassets/util/Color.h"
 #include "libassets/util/Sector.h"
 
+VertexTool::VertexTool(const size_t sectorIndex)
+{
+    sectorLockIndex = sectorIndex;
+    sectorLock = true;
+}
+
 void VertexTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {
     if (!isHovered)
@@ -21,65 +27,53 @@ void VertexTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
     }
     if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
     {
-        if (dragType == DragType::VERTEX)
+        if (selectionType == ItemType::VERTEX)
         {
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                Sector &sector = LevelEditor::level.sectors.at(dragSectorIndex);
+                Sector &sector = LevelEditor::level.sectors.at(selectionSectorIndex);
                 const glm::vec3 snapped = LevelEditor::SnapToGrid(worldSpaceHover);
-                sector.points[dragVertexIndex][0] = snapped.x;
-                sector.points[dragVertexIndex][1] = snapped.z;
-            } else
-            {
-                dragType = DragType::NONE;
+                sector.points[selectionVertexIndex][0] = snapped.x;
+                sector.points[selectionVertexIndex][1] = snapped.z;
             }
-        } else if (dragType == DragType::LINE)
+        } else if (selectionType == ItemType::LINE)
         {
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                Sector &sector = LevelEditor::level.sectors.at(dragSectorIndex);
+                Sector &sector = LevelEditor::level.sectors.at(selectionSectorIndex);
                 const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
                 const glm::vec2 startPos = worldHover2D - lineDragModeMouseOffset;
                 const glm::vec2 endPos = startPos - lineDragModeSecondVertexOffset;
                 const glm::vec3 startSnapped = LevelEditor::SnapToGrid(glm::vec3(startPos.x, 0, startPos.y));
                 const glm::vec3 endSnapped = LevelEditor::SnapToGrid(glm::vec3(endPos.x, 0, endPos.y));
-                sector.points[dragVertexIndex][0] = startSnapped.x;
-                sector.points[dragVertexIndex][1] = startSnapped.z;
-                sector.points[(dragVertexIndex + 1) % sector.points.size()][0] = endSnapped.x;
-                sector.points[(dragVertexIndex + 1) % sector.points.size()][1] = endSnapped.z;
-            } else
-            {
-                dragType = DragType::NONE;
+                sector.points[selectionVertexIndex][0] = startSnapped.x;
+                sector.points[selectionVertexIndex][1] = startSnapped.z;
+                sector.points[(selectionVertexIndex + 1) % sector.points.size()][0] = endSnapped.x;
+                sector.points[(selectionVertexIndex + 1) % sector.points.size()][1] = endSnapped.z;
             }
         }
     } else
     {
         // TODO prevent putting ceiling below floor / floor above ceiling
-        if (dragType == DragType::CEILING)
+        if (selectionType == ItemType::CEILING)
         {
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-                Sector &sector = LevelEditor::level.sectors.at(dragSectorIndex);
+                Sector &sector = LevelEditor::level.sectors.at(selectionSectorIndex);
                 const glm::vec3 snapped = LevelEditor::SnapToGrid(worldSpaceHover);
                 sector.ceilingHeight = snapped.y;
-            } else
-            {
-                dragType = DragType::NONE;
             }
-        } else if (dragType == DragType::FLOOR)
+        } else if (selectionType == ItemType::FLOOR)
         {
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-                Sector &sector = LevelEditor::level.sectors.at(dragSectorIndex);
+                Sector &sector = LevelEditor::level.sectors.at(selectionSectorIndex);
                 const glm::vec3 snapped = LevelEditor::SnapToGrid(worldSpaceHover);
                 sector.floorHeight = snapped.y;
-            } else
-            {
-                dragType = DragType::NONE;
             }
         }
     }
@@ -91,7 +85,7 @@ void VertexTool::ProcessSectorHover(const Viewport &vp,
                                     const glm::vec2 screenSpaceHover,
                                     const size_t sectorIndex)
 {
-    if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ && dragType == DragType::NONE)
+    if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ) // && selectionType == ItemType::NONE)
     {
         const std::array<float, 4> sectorBB = LevelEditor::CalculateBBox(sector.points);
         float ceilingDistance = FLT_MAX;
@@ -127,26 +121,26 @@ void VertexTool::ProcessSectorHover(const Viewport &vp,
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
             if (ImGui::BeginTooltip())
             {
-                ImGui::Text("Sector %lu ceiling: %.2f units", sectorIndex+1, sector.ceilingHeight);
+                ImGui::Text("Sector %lu ceiling: %.2f units", sectorIndex + 1, sector.ceilingHeight);
                 ImGui::EndTooltip();
             }
             if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
-                dragSectorIndex = sectorIndex;
-                dragType = DragType::CEILING;
+                selectionSectorIndex = sectorIndex;
+                selectionType = ItemType::CEILING;
             }
         } else if (floorDistance <= 5)
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
             if (ImGui::BeginTooltip())
             {
-                ImGui::Text("Sector %lu floor: %.2f units", sectorIndex+1, sector.floorHeight);
+                ImGui::Text("Sector %lu floor: %.2f units", sectorIndex + 1, sector.floorHeight);
                 ImGui::EndTooltip();
             }
             if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
-                dragSectorIndex = sectorIndex;
-                dragType = DragType::FLOOR;
+                selectionSectorIndex = sectorIndex;
+                selectionType = ItemType::FLOOR;
             }
         }
     }
@@ -166,71 +160,70 @@ void VertexTool::ProcessVertexHover(const Viewport &viewport,
 {
     if (viewport.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
     {
-        if (dragType == DragType::NONE)
+        if (glm::distance(vertexScreenSpace, screenSpaceHover) <= LevelEditor::HOVER_DISTANCE_PIXELS)
         {
-            if (glm::distance(vertexScreenSpace, screenSpaceHover) <= LevelEditor::HOVER_DISTANCE_PIXELS)
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            vertexColor = Color(1, 0.5, .5, 1);
+            if (ImGui::BeginTooltip())
             {
-                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                vertexColor = Color(1, 0.5, .5, 1);
-                if (ImGui::BeginTooltip())
-                {
-                    ImGui::Text("Sector %ld vertex %ld\n%.2f, %.2f",
-                                sectorIndex+1,
-                                vertexIndex+1,
-                                startCeiling.x,
-                                startCeiling.z);
-                    ImGui::EndTooltip();
-                }
-                if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-                {
-                    dragVertexIndex = vertexIndex;
-                    dragSectorIndex = sectorIndex;
-                    dragType = DragType::VERTEX;
-                } else if (isHovered && (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::Shortcut(ImGuiKey_Delete, ImGuiInputFlags_RouteGlobal)) && sector.points.size() > 3)
-                {
-                    sector.points.erase(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex));
-                }
-                return;
+                ImGui::Text("Sector %ld vertex %ld\n%.2f, %.2f",
+                            sectorIndex + 1,
+                            vertexIndex + 1,
+                            startCeiling.x,
+                            startCeiling.z);
+                ImGui::EndTooltip();
             }
-            const float distanceToLine = LevelEditor::VecDistanceToLine2D(vertexScreenSpace,
-                                                                          endVertexScreenSpace,
-                                                                          screenSpaceHover);
-            if (distanceToLine <= LevelEditor::HOVER_DISTANCE_PIXELS &&
-                glm::distance(endVertexScreenSpace, screenSpaceHover) > LevelEditor::HOVER_DISTANCE_PIXELS)
+            if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
-                const bool addPointMode = ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
-                ImGui::SetMouseCursor(addPointMode ? ImGuiMouseCursor_Hand : ImGuiMouseCursor_ResizeAll);
-                if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                selectionVertexIndex = vertexIndex;
+                selectionSectorIndex = sectorIndex;
+                selectionType = ItemType::VERTEX;
+            } else if (isHovered &&
+                       (ImGui::IsMouseClicked(ImGuiMouseButton_Right) ||
+                        ImGui::Shortcut(ImGuiKey_Delete, ImGuiInputFlags_RouteGlobal)) &&
+                       sector.points.size() > 3)
+            {
+                sector.points.erase(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex));
+            }
+            return;
+        }
+        const float distanceToLine = LevelEditor::VecDistanceToLine2D(vertexScreenSpace,
+                                                                      endVertexScreenSpace,
+                                                                      screenSpaceHover);
+        if (distanceToLine <= LevelEditor::HOVER_DISTANCE_PIXELS &&
+            glm::distance(endVertexScreenSpace, screenSpaceHover) > LevelEditor::HOVER_DISTANCE_PIXELS)
+        {
+            const bool addPointMode = ImGui::IsKeyDown(ImGuiKey_LeftShift) ||
+                                      ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
+            ImGui::SetMouseCursor(addPointMode ? ImGuiMouseCursor_Hand : ImGuiMouseCursor_ResizeAll);
+            if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            {
+                if (addPointMode)
                 {
-                    if (addPointMode)
-                    {
-                        const glm::vec2 newVertexPos = LevelEditor::SnapToGrid(worldSpaceHover);
-                        sector.points.insert(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex) + 1,
-                                             {newVertexPos.x, newVertexPos.y});
-                        sector.wallMaterials.insert(sector.wallMaterials.begin() +
-                                                            static_cast<ptrdiff_t>(vertexIndex) +
-                                                            1,
-                                                    sector.wallMaterials.at(vertexIndex));
-                        dragVertexIndex = vertexIndex + 1;
-                        dragSectorIndex = sectorIndex;
-                        dragType = DragType::VERTEX;
-                    } else
-                    {
-                        dragVertexIndex = vertexIndex;
-                        dragSectorIndex = sectorIndex;
-                        const glm::vec2 startPoint{
-                            sector.points.at(vertexIndex).at(0),
-                            sector.points.at(vertexIndex).at(1),
-                        };
-                        const glm::vec2 endPoint{
-                            sector.points.at((vertexIndex + 1) % sector.points.size()).at(0),
-                            sector.points.at((vertexIndex + 1) % sector.points.size()).at(1),
-                        };
-                        const glm::vec2 worldHover2D{worldSpaceHover.x, worldSpaceHover.z};
-                        lineDragModeSecondVertexOffset = startPoint - endPoint;
-                        lineDragModeMouseOffset = worldHover2D - startPoint;
-                        dragType = DragType::LINE;
-                    }
+                    const glm::vec2 newVertexPos = LevelEditor::SnapToGrid(worldSpaceHover);
+                    sector.points.insert(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex) + 1,
+                                         {newVertexPos.x, newVertexPos.y});
+                    sector.wallMaterials.insert(sector.wallMaterials.begin() + static_cast<ptrdiff_t>(vertexIndex) + 1,
+                                                sector.wallMaterials.at(vertexIndex));
+                    selectionVertexIndex = vertexIndex + 1;
+                    selectionSectorIndex = sectorIndex;
+                    selectionType = ItemType::VERTEX;
+                } else
+                {
+                    selectionVertexIndex = vertexIndex;
+                    selectionSectorIndex = sectorIndex;
+                    const glm::vec2 startPoint{
+                        sector.points.at(vertexIndex).at(0),
+                        sector.points.at(vertexIndex).at(1),
+                    };
+                    const glm::vec2 endPoint{
+                        sector.points.at((vertexIndex + 1) % sector.points.size()).at(0),
+                        sector.points.at((vertexIndex + 1) % sector.points.size()).at(1),
+                    };
+                    const glm::vec2 worldHover2D{worldSpaceHover.x, worldSpaceHover.z};
+                    lineDragModeSecondVertexOffset = startPoint - endPoint;
+                    lineDragModeMouseOffset = worldHover2D - startPoint;
+                    selectionType = ItemType::LINE;
                 }
             }
         }
@@ -258,12 +251,52 @@ void VertexTool::RenderViewport(Viewport &vp)
         }
     }
 
-    HandleDrag(vp, isHovered, worldSpaceHover);
+    if (sectorLock)
+    {
+        for (size_t sectorIndex = 0; sectorIndex < LevelEditor::level.sectors.size(); sectorIndex++)
+        {
+            Sector &sector = LevelEditor::level.sectors.at(sectorIndex);
+            if (sectorLockIndex == sectorIndex)
+            {
+                continue;
+            }
+
+            for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
+            {
+                const std::array<float, 2> &start2 = sector.points[vertexIndex];
+                const std::array<float, 2> &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
+                const glm::vec3 startCeiling = glm::vec3(start2.at(0), sector.ceilingHeight, start2.at(1));
+                const glm::vec3 endCeiling = glm::vec3(end2.at(0), sector.ceilingHeight, end2.at(1));
+                const glm::vec3 startFloor = glm::vec3(start2.at(0), sector.floorHeight, start2.at(1));
+                const glm::vec3 endFloor = glm::vec3(end2.at(0), sector.floorHeight, end2.at(1));
+
+                if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
+                {
+                    LevelRenderer::RenderLine(startFloor, endFloor, Color(0.5, 0.5, 0.5, 1), matrix, 4);
+                    LevelRenderer::RenderLine(startCeiling, startFloor, Color(.3, .3, .3, 1), matrix, 4);
+                }
+
+                LevelRenderer::RenderLine(startCeiling, endCeiling, Color(0.5, 0.5, 0.5, 1), matrix, 4);
+            }
+        }
+
+        if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
+        {
+            LevelEditor::toolType = LevelEditor::EditorToolType::SELECT;
+            LevelEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+        }
+    }
 
     for (size_t sectorIndex = 0; sectorIndex < LevelEditor::level.sectors.size(); sectorIndex++)
     {
         Sector &sector = LevelEditor::level.sectors.at(sectorIndex);
-        ProcessSectorHover(vp, sector, isHovered, screenSpaceHover, sectorIndex);
+        if (!sectorLock || sectorLockIndex == sectorIndex)
+        {
+            ProcessSectorHover(vp, sector, isHovered, screenSpaceHover, sectorIndex);
+        } else
+        {
+            continue;
+        }
 
         for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
         {
@@ -289,7 +322,6 @@ void VertexTool::RenderViewport(Viewport &vp)
                                c,
                                startCeiling);
 
-
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
                 LevelRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), 10, c, matrix);
@@ -302,6 +334,8 @@ void VertexTool::RenderViewport(Viewport &vp)
             LevelRenderer::RenderLine(startCeiling, endCeiling, Color(1, 1, 1, 1), matrix, 4);
         }
     }
+
+    HandleDrag(vp, isHovered, worldSpaceHover);
 }
 
 void VertexTool::RenderToolWindow()
@@ -311,5 +345,30 @@ void VertexTool::RenderToolWindow()
         return;
     }
     ImGui::PushItemWidth(-1);
-    ImGui::Text("No Options");
+    WallMaterial *mat = nullptr;
+    if (selectionType == ItemType::CEILING)
+    {
+        mat = &LevelEditor::level.sectors.at(selectionSectorIndex).ceilingMaterial;
+    } else if (selectionType == ItemType::FLOOR)
+    {
+        mat = &LevelEditor::level.sectors.at(selectionSectorIndex).floorMaterial;
+    } else if (selectionType == ItemType::LINE)
+    {
+        mat = &LevelEditor::level.sectors.at(selectionSectorIndex).wallMaterials.at(selectionVertexIndex);
+    }
+    if (mat != nullptr)
+    {
+        ImGui::Text("Current Texture: %s", mat->texture.c_str());
+        if (ImGui::Button("Apply Selected Texture"))
+        {
+            mat->texture = LevelEditor::texture;
+        }
+        ImGui::Text("UV Offset");
+        ImGui::InputFloat2("##UV Offset", mat->uvOffset.data());
+        ImGui::Text("UV Scale");
+        ImGui::InputFloat2("##UV Scale", mat->uvScale.data());
+    } else
+    {
+        ImGui::Text("No Options");
+    }
 }

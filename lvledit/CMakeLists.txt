@@ -16,7 +16,9 @@ add_executable(lvledit lvledit.cpp
         tools/AddPolygonTool.cpp
         tools/AddPolygonTool.h
         tools/AddPrimitiveTool.cpp
-        tools/AddPrimitiveTool.h)
+        tools/AddPrimitiveTool.h
+        tools/SelectTool.cpp
+        tools/SelectTool.h)
 
 set_target_properties(lvledit PROPERTIES LINKER_LANGUAGE CXX)
 

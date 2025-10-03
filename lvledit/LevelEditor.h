@@ -9,7 +9,7 @@
 #include <memory>
 #include "libassets/asset/LevelAsset.h"
 #include "tools/EditorTool.h"
-#include "tools/VertexTool.h"
+#include "tools/SelectTool.h"
 
 
 class LevelEditor
@@ -26,7 +26,7 @@ class LevelEditor
             EDIT_SECTOR
         };
 
-        static inline EditorToolType toolType = EditorToolType::EDIT_SECTOR;
+        static inline EditorToolType toolType = EditorToolType::SELECT;
 
         static inline LevelAsset level{};
 
@@ -45,7 +45,7 @@ class LevelEditor
         static constexpr float LEVEL_HALF_SIZE = 512;
         static constexpr float LEVEL_SIZE = LEVEL_HALF_SIZE * 2;
 
-        static inline std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new VertexTool());
+        static inline std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new SelectTool());
 
         static inline std::string texture = "";
 
