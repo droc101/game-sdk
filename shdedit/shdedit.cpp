@@ -110,7 +110,7 @@ static void exportCallback(void * /*userdata*/, const char *const *fileList, int
     }
 }
 
-static void Render(bool &done)
+static void Render(bool &done, SDL_Window *sdlWindow)
 {
     constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
                                              ImGuiWindowFlags_NoMove |
@@ -314,7 +314,7 @@ int main()
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
 
-        Render(done);
+        Render(done, window);
 
         SharedMgr::RenderSharedUI(window);
         BatchCompileWindow::Render(window);

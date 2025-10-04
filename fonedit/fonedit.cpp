@@ -87,7 +87,7 @@ static bool ComboGetter(void *data, const int index, const char **out_text)
     return true;
 }
 
-static void Render(bool &done)
+static void Render(bool &done, SDL_Window *sdlWindow)
 {
     constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
                                              ImGuiWindowFlags_NoMove |
@@ -358,7 +358,7 @@ int main()
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
 
-        Render(done);
+        Render(done, window);
 
         SharedMgr::RenderSharedUI(window);
 
