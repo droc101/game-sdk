@@ -8,13 +8,10 @@
 #include <cstddef>
 #include <libassets/util/Color.h>
 #include <libassets/util/Sector.h>
-#include <libassets/util/WallMaterial.h>
 #include "../LevelEditor.h"
 #include "../LevelRenderer.h"
 #include "../Viewport.h"
 #include "imgui.h"
-#include "SharedMgr.h"
-#include "TextureBrowserWindow.h"
 
 void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {

@@ -250,7 +250,7 @@ void AddPrimitiveTool::RenderToolWindow()
     ImGui::InputFloat("##floorHeight", &floor);
 }
 
-std::vector<glm::vec2> AddPrimitiveTool::buildNgon(int n,
+std::vector<glm::vec2> AddPrimitiveTool::buildNgon(const int n,
                                                    const glm::vec2 &p0,
                                                    const glm::vec2 &p1,
                                                    const float startAngleRadians)

@@ -208,7 +208,10 @@ void LevelRenderer::RenderLine(const glm::vec3 start,
     glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(vertices.size()));
 }
 
-void LevelRenderer::RenderBillboardPoint(glm::vec3 position, float pointSize, Color color, glm::mat4 &matrix)
+void LevelRenderer::RenderBillboardPoint(const glm::vec3 position,
+                                         const float pointSize,
+                                         Color color,
+                                         glm::mat4 &matrix)
 {
     glUseProgram(genericProgram);
 

@@ -3,8 +3,14 @@
 //
 
 #include "LevelEditor.h"
+#include <algorithm>
 #include <cmath>
-
+#include <array>
+#include <limits>
+#include <vector>
+#include <libassets/util/WallMaterial.h>
+#include <imgui.h>
+#include <libassets/util/Error.h>
 #include "SharedMgr.h"
 #include "TextureBrowserWindow.h"
 
@@ -25,13 +31,13 @@ glm::vec3 LevelEditor::SnapToGrid(const glm::vec3 v)
     return {SnapToGrid(v.x), SnapToGrid(v.y), SnapToGrid(v.z)};
 }
 
-glm::vec2 LevelEditor::SnapToGrid(glm::vec2 v)
+glm::vec2 LevelEditor::SnapToGrid(const glm::vec2 v)
 {
     return {SnapToGrid(v.x), SnapToGrid(v.y)};
 }
 
 
-bool LevelEditor::IsPointInBounds(glm::vec3 p)
+bool LevelEditor::IsPointInBounds(const glm::vec3 p)
 {
     const bool x = p.x >= -512 && p.x <= 512;
     const bool y = p.y >= -512 && p.y <= 512;

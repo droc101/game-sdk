@@ -38,7 +38,7 @@ class SelectTool final: public EditorTool
                                 glm::vec3 startCeiling,
                                 Color &lineColor);
 
-        void RenderViewportSelectMode(const ::Viewport &vp,
+        void RenderViewportSelectMode(const Viewport &vp,
                                       glm::mat4 &matrix,
                                       bool isHovered,
                                       const glm::vec3 &worldSpaceHover);
