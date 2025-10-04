@@ -1,30 +1,26 @@
+#include <algorithm>
+#include <cassert>
 #include <cstdio>
-#include <format>
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl3.h>
-#include <libassets/asset/LevelAsset.h>
 #include <libassets/util/Error.h>
 #include <memory>
-#include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
-#include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
-#include "DialogFilters.h"
-#include "imgui_internal.h"
 #include "LevelEditor.h"
 #include "LevelRenderer.h"
 #include "OpenGLImGuiTextureAssetCache.h"
+#include "Options.h"
 #include "SharedMgr.h"
 #include "TextureBrowserWindow.h"
 #include "tools/AddPolygonTool.h"
 #include "tools/AddPrimitiveTool.h"
 #include "tools/EditorTool.h"
 #include "tools/SelectTool.h"
-#include "tools/VertexTool.h"
 #include "Viewport.h"
 
 static SDL_Window *window = nullptr;
@@ -34,14 +30,45 @@ static Viewport vpTopDown = Viewport(ImVec2(0, 0), ImVec2(2, 1), Viewport::Viewp
 static Viewport vpFront = Viewport(ImVec2(0, 1), ImVec2(1, 1), Viewport::ViewportType::FRONT_XY);
 static Viewport vpSide = Viewport(ImVec2(1, 1), ImVec2(1, 1), Viewport::ViewportType::SIDE_YZ);
 
-static void Render(bool &done, SDL_Window *sdlWindow)
+static bool ToolbarToolButton(const char *id,
+                              const char *tooltip,
+                              const char *icon,
+                              const bool selected,
+                              const int spacing = 2,
+                              const char *shortcutText = nullptr,
+                              const ImGuiKeyChord shortcut = 0)
+{
+    const bool r = ImGui::Selectable(id, selected, 0, ImVec2(32, 32)) ||
+                   (shortcutText != nullptr && ImGui::Shortcut(shortcut, ImGuiInputFlags_RouteGlobal));
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::TextUnformatted(tooltip);
+        if (shortcutText != nullptr)
+        {
+            ImGui::TextDisabled("%s", shortcutText);
+        }
+        ImGui::EndTooltip();
+    }
+    ImTextureID tex = 0;
+    const Error::ErrorCode e = SharedMgr::textureCache->GetTextureID(icon, tex);
+    assert(e == Error::ErrorCode::OK);
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 40);
+    ImGui::Image(tex, ImVec2(32, 32));
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + static_cast<float>(spacing));
+    return r;
+}
+
+static void Render(bool &done)
 {
     if (ImGui::Shortcut(ImGuiKey_RightBracket, ImGuiInputFlags_RouteGlobal))
     {
         LevelEditor::gridSpacingIndex += 1;
-        if (LevelEditor::gridSpacingIndex >= LevelEditor::GRID_SPACING_VALUES.size())
+        if (static_cast<size_t>(LevelEditor::gridSpacingIndex) >= LevelEditor::GRID_SPACING_VALUES.size())
         {
-            LevelEditor::gridSpacingIndex = LevelEditor::GRID_SPACING_VALUES.size() - 1;
+            LevelEditor::gridSpacingIndex = static_cast<int>(LevelEditor::GRID_SPACING_VALUES.size() - 1);
         }
     } else if (ImGui::Shortcut(ImGuiKey_LeftBracket, ImGuiInputFlags_RouteGlobal))
     {
@@ -127,7 +154,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             if (ImGui::MenuItem("Larger Grid", "]"))
             {
                 LevelEditor::gridSpacingIndex += 1;
-                if (LevelEditor::gridSpacingIndex >= LevelEditor::GRID_SPACING_VALUES.size())
+                if (static_cast<size_t>(LevelEditor::gridSpacingIndex) >= LevelEditor::GRID_SPACING_VALUES.size())
                 {
                     LevelEditor::gridSpacingIndex = LevelEditor::GRID_SPACING_VALUES.size() - 1;
                 }
@@ -211,9 +238,9 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             if (ImGui::MenuItem("Larger Grid", "]"))
             {
                 LevelEditor::gridSpacingIndex += 1;
-                if (LevelEditor::gridSpacingIndex >= LevelEditor::GRID_SPACING_VALUES.size())
+                if (static_cast<size_t>(LevelEditor::gridSpacingIndex) >= LevelEditor::GRID_SPACING_VALUES.size())
                 {
-                    LevelEditor::gridSpacingIndex = LevelEditor::GRID_SPACING_VALUES.size() - 1;
+                    LevelEditor::gridSpacingIndex = static_cast<int>(LevelEditor::GRID_SPACING_VALUES.size() - 1);
                 }
             }
             if (ImGui::MenuItem("Reset Grid", "\\"))
@@ -253,28 +280,44 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                                              ImGuiWindowFlags_NoBringToFrontOnFocus |
                                              ImGuiWindowFlags_NoDocking;
     ImGui::Begin("toolbar", nullptr, windowFlags);
-    static int tool = static_cast<int>(LevelEditor::toolType);
-    if (ImGui::RadioButton("Select", &tool, static_cast<int>(LevelEditor::EditorToolType::SELECT)))
+
+    if (ToolbarToolButton("##selectTool",
+                          "Select",
+                          LevelEditor::SELECT_ICON_NAME,
+                          LevelEditor::toolType == LevelEditor::EditorToolType::SELECT,
+                          6,
+                          "Ctrl+1",
+                          ImGuiMod_Ctrl | ImGuiKey_1))
     {
+        LevelEditor::toolType = LevelEditor::EditorToolType::SELECT;
         LevelEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
     }
-    ImGui::SameLine();
-    if (ImGui::RadioButton("Sector Editor", &tool, static_cast<int>(LevelEditor::EditorToolType::EDIT_SECTOR)))
+
+    if (ToolbarToolButton("##primTool",
+                          "Add Primitive",
+                          LevelEditor::PRIMITIVE_ICON_NAME,
+                          LevelEditor::toolType == LevelEditor::EditorToolType::ADD_PRIMITIVE,
+                          2,
+                          "Ctrl+2",
+                          ImGuiMod_Ctrl | ImGuiKey_2))
     {
-        LevelEditor::tool = std::unique_ptr<EditorTool>(new VertexTool());
-    }
-    ImGui::SameLine();
-    if (ImGui::RadioButton("Add Primitive", &tool, static_cast<int>(LevelEditor::EditorToolType::ADD_PRIMITIVE)))
-    {
+        LevelEditor::toolType = LevelEditor::EditorToolType::ADD_PRIMITIVE;
         LevelEditor::tool = std::unique_ptr<EditorTool>(new AddPrimitiveTool());
     }
-    ImGui::SameLine();
-    if (ImGui::RadioButton("Add Polygon", &tool, static_cast<int>(LevelEditor::EditorToolType::ADD_POLYGON)))
+
+    if (ToolbarToolButton("##polyTool",
+                          "Add Polygon",
+                          LevelEditor::POLYGON_ICON_NAME,
+                          LevelEditor::toolType == LevelEditor::EditorToolType::ADD_POLYGON,
+                          2,
+                          "Ctrl+3",
+                          ImGuiMod_Ctrl | ImGuiKey_3))
     {
+        LevelEditor::toolType = LevelEditor::EditorToolType::ADD_POLYGON;
         LevelEditor::tool = std::unique_ptr<EditorTool>(new AddPolygonTool());
     }
-    ImGui::SameLine();
-    LevelEditor::toolType = static_cast<LevelEditor::EditorToolType>(tool);
+
+    ImGui::Dummy({1, 1});
     ImGui::End();
 
     if (LevelEditor::showSidebar)
@@ -292,13 +335,13 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         {
             ImGui::PushItemWidth(-1);
             ImTextureID tid{};
-            const Error::ErrorCode e = SharedMgr::textureCache.get()->GetTextureID(LevelEditor::texture, tid);
+            const Error::ErrorCode e = SharedMgr::textureCache->GetTextureID(LevelEditor::texture, tid);
             ImVec2 sz = ImGui::GetContentRegionAvail();
             if (e == Error::ErrorCode::OK)
             {
                 constexpr int imagePanelHeight = 128;
                 ImVec2 imageSize{};
-                SharedMgr::textureCache.get()->GetTextureSize(LevelEditor::texture, imageSize);
+                SharedMgr::textureCache->GetTextureSize(LevelEditor::texture, imageSize);
                 const glm::vec2 scales = {(sz.x - 16) / imageSize.x, imagePanelHeight / imageSize.y};
                 const float scale = std::ranges::min(scales.x, scales.y);
 
@@ -423,6 +466,10 @@ int main()
     ImGui_ImplSDL3_InitForOpenGL(window, glContext);
     ImGui_ImplOpenGL3_Init(glslVersion);
 
+    SharedMgr::textureCache->RegisterPng("assets/lvledit/select.png", LevelEditor::SELECT_ICON_NAME);
+    SharedMgr::textureCache->RegisterPng("assets/lvledit/primitives.png", LevelEditor::PRIMITIVE_ICON_NAME);
+    SharedMgr::textureCache->RegisterPng("assets/lvledit/polygon.png", LevelEditor::POLYGON_ICON_NAME);
+
     bool done = false;
     while (!done)
     {
@@ -454,7 +501,7 @@ int main()
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
 
-        Render(done, window);
+        Render(done);
 
         SharedMgr::RenderSharedUI(window);
 

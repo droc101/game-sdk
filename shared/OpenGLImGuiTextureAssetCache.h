@@ -23,6 +23,8 @@ class OpenGLImGuiTextureAssetCache final: public ImGuiTextureAssetCache
 
         [[nodiscard]] Error::ErrorCode LoadTexture(const std::string &relPath);
 
+        [[nodiscard]] Error::ErrorCode RegisterPng(const std::string &pngPath, const std::string &name) override;
+
     private:
         [[nodiscard]] static GLuint CreateTexture(const TextureAsset &textureAsset);
 };

@@ -3,12 +3,12 @@
 //
 
 #pragma once
+
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include "IOConnection.h"
 #include "Param.h"
-
 
 class Actor
 {

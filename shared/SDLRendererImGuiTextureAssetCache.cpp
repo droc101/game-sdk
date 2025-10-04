@@ -115,3 +115,21 @@ bool SDLRendererImGuiTextureAssetCache::CreateSDLTexture(TextureAsset &texture, 
     SDL_DestroySurface(surface);
     return true;
 }
+
+Error::ErrorCode SDLRendererImGuiTextureAssetCache::RegisterPng(const std::string &pngPath, const std::string &name)
+{
+    TextureAsset tex;
+    const Error::ErrorCode e = TextureAsset::CreateFromImage(pngPath.c_str(), tex);
+    if (e != Error::ErrorCode::OK)
+    {
+        return e;
+    }
+    SDL_Texture *sdlTex = nullptr;
+    if (!CreateSDLTexture(tex, sdlTex))
+    {
+        return Error::ErrorCode::UNKNOWN;
+    }
+    textureBuffers.insert({name, reinterpret_cast<ImTextureID>(sdlTex)});
+    return Error::ErrorCode::OK;
+}
+

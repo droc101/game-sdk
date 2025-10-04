@@ -20,6 +20,8 @@ class SDLRendererImGuiTextureAssetCache final: public ImGuiTextureAssetCache
 
         [[nodiscard]] Error::ErrorCode GetTextureSize(const std::string &relPath, ImVec2 &outSize) override;
 
+        [[nodiscard]] Error::ErrorCode RegisterPng(const std::string &pngPath, const std::string &name) override;
+
     private:
         SDL_Renderer *renderer = nullptr;
 

@@ -119,3 +119,17 @@ Error::ErrorCode OpenGLImGuiTextureAssetCache::LoadTexture(const std::string &re
     ImTextureID unused = 0;
     return GetTextureID(relPath, unused);
 }
+
+Error::ErrorCode OpenGLImGuiTextureAssetCache::RegisterPng(const std::string &pngPath, const std::string &name)
+{
+    TextureAsset tex;
+    const Error::ErrorCode e = TextureAsset::CreateFromImage(pngPath.c_str(), tex);
+    if (e != Error::ErrorCode::OK)
+    {
+        return e;
+    }
+    const GLuint glTex = CreateTexture(tex);
+    textureBuffers.insert({name, glTex});
+    return Error::ErrorCode::OK;
+}
+

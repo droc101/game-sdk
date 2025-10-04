@@ -3,10 +3,11 @@
 //
 
 #pragma once
+
 #include <GL/glew.h>
 #include <glm/glm.hpp>
+#include <libassets/util/Color.h>
 #include "GLHelper.h"
-#include "libassets/util/Color.h"
 #include "Viewport.h"
 
 class LevelRenderer

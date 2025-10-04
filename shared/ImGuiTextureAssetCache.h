@@ -20,6 +20,8 @@ class ImGuiTextureAssetCache
 
         virtual Error::ErrorCode GetTextureSize(const std::string & /*relPath*/, ImVec2 & /*outSize*/) = 0;
 
+        virtual Error::ErrorCode RegisterPng(const std::string & /*pngPath*/, const std::string & /*name*/) = 0;
+
     protected:
         std::unordered_map<std::string, ImTextureID> textureBuffers{};
 

@@ -3,10 +3,10 @@
 //
 
 #pragma once
+
 #include <cstdint>
 #include <string>
 #include "Color.h"
-
 
 class Param
 {

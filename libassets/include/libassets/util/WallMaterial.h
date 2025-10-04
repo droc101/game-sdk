@@ -3,10 +3,9 @@
 //
 
 #pragma once
+
 #include <array>
 #include <string>
-#include "DataWriter.h"
-
 
 class WallMaterial
 {

@@ -11,8 +11,6 @@ add_executable(lvledit lvledit.cpp
         LevelEditor.cpp
         LevelEditor.h
         tools/EditorTool.h
-        tools/VertexTool.cpp
-        tools/VertexTool.h
         tools/AddPolygonTool.cpp
         tools/AddPolygonTool.h
         tools/AddPrimitiveTool.cpp

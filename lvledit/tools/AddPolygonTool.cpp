@@ -6,13 +6,15 @@
 #include <array>
 #include <cstddef>
 #include <imgui.h>
+#include <libassets/util/Color.h>
+#include <libassets/util/Sector.h>
+#include <libassets/util/WallMaterial.h>
+#include <memory>
 #include "../LevelEditor.h"
 #include "../LevelRenderer.h"
 #include "../Viewport.h"
-#include "libassets/util/Color.h"
-#include "libassets/util/Sector.h"
-#include "libassets/util/WallMaterial.h"
-#include "Options.h"
+#include "EditorTool.h"
+#include "SelectTool.h"
 
 void AddPolygonTool::RenderToolWindow()
 {
@@ -61,12 +63,16 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                 isDrawing = true;
             } else
             {
-                LevelRenderer::RenderBillboardPoint(glm::vec3(pt.x, 0.1, pt.y),
-                                                    10,
-                                                    Color(1, 0.7, 0.7, 1),
-                                                    matrix);
+                LevelRenderer::RenderBillboardPoint(glm::vec3(pt.x, 0.1, pt.y), 10, Color(1, 0.7, 0.7, 1), matrix);
             }
-        } else if (isDrawing)
+
+            if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
+            {
+                LevelEditor::toolType = LevelEditor::EditorToolType::SELECT;
+                LevelEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+                return;
+            }
+        } else
         {
             if (ImGui::Shortcut(ImGuiKey_Escape))
             {

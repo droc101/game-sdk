@@ -3,14 +3,14 @@
 //
 
 #pragma once
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <libassets/asset/LevelAsset.h>
 #include <memory>
-#include "libassets/asset/LevelAsset.h"
 #include "tools/EditorTool.h"
 #include "tools/SelectTool.h"
-
 
 class LevelEditor
 {
@@ -23,7 +23,6 @@ class LevelEditor
             ADD_PRIMITIVE,
             ADD_POLYGON,
             ADD_ACTOR,
-            EDIT_SECTOR
         };
 
         static inline EditorToolType toolType = EditorToolType::SELECT;
@@ -38,12 +37,16 @@ class LevelEditor
         static inline bool snapToGrid = true;
         static inline bool showSidebar = true;
 
-        static constexpr size_t HOVER_DISTANCE_PIXELS = 5;
-        static constexpr size_t TOOLBAR_HEIGHT = 36;
+        static constexpr size_t HOVER_DISTANCE_PIXELS = 10;
+        static constexpr size_t TOOLBAR_HEIGHT = 48;
         static constexpr size_t SIDEBAR_WIDTH = 300;
         static constexpr std::array<float, 9> GRID_SPACING_VALUES = {0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0};
         static constexpr float LEVEL_HALF_SIZE = 512;
         static constexpr float LEVEL_SIZE = LEVEL_HALF_SIZE * 2;
+
+        static constexpr const char *SELECT_ICON_NAME = "editor/icon_select";
+        static constexpr const char *PRIMITIVE_ICON_NAME = "editor/icon_primitive";
+        static constexpr const char *POLYGON_ICON_NAME = "editor/icon_polygon";
 
         static inline std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new SelectTool());
 

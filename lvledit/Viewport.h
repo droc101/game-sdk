@@ -3,10 +3,10 @@
 //
 
 #pragma once
+
 #include <cstdint>
 #include <glm/mat4x4.hpp>
 #include "imgui.h"
-
 
 class Viewport
 {

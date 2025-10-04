@@ -34,11 +34,11 @@ bool ModelRenderer::Init()
         return false;
     }
 
-    const Error::ErrorCode modelProgramErrorCode = GLHelper::CreateProgram("assets/model.frag",
-                                                                           "assets/model.vert",
+    const Error::ErrorCode modelProgramErrorCode = GLHelper::CreateProgram("assets/mdledit/model.frag",
+                                                                           "assets/mdledit/model.vert",
                                                                            program);
-    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/cube.frag",
-                                                                          "assets/cube.vert",
+    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/mdledit/cube.frag",
+                                                                          "assets/mdledit/cube.vert",
                                                                           linesProgram);
     if (modelProgramErrorCode != Error::ErrorCode::OK || cubeProgramErrorCode != Error::ErrorCode::OK)
     {

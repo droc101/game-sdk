@@ -4,12 +4,12 @@
 
 #include "LevelRenderer.h"
 #include <glm/gtc/type_ptr.hpp>
+#include <libassets/util/Color.h>
+#include <libassets/util/Error.h>
 #include <vector>
 #include "GLHelper.h"
 #include "imgui.h"
 #include "LevelEditor.h"
-#include "libassets/util/Color.h"
-#include "libassets/util/Error.h"
 #include "Viewport.h"
 
 bool LevelRenderer::Init()
@@ -19,16 +19,16 @@ bool LevelRenderer::Init()
         return false;
     }
 
-    const Error::ErrorCode linesProgramErrorCode = GLHelper::CreateProgram("assets/basicVertexColor.frag",
-                                                                           "assets/basicVertexColor.vert",
+    const Error::ErrorCode linesProgramErrorCode = GLHelper::CreateProgram("assets/lvledit/basicVertexColor.frag",
+                                                                           "assets/lvledit/basicVertexColor.vert",
                                                                            lineProgram);
 
-    const Error::ErrorCode gridProgramErrorCode = GLHelper::CreateProgram("assets/grid.frag",
-                                                                          "assets/grid.vert",
+    const Error::ErrorCode gridProgramErrorCode = GLHelper::CreateProgram("assets/lvledit/grid.frag",
+                                                                          "assets/lvledit/grid.vert",
                                                                           gridProgram);
 
-    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/lvleditgeneric.frag",
-                                                                          "assets/lvleditgeneric.vert",
+    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/lvledit/generic.frag",
+                                                                          "assets/lvledit/generic.vert",
                                                                           genericProgram);
     if (cubeProgramErrorCode != Error::ErrorCode::OK ||
         linesProgramErrorCode != Error::ErrorCode::OK ||

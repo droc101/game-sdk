@@ -3,15 +3,13 @@
 //
 
 #pragma once
+
 #include <array>
+#include <cmath>
 #include <cstdint>
-#include <iosfwd>
-#include <string>
 #include <vector>
-
-#include "AddPolygonTool.h"
+#include "../Viewport.h"
 #include "EditorTool.h"
-
 
 class AddPrimitiveTool final: public EditorTool
 {
@@ -22,8 +20,9 @@ class AddPrimitiveTool final: public EditorTool
         void RenderViewport(Viewport &vp) override;
 
         void RenderToolWindow() override;
+
     private:
-        enum class PrimitiveType: uint8_t
+        enum class PrimitiveType : uint8_t
         {
             RECTANGLE,
             TRIANGLE,
@@ -38,14 +37,14 @@ class AddPrimitiveTool final: public EditorTool
 
         bool hasDrawnShape = false;
         bool isDragging = false;
-        glm::vec3 shapeStart;
-        glm::vec3 shapeEnd;
+        glm::vec3 shapeStart{};
+        glm::vec3 shapeEnd{};
         float ceiling = 1;
         float floor = -1;
 
-        inline static int32_t ngonSides = 16;
-        inline static float ngonStartAngle = 0;
-        inline static PrimitiveType primitive = PrimitiveType::RECTANGLE;
+        static inline int32_t ngonSides = 16;
+        static inline float ngonStartAngle = 0;
+        static inline PrimitiveType primitive = PrimitiveType::RECTANGLE;
 
         static std::vector<glm::vec2> buildNgon(int n,
                                                 const glm::vec2 &p0,

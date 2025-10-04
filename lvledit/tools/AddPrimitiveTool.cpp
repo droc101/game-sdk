@@ -8,13 +8,15 @@
 #include <cmath>
 #include <cstddef>
 #include <imgui.h>
+#include <libassets/util/Sector.h>
+#include <libassets/util/WallMaterial.h>
+#include <memory>
 #include <vector>
 #include "../LevelEditor.h"
 #include "../LevelRenderer.h"
 #include "../Viewport.h"
-#include "Options.h"
-#include "libassets/util/Sector.h"
-#include "libassets/util/WallMaterial.h"
+#include "EditorTool.h"
+#include "SelectTool.h"
 
 void AddPrimitiveTool::RenderViewport(Viewport &vp)
 {
@@ -57,7 +59,7 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
         }
     }
 
-    for (Sector &sector : LevelEditor::level.sectors)
+    for (Sector &sector: LevelEditor::level.sectors)
     {
         for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
         {
@@ -70,7 +72,10 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
 
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), 10, Color(1, 0.7, 0.7, 1), matrix);
+                LevelRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
+                                                    10,
+                                                    Color(1, 0.7, 0.7, 1),
+                                                    matrix);
             }
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
@@ -147,7 +152,10 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             const glm::vec3 endPointFloor = glm::vec3(points.at(nextIndex).x, floor, points.at(nextIndex).y);
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderBillboardPoint(startPointCeil + glm::vec3(0, 0.1, 0), 10, Color(1, 0, 0, 1), matrix);
+                LevelRenderer::RenderBillboardPoint(startPointCeil + glm::vec3(0, 0.1, 0),
+                                                    10,
+                                                    Color(1, 0, 0, 1),
+                                                    matrix);
             }
             LevelRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 1, 1), matrix, 4);
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
@@ -175,7 +183,14 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             }
             LevelEditor::level.sectors.push_back(s);
             hasDrawnShape = false;
+        } else if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
+        {
+            hasDrawnShape = false;
         }
+    } else if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
+    {
+        LevelEditor::toolType = LevelEditor::EditorToolType::SELECT;
+        LevelEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
     }
 }
 
