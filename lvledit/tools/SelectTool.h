@@ -70,6 +70,4 @@ class SelectTool final: public EditorTool
         glm::vec2 lineDragModeMouseOffset{};
 
         bool dragging = false;
-
-        static void MaterialToolWindow(WallMaterial &wallMat);
 };

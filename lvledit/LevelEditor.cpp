@@ -5,6 +5,9 @@
 #include "LevelEditor.h"
 #include <cmath>
 
+#include "SharedMgr.h"
+#include "TextureBrowserWindow.h"
+
 float LevelEditor::SnapToGrid(const float f)
 {
     if (!snapToGrid)
@@ -102,4 +105,42 @@ std::array<float, 4> LevelEditor::CalculateBBox(const std::vector<glm::vec2> &po
         }
     }
     return {minPoint.x, minPoint.y, maxPoint.x, maxPoint.y};
+}
+
+void LevelEditor::MaterialToolWindow(WallMaterial &wallMat)
+{
+    ImGui::PushItemWidth(-1);
+    ImTextureID tid{};
+    const Error::ErrorCode e = SharedMgr::textureCache->GetTextureID(wallMat.texture, tid);
+    ImVec2 sz = ImGui::GetContentRegionAvail();
+    if (e == Error::ErrorCode::OK)
+    {
+        constexpr int imagePanelHeight = 128;
+        ImVec2 imageSize{};
+        SharedMgr::textureCache->GetTextureSize(wallMat.texture, imageSize);
+        const glm::vec2 scales = {(sz.x - 16) / imageSize.x, imagePanelHeight / imageSize.y};
+        const float scale = std::ranges::min(scales.x, scales.y);
+
+        imageSize = {imageSize.x * scale, imageSize.y * scale};
+        if (ImGui::BeginChild("##imageBox",
+                              {sz.x, imagePanelHeight + 16},
+                              ImGuiChildFlags_Border,
+                              ImGuiWindowFlags_NoResize))
+        {
+            sz = ImGui::GetContentRegionAvail();
+            ImVec2 pos = ImGui::GetCursorPos();
+            pos.x += (sz.x - imageSize.x) * 0.5f;
+            pos.y += (sz.y - imageSize.y) * 0.5f;
+
+            ImGui::SetCursorPos(pos);
+            ImGui::Image(tid, imageSize);
+        }
+        ImGui::EndChild();
+    }
+    TextureBrowserWindow::InputTexture("##Texture", wallMat.texture);
+    ImGui::Separator();
+    ImGui::Text("UV Offset");
+    ImGui::InputFloat2("##uvOffset", wallMat.uvOffset.data());
+    ImGui::Text("UV Scale");
+    ImGui::InputFloat2("##uvScale", wallMat.uvScale.data());
 }

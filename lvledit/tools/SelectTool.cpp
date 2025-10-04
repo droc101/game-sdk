@@ -13,6 +13,8 @@
 #include "../LevelRenderer.h"
 #include "../Viewport.h"
 #include "imgui.h"
+#include "SharedMgr.h"
+#include "TextureBrowserWindow.h"
 
 void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {
@@ -463,20 +465,7 @@ void SelectTool::RenderViewport(Viewport &vp)
     }
 }
 
-void SelectTool::MaterialToolWindow(WallMaterial &wallMat)
-{
-    ImGui::Text("Texture");
-    ImGui::Text("%s", wallMat.texture.c_str());
-    if (ImGui::Button("Apply Texture"))
-    {
-        wallMat.texture = LevelEditor::texture;
-    }
-    ImGui::Separator();
-    ImGui::Text("UV Offset");
-    ImGui::InputFloat2("##uvOffset", wallMat.uvOffset.data());
-    ImGui::Text("UV Scale");
-    ImGui::InputFloat2("##uvScale", wallMat.uvScale.data());
-}
+
 
 
 void SelectTool::RenderToolWindow()
@@ -498,17 +487,17 @@ void SelectTool::RenderToolWindow()
                                        .data());
             break;
         case ItemType::LINE:
-            MaterialToolWindow(LevelEditor::level.sectors.at(focusedSectorIndex)
+            LevelEditor::MaterialToolWindow(LevelEditor::level.sectors.at(focusedSectorIndex)
                                        .wallMaterials.at(selectionVertexIndex));
             break;
         case ItemType::CEILING:
-            MaterialToolWindow(LevelEditor::level.sectors.at(focusedSectorIndex).ceilingMaterial);
+            LevelEditor::MaterialToolWindow(LevelEditor::level.sectors.at(focusedSectorIndex).ceilingMaterial);
             ImGui::Separator();
             ImGui::Text("Height");
             ImGui::InputFloat("##ceilHeight", &LevelEditor::level.sectors.at(focusedSectorIndex).ceilingHeight);
             break;
         case ItemType::FLOOR:
-            MaterialToolWindow(LevelEditor::level.sectors.at(focusedSectorIndex).floorMaterial);
+            LevelEditor::MaterialToolWindow(LevelEditor::level.sectors.at(focusedSectorIndex).floorMaterial);
             ImGui::Separator();
             ImGui::Text("Height");
             ImGui::InputFloat("##floorHeight", &LevelEditor::level.sectors.at(focusedSectorIndex).floorHeight);

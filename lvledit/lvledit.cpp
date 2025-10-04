@@ -331,38 +331,6 @@ static void Render(bool &done)
                              ImGuiWindowFlags_NoResize |
                              ImGuiWindowFlags_NoCollapse |
                              ImGuiWindowFlags_NoDecoration);
-        if (ImGui::CollapsingHeader("Texture", ImGuiTreeNodeFlags_DefaultOpen))
-        {
-            ImGui::PushItemWidth(-1);
-            ImTextureID tid{};
-            const Error::ErrorCode e = SharedMgr::textureCache->GetTextureID(LevelEditor::texture, tid);
-            ImVec2 sz = ImGui::GetContentRegionAvail();
-            if (e == Error::ErrorCode::OK)
-            {
-                constexpr int imagePanelHeight = 128;
-                ImVec2 imageSize{};
-                SharedMgr::textureCache->GetTextureSize(LevelEditor::texture, imageSize);
-                const glm::vec2 scales = {(sz.x - 16) / imageSize.x, imagePanelHeight / imageSize.y};
-                const float scale = std::ranges::min(scales.x, scales.y);
-
-                imageSize = {imageSize.x * scale, imageSize.y * scale};
-                if (ImGui::BeginChild("##imageBox",
-                                      {sz.x, imagePanelHeight + 16},
-                                      ImGuiChildFlags_Border,
-                                      ImGuiWindowFlags_NoResize))
-                {
-                    sz = ImGui::GetContentRegionAvail();
-                    ImVec2 pos = ImGui::GetCursorPos();
-                    pos.x += (sz.x - imageSize.x) * 0.5f;
-                    pos.y += (sz.y - imageSize.y) * 0.5f;
-
-                    ImGui::SetCursorPos(pos);
-                    ImGui::Image(tid, imageSize);
-                }
-                ImGui::EndChild();
-            }
-            TextureBrowserWindow::InputTexture("##Texture", LevelEditor::texture);
-        }
 
         LevelEditor::tool->RenderToolWindow();
 
@@ -386,7 +354,7 @@ int main()
     }
 
     SharedMgr::InitSharedMgr<OpenGLImGuiTextureAssetCache>();
-    LevelEditor::texture = Options::defaultTexture;
+    LevelEditor::mat = WallMaterial(Options::defaultTexture);
 
     const char *glslVersion = "#version 130";
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0))

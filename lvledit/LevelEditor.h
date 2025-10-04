@@ -50,7 +50,7 @@ class LevelEditor
 
         static inline std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new SelectTool());
 
-        static inline std::string texture = "";
+        static inline WallMaterial mat{};
 
         [[nodiscard]] static float SnapToGrid(float f);
 
@@ -65,4 +65,6 @@ class LevelEditor
         static std::array<float, 4> CalculateBBox(const std::vector<glm::vec2> &points);
 
         static std::array<float, 4> CalculateBBox(const std::vector<std::array<float, 2>> &points);
+
+        static void MaterialToolWindow(WallMaterial &wallMat);
 };

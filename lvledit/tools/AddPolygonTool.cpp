@@ -23,9 +23,11 @@ void AddPolygonTool::RenderToolWindow()
         return;
     }
     ImGui::PushItemWidth(-1);
-    ImGui::Text("Ceiling");
+    LevelEditor::MaterialToolWindow(LevelEditor::mat);
+    ImGui::Separator();
+    ImGui::Text("Ceiling Height");
     ImGui::InputFloat("##ceilHeight", &ceiling);
-    ImGui::Text("Floor");
+    ImGui::Text("Floor Height");
     ImGui::InputFloat("##floorHeight", &floor);
 }
 
@@ -103,7 +105,7 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                         {
                             isDrawing = false;
                             Sector s = Sector();
-                            const WallMaterial mat = WallMaterial(LevelEditor::texture);
+                            const WallMaterial mat = LevelEditor::mat;
                             s.ceilingMaterial = mat;
                             s.floorMaterial = mat;
                             s.floorHeight = floor;

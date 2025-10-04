@@ -169,7 +169,7 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
         if (ImGui::Shortcut(ImGuiKey_Enter) || ImGui::Shortcut(ImGuiKey_KeypadEnter))
         {
             Sector s = Sector();
-            const WallMaterial mat = WallMaterial(LevelEditor::texture);
+            const WallMaterial mat = LevelEditor::mat;
             s.ceilingMaterial = mat;
             s.floorMaterial = mat;
             s.floorHeight = floor;
@@ -201,6 +201,8 @@ void AddPrimitiveTool::RenderToolWindow()
         return;
     }
     ImGui::PushItemWidth(-1);
+    LevelEditor::MaterialToolWindow(LevelEditor::mat);
+    ImGui::Separator();
 
     ImGui::Text("Primitive Type");
     int type = static_cast<int>(primitive);
@@ -242,9 +244,9 @@ void AddPrimitiveTool::RenderToolWindow()
     }
 
     ImGui::Separator();
-    ImGui::Text("Ceiling");
+    ImGui::Text("Ceiling Height");
     ImGui::InputFloat("##ceilHeight", &ceiling);
-    ImGui::Text("Floor");
+    ImGui::Text("Floor Height");
     ImGui::InputFloat("##floorHeight", &floor);
 }
 

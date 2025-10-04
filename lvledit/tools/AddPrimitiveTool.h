@@ -10,6 +10,8 @@
 #include <vector>
 #include "../Viewport.h"
 #include "EditorTool.h"
+#include "libassets/util/WallMaterial.h"
+#include "Options.h"
 
 class AddPrimitiveTool final: public EditorTool
 {
