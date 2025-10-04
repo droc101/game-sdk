@@ -278,7 +278,7 @@ std::vector<glm::vec2> AddPrimitiveTool::buildNgon(const int n,
     pts.reserve(n);
     for (int i = 0; i < n; i++)
     {
-        const float theta = startAngleRadians + 1 * (2.0f * M_PIf * i / n);
+        const float theta = startAngleRadians + 1 * (2.0f * 3.14159265358979323846f * i / n);
         const float x = cx + rx * std::cos(theta);
         const float y = cy + ry * std::sin(theta);
         pts.emplace_back(x, y);

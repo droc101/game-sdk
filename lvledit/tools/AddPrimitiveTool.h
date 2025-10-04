@@ -51,7 +51,7 @@ class AddPrimitiveTool final: public EditorTool
         static std::vector<glm::vec2> buildNgon(int n,
                                                 const glm::vec2 &p0,
                                                 const glm::vec2 &p1,
-                                                float startAngleRadians = M_PI_2f);
+                                                float startAngleRadians = 1.57079632679489661923f); // PI/2
 
         static std::vector<glm::vec2> buildRect(const glm::vec2 &p0, const glm::vec2 &p1);
 
