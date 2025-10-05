@@ -36,6 +36,8 @@ class DataReader
 
         void ReadString(std::string &buffer, size_t characterCount);
 
+        void ReadStringWithSize(std::string &buffer);
+
         template<Primitive T> [[nodiscard]] T Read()
         {
             if (offset + sizeof(T) > size)

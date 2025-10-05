@@ -70,3 +70,10 @@ void DataReader::ReadString(std::string &buffer, const size_t characterCount)
     buffer.insert(buffer.begin(), &bytes.at(offset), &bytes.at(offset + characterCount - 1));
     offset += sizeof(char) * characterCount;
 }
+
+void DataReader::ReadStringWithSize(std::string &buffer)
+{
+    const size_t stringLength = Read<size_t>();
+    ReadString(buffer, stringLength);
+}
+

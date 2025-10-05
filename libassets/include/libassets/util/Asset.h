@@ -6,7 +6,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <libassets/libassets.h>
 #include <libassets/util/DataReader.h>
 
 class Asset
@@ -19,7 +18,8 @@ class Asset
             ASSET_TYPE_LEVEL = 2,
             ASSET_TYPE_SHADER = 3,
             ASSET_TYPE_MODEL = 4,
-            ASSET_TYPE_FONT = 5
+            ASSET_TYPE_FONT = 5,
+            ASSET_TYPE_GAME_CONFIG = 6
         };
 
         static constexpr uint8_t ASSET_CONTAINER_VERSION = 2;

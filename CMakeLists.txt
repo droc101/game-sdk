@@ -192,6 +192,7 @@ add_subdirectory(sndedit)
 add_subdirectory(lvledit)
 add_subdirectory(shdedit)
 add_subdirectory(fonedit)
+add_subdirectory(cfgedit)
 
 if (GAME_SDK_BUILD_PLUGINS)
     if (UNIX)

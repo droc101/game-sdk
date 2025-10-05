@@ -67,4 +67,9 @@ class DialogFilters
             SDL_DialogFileFilter{"JPG Images", "jpg;jepg"},
             SDL_DialogFileFilter{"TGA Images", "tga"},
         };
+
+        // cfgedit
+        static constexpr std::array<SDL_DialogFileFilter, 1> gameFilters = {
+            SDL_DialogFileFilter{"GAME configuration (*.game)", "game"},
+        };
 };

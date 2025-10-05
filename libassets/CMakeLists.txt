@@ -59,6 +59,8 @@ add_library(assets STATIC include/libassets/libassets.h
         include/libassets/util/Actor.h
         src/util/IOConnection.cpp
         include/libassets/util/IOConnection.h
+        src/asset/GameConfigAsset.cpp
+        include/libassets/asset/GameConfigAsset.h
 )
 
 target_link_libraries(assets PRIVATE ZLIB::ZLIB assimp::assimp glslang::glslang Vulkan::Vulkan)
