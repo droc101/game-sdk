@@ -5,7 +5,7 @@ option(GAME_SDK_BUILD_PLUGINS "Builds GAME SDK plugins" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_CXX_FLAGS "-Wpedantic -Wall -Wextra -Wno-missing-field-initializers")
+set(CMAKE_CXX_FLAGS "-Wpedantic -Wall -Wextra -Wno-missing-field-initializers -march=x86-64 -mmmx -msse -msse2")
 
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DBUILDSTYLE_DEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-g0 -O3 -s -DNDEBUG -DBUILDSTYLE_RELEASE")

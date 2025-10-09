@@ -5,10 +5,16 @@ Asset editing tools for [GAME](https://github.com/droc101/c-game-engine)
 
 Runs on Windows and Linux
 
-### Building
+## Building
 See [the wiki page](https://wiki.droc101.dev/index.php/Building_GAME_SDK) instructions on building
 
-### Tested on
+## System Requirements
+### CPU
+- x86_64 with MMX, SSE, and SSE2 extensions
+### GPU
+- OpenGL 3.3 support
+
+## Tested on
 - Windows 11
 - Arch Linux
 - Ubuntu
