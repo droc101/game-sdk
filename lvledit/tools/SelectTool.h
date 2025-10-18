@@ -5,9 +5,9 @@
 #pragma once
 
 #include <cstddef>
-#include <libassets/util/Color.h>
-#include <libassets/util/Sector.h>
-#include <libassets/util/WallMaterial.h>
+#include <libassets/type/Color.h>
+#include <libassets/type/Sector.h>
+#include <libassets/type/WallMaterial.h>
 #include "../Viewport.h"
 #include "EditorTool.h"
 

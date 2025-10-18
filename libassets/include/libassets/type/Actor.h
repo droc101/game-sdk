@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include <libassets/type/IOConnection.h>
+#include <libassets/type/Param.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "IOConnection.h"
-#include "Param.h"
 
 class Actor
 {

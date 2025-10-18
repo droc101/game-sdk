@@ -6,9 +6,9 @@
 #include <assimp/mesh.h>
 #include <assimp/vector3.h>
 #include <cstdint>
-#include <libassets/util/Color.h>
+#include <libassets/type/Color.h>
+#include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
-#include <libassets/util/ModelVertex.h>
 
 ModelVertex::ModelVertex(DataReader &reader)
 {

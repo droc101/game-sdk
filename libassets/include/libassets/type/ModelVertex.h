@@ -8,7 +8,7 @@
 #include <assimp/mesh.h>
 #include <cstddef>
 #include <cstdint>
-#include <libassets/util/Color.h>
+#include <libassets/type/Color.h>
 #include <libassets/util/DataReader.h>
 
 class ModelVertex

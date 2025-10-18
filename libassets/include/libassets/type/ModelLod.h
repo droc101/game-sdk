@@ -5,9 +5,9 @@
 #pragma once
 
 #include <cstdint>
+#include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
-#include <libassets/util/ModelVertex.h>
 #include <string>
 #include <vector>
 

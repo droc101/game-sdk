@@ -4,7 +4,7 @@
 
 #include <array>
 #include <cstdint>
-#include <libassets/util/Color.h>
+#include <libassets/type/Color.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 

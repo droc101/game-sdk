@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <format>
-#include <libassets/util/Asset.h>
+#include <libassets/type/Asset.h>
 #include <libassets/util/AssetReader.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>

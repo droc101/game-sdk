@@ -9,7 +9,7 @@
 #include <cstdio>
 #include <format>
 #include <imgui.h>
-#include <libassets/util/ModelLod.h>
+#include <libassets/type/ModelLod.h>
 #include <numeric>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>

@@ -12,8 +12,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <libassets/util/BoundingBox.h>
-#include <libassets/util/ConvexHull.h>
+#include <libassets/type/BoundingBox.h>
+#include <libassets/type/ConvexHull.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <stdexcept>

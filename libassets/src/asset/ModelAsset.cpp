@@ -7,16 +7,16 @@
 #include <cstddef>
 #include <cstdint>
 #include <libassets/asset/ModelAsset.h>
-#include <libassets/util/Asset.h>
+#include <libassets/type/Asset.h>
+#include <libassets/type/BoundingBox.h>
+#include <libassets/type/Color.h>
+#include <libassets/type/ConvexHull.h>
+#include <libassets/type/Material.h>
+#include <libassets/type/ModelLod.h>
+#include <libassets/type/ModelVertex.h>
 #include <libassets/util/AssetReader.h>
-#include <libassets/util/BoundingBox.h>
-#include <libassets/util/Color.h>
-#include <libassets/util/ConvexHull.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
-#include <libassets/util/Material.h>
-#include <libassets/util/ModelLod.h>
-#include <libassets/util/ModelVertex.h>
 #include <string>
 #include <vector>
 

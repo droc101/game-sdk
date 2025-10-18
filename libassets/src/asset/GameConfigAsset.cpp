@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <libassets/asset/GameConfigAsset.h>
-#include <libassets/util/Asset.h>
+#include <libassets/type/Asset.h>
 #include <libassets/util/AssetReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>

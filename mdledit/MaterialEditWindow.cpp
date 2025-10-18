@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <format>
 #include <imgui.h>
-#include <libassets/util/Material.h>
+#include <libassets/type/Material.h>
 #include <string>
 #include "ModelRenderer.h"
 #include "Options.h"

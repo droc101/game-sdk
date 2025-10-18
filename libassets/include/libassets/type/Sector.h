@@ -6,9 +6,9 @@
 
 #include <array>
 #include <cstdint>
+#include <libassets/type/Color.h>
+#include <libassets/type/WallMaterial.h>
 #include <vector>
-#include "Color.h"
-#include "WallMaterial.h"
 
 class Sector
 {

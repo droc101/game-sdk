@@ -4,7 +4,7 @@
 
 #include "LevelRenderer.h"
 #include <glm/gtc/type_ptr.hpp>
-#include <libassets/util/Color.h>
+#include <libassets/type/Color.h>
 #include <libassets/util/Error.h>
 #include <vector>
 #include "GLHelper.h"

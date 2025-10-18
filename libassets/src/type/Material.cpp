@@ -4,9 +4,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <libassets/type/Material.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
-#include <libassets/util/Material.h>
 #include <string>
 
 Material::Material(DataReader &reader)

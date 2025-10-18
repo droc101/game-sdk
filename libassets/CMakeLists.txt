@@ -25,16 +25,16 @@ add_library(assets STATIC include/libassets/libassets.h
         include/libassets/asset/SoundAsset.h
         src/asset/LevelAsset.cpp
         include/libassets/asset/LevelAsset.h
-        src/util/Color.cpp
-        include/libassets/util/Color.h
+        src/type/Color.cpp
+        include/libassets/type/Color.h
         include/libassets/util/Primitive.h
-        include/libassets/util/Asset.h
-        src/util/ModelVertex.cpp
-        include/libassets/util/ModelVertex.h
-        src/util/Material.cpp
-        include/libassets/util/Material.h
-        src/util/ModelLod.cpp
-        include/libassets/util/ModelLod.h
+        include/libassets/type/Asset.h
+        src/type/ModelVertex.cpp
+        include/libassets/type/ModelVertex.h
+        src/type/Material.cpp
+        include/libassets/type/Material.h
+        src/type/ModelLod.cpp
+        include/libassets/type/ModelLod.h
         include/libassets/util/Error.h
         src/util/ShaderCompiler.cpp
         include/libassets/util/ShaderCompiler.h
@@ -43,22 +43,24 @@ add_library(assets STATIC include/libassets/libassets.h
         src/asset/FontAsset.cpp
         include/libassets/asset/FontAsset.h
         include/libassets/util/VectorMove.h
-        src/util/BoundingBox.cpp
-        include/libassets/util/BoundingBox.h
-        src/util/ConvexHull.cpp
-        include/libassets/util/ConvexHull.h
-        src/util/StaticCollisionMesh.cpp
-        include/libassets/util/StaticCollisionMesh.h
-        src/util/Sector.cpp
-        include/libassets/util/Sector.h
-        src/util/WallMaterial.cpp
-        include/libassets/util/WallMaterial.h
-        src/util/Param.cpp
-        include/libassets/util/Param.h
-        src/util/Actor.cpp
-        include/libassets/util/Actor.h
-        src/util/IOConnection.cpp
-        include/libassets/util/IOConnection.h
+        src/type/BoundingBox.cpp
+        include/libassets/type/BoundingBox.h
+        src/type/ConvexHull.cpp
+        include/libassets/type/ConvexHull.h
+        src/type/StaticCollisionMesh.cpp
+        include/libassets/type/StaticCollisionMesh.h
+        src/type/Sector.cpp
+        include/libassets/type/Sector.h
+        src/type/WallMaterial.cpp
+        include/libassets/type/WallMaterial.h
+        src/type/Param.cpp
+        include/libassets/type/Param.h
+        src/type/Actor.cpp
+        include/libassets/type/Actor.h
+        src/type/IOConnection.cpp
+        include/libassets/type/IOConnection.h
+        src/asset/GameConfigAsset.cpp
+        include/libassets/asset/GameConfigAsset.h
         src/asset/GameConfigAsset.cpp
         include/libassets/asset/GameConfigAsset.h
 )

@@ -8,9 +8,9 @@
 #include <cmath>
 #include <cstdint>
 #include <vector>
+#include <libassets/type/WallMaterial.h>
 #include "../Viewport.h"
 #include "EditorTool.h"
-#include "libassets/util/WallMaterial.h"
 #include "Options.h"
 
 class AddPrimitiveTool final: public EditorTool

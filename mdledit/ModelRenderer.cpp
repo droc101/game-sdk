@@ -13,10 +13,10 @@
 #include <ios>
 #include <iosfwd>
 #include <libassets/asset/ModelAsset.h>
+#include <libassets/type/Material.h>
+#include <libassets/type/ModelLod.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
-#include <libassets/util/Material.h>
-#include <libassets/util/ModelLod.h>
 #include <memory>
 #include <utility>
 #include <vector>

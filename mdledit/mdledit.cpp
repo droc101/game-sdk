@@ -6,7 +6,7 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl3.h>
 #include <libassets/asset/ModelAsset.h>
-#include <libassets/util/ConvexHull.h>
+#include <libassets/type/ConvexHull.h>
 #include <libassets/util/Error.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>

@@ -4,13 +4,13 @@
 
 #include "LevelEditor.h"
 #include <algorithm>
-#include <cmath>
 #include <array>
+#include <cmath>
+#include <imgui.h>
+#include <libassets/type/WallMaterial.h>
+#include <libassets/util/Error.h>
 #include <limits>
 #include <vector>
-#include <libassets/util/WallMaterial.h>
-#include <imgui.h>
-#include <libassets/util/Error.h>
 #include "SharedMgr.h"
 #include "TextureBrowserWindow.h"
 

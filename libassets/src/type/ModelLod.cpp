@@ -12,10 +12,10 @@
 #include <cstdio>
 #include <format>
 #include <fstream>
+#include <libassets/type/ModelLod.h>
+#include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
-#include <libassets/util/ModelLod.h>
-#include <libassets/util/ModelVertex.h>
 #include <numeric>
 #include <stdexcept>
 #include <string>

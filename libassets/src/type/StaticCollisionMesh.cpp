@@ -13,9 +13,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <libassets/type/StaticCollisionMesh.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
-#include <libassets/util/StaticCollisionMesh.h>
 #include <stdexcept>
 #include <string>
 #include <vector>

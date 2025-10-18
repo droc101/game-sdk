@@ -8,8 +8,8 @@
 #include <cmath>
 #include <cstddef>
 #include <imgui.h>
-#include <libassets/util/Sector.h>
-#include <libassets/util/WallMaterial.h>
+#include <libassets/type/Sector.h>
+#include <libassets/type/WallMaterial.h>
 #include <memory>
 #include <vector>
 #include "../LevelEditor.h"

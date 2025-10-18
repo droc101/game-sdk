@@ -5,13 +5,13 @@
 #pragma once
 
 #include <cstdint>
-#include <libassets/util/BoundingBox.h>
-#include <libassets/util/ConvexHull.h>
+#include <libassets/type/BoundingBox.h>
+#include <libassets/type/ConvexHull.h>
+#include <libassets/type/Material.h>
+#include <libassets/type/ModelLod.h>
+#include <libassets/type/StaticCollisionMesh.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
-#include <libassets/util/Material.h>
-#include <libassets/util/ModelLod.h>
-#include <libassets/util/StaticCollisionMesh.h>
 #include <string>
 #include <vector>
 

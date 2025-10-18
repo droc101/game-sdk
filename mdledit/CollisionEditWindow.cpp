@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <format>
 #include <imgui.h>
-#include <libassets/util/ConvexHull.h>
+#include <libassets/type/ConvexHull.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_video.h>

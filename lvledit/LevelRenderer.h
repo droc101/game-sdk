@@ -6,7 +6,7 @@
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
-#include <libassets/util/Color.h>
+#include <libassets/type/Color.h>
 #include "GLHelper.h"
 #include "Viewport.h"
 

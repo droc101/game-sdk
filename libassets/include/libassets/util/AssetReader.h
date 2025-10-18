@@ -5,7 +5,7 @@
 #pragma once
 
 #include <cstdint>
-#include <libassets/util/Asset.h>
+#include <libassets/type/Asset.h>
 #include <libassets/util/Error.h>
 #include <vector>
 

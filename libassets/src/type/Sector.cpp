@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <libassets/util/Sector.h>
+#include <libassets/type/Sector.h>
 #include <vector>
 
 bool Sector::IsValid()

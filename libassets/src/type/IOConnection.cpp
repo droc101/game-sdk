@@ -2,7 +2,7 @@
 // Created by droc101 on 9/5/25.
 //
 
-#include <libassets/util/IOConnection.h>
+#include <libassets/type/IOConnection.h>
 
 void IOConnection::Write(DataWriter &writer) const
 {

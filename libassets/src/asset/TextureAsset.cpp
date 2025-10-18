@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <libassets/asset/TextureAsset.h>
-#include <libassets/util/Asset.h>
+#include <libassets/type/Asset.h>
 #include <libassets/util/AssetReader.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>

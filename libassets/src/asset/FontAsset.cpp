@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <format>
 #include <libassets/asset/FontAsset.h>
-#include <libassets/util/Asset.h>
+#include <libassets/type/Asset.h>
 #include <libassets/util/AssetReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>

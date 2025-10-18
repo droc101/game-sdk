@@ -8,7 +8,7 @@
 #include <fstream>
 #include <ios>
 #include <libassets/asset/LevelAsset.h>
-#include <libassets/util/Asset.h>
+#include <libassets/type/Asset.h>
 #include <libassets/util/AssetReader.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/Error.h>

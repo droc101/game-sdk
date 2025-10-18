@@ -6,8 +6,8 @@
 #include <array>
 #include <cfloat>
 #include <cstddef>
-#include <libassets/util/Color.h>
-#include <libassets/util/Sector.h>
+#include <libassets/type/Color.h>
+#include <libassets/type/Sector.h>
 #include "../LevelEditor.h"
 #include "../LevelRenderer.h"
 #include "../Viewport.h"
@@ -463,8 +463,6 @@ void SelectTool::RenderViewport(Viewport &vp)
 }
 
 
-
-
 void SelectTool::RenderToolWindow()
 {
     if (!ImGui::CollapsingHeader("Select Tool", ImGuiTreeNodeFlags_DefaultOpen))
@@ -485,7 +483,7 @@ void SelectTool::RenderToolWindow()
             break;
         case ItemType::LINE:
             LevelEditor::MaterialToolWindow(LevelEditor::level.sectors.at(focusedSectorIndex)
-                                       .wallMaterials.at(selectionVertexIndex));
+                                                    .wallMaterials.at(selectionVertexIndex));
             break;
         case ItemType::CEILING:
             LevelEditor::MaterialToolWindow(LevelEditor::level.sectors.at(focusedSectorIndex).ceilingMaterial);

@@ -6,9 +6,9 @@
 #include <array>
 #include <cstddef>
 #include <imgui.h>
-#include <libassets/util/Color.h>
-#include <libassets/util/Sector.h>
-#include <libassets/util/WallMaterial.h>
+#include <libassets/type/Color.h>
+#include <libassets/type/Sector.h>
+#include <libassets/type/WallMaterial.h>
 #include <memory>
 #include "../LevelEditor.h"
 #include "../LevelRenderer.h"

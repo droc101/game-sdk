@@ -199,7 +199,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                           ImGuiChildFlags_Border,
                           ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
         {
-            ImGui::InputTextMultiline("##glsl", &shader.GetGLSL(), ImVec2(-1, -1));
+            ImGui::InputTextMultiline("##glsl", &shader.GetGLSL(), ImVec2(-1, -1), ImGuiInputTextFlags_AllowTabInput);
         }
         ImGui::EndChild();
         ImGui::SameLine();

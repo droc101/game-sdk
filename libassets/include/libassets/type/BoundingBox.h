@@ -6,7 +6,7 @@
 #include <array>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
-#include <libassets/util/ModelVertex.h>
+#include <libassets/type/ModelVertex.h>
 #include <vector>
 
 /**

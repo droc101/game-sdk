@@ -5,7 +5,7 @@
 #pragma once
 
 #include <cstdint>
-#include <libassets/util/Color.h>
+#include <libassets/type/Color.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <string>

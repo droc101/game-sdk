@@ -4,8 +4,8 @@
 
 #pragma once
 #include <string>
-#include "libassets/util/DataWriter.h"
-#include "Param.h"
+#include <libassets/util/DataWriter.h>
+#include <libassets/type/Param.h>
 
 
 class IOConnection
