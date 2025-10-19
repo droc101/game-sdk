@@ -11,6 +11,8 @@
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
+
+#include "ActorBrowserWindow.h"
 #include "LevelEditor.h"
 #include "LevelRenderer.h"
 #include "OpenGLImGuiTextureAssetCache.h"
@@ -262,6 +264,10 @@ static void Render(bool &done)
         {
             ImGui::MenuItem("Compile Map TODO", "F5");
             ImGui::MenuItem("Generate Benchmark TODO");
+            if (ImGui::MenuItem("Actor Class Browser"))
+            {
+                ActorBrowserWindow::visible = true;
+            }
             ImGui::Separator();
             ImGui::EndMenu();
         }
@@ -343,6 +349,8 @@ static void Render(bool &done)
         vpFront.RenderImGui();
         vpSide.RenderImGui();
     }
+
+    ActorBrowserWindow::Render();
 }
 
 int main()

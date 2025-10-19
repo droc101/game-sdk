@@ -16,7 +16,7 @@
 #include <libassets/util/Error.h>
 #include <string>
 
-ParamDefinition *ParamDefinition::Create(const nlohmann::json &json, Error::ErrorCode &e)
+ParamDefinition *ParamDefinition::Create(const nlohmann::json &json, Error::ErrorCode &e, const std::string &paramName)
 {
     ParamDefinition *output = nullptr;
     const Param::ParamType type = Param::ParseType(json.value("type", "int"));
@@ -27,6 +27,7 @@ ParamDefinition *ParamDefinition::Create(const nlohmann::json &json, Error::Erro
         return nullptr;
     }
     const std::string desc = json.value("description", "");
+    const std::string displayName = json.value("display", paramName);
     if (json.contains("options"))
     {
         OptionParamDefinition *optionDef = new OptionParamDefinition();
@@ -94,6 +95,7 @@ ParamDefinition *ParamDefinition::Create(const nlohmann::json &json, Error::Erro
 
     output->description = desc;
     output->type = type;
+    output->displayName = displayName;
 
     e = Error::ErrorCode::OK;
     return output;

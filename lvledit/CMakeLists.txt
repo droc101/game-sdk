@@ -16,7 +16,9 @@ add_executable(lvledit lvledit.cpp
         tools/AddPrimitiveTool.cpp
         tools/AddPrimitiveTool.h
         tools/SelectTool.cpp
-        tools/SelectTool.h)
+        tools/SelectTool.h
+        ActorBrowserWindow.cpp
+        ActorBrowserWindow.h)
 
 set_target_properties(lvledit PROPERTIES LINKER_LANGUAGE CXX)
 

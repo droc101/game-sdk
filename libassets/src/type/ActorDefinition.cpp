@@ -66,7 +66,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         for (const auto &[key, value]: params.items())
         {
             Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
-            ParamDefinition *param = ParamDefinition::Create(value, e);
+            ParamDefinition *param = ParamDefinition::Create(value, e, key);
             if (e != Error::ErrorCode::OK)
             {
                 // TODO delete any existing params
@@ -84,7 +84,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
     return Error::ErrorCode::OK;
 }
 
-void ActorDefinition::GetInputNames(std::unordered_set<std::string> out) const
+void ActorDefinition::GetInputNames(std::unordered_set<std::string> &out) const
 {
     if (parentClass != nullptr)
     {
@@ -96,7 +96,7 @@ void ActorDefinition::GetInputNames(std::unordered_set<std::string> out) const
     }
 }
 
-void ActorDefinition::GetOutputNames(std::unordered_set<std::string> out) const
+void ActorDefinition::GetOutputNames(std::unordered_set<std::string> &out) const
 {
     if (parentClass != nullptr)
     {
@@ -108,7 +108,7 @@ void ActorDefinition::GetOutputNames(std::unordered_set<std::string> out) const
     }
 }
 
-void ActorDefinition::GetParamNames(std::unordered_set<std::string> out) const
+void ActorDefinition::GetParamNames(std::unordered_set<std::string> &out) const
 {
     if (parentClass != nullptr)
     {
@@ -120,7 +120,7 @@ void ActorDefinition::GetParamNames(std::unordered_set<std::string> out) const
     }
 }
 
-Error::ErrorCode ActorDefinition::GetInput(std::string &name, SignalDefinition &input) const
+Error::ErrorCode ActorDefinition::GetInput(const std::string &name, SignalDefinition &input) const
 {
     if (inputs.contains(name))
     {
@@ -134,7 +134,7 @@ Error::ErrorCode ActorDefinition::GetInput(std::string &name, SignalDefinition &
     return Error::ErrorCode::NOT_FOUND;
 }
 
-Error::ErrorCode ActorDefinition::GetOutput(std::string &name, SignalDefinition &output) const
+Error::ErrorCode ActorDefinition::GetOutput(const std::string &name, SignalDefinition &output) const
 {
     if (outputs.contains(name))
     {
@@ -148,7 +148,7 @@ Error::ErrorCode ActorDefinition::GetOutput(std::string &name, SignalDefinition 
     return Error::ErrorCode::NOT_FOUND;
 }
 
-Error::ErrorCode ActorDefinition::GetParam(std::string &name, ParamDefinition *param) const
+Error::ErrorCode ActorDefinition::GetParam(const std::string &name, ParamDefinition *&param) const
 {
     if (params.contains(name))
     {

@@ -14,8 +14,11 @@ class ParamDefinition
     public:
         virtual ~ParamDefinition() = default;
 
+        std::string displayName;
         Param::ParamType type = Param::ParamType::PARAM_TYPE_NONE;
         std::string description;
 
-        [[nodiscard]] static ParamDefinition *Create(const nlohmann::json &json, Error::ErrorCode &e);
+        [[nodiscard]] static ParamDefinition *Create(const nlohmann::json &json,
+                                                     Error::ErrorCode &e,
+                                                     const std::string &paramName);
 };

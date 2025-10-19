@@ -27,13 +27,13 @@ class ActorDefinition
 
         [[nodiscard]] static Error::ErrorCode Create(const std::string &path, ActorDefinition &definition);
 
-        void GetInputNames(std::unordered_set<std::string> out) const;
-        void GetOutputNames(std::unordered_set<std::string> out) const;
-        void GetParamNames(std::unordered_set<std::string> out) const;
+        void GetInputNames(std::unordered_set<std::string> &out) const;
+        void GetOutputNames(std::unordered_set<std::string> &out) const;
+        void GetParamNames(std::unordered_set<std::string> &out) const;
 
-        [[nodiscard]] Error::ErrorCode GetInput(std::string &name, SignalDefinition &input) const;
-        [[nodiscard]] Error::ErrorCode GetOutput(std::string &name, SignalDefinition &output) const;
-        [[nodiscard]] Error::ErrorCode GetParam(std::string &name, ParamDefinition *param) const;
+        [[nodiscard]] Error::ErrorCode GetInput(const std::string &name, SignalDefinition &input) const;
+        [[nodiscard]] Error::ErrorCode GetOutput(const std::string &name, SignalDefinition &output) const;
+        [[nodiscard]] Error::ErrorCode GetParam(const std::string &name, ParamDefinition *&param) const;
 
         std::unordered_map<std::string, SignalDefinition> inputs{};
         std::unordered_map<std::string, SignalDefinition> outputs{};

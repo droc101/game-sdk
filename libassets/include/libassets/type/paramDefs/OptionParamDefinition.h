@@ -17,5 +17,4 @@ class OptionParamDefinition final: public ParamDefinition
         std::string optionListName;
         OptionDefinition *definition = nullptr;
         std::string defaultValue;
-        size_t defaultIndex = 0;
 };
