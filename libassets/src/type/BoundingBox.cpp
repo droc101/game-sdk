@@ -9,7 +9,6 @@
 #include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
-#include <libassets/type/ModelVertex.h>
 #include <limits>
 #include <vector>
 

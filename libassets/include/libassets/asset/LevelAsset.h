@@ -29,9 +29,7 @@ class LevelAsset final
 
         std::vector<Sector> sectors{};
         std::vector<Actor> actors{};
-        std::array<float, 3> playerSpawnPosition;
-        float playerSpawnYaw;
-        // TODO: music & fog will be controlled by actors
+        // TODO: player, music, and fog will be controlled by actors
 
     private:
         void SaveToBuffer(std::vector<uint8_t> &buffer) const;

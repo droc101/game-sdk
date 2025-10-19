@@ -8,6 +8,7 @@
 #include <nlohmann/json.hpp>
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_stdinc.h>
+#include <sstream>
 #include <string>
 
 void Options::Load()
@@ -21,8 +22,9 @@ void Options::Load()
         printf("Could not open file %s\n", path.data());
         return;
     }
-    std::string j;
-    file >> j;
+    std::ostringstream ss;
+    ss << file.rdbuf();
+    const std::string j = ss.str();
     const nlohmann::json savedata = nlohmann::json::parse(j);
     if (savedata.is_discarded())
     {

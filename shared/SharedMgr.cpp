@@ -6,9 +6,17 @@
 #include <cstdio>
 #include <filesystem>
 #include <imgui.h>
+#include <libassets/type/ActorDefinition.h>
+#include <libassets/type/OptionDefinition.h>
+#include <libassets/type/paramDefs/OptionParamDefinition.h>
+#include <libassets/type/paramDefs/ParamDefinition.h>
+#include <libassets/util/Error.h>
+#include <ranges>
 #include <SDL3/SDL_misc.h>
 #include <SDL3/SDL_video.h>
+#include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 #include "AboutWindow.h"
 #include "Options.h"
@@ -134,4 +142,72 @@ void SharedMgr::ApplyTheme()
     {
         ImGui::StyleColorsDark();
     }
+}
+
+void SharedMgr::LoadOptionDefinitions()
+{
+    const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::gamePath + "/assets/defs/options",
+                                                                ".json",
+                                                                true);
+    for (const std::string &path: defs)
+    {
+        OptionDefinition def{};
+        std::string fullPath = Options::gamePath + "/assets/defs/options/" + path;
+        const Error::ErrorCode e = OptionDefinition::Create(fullPath, def);
+        if (e == Error::ErrorCode::OK)
+        {
+            optionDefinitions[def.GetName()] = def;
+        } else
+        {
+            printf("Failed to load option def %s: %s\n", fullPath.c_str(), Error::ErrorString(e).c_str());
+        }
+    }
+    printf("Loaded %zu option definitions\n", optionDefinitions.size());
+}
+
+void SharedMgr::LoadActorDefinitions()
+{
+    const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::gamePath + "/assets/defs/actors",
+                                                                ".json",
+                                                                true);
+    for (const std::string &path: defs)
+    {
+        ActorDefinition def{};
+        const std::string fullPath = Options::gamePath + "/assets/defs/actors/" + path;
+        const Error::ErrorCode e = ActorDefinition::Create(fullPath, def);
+        if (e == Error::ErrorCode::OK)
+        {
+            actorDefinitions[def.className] = def;
+        } else
+        {
+            printf("Failed to load actor def %s: %s\n", fullPath.c_str(), Error::ErrorString(e).c_str());
+        }
+    }
+
+    for (std::pair<const std::string, ActorDefinition> &def: actorDefinitions)
+    {
+        if (!def.second.parentClassName.empty())
+        {
+            if (def.second.parentClassName == def.first)
+            {
+                throw std::runtime_error("An actor cannot be its own parent");
+            }
+            def.second.parentClass = &actorDefinitions.at(def.second.parentClassName);
+        }
+
+        for (ParamDefinition *val: def.second.params | std::views::values)
+        {
+            OptionParamDefinition *opt = dynamic_cast<OptionParamDefinition *>(val);
+            if (opt != nullptr)
+            {
+                opt->definition = &optionDefinitions.at(opt->optionListName);
+                if (opt->definition == nullptr)
+                {
+                    throw std::runtime_error("Failed to find option definition!");
+                }
+            }
+        }
+    }
+
+    printf("Loaded %zu actor definitions\n", actorDefinitions.size());
 }

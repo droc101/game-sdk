@@ -5,9 +5,10 @@
 #pragma once
 
 #include <cstdint>
+#include <libassets/type/Color.h>
+#include <libassets/util/DataReader.h>
 #include <string>
 #include <variant>
-#include "Color.h"
 
 template<typename T> concept ParamTypeTemplate = std::same_as<T, uint8_t> ||
                                                  std::same_as<T, int32_t> ||
@@ -31,11 +32,17 @@ class Param
         };
 
         Param();
-        Param(DataReader &reader);
+        explicit Param(DataReader &reader);
+        template<ParamTypeTemplate T> explicit Param(T value)
+        {
+            Set<T>(value);
+        }
 
-        void Write(DataWriter &writer);
+        void Write(DataWriter &writer) const;
 
-        template<ParamTypeTemplate T> [[nodiscard]] T Get(T defaultValue)
+        static ParamType ParseType(const std::string &type);
+
+        template<ParamTypeTemplate T> [[nodiscard]] T Get(T defaultValue) const
         {
             if ((std::same_as<T, uint8_t> && type != ParamType::PARAM_TYPE_BYTE) ||
                 (std::same_as<T, int32_t> && type != ParamType::PARAM_TYPE_INTEGER) ||

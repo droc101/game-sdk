@@ -63,9 +63,24 @@ add_library(assets STATIC include/libassets/libassets.h
         include/libassets/asset/GameConfigAsset.h
         src/asset/GameConfigAsset.cpp
         include/libassets/asset/GameConfigAsset.h
+        src/type/OptionDefinition.cpp
+        include/libassets/type/OptionDefinition.h
+        src/type/ActorDefinition.cpp
+        include/libassets/type/ActorDefinition.h
+        src/type/SignalDefinition.cpp
+        include/libassets/type/SignalDefinition.h
+        include/libassets/type/paramDefs/ParamDefinition.h
+        include/libassets/type/paramDefs/ByteParamDefinition.h
+        include/libassets/type/paramDefs/IntParamDefinition.h
+        include/libassets/type/paramDefs/FloatParamDefinition.h
+        include/libassets/type/paramDefs/BoolParamDefinition.h
+        include/libassets/type/paramDefs/StringParamDefinition.h
+        include/libassets/type/paramDefs/ColorParamDefinition.h
+        include/libassets/type/paramDefs/OptionParamDefinition.h
+        src/type/paramDefs/ParamDefinition.cpp
 )
 
-target_link_libraries(assets PRIVATE ZLIB::ZLIB assimp::assimp glslang::glslang Vulkan::Vulkan)
+target_link_libraries(assets PRIVATE ZLIB::ZLIB assimp::assimp glslang::glslang Vulkan::Vulkan nlohmann_json::nlohmann_json)
 
 target_include_directories(assets PUBLIC "include")
 target_include_directories(assets PRIVATE ${ZLIB_INCLUDE_DIRS} ${ASSIMP_INCLUDE_DIRS} "../lib/stb")

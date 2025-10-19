@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <cstdint>
 #include <format>
-#include <libassets/libassets.h>
 #include <string>
 #include <utility>
 
@@ -28,7 +27,8 @@ class Error
             SHADER_PARSE_ERROR,
             SHADER_LINK_ERROR,
             INCORRECT_VERSION,
-            INVALID_DIRECTORY
+            INVALID_DIRECTORY,
+            NOT_FOUND,
         };
 
         Error() = delete;
@@ -61,6 +61,8 @@ class Error
                     return "Incorrect Version";
                 case ErrorCode::INVALID_DIRECTORY:
                     return "Invalid Directory Path";
+                case ErrorCode::NOT_FOUND:
+                    return "Not Found";
                 case ErrorCode::UNKNOWN:
                 default:
                     return "Unknown Error";

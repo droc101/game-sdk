@@ -3,10 +3,11 @@
 //
 
 #pragma once
-#include <string>
-#include <libassets/util/DataWriter.h>
-#include <libassets/type/Param.h>
 
+#include <libassets/type/Param.h>
+#include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
+#include <string>
 
 class IOConnection
 {
@@ -17,6 +18,8 @@ class IOConnection
         Param param;
 
         IOConnection() = default;
+
+        explicit IOConnection(DataReader &reader);
 
         void Write(DataWriter &writer) const;
 };

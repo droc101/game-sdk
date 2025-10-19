@@ -11,8 +11,7 @@
 
 Material::Material(DataReader &reader)
 {
-    const size_t textureStringLength = reader.Read<size_t>();
-    reader.ReadString(texture, textureStringLength);
+    reader.ReadStringWithSize(texture);
     color = Color(reader, true);
     shader = static_cast<MaterialShader>(reader.Read<uint32_t>());
 }

@@ -45,7 +45,7 @@ Param::Param(DataReader &reader)
     }
 }
 
-void Param::Write(DataWriter &writer)
+void Param::Write(DataWriter &writer) const
 {
     writer.Write<uint8_t>(static_cast<uint8_t>(type));
     switch (type)
@@ -73,3 +73,33 @@ void Param::Write(DataWriter &writer)
             break;
     }
 }
+
+Param::ParamType Param::ParseType(const std::string &type)
+{
+    if (type == "byte")
+    {
+        return ParamType::PARAM_TYPE_BYTE;
+    }
+    if (type == "int" || type == "integer")
+    {
+        return ParamType::PARAM_TYPE_INTEGER;
+    }
+    if (type == "float" || type == "decimal")
+    {
+        return ParamType::PARAM_TYPE_FLOAT;
+    }
+    if (type == "bool" || type == "boolean")
+    {
+        return ParamType::PARAM_TYPE_BOOL;
+    }
+    if (type == "string" || type == "str")
+    {
+        return ParamType::PARAM_TYPE_STRING;
+    }
+    if (type == "color" || type == "col")
+    {
+        return ParamType::PARAM_TYPE_COLOR;
+    }
+    return ParamType::PARAM_TYPE_NONE;
+}
+
