@@ -71,6 +71,7 @@ void OptionsWindow::Render(SDL_Window *window)
         ImGui::SameLine();
         if (ImGui::Button("OK", ImVec2(60, 0)))
         {
+            Options::Save();
             visible = false;
         }
         ImGui::SameLine();
