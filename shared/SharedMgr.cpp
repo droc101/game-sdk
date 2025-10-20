@@ -3,6 +3,7 @@
 //
 
 #include "SharedMgr.h"
+#include <algorithm>
 #include <cstdio>
 #include <filesystem>
 #include <imgui.h>
@@ -120,6 +121,9 @@ std::vector<std::string> SharedMgr::ScanFolder(const std::string &directoryPath,
         {
             file = file.substr(directoryPath.length() + 1);
         }
+        std::ranges::sort(files, [](const std::string &a, const std::string &b) {
+            return std::filesystem::path(a).filename().string() < std::filesystem::path(b).filename().string();
+        });
     }
     return files;
 }

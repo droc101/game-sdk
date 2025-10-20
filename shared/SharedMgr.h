@@ -45,9 +45,9 @@ class SharedMgr
 
         static inline std::unique_ptr<ImGuiTextureAssetCache> textureCache{};
 
-        static inline std::unordered_map<std::string, OptionDefinition> optionDefinitions{};
+        static inline std::map<std::string, OptionDefinition> optionDefinitions{};
 
-        static inline std::unordered_map<std::string, ActorDefinition> actorDefinitions{};
+        static inline std::map<std::string, ActorDefinition> actorDefinitions{};
 
     private:
         static inline bool metricsVisible = false;

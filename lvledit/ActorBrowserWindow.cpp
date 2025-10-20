@@ -63,6 +63,8 @@ void ActorBrowserWindow::Render()
                 selectedClass.c_str(),
                 def.description.empty() ? "no description" : def.description.c_str());
 
+    ImGui::Dummy(ImVec2(0, 8));
+
     if (ImGui::BeginTabBar("##classInfo"))
     {
         if (ImGui::BeginTabItem("Params"))
@@ -100,8 +102,9 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
         std::unordered_set<std::string> paramNames{};
         def.GetParamNames(paramNames);
         std::vector<std::string> paramNamesV(paramNames.begin(), paramNames.end());
+        std::ranges::sort(paramNamesV);
         size_t i = 0;
-        for (const std::string &key: paramNames)
+        for (const std::string &key: paramNamesV)
         {
             ParamDefinition *param = nullptr;
             const Error::ErrorCode e = def.GetParam(key, param);
