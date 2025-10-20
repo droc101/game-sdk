@@ -226,6 +226,7 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
                                 break;
                             case StringParamDefinition::StringParamHint::SOUND:
                                 ImGui::Text("Hint: Sound");
+                                break;
                             case StringParamDefinition::StringParamHint::TEXTURE:
                                 ImGui::Text("Hint: Texture");
                                 break;
