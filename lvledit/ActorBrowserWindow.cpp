@@ -3,20 +3,23 @@
 //
 
 #include "ActorBrowserWindow.h"
+#include <cstddef>
 #include <imgui.h>
 #include <libassets/type/ActorDefinition.h>
+#include <libassets/type/Param.h>
+#include <libassets/type/paramDefs/BoolParamDefinition.h>
+#include <libassets/type/paramDefs/ByteParamDefinition.h>
+#include <libassets/type/paramDefs/FloatParamDefinition.h>
+#include <libassets/type/paramDefs/IntParamDefinition.h>
+#include <libassets/type/paramDefs/OptionParamDefinition.h>
+#include <libassets/type/paramDefs/ParamDefinition.h>
+#include <libassets/type/paramDefs/StringParamDefinition.h>
+#include <libassets/type/SignalDefinition.h>
+#include <libassets/util/Error.h>
 #include <ranges>
+#include <unordered_set>
 #include <utility>
-#include "libassets/type/Param.h"
-#include "libassets/type/SignalDefinition.h"
-#include "libassets/type/paramDefs/BoolParamDefinition.h"
-#include "libassets/type/paramDefs/ByteParamDefinition.h"
-#include "libassets/type/paramDefs/FloatParamDefinition.h"
-#include "libassets/type/paramDefs/IntParamDefinition.h"
-#include "libassets/type/paramDefs/OptionParamDefinition.h"
-#include "libassets/type/paramDefs/ParamDefinition.h"
-#include "libassets/type/paramDefs/StringParamDefinition.h"
-#include "libassets/util/Error.h"
+#include <vector>
 #include "SharedMgr.h"
 
 void ActorBrowserWindow::Render()
@@ -25,7 +28,16 @@ void ActorBrowserWindow::Render()
     {
         return;
     }
+
     ImGui::Begin("Actor Class Browser", &visible, ImGuiWindowFlags_NoCollapse);
+
+    if (SharedMgr::actorDefinitions.size() == 0 || !SharedMgr::actorDefinitions.contains("actor"))
+    {
+        ImGui::TextDisabled("No actor definbitions are loaded. Is the gamw path set correctly?");
+        ImGui::End();
+        return;
+    }
+
     ImGui::Text("Class");
     if (ImGui::BeginCombo("##a", selectedClass.c_str()))
     {
@@ -273,7 +285,8 @@ void ActorBrowserWindow::RenderInputsTab(const ActorDefinition &def)
             }
 
             ImGui::TableNextColumn();
-            ImGui::TextWrapped("%s", signal.GetDescription().empty() ? "No Description" : signal.GetDescription().c_str());
+            ImGui::TextWrapped("%s",
+                               signal.GetDescription().empty() ? "No Description" : signal.GetDescription().c_str());
         }
         ImGui::EndTable();
     }
@@ -327,9 +340,9 @@ void ActorBrowserWindow::RenderOutputsTab(const ActorDefinition &def)
             }
 
             ImGui::TableNextColumn();
-            ImGui::TextWrapped("%s", signal.GetDescription().empty() ? "No Description" : signal.GetDescription().c_str());
+            ImGui::TextWrapped("%s",
+                               signal.GetDescription().empty() ? "No Description" : signal.GetDescription().c_str());
         }
         ImGui::EndTable();
     }
 }
-
