@@ -12,10 +12,12 @@
 class IOConnection
 {
     public:
-        std::string targetName;
-        std::string sourceOutput;
-        std::string targetInput;
-        Param param;
+        std::string targetName{};
+        std::string sourceOutput{};
+        std::string targetInput{};
+        bool overridesParam = false;
+        Param param{};
+        size_t numRefires{};
 
         IOConnection() = default;
 

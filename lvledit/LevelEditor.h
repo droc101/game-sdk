@@ -20,9 +20,9 @@ class LevelEditor
         enum class EditorToolType : uint8_t
         {
             SELECT,
+            ADD_ACTOR,
             ADD_PRIMITIVE,
             ADD_POLYGON,
-            ADD_ACTOR,
         };
 
         static inline EditorToolType toolType = EditorToolType::SELECT;
@@ -45,6 +45,7 @@ class LevelEditor
         static constexpr float LEVEL_SIZE = LEVEL_HALF_SIZE * 2;
 
         static constexpr const char *SELECT_ICON_NAME = "editor/icon_select";
+        static constexpr const char *ACTOR_ICON_NAME = "editor/icon_actor";
         static constexpr const char *PRIMITIVE_ICON_NAME = "editor/icon_primitive";
         static constexpr const char *POLYGON_ICON_NAME = "editor/icon_polygon";
 

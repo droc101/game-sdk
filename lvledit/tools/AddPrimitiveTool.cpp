@@ -8,9 +8,11 @@
 #include <cmath>
 #include <cstddef>
 #include <imgui.h>
+#include <libassets/type/Actor.h>
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
 #include <memory>
+#include <numbers>
 #include <vector>
 #include "../LevelEditor.h"
 #include "../LevelRenderer.h"
@@ -85,6 +87,12 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
 
             LevelRenderer::RenderLine(startCeiling, endCeiling, Color(0.7, .7, .7, 1), matrix, 4);
         }
+    }
+
+    for (Actor &a: LevelEditor::level.actors)
+    {
+        const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
+        LevelRenderer::RenderBillboardPoint(pos, 10, Color(0.7, 1, 0.7, 1), matrix);
     }
 
     if (hasDrawnShape)
@@ -278,7 +286,7 @@ std::vector<glm::vec2> AddPrimitiveTool::buildNgon(const int n,
     pts.reserve(n);
     for (int i = 0; i < n; i++)
     {
-        const float theta = startAngleRadians + 1 * (2.0f * 3.14159265358979323846f * i / n);
+        const float theta = startAngleRadians + 1 * (2.0f * std::numbers::pi_v<float> * i / n);
         const float x = cx + rx * std::cos(theta);
         const float y = cy + ry * std::sin(theta);
         pts.emplace_back(x, y);

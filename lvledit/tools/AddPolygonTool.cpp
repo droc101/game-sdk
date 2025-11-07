@@ -161,6 +161,12 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
         }
     }
 
+    for (Actor &a: LevelEditor::level.actors)
+    {
+        const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
+        LevelRenderer::RenderBillboardPoint(pos, 10, Color(0.7, 1, 0.7, 1), matrix);
+    }
+
     if (isDrawing)
     {
         for (size_t vertexIndex = 0; vertexIndex < points.size(); vertexIndex++)

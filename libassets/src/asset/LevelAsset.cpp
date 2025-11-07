@@ -14,6 +14,8 @@
 #include <libassets/util/Error.h>
 #include <ostream>
 #include <vector>
+#include <string>
+#include <libassets/type/Actor.h>
 
 void LevelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
 {
@@ -48,3 +50,21 @@ Error::ErrorCode LevelAsset::SaveAsMapSrc(const char *mapSrcPath) const
     file.close();
     return Error::ErrorCode::OK;
 }
+
+Actor *LevelAsset::GetActor(const std::string &name)
+{
+    for (Actor &a: actors)
+    {
+        if (a.params.contains("name"))
+        {
+            std::string actorName = a.params.at("name").Get<std::string>("");
+            if (!actorName.empty() && actorName == name)
+            {
+                return &a;
+            }
+        }
+    }
+
+    return nullptr;
+}
+

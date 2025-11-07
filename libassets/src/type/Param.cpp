@@ -45,6 +45,32 @@ Param::Param(DataReader &reader)
     }
 }
 
+bool Param::operator==(const Param &param) const
+{
+    if (type != param.type)
+    {
+        return false;
+    }
+    switch (param.type)
+    {
+        case ParamType::PARAM_TYPE_BOOL:
+            return Get<bool>(false) == param.Get<bool>(false);
+        case ParamType::PARAM_TYPE_BYTE:
+            return Get<uint8_t>(0) == param.Get<uint8_t>(0);
+        case ParamType::PARAM_TYPE_INTEGER:
+            return Get<int32_t>(0) == param.Get<int32_t>(0);
+        case ParamType::PARAM_TYPE_FLOAT:
+            return Get<float>(0) == param.Get<float>(0);
+        case ParamType::PARAM_TYPE_STRING:
+            return Get<std::string>("") == param.Get<std::string>("");
+        case ParamType::PARAM_TYPE_COLOR:
+            return Get<Color>(Color(-1)) == param.Get<Color>(Color(-1));
+        default:
+            return true;
+    }
+}
+
+
 void Param::Write(DataWriter &writer) const
 {
     writer.Write<uint8_t>(static_cast<uint8_t>(type));
@@ -103,3 +129,43 @@ Param::ParamType Param::ParseType(const std::string &type)
     return ParamType::PARAM_TYPE_NONE;
 }
 
+void Param::Clear()
+{
+    type = ParamType::PARAM_TYPE_NONE;
+    value = static_cast<uint8_t>(0);
+}
+
+void Param::ClearToType(const ParamType dataType)
+{
+    switch (dataType)
+    {
+        case ParamType::PARAM_TYPE_BYTE:
+            Set<uint8_t>(0);
+            break;
+        case ParamType::PARAM_TYPE_INTEGER:
+            Set<int32_t>(0);
+            break;
+        case ParamType::PARAM_TYPE_FLOAT:
+            Set<float>(0);
+            break;
+        case ParamType::PARAM_TYPE_BOOL:
+            Set<bool>(false);
+            break;
+        case ParamType::PARAM_TYPE_STRING:
+            Set<std::string>("");
+            break;
+        case ParamType::PARAM_TYPE_COLOR:
+            Set<Color>(Color(-1));
+            break;
+        case ParamType::PARAM_TYPE_NONE:
+        default:
+            Clear();
+            break;
+    }
+}
+
+
+Param::ParamType Param::GetType() const
+{
+    return type;
+}

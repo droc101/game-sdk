@@ -8,6 +8,8 @@
 #include <cstddef>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
+#include "../ActorBrowserWindow.h"
+#include "../EditActorWindow.h"
 #include "../LevelEditor.h"
 #include "../LevelRenderer.h"
 #include "../Viewport.h"
@@ -355,6 +357,12 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
         }
     }
 
+    for (Actor &a: LevelEditor::level.actors)
+    {
+        const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
+        LevelRenderer::RenderBillboardPoint(pos, 10, Color(0.7, 1, 0.7, 1), matrix);
+    }
+
     HandleDrag(vp, isHovered, worldSpaceHover);
 }
 
@@ -406,6 +414,34 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
         }
     }
 
+    for (size_t actorIndex = 0; actorIndex < LevelEditor::level.actors.size(); actorIndex++)
+    {
+        Actor &a = LevelEditor::level.actors.at(actorIndex);
+        const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
+        const glm::vec2 posScreenSpace = vp.WorldToScreenPos(pos);
+        const ImVec2 hoverScreenSpaceIV = vp.GetLocalMousePos();
+        const glm::vec2 hoverScreenSpace = glm::vec2(hoverScreenSpaceIV.x, hoverScreenSpaceIV.y);
+
+        if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ &&
+            hoverType == ItemType::NONE &&
+            distance(posScreenSpace, hoverScreenSpace) <= LevelEditor::HOVER_DISTANCE_PIXELS &&
+            isHovered)
+        {
+            hoverIndex = actorIndex;
+            hoverType = ItemType::ACTOR;
+        }
+
+        Color c = Color(0.7, 1, 0.7, 1);
+        if (selectionType == ItemType::ACTOR && selectionIndex == actorIndex)
+        {
+            c = Color(0, 1, 0, 1);
+        } else if (hoverType == ItemType::ACTOR && hoverIndex == actorIndex)
+        {
+            c = Color(0.4, .8, 0.4, 1);
+        }
+        LevelRenderer::RenderBillboardPoint(pos, 10, c, matrix);
+    }
+
     if (isHovered && vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
     {
         if ((hoverType == ItemType::NONE && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) ||
@@ -421,6 +457,10 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
                 focusedSectorIndex = selectionIndex;
                 sectorFocusMode = true;
             }
+        } else if (hoverType == ItemType::ACTOR && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            selectionIndex = hoverIndex;
+            selectionType = ItemType::ACTOR;
         }
 
         if (selectionType == ItemType::SECTOR && (ImGui::Shortcut(ImGuiKey_Enter, ImGuiInputFlags_RouteGlobal) ||
@@ -428,6 +468,16 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
         {
             focusedSectorIndex = selectionIndex;
             sectorFocusMode = true;
+        } else if (selectionType == ItemType::ACTOR)
+        {
+            if (ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_Enter))
+            {
+                // TODO show properties window
+                EditActorWindow::selectedParam = 0;
+                EditActorWindow::visible = true;
+            }
+
+            // TODO drag actor
         }
     }
 }
@@ -459,6 +509,11 @@ void SelectTool::RenderViewport(Viewport &vp)
     } else
     {
         RenderViewportSelectMode(vp, matrix, isHovered, worldSpaceHover);
+    }
+
+    if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ && selectionType == ItemType::ACTOR)
+    {
+        EditActorWindow::Render(LevelEditor::level.actors.at(selectionIndex));
     }
 }
 
@@ -500,6 +555,12 @@ void SelectTool::RenderToolWindow()
         case ItemType::SECTOR:
             ImGui::ColorEdit4("##sectorColor",
                               LevelEditor::level.sectors.at(focusedSectorIndex).lightColor.GetDataPointer());
+            break;
+        case ItemType::ACTOR:
+            ImGui::Text("Position");
+            ImGui::InputFloat3("##position", LevelEditor::level.actors.at(selectionIndex).position.data());
+            ImGui::Text("Rotation");
+            ImGui::InputFloat3("##rotation", LevelEditor::level.actors.at(selectionIndex).rotation.data());
             break;
         default:
             ImGui::Text("The current selection has no properties");

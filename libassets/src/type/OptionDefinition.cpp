@@ -103,3 +103,16 @@ const std::string &OptionDefinition::GetName() const
     return name;
 }
 
+std::string OptionDefinition::Find(const Param &value) const
+{
+    for (const std::pair<const std::string, Param> &option: options)
+    {
+        if (option.second == value)
+        {
+            return option.first;
+        }
+    }
+    return "";
+}
+
+

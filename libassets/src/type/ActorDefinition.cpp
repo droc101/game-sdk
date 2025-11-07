@@ -44,7 +44,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         for (const auto &[key, value]: inputs.items())
         {
             const SignalDefinition signal = SignalDefinition(value.value("description", ""),
-                                                             Param::ParseType(value.value("type", "int")));
+                                                             Param::ParseType(value.value("type", "none")));
             definition.inputs[key] = signal;
         }
     }
@@ -55,7 +55,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         for (const auto &[key, value]: outputs.items())
         {
             const SignalDefinition signal = SignalDefinition(value.value("description", ""),
-                                                       Param::ParseType(value.value("type", "int")));
+                                                       Param::ParseType(value.value("type", "none")));
             definition.outputs[key] = signal;
         }
     }

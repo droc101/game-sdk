@@ -26,6 +26,8 @@ class OptionDefinition
 
         const std::string &GetName() const;
 
+        std::string Find(const Param &value) const;
+
     private:
         template<ParamTypeTemplate T>
         [[nodiscard]] Error::ErrorCode LoadOptions(const nlohmann::json &definition_json)

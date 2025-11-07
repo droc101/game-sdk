@@ -19,6 +19,7 @@
 #include "Options.h"
 #include "SharedMgr.h"
 #include "TextureBrowserWindow.h"
+#include "tools/AddActorTool.h"
 #include "tools/AddPolygonTool.h"
 #include "tools/AddPrimitiveTool.h"
 #include "tools/EditorTool.h"
@@ -139,7 +140,7 @@ static void Render(bool &done)
         }
         if (ImGui::BeginMenu("Edit"))
         {
-            ImGui::MenuItem("Selection Properties TODO", "Alt+Enter");
+            ImGui::MenuItem("Selection Properties", "Alt+Enter");
             ImGui::Separator();
             if (ImGui::MenuItem("Snap on Grid", "", LevelEditor::snapToGrid))
             {
@@ -299,13 +300,25 @@ static void Render(bool &done)
         LevelEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
     }
 
+    if (ToolbarToolButton("##actorTool",
+                          "Add Actor",
+                          LevelEditor::ACTOR_ICON_NAME,
+                          LevelEditor::toolType == LevelEditor::EditorToolType::ADD_ACTOR,
+                          6,
+                          "Ctrl+2",
+                          ImGuiMod_Ctrl | ImGuiKey_2))
+    {
+        LevelEditor::toolType = LevelEditor::EditorToolType::ADD_ACTOR;
+        LevelEditor::tool = std::unique_ptr<EditorTool>(new AddActorTool());
+    }
+
     if (ToolbarToolButton("##primTool",
                           "Add Primitive",
                           LevelEditor::PRIMITIVE_ICON_NAME,
                           LevelEditor::toolType == LevelEditor::EditorToolType::ADD_PRIMITIVE,
                           2,
-                          "Ctrl+2",
-                          ImGuiMod_Ctrl | ImGuiKey_2))
+                          "Ctrl+3",
+                          ImGuiMod_Ctrl | ImGuiKey_3))
     {
         LevelEditor::toolType = LevelEditor::EditorToolType::ADD_PRIMITIVE;
         LevelEditor::tool = std::unique_ptr<EditorTool>(new AddPrimitiveTool());
@@ -316,8 +329,8 @@ static void Render(bool &done)
                           LevelEditor::POLYGON_ICON_NAME,
                           LevelEditor::toolType == LevelEditor::EditorToolType::ADD_POLYGON,
                           2,
-                          "Ctrl+3",
-                          ImGuiMod_Ctrl | ImGuiKey_3))
+                          "Ctrl+4",
+                          ImGuiMod_Ctrl | ImGuiKey_4))
     {
         LevelEditor::toolType = LevelEditor::EditorToolType::ADD_POLYGON;
         LevelEditor::tool = std::unique_ptr<EditorTool>(new AddPolygonTool());
@@ -363,6 +376,12 @@ int main()
 
     SharedMgr::InitSharedMgr<OpenGLImGuiTextureAssetCache>();
     LevelEditor::mat = WallMaterial(Options::defaultTexture);
+
+    // Actor a = Actor();
+    // a.className = "logic_counter";
+    // a.ApplyDefinition(SharedMgr::actorDefinitions.at(a.className));
+    // a.params.at("name").Set<std::string>("counter");
+    // LevelEditor::level.actors.push_back(a);
 
     const char *glslVersion = "#version 130";
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0))
@@ -443,6 +462,7 @@ int main()
     ImGui_ImplOpenGL3_Init(glslVersion);
 
     SharedMgr::textureCache->RegisterPng("assets/lvledit/select.png", LevelEditor::SELECT_ICON_NAME);
+    SharedMgr::textureCache->RegisterPng("assets/lvledit/actors.png", LevelEditor::ACTOR_ICON_NAME);
     SharedMgr::textureCache->RegisterPng("assets/lvledit/primitives.png", LevelEditor::PRIMITIVE_ICON_NAME);
     SharedMgr::textureCache->RegisterPng("assets/lvledit/polygon.png", LevelEditor::POLYGON_ICON_NAME);
 

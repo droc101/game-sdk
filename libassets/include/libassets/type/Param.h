@@ -4,9 +4,11 @@
 
 #pragma once
 
+#include <concepts>
 #include <cstdint>
 #include <libassets/type/Color.h>
 #include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
 #include <string>
 #include <variant>
 
@@ -37,10 +39,17 @@ class Param
         {
             Set<T>(value);
         }
+        bool operator==(const Param & param) const;
 
         void Write(DataWriter &writer) const;
 
         static ParamType ParseType(const std::string &type);
+
+        void Clear();
+
+        void ClearToType(const ParamType dataType);
+
+        [[nodiscard]] ParamType GetType() const;
 
         template<ParamTypeTemplate T> [[nodiscard]] T Get(T defaultValue) const
         {

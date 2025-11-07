@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <array>
+#include <libassets/type/ActorDefinition.h>
 #include <libassets/type/IOConnection.h>
 #include <libassets/type/Param.h>
 #include <string>
@@ -13,8 +15,11 @@
 class Actor
 {
     public:
-        std::string typeName;
-        std::string name;
-        std::unordered_map<std::string, Param> params;
-        std::vector<IOConnection> connections;
+        std::string className;
+        std::unordered_map<std::string, Param> params{};
+        std::vector<IOConnection> connections{};
+        std::array<float, 3> position{};
+        std::array<float, 3> rotation{};
+
+        void ApplyDefinition(const ActorDefinition &definition);
 };

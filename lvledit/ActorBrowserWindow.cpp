@@ -33,7 +33,7 @@ void ActorBrowserWindow::Render()
 
     if (SharedMgr::actorDefinitions.size() == 0 || !SharedMgr::actorDefinitions.contains("actor"))
     {
-        ImGui::TextDisabled("No actor definbitions are loaded. Is the gamw path set correctly?");
+        ImGui::TextDisabled("No actor definitions are loaded. Is the game path set correctly?");
         ImGui::End();
         return;
     }

@@ -11,6 +11,7 @@
 #include <libassets/util/AssetReader.h>
 #include <libassets/util/Error.h>
 #include <vector>
+#include <string>
 
 class LevelAsset final
 {
@@ -30,6 +31,8 @@ class LevelAsset final
         std::vector<Sector> sectors{};
         std::vector<Actor> actors{};
         // TODO: player, music, and fog will be controlled by actors
+
+        Actor *GetActor(const std::string &name);
 
     private:
         void SaveToBuffer(std::vector<uint8_t> &buffer) const;

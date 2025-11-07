@@ -24,6 +24,7 @@ class EditorTool
             LINE,
             CEILING,
             FLOOR,
-            SECTOR
+            SECTOR,
+            ACTOR
         };
 };
