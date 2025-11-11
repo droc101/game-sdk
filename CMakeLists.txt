@@ -182,6 +182,7 @@ target_include_directories(shared INTERFACE
 
 add_custom_target(
         copy_assets
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/bin/assets
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/bin/assets
 )
 
@@ -193,6 +194,7 @@ add_subdirectory(lvledit)
 add_subdirectory(shdedit)
 add_subdirectory(fonedit)
 add_subdirectory(cfgedit)
+add_subdirectory(launcher)
 
 if (GAME_SDK_BUILD_PLUGINS)
     if (UNIX)

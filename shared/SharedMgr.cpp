@@ -55,10 +55,14 @@ void SharedMgr::SharedMenuUI(const std::string &programName)
 #endif
     if (ImGui::BeginMenu("Help"))
     {
-        if (ImGui::MenuItem(("Wiki page for " + programName).c_str()))
+        if (!programName.empty())
         {
-            (void)SDL_OpenURL(("https://wiki.droc101.dev/index.php/" + programName).c_str());
+            if (ImGui::MenuItem(("Wiki page for " + programName).c_str()))
+            {
+                (void)SDL_OpenURL(("https://wiki.droc101.dev/index.php/" + programName).c_str());
+            }
         }
+
         if (ImGui::MenuItem("Wiki page for GAME SDK"))
         {
             (void)SDL_OpenURL("https://wiki.droc101.dev/index.php/GAME_SDK");

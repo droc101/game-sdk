@@ -1,0 +1,52 @@
+{
+  "categories": {
+    "GAME": {
+      "Launch GAME": {
+        "binary": "$GAMEDIR/game",
+        "workdir": "$GAMEDIR"
+      },
+      "GAME Directory": {
+        "folder": "$GAMEDIR"
+      },
+      "GAME Log": {
+        "file": "$GAMEDIR/game.log"
+      }
+    },
+
+    "SDK Tools": {
+      "Level Editor": {
+        "binary": "$SDKDIR/lvledit"
+      },
+      "Texture Editor": {
+        "binary": "$SDKDIR/texedit"
+      },
+      "Model Editor": {
+        "binary": "$SDKDIR/mdledit"
+      },
+      "Sound Editor": {
+        "binary": "$SDKDIR/sndedit"
+      },
+      "GAME Config Editor": {
+        "binary": "$SDKDIR/cfgedit"
+      },
+      "Font Editor": {
+        "binary": "$SDKDIR/fonedit"
+      },
+      "Shader Editor": {
+        "binary": "$SDKDIR/shdedit"
+      },
+      "SDK Directory": {
+        "folder": "$SDKDIR"
+      }
+    },
+
+    "Resources": {
+      "Droc101 Development Wiki": {
+        "url": "https://wiki.droc101.dev"
+      },
+      "Engine Source Code": {
+        "url": "https://github.com/droc101/c-game-engine"
+      }
+    }
+  }
+}
