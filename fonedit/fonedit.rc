@@ -14,11 +14,11 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Droc101 Development"
-                        VALUE "FileDescription", "GAME SDK"
-                        VALUE "InternalName", "GAME SDK"
-                        VALUE "LegalCopyright", "Droc101 Development"
-                        VALUE "OriginalFilename", ""
-                        VALUE "ProductName", "GAME SDK"
+            VALUE "FileDescription", "GAME SDK Font Editor"
+            VALUE "InternalName", "fonedit"
+            VALUE "LegalCopyright", "Droc101 Development"
+            VALUE "OriginalFilename", "fonedit.exe"
+            VALUE "ProductName", "GAME SDK"
         END
     END
     BLOCK "VarFileInfo"

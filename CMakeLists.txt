@@ -158,7 +158,6 @@ target_sources(shared INTERFACE
         shared/GLDebug.cpp
         shared/GLDebug.h
         shared/DialogFilters.h
-        $<$<BOOL:${WIN32}>:${CMAKE_SOURCE_DIR}/game-sdk.rc>
 )
 target_link_libraries(shared INTERFACE
         SDL3::SDL3

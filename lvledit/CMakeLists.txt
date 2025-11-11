@@ -23,6 +23,7 @@ add_executable(lvledit lvledit.cpp
         tools/AddActorTool.h
         EditActorWindow.cpp
         EditActorWindow.h
+        $<$<BOOL:${WIN32}>:lvledit.rc>
 )
 
 set_target_properties(lvledit PROPERTIES LINKER_LANGUAGE CXX)

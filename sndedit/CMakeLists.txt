@@ -3,7 +3,7 @@ project(sndedit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(sndedit sndedit.cpp)
+add_executable(sndedit sndedit.cpp $<$<BOOL:${WIN32}>:sndedit.rc>)
 
 set_target_properties(sndedit PROPERTIES LINKER_LANGUAGE CXX)
 

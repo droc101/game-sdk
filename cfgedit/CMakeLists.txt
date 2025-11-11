@@ -3,7 +3,7 @@ project(cfgedit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(cfgedit cfgedit.cpp)
+add_executable(cfgedit cfgedit.cpp $<$<BOOL:${WIN32}>:cfgedit.rc>)
 
 set_target_properties(cfgedit PROPERTIES LINKER_LANGUAGE CXX)
 
