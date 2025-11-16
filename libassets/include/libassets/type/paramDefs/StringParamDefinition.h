@@ -17,7 +17,8 @@ class StringParamDefinition final: public ParamDefinition
             TEXTURE,
             MODEL,
             SOUND,
-            ACTOR
+            ACTOR,
+            MATERIAL
         };
 
         StringParamDefinition() = default;

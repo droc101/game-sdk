@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 #include "AboutWindow.h"
+#include "MaterialBrowserWindow.h"
 #include "Options.h"
 #include "OptionsWindow.h"
 #include "SetupWindow.h"
@@ -85,6 +86,7 @@ void SharedMgr::RenderSharedUI(SDL_Window *window)
     OptionsWindow::Render(window);
     AboutWindow::Render();
     TextureBrowserWindow::Render();
+    MaterialBrowserWindow::Render();
     SetupWindow::Render(window);
     if (metricsVisible)
     {

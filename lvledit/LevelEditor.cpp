@@ -11,6 +11,8 @@
 #include <libassets/util/Error.h>
 #include <limits>
 #include <vector>
+
+#include "MaterialBrowserWindow.h"
 #include "SharedMgr.h"
 #include "TextureBrowserWindow.h"
 
@@ -117,13 +119,15 @@ void LevelEditor::MaterialToolWindow(WallMaterial &wallMat)
 {
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
-    const Error::ErrorCode e = SharedMgr::textureCache->GetTextureID(wallMat.texture, tid);
+    LevelMaterialAsset mat;
+    LevelMaterialAsset::CreateFromAsset((Options::gamePath + "/assets/" + wallMat.material).c_str(), mat); // TODO improve
+    const Error::ErrorCode e = SharedMgr::textureCache->GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e == Error::ErrorCode::OK)
     {
         constexpr int imagePanelHeight = 128;
         ImVec2 imageSize{};
-        SharedMgr::textureCache->GetTextureSize(wallMat.texture, imageSize);
+        SharedMgr::textureCache->GetTextureSize(mat.texture, imageSize);
         const glm::vec2 scales = {(sz.x - 16) / imageSize.x, imagePanelHeight / imageSize.y};
         const float scale = std::ranges::min(scales.x, scales.y);
 
@@ -143,7 +147,7 @@ void LevelEditor::MaterialToolWindow(WallMaterial &wallMat)
         }
         ImGui::EndChild();
     }
-    TextureBrowserWindow::InputTexture("##Texture", wallMat.texture);
+    MaterialBrowserWindow::InputMaterial("##Texture", wallMat.material);
     ImGui::Separator();
     ImGui::Text("UV Offset");
     ImGui::InputFloat2("##uvOffset", wallMat.uvOffset.data());

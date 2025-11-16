@@ -439,7 +439,7 @@ int main()
     }
 
     SharedMgr::InitSharedMgr<OpenGLImGuiTextureAssetCache>();
-    LevelEditor::mat = WallMaterial(Options::defaultTexture);
+    LevelEditor::mat = WallMaterial(Options::defaultMaterial);
 
     // Actor a = Actor();
     // a.className = "logic_counter";

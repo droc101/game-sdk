@@ -8,6 +8,8 @@
 #include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_video.h>
+
+#include "MaterialBrowserWindow.h"
 #include "Options.h"
 #include "SharedMgr.h"
 #include "TextureBrowserWindow.h"
@@ -53,6 +55,8 @@ void OptionsWindow::Render(SDL_Window *window)
 
         ImGui::TextUnformatted("Default Texture");
         TextureBrowserWindow::InputTexture("##defaulttexinput", Options::defaultTexture);
+        ImGui::TextUnformatted("Default Material");
+        MaterialBrowserWindow::InputMaterial("##defaultmatinput", Options::defaultMaterial);
 
         ImGui::TextUnformatted("Theme");
         int theme = static_cast<int>(Options::theme);

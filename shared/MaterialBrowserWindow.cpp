@@ -1,42 +1,49 @@
 //
-// Created by droc101 on 7/6/25.
+// Created by droc101 on 11/16/25.
 //
 
-#include "TextureBrowserWindow.h"
+#include "MaterialBrowserWindow.h"
 #include <cstddef>
 #include <format>
 #include <imgui.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
+#include "libassets/asset/LevelMaterialAsset.h"
 #include "Options.h"
 #include "SharedMgr.h"
 
 constexpr int tileSize = 128;
 static std::string filter = "";
 
-void TextureBrowserWindow::Hide()
+void MaterialBrowserWindow::Hide()
 {
     visible = false;
 }
 
-void TextureBrowserWindow::Show(std::string &texture)
+void MaterialBrowserWindow::Show(std::string &material)
 {
-    str = &texture;
-    textures = SharedMgr::ScanFolder(Options::gamePath + "/assets/texture", ".gtex", true);
+    str = &material;
+    materialPaths = SharedMgr::ScanFolder(Options::gamePath + "/assets/material", ".gmtl", true);
+    for (const std::string &path: materialPaths)
+    {
+        LevelMaterialAsset mat;
+        Error::ErrorCode e = LevelMaterialAsset::CreateFromAsset((Options::gamePath + "/assets/material/" + path).c_str(), mat);
+        materials.push_back(mat);
+    }
     visible = true;
 }
 
-void TextureBrowserWindow::Render()
+void MaterialBrowserWindow::Render()
 {
     if (visible)
     {
-        ImGui::OpenPopup("Choose Texture");
+        ImGui::OpenPopup("Choose Material");
         ImGui::SetNextWindowSize(ImVec2(600, 500), ImGuiCond_Appearing);
         ImGui::SetNextWindowSizeConstraints(ImVec2(192, 192), ImVec2(FLT_MAX, FLT_MAX));
         constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
                                                  ImGuiWindowFlags_NoSavedSettings;
-        if (ImGui::BeginPopupModal("Choose Texture", &visible, windowFlags))
+        if (ImGui::BeginPopupModal("Choose Material", &visible, windowFlags))
         {
             ImGui::PushItemWidth(-1);
             ImGui::InputTextWithHint("##search", "Filter", &filter);
@@ -47,18 +54,20 @@ void TextureBrowserWindow::Render()
                 const float regionMaxX = ImGui::GetWindowPos().x + ImGui::GetContentRegionMax().x;
                 bool foundResults = false;
 
-                for (size_t i = 0; i < textures.size(); i++)
+                for (size_t i = 0; i < materialPaths.size(); i++)
                 {
-                    if (textures.at(i).find(filter) == std::string::npos) {continue;}
+                    if (materialPaths.at(i).find(filter) == std::string::npos) {continue;}
+
+                    const std::string textureName = materials.at(i).texture;
 
                     ImVec2 texSize;
-                    if (SharedMgr::textureCache->GetTextureSize("texture/" + textures[i], texSize) !=
+                    if (SharedMgr::textureCache->GetTextureSize(textureName, texSize) !=
                         Error::ErrorCode::OK)
                     {
                         continue;
                     }
                     ImTextureID tex = 0;
-                    if (SharedMgr::textureCache->GetTextureID("texture/" + textures[i], tex) != Error::ErrorCode::OK)
+                    if (SharedMgr::textureCache->GetTextureID(textureName, tex) != Error::ErrorCode::OK)
                     {
                         continue;
                     }
@@ -73,13 +82,13 @@ void TextureBrowserWindow::Render()
 
                     const float cursor = ImGui::GetCursorPosX();
 
-                    if (ImGui::Selectable("##tile", "texture/" + textures[i] == *str, 0, ImVec2(tileSize, tileSize)))
+                    if (ImGui::Selectable("##tile", "material/" + materialPaths[i] == *str, 0, ImVec2(tileSize, tileSize)))
                     {
-                        *str = "texture/" + textures[i];
+                        *str = "material/" + materialPaths[i];
                     }
                     if (ImGui::BeginItemTooltip())
                     {
-                        const std::string tooltip = std::format("{}\n{}x{}", textures[i], texSize.x, texSize.y);
+                        const std::string tooltip = materialPaths[i];
                         ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
                         ImGui::TextUnformatted(tooltip.c_str());
                         ImGui::PopTextWrapPos();
@@ -141,13 +150,14 @@ void TextureBrowserWindow::Render()
     }
 }
 
-void TextureBrowserWindow::InputTexture(const char *label, std::string &texture)
+void MaterialBrowserWindow::InputMaterial(const char *label, std::string &material)
 {
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::InputText(label, &texture);
+    ImGui::InputText(label, &material);
     ImGui::SameLine();
     if (ImGui::Button(("..." + std::string(label)).c_str(), ImVec2(40, 0)))
     {
-        Show(texture);
+        Show(material);
     }
 }
+

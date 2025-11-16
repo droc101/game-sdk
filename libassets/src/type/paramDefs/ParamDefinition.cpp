@@ -80,6 +80,9 @@ ParamDefinition *ParamDefinition::Create(const nlohmann::json &json, Error::Erro
             } else if (hint == "actor")
             {
                 stringDef->hintType = StringParamDefinition::StringParamHint::ACTOR;
+            } else if (hint == "material")
+            {
+                stringDef->hintType = StringParamDefinition::StringParamHint::MATERIAL;
             } else
             {
                 stringDef->hintType = StringParamDefinition::StringParamHint::NONE;

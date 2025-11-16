@@ -161,6 +161,8 @@ target_sources(shared INTERFACE
         shared/DialogFilters.h
         shared/SetupWindow.cpp
         shared/SetupWindow.h
+        shared/MaterialBrowserWindow.h
+        shared/MaterialBrowserWindow.cpp
 )
 target_link_libraries(shared INTERFACE
         SDL3::SDL3

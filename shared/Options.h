@@ -30,6 +30,7 @@ class Options
         static inline std::string gamePath;
 
         static inline std::string defaultTexture;
+        static inline std::string defaultMaterial;
 
         static inline Theme theme;
 };
