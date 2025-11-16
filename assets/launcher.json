@@ -20,6 +20,9 @@
       "Texture Editor": {
         "binary": "$SDKDIR/texedit"
       },
+      "Material Editor": {
+        "binary": "$SDKDIR/mtledit"
+      },
       "Model Editor": {
         "binary": "$SDKDIR/mdledit"
       },

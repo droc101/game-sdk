@@ -98,7 +98,8 @@ find_package(glslang CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 
 
-add_library(imgui INTERFACE)
+add_library(imgui INTERFACE
+        mtledit/mtledit.cpp)
 target_sources(imgui INTERFACE
         lib/imgui/imconfig.h
         lib/imgui/imgui.cpp
@@ -195,6 +196,7 @@ add_subdirectory(lvledit)
 add_subdirectory(shdedit)
 add_subdirectory(fonedit)
 add_subdirectory(cfgedit)
+add_subdirectory(mtledit)
 add_subdirectory(launcher)
 
 if (GAME_SDK_BUILD_PLUGINS)

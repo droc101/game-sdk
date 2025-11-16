@@ -78,6 +78,8 @@ add_library(assets STATIC include/libassets/libassets.h
         include/libassets/type/paramDefs/ColorParamDefinition.h
         include/libassets/type/paramDefs/OptionParamDefinition.h
         src/type/paramDefs/ParamDefinition.cpp
+        src/asset/LevelMaterialAsset.cpp
+        include/libassets/asset/LevelMaterialAsset.h
 )
 
 target_link_libraries(assets PRIVATE ZLIB::ZLIB assimp::assimp glslang::glslang Vulkan::Vulkan nlohmann_json::nlohmann_json)

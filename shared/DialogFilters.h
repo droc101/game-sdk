@@ -24,6 +24,11 @@ class DialogFilters
             SDL_DialogFileFilter{"GAME map source (*.json)", "json"},
         };
 
+        // mtledit
+        static constexpr std::array<SDL_DialogFileFilter, 1> gmtlFilters = {
+            SDL_DialogFileFilter{"GAME Material (*.gmtl)", "gmtl"},
+        };
+
         // mdledit
         static constexpr std::array<SDL_DialogFileFilter, 5> modelFilters = {
             SDL_DialogFileFilter{"3D Models (obj, fbx, gltf, dae)", "obj;fbx;gltf;dae"},
