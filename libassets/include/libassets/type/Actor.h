@@ -15,6 +15,9 @@
 class Actor
 {
     public:
+        Actor() = default;
+        explicit Actor(nlohmann::ordered_json j);
+
         std::string className;
         std::unordered_map<std::string, Param> params{};
         std::vector<IOConnection> connections{};
@@ -22,4 +25,6 @@ class Actor
         std::array<float, 3> rotation{};
 
         void ApplyDefinition(const ActorDefinition &definition);
+
+        nlohmann::ordered_json GenerateJson() const;
 };

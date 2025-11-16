@@ -20,8 +20,8 @@ class DialogFilters
         static constexpr std::array<SDL_DialogFileFilter, 1> gmapFilters = {
             SDL_DialogFileFilter{"Compiled GAME map (*.gmap)", "gmap"},
         };
-        static constexpr std::array<SDL_DialogFileFilter, 1> binFilters = {
-            SDL_DialogFileFilter{"Raw GAME map (*.bin)", "bin"},
+        static constexpr std::array<SDL_DialogFileFilter, 1> jsonFilters = {
+            SDL_DialogFileFilter{"GAME map source (*.json)", "json"},
         };
 
         // mdledit

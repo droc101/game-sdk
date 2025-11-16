@@ -39,7 +39,8 @@ class Param
         {
             Set<T>(value);
         }
-        bool operator==(const Param & param) const;
+        explicit Param(nlohmann::ordered_json j);
+        bool operator==(const Param &param) const;
 
         void Write(DataWriter &writer) const;
 
@@ -47,9 +48,11 @@ class Param
 
         void Clear();
 
-        void ClearToType(const ParamType dataType);
+        void ClearToType(ParamType dataType);
 
         [[nodiscard]] ParamType GetType() const;
+
+        [[nodiscard]] nlohmann::ordered_json GetJson() const;
 
         template<ParamTypeTemplate T> [[nodiscard]] T Get(T defaultValue) const
         {

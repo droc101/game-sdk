@@ -29,6 +29,17 @@ Color::Color(DataReader &reader, const bool useFloats)
     }
 }
 
+Color::Color(nlohmann::ordered_json j)
+{
+    color = {
+        j["r"],
+        j["g"],
+        j["b"],
+        j["a"],
+    };
+}
+
+
 float *Color::GetDataPointer()
 {
     return color.data();
@@ -72,4 +83,14 @@ Color::Color(const float r, const float g, const float b, const float a)
 std::array<float, 4> Color::CopyData() const
 {
     return color;
+}
+
+nlohmann::ordered_json Color::GenerateJson() const
+{
+    nlohmann::ordered_json j{};
+    j["r"] = color[0];
+    j["g"] = color[1];
+    j["b"] = color[2];
+    j["a"] = color[3];
+    return j;
 }

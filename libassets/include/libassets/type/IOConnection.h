@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <libassets/type/Param.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
@@ -12,6 +13,9 @@
 class IOConnection
 {
     public:
+        IOConnection() = default;
+        explicit IOConnection(const nlohmann::ordered_json &j);
+
         std::string targetName{};
         std::string sourceOutput{};
         std::string targetInput{};
@@ -19,9 +23,9 @@ class IOConnection
         Param param{};
         size_t numRefires{};
 
-        IOConnection() = default;
-
         explicit IOConnection(DataReader &reader);
 
         void Write(DataWriter &writer) const;
+
+        [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 };

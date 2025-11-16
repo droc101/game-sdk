@@ -8,10 +8,9 @@
 #include <cstdint>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Sector.h>
-#include <libassets/util/AssetReader.h>
 #include <libassets/util/Error.h>
-#include <vector>
 #include <string>
+#include <vector>
 
 class LevelAsset final
 {
@@ -25,6 +24,7 @@ class LevelAsset final
         [[nodiscard]] Error::ErrorCode Compile(const char *assetPath) const;
 
         static constexpr uint8_t LEVEL_ASSET_VERSION = 1;
+        static constexpr uint8_t LEVEL_JSON_VERSION = 1;
 
         static constexpr float LEVEL_MAX_HALF_EXTENTS = 512; // 1024 unit wide level
 

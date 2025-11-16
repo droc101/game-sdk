@@ -9,10 +9,11 @@
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
+#include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
-
 #include "ActorBrowserWindow.h"
+#include "DialogFilters.h"
 #include "LevelEditor.h"
 #include "LevelRenderer.h"
 #include "OpenGLImGuiTextureAssetCache.h"
@@ -64,7 +65,46 @@ static bool ToolbarToolButton(const char *id,
     return r;
 }
 
-static void Render(bool &done)
+static void saveJsonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+{
+    if (fileList == nullptr || fileList[0] == nullptr)
+    {
+        return;
+    }
+    const Error::ErrorCode errorCode = LevelEditor::level.SaveAsMapSrc(fileList[0]);
+    if (errorCode != Error::ErrorCode::OK)
+    {
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to save the texture!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
+    }
+}
+
+static void openJsonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+{
+    if (fileList == nullptr || fileList[0] == nullptr)
+    {
+        return;
+    }
+    const Error::ErrorCode errorCode = LevelAsset::CreateFromMapSrc(fileList[0], LevelEditor::level);
+    if (errorCode != Error::ErrorCode::OK)
+    {
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to open the level!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
+        return;
+    }
+}
+
+static void Render(bool &done, SDL_Window *sdlWindow)
 {
     if (ImGui::Shortcut(ImGuiKey_RightBracket, ImGuiInputFlags_RouteGlobal))
     {
@@ -127,10 +167,32 @@ static void Render(bool &done)
     {
         if (ImGui::BeginMenu("File"))
         {
-            ImGui::MenuItem("New TODO", "Ctrl+N");
+            if (ImGui::MenuItem("New", "Ctrl+N"))
+            {
+                LevelEditor::level = LevelAsset();
+                LevelEditor::toolType = LevelEditor::EditorToolType::SELECT;
+                LevelEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+            }
             ImGui::Separator();
-            ImGui::MenuItem("Open TODO", "Ctrl+O");
-            ImGui::MenuItem("Save TODO", "Ctrl+S");
+            if (ImGui::MenuItem("Open", "Ctrl+O"))
+            {
+                SDL_ShowOpenFileDialog(openJsonCallback,
+                                       nullptr,
+                                       sdlWindow,
+                                       DialogFilters::jsonFilters.data(),
+                                       1,
+                                       nullptr,
+                                       false);
+            }
+            if (ImGui::MenuItem("Save", "Ctrl+S"))
+            {
+                SDL_ShowSaveFileDialog(saveJsonCallback,
+                                       nullptr,
+                                       sdlWindow,
+                                       DialogFilters::jsonFilters.data(),
+                                       1,
+                                       nullptr);
+            }
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
@@ -497,7 +559,7 @@ int main()
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
 
-        Render(done);
+        Render(done, window);
 
         SharedMgr::RenderSharedUI(window);
 

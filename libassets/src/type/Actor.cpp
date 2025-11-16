@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
+#include <libassets/type/IOConnection.h>
 #include <libassets/type/OptionDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/BoolParamDefinition.h>
@@ -19,6 +20,32 @@
 #include <string>
 #include <unordered_set>
 #include <utility>
+
+Actor::Actor(nlohmann::ordered_json j)
+{
+    className = j.value("class", "actor");
+    position = {
+        j["position"]["x"],
+        j["position"]["y"],
+        j["position"]["z"],
+    };
+    rotation = {
+        j["rotation"]["x"],
+        j["rotation"]["y"],
+        j["rotation"]["z"],
+    };
+    const nlohmann::ordered_json conns = j.at("connections");
+    for (const nlohmann::basic_json<nlohmann::ordered_map> &conn: conns)
+    {
+        connections.emplace_back(conn);
+    }
+    nlohmann::ordered_json jParams = j.at("params");
+    for (const auto &[key, value]: jParams.items())
+    {
+        params[key] = Param(value);
+    }
+}
+
 
 void Actor::ApplyDefinition(const ActorDefinition &definition)
 {
@@ -73,4 +100,27 @@ void Actor::ApplyDefinition(const ActorDefinition &definition)
             assert(false); // unimplemented param type
         }
     }
+}
+
+nlohmann::ordered_json Actor::GenerateJson() const
+{
+    nlohmann::ordered_json j{};
+    j["class"] = className;
+    j["position"]["x"] = position.at(0);
+    j["position"]["y"] = position.at(1);
+    j["position"]["z"] = position.at(2);
+    j["rotation"]["x"] = rotation.at(0);
+    j["rotation"]["y"] = rotation.at(1);
+    j["rotation"]["z"] = rotation.at(2);
+    j["connections"] = nlohmann::ordered_json::array();
+    for (const IOConnection &connection: connections)
+    {
+        j["connections"].push_back(connection.GenerateJson());
+    }
+    j["params"] = nlohmann::ordered_json::object();
+    for (const std::pair<const std::string, Param> &pair: params)
+    {
+        j["params"][pair.first] = pair.second.GetJson();
+    }
+    return j;
 }

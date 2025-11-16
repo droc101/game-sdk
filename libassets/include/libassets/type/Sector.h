@@ -8,11 +8,15 @@
 #include <cstdint>
 #include <libassets/type/Color.h>
 #include <libassets/type/WallMaterial.h>
+#include <nlohmann/json.hpp>
 #include <vector>
 
 class Sector
 {
     public:
+        Sector() = default;
+        explicit Sector(nlohmann::ordered_json j);
+
         std::vector<std::array<float, 2>> points{};
         std::vector<WallMaterial> wallMaterials;
         float floorHeight;
@@ -25,6 +29,8 @@ class Sector
         bool IsValid();
 
         [[nodiscard]] bool ContainsPoint(std::array<float, 2> point) const;
+
+        [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 
     private:
         enum class SegmentOrientation : uint8_t

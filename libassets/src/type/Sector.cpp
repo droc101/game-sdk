@@ -6,7 +6,27 @@
 #include <array>
 #include <cstddef>
 #include <libassets/type/Sector.h>
+#include <nlohmann/json.hpp>
 #include <vector>
+
+Sector::Sector(nlohmann::ordered_json j)
+{
+    floorHeight = j.value("floorHeight", -1.0f);
+    ceilingHeight = j.value("ceilingHeight", 1.0f);
+    floorMaterial = WallMaterial(j["floorMaterial"]);
+    ceilingMaterial = WallMaterial(j["ceilingMaterial"]);
+    const nlohmann::ordered_json mats = j.at("wallMaterials");
+    for (const nlohmann::basic_json<nlohmann::ordered_map> &material: mats)
+    {
+        wallMaterials.emplace_back(WallMaterial(material));
+    }
+    const nlohmann::ordered_json jPoints = j.at("points");
+    for (const nlohmann::basic_json<nlohmann::ordered_map> &point: jPoints)
+    {
+        points.push_back({point.value("x", 0.0f), point.value("z", 0.0f)});
+    }
+}
+
 
 bool Sector::IsValid()
 {
@@ -122,4 +142,28 @@ bool Sector::ContainsPoint(const std::array<float, 2> point) const
         }
     }
     return inside;
+}
+
+nlohmann::ordered_json Sector::GenerateJson() const
+{
+    nlohmann::ordered_json j = nlohmann::ordered_json();
+    j["floorHeight"] = floorHeight;
+    j["ceilingHeight"] = ceilingHeight;
+    j["floorMaterial"] = floorMaterial.GenerateJson();
+    j["ceilingMaterial"] = ceilingMaterial.GenerateJson();
+    j["lightColor"] = lightColor.GenerateJson();
+    j["wallMaterials"] = nlohmann::ordered_json::array();
+    for (const WallMaterial &material: wallMaterials)
+    {
+        j["wallMaterials"].push_back(material.GenerateJson());
+    }
+    j["points"] = nlohmann::ordered_json::array();
+    for (const std::array<float, 2> &point: points)
+    {
+        nlohmann::ordered_json jPoint{};
+        jPoint["x"] = point.at(0);
+        jPoint["z"] = point.at(1);
+        j["points"].push_back(jPoint);
+    }
+    return j;
 }

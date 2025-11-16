@@ -45,6 +45,36 @@ Param::Param(DataReader &reader)
     }
 }
 
+Param::Param(nlohmann::ordered_json j)
+{
+    type = ParseType(j.value("type", "none"));
+    switch (type)
+    {
+        case ParamType::PARAM_TYPE_BYTE:
+            Set<uint8_t>(j["value"]);
+            break;
+        case ParamType::PARAM_TYPE_INTEGER:
+            Set<int32_t>(j["value"]);
+            break;
+        case ParamType::PARAM_TYPE_FLOAT:
+            Set<float>(j["value"]);
+            break;
+        case ParamType::PARAM_TYPE_BOOL:
+            Set<bool>(j["value"]);
+            break;
+        case ParamType::PARAM_TYPE_STRING:
+            Set<std::string>(j["value"]);
+            break;
+        case ParamType::PARAM_TYPE_COLOR:
+            Set<Color>(Color(j["value"]));
+            break;
+        case ParamType::PARAM_TYPE_NONE:
+        default:
+            break;
+    }
+}
+
+
 bool Param::operator==(const Param &param) const
 {
     if (type != param.type)
@@ -69,7 +99,6 @@ bool Param::operator==(const Param &param) const
             return true;
     }
 }
-
 
 void Param::Write(DataWriter &writer) const
 {
@@ -168,4 +197,41 @@ void Param::ClearToType(const ParamType dataType)
 Param::ParamType Param::GetType() const
 {
     return type;
+}
+
+nlohmann::ordered_json Param::GetJson() const
+{
+    nlohmann::ordered_json j{};
+    switch (GetType())
+    {
+        case ParamType::PARAM_TYPE_BYTE:
+            j["type"] = "byte";
+            j["value"] = Get<uint8_t>(0);
+            break;
+        case ParamType::PARAM_TYPE_INTEGER:
+            j["type"] = "int";
+            j["value"] = Get<int32_t>(0);
+            break;
+        case ParamType::PARAM_TYPE_FLOAT:
+            j["type"] = "float";
+            j["value"] = Get<float>(0);
+            break;
+        case ParamType::PARAM_TYPE_BOOL:
+            j["type"] = "bool";
+            j["value"] = Get<bool>(false);
+            break;
+        case ParamType::PARAM_TYPE_STRING:
+            j["type"] = "string";
+            j["value"] = Get<std::string>("");
+            break;
+        case ParamType::PARAM_TYPE_COLOR:
+            j["type"] = "color";
+            j["value"] = Get<Color>(Color(-1)).GenerateJson();
+            break;
+        case ParamType::PARAM_TYPE_NONE:
+        default:
+            j["type"] = "none";
+            break;
+    }
+    return j;
 }
