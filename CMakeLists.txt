@@ -158,6 +158,8 @@ target_sources(shared INTERFACE
         shared/GLDebug.cpp
         shared/GLDebug.h
         shared/DialogFilters.h
+        shared/SetupWindow.cpp
+        shared/SetupWindow.h
 )
 target_link_libraries(shared INTERFACE
         SDL3::SDL3

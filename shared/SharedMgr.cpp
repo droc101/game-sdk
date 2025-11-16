@@ -22,6 +22,7 @@
 #include "AboutWindow.h"
 #include "Options.h"
 #include "OptionsWindow.h"
+#include "SetupWindow.h"
 #include "TextureBrowserWindow.h"
 
 void SharedMgr::DestroySharedMgr()
@@ -84,6 +85,7 @@ void SharedMgr::RenderSharedUI(SDL_Window *window)
     OptionsWindow::Render(window);
     AboutWindow::Render();
     TextureBrowserWindow::Render();
+    SetupWindow::Render(window);
     if (metricsVisible)
     {
         ImGui::ShowMetricsWindow(&metricsVisible);

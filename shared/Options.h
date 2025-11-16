@@ -25,6 +25,8 @@ class Options
 
         static void Save();
 
+        static bool ValidateGamePath();
+
         static inline std::string gamePath;
 
         static inline std::string defaultTexture;

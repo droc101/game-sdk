@@ -102,7 +102,10 @@ static void LaunchSelectedTool()
     {
         std::string workdir = item.value("workdir", "$SDKDIR");
         ParsePath(workdir);
-        std::filesystem::current_path(workdir);
+        if (std::filesystem::is_directory(workdir))
+        {
+            std::filesystem::current_path(workdir);
+        }
 
         std::string folder = item.value("binary", "");
         ParsePath(folder);
@@ -133,7 +136,9 @@ static void Render()
                                              ImGuiWindowFlags_NoMove |
                                              ImGuiWindowFlags_NoSavedSettings |
                                              ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::Begin("GAME SDK", nullptr, windowFlags);
+    ImGui::PopStyleVar();
 
     const ImVec2 wndArea = ImGui::GetContentRegionAvail();
 

@@ -4,6 +4,7 @@
 
 #include "Options.h"
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <SDL3/SDL_filesystem.h>
@@ -64,4 +65,32 @@ void Options::Save()
     }
     file << savedata.dump(); // a shift operator should not write to a stream this is not ok
     file.close();
+}
+
+bool Options::ValidateGamePath()
+{
+    if (!std::filesystem::is_directory(gamePath))
+    {
+        return false;
+    }
+    if (!std::filesystem::is_directory(gamePath + "/assets"))
+    {
+        return false;
+    }
+    if (!std::filesystem::is_directory(gamePath + "/bin"))
+    {
+        return false;
+    }
+#ifdef WIN32
+    if (!std::filesystem::is_regular_file(gamePath + "/game.exe"))
+    {
+        return false;
+    }
+#else
+    if (!std::filesystem::is_regular_file(gamePath + "/game"))
+    {
+        return false;
+    }
+#endif
+    return true;
 }

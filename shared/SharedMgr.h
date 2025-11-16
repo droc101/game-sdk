@@ -13,6 +13,7 @@
 #include <vector>
 #include "ImGuiTextureAssetCache.h"
 #include "Options.h"
+#include "SetupWindow.h"
 
 class SharedMgr
 {
@@ -25,6 +26,10 @@ class SharedMgr
             textureCache = std::make_unique<T>(args...);
             LoadOptionDefinitions();
             LoadActorDefinitions();
+            if (!Options::ValidateGamePath())
+            {
+                SetupWindow::Show();
+            }
         }
 
         static void SharedMenuUI(const std::string &programName);
