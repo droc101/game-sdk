@@ -445,6 +445,34 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
 {
     hoverType = ItemType::NONE;
 
+    for (size_t actorIndex = 0; actorIndex < LevelEditor::level.actors.size(); actorIndex++)
+    {
+        Actor &a = LevelEditor::level.actors.at(actorIndex);
+        const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
+        const glm::vec2 posScreenSpace = vp.WorldToScreenPos(pos);
+        const ImVec2 hoverScreenSpaceIV = vp.GetLocalMousePos();
+        const glm::vec2 hoverScreenSpace = glm::vec2(hoverScreenSpaceIV.x, hoverScreenSpaceIV.y);
+
+        if (hoverType == ItemType::NONE &&
+            distance(posScreenSpace, hoverScreenSpace) <= LevelEditor::HOVER_DISTANCE_PIXELS &&
+            isHovered)
+        {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            hoverIndex = actorIndex;
+            hoverType = ItemType::ACTOR;
+        }
+
+        Color c = Color(0.7, 1, 0.7, 1);
+        if (selectionType == ItemType::ACTOR && selectionIndex == actorIndex)
+        {
+            c = Color(0, 1, 0, 1);
+        } else if (hoverType == ItemType::ACTOR && hoverIndex == actorIndex)
+        {
+            c = Color(0.4, .8, 0.4, 1);
+        }
+        LevelRenderer::RenderBillboardPoint(pos, 10, c, matrix);
+    }
+
     for (size_t sectorIndex = 0; sectorIndex < LevelEditor::level.sectors.size(); sectorIndex++)
     {
         Sector &sector = LevelEditor::level.sectors.at(sectorIndex);
@@ -483,34 +511,6 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
 
             LevelRenderer::RenderLine(startCeiling, endCeiling, c, matrix, 4);
         }
-    }
-
-    for (size_t actorIndex = 0; actorIndex < LevelEditor::level.actors.size(); actorIndex++)
-    {
-        Actor &a = LevelEditor::level.actors.at(actorIndex);
-        const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
-        const glm::vec2 posScreenSpace = vp.WorldToScreenPos(pos);
-        const ImVec2 hoverScreenSpaceIV = vp.GetLocalMousePos();
-        const glm::vec2 hoverScreenSpace = glm::vec2(hoverScreenSpaceIV.x, hoverScreenSpaceIV.y);
-
-        if (hoverType == ItemType::NONE &&
-            distance(posScreenSpace, hoverScreenSpace) <= LevelEditor::HOVER_DISTANCE_PIXELS &&
-            isHovered)
-        {
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-            hoverIndex = actorIndex;
-            hoverType = ItemType::ACTOR;
-        }
-
-        Color c = Color(0.7, 1, 0.7, 1);
-        if (selectionType == ItemType::ACTOR && selectionIndex == actorIndex)
-        {
-            c = Color(0, 1, 0, 1);
-        } else if (hoverType == ItemType::ACTOR && hoverIndex == actorIndex)
-        {
-            c = Color(0.4, .8, 0.4, 1);
-        }
-        LevelRenderer::RenderBillboardPoint(pos, 10, c, matrix);
     }
 
     if (isHovered && vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)

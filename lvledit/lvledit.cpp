@@ -183,6 +183,8 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                                        1,
                                        nullptr,
                                        false);
+                LevelEditor::toolType = LevelEditor::EditorToolType::SELECT;
+                LevelEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
             }
             if (ImGui::MenuItem("Save", "Ctrl+S"))
             {
