@@ -11,6 +11,8 @@
 #include "../Viewport.h"
 #include "EditorTool.h"
 
+
+class Actor;
 class SelectTool final: public EditorTool
 {
     public:
@@ -37,6 +39,13 @@ class SelectTool final: public EditorTool
                                 Color &vertexColor,
                                 glm::vec3 startCeiling,
                                 Color &lineColor);
+
+        void ProcessActorHover(const Viewport &viewport,
+                               const glm::vec2 vertexScreenSpace,
+                               const glm::vec2 screenSpaceHover,
+                               Actor &actor,
+                               const size_t actorIndex,
+                               Color &vertexColor);
 
         void RenderViewportSelectMode(const Viewport &vp,
                                       glm::mat4 &matrix,

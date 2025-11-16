@@ -23,7 +23,22 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
     }
     if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
     {
-        if (selectionType == ItemType::VERTEX &&
+        if (selectionType == ItemType::ACTOR &&
+            ((hoverType == ItemType::ACTOR && hoverIndex == selectionIndex) || dragging))
+        {
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            {
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+                Actor &actor = LevelEditor::level.actors.at(selectionIndex);
+                const glm::vec3 snapped = LevelEditor::SnapToGrid(worldSpaceHover);
+                actor.position[0] = snapped.x;
+                actor.position[2] = snapped.z;
+                dragging = true;
+            } else
+            {
+                dragging = false;
+            }
+        } else if (selectionType == ItemType::VERTEX &&
             ((hoverType == ItemType::VERTEX && hoverIndex == selectionVertexIndex) || dragging))
         {
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
@@ -63,7 +78,29 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
     } else
     {
         // TODO prevent putting ceiling below floor / floor above ceiling
-        if (selectionType == ItemType::CEILING && (hoverType == ItemType::CEILING || dragging))
+        if (selectionType == ItemType::ACTOR &&
+            ((hoverType == ItemType::ACTOR && hoverIndex == selectionIndex) || dragging))
+        {
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            {
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+                Actor &actor = LevelEditor::level.actors.at(selectionIndex);
+                const glm::vec3 snapped = LevelEditor::SnapToGrid(worldSpaceHover);
+                if (vp.GetType() == Viewport::ViewportType::SIDE_YZ)
+                {
+                    actor.position[1] = snapped.y;
+                    actor.position[2] = snapped.z;
+                } else
+                {
+                    actor.position[0] = snapped.x;
+                    actor.position[1] = snapped.y;
+                }
+                dragging = true;
+            } else
+            {
+                dragging = false;
+            }
+        } else if (selectionType == ItemType::CEILING && (hoverType == ItemType::CEILING || dragging))
         {
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
@@ -248,6 +285,39 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
     }
 }
 
+void SelectTool::ProcessActorHover(const Viewport &viewport,
+                                    const glm::vec2 vertexScreenSpace,
+                                    const glm::vec2 screenSpaceHover,
+                                    Actor &actor,
+                                    const size_t actorIndex,
+                                    Color &vertexColor)
+{
+    if (viewport.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+    {
+        if (glm::distance(vertexScreenSpace, screenSpaceHover) <= LevelEditor::HOVER_DISTANCE_PIXELS)
+        {
+            hoverType = ItemType::ACTOR;
+            hoverIndex = actorIndex;
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            vertexColor = Color(1, 0.5, .5, 1);
+            if (ImGui::BeginTooltip())
+            {
+                ImGui::Text("Actor %ld\n%.2f, %.2f, %.2f",
+                            actorIndex + 1,
+                            actor.position[0],
+                            actor.position[1],
+                            actor.position[2]);
+                ImGui::EndTooltip();
+            }
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            {
+                selectionIndex = actorIndex;
+                selectionType = ItemType::ACTOR;
+            }
+        }
+    }
+}
+
 void SelectTool::RenderViewportVertexMode(Viewport &vp,
                                           glm::mat4 &matrix,
                                           bool isHovered,
@@ -359,8 +429,9 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
 
     for (Actor &a: LevelEditor::level.actors)
     {
+        const Color vertexColor = Color(0.8, 0, 0, 1);
         const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
-        LevelRenderer::RenderBillboardPoint(pos, 10, Color(0.7, 1, 0.7, 1), matrix);
+        LevelRenderer::RenderBillboardPoint(pos, 10, vertexColor, matrix);
     }
 
     HandleDrag(vp, isHovered, worldSpaceHover);
@@ -422,11 +493,11 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
         const ImVec2 hoverScreenSpaceIV = vp.GetLocalMousePos();
         const glm::vec2 hoverScreenSpace = glm::vec2(hoverScreenSpaceIV.x, hoverScreenSpaceIV.y);
 
-        if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ &&
-            hoverType == ItemType::NONE &&
+        if (hoverType == ItemType::NONE &&
             distance(posScreenSpace, hoverScreenSpace) <= LevelEditor::HOVER_DISTANCE_PIXELS &&
             isHovered)
         {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
             hoverIndex = actorIndex;
             hoverType = ItemType::ACTOR;
         }
@@ -472,14 +543,13 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
         {
             if (ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_Enter))
             {
-                // TODO show properties window
                 EditActorWindow::selectedParam = 0;
                 EditActorWindow::visible = true;
             }
-
-            // TODO drag actor
         }
     }
+
+    HandleDrag(vp, isHovered, worldSpaceHover);
 }
 
 
