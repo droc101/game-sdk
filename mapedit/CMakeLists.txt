@@ -24,6 +24,8 @@ add_executable(mapedit mapedit.cpp
         EditActorWindow.cpp
         EditActorWindow.h
         $<$<BOOL:${WIN32}>:mapedit.rc>
+        MapPropertiesWindow.cpp
+        MapPropertiesWindow.h
 )
 
 set_target_properties(mapedit PROPERTIES LINKER_LANGUAGE CXX)

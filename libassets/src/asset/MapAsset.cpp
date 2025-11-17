@@ -48,6 +48,10 @@ Error::ErrorCode MapAsset::CreateFromMapSrc(const char *mapSrcPath, MapAsset &ma
 
     map = MapAsset();
 
+    map.discord_rpc_icon_id = json.value("discord_rpc_icon_id", "icon");
+    map.discord_rpc_map_name = json.value("discord_rpc_map_name", "Unnamed Map");
+    map.sky_texture = json.value("sky_texture", "texture/level/sky_test.gtex");
+
     const nlohmann::ordered_json jSectors = json.at("sectors");
     for (const nlohmann::ordered_json &sect: jSectors)
     {
@@ -66,6 +70,9 @@ Error::ErrorCode MapAsset::SaveAsMapSrc(const char *mapSrcPath) const
 {
     nlohmann::ordered_json src = nlohmann::ordered_json();
     src["version"] = MAP_JSON_VERSION;
+    src["discord_rpc_icon_id"] = discord_rpc_icon_id;
+    src["discord_rpc_map_name"] = discord_rpc_map_name;
+    src["sky_texture"] = sky_texture;
     src["sectors"] = nlohmann::ordered_json::array();
     src["actors"] = nlohmann::ordered_json::array();
     for (const Sector &sector: sectors)

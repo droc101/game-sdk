@@ -80,6 +80,11 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     }
 
     DataWriter writer = DataWriter();
+
+    writer.WriteString(map.sky_texture);
+    writer.WriteString(map.discord_rpc_icon_id);
+    writer.WriteString(map.discord_rpc_map_name);
+
     writer.Write<size_t>(map.actors.size());
 
     size_t numPlayerActors = 0;

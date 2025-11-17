@@ -18,6 +18,7 @@
 #include "ActorBrowserWindow.h"
 #include "DialogFilters.h"
 #include "MapEditor.h"
+#include "MapPropertiesWindow.h"
 #include "MapRenderer.h"
 #include "OpenGLImGuiTextureAssetCache.h"
 #include "Options.h"
@@ -272,7 +273,10 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         }
         if (ImGui::BeginMenu("Edit"))
         {
-            ImGui::MenuItem("Selection Properties", "Alt+Enter");
+            if (ImGui::MenuItem("Map Properties", ""))
+            {
+                MapPropertiesWindow::visible = true;
+            }
             ImGui::Separator();
             if (ImGui::MenuItem("Snap on Grid", "", MapEditor::snapToGrid))
             {
@@ -498,6 +502,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     }
 
     ActorBrowserWindow::Render();
+    MapPropertiesWindow::Render();
 }
 
 int main()

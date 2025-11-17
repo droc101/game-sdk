@@ -28,7 +28,10 @@ class MapAsset final
 
         std::vector<Sector> sectors{};
         std::vector<Actor> actors{};
-        // TODO: player, music, sky, and fog will be controlled by actors
+        std::string discord_rpc_icon_id = "logo";
+        std::string discord_rpc_map_name = "Unnamed Map";
+        std::string sky_texture = "texture/level/sky_test.gtex";
+        // TODO: music and fog will be controlled by actors
 
         Actor *GetActor(const std::string &name);
 };
