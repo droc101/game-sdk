@@ -435,6 +435,19 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
     }
 
     HandleDrag(vp, isHovered, worldSpaceHover);
+
+    if (ImGui::Shortcut(ImGuiKey_Delete))
+    {
+        if (selectionType == ItemType::VERTEX || selectionType == ItemType::LINE)
+        {
+            Sector &s = MapEditor::level.sectors.at(selectionIndex);
+            if (s.points.size() > 3)
+            {
+                s.points.erase(s.points.begin() + selectionVertexIndex);
+                selectionType = ItemType::NONE;
+            }
+        }
+    }
 }
 
 
@@ -550,6 +563,19 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
     }
 
     HandleDrag(vp, isHovered, worldSpaceHover);
+
+    if (ImGui::Shortcut(ImGuiKey_Delete))
+    {
+        if (selectionType == ItemType::ACTOR)
+        {
+            MapEditor::level.actors.erase(MapEditor::level.actors.begin() + selectionIndex);
+            selectionType = ItemType::NONE;
+        } else if (selectionType == ItemType::SECTOR)
+        {
+            MapEditor::level.sectors.erase(MapEditor::level.sectors.begin() + selectionIndex);
+            selectionType = ItemType::NONE;
+        }
+    }
 }
 
 
