@@ -34,6 +34,8 @@ class Sector
 
         [[nodiscard]] std::array<float, 2> SegmentNormal(int segmentIndex) const;
 
+        [[nodiscard]] double CalculateArea() const;
+
     private:
         enum class SegmentOrientation : uint8_t
         {
@@ -54,6 +56,4 @@ class Sector
                                       const std::array<float, 2> &segmentAEnd,
                                       const std::array<float, 2> &segmentBStart,
                                       const std::array<float, 2> &segmentBEnd);
-
-        [[nodiscard]] double CalculateArea() const;
 };

@@ -12,6 +12,7 @@
 #include <libassets/type/ModelVertex.h>
 #include <libassets/type/Sector.h>
 #include <mapbox/earcut.hpp>
+#include <utility>
 #include <vector>
 
 void LevelMeshBuilder::AddCeiling(const Sector &sector)
@@ -77,13 +78,22 @@ void LevelMeshBuilder::AddWall(const Sector &sector, const size_t wallIndex)
         vertices.push_back(v);
     }
 
-    indices.push_back(0 + currentIndex);
-    indices.push_back(1 + currentIndex);
     indices.push_back(2 + currentIndex);
+    indices.push_back(1 + currentIndex);
+    indices.push_back(0 + currentIndex);
 
     indices.push_back(1 + currentIndex);
     indices.push_back(2 + currentIndex);
     indices.push_back(3 + currentIndex);
+
+    const bool ccw = sector.CalculateArea() > 0;
+    if (!ccw)
+    {
+        for (size_t i = indices.size() - 6; i + 2 < indices.size(); i += 3)
+        {
+            std::swap(indices[i], indices[i + 2]);
+        }
+    }
 
     currentIndex += 4;
 }
@@ -91,7 +101,7 @@ void LevelMeshBuilder::AddWall(const Sector &sector, const size_t wallIndex)
 void LevelMeshBuilder::AddSectorBase(const Sector &sector, const bool isFloor)
 {
     const std::vector<std::vector<std::array<float, 2>>> polygon{sector.points};
-    const std::vector<uint32_t> idx = mapbox::earcut<uint32_t>(polygon);
+    std::vector<uint32_t> idx = mapbox::earcut<uint32_t>(polygon);
 
     const WallMaterial &mat = isFloor ? sector.floorMaterial : sector.ceilingMaterial;
 
@@ -117,6 +127,15 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector, const bool isFloor)
         v.uv[1] *= mat.uvScale[1]; // TODO is this the correct way to offset+scale?
         vertices.push_back(v);
     }
+
+    if (isFloor)
+    {
+        for (size_t i = 0; i + 2 < idx.size(); i += 3)
+        {
+            std::swap(idx[i], idx[i + 2]);
+        }
+    }
+
     for (const uint32_t i: idx)
     {
         indices.push_back(i + currentIndex);
