@@ -22,6 +22,8 @@ class ModelVertex
 
         bool operator==(const ModelVertex &other) const;
 
+        void Write(DataWriter &writer) const;
+
         std::array<float, 3> position{};
 
         std::array<float, 2> uv{};

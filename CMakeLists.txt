@@ -97,7 +97,6 @@ find_package(GLEW REQUIRED)
 find_package(glslang CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 
-
 add_library(imgui INTERFACE
         mtledit/mtledit.cpp)
 target_sources(imgui INTERFACE

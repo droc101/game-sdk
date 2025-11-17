@@ -18,15 +18,15 @@ class Sector
         explicit Sector(nlohmann::ordered_json j);
 
         std::vector<std::array<float, 2>> points{};
-        std::vector<WallMaterial> wallMaterials;
-        float floorHeight;
-        float ceilingHeight;
-        WallMaterial floorMaterial;
-        WallMaterial ceilingMaterial;
-        Color lightColor;
+        std::vector<WallMaterial> wallMaterials{};
+        float floorHeight = -1.0;
+        float ceilingHeight = 1.0;
+        WallMaterial floorMaterial{};
+        WallMaterial ceilingMaterial{};
+        Color lightColor = Color(-1);
 
         /// Expensive!
-        bool IsValid();
+        [[nodiscard]] bool IsValid() const;
 
         [[nodiscard]] bool ContainsPoint(std::array<float, 2> point) const;
 

@@ -27,4 +27,6 @@ class Actor
         void ApplyDefinition(const ActorDefinition &definition);
 
         nlohmann::ordered_json GenerateJson() const;
+
+        void Write(DataWriter &writer) const;
 };

@@ -162,10 +162,7 @@ void ModelLod::Write(DataWriter &writer) const
     writer.Write<size_t>(vertices.size());
     for (const ModelVertex &vertex: vertices)
     {
-        writer.WriteBuffer<float, 3>(vertex.position);
-        writer.WriteBuffer<float, 2>(vertex.uv);
-        vertex.color.WriteFloats(writer);
-        writer.WriteBuffer<float, 3>(vertex.normal);
+        vertex.Write(writer);
     }
     const uint32_t totalIndexCount = std::accumulate(indexCounts.begin(), indexCounts.end(), 0ul);
     writer.Write<uint32_t>(totalIndexCount);

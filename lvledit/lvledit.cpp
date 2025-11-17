@@ -76,7 +76,27 @@ static void saveJsonCallback(void * /*userdata*/, const char *const *fileList, i
     {
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
-                                      std::format("Failed to save the texture!\n{}", errorCode).c_str(),
+                                      std::format("Failed to save the level!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
+    }
+}
+
+static void saveGmapCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+{
+    // TODO compile on a thread
+    if (fileList == nullptr || fileList[0] == nullptr)
+    {
+        return;
+    }
+    const Error::ErrorCode errorCode = LevelEditor::level.Compile(fileList[0]);
+    if (errorCode != Error::ErrorCode::OK)
+    {
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to compile the level!\n{}", errorCode).c_str(),
                                       window))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
@@ -327,7 +347,15 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         }
         if (ImGui::BeginMenu("Tools"))
         {
-            ImGui::MenuItem("Compile Map TODO", "F5");
+            if (ImGui::MenuItem("Compile Map TODO", "F5"))
+            {
+                SDL_ShowSaveFileDialog(saveGmapCallback,
+                                      nullptr,
+                                      sdlWindow,
+                                      DialogFilters::gmapFilters.data(),
+                                      1,
+                                      nullptr);
+            }
             ImGui::MenuItem("Generate Benchmark TODO");
             if (ImGui::MenuItem("Actor Class Browser"))
             {

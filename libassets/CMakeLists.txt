@@ -7,6 +7,7 @@ find_package(ZLIB REQUIRED)
 find_package(assimp REQUIRED)
 find_package(glslang CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
+fetch_earcut_hpp()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
@@ -80,9 +81,11 @@ add_library(assets STATIC include/libassets/libassets.h
         src/type/paramDefs/ParamDefinition.cpp
         src/asset/LevelMaterialAsset.cpp
         include/libassets/asset/LevelMaterialAsset.h
+        src/type/LevelMeshBuilder.cpp
+        src/type/LevelMeshBuilder.h
 )
 
-target_link_libraries(assets PRIVATE ZLIB::ZLIB assimp::assimp glslang::glslang Vulkan::Vulkan nlohmann_json::nlohmann_json)
+target_link_libraries(assets PRIVATE ZLIB::ZLIB assimp::assimp glslang::glslang Vulkan::Vulkan nlohmann_json::nlohmann_json earcut)
 
 target_include_directories(assets PUBLIC "include")
 target_include_directories(assets PRIVATE ${ZLIB_INCLUDE_DIRS} ${ASSIMP_INCLUDE_DIRS} "../lib/stb")

@@ -5,27 +5,119 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <fstream>
 #include <ios>
 #include <libassets/asset/LevelAsset.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Asset.h>
+#include <libassets/type/Sector.h>
 #include <libassets/util/AssetReader.h>
+#include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
-void LevelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
+#include "../type/LevelMeshBuilder.h"
+#include "libassets/type/WallMaterial.h"
+
+Error::ErrorCode LevelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
 {
     assert(buffer.empty());
+
+    for (const Sector &sector: sectors)
+    {
+        if (!sector.IsValid())
+        {
+            printf("Compile Error: Invalid Sector\n");
+            return Error::ErrorCode::INCORRECT_FORMAT;
+        }
+    }
+
+    DataWriter writer = DataWriter();
+    writer.Write<size_t>(actors.size());
+
+    size_t numPlayerActors = 0;
+    for (const Actor &actor: actors)
+    {
+        actor.Write(writer);
+        if (actor.className == "player")
+        {
+            numPlayerActors++;
+        }
+
+        bool insideSector = false;
+        for (const Sector &sector: sectors)
+        {
+            const bool insideHorizontally = sector.ContainsPoint({actor.position[0], actor.position[2]});
+            const bool insideVertically = actor.position[1] >= sector.floorHeight && actor.position[1] <= sector.ceilingHeight;
+            if (insideHorizontally && insideVertically)
+            {
+                insideSector = true;
+                break;
+            }
+        }
+        if (!insideSector)
+        {
+            printf("Compile Warning: Found an actor that is not inside any sector.\n");
+        }
+    }
+
+    if (numPlayerActors == 0)
+    {
+        printf("Compile Warning: There is no player actor, the player will spawn at the origin.\n");
+    } else if (numPlayerActors != 1)
+    {
+        printf("Compile Warning: Multiple player actors are present, only one will function.\n");
+    }
+
+    std::unordered_map<std::string, LevelMeshBuilder> meshBuilders{};
+    for (const Sector &sector: sectors)
+    {
+        for (size_t i = 0; i < sector.points.size(); i++)
+        {
+            const WallMaterial &mat = sector.wallMaterials.at(i);
+            if (!meshBuilders.contains(mat.material))
+            {
+                meshBuilders[mat.material] = LevelMeshBuilder();
+            }
+            meshBuilders.at(mat.material).AddWall(sector, i);
+        }
+        if (!meshBuilders.contains(sector.ceilingMaterial.material))
+        {
+            meshBuilders[sector.ceilingMaterial.material] = LevelMeshBuilder();
+        }
+        meshBuilders.at(sector.ceilingMaterial.material).AddCeiling(sector);
+        if (!meshBuilders.contains(sector.floorMaterial.material))
+        {
+            meshBuilders[sector.floorMaterial.material] = LevelMeshBuilder();
+        }
+        meshBuilders.at(sector.floorMaterial.material).AddFloor(sector);
+        // TODO collision
+        // TODO check material for compileInvisible (how get material???)
+    }
+
+    writer.Write<size_t>(meshBuilders.size());
+    for (const LevelMeshBuilder &builder: meshBuilders | std::views::values)
+    {
+        builder.Write(writer);
+    }
+
+    writer.CopyToVector(buffer);
+    return Error::ErrorCode::OK;
 }
 
 Error::ErrorCode LevelAsset::Compile(const char *assetPath) const
 {
     std::vector<uint8_t> buffer;
-    SaveToBuffer(buffer);
+    const Error::ErrorCode e = SaveToBuffer(buffer);
+    if (e != Error::ErrorCode::OK)
+    {
+        return e;
+    }
     return AssetReader::SaveToFile(assetPath, buffer, Asset::AssetType::ASSET_TYPE_LEVEL, LEVEL_ASSET_VERSION);
 }
 

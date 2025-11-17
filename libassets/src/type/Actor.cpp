@@ -124,3 +124,22 @@ nlohmann::ordered_json Actor::GenerateJson() const
     }
     return j;
 }
+
+void Actor::Write(DataWriter &writer) const
+{
+    writer.WriteString(className);
+    writer.WriteBuffer<float>(position);
+    writer.WriteBuffer<float>(rotation);
+    writer.Write<size_t>(connections.size());
+    for (const IOConnection &connection: connections)
+    {
+        connection.Write(writer);
+    }
+    writer.Write<size_t>(params.size());
+    for (const std::pair<const std::string, Param> &kv: params)
+    {
+        writer.WriteString(kv.first);
+        kv.second.Write(writer);
+    }
+}
+

@@ -44,3 +44,12 @@ bool ModelVertex::operator==(const ModelVertex &other) const
            this->uv == other.uv &&
            this->color == other.color;
 }
+
+void ModelVertex::Write(DataWriter &writer) const
+{
+    writer.WriteBuffer<float, 3>(position);
+    writer.WriteBuffer<float, 2>(uv);
+    color.WriteFloats(writer);
+    writer.WriteBuffer<float, 3>(normal);
+}
+

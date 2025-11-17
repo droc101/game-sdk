@@ -28,15 +28,16 @@ Sector::Sector(nlohmann::ordered_json j)
 }
 
 
-bool Sector::IsValid()
+bool Sector::IsValid() const
 {
     if (points.size() < 3)
     {
         return false;
     }
 
-    const std::vector<std::array<float, 2>>::iterator it = std::ranges::unique(points).begin();
-    if (it != points.end())
+    std::vector<std::array<float, 2>> points_copy = points;
+    const std::vector<std::array<float, 2>>::iterator it = std::ranges::unique(points_copy).begin();
+    if (it != points_copy.end())
     {
         return false;
     }

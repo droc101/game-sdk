@@ -30,10 +30,10 @@ class LevelAsset final
 
         std::vector<Sector> sectors{};
         std::vector<Actor> actors{};
-        // TODO: player, music, and fog will be controlled by actors
+        // TODO: player, music, sky, and fog will be controlled by actors
 
         Actor *GetActor(const std::string &name);
 
     private:
-        void SaveToBuffer(std::vector<uint8_t> &buffer) const;
+        Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer) const;
 };
