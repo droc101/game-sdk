@@ -17,7 +17,14 @@ add_executable(mapcomp mapcomp.cpp
 
 set_target_properties(mapcomp PROPERTIES LINKER_LANGUAGE CXX)
 
-target_link_libraries(mapcomp PRIVATE earcut assets)
+target_link_libraries(mapcomp PRIVATE
+        earcut
+        assets
+        nlohmann_json::nlohmann_json
+        glm::glm
+        assimp::assimp
+        ZLIB::ZLIB
+)
 
 add_dependencies(mapcomp assets)
 
