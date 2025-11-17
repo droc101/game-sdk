@@ -30,9 +30,7 @@ set_target_properties(mapedit PROPERTIES LINKER_LANGUAGE CXX)
 
 target_link_libraries(mapedit PRIVATE shared imgui_opengl3)
 
-add_dependencies(mapedit assets)
-
-add_dependencies(mapedit copy_assets)
+add_dependencies(mapedit assets copy_assets mapcomp)
 
 if (WIN32)
     add_dependencies(mapedit copydlls)

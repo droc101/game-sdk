@@ -198,6 +198,7 @@ add_subdirectory(shdedit)
 add_subdirectory(fonedit)
 add_subdirectory(cfgedit)
 add_subdirectory(mtledit)
+add_subdirectory(mapcomp)
 add_subdirectory(launcher)
 
 if (GAME_SDK_BUILD_PLUGINS)

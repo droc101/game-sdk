@@ -59,7 +59,7 @@ void LevelMeshBuilder::AddWall(const Sector &sector, const size_t wallIndex)
         std::array<float, 2> normal = sector.SegmentNormal(wallIndex);
         v.normal[0] = normal[0];
         v.normal[1] = 0;
-        v.normal[2] = normal[1];
+        v.normal[2] = -normal[1];
 
         v.uv[0] = sLength;
         if (point[0] == endPoint[0] && point[2] == endPoint[1])

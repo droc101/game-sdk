@@ -28,6 +28,7 @@ class MapEditor
         static inline EditorToolType toolType = EditorToolType::SELECT;
 
         static inline MapAsset level{};
+        static inline std::string levelFile = "";
 
         static inline int gridSpacingIndex = 2;
         static inline bool drawGrid = true;

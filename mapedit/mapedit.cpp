@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstdio>
 #include <imgui.h>
@@ -8,8 +9,10 @@
 #include <memory>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
+#include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_messagebox.h>
+#include <SDL3/SDL_process.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include "ActorBrowserWindow.h"
@@ -81,27 +84,9 @@ static void saveJsonCallback(void * /*userdata*/, const char *const *fileList, i
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
-    }
-}
-
-static void saveGmapCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    // TODO compile on a thread
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
         return;
     }
-    const Error::ErrorCode errorCode = MapEditor::level.Compile(fileList[0]);
-    if (errorCode != Error::ErrorCode::OK)
-    {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to compile the level!\n{}", errorCode).c_str(),
-                                      window))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
-    }
+    MapEditor::levelFile = fileList[0];
 }
 
 static void openJsonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -121,6 +106,68 @@ static void openJsonCallback(void * /*userdata*/, const char *const *fileList, i
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
         return;
+    }
+    MapEditor::levelFile = fileList[0];
+}
+
+void CompileMap()
+{
+    if (MapEditor::levelFile.empty())
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                 "Error",
+                                 "The level must be saved before compiling",
+                                 window);
+    } else
+    {
+        const Error::ErrorCode errorCode = MapEditor::level.SaveAsMapSrc(MapEditor::levelFile.c_str());
+        if (errorCode != Error::ErrorCode::OK)
+        {
+            if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                          "Error",
+                                          std::format("Failed to save the level!\n{}", errorCode).c_str(),
+                                          window))
+            {
+                printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+            }
+        } else
+        {
+            std::string compilerPath = SDL_GetBasePath();
+            compilerPath += "mapcomp";
+#ifdef WIN32
+            compilerPath += ".exe";
+#endif
+
+            const std::string srcArgument = "--map-source=" + MapEditor::levelFile;
+            const std::string dirArgument = "--assets-dir=" + Options::gamePath + "/assets";
+            const char *args[4] = {
+                compilerPath.c_str(),
+                srcArgument.c_str(),
+                dirArgument.c_str(),
+                NULL
+            };
+            SDL_Process *p = SDL_CreateProcess(args, false);
+            if (p == nullptr)
+            {
+                printf("Compiler launch error: %s\n", SDL_GetError());
+                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                 "Error",
+                                 "Map compiler failed to launch",
+                                 window);
+            } else
+            {
+                int exit = -1;
+                bool exited = SDL_WaitProcess(p, true, &exit);
+                if (exit != 0)
+                {
+                    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                     "Error",
+                                     std::format("Map compiler failed with code {}", exit).c_str(),
+                                     window);
+                }
+            }
+
+        }
     }
 }
 
@@ -192,6 +239,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                 MapEditor::level = MapAsset();
                 MapEditor::toolType = MapEditor::EditorToolType::SELECT;
                 MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+                MapEditor::levelFile = "";
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Open", "Ctrl+O"))
@@ -347,14 +395,9 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         }
         if (ImGui::BeginMenu("Tools"))
         {
-            if (ImGui::MenuItem("Compile Map TODO", "F5"))
+            if (ImGui::MenuItem("Compile Map", "F5"))
             {
-                SDL_ShowSaveFileDialog(saveGmapCallback,
-                                      nullptr,
-                                      sdlWindow,
-                                      DialogFilters::gmapFilters.data(),
-                                      1,
-                                      nullptr);
+                CompileMap();
             }
             ImGui::MenuItem("Generate Benchmark TODO");
             if (ImGui::MenuItem("Actor Class Browser"))
@@ -434,8 +477,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     if (MapEditor::showSidebar)
     {
         ImGui::SetNextWindowPos(ImVec2(0, viewport->WorkPos.y + MapEditor::TOOLBAR_HEIGHT));
-        ImGui::SetNextWindowSize(ImVec2(MapEditor::SIDEBAR_WIDTH,
-                                        viewport->WorkSize.y - MapEditor::TOOLBAR_HEIGHT));
+        ImGui::SetNextWindowSize(ImVec2(MapEditor::SIDEBAR_WIDTH, viewport->WorkSize.y - MapEditor::TOOLBAR_HEIGHT));
         ImGui::Begin("Tools",
                      nullptr,
                      ImGuiWindowFlags_NoMove |

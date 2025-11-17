@@ -21,8 +21,6 @@ class MapAsset final
 
         [[nodiscard]] Error::ErrorCode SaveAsMapSrc(const char *mapSrcPath) const;
 
-        [[nodiscard]] Error::ErrorCode Compile(const char *assetPath) const;
-
         static constexpr uint8_t MAP_ASSET_VERSION = 1;
         static constexpr uint8_t MAP_JSON_VERSION = 1;
 
@@ -33,7 +31,4 @@ class MapAsset final
         // TODO: player, music, sky, and fog will be controlled by actors
 
         Actor *GetActor(const std::string &name);
-
-    private:
-        Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer) const;
 };
