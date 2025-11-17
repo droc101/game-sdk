@@ -14,15 +14,15 @@
 #include <memory>
 #include <numbers>
 #include <vector>
-#include "../LevelEditor.h"
-#include "../LevelRenderer.h"
+#include "../MapEditor.h"
+#include "../MapRenderer.h"
 #include "../Viewport.h"
 #include "EditorTool.h"
 #include "SelectTool.h"
 
 void AddPrimitiveTool::RenderViewport(Viewport &vp)
 {
-    LevelRenderer::RenderViewport(vp);
+    MapRenderer::RenderViewport(vp);
 
     glm::mat4 matrix = vp.GetMatrix();
 
@@ -44,15 +44,15 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
         {
             if (!isDragging && ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
-                shapeStart = LevelEditor::SnapToGrid(worldSpaceHover);
+                shapeStart = MapEditor::SnapToGrid(worldSpaceHover);
                 shapeStart.y = ceiling;
-                shapeEnd = LevelEditor::SnapToGrid(worldSpaceHover);
+                shapeEnd = MapEditor::SnapToGrid(worldSpaceHover);
                 shapeEnd.y = ceiling;
                 isDragging = true;
                 hasDrawnShape = true;
             } else if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
-                shapeEnd = LevelEditor::SnapToGrid(worldSpaceHover);
+                shapeEnd = MapEditor::SnapToGrid(worldSpaceHover);
                 shapeEnd.y = ceiling;
             } else
             {
@@ -61,7 +61,7 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
         }
     }
 
-    for (Sector &sector: LevelEditor::level.sectors)
+    for (Sector &sector: MapEditor::level.sectors)
     {
         for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
         {
@@ -74,25 +74,25 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
 
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
+                MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
                                                     10,
                                                     Color(1, 0.7, 0.7, 1),
                                                     matrix);
             }
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderLine(startFloor, endFloor, Color(0.7, .7, .7, 1), matrix, 4);
-                LevelRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
+                MapRenderer::RenderLine(startFloor, endFloor, Color(0.7, .7, .7, 1), matrix, 4);
+                MapRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
             }
 
-            LevelRenderer::RenderLine(startCeiling, endCeiling, Color(0.7, .7, .7, 1), matrix, 4);
+            MapRenderer::RenderLine(startCeiling, endCeiling, Color(0.7, .7, .7, 1), matrix, 4);
         }
     }
 
-    for (Actor &a: LevelEditor::level.actors)
+    for (Actor &a: MapEditor::level.actors)
     {
         const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
-        LevelRenderer::RenderBillboardPoint(pos, 10, Color(0.7, 1, 0.7, 1), matrix);
+        MapRenderer::RenderBillboardPoint(pos, 10, Color(0.7, 1, 0.7, 1), matrix);
     }
 
     if (hasDrawnShape)
@@ -110,11 +110,11 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             const glm::vec3 startPointFloor = glm::vec3(boxPoints.at(i).x, floor, boxPoints.at(i).z);
             const glm::vec3 endPointCeil = glm::vec3(boxPoints.at(nextIndex).x, ceiling, boxPoints.at(nextIndex).z);
             const glm::vec3 endPointFloor = glm::vec3(boxPoints.at(nextIndex).x, floor, boxPoints.at(nextIndex).z);
-            LevelRenderer::RenderLine(startPointCeil, endPointCeil, Color(.6, 6, 0, 1), matrix, 2);
+            MapRenderer::RenderLine(startPointCeil, endPointCeil, Color(.6, 6, 0, 1), matrix, 2);
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderLine(startPointFloor, endPointFloor, Color(.6, .6, 0, 1), matrix, 2);
-                LevelRenderer::RenderLine(startPointCeil, startPointFloor, Color(.3, .3, 0, 1), matrix, 1);
+                MapRenderer::RenderLine(startPointFloor, endPointFloor, Color(.6, .6, 0, 1), matrix, 2);
+                MapRenderer::RenderLine(startPointCeil, startPointFloor, Color(.3, .3, 0, 1), matrix, 1);
             }
         }
 
@@ -130,11 +130,11 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
                 const glm::vec3 startPointFloor = glm::vec3(points.at(i).x, floor, points.at(i).y);
                 const glm::vec3 endPointCeil = glm::vec3(points.at(nextIndex).x, ceiling, points.at(nextIndex).y);
                 const glm::vec3 endPointFloor = glm::vec3(points.at(nextIndex).x, floor, points.at(nextIndex).y);
-                LevelRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 0, 1), matrix, 4);
+                MapRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 0, 1), matrix, 4);
                 if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
                 {
-                    LevelRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 0, 1), matrix, 4);
-                    LevelRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, 0, 1), matrix, 2);
+                    MapRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 0, 1), matrix, 4);
+                    MapRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, 0, 1), matrix, 2);
                 }
             }
 
@@ -160,16 +160,16 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             const glm::vec3 endPointFloor = glm::vec3(points.at(nextIndex).x, floor, points.at(nextIndex).y);
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderBillboardPoint(startPointCeil + glm::vec3(0, 0.1, 0),
+                MapRenderer::RenderBillboardPoint(startPointCeil + glm::vec3(0, 0.1, 0),
                                                     10,
                                                     Color(1, 0, 0, 1),
                                                     matrix);
             }
-            LevelRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 1, 1), matrix, 4);
+            MapRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 1, 1), matrix, 4);
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 1, 1), matrix, 4);
-                LevelRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, .6, 1), matrix, 2);
+                MapRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 1, 1), matrix, 4);
+                MapRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, .6, 1), matrix, 2);
             }
         }
 
@@ -177,7 +177,7 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
         if (ImGui::Shortcut(ImGuiKey_Enter) || ImGui::Shortcut(ImGuiKey_KeypadEnter))
         {
             Sector s = Sector();
-            const WallMaterial mat = LevelEditor::mat;
+            const WallMaterial mat = MapEditor::mat;
             s.ceilingMaterial = mat;
             s.floorMaterial = mat;
             s.floorHeight = floor;
@@ -189,7 +189,7 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
                 s.points.push_back(point);
                 s.wallMaterials.push_back(mat);
             }
-            LevelEditor::level.sectors.push_back(s);
+            MapEditor::level.sectors.push_back(s);
             hasDrawnShape = false;
         } else if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
         {
@@ -197,8 +197,8 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
         }
     } else if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
     {
-        LevelEditor::toolType = LevelEditor::EditorToolType::SELECT;
-        LevelEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+        MapEditor::toolType = MapEditor::EditorToolType::SELECT;
+        MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
     }
 }
 
@@ -209,7 +209,7 @@ void AddPrimitiveTool::RenderToolWindow()
         return;
     }
     ImGui::PushItemWidth(-1);
-    LevelEditor::MaterialToolWindow(LevelEditor::mat);
+    MapEditor::MaterialToolWindow(MapEditor::mat);
     ImGui::Separator();
 
     ImGui::Text("Primitive Type");

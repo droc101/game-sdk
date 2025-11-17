@@ -14,8 +14,8 @@
     },
 
     "SDK Tools": {
-      "Level Editor": {
-        "binary": "$SDKDIR/lvledit"
+      "Map Editor": {
+        "binary": "$SDKDIR/mapedit"
       },
       "Texture Editor": {
         "binary": "$SDKDIR/texedit"

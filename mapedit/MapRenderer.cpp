@@ -2,33 +2,33 @@
 // Created by droc101 on 9/5/25.
 //
 
-#include "LevelRenderer.h"
+#include "MapRenderer.h"
 #include <glm/gtc/type_ptr.hpp>
 #include <libassets/type/Color.h>
 #include <libassets/util/Error.h>
 #include <vector>
 #include "GLHelper.h"
 #include "imgui.h"
-#include "LevelEditor.h"
+#include "MapEditor.h"
 #include "Viewport.h"
 
-bool LevelRenderer::Init()
+bool MapRenderer::Init()
 {
     if (!GLHelper::Init())
     {
         return false;
     }
 
-    const Error::ErrorCode linesProgramErrorCode = GLHelper::CreateProgram("assets/lvledit/basicVertexColor.frag",
-                                                                           "assets/lvledit/basicVertexColor.vert",
+    const Error::ErrorCode linesProgramErrorCode = GLHelper::CreateProgram("assets/mapedit/basicVertexColor.frag",
+                                                                           "assets/mapedit/basicVertexColor.vert",
                                                                            lineProgram);
 
-    const Error::ErrorCode gridProgramErrorCode = GLHelper::CreateProgram("assets/lvledit/grid.frag",
-                                                                          "assets/lvledit/grid.vert",
+    const Error::ErrorCode gridProgramErrorCode = GLHelper::CreateProgram("assets/mapedit/grid.frag",
+                                                                          "assets/mapedit/grid.vert",
                                                                           gridProgram);
 
-    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/lvledit/generic.frag",
-                                                                          "assets/lvledit/generic.vert",
+    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/mapedit/generic.frag",
+                                                                          "assets/mapedit/generic.vert",
                                                                           genericProgram);
     if (cubeProgramErrorCode != Error::ErrorCode::OK ||
         linesProgramErrorCode != Error::ErrorCode::OK ||
@@ -40,12 +40,12 @@ bool LevelRenderer::Init()
     axisHelperBuffer = GLHelper::CreateBuffer();
     // clang-format off
     const std::vector<float> axisHelperVerts = {
-        0, -LevelEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0,
-        0, LevelEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0,
-        -LevelEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0, 0,
-        LevelEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0, 0,
-        0, 0, -LevelEditor::LEVEL_HALF_SIZE, 0, 0, 1,
-        0, 0, LevelEditor::LEVEL_HALF_SIZE, 0, 0, 1,
+        0, -MapEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0,
+        0, MapEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0,
+        -MapEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0, 0,
+        MapEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0, 0,
+        0, 0, -MapEditor::LEVEL_HALF_SIZE, 0, 0, 1,
+        0, 0, MapEditor::LEVEL_HALF_SIZE, 0, 0, 1,
     };
     // clang-format on
     GLHelper::BindBuffer(axisHelperBuffer);
@@ -57,30 +57,30 @@ bool LevelRenderer::Init()
     worldBorderBuffer = GLHelper::CreateBuffer();
     // clang-format off
     const std::vector<float> verts = {
-        -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, -LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, LevelEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
     };
     // clang-format on
     GLHelper::BindBuffer(worldBorderBuffer);
@@ -92,7 +92,7 @@ bool LevelRenderer::Init()
     return true;
 }
 
-void LevelRenderer::Destroy()
+void MapRenderer::Destroy()
 {
     glDeleteProgram(genericProgram);
     glDeleteProgram(lineProgram);
@@ -100,7 +100,7 @@ void LevelRenderer::Destroy()
     GLHelper::DestroyBuffer(worldBorderBuffer);
 }
 
-void LevelRenderer::RenderViewport(const Viewport &vp)
+void MapRenderer::RenderViewport(const Viewport &vp)
 {
     ImVec2 WindowSize;
     ImVec2 WindowPos;
@@ -123,10 +123,10 @@ void LevelRenderer::RenderViewport(const Viewport &vp)
 
     glDisable(GL_DEPTH_TEST);
 
-    if (LevelEditor::drawGrid)
+    if (MapEditor::drawGrid)
     {
-        const float gridSpacing = LevelEditor::GRID_SPACING_VALUES.at(LevelEditor::gridSpacingIndex);
-        const int numInstances = static_cast<int>(LevelEditor::LEVEL_SIZE * 2 / gridSpacing);
+        const float gridSpacing = MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex);
+        const int numInstances = static_cast<int>(MapEditor::LEVEL_SIZE * 2 / gridSpacing);
 
         glUseProgram(gridProgram);
         glUniformMatrix4fv(glGetUniformLocation(gridProgram, "matrix"), 1, GL_FALSE, glm::value_ptr(view));
@@ -142,7 +142,7 @@ void LevelRenderer::RenderViewport(const Viewport &vp)
     glUniformMatrix4fv(glGetUniformLocation(lineProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
     const GLint posAttrib = glGetAttribLocation(lineProgram, "VERTEX");
     const GLint colorAttrib = glGetAttribLocation(lineProgram, "VERTEX_COLOR");
-    if (LevelEditor::drawAxisHelper)
+    if (MapEditor::drawAxisHelper)
     {
         GLHelper::BindBuffer(axisHelperBuffer);
         glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
@@ -156,7 +156,7 @@ void LevelRenderer::RenderViewport(const Viewport &vp)
         glEnableVertexAttribArray(colorAttrib);
         glDrawArrays(GL_LINES, 0, 6);
     }
-    if (LevelEditor::drawWorldBorder)
+    if (MapEditor::drawWorldBorder)
     {
         GLHelper::BindBuffer(worldBorderBuffer);
         glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
@@ -175,7 +175,7 @@ void LevelRenderer::RenderViewport(const Viewport &vp)
     glDisable(GL_CULL_FACE);
 }
 
-void LevelRenderer::RenderLine(const glm::vec3 start,
+void MapRenderer::RenderLine(const glm::vec3 start,
                                const glm::vec3 end,
                                Color color,
                                glm::mat4 &matrix,
@@ -208,7 +208,7 @@ void LevelRenderer::RenderLine(const glm::vec3 start,
     glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(vertices.size()));
 }
 
-void LevelRenderer::RenderBillboardPoint(const glm::vec3 position,
+void MapRenderer::RenderBillboardPoint(const glm::vec3 position,
                                          const float pointSize,
                                          Color color,
                                          glm::mat4 &matrix)

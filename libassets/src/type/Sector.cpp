@@ -168,3 +168,38 @@ nlohmann::ordered_json Sector::GenerateJson() const
     }
     return j;
 }
+
+double Sector::CalculateArea() const
+{
+    double area = 0;
+    const int numPoints = points.size();
+    for (int i = 0; i < numPoints; i++)
+    {
+        int j = (i + 1) % numPoints;
+        area += points[i][0] * points[j][1] - points[j][0] * points[i][1];
+    }
+    return area * 0.5;
+}
+
+std::array<float, 2> Sector::SegmentNormal(const int segmentIndex) const
+{
+    const std::array<float, 2> p0 = points[segmentIndex];
+    const std::array<float, 2> p1 = points[(segmentIndex + 1) % points.size()];
+
+    const std::array<float, 2> edgeDir = {p1[0] - p0[0], p1[1] - p0[1]};
+
+    const std::array<float, 2> left = {-edgeDir[1], edgeDir[0]};
+    const std::array<float, 2> right = {edgeDir[1], -edgeDir[0]};
+
+    const bool ccw = CalculateArea() > 0;
+
+    std::array<float, 2> nrm = ccw ? right : left;
+
+    const float len = std::sqrt(nrm[0] * nrm[0] + nrm[1] * nrm[1]);
+    if (len > 1e-12f)
+    {
+        nrm[0] /= len;
+        nrm[1] /= len;
+    }
+    return nrm;
+}

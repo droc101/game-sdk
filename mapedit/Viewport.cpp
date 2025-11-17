@@ -9,7 +9,7 @@
 #include <string>
 #include "GLHelper.h"
 #include "imgui.h"
-#include "LevelEditor.h"
+#include "MapEditor.h"
 
 Viewport::Viewport(const ImVec2 gridPos, const ImVec2 gridSize, const ViewportType type)
 {
@@ -25,11 +25,11 @@ Viewport::Viewport(const ImVec2 gridPos, const ImVec2 gridSize, const ViewportTy
 void Viewport::GetWindowRect(ImVec2 &pos, ImVec2 &size) const
 {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
-    const float sidebarSize = LevelEditor::showSidebar ? LevelEditor::SIDEBAR_WIDTH : 0;
+    const float sidebarSize = MapEditor::showSidebar ? MapEditor::SIDEBAR_WIDTH : 0;
     const ImVec2 GridTopLeft = ImVec2(viewport->WorkPos.x + sidebarSize,
-                                      viewport->WorkPos.y + LevelEditor::TOOLBAR_HEIGHT);
+                                      viewport->WorkPos.y + MapEditor::TOOLBAR_HEIGHT);
     const ImVec2 GridCellSize = ImVec2((viewport->WorkSize.x - sidebarSize) / 2,
-                                       (viewport->WorkSize.y - LevelEditor::TOOLBAR_HEIGHT) / 2);
+                                       (viewport->WorkSize.y - MapEditor::TOOLBAR_HEIGHT) / 2);
     if (fullscreen)
     {
         pos = ImVec2(GridTopLeft.x, GridTopLeft.y);
@@ -83,13 +83,13 @@ void Viewport::RenderImGui()
     if (ImGui::BeginChild("_vp_stats", ImVec2(0, 0), childFlags))
     {
         ImGui::TextUnformatted(title.c_str());
-        if (LevelEditor::drawViewportInfo)
+        if (MapEditor::drawViewportInfo)
         {
             ImGui::Text("Pos: %.2f, %.2f\nZoom: %.2f units/screen\nGrid: %.2f units",
                         scrollCenterPos.x,
                         scrollCenterPos.y,
                         zoom,
-                        LevelEditor::GRID_SPACING_VALUES.at(LevelEditor::gridSpacingIndex));
+                        MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex));
         }
         ImGui::EndChild();
     }
@@ -134,7 +134,7 @@ void Viewport::RenderImGui()
         ClampZoom();
     }
 
-    LevelEditor::tool->RenderViewport(*this);
+    MapEditor::tool->RenderViewport(*this);
 
     ImGui::End();
 }
@@ -199,25 +199,25 @@ glm::mat4 Viewport::GetMatrix() const
     const float right = scrollCenterPos.x + halfWidth;
     const float top = scrollCenterPos.y + halfHeight;
     const float bottom = scrollCenterPos.y - halfHeight;
-    const glm::mat4 ortho = glm::ortho(left, right, bottom, top, 0.01f, LevelEditor::LEVEL_SIZE + 100);
+    const glm::mat4 ortho = glm::ortho(left, right, bottom, top, 0.01f, MapEditor::LEVEL_SIZE + 100);
 
     glm::vec3 up;
     glm::vec3 eye;
     glm::vec3 target;
     if (type == ViewportType::TOP_DOWN_XZ)
     {
-        target = glm::vec3(0, LevelEditor::LEVEL_HALF_SIZE + 8, 0);
-        eye = glm::vec3(0, LevelEditor::LEVEL_HALF_SIZE + 18, 0);
+        target = glm::vec3(0, MapEditor::LEVEL_HALF_SIZE + 8, 0);
+        eye = glm::vec3(0, MapEditor::LEVEL_HALF_SIZE + 18, 0);
         up = glm::vec3(0, 0, 1);
     } else if (type == ViewportType::SIDE_YZ)
     {
-        target = glm::vec3(LevelEditor::LEVEL_HALF_SIZE + 8, 0, 0);
-        eye = glm::vec3(LevelEditor::LEVEL_HALF_SIZE + 18, 0, 0);
+        target = glm::vec3(MapEditor::LEVEL_HALF_SIZE + 8, 0, 0);
+        eye = glm::vec3(MapEditor::LEVEL_HALF_SIZE + 18, 0, 0);
         up = glm::vec3(0, 1, 0);
     } else
     {
-        target = glm::vec3(0, 0, LevelEditor::LEVEL_HALF_SIZE + 8);
-        eye = glm::vec3(0, 0, LevelEditor::LEVEL_HALF_SIZE + 18);
+        target = glm::vec3(0, 0, MapEditor::LEVEL_HALF_SIZE + 8);
+        eye = glm::vec3(0, 0, MapEditor::LEVEL_HALF_SIZE + 18);
         up = glm::vec3(0, 1, 0);
     }
 
@@ -254,9 +254,9 @@ void Viewport::ClampZoom()
     {
         zoom = 5;
     }
-    if (zoom > LevelEditor::LEVEL_SIZE + 500)
+    if (zoom > MapEditor::LEVEL_SIZE + 500)
     {
-        zoom = LevelEditor::LEVEL_SIZE + 500;
+        zoom = MapEditor::LEVEL_SIZE + 500;
     }
 }
 

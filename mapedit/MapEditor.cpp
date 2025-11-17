@@ -2,7 +2,7 @@
 // Created by droc101 on 9/6/25.
 //
 
-#include "LevelEditor.h"
+#include "MapEditor.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -16,7 +16,7 @@
 #include "SharedMgr.h"
 #include "TextureBrowserWindow.h"
 
-float LevelEditor::SnapToGrid(const float f)
+float MapEditor::SnapToGrid(const float f)
 {
     if (!snapToGrid)
     {
@@ -28,18 +28,18 @@ float LevelEditor::SnapToGrid(const float f)
     return fs * gridSize;
 }
 
-glm::vec3 LevelEditor::SnapToGrid(const glm::vec3 v)
+glm::vec3 MapEditor::SnapToGrid(const glm::vec3 v)
 {
     return {SnapToGrid(v.x), SnapToGrid(v.y), SnapToGrid(v.z)};
 }
 
-glm::vec2 LevelEditor::SnapToGrid(const glm::vec2 v)
+glm::vec2 MapEditor::SnapToGrid(const glm::vec2 v)
 {
     return {SnapToGrid(v.x), SnapToGrid(v.y)};
 }
 
 
-bool LevelEditor::IsPointInBounds(const glm::vec3 p)
+bool MapEditor::IsPointInBounds(const glm::vec3 p)
 {
     const bool x = p.x >= -512 && p.x <= 512;
     const bool y = p.y >= -512 && p.y <= 512;
@@ -47,7 +47,7 @@ bool LevelEditor::IsPointInBounds(const glm::vec3 p)
     return x && y && z;
 }
 
-float LevelEditor::VecDistanceToLine2D(const glm::vec2 lineStart, const glm::vec2 lineEnd, const glm::vec2 testPoint)
+float MapEditor::VecDistanceToLine2D(const glm::vec2 lineStart, const glm::vec2 lineEnd, const glm::vec2 testPoint)
 {
     const float lineMag = distance(lineStart, lineEnd);
 
@@ -76,7 +76,7 @@ float LevelEditor::VecDistanceToLine2D(const glm::vec2 lineStart, const glm::vec
     return distance(testPoint, intersection);
 }
 
-std::array<float, 4> LevelEditor::CalculateBBox(const std::vector<std::array<float, 2>> &points)
+std::array<float, 4> MapEditor::CalculateBBox(const std::vector<std::array<float, 2>> &points)
 {
     std::vector<glm::vec2> glmPoints{};
     for (const std::array<float, 2> &point: points)
@@ -87,7 +87,7 @@ std::array<float, 4> LevelEditor::CalculateBBox(const std::vector<std::array<flo
 }
 
 
-std::array<float, 4> LevelEditor::CalculateBBox(const std::vector<glm::vec2> &points)
+std::array<float, 4> MapEditor::CalculateBBox(const std::vector<glm::vec2> &points)
 {
     glm::vec2 minPoint = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
     glm::vec2 maxPoint = {std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()};
@@ -115,7 +115,7 @@ std::array<float, 4> LevelEditor::CalculateBBox(const std::vector<glm::vec2> &po
     return {minPoint.x, minPoint.y, maxPoint.x, maxPoint.y};
 }
 
-void LevelEditor::MaterialToolWindow(WallMaterial &wallMat)
+void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
 {
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};

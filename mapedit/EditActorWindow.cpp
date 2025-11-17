@@ -28,7 +28,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include "LevelEditor.h"
+#include "MapEditor.h"
 #include "SharedMgr.h"
 
 void EditActorWindow::Render(Actor &actor)
@@ -347,7 +347,7 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
 
             ImGui::Text("Target Actor");
             std::vector<std::string> actorNames{};
-            for (const Actor &levelActor: LevelEditor::level.actors)
+            for (const Actor &levelActor: MapEditor::level.actors)
             {
                 if (!levelActor.params.contains("name"))
                 {
@@ -391,7 +391,7 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
 
             if (std::ranges::find(actorNames, connection.targetName) != actorNames.end())
             {
-                const Actor *targetActor = LevelEditor::level.GetActor(connection.targetName);
+                const Actor *targetActor = MapEditor::level.GetActor(connection.targetName);
                 assert(targetActor);
                 const ActorDefinition &targetDef = SharedMgr::actorDefinitions.at(targetActor->className);
                 std::unordered_set<std::string> targetInputNames{};

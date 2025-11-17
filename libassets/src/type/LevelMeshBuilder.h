@@ -20,7 +20,7 @@ class LevelMeshBuilder
         void AddFloor(const Sector &sector);
         void AddCeiling(const Sector &sector);
 
-        void Write(DataWriter &writer) const;
+        void Write(DataWriter &writer, const std::string &materialPath) const;
 
     private:
         std::vector<ModelVertex> vertices{};

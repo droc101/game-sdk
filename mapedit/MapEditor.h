@@ -7,15 +7,15 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <libassets/asset/LevelAsset.h>
+#include <libassets/asset/MapAsset.h>
 #include <memory>
 #include "tools/EditorTool.h"
 #include "tools/SelectTool.h"
 
-class LevelEditor
+class MapEditor
 {
     public:
-        LevelEditor() = delete;
+        MapEditor() = delete;
 
         enum class EditorToolType : uint8_t
         {
@@ -27,7 +27,7 @@ class LevelEditor
 
         static inline EditorToolType toolType = EditorToolType::SELECT;
 
-        static inline LevelAsset level{};
+        static inline MapAsset level{};
 
         static inline int gridSpacingIndex = 2;
         static inline bool drawGrid = true;

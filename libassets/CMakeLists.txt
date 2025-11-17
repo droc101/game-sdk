@@ -24,8 +24,8 @@ add_library(assets STATIC include/libassets/libassets.h
         include/libassets/util/DataWriter.h
         src/asset/SoundAsset.cpp
         include/libassets/asset/SoundAsset.h
-        src/asset/LevelAsset.cpp
-        include/libassets/asset/LevelAsset.h
+        src/asset/MapAsset.cpp
+        include/libassets/asset/MapAsset.h
         src/type/Color.cpp
         include/libassets/type/Color.h
         include/libassets/util/Primitive.h

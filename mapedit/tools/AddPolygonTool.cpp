@@ -10,8 +10,8 @@
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
 #include <memory>
-#include "../LevelEditor.h"
-#include "../LevelRenderer.h"
+#include "../MapEditor.h"
+#include "../MapRenderer.h"
 #include "../Viewport.h"
 #include "EditorTool.h"
 #include "SelectTool.h"
@@ -23,7 +23,7 @@ void AddPolygonTool::RenderToolWindow()
         return;
     }
     ImGui::PushItemWidth(-1);
-    LevelEditor::MaterialToolWindow(LevelEditor::mat);
+    MapEditor::MaterialToolWindow(MapEditor::mat);
     ImGui::Separator();
     ImGui::Text("Ceiling Height");
     ImGui::InputFloat("##ceilHeight", &ceiling);
@@ -33,7 +33,7 @@ void AddPolygonTool::RenderToolWindow()
 
 void AddPolygonTool::RenderViewport(Viewport &vp)
 {
-    LevelRenderer::RenderViewport(vp);
+    MapRenderer::RenderViewport(vp);
 
     glm::mat4 matrix = vp.GetMatrix();
 
@@ -56,7 +56,7 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
     {
         if (!isDrawing)
         {
-            const glm::vec2 pt = LevelEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
+            const glm::vec2 pt = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
                 points = {pt};
@@ -65,13 +65,13 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                 isDrawing = true;
             } else
             {
-                LevelRenderer::RenderBillboardPoint(glm::vec3(pt.x, 0.1, pt.y), 10, Color(1, 0.7, 0.7, 1), matrix);
+                MapRenderer::RenderBillboardPoint(glm::vec3(pt.x, 0.1, pt.y), 10, Color(1, 0.7, 0.7, 1), matrix);
             }
 
             if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
             {
-                LevelEditor::toolType = LevelEditor::EditorToolType::SELECT;
-                LevelEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+                MapEditor::toolType = MapEditor::EditorToolType::SELECT;
+                MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
                 return;
             }
         } else
@@ -85,7 +85,7 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                 const glm::vec3 worldSpaceFirstPoint = glm::vec3(firstPoint.x, worldSpaceHover.y, firstPoint.y);
                 const glm::vec2 screenSpaceFirstPoint = vp.WorldToScreenPos(worldSpaceFirstPoint);
                 if (distance(screenSpaceHover, screenSpaceFirstPoint) < 5 ||
-                    LevelEditor::SnapToGrid(worldSpaceHover) == worldSpaceFirstPoint)
+                    MapEditor::SnapToGrid(worldSpaceHover) == worldSpaceFirstPoint)
                 {
                     if (points.size() < 3)
                     {
@@ -105,7 +105,7 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                         {
                             isDrawing = false;
                             Sector s = Sector();
-                            const WallMaterial mat = LevelEditor::mat;
+                            const WallMaterial mat = MapEditor::mat;
                             s.ceilingMaterial = mat;
                             s.floorMaterial = mat;
                             s.floorHeight = floor;
@@ -117,7 +117,7 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                                 s.points.push_back(point);
                                 s.wallMaterials.push_back(mat);
                             }
-                            LevelEditor::level.sectors.push_back(s);
+                            MapEditor::level.sectors.push_back(s);
                         }
                     }
                 } else
@@ -126,14 +126,14 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                     // TODO don't allow placing the same point twice
                     if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                     {
-                        points.push_back(LevelEditor::SnapToGrid(worldSpacePoint));
+                        points.push_back(MapEditor::SnapToGrid(worldSpacePoint));
                     }
                 }
             }
         }
     }
 
-    for (auto &sector: LevelEditor::level.sectors)
+    for (auto &sector: MapEditor::level.sectors)
     {
         for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
         {
@@ -146,25 +146,25 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
 
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
+                MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
                                                     10,
                                                     Color(1, 0.7, 0.7, 1),
                                                     matrix);
             }
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderLine(startFloor, endFloor, Color(0.7, .7, .7, 1), matrix, 4);
-                LevelRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
+                MapRenderer::RenderLine(startFloor, endFloor, Color(0.7, .7, .7, 1), matrix, 4);
+                MapRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
             }
 
-            LevelRenderer::RenderLine(startCeiling, endCeiling, Color(0.7, .7, .7, 1), matrix, 4);
+            MapRenderer::RenderLine(startCeiling, endCeiling, Color(0.7, .7, .7, 1), matrix, 4);
         }
     }
 
-    for (Actor &a: LevelEditor::level.actors)
+    for (Actor &a: MapEditor::level.actors)
     {
         const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
-        LevelRenderer::RenderBillboardPoint(pos, 10, Color(0.7, 1, 0.7, 1), matrix);
+        MapRenderer::RenderBillboardPoint(pos, 10, Color(0.7, 1, 0.7, 1), matrix);
     }
 
     if (isDrawing)
@@ -175,7 +175,7 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
             glm::vec2 end2 = points[(vertexIndex + 1) % points.size()];
             if (vertexIndex == points.size() - 1)
             {
-                end2 = LevelEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
+                end2 = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
             }
             const glm::vec3 startCeiling = glm::vec3(start2.x, ceiling, start2.y);
             const glm::vec3 endCeiling = glm::vec3(end2.x, ceiling, end2.y);
@@ -184,15 +184,15 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
 
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), 10, Color(1, 0, 0, 1), matrix);
+                MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), 10, Color(1, 0, 0, 1), matrix);
             }
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderLine(startFloor, endFloor, Color(1, 1, 1, 1), matrix, 4);
-                LevelRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
+                MapRenderer::RenderLine(startFloor, endFloor, Color(1, 1, 1, 1), matrix, 4);
+                MapRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
             }
 
-            LevelRenderer::RenderLine(startCeiling, endCeiling, Color(1, 1, 1, 1), matrix, 4);
+            MapRenderer::RenderLine(startCeiling, endCeiling, Color(1, 1, 1, 1), matrix, 4);
         }
     }
 }

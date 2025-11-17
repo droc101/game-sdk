@@ -10,10 +10,10 @@
 #include "GLHelper.h"
 #include "Viewport.h"
 
-class LevelRenderer
+class MapRenderer
 {
     public:
-        LevelRenderer() = delete;
+        MapRenderer() = delete;
 
         static bool Init();
         static void Destroy();

@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.20)
-project(lvledit)
+project(mapedit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(lvledit lvledit.cpp
+add_executable(mapedit mapedit.cpp
         Viewport.cpp
         Viewport.h
-        LevelRenderer.cpp
-        LevelRenderer.h
-        LevelEditor.cpp
-        LevelEditor.h
+        MapRenderer.cpp
+        MapRenderer.h
+        MapEditor.cpp
+        MapEditor.h
         tools/EditorTool.h
         tools/AddPolygonTool.cpp
         tools/AddPolygonTool.h
@@ -23,17 +23,17 @@ add_executable(lvledit lvledit.cpp
         tools/AddActorTool.h
         EditActorWindow.cpp
         EditActorWindow.h
-        $<$<BOOL:${WIN32}>:lvledit.rc>
+        $<$<BOOL:${WIN32}>:mapedit.rc>
 )
 
-set_target_properties(lvledit PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(mapedit PROPERTIES LINKER_LANGUAGE CXX)
 
-target_link_libraries(lvledit PRIVATE shared imgui_opengl3)
+target_link_libraries(mapedit PRIVATE shared imgui_opengl3)
 
-add_dependencies(lvledit assets)
+add_dependencies(mapedit assets)
 
-add_dependencies(lvledit copy_assets)
+add_dependencies(mapedit copy_assets)
 
 if (WIN32)
-    add_dependencies(lvledit copydlls)
+    add_dependencies(mapedit copydlls)
 endif()

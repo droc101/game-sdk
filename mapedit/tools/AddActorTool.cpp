@@ -12,8 +12,8 @@
 #include <memory>
 #include <ranges>
 #include <unordered_set>
-#include "../LevelEditor.h"
-#include "../LevelRenderer.h"
+#include "../MapEditor.h"
+#include "../MapRenderer.h"
 #include "../Viewport.h"
 #include "EditorTool.h"
 #include "libassets/type/ActorDefinition.h"
@@ -22,7 +22,7 @@
 
 void AddActorTool::RenderViewport(Viewport &vp)
 {
-    LevelRenderer::RenderViewport(vp);
+    MapRenderer::RenderViewport(vp);
 
     glm::mat4 matrix = vp.GetMatrix();
 
@@ -45,20 +45,20 @@ void AddActorTool::RenderViewport(Viewport &vp)
     {
         if (!hasPlacedActor)
         {
-            const glm::vec2 pt = LevelEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
+            const glm::vec2 pt = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
-                newActorPosition = LevelEditor::SnapToGrid(worldSpaceHover);
+                newActorPosition = MapEditor::SnapToGrid(worldSpaceHover);
                 hasPlacedActor = true;
             } else
             {
-                LevelRenderer::RenderBillboardPoint(glm::vec3(pt.x, 0.1, pt.y), 10, Color(0.7, 1, 0.7, 1), matrix);
+                MapRenderer::RenderBillboardPoint(glm::vec3(pt.x, 0.1, pt.y), 10, Color(0.7, 1, 0.7, 1), matrix);
             }
 
             if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
             {
-                LevelEditor::toolType = LevelEditor::EditorToolType::SELECT;
-                LevelEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+                MapEditor::toolType = MapEditor::EditorToolType::SELECT;
+                MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
                 return;
             }
         } else
@@ -76,13 +76,13 @@ void AddActorTool::RenderViewport(Viewport &vp)
                 ActorDefinition def = SharedMgr::actorDefinitions.at(newActorType);
                 a.ApplyDefinition(def);
 
-                LevelEditor::level.actors.push_back(a);
+                MapEditor::level.actors.push_back(a);
                 hasPlacedActor = false;
             } else
             {
                 if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
                 {
-                    const glm::vec3 snappedHover = LevelEditor::SnapToGrid(worldSpaceHover);
+                    const glm::vec3 snappedHover = MapEditor::SnapToGrid(worldSpaceHover);
                     switch (vp.GetType())
                     {
                         case Viewport::ViewportType::TOP_DOWN_XZ:
@@ -103,7 +103,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
         }
     }
 
-    for (auto &sector: LevelEditor::level.sectors)
+    for (auto &sector: MapEditor::level.sectors)
     {
         for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
         {
@@ -116,30 +116,30 @@ void AddActorTool::RenderViewport(Viewport &vp)
 
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
+                MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
                                                     10,
                                                     Color(1, 0.7, 0.7, 1),
                                                     matrix);
             }
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                LevelRenderer::RenderLine(startFloor, endFloor, Color(0.7, .7, .7, 1), matrix, 4);
-                LevelRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
+                MapRenderer::RenderLine(startFloor, endFloor, Color(0.7, .7, .7, 1), matrix, 4);
+                MapRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
             }
 
-            LevelRenderer::RenderLine(startCeiling, endCeiling, Color(0.7, .7, .7, 1), matrix, 4);
+            MapRenderer::RenderLine(startCeiling, endCeiling, Color(0.7, .7, .7, 1), matrix, 4);
         }
     }
 
-    for (Actor &a: LevelEditor::level.actors)
+    for (Actor &a: MapEditor::level.actors)
     {
         const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
-        LevelRenderer::RenderBillboardPoint(pos, 10, Color(0.7, 1, 0.7, 1), matrix);
+        MapRenderer::RenderBillboardPoint(pos, 10, Color(0.7, 1, 0.7, 1), matrix);
     }
 
     if (hasPlacedActor)
     {
-        LevelRenderer::RenderBillboardPoint(newActorPosition, 10, Color(0, 1, 0, 1), matrix);
+        MapRenderer::RenderBillboardPoint(newActorPosition, 10, Color(0, 1, 0, 1), matrix);
     }
 }
 

@@ -12,21 +12,21 @@
 #include <string>
 #include <vector>
 
-class LevelAsset final
+class MapAsset final
 {
     public:
-        LevelAsset() = default;
+        MapAsset() = default;
 
-        [[nodiscard]] static Error::ErrorCode CreateFromMapSrc(const char *mapSrcPath, LevelAsset &level);
+        [[nodiscard]] static Error::ErrorCode CreateFromMapSrc(const char *mapSrcPath, MapAsset &map);
 
         [[nodiscard]] Error::ErrorCode SaveAsMapSrc(const char *mapSrcPath) const;
 
         [[nodiscard]] Error::ErrorCode Compile(const char *assetPath) const;
 
-        static constexpr uint8_t LEVEL_ASSET_VERSION = 1;
-        static constexpr uint8_t LEVEL_JSON_VERSION = 1;
+        static constexpr uint8_t MAP_ASSET_VERSION = 1;
+        static constexpr uint8_t MAP_JSON_VERSION = 1;
 
-        static constexpr float LEVEL_MAX_HALF_EXTENTS = 512; // 1024 unit wide level
+        static constexpr float MAP_MAX_HALF_EXTENTS = 512; // 1024 unit wide map
 
         std::vector<Sector> sectors{};
         std::vector<Actor> actors{};

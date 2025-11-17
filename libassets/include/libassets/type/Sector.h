@@ -32,6 +32,8 @@ class Sector
 
         [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 
+        [[nodiscard]] std::array<float, 2> SegmentNormal(int segmentIndex) const;
+
     private:
         enum class SegmentOrientation : uint8_t
         {
@@ -40,16 +42,18 @@ class Sector
             COUNTERCLOCKWISE = 2
         };
 
-        static SegmentOrientation GetOrientation(const std::array<float, 2> &pointA,
+        [[nodiscard]] static SegmentOrientation GetOrientation(const std::array<float, 2> &pointA,
                                                  const std::array<float, 2> &pointB,
                                                  const std::array<float, 2> &pointC);
 
-        static bool OnSegment(const std::array<float, 2> &segment_start,
+        [[nodiscard]] static bool OnSegment(const std::array<float, 2> &segment_start,
                               const std::array<float, 2> &point,
                               const std::array<float, 2> &segment_end);
 
-        static bool CheckIntersection(const std::array<float, 2> &segmentAStart,
+        [[nodiscard]] static bool CheckIntersection(const std::array<float, 2> &segmentAStart,
                                       const std::array<float, 2> &segmentAEnd,
                                       const std::array<float, 2> &segmentBStart,
                                       const std::array<float, 2> &segmentBEnd);
+
+        [[nodiscard]] double CalculateArea() const;
 };

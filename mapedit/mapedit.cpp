@@ -14,8 +14,8 @@
 #include <SDL3/SDL_video.h>
 #include "ActorBrowserWindow.h"
 #include "DialogFilters.h"
-#include "LevelEditor.h"
-#include "LevelRenderer.h"
+#include "MapEditor.h"
+#include "MapRenderer.h"
 #include "OpenGLImGuiTextureAssetCache.h"
 #include "Options.h"
 #include "SharedMgr.h"
@@ -71,7 +71,7 @@ static void saveJsonCallback(void * /*userdata*/, const char *const *fileList, i
     {
         return;
     }
-    const Error::ErrorCode errorCode = LevelEditor::level.SaveAsMapSrc(fileList[0]);
+    const Error::ErrorCode errorCode = MapEditor::level.SaveAsMapSrc(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
@@ -91,7 +91,7 @@ static void saveGmapCallback(void * /*userdata*/, const char *const *fileList, i
     {
         return;
     }
-    const Error::ErrorCode errorCode = LevelEditor::level.Compile(fileList[0]);
+    const Error::ErrorCode errorCode = MapEditor::level.Compile(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
@@ -110,7 +110,7 @@ static void openJsonCallback(void * /*userdata*/, const char *const *fileList, i
     {
         return;
     }
-    const Error::ErrorCode errorCode = LevelAsset::CreateFromMapSrc(fileList[0], LevelEditor::level);
+    const Error::ErrorCode errorCode = MapAsset::CreateFromMapSrc(fileList[0], MapEditor::level);
     if (errorCode != Error::ErrorCode::OK)
     {
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
@@ -128,21 +128,21 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 {
     if (ImGui::Shortcut(ImGuiKey_RightBracket, ImGuiInputFlags_RouteGlobal))
     {
-        LevelEditor::gridSpacingIndex += 1;
-        if (static_cast<size_t>(LevelEditor::gridSpacingIndex) >= LevelEditor::GRID_SPACING_VALUES.size())
+        MapEditor::gridSpacingIndex += 1;
+        if (static_cast<size_t>(MapEditor::gridSpacingIndex) >= MapEditor::GRID_SPACING_VALUES.size())
         {
-            LevelEditor::gridSpacingIndex = static_cast<int>(LevelEditor::GRID_SPACING_VALUES.size() - 1);
+            MapEditor::gridSpacingIndex = static_cast<int>(MapEditor::GRID_SPACING_VALUES.size() - 1);
         }
     } else if (ImGui::Shortcut(ImGuiKey_LeftBracket, ImGuiInputFlags_RouteGlobal))
     {
-        LevelEditor::gridSpacingIndex -= 1;
-        if (LevelEditor::gridSpacingIndex < 0)
+        MapEditor::gridSpacingIndex -= 1;
+        if (MapEditor::gridSpacingIndex < 0)
         {
-            LevelEditor::gridSpacingIndex = 0;
+            MapEditor::gridSpacingIndex = 0;
         }
     } else if (ImGui::Shortcut(ImGuiKey_Backslash, ImGuiInputFlags_RouteGlobal))
     {
-        LevelEditor::gridSpacingIndex = 2;
+        MapEditor::gridSpacingIndex = 2;
     }
 
     if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Minus, ImGuiInputFlags_RouteGlobal | ImGuiInputFlags_Repeat))
@@ -189,9 +189,9 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         {
             if (ImGui::MenuItem("New", "Ctrl+N"))
             {
-                LevelEditor::level = LevelAsset();
-                LevelEditor::toolType = LevelEditor::EditorToolType::SELECT;
-                LevelEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+                MapEditor::level = MapAsset();
+                MapEditor::toolType = MapEditor::EditorToolType::SELECT;
+                MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Open", "Ctrl+O"))
@@ -203,8 +203,8 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                                        1,
                                        nullptr,
                                        false);
-                LevelEditor::toolType = LevelEditor::EditorToolType::SELECT;
-                LevelEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+                MapEditor::toolType = MapEditor::EditorToolType::SELECT;
+                MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
             }
             if (ImGui::MenuItem("Save", "Ctrl+S"))
             {
@@ -226,29 +226,29 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         {
             ImGui::MenuItem("Selection Properties", "Alt+Enter");
             ImGui::Separator();
-            if (ImGui::MenuItem("Snap on Grid", "", LevelEditor::snapToGrid))
+            if (ImGui::MenuItem("Snap on Grid", "", MapEditor::snapToGrid))
             {
-                LevelEditor::snapToGrid = !LevelEditor::snapToGrid;
+                MapEditor::snapToGrid = !MapEditor::snapToGrid;
             }
             if (ImGui::MenuItem("Smaller Grid", "["))
             {
-                LevelEditor::gridSpacingIndex -= 1;
-                if (LevelEditor::gridSpacingIndex < 0)
+                MapEditor::gridSpacingIndex -= 1;
+                if (MapEditor::gridSpacingIndex < 0)
                 {
-                    LevelEditor::gridSpacingIndex = 0;
+                    MapEditor::gridSpacingIndex = 0;
                 }
             }
             if (ImGui::MenuItem("Larger Grid", "]"))
             {
-                LevelEditor::gridSpacingIndex += 1;
-                if (static_cast<size_t>(LevelEditor::gridSpacingIndex) >= LevelEditor::GRID_SPACING_VALUES.size())
+                MapEditor::gridSpacingIndex += 1;
+                if (static_cast<size_t>(MapEditor::gridSpacingIndex) >= MapEditor::GRID_SPACING_VALUES.size())
                 {
-                    LevelEditor::gridSpacingIndex = LevelEditor::GRID_SPACING_VALUES.size() - 1;
+                    MapEditor::gridSpacingIndex = MapEditor::GRID_SPACING_VALUES.size() - 1;
                 }
             }
             if (ImGui::MenuItem("Reset Grid", "\\"))
             {
-                LevelEditor::gridSpacingIndex = 2;
+                MapEditor::gridSpacingIndex = 2;
             }
 
             ImGui::EndMenu();
@@ -298,50 +298,50 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             }
             ImGui::MenuItem("Center Selection TODO");
             ImGui::Separator();
-            if (ImGui::MenuItem("Show Viewport Information", "", LevelEditor::drawViewportInfo))
+            if (ImGui::MenuItem("Show Viewport Information", "", MapEditor::drawViewportInfo))
             {
-                LevelEditor::drawViewportInfo = !LevelEditor::drawViewportInfo;
+                MapEditor::drawViewportInfo = !MapEditor::drawViewportInfo;
             }
-            if (ImGui::MenuItem("Show Axes", "", LevelEditor::drawAxisHelper))
+            if (ImGui::MenuItem("Show Axes", "", MapEditor::drawAxisHelper))
             {
-                LevelEditor::drawAxisHelper = !LevelEditor::drawAxisHelper;
+                MapEditor::drawAxisHelper = !MapEditor::drawAxisHelper;
             }
-            if (ImGui::MenuItem("Show World Border", "", LevelEditor::drawWorldBorder))
+            if (ImGui::MenuItem("Show World Border", "", MapEditor::drawWorldBorder))
             {
-                LevelEditor::drawWorldBorder = !LevelEditor::drawWorldBorder;
+                MapEditor::drawWorldBorder = !MapEditor::drawWorldBorder;
             }
-            if (ImGui::MenuItem("Show Grid", "", LevelEditor::drawGrid))
+            if (ImGui::MenuItem("Show Grid", "", MapEditor::drawGrid))
             {
-                LevelEditor::drawGrid = !LevelEditor::drawGrid;
+                MapEditor::drawGrid = !MapEditor::drawGrid;
             }
             if (ImGui::MenuItem("Smaller Grid", "["))
             {
-                LevelEditor::gridSpacingIndex -= 1;
-                if (LevelEditor::gridSpacingIndex < 0)
+                MapEditor::gridSpacingIndex -= 1;
+                if (MapEditor::gridSpacingIndex < 0)
                 {
-                    LevelEditor::gridSpacingIndex = 0;
+                    MapEditor::gridSpacingIndex = 0;
                 }
             }
             if (ImGui::MenuItem("Larger Grid", "]"))
             {
-                LevelEditor::gridSpacingIndex += 1;
-                if (static_cast<size_t>(LevelEditor::gridSpacingIndex) >= LevelEditor::GRID_SPACING_VALUES.size())
+                MapEditor::gridSpacingIndex += 1;
+                if (static_cast<size_t>(MapEditor::gridSpacingIndex) >= MapEditor::GRID_SPACING_VALUES.size())
                 {
-                    LevelEditor::gridSpacingIndex = static_cast<int>(LevelEditor::GRID_SPACING_VALUES.size() - 1);
+                    MapEditor::gridSpacingIndex = static_cast<int>(MapEditor::GRID_SPACING_VALUES.size() - 1);
                 }
             }
             if (ImGui::MenuItem("Reset Grid", "\\"))
             {
-                LevelEditor::gridSpacingIndex = 3;
+                MapEditor::gridSpacingIndex = 3;
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Show Secondary Viewports", "Alt+V", !vpTopDown.IsFullscreen()))
             {
                 vpTopDown.ToggleFullscreen();
             }
-            if (ImGui::MenuItem("Show Sidebar", "", LevelEditor::showSidebar))
+            if (ImGui::MenuItem("Show Sidebar", "", MapEditor::showSidebar))
             {
-                LevelEditor::showSidebar = !LevelEditor::showSidebar;
+                MapEditor::showSidebar = !MapEditor::showSidebar;
             }
             ImGui::EndMenu();
         }
@@ -364,12 +364,12 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             ImGui::Separator();
             ImGui::EndMenu();
         }
-        SharedMgr::SharedMenuUI("lvledit");
+        SharedMgr::SharedMenuUI("mapedit");
         ImGui::EndMainMenuBar();
     }
 
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
-    const ImVec2 workSize{viewport->WorkSize.x, LevelEditor::TOOLBAR_HEIGHT};
+    const ImVec2 workSize{viewport->WorkSize.x, MapEditor::TOOLBAR_HEIGHT};
     const ImVec2 workPos{viewport->WorkPos.x, viewport->WorkPos.y};
     ImGui::SetNextWindowPos(workPos);
     ImGui::SetNextWindowSize(workSize);
@@ -382,60 +382,60 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
     if (ToolbarToolButton("##selectTool",
                           "Select",
-                          LevelEditor::SELECT_ICON_NAME,
-                          LevelEditor::toolType == LevelEditor::EditorToolType::SELECT,
+                          MapEditor::SELECT_ICON_NAME,
+                          MapEditor::toolType == MapEditor::EditorToolType::SELECT,
                           6,
                           "Ctrl+1",
                           ImGuiMod_Ctrl | ImGuiKey_1))
     {
-        LevelEditor::toolType = LevelEditor::EditorToolType::SELECT;
-        LevelEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+        MapEditor::toolType = MapEditor::EditorToolType::SELECT;
+        MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
     }
 
     if (ToolbarToolButton("##actorTool",
                           "Add Actor",
-                          LevelEditor::ACTOR_ICON_NAME,
-                          LevelEditor::toolType == LevelEditor::EditorToolType::ADD_ACTOR,
+                          MapEditor::ACTOR_ICON_NAME,
+                          MapEditor::toolType == MapEditor::EditorToolType::ADD_ACTOR,
                           6,
                           "Ctrl+2",
                           ImGuiMod_Ctrl | ImGuiKey_2))
     {
-        LevelEditor::toolType = LevelEditor::EditorToolType::ADD_ACTOR;
-        LevelEditor::tool = std::unique_ptr<EditorTool>(new AddActorTool());
+        MapEditor::toolType = MapEditor::EditorToolType::ADD_ACTOR;
+        MapEditor::tool = std::unique_ptr<EditorTool>(new AddActorTool());
     }
 
     if (ToolbarToolButton("##primTool",
                           "Add Primitive",
-                          LevelEditor::PRIMITIVE_ICON_NAME,
-                          LevelEditor::toolType == LevelEditor::EditorToolType::ADD_PRIMITIVE,
+                          MapEditor::PRIMITIVE_ICON_NAME,
+                          MapEditor::toolType == MapEditor::EditorToolType::ADD_PRIMITIVE,
                           2,
                           "Ctrl+3",
                           ImGuiMod_Ctrl | ImGuiKey_3))
     {
-        LevelEditor::toolType = LevelEditor::EditorToolType::ADD_PRIMITIVE;
-        LevelEditor::tool = std::unique_ptr<EditorTool>(new AddPrimitiveTool());
+        MapEditor::toolType = MapEditor::EditorToolType::ADD_PRIMITIVE;
+        MapEditor::tool = std::unique_ptr<EditorTool>(new AddPrimitiveTool());
     }
 
     if (ToolbarToolButton("##polyTool",
                           "Add Polygon",
-                          LevelEditor::POLYGON_ICON_NAME,
-                          LevelEditor::toolType == LevelEditor::EditorToolType::ADD_POLYGON,
+                          MapEditor::POLYGON_ICON_NAME,
+                          MapEditor::toolType == MapEditor::EditorToolType::ADD_POLYGON,
                           2,
                           "Ctrl+4",
                           ImGuiMod_Ctrl | ImGuiKey_4))
     {
-        LevelEditor::toolType = LevelEditor::EditorToolType::ADD_POLYGON;
-        LevelEditor::tool = std::unique_ptr<EditorTool>(new AddPolygonTool());
+        MapEditor::toolType = MapEditor::EditorToolType::ADD_POLYGON;
+        MapEditor::tool = std::unique_ptr<EditorTool>(new AddPolygonTool());
     }
 
     ImGui::Dummy({1, 1});
     ImGui::End();
 
-    if (LevelEditor::showSidebar)
+    if (MapEditor::showSidebar)
     {
-        ImGui::SetNextWindowPos(ImVec2(0, viewport->WorkPos.y + LevelEditor::TOOLBAR_HEIGHT));
-        ImGui::SetNextWindowSize(ImVec2(LevelEditor::SIDEBAR_WIDTH,
-                                        viewport->WorkSize.y - LevelEditor::TOOLBAR_HEIGHT));
+        ImGui::SetNextWindowPos(ImVec2(0, viewport->WorkPos.y + MapEditor::TOOLBAR_HEIGHT));
+        ImGui::SetNextWindowSize(ImVec2(MapEditor::SIDEBAR_WIDTH,
+                                        viewport->WorkSize.y - MapEditor::TOOLBAR_HEIGHT));
         ImGui::Begin("Tools",
                      nullptr,
                      ImGuiWindowFlags_NoMove |
@@ -443,7 +443,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                              ImGuiWindowFlags_NoCollapse |
                              ImGuiWindowFlags_NoDecoration);
 
-        LevelEditor::tool->RenderToolWindow();
+        MapEditor::tool->RenderToolWindow();
 
         ImGui::End();
     }
@@ -467,13 +467,13 @@ int main()
     }
 
     SharedMgr::InitSharedMgr<OpenGLImGuiTextureAssetCache>();
-    LevelEditor::mat = WallMaterial(Options::defaultMaterial);
+    MapEditor::mat = WallMaterial(Options::defaultMaterial);
 
     // Actor a = Actor();
     // a.className = "logic_counter";
     // a.ApplyDefinition(SharedMgr::actorDefinitions.at(a.className));
     // a.params.at("name").Set<std::string>("counter");
-    // LevelEditor::level.actors.push_back(a);
+    // MapEditor::level.actors.push_back(a);
 
     const char *glslVersion = "#version 130";
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0))
@@ -509,7 +509,7 @@ int main()
                                             SDL_WINDOW_OPENGL |
                                             SDL_WINDOW_RESIZABLE |
                                             SDL_WINDOW_MAXIMIZED;
-    window = SDL_CreateWindow("lvledit (beta)", 1366, 778, windowFlags);
+    window = SDL_CreateWindow("mapedit (beta)", 1366, 778, windowFlags);
     if (window == nullptr)
     {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
@@ -528,7 +528,7 @@ int main()
         printf("Error: SDL_GL_MakeCurrent(): %s\n", SDL_GetError());
         return -1;
     }
-    if (!LevelRenderer::Init())
+    if (!MapRenderer::Init())
     {
         printf("Failed to start renderer!\n");
         return -1;
@@ -553,10 +553,10 @@ int main()
     ImGui_ImplSDL3_InitForOpenGL(window, glContext);
     ImGui_ImplOpenGL3_Init(glslVersion);
 
-    SharedMgr::textureCache->RegisterPng("assets/lvledit/select.png", LevelEditor::SELECT_ICON_NAME);
-    SharedMgr::textureCache->RegisterPng("assets/lvledit/actors.png", LevelEditor::ACTOR_ICON_NAME);
-    SharedMgr::textureCache->RegisterPng("assets/lvledit/primitives.png", LevelEditor::PRIMITIVE_ICON_NAME);
-    SharedMgr::textureCache->RegisterPng("assets/lvledit/polygon.png", LevelEditor::POLYGON_ICON_NAME);
+    SharedMgr::textureCache->RegisterPng("assets/mapedit/select.png", MapEditor::SELECT_ICON_NAME);
+    SharedMgr::textureCache->RegisterPng("assets/mapedit/actors.png", MapEditor::ACTOR_ICON_NAME);
+    SharedMgr::textureCache->RegisterPng("assets/mapedit/primitives.png", MapEditor::PRIMITIVE_ICON_NAME);
+    SharedMgr::textureCache->RegisterPng("assets/mapedit/polygon.png", MapEditor::POLYGON_ICON_NAME);
 
     bool done = false;
     while (!done)
@@ -605,7 +605,7 @@ int main()
 
     SharedMgr::DestroySharedMgr();
 
-    LevelRenderer::Destroy();
+    MapRenderer::Destroy();
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();

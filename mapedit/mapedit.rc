@@ -14,10 +14,10 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Droc101 Development"
-            VALUE "FileDescription", "GAME SDK Level Editor"
-            VALUE "InternalName", "lvledit"
+            VALUE "FileDescription", "GAME SDK Map Editor"
+            VALUE "InternalName", "mapedit"
             VALUE "LegalCopyright", "Droc101 Development"
-            VALUE "OriginalFilename", "lvledit.exe"
+            VALUE "OriginalFilename", "mapedit.exe"
             VALUE "ProductName", "GAME SDK"
         END
     END

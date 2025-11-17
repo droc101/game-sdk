@@ -8,7 +8,7 @@
 #include <cstdio>
 #include <fstream>
 #include <ios>
-#include <libassets/asset/LevelAsset.h>
+#include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Asset.h>
 #include <libassets/type/Sector.h>
@@ -16,6 +16,7 @@
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <ostream>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -24,7 +25,7 @@
 #include "../type/LevelMeshBuilder.h"
 #include "libassets/type/WallMaterial.h"
 
-Error::ErrorCode LevelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
+Error::ErrorCode MapAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
 {
     assert(buffer.empty());
 
@@ -80,37 +81,25 @@ Error::ErrorCode LevelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
         for (size_t i = 0; i < sector.points.size(); i++)
         {
             const WallMaterial &mat = sector.wallMaterials.at(i);
-            if (!meshBuilders.contains(mat.material))
-            {
-                meshBuilders[mat.material] = LevelMeshBuilder();
-            }
-            meshBuilders.at(mat.material).AddWall(sector, i);
+            meshBuilders[mat.material].AddWall(sector, i);
         }
-        if (!meshBuilders.contains(sector.ceilingMaterial.material))
-        {
-            meshBuilders[sector.ceilingMaterial.material] = LevelMeshBuilder();
-        }
-        meshBuilders.at(sector.ceilingMaterial.material).AddCeiling(sector);
-        if (!meshBuilders.contains(sector.floorMaterial.material))
-        {
-            meshBuilders[sector.floorMaterial.material] = LevelMeshBuilder();
-        }
-        meshBuilders.at(sector.floorMaterial.material).AddFloor(sector);
+        meshBuilders[sector.ceilingMaterial.material].AddCeiling(sector);
+        meshBuilders[sector.floorMaterial.material].AddFloor(sector);
         // TODO collision
         // TODO check material for compileInvisible (how get material???)
     }
 
     writer.Write<size_t>(meshBuilders.size());
-    for (const LevelMeshBuilder &builder: meshBuilders | std::views::values)
+    for (const std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)
     {
-        builder.Write(writer);
+        builder.second.Write(writer, builder.first);
     }
 
     writer.CopyToVector(buffer);
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode LevelAsset::Compile(const char *assetPath) const
+Error::ErrorCode MapAsset::Compile(const char *assetPath) const
 {
     std::vector<uint8_t> buffer;
     const Error::ErrorCode e = SaveToBuffer(buffer);
@@ -118,11 +107,11 @@ Error::ErrorCode LevelAsset::Compile(const char *assetPath) const
     {
         return e;
     }
-    return AssetReader::SaveToFile(assetPath, buffer, Asset::AssetType::ASSET_TYPE_LEVEL, LEVEL_ASSET_VERSION);
+    return AssetReader::SaveToFile(assetPath, buffer, Asset::AssetType::ASSET_TYPE_LEVEL, MAP_ASSET_VERSION);
 }
 
 
-Error::ErrorCode LevelAsset::CreateFromMapSrc(const char *mapSrcPath, LevelAsset &level)
+Error::ErrorCode MapAsset::CreateFromMapSrc(const char *mapSrcPath, MapAsset &map)
 {
     std::ifstream file(mapSrcPath, std::ios::binary | std::ios::ate);
     std::ostringstream ss;
@@ -138,31 +127,31 @@ Error::ErrorCode LevelAsset::CreateFromMapSrc(const char *mapSrcPath, LevelAsset
     }
     file.close();
 
-    if (json.value("version", 0) != LEVEL_JSON_VERSION)
+    if (json.value("version", 0) != MAP_JSON_VERSION)
     {
         return Error::ErrorCode::INCORRECT_VERSION;
     }
 
-    level = LevelAsset();
+    map = MapAsset();
 
     const nlohmann::ordered_json jSectors = json.at("sectors");
     for (const nlohmann::ordered_json &sect: jSectors)
     {
-        level.sectors.emplace_back(sect);
+        map.sectors.emplace_back(sect);
     }
 
     const nlohmann::ordered_json jActors = json.at("actors");
     for (const nlohmann::ordered_json &actor: jActors)
     {
-        level.actors.emplace_back(actor);
+        map.actors.emplace_back(actor);
     }
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode LevelAsset::SaveAsMapSrc(const char *mapSrcPath) const
+Error::ErrorCode MapAsset::SaveAsMapSrc(const char *mapSrcPath) const
 {
     nlohmann::ordered_json src = nlohmann::ordered_json();
-    src["version"] = LEVEL_JSON_VERSION;
+    src["version"] = MAP_JSON_VERSION;
     src["sectors"] = nlohmann::ordered_json::array();
     src["actors"] = nlohmann::ordered_json::array();
     for (const Sector &sector: sectors)
@@ -184,7 +173,7 @@ Error::ErrorCode LevelAsset::SaveAsMapSrc(const char *mapSrcPath) const
     return Error::ErrorCode::OK;
 }
 
-Actor *LevelAsset::GetActor(const std::string &name)
+Actor *MapAsset::GetActor(const std::string &name)
 {
     for (Actor &a: actors)
     {
