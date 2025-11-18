@@ -19,6 +19,7 @@
 #include <SDL3/SDL_video.h>
 #include <sstream>
 #include <string>
+#include "DesktopInterface.h"
 #include "Options.h"
 #include "SDLRendererImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
@@ -86,15 +87,6 @@ static void ParsePath(std::string &path)
     StringReplace(path, "$SDKDIR", sdkPath);
 }
 
-static void SystemOpenPath(const std::string &path)
-{
-#ifdef WIN32
-    system(("start \"" + path + "\"").c_str()); // TODO don't use system()
-#else
-    system(("xdg-open \"" + path + "\"").c_str()); // TODO don't use system()
-#endif
-}
-
 static void LaunchSelectedTool()
 {
     const nlohmann::json item = launcher_json.at("categories").at(selectionCategory).at(selectionIndex);
@@ -113,20 +105,20 @@ static void LaunchSelectedTool()
         folder += ".exe";
 #endif
         printf("Launching process \"%s\"...\n", folder.c_str());
-        system((folder + " &").c_str()); // TODO don't use system()
+        DesktopInterface::ExecuteProcessNonBlocking(folder, {});
     } else if (item.contains("file"))
     {
         std::string folder = item.value("file", "");
         ParsePath(folder);
-        SystemOpenPath(folder);
+        DesktopInterface::OpenFilesystemPath(folder);
     } else if (item.contains("folder"))
     {
         std::string folder = item.value("folder", "");
         ParsePath(folder);
-        SystemOpenPath(folder);
+        DesktopInterface::OpenFilesystemPath(folder);
     } else if (item.contains("url"))
     {
-        SDL_OpenURL(item.value("url", "").c_str());
+        DesktopInterface::OpenURL(item.value("url", ""));
     }
 }
 

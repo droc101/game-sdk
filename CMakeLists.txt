@@ -162,6 +162,8 @@ target_sources(shared INTERFACE
         shared/SetupWindow.h
         shared/MaterialBrowserWindow.h
         shared/MaterialBrowserWindow.cpp
+        shared/DesktopInterface.h
+        shared/DesktopInterface.cpp
 )
 target_link_libraries(shared INTERFACE
         SDL3::SDL3
