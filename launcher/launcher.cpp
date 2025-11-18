@@ -136,7 +136,7 @@ static void Render()
     ImGui::Begin("GAME SDK", nullptr, windowFlags);
     ImGui::PopStyleVar();
 
-    const ImVec2 wndArea = ImGui::GetContentRegionAvail();
+    ImVec2 wndArea = ImGui::GetContentRegionAvail();
 
     if (ImGui::BeginChild("##list", ImVec2(wndArea.x, wndArea.y - 36), ImGuiChildFlags_Borders))
     {
@@ -160,6 +160,9 @@ static void Render()
         ImGui::EndChild();
     }
 
+    ImGui::TextDisabled("GAME SDK for Beta Testers\nVersion %s", LIBASSETS_VERSION_STRING);
+    ImGui::SameLine();
+    wndArea = ImGui::GetContentRegionAvail();
     ImGui::Dummy(ImVec2(wndArea.x - 80 - 8, 1));
     ImGui::SameLine();
     if (ImGui::Button("Launch", ImVec2(80, 32)))
