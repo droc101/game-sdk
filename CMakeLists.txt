@@ -30,7 +30,7 @@ if (WIN32)
     set(CMAKE_AUTO_RCC ON)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows")
     execute_process(
-            COMMAND cygpath -w /mingw64
+            COMMAND cygpath -w /ucrt64
             OUTPUT_VARIABLE MINGW_PATH
             OUTPUT_STRIP_TRAILING_WHITESPACE
     )
