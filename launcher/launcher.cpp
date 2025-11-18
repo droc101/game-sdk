@@ -138,7 +138,7 @@ static void Render()
 
     const ImVec2 wndArea = ImGui::GetContentRegionAvail();
 
-    if (ImGui::BeginChild("##list", ImVec2(wndArea.x, wndArea.y - 36), ImGuiChildFlags_Border))
+    if (ImGui::BeginChild("##list", ImVec2(wndArea.x, wndArea.y - 36), ImGuiChildFlags_Borders))
     {
         for (const auto &[category, items]: launcher_json.at("categories").items())
         {
