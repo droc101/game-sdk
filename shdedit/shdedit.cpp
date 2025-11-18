@@ -196,7 +196,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
         ImGui::BeginChild("ImagePane",
                           ImVec2(imageWidth, availableSize.y),
-                          ImGuiChildFlags_Border,
+                          ImGuiChildFlags_Borders,
                           ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
         {
             ImGui::InputTextMultiline("##glsl", &shader.GetGLSL(), ImVec2(-1, -1), ImGuiInputTextFlags_AllowTabInput);

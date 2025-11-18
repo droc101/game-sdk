@@ -123,7 +123,7 @@ void BatchDecompileWindow::Render(SDL_Window *window)
                                        nullptr,
                                        true);
             }
-            if (ImGui::BeginChild("##picker", ImVec2(-1, 250), ImGuiChildFlags_Border, 0))
+            if (ImGui::BeginChild("##picker", ImVec2(-1, 250), ImGuiChildFlags_Borders, 0))
             {
                 const ImVec2 availSize = ImGui::GetContentRegionAvail();
                 if (ImGui::BeginTable("fileTable", 2, ImGuiTableFlags_ScrollY, availSize))

@@ -79,7 +79,7 @@ void Viewport::RenderImGui()
     constexpr ImGuiChildFlags childFlags = ImGuiChildFlags_AlwaysAutoResize |
                                            ImGuiChildFlags_AutoResizeX |
                                            ImGuiChildFlags_AutoResizeY |
-                                           ImGuiChildFlags_Border;
+                                           ImGuiChildFlags_Borders;
     if (ImGui::BeginChild("_vp_stats", ImVec2(0, 0), childFlags))
     {
         ImGui::TextUnformatted(title.c_str());

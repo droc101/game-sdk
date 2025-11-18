@@ -74,7 +74,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                                              ImGuiWindowFlags_NoSavedSettings |
                                              ImGuiWindowFlags_NoBringToFrontOnFocus;
     ImGui::Begin("mtledit", nullptr, windowFlags);
-    bool newPressed = ImGui::Shortcut(ImGuiKey_ModCtrl | ImGuiKey_N);
+    bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S);
 

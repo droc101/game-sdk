@@ -134,7 +134,7 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
         imageSize = {imageSize.x * scale, imageSize.y * scale};
         if (ImGui::BeginChild("##imageBox",
                               {sz.x, imagePanelHeight + 16},
-                              ImGuiChildFlags_Border,
+                              ImGuiChildFlags_Borders,
                               ImGuiWindowFlags_NoResize))
         {
             sz = ImGui::GetContentRegionAvail();

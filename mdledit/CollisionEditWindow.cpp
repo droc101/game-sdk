@@ -128,7 +128,7 @@ void CollisionEditWindow::RenderCHullUI(SDL_Window *window)
                                false);
     }
     constexpr float panelHeight = 250.0f;
-    ImGui::BeginChild("ScrollableRegion", ImVec2(0, panelHeight), ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Border);
+    ImGui::BeginChild("ScrollableRegion", ImVec2(0, panelHeight), ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Borders);
     for (size_t hullIndex = 0; hullIndex < ModelRenderer::GetModel().GetNumHulls(); hullIndex++)
     {
         const std::string title = std::format("Shape {}", hullIndex);
