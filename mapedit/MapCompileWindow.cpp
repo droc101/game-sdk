@@ -98,6 +98,9 @@ void MapCompileWindow::Render(SDL_Window *window)
         StartCompile(window);
     }
     ImGui::EndDisabled();
+
+    ImGui::Separator();
+    ImGui::Text("Compiler Output:");
     ImGui::InputTextMultiline("##output",
                               &log,
                               ImVec2(-1, 300),
