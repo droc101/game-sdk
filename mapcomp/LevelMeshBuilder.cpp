@@ -101,6 +101,17 @@ void LevelMeshBuilder::AddWallBase(const std::array<float, 2> &startPoint,
                                    const Color &lightColor,
                                    const bool ccw)
 {
+    if (floorHeight > ceilingHeight)
+    {
+        printf("Compile Error: Wall with ceiling below floor, will be skipped");
+        return;
+    }
+
+    if (floorHeight == ceilingHeight)
+    {
+        return;
+    }
+
     std::array<std::array<float, 3>, 4> wallPoints{};
     wallPoints.at(0) = {startPoint[0], ceilingHeight, startPoint[1]}; // SC
     wallPoints.at(1) = {endPoint[0], ceilingHeight, endPoint[1]}; // EC
