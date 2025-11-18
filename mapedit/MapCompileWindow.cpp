@@ -1,0 +1,109 @@
+//
+// Created by droc101 on 11/18/25.
+//
+
+#include "MapCompileWindow.h"
+#include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
+#include <SDL3/SDL_filesystem.h>
+#include <SDL3/SDL_messagebox.h>
+#include "DesktopInterface.h"
+#include "MapEditor.h"
+#include "Options.h"
+
+void MapCompileWindow::StartCompile(SDL_Window *window)
+{
+    if (MapEditor::levelFile.empty())
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "The level must be saved before compiling", window);
+    } else
+    {
+        const Error::ErrorCode errorCode = MapEditor::level.SaveAsMapSrc(MapEditor::levelFile.c_str());
+        if (errorCode != Error::ErrorCode::OK)
+        {
+            log += std::format("Failed to save the level!{}\n", Error::ErrorString(errorCode));
+
+        } else
+        {
+            log = "";
+            std::string compilerPath = SDL_GetBasePath();
+            compilerPath += "mapcomp";
+#ifdef WIN32
+            compilerPath += ".exe";
+#endif
+
+            const std::string srcArgument = "--map-source=" + MapEditor::levelFile;
+            std::string dirArgument = "--assets-dir=" + Options::gamePath + "/assets";
+            if (overrideGameDir)
+            {
+                dirArgument = "--assets-dir=" + gameDir + "/assets";
+            }
+            const char *args[4] = {compilerPath.c_str(), srcArgument.c_str(), dirArgument.c_str(), nullptr};
+            compilerProcess = SDL_CreateProcess(args, true);
+            if (compilerProcess == nullptr)
+            {
+                log += std::format("Failed to launch compiler: {}\n", SDL_GetError());
+            }
+            size_t outputSize = 0;
+            int exitCode = -1;
+            void *output = SDL_ReadProcess(compilerProcess, &outputSize, &exitCode);
+            log += std::string(static_cast<char *>(output));
+            log += std::format("\nProcess exited with code {}", exitCode);
+            compilerProcess = nullptr;
+            if (exitCode == 0 && playMap)
+            {
+                std::string optPath = Options::gamePath;
+                if (overrideGameDir)
+                {
+                    optPath = gameDir + "/..";
+                }
+                std::string gameBinary = "/game";
+#ifdef WIN32
+                gameBinary += ".exe";
+#endif
+                const std::string mapName = std::filesystem::path(MapEditor::levelFile).stem().string();
+                const std::string mapArg = "--map=" + mapName;
+                if (!DesktopInterface::ExecuteProcessNonBlocking(optPath + gameBinary, {mapArg.c_str()}))
+                {
+                    log += "Failed to execute game binary";
+                }
+            }
+        }
+    }
+}
+
+void MapCompileWindow::Show()
+{
+    visible = true;
+}
+
+void MapCompileWindow::Render(SDL_Window *window)
+{
+    if (!visible)
+    {
+        return;
+    }
+    ImGui::SetNextWindowSize(ImVec2(500, -1));
+    ImGui::Begin("Compile Map", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+
+    ImGui::BeginDisabled(compilerProcess != nullptr);
+    ImGui::Checkbox("Custom Game Directory", &overrideGameDir);
+    ImGui::BeginDisabled(!overrideGameDir);
+    ImGui::InputText("##customAssets", &gameDir);
+    ImGui::EndDisabled();
+    ImGui::Checkbox("Play after compile", &playMap);
+
+    if (ImGui::Button("Compile"))
+    {
+        StartCompile(window);
+    }
+    ImGui::EndDisabled();
+    ImGui::InputTextMultiline("##output",
+                              &log,
+                              ImVec2(-1, 300),
+                              ImGuiInputTextFlags_ReadOnly |
+                                      ImGuiInputTextFlags_WordWrap |
+                                      ImGuiInputTextFlags_NoHorizontalScroll);
+
+    ImGui::End();
+}

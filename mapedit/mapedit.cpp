@@ -17,6 +17,7 @@
 #include <SDL3/SDL_video.h>
 #include "ActorBrowserWindow.h"
 #include "DialogFilters.h"
+#include "MapCompileWindow.h"
 #include "MapEditor.h"
 #include "MapPropertiesWindow.h"
 #include "MapRenderer.h"
@@ -109,67 +110,6 @@ static void openJsonCallback(void * /*userdata*/, const char *const *fileList, i
         return;
     }
     MapEditor::levelFile = fileList[0];
-}
-
-void CompileMap()
-{
-    if (MapEditor::levelFile.empty())
-    {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                 "Error",
-                                 "The level must be saved before compiling",
-                                 window);
-    } else
-    {
-        const Error::ErrorCode errorCode = MapEditor::level.SaveAsMapSrc(MapEditor::levelFile.c_str());
-        if (errorCode != Error::ErrorCode::OK)
-        {
-            if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                          "Error",
-                                          std::format("Failed to save the level!\n{}", errorCode).c_str(),
-                                          window))
-            {
-                printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-            }
-        } else
-        {
-            std::string compilerPath = SDL_GetBasePath();
-            compilerPath += "mapcomp";
-#ifdef WIN32
-            compilerPath += ".exe";
-#endif
-
-            const std::string srcArgument = "--map-source=" + MapEditor::levelFile;
-            const std::string dirArgument = "--assets-dir=" + Options::gamePath + "/assets";
-            const char *args[4] = {
-                compilerPath.c_str(),
-                srcArgument.c_str(),
-                dirArgument.c_str(),
-                NULL
-            };
-            SDL_Process *p = SDL_CreateProcess(args, false);
-            if (p == nullptr)
-            {
-                printf("Compiler launch error: %s\n", SDL_GetError());
-                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                 "Error",
-                                 "Map compiler failed to launch",
-                                 window);
-            } else
-            {
-                int exit = -1;
-                bool exited = SDL_WaitProcess(p, true, &exit);
-                if (exit != 0)
-                {
-                    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                     "Error",
-                                     std::format("Map compiler failed with code {}", exit).c_str(),
-                                     window);
-                }
-            }
-
-        }
-    }
 }
 
 static void Render(bool &done, SDL_Window *sdlWindow)
@@ -401,7 +341,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         {
             if (ImGui::MenuItem("Compile Map", "F5"))
             {
-                CompileMap();
+                MapCompileWindow::Show();
             }
             ImGui::MenuItem("Generate Benchmark TODO");
             if (ImGui::MenuItem("Actor Class Browser"))
@@ -503,6 +443,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
     ActorBrowserWindow::Render();
     MapPropertiesWindow::Render();
+    MapCompileWindow::Render(sdlWindow);
 }
 
 int main()

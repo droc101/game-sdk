@@ -10,7 +10,7 @@ See [the wiki page](https://wiki.droc101.dev/index.php/Building_GAME_SDK) instru
 
 ## System Requirements
 ### CPU
-- x86_64 with MMX, SSE, and SSE2 extensions
+- x86_64-v3 support
 ### GPU
 - OpenGL 3.3 support
 
