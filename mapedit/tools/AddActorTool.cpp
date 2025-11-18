@@ -76,7 +76,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
                 ActorDefinition def = SharedMgr::actorDefinitions.at(newActorType);
                 a.ApplyDefinition(def);
 
-                MapEditor::level.actors.push_back(a);
+                MapEditor::map.actors.push_back(a);
                 hasPlacedActor = false;
             } else
             {
@@ -103,7 +103,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
         }
     }
 
-    for (auto &sector: MapEditor::level.sectors)
+    for (auto &sector: MapEditor::map.sectors)
     {
         for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
         {
@@ -131,7 +131,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
         }
     }
 
-    for (Actor &a: MapEditor::level.actors)
+    for (Actor &a: MapEditor::map.actors)
     {
         const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
         MapRenderer::RenderBillboardPoint(pos, 10, Color(0.7, 1, 0.7, 1), matrix);

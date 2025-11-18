@@ -347,7 +347,7 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
 
             ImGui::Text("Target Actor");
             std::vector<std::string> actorNames{};
-            for (const Actor &levelActor: MapEditor::level.actors)
+            for (const Actor &levelActor: MapEditor::map.actors)
             {
                 if (!levelActor.params.contains("name"))
                 {
@@ -391,7 +391,7 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
 
             if (std::ranges::find(actorNames, connection.targetName) != actorNames.end())
             {
-                const Actor *targetActor = MapEditor::level.GetActor(connection.targetName);
+                const Actor *targetActor = MapEditor::map.GetActor(connection.targetName);
                 assert(targetActor);
                 const ActorDefinition &targetDef = SharedMgr::actorDefinitions.at(targetActor->className);
                 std::unordered_set<std::string> targetInputNames{};

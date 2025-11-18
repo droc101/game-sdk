@@ -20,13 +20,13 @@ void MapPropertiesWindow::Render()
     ImGui::Begin("Map Properties", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
     ImGui::Text("Sky Texture");
-    TextureBrowserWindow::InputTexture("##skyTexture", MapEditor::level.sky_texture);
+    TextureBrowserWindow::InputTexture("##skyTexture", MapEditor::map.sky_texture);
 
     ImGui::Text("Discord RPC icon ID");
-    ImGui::InputText("##rpcIcon", &MapEditor::level.discord_rpc_icon_id);
+    ImGui::InputText("##rpcIcon", &MapEditor::map.discord_rpc_icon_id);
 
     ImGui::Text("Discord RPC display name");
-    ImGui::InputText("##rpcName", &MapEditor::level.discord_rpc_map_name);
+    ImGui::InputText("##rpcName", &MapEditor::map.discord_rpc_map_name);
 
     ImGui::End();
 }

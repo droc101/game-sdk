@@ -27,8 +27,8 @@ class MapEditor
 
         static inline EditorToolType toolType = EditorToolType::SELECT;
 
-        static inline MapAsset level{};
-        static inline std::string levelFile = "";
+        static inline MapAsset map{};
+        static inline std::string mapFile = "";
 
         static inline int gridSpacingIndex = 2;
         static inline bool drawGrid = true;
@@ -42,8 +42,8 @@ class MapEditor
         static constexpr size_t TOOLBAR_HEIGHT = 48;
         static constexpr size_t SIDEBAR_WIDTH = 300;
         static constexpr std::array<float, 9> GRID_SPACING_VALUES = {0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0};
-        static constexpr float LEVEL_HALF_SIZE = 512;
-        static constexpr float LEVEL_SIZE = LEVEL_HALF_SIZE * 2;
+        static constexpr float MAP_HALF_SIZE = MapAsset::MAP_MAX_HALF_EXTENTS;
+        static constexpr float MAP_SIZE = MAP_HALF_SIZE * 2;
 
         static constexpr const char *SELECT_ICON_NAME = "editor/icon_select";
         static constexpr const char *ACTOR_ICON_NAME = "editor/icon_actor";

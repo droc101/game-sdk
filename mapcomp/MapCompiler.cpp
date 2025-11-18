@@ -161,6 +161,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
                         foundAdjWall = true;
                         adjFloor = otherSector.floorHeight;
                         adjCeil = otherSector.ceilingHeight;
+                        break;
                     }
                 }
             }

@@ -13,12 +13,12 @@
 
 void MapCompileWindow::StartCompile(SDL_Window *window)
 {
-    if (MapEditor::levelFile.empty())
+    if (MapEditor::mapFile.empty())
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "The level must be saved before compiling", window);
     } else
     {
-        const Error::ErrorCode errorCode = MapEditor::level.SaveAsMapSrc(MapEditor::levelFile.c_str());
+        const Error::ErrorCode errorCode = MapEditor::map.SaveAsMapSrc(MapEditor::mapFile.c_str());
         if (errorCode != Error::ErrorCode::OK)
         {
             log += std::format("Failed to save the level!{}\n", Error::ErrorString(errorCode));
@@ -32,7 +32,7 @@ void MapCompileWindow::StartCompile(SDL_Window *window)
             compilerPath += ".exe";
 #endif
 
-            const std::string srcArgument = "--map-source=" + MapEditor::levelFile;
+            const std::string srcArgument = "--map-source=" + MapEditor::mapFile;
             std::string dirArgument = "--assets-dir=" + Options::gamePath + "/assets";
             if (overrideGameDir)
             {
@@ -61,7 +61,7 @@ void MapCompileWindow::StartCompile(SDL_Window *window)
 #ifdef WIN32
                 gameBinary += ".exe";
 #endif
-                const std::string mapName = std::filesystem::path(MapEditor::levelFile).stem().string();
+                const std::string mapName = std::filesystem::path(MapEditor::mapFile).stem().string();
                 const std::string mapArg = "--map=" + mapName;
                 if (!DesktopInterface::ExecuteProcessNonBlocking(optPath + gameBinary, {mapArg.c_str()}))
                 {

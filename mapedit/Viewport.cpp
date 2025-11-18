@@ -199,25 +199,25 @@ glm::mat4 Viewport::GetMatrix() const
     const float right = scrollCenterPos.x + halfWidth;
     const float top = scrollCenterPos.y + halfHeight;
     const float bottom = scrollCenterPos.y - halfHeight;
-    const glm::mat4 ortho = glm::ortho(left, right, bottom, top, 0.01f, MapEditor::LEVEL_SIZE + 100);
+    const glm::mat4 ortho = glm::ortho(left, right, bottom, top, 0.01f, MapEditor::MAP_SIZE + 100);
 
     glm::vec3 up;
     glm::vec3 eye;
     glm::vec3 target;
     if (type == ViewportType::TOP_DOWN_XZ)
     {
-        target = glm::vec3(0, MapEditor::LEVEL_HALF_SIZE + 8, 0);
-        eye = glm::vec3(0, MapEditor::LEVEL_HALF_SIZE + 18, 0);
+        target = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 8, 0);
+        eye = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 18, 0);
         up = glm::vec3(0, 0, 1);
     } else if (type == ViewportType::SIDE_YZ)
     {
-        target = glm::vec3(MapEditor::LEVEL_HALF_SIZE + 8, 0, 0);
-        eye = glm::vec3(MapEditor::LEVEL_HALF_SIZE + 18, 0, 0);
+        target = glm::vec3(MapEditor::MAP_HALF_SIZE + 8, 0, 0);
+        eye = glm::vec3(MapEditor::MAP_HALF_SIZE + 18, 0, 0);
         up = glm::vec3(0, 1, 0);
     } else
     {
-        target = glm::vec3(0, 0, MapEditor::LEVEL_HALF_SIZE + 8);
-        eye = glm::vec3(0, 0, MapEditor::LEVEL_HALF_SIZE + 18);
+        target = glm::vec3(0, 0, MapEditor::MAP_HALF_SIZE + 8);
+        eye = glm::vec3(0, 0, MapEditor::MAP_HALF_SIZE + 18);
         up = glm::vec3(0, 1, 0);
     }
 
@@ -254,9 +254,9 @@ void Viewport::ClampZoom()
     {
         zoom = 5;
     }
-    if (zoom > MapEditor::LEVEL_SIZE + 500)
+    if (zoom > MapEditor::MAP_SIZE + 500)
     {
-        zoom = MapEditor::LEVEL_SIZE + 500;
+        zoom = MapEditor::MAP_SIZE + 500;
     }
 }
 

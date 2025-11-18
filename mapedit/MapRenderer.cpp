@@ -40,12 +40,12 @@ bool MapRenderer::Init()
     axisHelperBuffer = GLHelper::CreateBuffer();
     // clang-format off
     const std::vector<float> axisHelperVerts = {
-        0, -MapEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0,
-        0, MapEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0,
-        -MapEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0, 0,
-        MapEditor::LEVEL_HALF_SIZE, 0, 0, 1, 0, 0,
-        0, 0, -MapEditor::LEVEL_HALF_SIZE, 0, 0, 1,
-        0, 0, MapEditor::LEVEL_HALF_SIZE, 0, 0, 1,
+        0, -MapEditor::MAP_HALF_SIZE, 0, 0, 1, 0,
+        0, MapEditor::MAP_HALF_SIZE, 0, 0, 1, 0,
+        -MapEditor::MAP_HALF_SIZE, 0, 0, 1, 0, 0,
+        MapEditor::MAP_HALF_SIZE, 0, 0, 1, 0, 0,
+        0, 0, -MapEditor::MAP_HALF_SIZE, 0, 0, 1,
+        0, 0, MapEditor::MAP_HALF_SIZE, 0, 0, 1,
     };
     // clang-format on
     GLHelper::BindBuffer(axisHelperBuffer);
@@ -57,30 +57,30 @@ bool MapRenderer::Init()
     worldBorderBuffer = GLHelper::CreateBuffer();
     // clang-format off
     const std::vector<float> verts = {
-        -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, -MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
-        -MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, MapEditor::LEVEL_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, -MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
+        -MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, MapEditor::MAP_HALF_SIZE, 0.5, 0.5, 0.5,
     };
     // clang-format on
     GLHelper::BindBuffer(worldBorderBuffer);
@@ -126,7 +126,7 @@ void MapRenderer::RenderViewport(const Viewport &vp)
     if (MapEditor::drawGrid)
     {
         const float gridSpacing = MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex);
-        const int numInstances = static_cast<int>(MapEditor::LEVEL_SIZE * 2 / gridSpacing);
+        const int numInstances = static_cast<int>(MapEditor::MAP_SIZE * 2 / gridSpacing);
 
         glUseProgram(gridProgram);
         glUniformMatrix4fv(glGetUniformLocation(gridProgram, "matrix"), 1, GL_FALSE, glm::value_ptr(view));

@@ -29,7 +29,7 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                Actor &actor = MapEditor::level.actors.at(selectionIndex);
+                Actor &actor = MapEditor::map.actors.at(selectionIndex);
                 const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
                 actor.position[0] = snapped.x;
                 actor.position[2] = snapped.z;
@@ -44,7 +44,7 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                Sector &sector = MapEditor::level.sectors.at(focusedSectorIndex);
+                Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
                 const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
                 sector.points[selectionVertexIndex][0] = snapped.x;
                 sector.points[selectionVertexIndex][1] = snapped.z;
@@ -59,7 +59,7 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                Sector &sector = MapEditor::level.sectors.at(focusedSectorIndex);
+                Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
                 const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
                 const glm::vec2 startPos = worldHover2D - lineDragModeMouseOffset;
                 const glm::vec2 endPos = startPos - lineDragModeSecondVertexOffset;
@@ -84,7 +84,7 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                Actor &actor = MapEditor::level.actors.at(selectionIndex);
+                Actor &actor = MapEditor::map.actors.at(selectionIndex);
                 const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
                 if (vp.GetType() == Viewport::ViewportType::SIDE_YZ)
                 {
@@ -105,7 +105,7 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-                Sector &sector = MapEditor::level.sectors.at(focusedSectorIndex);
+                Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
                 const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
                 sector.ceilingHeight = snapped.y;
                 dragging = true;
@@ -118,7 +118,7 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-                Sector &sector = MapEditor::level.sectors.at(focusedSectorIndex);
+                Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
                 const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
                 sector.floorHeight = snapped.y;
                 dragging = true;
@@ -326,9 +326,9 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
 {
     hoverType = ItemType::NONE;
 
-    for (size_t sectorIndex = 0; sectorIndex < MapEditor::level.sectors.size(); sectorIndex++)
+    for (size_t sectorIndex = 0; sectorIndex < MapEditor::map.sectors.size(); sectorIndex++)
     {
-        Sector &sector = MapEditor::level.sectors.at(sectorIndex);
+        Sector &sector = MapEditor::map.sectors.at(sectorIndex);
         if (focusedSectorIndex == sectorIndex)
         {
             continue;
@@ -360,9 +360,9 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
         sectorFocusMode = false;
     }
 
-    for (size_t sectorIndex = 0; sectorIndex < MapEditor::level.sectors.size(); sectorIndex++)
+    for (size_t sectorIndex = 0; sectorIndex < MapEditor::map.sectors.size(); sectorIndex++)
     {
-        Sector &sector = MapEditor::level.sectors.at(sectorIndex);
+        Sector &sector = MapEditor::map.sectors.at(sectorIndex);
         if (focusedSectorIndex == sectorIndex)
         {
             ProcessSectorHover(vp, sector, isHovered, screenSpaceHover, sectorIndex);
@@ -427,7 +427,7 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
         }
     }
 
-    for (Actor &a: MapEditor::level.actors)
+    for (Actor &a: MapEditor::map.actors)
     {
         const Color vertexColor = Color(0.8, 0, 0, 1);
         const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
@@ -440,7 +440,7 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
     {
         if (selectionType == ItemType::VERTEX || selectionType == ItemType::LINE)
         {
-            Sector &s = MapEditor::level.sectors.at(selectionIndex);
+            Sector &s = MapEditor::map.sectors.at(selectionIndex);
             if (s.points.size() > 3)
             {
                 s.points.erase(s.points.begin() + selectionVertexIndex);
@@ -458,9 +458,9 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
 {
     hoverType = ItemType::NONE;
 
-    for (size_t actorIndex = 0; actorIndex < MapEditor::level.actors.size(); actorIndex++)
+    for (size_t actorIndex = 0; actorIndex < MapEditor::map.actors.size(); actorIndex++)
     {
-        Actor &a = MapEditor::level.actors.at(actorIndex);
+        Actor &a = MapEditor::map.actors.at(actorIndex);
         const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
         const glm::vec2 posScreenSpace = vp.WorldToScreenPos(pos);
         const ImVec2 hoverScreenSpaceIV = vp.GetLocalMousePos();
@@ -486,9 +486,9 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
         MapRenderer::RenderBillboardPoint(pos, 10, c, matrix);
     }
 
-    for (size_t sectorIndex = 0; sectorIndex < MapEditor::level.sectors.size(); sectorIndex++)
+    for (size_t sectorIndex = 0; sectorIndex < MapEditor::map.sectors.size(); sectorIndex++)
     {
-        Sector &sector = MapEditor::level.sectors.at(sectorIndex);
+        Sector &sector = MapEditor::map.sectors.at(sectorIndex);
         if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ &&
             hoverType == ItemType::NONE &&
             sector.ContainsPoint({worldSpaceHover.x, worldSpaceHover.z}) &&
@@ -568,11 +568,11 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
     {
         if (selectionType == ItemType::ACTOR)
         {
-            MapEditor::level.actors.erase(MapEditor::level.actors.begin() + selectionIndex);
+            MapEditor::map.actors.erase(MapEditor::map.actors.begin() + selectionIndex);
             selectionType = ItemType::NONE;
         } else if (selectionType == ItemType::SECTOR)
         {
-            MapEditor::level.sectors.erase(MapEditor::level.sectors.begin() + selectionIndex);
+            MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + selectionIndex);
             selectionType = ItemType::NONE;
         }
     }
@@ -609,7 +609,7 @@ void SelectTool::RenderViewport(Viewport &vp)
 
     if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ && selectionType == ItemType::ACTOR)
     {
-        EditActorWindow::Render(MapEditor::level.actors.at(selectionIndex));
+        EditActorWindow::Render(MapEditor::map.actors.at(selectionIndex));
     }
 }
 
@@ -628,35 +628,35 @@ void SelectTool::RenderToolWindow()
             break;
         case ItemType::VERTEX:
             ImGui::InputFloat2("##vertexPosition",
-                               MapEditor::level.sectors.at(focusedSectorIndex)
+                               MapEditor::map.sectors.at(focusedSectorIndex)
                                        .points.at(selectionVertexIndex)
                                        .data());
             break;
         case ItemType::LINE:
-            MapEditor::MaterialToolWindow(MapEditor::level.sectors.at(focusedSectorIndex)
+            MapEditor::MaterialToolWindow(MapEditor::map.sectors.at(focusedSectorIndex)
                                                     .wallMaterials.at(selectionVertexIndex));
             break;
         case ItemType::CEILING:
-            MapEditor::MaterialToolWindow(MapEditor::level.sectors.at(focusedSectorIndex).ceilingMaterial);
+            MapEditor::MaterialToolWindow(MapEditor::map.sectors.at(focusedSectorIndex).ceilingMaterial);
             ImGui::Separator();
             ImGui::Text("Height");
-            ImGui::InputFloat("##ceilHeight", &MapEditor::level.sectors.at(focusedSectorIndex).ceilingHeight);
+            ImGui::InputFloat("##ceilHeight", &MapEditor::map.sectors.at(focusedSectorIndex).ceilingHeight);
             break;
         case ItemType::FLOOR:
-            MapEditor::MaterialToolWindow(MapEditor::level.sectors.at(focusedSectorIndex).floorMaterial);
+            MapEditor::MaterialToolWindow(MapEditor::map.sectors.at(focusedSectorIndex).floorMaterial);
             ImGui::Separator();
             ImGui::Text("Height");
-            ImGui::InputFloat("##floorHeight", &MapEditor::level.sectors.at(focusedSectorIndex).floorHeight);
+            ImGui::InputFloat("##floorHeight", &MapEditor::map.sectors.at(focusedSectorIndex).floorHeight);
             break;
         case ItemType::SECTOR:
             ImGui::ColorEdit4("##sectorColor",
-                              MapEditor::level.sectors.at(focusedSectorIndex).lightColor.GetDataPointer());
+                              MapEditor::map.sectors.at(focusedSectorIndex).lightColor.GetDataPointer());
             break;
         case ItemType::ACTOR:
             ImGui::Text("Position");
-            ImGui::InputFloat3("##position", MapEditor::level.actors.at(selectionIndex).position.data());
+            ImGui::InputFloat3("##position", MapEditor::map.actors.at(selectionIndex).position.data());
             ImGui::Text("Rotation");
-            ImGui::InputFloat3("##rotation", MapEditor::level.actors.at(selectionIndex).rotation.data());
+            ImGui::InputFloat3("##rotation", MapEditor::map.actors.at(selectionIndex).rotation.data());
             break;
         default:
             ImGui::Text("The current selection has no properties");

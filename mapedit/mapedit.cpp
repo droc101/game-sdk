@@ -76,7 +76,7 @@ static void saveJsonCallback(void * /*userdata*/, const char *const *fileList, i
     {
         return;
     }
-    const Error::ErrorCode errorCode = MapEditor::level.SaveAsMapSrc(fileList[0]);
+    const Error::ErrorCode errorCode = MapEditor::map.SaveAsMapSrc(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
@@ -88,7 +88,7 @@ static void saveJsonCallback(void * /*userdata*/, const char *const *fileList, i
         }
         return;
     }
-    MapEditor::levelFile = fileList[0];
+    MapEditor::mapFile = fileList[0];
 }
 
 static void openJsonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -97,7 +97,7 @@ static void openJsonCallback(void * /*userdata*/, const char *const *fileList, i
     {
         return;
     }
-    const Error::ErrorCode errorCode = MapAsset::CreateFromMapSrc(fileList[0], MapEditor::level);
+    const Error::ErrorCode errorCode = MapAsset::CreateFromMapSrc(fileList[0], MapEditor::map);
     if (errorCode != Error::ErrorCode::OK)
     {
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
@@ -109,7 +109,7 @@ static void openJsonCallback(void * /*userdata*/, const char *const *fileList, i
         }
         return;
     }
-    MapEditor::levelFile = fileList[0];
+    MapEditor::mapFile = fileList[0];
 }
 
 static void Render(bool &done, SDL_Window *sdlWindow)
@@ -177,10 +177,10 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         {
             if (ImGui::MenuItem("New", "Ctrl+N"))
             {
-                MapEditor::level = MapAsset();
+                MapEditor::map = MapAsset();
                 MapEditor::toolType = MapEditor::EditorToolType::SELECT;
                 MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
-                MapEditor::levelFile = "";
+                MapEditor::mapFile = "";
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Open", "Ctrl+O"))
