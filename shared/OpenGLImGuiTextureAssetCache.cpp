@@ -14,11 +14,7 @@
 #include <vector>
 #include "Options.h"
 
-OpenGLImGuiTextureAssetCache::OpenGLImGuiTextureAssetCache()
-{
-    const TextureAsset texture;
-    this->missingTexture = static_cast<ImTextureID>(CreateTexture(texture));
-}
+OpenGLImGuiTextureAssetCache::OpenGLImGuiTextureAssetCache(): ImGuiTextureAssetCache() {}
 
 OpenGLImGuiTextureAssetCache::~OpenGLImGuiTextureAssetCache()
 {
@@ -28,6 +24,13 @@ OpenGLImGuiTextureAssetCache::~OpenGLImGuiTextureAssetCache()
         glDeleteTextures(1, &tex);
     }
     textureBuffers.clear();
+}
+
+void OpenGLImGuiTextureAssetCache::InitMissingTexture()
+{
+    TextureAsset texture;
+    TextureAsset::CreateMissingTexture(texture);
+    this->missingTexture = static_cast<ImTextureID>(CreateTexture(texture));
 }
 
 

@@ -15,6 +15,8 @@ class OpenGLImGuiTextureAssetCache final: public ImGuiTextureAssetCache
 
         ~OpenGLImGuiTextureAssetCache() override;
 
+        void InitMissingTexture();
+
         [[nodiscard]] Error::ErrorCode GetTextureID(const std::string &relPath, ImTextureID &outTexture) override;
 
         [[nodiscard]] Error::ErrorCode GetTextureSize(const std::string &relPath, ImVec2 &outSize) override;

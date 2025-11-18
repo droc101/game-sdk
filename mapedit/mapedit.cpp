@@ -531,6 +531,8 @@ int main()
         return -1;
     }
 
+    dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache.get())->InitMissingTexture();
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
