@@ -7,6 +7,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <glm/detail/func_geometric.inl>
+#include <glm/vec2.hpp>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Asset.h>
@@ -19,6 +21,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include "LevelMeshBuilder.h"
 #include "libassets/asset/LevelMaterialAsset.h"
 
@@ -124,15 +127,55 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     }
 
     std::unordered_map<std::string, LevelMeshBuilder> meshBuilders{};
-    for (const Sector &sector: map.sectors)
+    for (size_t sectorIndex = 0; sectorIndex < map.sectors.size(); sectorIndex++)
     {
+        const Sector &sector = map.sectors[sectorIndex];
         for (size_t i = 0; i < sector.points.size(); i++)
         {
+            const std::array<float, 2> &wallStart = sector.points.at(i);
+            const std::array<float, 2> &wallEnd = sector.points.at((i + 1) % sector.points.size());
+            const glm::vec2 wallStartV = glm::vec2(wallStart[0], wallStart[1]);
+            const glm::vec2 wallEndV = glm::vec2(wallEnd[0], wallEnd[1]);
+            bool foundAdjWall = false;
+            float adjFloor = 0;
+            float adjCeil = 0;
+            for (size_t otherSectorIndex = 0; otherSectorIndex < map.sectors.size(); otherSectorIndex++)
+            {
+                const Sector &otherSector = map.sectors[otherSectorIndex];
+                if (sectorIndex == otherSectorIndex)
+                {
+                    continue;
+                }
+                for (size_t j = 0; j < otherSector.points.size(); j++)
+                {
+                    const std::array<float, 2> &otherWallStart = otherSector.points.at(j);
+                    const std::array<float, 2> &otherWallEnd = otherSector.points.at((j + 1) %
+                                                                                     otherSector.points.size());
+                    const glm::vec2 otherWallStartV = glm::vec2(otherWallStart[0], otherWallStart[1]);
+                    const glm::vec2 otherWallEndV = glm::vec2(otherWallEnd[0], otherWallEnd[1]);
+                    if ((wallStartV == otherWallStartV && wallEndV == otherWallEndV) ||
+                        (wallStartV == otherWallEndV && wallEndV == otherWallStartV))
+                    {
+                        // MATCH FOUND!!!
+                        printf("Found adjacent walls %zu,%zu and %zu,%zu\n", sectorIndex, i, otherSectorIndex, j);
+                        foundAdjWall = true;
+                        adjFloor = otherSector.floorHeight;
+                        adjCeil = otherSector.ceilingHeight;
+                    }
+                }
+            }
+
             const WallMaterial &mat = sector.wallMaterials.at(i);
             const LevelMaterialAsset mapMaterial = GetMapMaterial(mat.material);
             if (!mapMaterial.compileInvisible)
             {
-                meshBuilders[mat.material].AddWall(sector, i);
+                if (foundAdjWall)
+                {
+                    meshBuilders[mat.material].AddWallWithGap(sector, i, adjFloor, adjCeil);
+                } else
+                {
+                    meshBuilders[mat.material].AddWall(sector, i);
+                }
             }
         }
         const LevelMaterialAsset ceilingMaterial = GetMapMaterial(sector.ceilingMaterial.material);

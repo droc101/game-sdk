@@ -16,6 +16,7 @@ class LevelMeshBuilder
     public:
         LevelMeshBuilder() = default;
 
+        void AddWallWithGap(const Sector &sector, size_t wallIndex, float adjFloor, float adjCeil);
         void AddWall(const Sector &sector, size_t wallIndex);
         void AddFloor(const Sector &sector);
         void AddCeiling(const Sector &sector);
@@ -27,5 +28,15 @@ class LevelMeshBuilder
         std::vector<uint32_t> indices{};
         uint32_t currentIndex = 0;
 
+        static float CalculateSLength(const Sector &sector, size_t wallIndex);
+        void AddWallBase(const std::array<float, 2> &startPoint,
+                         const std::array<float, 2> &endPoint,
+                         const WallMaterial &mat,
+                         std::array<float, 2> normal,
+                         float sLength,
+                         float floorHeight,
+                         float ceilingHeight,
+                         const Color &lightColor,
+                         bool ccw);
         void AddSectorBase(const Sector &sector, bool isFloor);
 };

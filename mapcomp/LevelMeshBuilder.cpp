@@ -25,7 +25,58 @@ void LevelMeshBuilder::AddFloor(const Sector &sector)
     AddSectorBase(sector, true);
 }
 
+void LevelMeshBuilder::AddWallWithGap(const Sector &sector, size_t wallIndex, float adjFloor, float adjCeil)
+{
+    if (adjFloor == sector.floorHeight && adjCeil == sector.ceilingHeight)
+    {
+        return;
+    }
+
+    const float sLength = CalculateSLength(sector, wallIndex);
+
+    const WallMaterial &mat = sector.wallMaterials[wallIndex];
+
+    const std::array<float, 2> &startPoint = sector.points.at(wallIndex);
+    const std::array<float, 2> &endPoint = sector.points.at((wallIndex + 1) % (sector.points.size()));
+
+    const std::array<float, 2> normal = sector.SegmentNormal(wallIndex);
+    const bool ccw = sector.CalculateArea() > 0;
+
+    if (adjFloor > sector.floorHeight)
+    {
+        AddWallBase(startPoint, endPoint, mat, normal, sLength, sector.floorHeight, adjFloor, sector.lightColor, ccw);
+    }
+    if (adjCeil < sector.ceilingHeight)
+    {
+        AddWallBase(startPoint, endPoint, mat, normal, sLength, adjCeil, sector.ceilingHeight, sector.lightColor, ccw);
+    }
+}
+
+
 void LevelMeshBuilder::AddWall(const Sector &sector, const size_t wallIndex)
+{
+    const float sLength = CalculateSLength(sector, wallIndex);
+
+    const WallMaterial &mat = sector.wallMaterials[wallIndex];
+
+    const std::array<float, 2> &startPoint = sector.points.at(wallIndex);
+    const std::array<float, 2> &endPoint = sector.points.at((wallIndex + 1) % (sector.points.size()));
+
+    const std::array<float, 2> normal = sector.SegmentNormal(wallIndex);
+    const bool ccw = sector.CalculateArea() > 0;
+
+    AddWallBase(startPoint,
+                endPoint,
+                mat,
+                normal,
+                sLength,
+                sector.floorHeight,
+                sector.ceilingHeight,
+                sector.lightColor,
+                ccw);
+}
+
+float LevelMeshBuilder::CalculateSLength(const Sector &sector, const size_t wallIndex)
 {
     float sLength = 0;
     for (size_t i = 0; i < wallIndex; i++)
@@ -36,17 +87,26 @@ void LevelMeshBuilder::AddWall(const Sector &sector, const size_t wallIndex)
         const glm::vec2 endPointV = {endPoint[0], endPoint[1]};
         sLength += glm::distance(startPointV, endPointV);
     }
+    return sLength;
+}
 
-    const WallMaterial &mat = sector.wallMaterials[wallIndex];
 
-    const std::array<float, 2> &startPoint = sector.points.at(wallIndex);
-    const std::array<float, 2> &endPoint = sector.points.at((wallIndex + 1) % (sector.points.size()));
+void LevelMeshBuilder::AddWallBase(const std::array<float, 2> &startPoint,
+                                   const std::array<float, 2> &endPoint,
+                                   const WallMaterial &mat,
+                                   std::array<float, 2> normal,
+                                   const float sLength,
+                                   const float floorHeight,
+                                   const float ceilingHeight,
+                                   const Color &lightColor,
+                                   const bool ccw)
+{
     std::array<std::array<float, 3>, 4> wallPoints{};
-    wallPoints.at(0) = {startPoint[0], sector.ceilingHeight, startPoint[1]}; // SC
-    wallPoints.at(1) = {endPoint[0], sector.ceilingHeight, endPoint[1]}; // EC
+    wallPoints.at(0) = {startPoint[0], ceilingHeight, startPoint[1]}; // SC
+    wallPoints.at(1) = {endPoint[0], ceilingHeight, endPoint[1]}; // EC
 
-    wallPoints.at(2) = {startPoint[0], sector.floorHeight, startPoint[1]}; // SF
-    wallPoints.at(3) = {endPoint[0], sector.floorHeight, endPoint[1]}; // EF
+    wallPoints.at(2) = {startPoint[0], floorHeight, startPoint[1]}; // SF
+    wallPoints.at(3) = {endPoint[0], floorHeight, endPoint[1]}; // EF
 
     const glm::vec2 startPointV = {startPoint[0], startPoint[1]};
     const glm::vec2 endPointV = {endPoint[0], endPoint[1]};
@@ -55,8 +115,7 @@ void LevelMeshBuilder::AddWall(const Sector &sector, const size_t wallIndex)
     for (const std::array<float, 3> &point: wallPoints)
     {
         ModelVertex v{};
-        v.color = sector.lightColor;
-        std::array<float, 2> normal = sector.SegmentNormal(wallIndex);
+        v.color = lightColor;
         v.normal[0] = normal[0];
         v.normal[1] = 0;
         v.normal[2] = -normal[1];
@@ -86,7 +145,6 @@ void LevelMeshBuilder::AddWall(const Sector &sector, const size_t wallIndex)
     indices.push_back(2 + currentIndex);
     indices.push_back(3 + currentIndex);
 
-    const bool ccw = sector.CalculateArea() > 0;
     if (!ccw)
     {
         for (size_t i = indices.size() - 6; i + 2 < indices.size(); i += 3)
@@ -97,6 +155,7 @@ void LevelMeshBuilder::AddWall(const Sector &sector, const size_t wallIndex)
 
     currentIndex += 4;
 }
+
 
 void LevelMeshBuilder::AddSectorBase(const Sector &sector, const bool isFloor)
 {
