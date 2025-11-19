@@ -213,6 +213,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
         }
         if (!floorMaterial.compileNoClip)
         {
+            builder.NextShape();
             builder.AddFloor();
         }
 

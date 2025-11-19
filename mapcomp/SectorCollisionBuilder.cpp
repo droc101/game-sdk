@@ -19,8 +19,24 @@
 SectorCollisionBuilder::SectorCollisionBuilder(const Sector &sector)
 {
     this->sector = &sector;
+    std::array<float, 2> sums{};
+    for (const std::array<float, 2> &point: sector.points)
+    {
+        sums[0] += point[0];
+        sums[1] += point[1];
+    }
+
+    sectorCenter[0] = sums[0] / sector.points.size();
+    sectorCenter[2] = sums[1] / sector.points.size();
+    sectorCenter[1] = (sector.floorHeight + sector.ceilingHeight) / 2.0f;
+
+    NextShape();
 }
 
+void SectorCollisionBuilder::NextShape()
+{
+    shapes.emplace_back();
+}
 
 void SectorCollisionBuilder::AddCeiling()
 {
@@ -32,14 +48,14 @@ void SectorCollisionBuilder::AddFloor()
     AddSectorBase(true);
 }
 
-void SectorCollisionBuilder::AddSectorBase(bool isFloor)
+void SectorCollisionBuilder::AddSectorBase(const bool isFloor)
 {
     const std::vector<std::vector<std::array<float, 2>>> polygon{sector->points};
     std::vector<uint32_t> idx = mapbox::earcut<uint32_t>(polygon);
 
     for (const std::array<float, 2> &point: sector->points)
     {
-        vertices.push_back({point.at(0), isFloor ? sector->floorHeight : sector->ceilingHeight, point.at(1)});
+        CurrentShape().vertices.push_back({point.at(0), isFloor ? sector->floorHeight : sector->ceilingHeight, point.at(1)});
     }
 
     if (isFloor)
@@ -52,12 +68,12 @@ void SectorCollisionBuilder::AddSectorBase(bool isFloor)
 
     for (const uint32_t i: idx)
     {
-        indices.push_back(i + currentIndex);
+        CurrentShape().indices.push_back(i + CurrentShape().currentIndex);
     }
-    currentIndex += sector->points.size();
+    CurrentShape().currentIndex += sector->points.size();
 }
 
-void SectorCollisionBuilder::AddWall(size_t wallIndex)
+void SectorCollisionBuilder::AddWall(const size_t wallIndex)
 {
     const std::array<float, 2> &startPoint = sector->points.at(wallIndex);
     const std::array<float, 2> &endPoint = sector->points.at((wallIndex + 1) % (sector->points.size()));
@@ -67,7 +83,7 @@ void SectorCollisionBuilder::AddWall(size_t wallIndex)
     AddWallBase(startPoint, endPoint, sector->floorHeight, sector->ceilingHeight, ccw);
 }
 
-void SectorCollisionBuilder::AddWallWithGap(size_t wallIndex, float adjFloor, float adjCeil)
+void SectorCollisionBuilder::AddWallWithGap(const size_t wallIndex, const float adjFloor, const float adjCeil)
 {
     if (adjFloor == sector->floorHeight && adjCeil == sector->ceilingHeight)
     {
@@ -92,9 +108,9 @@ void SectorCollisionBuilder::AddWallWithGap(size_t wallIndex, float adjFloor, fl
 
 void SectorCollisionBuilder::AddWallBase(const std::array<float, 2> &startPoint,
                                          const std::array<float, 2> &endPoint,
-                                         float floorHeight,
-                                         float ceilingHeight,
-                                         bool counterClockWise)
+                                         const float floorHeight,
+                                         const float ceilingHeight,
+                                         const bool counterClockWise)
 {
     if (floorHeight > ceilingHeight)
     {
@@ -116,35 +132,55 @@ void SectorCollisionBuilder::AddWallBase(const std::array<float, 2> &startPoint,
 
     for (const std::array<float, 3> &point: wallPoints)
     {
-        vertices.push_back(point);
+        CurrentShape().vertices.push_back(point);
     }
 
-    indices.push_back(2 + currentIndex);
-    indices.push_back(1 + currentIndex);
-    indices.push_back(0 + currentIndex);
+    CurrentShape().indices.push_back(2 + CurrentShape().currentIndex);
+    CurrentShape().indices.push_back(1 + CurrentShape().currentIndex);
+    CurrentShape().indices.push_back(0 + CurrentShape().currentIndex);
 
-    indices.push_back(1 + currentIndex);
-    indices.push_back(2 + currentIndex);
-    indices.push_back(3 + currentIndex);
+    CurrentShape().indices.push_back(1 + CurrentShape().currentIndex);
+    CurrentShape().indices.push_back(2 + CurrentShape().currentIndex);
+    CurrentShape().indices.push_back(3 + CurrentShape().currentIndex);
 
     if (!counterClockWise)
     {
-        for (size_t i = indices.size() - 6; i + 2 < indices.size(); i += 3)
+        for (size_t i = CurrentShape().indices.size() - 6; i + 2 < CurrentShape().indices.size(); i += 3)
         {
-            std::swap(indices[i], indices[i + 2]);
+            std::swap(CurrentShape().indices[i], CurrentShape().indices[i + 2]);
         }
     }
 
-    currentIndex += 4;
+    CurrentShape().currentIndex += 4;
 }
 
 void SectorCollisionBuilder::Write(DataWriter &writer) const
 {
-    writer.Write<size_t>(indices.size() / 3);
-    for (size_t i = 0; i < indices.size(); i += 3)
+    writer.WriteBuffer<float>(sectorCenter);
+    writer.Write<size_t>(shapes.size());
+    for (const SubShape &shape: shapes)
     {
-        writer.WriteBuffer<float>(vertices.at(indices.at(i)));
-        writer.WriteBuffer<float>(vertices.at(indices.at(i + 1)));
-        writer.WriteBuffer<float>(vertices.at(indices.at(i + 2)));
+        writer.Write<size_t>(shape.indices.size() / 3);
+        for (size_t i = 0; i < shape.indices.size(); i += 3)
+        {
+            WriteIndex(shape.indices.at(i), writer, shape);
+            WriteIndex(shape.indices.at(i + 1), writer, shape);
+            WriteIndex(shape.indices.at(i + 2), writer, shape);
+        }
     }
 }
+
+void SectorCollisionBuilder::WriteIndex(const size_t index, DataWriter &writer, const SubShape &shape) const
+{
+    std::array<float, 3> vertex = shape.vertices.at(index);
+    vertex.at(0) -= sectorCenter.at(0);
+    vertex.at(1) -= sectorCenter.at(1);
+    vertex.at(2) -= sectorCenter.at(2);
+    writer.WriteBuffer<float>(vertex);
+}
+
+SectorCollisionBuilder::SubShape &SectorCollisionBuilder::CurrentShape()
+{
+    return shapes.at(shapes.size() - 1);
+}
+
