@@ -220,6 +220,10 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
         collisionBuilders.push_back(builder);
     }
 
+    std::erase_if(meshBuilders, [](const std::pair<std::string, LevelMeshBuilder> &item) {
+        return item.second.IsEmpty();
+    });
+
     writer.Write<size_t>(meshBuilders.size());
     for (const std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)
     {
@@ -227,7 +231,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     }
 
     writer.Write<size_t>(collisionBuilders.size());
-    for (const SectorCollisionBuilder &builder: collisionBuilders)
+    for (SectorCollisionBuilder &builder: collisionBuilders)
     {
         builder.Write(writer);
     }

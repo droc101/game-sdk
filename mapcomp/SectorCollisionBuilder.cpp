@@ -55,7 +55,9 @@ void SectorCollisionBuilder::AddSectorBase(const bool isFloor)
 
     for (const std::array<float, 2> &point: sector->points)
     {
-        CurrentShape().vertices.push_back({point.at(0), isFloor ? sector->floorHeight : sector->ceilingHeight, point.at(1)});
+        CurrentShape().vertices.push_back({point.at(0),
+                                           isFloor ? sector->floorHeight : sector->ceilingHeight,
+                                           point.at(1)});
     }
 
     if (isFloor)
@@ -154,8 +156,10 @@ void SectorCollisionBuilder::AddWallBase(const std::array<float, 2> &startPoint,
     CurrentShape().currentIndex += 4;
 }
 
-void SectorCollisionBuilder::Write(DataWriter &writer) const
+void SectorCollisionBuilder::Write(DataWriter &writer)
 {
+    std::erase_if(shapes, [](const SubShape &s) { return s.indices.size() < 3 || s.vertices.empty(); });
+
     writer.WriteBuffer<float>(sectorCenter);
     writer.Write<size_t>(shapes.size());
     for (const SubShape &shape: shapes)
@@ -183,4 +187,3 @@ SectorCollisionBuilder::SubShape &SectorCollisionBuilder::CurrentShape()
 {
     return shapes.at(shapes.size() - 1);
 }
-

@@ -22,7 +22,7 @@ class SectorCollisionBuilder
 
         void NextShape();
 
-        void Write(DataWriter &writer) const;
+        void Write(DataWriter &writer);
 
     private:
         struct SubShape

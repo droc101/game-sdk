@@ -224,3 +224,9 @@ void LevelMeshBuilder::Write(DataWriter &writer, const std::string &materialPath
     writer.Write<uint32_t>(indices.size());
     writer.WriteBuffer<uint32_t>(indices);
 }
+
+bool LevelMeshBuilder::IsEmpty() const
+{
+    return vertices.empty() || indices.size() < 3;
+}
+

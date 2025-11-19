@@ -24,6 +24,8 @@ class LevelMeshBuilder
 
         void Write(DataWriter &writer, const std::string &materialPath) const;
 
+        bool IsEmpty() const;
+
     private:
         std::vector<ModelVertex> vertices{};
         std::vector<uint32_t> indices{};
