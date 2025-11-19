@@ -93,13 +93,13 @@ float LevelMeshBuilder::CalculateSLength(const Sector &sector, const size_t wall
 
 void LevelMeshBuilder::AddWallBase(const std::array<float, 2> &startPoint,
                                    const std::array<float, 2> &endPoint,
-                                   const WallMaterial &mat,
-                                   std::array<float, 2> normal,
-                                   const float sLength,
+                                   const WallMaterial &wallMaterial,
+                                   const std::array<float, 2> wallNormalVector,
+                                   const float previousWallsLength,
                                    const float floorHeight,
                                    const float ceilingHeight,
                                    const Color &lightColor,
-                                   const bool ccw)
+                                   const bool counterClockWise)
 {
     if (floorHeight > ceilingHeight)
     {
@@ -127,22 +127,22 @@ void LevelMeshBuilder::AddWallBase(const std::array<float, 2> &startPoint,
     {
         ModelVertex v{};
         v.color = lightColor;
-        v.normal[0] = normal[0];
+        v.normal[0] = wallNormalVector[0];
         v.normal[1] = 0;
-        v.normal[2] = -normal[1];
+        v.normal[2] = -wallNormalVector[1];
 
-        v.uv[0] = sLength;
+        v.uv[0] = previousWallsLength;
         if (point[0] == endPoint[0] && point[2] == endPoint[1])
         {
             v.uv[0] += wallLength;
         }
         v.uv[1] = -point[1];
 
-        v.uv[0] += mat.uvOffset[0];
-        v.uv[1] += mat.uvOffset[1];
+        v.uv[0] += wallMaterial.uvOffset[0];
+        v.uv[1] += wallMaterial.uvOffset[1];
 
-        v.uv[0] *= mat.uvScale[0];
-        v.uv[1] *= mat.uvScale[1]; // TODO is this the correct way to offset+scale?
+        v.uv[0] *= wallMaterial.uvScale[0];
+        v.uv[1] *= wallMaterial.uvScale[1]; // TODO is this the correct way to offset+scale?
 
         v.position = point;
         vertices.push_back(v);
@@ -156,7 +156,7 @@ void LevelMeshBuilder::AddWallBase(const std::array<float, 2> &startPoint,
     indices.push_back(2 + currentIndex);
     indices.push_back(3 + currentIndex);
 
-    if (!ccw)
+    if (!counterClockWise)
     {
         for (size_t i = indices.size() - 6; i + 2 < indices.size(); i += 3)
         {

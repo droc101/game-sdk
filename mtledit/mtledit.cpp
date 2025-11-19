@@ -101,7 +101,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         SDL_ShowOpenFileDialog(openGmtlCallback,
                                nullptr,
                                sdlWindow,
-                               DialogFilters::gtexFilters.data(),
+                               DialogFilters::gmtlFilters.data(),
                                1,
                                nullptr,
                                false);

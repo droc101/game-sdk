@@ -46,7 +46,7 @@ void LevelMaterialAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     writer.Write<uint8_t>(static_cast<uint8_t>(shader));
     writer.Write<uint8_t>(static_cast<uint8_t>(soundClass));
     writer.Write<uint8_t>(compileInvisible ? 1 : 0);
-    writer.Write<uint8_t>(compileInvisible ? 1 : 0);
+    writer.Write<uint8_t>(compileNoClip ? 1 : 0);
     writer.CopyToVector(buffer);
 }
 

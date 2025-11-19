@@ -24,6 +24,7 @@
 
 #include "LevelMeshBuilder.h"
 #include "libassets/asset/LevelMaterialAsset.h"
+#include "SectorCollisionBuilder.h"
 
 MapCompiler::MapCompiler(const std::string &assetsDirectory)
 {
@@ -128,9 +129,11 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     }
 
     std::unordered_map<std::string, LevelMeshBuilder> meshBuilders{};
+    std::vector<SectorCollisionBuilder> collisionBuilders{};
     for (size_t sectorIndex = 0; sectorIndex < map.sectors.size(); sectorIndex++)
     {
         const Sector &sector = map.sectors[sectorIndex];
+        SectorCollisionBuilder builder = SectorCollisionBuilder(sector);
         for (size_t i = 0; i < sector.points.size(); i++)
         {
             const std::array<float, 2> &wallStart = sector.points.at(i);
@@ -179,11 +182,28 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
                     meshBuilders[mat.material].AddWall(sector, i);
                 }
             }
+
+            if (!mapMaterial.compileNoClip)
+            {
+                if (foundAdjWall)
+                {
+                    builder.AddWallWithGap(i, adjFloor, adjCeil);
+                } else
+                {
+                    builder.AddWall(i);
+                }
+            }
         }
+
+
         const LevelMaterialAsset ceilingMaterial = GetMapMaterial(sector.ceilingMaterial.material);
         if (!ceilingMaterial.compileInvisible)
         {
             meshBuilders[sector.ceilingMaterial.material].AddCeiling(sector);
+        }
+        if (!ceilingMaterial.compileNoClip)
+        {
+            builder.AddCeiling();
         }
 
         const LevelMaterialAsset floorMaterial = GetMapMaterial(sector.floorMaterial.material);
@@ -191,14 +211,24 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
         {
             meshBuilders[sector.floorMaterial.material].AddFloor(sector);
         }
+        if (!floorMaterial.compileNoClip)
+        {
+            builder.AddFloor();
+        }
 
-        // TODO collision
+        collisionBuilders.push_back(builder);
     }
 
     writer.Write<size_t>(meshBuilders.size());
     for (const std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)
     {
         builder.second.Write(writer, builder.first);
+    }
+
+    writer.Write<size_t>(collisionBuilders.size());
+    for (const SectorCollisionBuilder &builder: collisionBuilders)
+    {
+        builder.Write(writer);
     }
 
     writer.CopyToVector(buffer);

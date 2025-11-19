@@ -13,6 +13,8 @@ add_executable(mapcomp mapcomp.cpp
         LevelMeshBuilder.h
         MapCompiler.cpp
         MapCompiler.h
+        SectorCollisionBuilder.cpp
+        SectorCollisionBuilder.h
 )
 
 set_target_properties(mapcomp PROPERTIES LINKER_LANGUAGE CXX)

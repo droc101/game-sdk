@@ -3,13 +3,14 @@
 //
 
 #pragma once
+
 #include <cstddef>
 #include <cstdint>
-#include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/type/ModelVertex.h>
 #include <libassets/type/Sector.h>
+#include <libassets/util/DataWriter.h>
+#include <string>
 #include <vector>
-
 
 class LevelMeshBuilder
 {
@@ -31,12 +32,12 @@ class LevelMeshBuilder
         static float CalculateSLength(const Sector &sector, size_t wallIndex);
         void AddWallBase(const std::array<float, 2> &startPoint,
                          const std::array<float, 2> &endPoint,
-                         const WallMaterial &mat,
-                         std::array<float, 2> normal,
-                         float sLength,
+                         const WallMaterial &wallMaterial,
+                         std::array<float, 2> wallNormalVector,
+                         float previousWallsLength,
                          float floorHeight,
                          float ceilingHeight,
                          const Color &lightColor,
-                         bool ccw);
+                         bool counterClockWise);
         void AddSectorBase(const Sector &sector, bool isFloor);
 };
