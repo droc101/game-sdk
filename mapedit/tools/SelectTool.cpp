@@ -429,9 +429,8 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
 
     for (Actor &a: MapEditor::map.actors)
     {
-        const Color vertexColor = Color(0.8, 0, 0, 1);
-        const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
-        MapRenderer::RenderBillboardPoint(pos, 10, vertexColor, matrix);
+        const Color vertexColor = Color(0.7, 1, 0.7, 1);
+        MapRenderer::RenderActor(a, matrix, vertexColor);
     }
 
     HandleDrag(vp, isHovered, worldSpaceHover);
@@ -483,7 +482,7 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
         {
             c = Color(0.4, .8, 0.4, 1);
         }
-        MapRenderer::RenderBillboardPoint(pos, 10, c, matrix);
+        MapRenderer::RenderActor(a, matrix, c);
     }
 
     for (size_t sectorIndex = 0; sectorIndex < MapEditor::map.sectors.size(); sectorIndex++)

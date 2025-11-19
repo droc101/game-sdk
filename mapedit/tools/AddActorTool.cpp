@@ -133,8 +133,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
 
     for (Actor &a: MapEditor::map.actors)
     {
-        const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
-        MapRenderer::RenderBillboardPoint(pos, 10, Color(0.7, 1, 0.7, 1), matrix);
+        MapRenderer::RenderActor(a, matrix, Color(0.7, 1, 0.7, 1));
     }
 
     if (hasPlacedActor)

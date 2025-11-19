@@ -232,3 +232,31 @@ void MapRenderer::RenderBillboardPoint(const glm::vec3 position,
     glEnableVertexAttribArray(posAttrLoc);
     glDrawArrays(GL_POINTS, 0, 1);
 }
+
+void MapRenderer::RenderUnitVector(const glm::vec3 origin,
+                                   const glm::vec3 eulerAngles,
+                                   const Color color,
+                                   glm::mat4 &matrix,
+                                   const float thickness,
+                                   const float length)
+{
+    const glm::vec3 anglesRad = glm::radians(eulerAngles);
+    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), anglesRad.x, glm::vec3(1, 0, 0));
+    rotationMatrix = glm::rotate(rotationMatrix, anglesRad.y, glm::vec3(0, 1, 0));
+    rotationMatrix = glm::rotate(rotationMatrix, anglesRad.z, glm::vec3(0, 0, 1));
+
+    const glm::vec4 unitVector(0.0f, 0.0f, -length, 0.0f);
+    const glm::vec4 rotatedVector = rotationMatrix * unitVector;
+    const glm::vec3 lenVector = glm::vec3(rotatedVector);
+
+    RenderLine(origin, origin + lenVector, color, matrix, thickness);
+}
+
+void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix, const Color &c)
+{
+    const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
+    RenderBillboardPoint(pos, 10, c, matrix);
+    const glm::vec3 actorRotation = glm::vec3(a.rotation[0], a.rotation[1], a.rotation[2]);
+    RenderUnitVector(pos, actorRotation, c, matrix, 2, 1);
+}
+
