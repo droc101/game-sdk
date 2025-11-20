@@ -241,8 +241,8 @@ void MapRenderer::RenderUnitVector(const glm::vec3 origin,
                                    const float length)
 {
     const glm::vec3 anglesRad = glm::radians(eulerAngles);
-    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), anglesRad.x, glm::vec3(1, 0, 0));
-    rotationMatrix = glm::rotate(rotationMatrix, anglesRad.y, glm::vec3(0, 1, 0));
+    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), anglesRad.y, glm::vec3(0, 1, 0));
+    rotationMatrix = glm::rotate(rotationMatrix, anglesRad.x, glm::vec3(1, 0, 0));
     rotationMatrix = glm::rotate(rotationMatrix, anglesRad.z, glm::vec3(0, 0, 1));
 
     const glm::vec4 unitVector(0.0f, 0.0f, -length, 0.0f);
