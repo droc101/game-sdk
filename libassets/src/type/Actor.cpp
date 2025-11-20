@@ -135,7 +135,7 @@ void Actor::Write(DataWriter &writer) const
     writer.WriteBuffer<float>(position);
     for (float const x: rotation)
     {
-        writer.Write<float>(x * (M_PIf / 180.0f));
+        writer.Write<float>(x * (M_PI / 180.0f));
     }
     writer.Write<size_t>(connections.size());
     for (const IOConnection &connection: connections)
