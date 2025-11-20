@@ -39,7 +39,7 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
                 dragging = false;
             }
         } else if (selectionType == ItemType::VERTEX &&
-            ((hoverType == ItemType::VERTEX && hoverIndex == selectionVertexIndex) || dragging))
+                   ((hoverType == ItemType::VERTEX && hoverIndex == selectionVertexIndex) || dragging))
         {
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
@@ -146,25 +146,25 @@ void SelectTool::ProcessSectorHover(const Viewport &vp,
             const glm::vec3 ceilingA = glm::vec3(sectorBB.at(0), sector.ceilingHeight, 0);
             const glm::vec3 ceilingB = glm::vec3(sectorBB.at(2), sector.ceilingHeight, 0);
             ceilingDistance = MapEditor::VecDistanceToLine2D(vp.WorldToScreenPos(ceilingA),
-                                                               vp.WorldToScreenPos(ceilingB),
-                                                               screenSpaceHover);
+                                                             vp.WorldToScreenPos(ceilingB),
+                                                             screenSpaceHover);
             const glm::vec3 floorA = glm::vec3(sectorBB.at(0), sector.floorHeight, 0);
             const glm::vec3 floorB = glm::vec3(sectorBB.at(2), sector.floorHeight, 0);
             floorDistance = MapEditor::VecDistanceToLine2D(vp.WorldToScreenPos(floorA),
-                                                             vp.WorldToScreenPos(floorB),
-                                                             screenSpaceHover);
+                                                           vp.WorldToScreenPos(floorB),
+                                                           screenSpaceHover);
         } else if (vp.GetType() == Viewport::ViewportType::SIDE_YZ)
         {
             const glm::vec3 ceilingA = glm::vec3(0, sector.ceilingHeight, sectorBB.at(1));
             const glm::vec3 ceilingB = glm::vec3(0, sector.ceilingHeight, sectorBB.at(3));
             ceilingDistance = MapEditor::VecDistanceToLine2D(vp.WorldToScreenPos(ceilingA),
-                                                               vp.WorldToScreenPos(ceilingB),
-                                                               screenSpaceHover);
+                                                             vp.WorldToScreenPos(ceilingB),
+                                                             screenSpaceHover);
             const glm::vec3 floorA = glm::vec3(0, sector.floorHeight, sectorBB.at(1));
             const glm::vec3 floorB = glm::vec3(0, sector.floorHeight, sectorBB.at(3));
             floorDistance = MapEditor::VecDistanceToLine2D(vp.WorldToScreenPos(floorA),
-                                                             vp.WorldToScreenPos(floorB),
-                                                             screenSpaceHover);
+                                                           vp.WorldToScreenPos(floorB),
+                                                           screenSpaceHover);
         }
 
         if (ceilingDistance <= 5)
@@ -241,8 +241,8 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
             return;
         }
         const float distanceToLine = MapEditor::VecDistanceToLine2D(vertexScreenSpace,
-                                                                      endVertexScreenSpace,
-                                                                      screenSpaceHover);
+                                                                    endVertexScreenSpace,
+                                                                    screenSpaceHover);
         if (distanceToLine <= MapEditor::HOVER_DISTANCE_PIXELS &&
             glm::distance(endVertexScreenSpace, screenSpaceHover) > MapEditor::HOVER_DISTANCE_PIXELS)
         {
@@ -286,11 +286,11 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
 }
 
 void SelectTool::ProcessActorHover(const Viewport &viewport,
-                                    const glm::vec2 vertexScreenSpace,
-                                    const glm::vec2 screenSpaceHover,
-                                    Actor &actor,
-                                    const size_t actorIndex,
-                                    Color &vertexColor)
+                                   const glm::vec2 vertexScreenSpace,
+                                   const glm::vec2 screenSpaceHover,
+                                   Actor &actor,
+                                   const size_t actorIndex,
+                                   Color &vertexColor)
 {
     if (viewport.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
     {
@@ -404,9 +404,9 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
                     selectionIndex == sectorIndex)
                 {
                     MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.05, 0),
-                                                        12,
-                                                        Color(0, 1, 1, 1),
-                                                        matrix);
+                                                      12,
+                                                      Color(0, 1, 1, 1),
+                                                      matrix);
                 }
                 MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), 10, vertexColor, matrix);
             } else
@@ -620,6 +620,8 @@ void SelectTool::RenderToolWindow()
         return;
     }
     ImGui::PushItemWidth(-1);
+    std::array<float, 4> col{};
+    size_t sectIndex = 0;
     switch (selectionType)
     {
         case ItemType::NONE:
@@ -627,13 +629,11 @@ void SelectTool::RenderToolWindow()
             break;
         case ItemType::VERTEX:
             ImGui::InputFloat2("##vertexPosition",
-                               MapEditor::map.sectors.at(focusedSectorIndex)
-                                       .points.at(selectionVertexIndex)
-                                       .data());
+                               MapEditor::map.sectors.at(focusedSectorIndex).points.at(selectionVertexIndex).data());
             break;
         case ItemType::LINE:
             MapEditor::MaterialToolWindow(MapEditor::map.sectors.at(focusedSectorIndex)
-                                                    .wallMaterials.at(selectionVertexIndex));
+                                                  .wallMaterials.at(selectionVertexIndex));
             break;
         case ItemType::CEILING:
             MapEditor::MaterialToolWindow(MapEditor::map.sectors.at(focusedSectorIndex).ceilingMaterial);
@@ -648,8 +648,18 @@ void SelectTool::RenderToolWindow()
             ImGui::InputFloat("##floorHeight", &MapEditor::map.sectors.at(focusedSectorIndex).floorHeight);
             break;
         case ItemType::SECTOR:
-            ImGui::ColorEdit4("##sectorColor",
-                              MapEditor::map.sectors.at(focusedSectorIndex).lightColor.GetDataPointer());
+            if (sectorFocusMode)
+            {
+                sectIndex = focusedSectorIndex;
+            } else
+            {
+                sectIndex = selectionIndex;
+            }
+            col = MapEditor::map.sectors.at(sectIndex).lightColor.CopyData();
+            if (ImGui::ColorEdit4("##sectorColor", col.data()))
+            {
+                MapEditor::map.sectors.at(sectIndex).lightColor = Color(col[0], col[1], col[2], col[3]);
+            }
             break;
         case ItemType::ACTOR:
             ImGui::Text("Position");

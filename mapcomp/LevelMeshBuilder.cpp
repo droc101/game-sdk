@@ -14,6 +14,7 @@
 #include <mapbox/earcut.hpp>
 #include <utility>
 #include <vector>
+#include "libassets/type/Color.h"
 
 void LevelMeshBuilder::AddCeiling(const Sector &sector)
 {

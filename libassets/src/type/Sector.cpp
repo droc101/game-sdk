@@ -15,6 +15,7 @@ Sector::Sector(nlohmann::ordered_json j)
     ceilingHeight = j.value("ceilingHeight", 1.0f);
     floorMaterial = WallMaterial(j["floorMaterial"]);
     ceilingMaterial = WallMaterial(j["ceilingMaterial"]);
+    lightColor = Color(j["lightColor"]);
     const nlohmann::ordered_json mats = j.at("wallMaterials");
     for (const nlohmann::basic_json<nlohmann::ordered_map> &material: mats)
     {
