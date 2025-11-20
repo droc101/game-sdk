@@ -58,7 +58,11 @@ void Actor::ApplyDefinition(const ActorDefinition &definition)
     {
         ParamDefinition *param = nullptr;
         const Error::ErrorCode e = definition.GetParam(key, param);
-        // TODO check e
+        if (e != Error::ErrorCode::OK)
+        {
+            printf("Failed to get definition for param %s::%s\n", definition.className.c_str(), key.c_str());
+            continue;
+        }
 
         const OptionParamDefinition *optionParam = dynamic_cast<OptionParamDefinition *>(param);
         if (optionParam != nullptr)
@@ -129,7 +133,10 @@ void Actor::Write(DataWriter &writer) const
 {
     writer.WriteString(className);
     writer.WriteBuffer<float>(position);
-    writer.WriteBuffer<float>(rotation);
+    for (float const x: rotation)
+    {
+        writer.Write<float>(x * (M_PIf / 180.0f));
+    }
     writer.Write<size_t>(connections.size());
     for (const IOConnection &connection: connections)
     {
