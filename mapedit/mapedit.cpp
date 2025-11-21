@@ -130,7 +130,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         }
     } else if (ImGui::Shortcut(ImGuiKey_Backslash, ImGuiInputFlags_RouteGlobal))
     {
-        MapEditor::gridSpacingIndex = 2;
+        MapEditor::gridSpacingIndex = MapEditor::DEFAULT_GRID_SPACING_INDEX;
     }
 
     if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Minus, ImGuiInputFlags_RouteGlobal | ImGuiInputFlags_Repeat))
@@ -151,16 +151,16 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         vpSide.ClampZoom();
     } else if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_0, ImGuiInputFlags_RouteGlobal))
     {
-        vpTopDown.GetZoom() = 20;
-        vpFront.GetZoom() = 20;
-        vpSide.GetZoom() = 20;
+        vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
+        vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;
+        vpSide.GetZoom() = MapEditor::DEFAULT_ZOOM;
     }
 
     if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_R, ImGuiInputFlags_RouteGlobal))
     {
-        vpTopDown.GetZoom() = 20;
-        vpFront.GetZoom() = 20;
-        vpSide.GetZoom() = 20;
+        vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
+        vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;
+        vpSide.GetZoom() = MapEditor::DEFAULT_ZOOM;
         vpTopDown.CenterPosition(glm::vec3(0));
         vpFront.CenterPosition(glm::vec3(0));
         vpSide.CenterPosition(glm::vec3(0));
@@ -171,39 +171,19 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         vpTopDown.ToggleFullscreen();
     }
 
+    bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N, ImGuiInputFlags_RouteGlobal);
+    bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O, ImGuiInputFlags_RouteGlobal);
+    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N, ImGuiInputFlags_RouteGlobal);
+    bool compilePressed = ImGui::Shortcut(ImGuiKey_F5, ImGuiInputFlags_RouteGlobal);
+
     if (ImGui::BeginMainMenuBar())
     {
         if (ImGui::BeginMenu("File"))
         {
-            if (ImGui::MenuItem("New", "Ctrl+N"))
-            {
-                MapEditor::map = MapAsset();
-                MapEditor::toolType = MapEditor::EditorToolType::SELECT;
-                MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
-                MapEditor::mapFile = "";
-            }
+            newPressed |= ImGui::MenuItem("New", "Ctrl+N");
             ImGui::Separator();
-            if (ImGui::MenuItem("Open", "Ctrl+O"))
-            {
-                SDL_ShowOpenFileDialog(openJsonCallback,
-                                       nullptr,
-                                       sdlWindow,
-                                       DialogFilters::jsonFilters.data(),
-                                       1,
-                                       nullptr,
-                                       false);
-                MapEditor::toolType = MapEditor::EditorToolType::SELECT;
-                MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
-            }
-            if (ImGui::MenuItem("Save", "Ctrl+S"))
-            {
-                SDL_ShowSaveFileDialog(saveJsonCallback,
-                                       nullptr,
-                                       sdlWindow,
-                                       DialogFilters::jsonFilters.data(),
-                                       1,
-                                       nullptr);
-            }
+            openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
+            savePressed |= ImGui::MenuItem("Save", "Ctrl+S");
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
@@ -240,7 +220,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             }
             if (ImGui::MenuItem("Reset Grid", "\\"))
             {
-                MapEditor::gridSpacingIndex = 2;
+                MapEditor::gridSpacingIndex = MapEditor::DEFAULT_GRID_SPACING_INDEX;
             }
 
             ImGui::EndMenu();
@@ -249,9 +229,9 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         {
             if (ImGui::MenuItem("Reset All Views", "Ctrl+R"))
             {
-                vpTopDown.GetZoom() = 20;
-                vpFront.GetZoom() = 20;
-                vpSide.GetZoom() = 20;
+                vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
+                vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;
+                vpSide.GetZoom() = MapEditor::DEFAULT_ZOOM;
                 vpTopDown.CenterPosition(glm::vec3(0));
                 vpFront.CenterPosition(glm::vec3(0));
                 vpSide.CenterPosition(glm::vec3(0));
@@ -288,7 +268,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                 vpFront.CenterPosition(glm::vec3(0));
                 vpSide.CenterPosition(glm::vec3(0));
             }
-            ImGui::MenuItem("Center Selection TODO");
+            // ImGui::MenuItem("Center Selection TODO");
             ImGui::Separator();
             if (ImGui::MenuItem("Show Viewport Information", "", MapEditor::drawViewportInfo))
             {
@@ -339,11 +319,8 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         }
         if (ImGui::BeginMenu("Tools"))
         {
-            if (ImGui::MenuItem("Compile Map", "F5"))
-            {
-                MapCompileWindow::Show();
-            }
-            ImGui::MenuItem("Generate Benchmark TODO");
+            compilePressed |= ImGui::MenuItem("Compile Map", "F5");
+            // ImGui::MenuItem("Generate Benchmark TODO");
             if (ImGui::MenuItem("Actor Class Browser"))
             {
                 ActorBrowserWindow::visible = true;
@@ -353,6 +330,39 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         }
         SharedMgr::SharedMenuUI("mapedit");
         ImGui::EndMainMenuBar();
+    }
+
+    if (newPressed)
+    {
+        MapEditor::map = MapAsset();
+        MapEditor::toolType = MapEditor::EditorToolType::SELECT;
+        MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+        MapEditor::mapFile = "";
+    }
+    if (openPressed)
+    {
+        SDL_ShowOpenFileDialog(openJsonCallback,
+                                       nullptr,
+                                       sdlWindow,
+                                       DialogFilters::jsonFilters.data(),
+                                       1,
+                                       nullptr,
+                                       false);
+        MapEditor::toolType = MapEditor::EditorToolType::SELECT;
+        MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+    }
+    if (savePressed)
+    {
+        SDL_ShowSaveFileDialog(saveJsonCallback,
+                                       nullptr,
+                                       sdlWindow,
+                                       DialogFilters::jsonFilters.data(),
+                                       1,
+                                       nullptr);
+    }
+    if (compilePressed)
+    {
+        MapCompileWindow::Show();
     }
 
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
@@ -497,7 +507,7 @@ int main()
                                             SDL_WINDOW_OPENGL |
                                             SDL_WINDOW_RESIZABLE |
                                             SDL_WINDOW_MAXIMIZED;
-    window = SDL_CreateWindow("mapedit (beta)", 1366, 778, windowFlags);
+    window = SDL_CreateWindow("mapedit", 1366, 778, windowFlags);
     if (window == nullptr)
     {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
@@ -547,6 +557,10 @@ int main()
     SharedMgr::textureCache->RegisterPng("assets/mapedit/actors.png", MapEditor::ACTOR_ICON_NAME);
     SharedMgr::textureCache->RegisterPng("assets/mapedit/primitives.png", MapEditor::PRIMITIVE_ICON_NAME);
     SharedMgr::textureCache->RegisterPng("assets/mapedit/polygon.png", MapEditor::POLYGON_ICON_NAME);
+
+    vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
+    vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;
+    vpSide.GetZoom() = MapEditor::DEFAULT_ZOOM;
 
     bool done = false;
     while (!done)

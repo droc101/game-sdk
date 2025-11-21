@@ -49,6 +49,9 @@
       },
       "Engine Source Code": {
         "url": "https://github.com/droc101/c-game-engine"
+      },
+      "SDK Source Code": {
+        "url": "https://github.com/droc101/game-sdk"
       }
     }
   }

@@ -55,5 +55,5 @@ class Viewport
         ViewportType type;
 
         ImVec2 scrollCenterPos{};
-        float zoom = 20;
+        float zoom = 10.0f;
 };

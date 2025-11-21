@@ -87,10 +87,10 @@ void MapCompileWindow::Render(SDL_Window *window)
     ImGui::Begin("Compile Map", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
     ImGui::BeginDisabled(compilerProcess != nullptr);
-    ImGui::Checkbox("Custom Game Directory", &overrideGameDir);
-    ImGui::BeginDisabled(!overrideGameDir);
-    ImGui::InputText("##customAssets", &gameDir);
-    ImGui::EndDisabled();
+    // ImGui::Checkbox("Custom Game Directory", &overrideGameDir);
+    // ImGui::BeginDisabled(!overrideGameDir);
+    // ImGui::InputText("##customAssets", &gameDir);
+    // ImGui::EndDisabled();
     ImGui::Checkbox("Play after compile", &playMap);
 
     if (ImGui::Button("Compile"))

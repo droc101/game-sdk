@@ -666,6 +666,12 @@ void SelectTool::RenderToolWindow()
             ImGui::InputFloat3("##position", MapEditor::map.actors.at(selectionIndex).position.data());
             ImGui::Text("Rotation");
             ImGui::InputFloat3("##rotation", MapEditor::map.actors.at(selectionIndex).rotation.data());
+            ImGui::Separator();
+            if (ImGui::Button("Actor Properties"))
+            {
+                EditActorWindow::selectedParam = 0;
+                EditActorWindow::visible = true;
+            }
             break;
         default:
             ImGui::Text("The current selection has no properties");
