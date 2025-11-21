@@ -6,12 +6,18 @@ on:
   pull_request:
     branches: [ "master" ]
 
-env:
-  BUILD_TYPE: Release
-
 jobs:
   build:
     runs-on: windows-latest
+
+    strategy:
+      matrix:
+        build_type: [ Debug, Release ]
+        include:
+          - build_type: Debug
+            zip_name: game-sdk.windows.debug
+          - build_type: Release
+            zip_name: game-sdk.windows.release
 
     steps:
     - uses: actions/checkout@v4
@@ -41,16 +47,16 @@ jobs:
 
     - name: Configure CMake
       shell: msys2 {0}
-      run: cmake -B "$MINGW_WORKSPACE/build" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -B "$MINGW_WORKSPACE/build-${{ matrix.build_type }}" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
     - name: Build
       shell: msys2 {0}
-      run: cmake --build "$MINGW_WORKSPACE/build" --config ${{env.BUILD_TYPE}}
+      run: cmake --build "$MINGW_WORKSPACE/build-${{ matrix.build_type }}" --config ${{ matrix.build_type }}
 
     - name: Upload results
       uses: actions/upload-artifact@v4
       with:
-        name: game-sdk.windows
+        name: ${{ matrix.zip_name }}
         path: |
-          build/bin/
+          build-${{ matrix.build_type }}/bin/
         retention-days: 90
