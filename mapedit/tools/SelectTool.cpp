@@ -8,11 +8,13 @@
 #include <cstddef>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
+
 #include "../ActorBrowserWindow.h"
 #include "../EditActorWindow.h"
 #include "../MapEditor.h"
 #include "../MapRenderer.h"
 #include "../Viewport.h"
+#include "AddActorTool.h"
 #include "imgui.h"
 
 void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
@@ -208,7 +210,8 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
                                     const size_t sectorIndex,
                                     Color &vertexColor,
                                     const glm::vec3 startCeiling,
-                                    Color &lineColor)
+                                    Color &lineColor,
+                                    bool &haveAddedNewVertex)
 {
     if (viewport.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
     {
@@ -249,12 +252,12 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
             hoverType = ItemType::LINE;
             hoverIndex = vertexIndex;
             lineColor = Color(1, .8, .8, 1);
-            const bool addPointMode = ImGui::IsKeyDown(ImGuiKey_LeftShift) ||
-                                      ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
+            const bool addPointMode = !haveAddedNewVertex && (ImGui::IsKeyDown(ImGuiKey_LeftShift) ||
+                                                              ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left));
             ImGui::SetMouseCursor(addPointMode ? ImGuiMouseCursor_Hand : ImGuiMouseCursor_ResizeAll);
             if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
-                if (addPointMode) // TODO this freezes in a memory leak loop sometimes?!?!?!?!
+                if (addPointMode)
                 {
                     const glm::vec2 newVertexPos = MapEditor::SnapToGrid(worldSpaceHover);
                     sector.points.insert(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex) + 1,
@@ -264,6 +267,7 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
                     selectionVertexIndex = vertexIndex + 1;
                     selectionType = ItemType::VERTEX;
                     hoverType = ItemType::NONE;
+                    haveAddedNewVertex = true;
                 } else
                 {
                     selectionVertexIndex = vertexIndex;
@@ -360,6 +364,8 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
         sectorFocusMode = false;
     }
 
+    bool haveAddedNewVertex = false;
+
     for (size_t sectorIndex = 0; sectorIndex < MapEditor::map.sectors.size(); sectorIndex++)
     {
         Sector &sector = MapEditor::map.sectors.at(sectorIndex);
@@ -395,7 +401,8 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
                                sectorIndex,
                                vertexColor,
                                startCeiling,
-                               lineColor);
+                               lineColor,
+                               haveAddedNewVertex);
 
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
