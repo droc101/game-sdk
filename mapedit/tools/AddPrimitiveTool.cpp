@@ -14,9 +14,11 @@
 #include <memory>
 #include <numbers>
 #include <vector>
+
 #include "../MapEditor.h"
 #include "../MapRenderer.h"
 #include "../Viewport.h"
+#include "AddActorTool.h"
 #include "EditorTool.h"
 #include "SelectTool.h"
 
@@ -54,6 +56,32 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             {
                 shapeEnd = MapEditor::SnapToGrid(worldSpaceHover);
                 shapeEnd.y = ceiling;
+            } else if (hasDrawnShape && isDragging && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            {
+                if (shapeStart == shapeEnd)
+                {
+                    hasDrawnShape = false;
+                    isDragging = false;
+                } else
+                {
+                    Sector s = Sector();
+                    const WallMaterial mat = MapEditor::mat;
+                    s.ceilingMaterial = mat;
+                    s.floorMaterial = mat;
+                    s.floorHeight = floor;
+                    s.ceilingHeight = ceiling;
+                    s.lightColor = Color(1, 1, 1, 1);
+                    const std::vector<glm::vec2> points = GetPoints();
+                    for (const glm::vec2 &glmPoint: points)
+                    {
+                        const std::array<float, 2> point = {glmPoint.x, glmPoint.y};
+                        s.points.push_back(point);
+                        s.wallMaterials.push_back(mat);
+                    }
+                    MapEditor::map.sectors.push_back(s);
+                    hasDrawnShape = false;
+                    isDragging = false;
+                }
             } else
             {
                 isDragging = false;
@@ -75,9 +103,9 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
                 MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
-                                                    10,
-                                                    Color(1, 0.7, 0.7, 1),
-                                                    matrix);
+                                                  10,
+                                                  Color(1, 0.7, 0.7, 1),
+                                                  matrix);
             }
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
@@ -117,38 +145,7 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             }
         }
 
-        std::vector<glm::vec2> points{};
-
-        if (primitive == PrimitiveType::NGON)
-        {
-            points = buildNgon(32, glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
-            for (size_t i = 0; i < points.size(); i++)
-            {
-                const size_t nextIndex = (i + 1) % points.size();
-                const glm::vec3 startPointCeil = glm::vec3(points.at(i).x, ceiling, points.at(i).y);
-                const glm::vec3 startPointFloor = glm::vec3(points.at(i).x, floor, points.at(i).y);
-                const glm::vec3 endPointCeil = glm::vec3(points.at(nextIndex).x, ceiling, points.at(nextIndex).y);
-                const glm::vec3 endPointFloor = glm::vec3(points.at(nextIndex).x, floor, points.at(nextIndex).y);
-                MapRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 0, 1), matrix, 4);
-                if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
-                {
-                    MapRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 0, 1), matrix, 4);
-                    MapRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, 0, 1), matrix, 2);
-                }
-            }
-
-
-            points = buildNgon(ngonSides,
-                               glm::vec2(shapeStart.x, shapeStart.z),
-                               glm::vec2(shapeEnd.x, shapeEnd.z),
-                               ngonStartAngle);
-        } else if (primitive == PrimitiveType::TRIANGLE)
-        {
-            points = buildTri(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
-        } else if (primitive == PrimitiveType::RECTANGLE)
-        {
-            points = buildRect(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
-        }
+        std::vector<glm::vec2> points = GetPoints();
 
         for (size_t i = 0; i < points.size(); i++)
         {
@@ -159,10 +156,7 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             const glm::vec3 endPointFloor = glm::vec3(points.at(nextIndex).x, floor, points.at(nextIndex).y);
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
-                MapRenderer::RenderBillboardPoint(startPointCeil + glm::vec3(0, 0.1, 0),
-                                                    10,
-                                                    Color(1, 0, 0, 1),
-                                                    matrix);
+                MapRenderer::RenderBillboardPoint(startPointCeil + glm::vec3(0, 0.1, 0), 10, Color(1, 0, 0, 1), matrix);
             }
             MapRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 1, 1), matrix, 4);
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
@@ -173,24 +167,7 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
         }
 
 
-        if (ImGui::Shortcut(ImGuiKey_Enter) || ImGui::Shortcut(ImGuiKey_KeypadEnter))
-        {
-            Sector s = Sector();
-            const WallMaterial mat = MapEditor::mat;
-            s.ceilingMaterial = mat;
-            s.floorMaterial = mat;
-            s.floorHeight = floor;
-            s.ceilingHeight = ceiling;
-            s.lightColor = Color(1, 1, 1, 1);
-            for (const glm::vec2 &glmPoint: points)
-            {
-                const std::array<float, 2> point = {glmPoint.x, glmPoint.y};
-                s.points.push_back(point);
-                s.wallMaterials.push_back(mat);
-            }
-            MapEditor::map.sectors.push_back(s);
-            hasDrawnShape = false;
-        } else if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
+        if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
         {
             hasDrawnShape = false;
         }
@@ -199,6 +176,26 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
         MapEditor::toolType = MapEditor::EditorToolType::SELECT;
         MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
     }
+}
+
+std::vector<glm::vec2> AddPrimitiveTool::GetPoints() const
+{
+    std::vector<glm::vec2> points{};
+
+    if (primitive == PrimitiveType::NGON)
+    {
+        points = buildNgon(ngonSides,
+                           glm::vec2(shapeStart.x, shapeStart.z),
+                           glm::vec2(shapeEnd.x, shapeEnd.z),
+                           ngonStartAngle);
+    } else if (primitive == PrimitiveType::TRIANGLE)
+    {
+        points = buildTri(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
+    } else if (primitive == PrimitiveType::RECTANGLE)
+    {
+        points = buildRect(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
+    }
+    return points;
 }
 
 void AddPrimitiveTool::RenderToolWindow()

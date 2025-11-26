@@ -185,6 +185,8 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
             savePressed |= ImGui::MenuItem("Save", "Ctrl+S");
             ImGui::Separator();
+            compilePressed |= ImGui::MenuItem("Compile", "F5");
+            ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
                 done = true;
@@ -319,7 +321,6 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         }
         if (ImGui::BeginMenu("Tools"))
         {
-            compilePressed |= ImGui::MenuItem("Compile Map", "F5");
             // ImGui::MenuItem("Generate Benchmark TODO");
             if (ImGui::MenuItem("Actor Class Browser"))
             {
