@@ -221,7 +221,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     }
 
     std::erase_if(meshBuilders,
-                  [](const std::pair<std::string, LevelMeshBuilder> &item) { return item.second.IsEmpty(); });
+                  [](const std::pair<std::string, LevelMeshBuilder> &item) -> bool { return item.second.IsEmpty(); });
 
     writer.Write<size_t>(meshBuilders.size());
     for (const std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)

@@ -38,7 +38,8 @@ class SelectTool final: public EditorTool
                                 size_t sectorIndex,
                                 Color &vertexColor,
                                 glm::vec3 startCeiling,
-                                Color &lineColor);
+                                Color &lineColor,
+                                bool &haveAddedNewVertex);
 
         void ProcessActorHover(const Viewport &viewport,
                                const glm::vec2 vertexScreenSpace,
