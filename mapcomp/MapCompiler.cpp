@@ -146,12 +146,12 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
             for (size_t otherSectorIndex = 0; otherSectorIndex < map.sectors.size(); otherSectorIndex++)
             {
                 const Sector &otherSector = map.sectors[otherSectorIndex];
-                if (sectorIndex == otherSectorIndex)
-                {
-                    continue;
-                }
                 for (size_t j = 0; j < otherSector.points.size(); j++)
                 {
+                    if (sectorIndex == otherSectorIndex && i == j)
+                    {
+                        continue; // same sector and wall
+                    }
                     const std::array<float, 2> &otherWallStart = otherSector.points.at(j);
                     const std::array<float, 2> &otherWallEnd = otherSector.points.at((j + 1) %
                                                                                      otherSector.points.size());
@@ -213,7 +213,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
         }
         if (!floorMaterial.compileNoClip)
         {
-            builder.NextShape();
+            // builder.NextShape();
             builder.AddFloor();
         }
 
