@@ -9,6 +9,7 @@
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/BoolParamDefinition.h>
 #include <libassets/type/paramDefs/ByteParamDefinition.h>
+#include <libassets/type/paramDefs/ColorParamDefinition.h>
 #include <libassets/type/paramDefs/FloatParamDefinition.h>
 #include <libassets/type/paramDefs/IntParamDefinition.h>
 #include <libassets/type/paramDefs/OptionParamDefinition.h>
@@ -231,6 +232,12 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
                                 ImGui::Text("Hint: Texture");
                                 break;
                         }
+                    } else if (param->type == Param::ParamType::PARAM_TYPE_COLOR)
+                    {
+                        const ColorParamDefinition *p = dynamic_cast<ColorParamDefinition *>(param);
+                        ImGui::Text("Show Alpha: %s", p->showAlpha ? "Yes" : "No");
+                        ImGui::SetCursorPosX(cursorPos.x);
+                        ImGui::Text("Default: %x", p->defaultValue.GetUint32());
                     }
                 }
             }

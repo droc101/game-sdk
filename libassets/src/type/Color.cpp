@@ -55,11 +55,16 @@ void Color::WriteFloats(DataWriter &writer) const
 
 void Color::WriteUint32(DataWriter &writer) const
 {
-    const uint32_t rgba = (static_cast<uint32_t>(color[0] * 255.0f) << 24) |
-                          (static_cast<uint32_t>(color[1] * 255.0f) << 16) |
-                          (static_cast<uint32_t>(color[2] * 255.0f) << 8) |
-                          (static_cast<uint32_t>(color[3] * 255.0f));
+    const uint32_t rgba = GetUint32();
     writer.Write<uint32_t>(rgba);
+}
+
+uint32_t Color::GetUint32() const
+{
+    return (static_cast<uint32_t>(color[0] * 255.0f) << 24) |
+           (static_cast<uint32_t>(color[1] * 255.0f) << 16) |
+           (static_cast<uint32_t>(color[2] * 255.0f) << 8) |
+           (static_cast<uint32_t>(color[3] * 255.0f));
 }
 
 Color::Color(const uint32_t rgba)

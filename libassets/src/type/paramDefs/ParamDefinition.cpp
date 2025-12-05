@@ -8,6 +8,7 @@
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/BoolParamDefinition.h>
 #include <libassets/type/paramDefs/ByteParamDefinition.h>
+#include <libassets/type/paramDefs/ColorParamDefinition.h>
 #include <libassets/type/paramDefs/FloatParamDefinition.h>
 #include <libassets/type/paramDefs/IntParamDefinition.h>
 #include <libassets/type/paramDefs/OptionParamDefinition.h>
@@ -88,6 +89,12 @@ ParamDefinition *ParamDefinition::Create(const nlohmann::json &json, Error::Erro
                 stringDef->hintType = StringParamDefinition::StringParamHint::NONE;
             }
             output = stringDef;
+        } else if (type == Param::ParamType::PARAM_TYPE_COLOR)
+        {
+            ColorParamDefinition *colorDef = new ColorParamDefinition();
+            colorDef->defaultValue = Color(json.value("default", 0xFFFFFFFF));
+            colorDef->showAlpha = json.value("default", true);
+            output = colorDef;
         } else
         {
             e = Error::ErrorCode::INCORRECT_FORMAT;

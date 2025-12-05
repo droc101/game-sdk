@@ -4,6 +4,7 @@
 
 #include "EditActorWindow.h"
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -11,11 +12,13 @@
 #include <imgui.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
+#include <libassets/type/Color.h>
 #include <libassets/type/IOConnection.h>
 #include <libassets/type/OptionDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/BoolParamDefinition.h>
 #include <libassets/type/paramDefs/ByteParamDefinition.h>
+#include <libassets/type/paramDefs/ColorParamDefinition.h>
 #include <libassets/type/paramDefs/FloatParamDefinition.h>
 #include <libassets/type/paramDefs/IntParamDefinition.h>
 #include <libassets/type/paramDefs/OptionParamDefinition.h>
@@ -155,8 +158,10 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
             } else if (paramDef->type == Param::ParamType::PARAM_TYPE_STRING)
             {
                 ImGui::TextWrapped("\"%s\"", param.Get<std::string>("").c_str());
+            } else if (paramDef->type == Param::ParamType::PARAM_TYPE_COLOR)
+            {
+                ImGui::TextWrapped("0x%x", param.Get<Color>(Color(-1)).GetUint32());
             }
-            // TODO color param
 
             i++;
         }
@@ -240,8 +245,19 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                     {
                         param.Set<std::string>(val);
                     }
+                } else if (paramDef->type == Param::ParamType::PARAM_TYPE_COLOR)
+                {
+                    const ColorParamDefinition *colorDef = dynamic_cast<ColorParamDefinition *>(paramDef);
+                    Color col = param.Get<Color>(Color(-1));
+                    std::array<float, 4> colorData = col.CopyData();
+                    if (ImGui::ColorEdit4("##color",
+                                          colorData.data(),
+                                          colorDef->showAlpha ? 0 : ImGuiColorEditFlags_NoAlpha))
+                    {
+                        col = Color(colorData[0], colorData[1], colorData[2], colorData[3]);
+                        param.Set<Color>(col);
+                    }
                 }
-                // TODO color param
             }
         } else
         {
@@ -297,8 +313,10 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
             } else if (param.GetType() == Param::ParamType::PARAM_TYPE_STRING)
             {
                 ImGui::TextWrapped("\"%s\"", param.Get<std::string>("").c_str());
+            } else if (param.GetType() == Param::ParamType::PARAM_TYPE_STRING)
+            {
+                ImGui::TextWrapped("0x%x", param.Get<Color>(Color(-1)).GetUint32());
             }
-            // TODO color param
 
             i++;
         }
@@ -489,9 +507,16 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
                         {
                             param.Set<std::string>(val);
                         }
-                    }
-                    // TODO color param
-                    else
+                    } else if (param.GetType() == Param::ParamType::PARAM_TYPE_COLOR)
+                    {
+                        Color col = param.Get<Color>(Color(-1));
+                        std::array<float, 4> colorData = col.CopyData();
+                        if (ImGui::ColorEdit4("##color", colorData.data()))
+                        {
+                            col = Color(colorData[0], colorData[1], colorData[2], colorData[3]);
+                            param.Set<Color>(col);
+                        }
+                    } else
                     {
                         ImGui::TextDisabled("This input does not accept a parameter.");
                     }

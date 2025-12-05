@@ -30,6 +30,8 @@ class Color
 
         void WriteUint32(DataWriter &writer) const;
 
+        [[nodiscard]] uint32_t GetUint32() const;
+
         float *GetDataPointer();
 
         [[nodiscard]] std::array<float, 4> CopyData() const;

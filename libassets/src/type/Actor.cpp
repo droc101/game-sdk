@@ -6,11 +6,13 @@
 #include <cstdint>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
+#include <libassets/type/Color.h>
 #include <libassets/type/IOConnection.h>
 #include <libassets/type/OptionDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/BoolParamDefinition.h>
 #include <libassets/type/paramDefs/ByteParamDefinition.h>
+#include <libassets/type/paramDefs/ColorParamDefinition.h>
 #include <libassets/type/paramDefs/FloatParamDefinition.h>
 #include <libassets/type/paramDefs/IntParamDefinition.h>
 #include <libassets/type/paramDefs/OptionParamDefinition.h>
@@ -99,6 +101,12 @@ void Actor::ApplyDefinition(const ActorDefinition &definition)
             Param p{};
             p.Set<std::string>(stringParam->defaultValue);
             params[key] = p;
+        } else if (param->type == Param::ParamType::PARAM_TYPE_COLOR)
+        {
+            const ColorParamDefinition *colorParam = dynamic_cast<ColorParamDefinition *>(param);
+            Param p{};
+            p.Set<Color>(colorParam->defaultValue);
+            params[key] = p;
         } else
         {
             assert(false); // unimplemented param type
@@ -133,7 +141,7 @@ void Actor::Write(DataWriter &writer) const
 {
     writer.WriteString(className);
     writer.WriteBuffer<float>(position);
-    for (float const x: rotation)
+    for (const float x: rotation)
     {
         writer.Write<float>(x * (M_PI / 180.0f));
     }
@@ -149,4 +157,3 @@ void Actor::Write(DataWriter &writer) const
         kv.second.Write(writer);
     }
 }
-
