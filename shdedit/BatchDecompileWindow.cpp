@@ -69,14 +69,18 @@ Error::ErrorCode BatchDecompileWindow::Execute()
         {
             return e;
         }
-        if (shd.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAG)
+        if (shd.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT)
         {
             const size_t suffixPosition = filename.rfind("_f." + ShaderAsset::SHADER_ASSET_EXTENSION);
             e = shd.SaveAsGlsl(std::format("{}/{}.frag", outputFolder, filename.substr(0, suffixPosition)).c_str());
-        } else
+        } else if (shd.type == ShaderAsset::ShaderType::SHADER_TYPE_VERTEX)
         {
             const size_t suffixPosition = filename.rfind("_v." + ShaderAsset::SHADER_ASSET_EXTENSION);
             e = shd.SaveAsGlsl(std::format("{}/{}.vert", outputFolder, filename.substr(0, suffixPosition)).c_str());
+        } else if (shd.type == ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE)
+        {
+            const size_t suffixPosition = filename.rfind("_c." + ShaderAsset::SHADER_ASSET_EXTENSION);
+            e = shd.SaveAsGlsl(std::format("{}/{}.comp", outputFolder, filename.substr(0, suffixPosition)).c_str());
         }
         if (e != Error::ErrorCode::OK)
         {

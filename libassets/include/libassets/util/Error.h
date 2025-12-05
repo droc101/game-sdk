@@ -29,6 +29,7 @@ class Error
             INCORRECT_VERSION,
             INVALID_DIRECTORY,
             NOT_FOUND,
+            INVALID_SHADER_TYPE,
         };
 
         Error() = delete;
@@ -63,6 +64,8 @@ class Error
                     return "Invalid Directory Path";
                 case ErrorCode::NOT_FOUND:
                     return "Not Found";
+                case ErrorCode::INVALID_SHADER_TYPE:
+                    return "Invalid Shader Type";
                 case ErrorCode::UNKNOWN:
                 default:
                     return "Unknown Error";

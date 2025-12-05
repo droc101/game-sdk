@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <libassets/util/Error.h>
+#include <string>
 #include <vector>
 
 class ShaderAsset final
@@ -19,8 +20,9 @@ class ShaderAsset final
 
         enum class ShaderType : uint8_t
         {
-            SHADER_TYPE_FRAG,
-            SHADER_TYPE_VERT
+            SHADER_TYPE_FRAGMENT,
+            SHADER_TYPE_VERTEX,
+            SHADER_TYPE_COMPUTE
         };
 
         ShaderAsset() = default;
@@ -36,7 +38,7 @@ class ShaderAsset final
         [[nodiscard]] std::string &GetGLSL();
 
         ShaderPlatform platform = ShaderPlatform::PLATFORM_VULKAN;
-        ShaderType type = ShaderType::SHADER_TYPE_FRAG;
+        ShaderType type = ShaderType::SHADER_TYPE_FRAGMENT;
 
         static constexpr uint8_t SHADER_ASSET_VERSION = 1;
 

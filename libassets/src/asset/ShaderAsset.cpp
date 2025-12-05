@@ -75,6 +75,11 @@ Error::ErrorCode ShaderAsset::SaveAsGlsl(const char *glslPath) const
 
 Error::ErrorCode ShaderAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
 {
+    if (platform == ShaderPlatform::PLATFORM_OPENGL && type == ShaderType::SHADER_TYPE_COMPUTE)
+    {
+        return Error::ErrorCode::INVALID_SHADER_TYPE;
+    }
+
     DataWriter writer{};
     writer.Write<uint8_t>(static_cast<uint8_t>(platform));
     writer.Write<uint8_t>(static_cast<uint8_t>(type));
@@ -84,7 +89,7 @@ Error::ErrorCode ShaderAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     if (platform == ShaderPlatform::PLATFORM_VULKAN)
     {
         std::vector<uint32_t> spirv;
-        const vk::ShaderStageFlagBits stage = type == ShaderType::SHADER_TYPE_VERT ? vk::ShaderStageFlagBits::eVertex
+        const vk::ShaderStageFlagBits stage = type == ShaderType::SHADER_TYPE_VERTEX ? vk::ShaderStageFlagBits::eVertex
                                                                                    : vk::ShaderStageFlagBits::eFragment;
         ShaderCompiler compiler = ShaderCompiler(glsl, stage);
         compiler.SetTargetVersions(glslang::EShTargetClientVersion::EShTargetVulkan_1_2,

@@ -214,17 +214,27 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             if (ImGui::RadioButton("OpenGL", shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_OPENGL))
             {
                 shader.platform = ShaderAsset::ShaderPlatform::PLATFORM_OPENGL;
+                if (shader.type == ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE)
+                {
+                    shader.type = ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT;
+                }
             }
 
             ImGui::TextUnformatted("Type");
-            if (ImGui::RadioButton("Fragment", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAG))
+            if (ImGui::RadioButton("Fragment", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT))
             {
-                shader.type = ShaderAsset::ShaderType::SHADER_TYPE_FRAG;
+                shader.type = ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT;
             }
-            if (ImGui::RadioButton("Vertex", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_VERT))
+            if (ImGui::RadioButton("Vertex", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_VERTEX))
             {
-                shader.type = ShaderAsset::ShaderType::SHADER_TYPE_VERT;
+                shader.type = ShaderAsset::ShaderType::SHADER_TYPE_VERTEX;
             }
+            ImGui::BeginDisabled(shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_OPENGL);
+            if (ImGui::RadioButton("Compute", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE))
+            {
+                shader.type = ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE;
+            }
+            ImGui::EndDisabled();
         }
         ImGui::EndChild();
     } else
