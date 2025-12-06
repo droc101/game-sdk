@@ -74,7 +74,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
                 a.position = {newActorPosition.x, newActorPosition.y, newActorPosition.z};
 
                 ActorDefinition def = SharedMgr::actorDefinitions.at(newActorType);
-                a.ApplyDefinition(def);
+                a.ApplyDefinition(def, true);
 
                 MapEditor::map.actors.push_back(a);
                 hasPlacedActor = false;

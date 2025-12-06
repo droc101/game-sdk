@@ -49,15 +49,22 @@ Actor::Actor(nlohmann::ordered_json j)
 }
 
 
-void Actor::ApplyDefinition(const ActorDefinition &definition)
+void Actor::ApplyDefinition(const ActorDefinition &definition, const bool overwrite)
 {
     std::unordered_set<std::string> paramNames{};
     definition.GetParamNames(paramNames);
 
-    params.clear();
+    if (overwrite)
+    {
+        params.clear();
+    }
 
     for (const std::string &key: paramNames)
     {
+        if (!overwrite && params.contains(key))
+        {
+            continue;
+        }
         ParamDefinition *param = nullptr;
         const Error::ErrorCode e = definition.GetParam(key, param);
         if (e != Error::ErrorCode::OK)

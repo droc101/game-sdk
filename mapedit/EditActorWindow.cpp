@@ -66,7 +66,7 @@ void EditActorWindow::Render(Actor &actor)
             if (ImGui::Selectable(def.first.c_str(), def.first == actor.className))
             {
                 actor.className = def.first;
-                actor.ApplyDefinition(def.second);
+                actor.ApplyDefinition(def.second, true);
                 selectedParam = 0;
             }
         }

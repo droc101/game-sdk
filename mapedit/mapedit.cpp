@@ -110,6 +110,10 @@ static void openJsonCallback(void * /*userdata*/, const char *const *fileList, i
         return;
     }
     MapEditor::mapFile = fileList[0];
+    for (Actor &actor: MapEditor::map.actors)
+    {
+        actor.ApplyDefinition(SharedMgr::actorDefinitions.at(actor.className), false);
+    }
 }
 
 static void Render(bool &done, SDL_Window *sdlWindow)

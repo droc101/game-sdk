@@ -24,7 +24,7 @@ class Actor
         std::array<float, 3> position{};
         std::array<float, 3> rotation{};
 
-        void ApplyDefinition(const ActorDefinition &definition);
+        void ApplyDefinition(const ActorDefinition &definition, bool overwrite);
 
         nlohmann::ordered_json GenerateJson() const;
 
