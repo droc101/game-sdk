@@ -142,8 +142,15 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
 
             ImGui::TableNextColumn();
             const Param &param = actor.params.at(key);
-            // TODO option param def
-            if (paramDef->type == Param::ParamType::PARAM_TYPE_BYTE)
+            const OptionParamDefinition *optionDef = dynamic_cast<OptionParamDefinition *>(paramDef);
+            if (optionDef != nullptr)
+            {
+                const OptionDefinition *options = optionDef->definition;
+                const std::vector<std::string> optionList = options->GetOptions();
+                const std::string selected = options->Find(param);
+                ImGui::TextUnformatted(selected.c_str());
+
+            } else if (paramDef->type == Param::ParamType::PARAM_TYPE_BYTE)
             {
                 ImGui::Text("%d", param.Get<uint8_t>(0));
             } else if (paramDef->type == Param::ParamType::PARAM_TYPE_INTEGER)

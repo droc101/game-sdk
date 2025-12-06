@@ -93,7 +93,7 @@ ParamDefinition *ParamDefinition::Create(const nlohmann::json &json, Error::Erro
         {
             ColorParamDefinition *colorDef = new ColorParamDefinition();
             colorDef->defaultValue = Color(json.value("default", 0xFFFFFFFF));
-            colorDef->showAlpha = json.value("default", true);
+            colorDef->showAlpha = json.value("showAlpha", true);
             output = colorDef;
         } else
         {
