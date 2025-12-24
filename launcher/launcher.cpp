@@ -104,8 +104,9 @@ static void LaunchSelectedTool()
 #ifdef WIN32
         folder += ".exe";
 #endif
+        std::vector<std::string> args = item.value("arguments", std::vector<std::string>{});
         printf("Launching process \"%s\"...\n", folder.c_str());
-        DesktopInterface::ExecuteProcessNonBlocking(folder, {});
+        DesktopInterface::ExecuteProcessNonBlocking(folder, args);
     } else if (item.contains("file"))
     {
         std::string folder = item.value("file", "");

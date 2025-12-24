@@ -4,6 +4,8 @@
 
 #include "DesktopInterface.h"
 
+#include <SDL3/SDL_timer.h>
+#include <cstdint>
 #include <filesystem>
 #include <SDL3/SDL_misc.h>
 #include <SDL3/SDL_process.h>
@@ -52,6 +54,7 @@ bool DesktopInterface::ExecuteProcessNonBlocking(const std::string &executable,
     {
         return false;
     }
+    processes.push_back(p);
     return true;
 }
 
@@ -77,7 +80,29 @@ bool DesktopInterface::OpenFilesystemPath(const std::string &path)
     info.fMask = 0;
     return ShellExecuteEx(&info);
 #else
-    return ExecuteProcess("xdg-open", {std::move(path)}, nullptr);
+    return ExecuteProcess("xdg-open", {path}, nullptr);
 #endif
 }
 
+uint32_t DesktopInterface::GarbageCollectorCallback(void *userdata, SDL_TimerID timer, uint32_t interval)
+{
+    std::vector<SDL_Process *>::iterator iter = processes.begin();
+    while (iter != processes.end())
+    {
+        SDL_Process *p = *iter.base();
+        if (SDL_WaitProcess(p, false, nullptr))
+        {
+            SDL_DestroyProcess(p);
+            iter = processes.erase(iter);
+        } else
+        {
+            iter += 1;
+        }
+    }
+    return interval;
+}
+
+void DesktopInterface::InitDesktopInterface()
+{
+    gcTimer = SDL_AddTimer(1000, GarbageCollectorCallback, nullptr);
+}

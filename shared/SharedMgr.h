@@ -11,6 +11,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "DesktopInterface.h"
 #include "ImGuiTextureAssetCache.h"
 #include "Options.h"
 #include "SetupWindow.h"
@@ -26,6 +28,7 @@ class SharedMgr
             textureCache = std::make_unique<T>(args...);
             LoadOptionDefinitions();
             LoadActorDefinitions();
+            DesktopInterface::InitDesktopInterface();
             if (!Options::ValidateGamePath())
             {
                 SetupWindow::Show();

@@ -3,7 +3,10 @@
     "GAME": {
       "Launch GAME": {
         "binary": "$GAMEDIR/game",
-        "workdir": "$GAMEDIR"
+        "workdir": "$GAMEDIR",
+        "arguments": [
+          "--nosteam"
+        ]
       },
       "GAME Directory": {
         "folder": "$GAMEDIR"

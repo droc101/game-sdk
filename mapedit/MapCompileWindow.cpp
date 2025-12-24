@@ -63,7 +63,7 @@ void MapCompileWindow::StartCompile(SDL_Window *window)
 #endif
                 const std::string mapName = std::filesystem::path(MapEditor::mapFile).stem().string();
                 const std::string mapArg = "--map=" + mapName;
-                if (!DesktopInterface::ExecuteProcessNonBlocking(optPath + gameBinary, {mapArg.c_str()}))
+                if (!DesktopInterface::ExecuteProcessNonBlocking(optPath + gameBinary, {mapArg.c_str(), "--nosteam"}))
                 {
                     log += "Failed to execute game binary";
                 }
