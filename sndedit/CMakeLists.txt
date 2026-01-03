@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(sndedit sndedit.cpp $<$<BOOL:${WIN32}>:sndedit.rc>)
 
-set_target_properties(sndedit PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(sndedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
 target_link_libraries(sndedit PRIVATE shared imgui_sdl3_renderer)
 

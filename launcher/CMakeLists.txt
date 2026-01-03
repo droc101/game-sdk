@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(launcher launcher.cpp $<$<BOOL:${WIN32}>:launcher.rc>)
 
-set_target_properties(launcher PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(launcher PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
 target_link_libraries(launcher PRIVATE shared imgui_sdl3_renderer)
 

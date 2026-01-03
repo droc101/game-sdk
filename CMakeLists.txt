@@ -40,14 +40,10 @@ if (WIN32)
             libgcc_s_seh-1.dll
             libwinpthread-1.dll
             SDL3.dll
-            glew32.dll
             libassimp-6.dll
             zlib1.dll
             libminizip-1.dll
             libbz2-1.dll
-            glslang.dll
-            libSPIRV-Tools-opt.dll
-            libSPIRV-Tools.dll
     )
 
     add_custom_target(copydlls ALL
@@ -66,36 +62,26 @@ endif ()
 include(cmake/FindOrFetchPackage.cmake)
 
 set(SDL_AUDIO_DEFAULT OFF)
+set(SDL_GPU_DEFAULT OFF)
 set(SDL_CAMERA_DEFAULT OFF)
 set(SDL_JOYSTICK_DEFAULT OFF)
 set(SDL_HAPTIC_DEFAULT OFF)
 set(SDL_POWER_DEFAULT OFF)
 set(SDL_SENSOR_DEFAULT OFF)
-set(SDL_TEST_LIBRARY OFF)
 set(SDL_PIPEWIRE OFF)
 set(SDL_OFFSCREEN OFF)
+set(SDL_LIBUDEV OFF)
+set(SDL_TEST_LIBRARY OFF)
+set(SDL_EXAMPLES OFF)
 findOrFetchPackage(https://github.com/libsdl-org/SDL.git release-3.*.* SDL3 CONFIG)
-fetchPackage(https://github.com/nlohmann/json.git v3.*.* JSON)
+
 fetchPackage(https://github.com/mackron/miniaudio.git 0.*.* miniaudio)
 
-set(ASSIMP_BUILD_TESTS OFF)
-set(ASSIMP_WARNINGS_AS_ERRORS OFF)
-set(ASSIMP_BUILD_ZLIB OFF)
-set(ASSIMP_NO_EXPORT ON)
-set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
-set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF)
-set(ASSIMP_BUILD_OBJ_IMPORTER ON)
-set(ASSIMP_BUILD_FBX_IMPORTER ON)
-set(ASSIMP_BUILD_GLTF_IMPORTER ON)
-set(ASSIMP_BUILD_COLLADA_IMPORTER ON)
-findOrFetchPackage(https://github.com/assimp/assimp.git v6.*.* assimp 6.0.0...<7.0.0)
+fetch_glew()
 
-find_package(ZLIB REQUIRED)
-find_package(glm REQUIRED)
+findOrFetchPackage(https://github.com/g-truc/glm.git 1.*.* glm)
+
 find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
-find_package(glslang CONFIG REQUIRED)
-find_package(Vulkan REQUIRED)
 
 add_library(imgui INTERFACE
         mtledit/mtledit.cpp)
@@ -167,23 +153,13 @@ target_sources(shared INTERFACE
 )
 target_link_libraries(shared INTERFACE
         SDL3::SDL3
-        nlohmann_json::nlohmann_json
         miniaudio
         assets
         glm::glm
-        assimp::assimp
-        ${OPENGL_LIBRARIES}
-        ${GLEW_LIBRARIES}
-        ZLIB::ZLIB
-        glslang::glslang
-        Vulkan::Vulkan
-        $<$<BOOL:${WIN32}>:opengl32>
+        OpenGL::GL
+        glew_s
 )
-target_include_directories(shared INTERFACE
-        shared
-        ${OPENGL_INCLUDE_DIR}
-        ${GLEW_INCLUDE_DIRS}
-)
+target_include_directories(shared INTERFACE shared)
 
 add_custom_target(
         copy_assets

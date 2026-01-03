@@ -18,7 +18,7 @@ bool GLHelper::Init()
     const GLenum err = glewInit();
     if (err != GLEW_OK)
     {
-        printf("GLEW init failure");
+        printf("GLEW init failure %d\n", err);
         return false;
     }
 

@@ -58,3 +58,22 @@ function(fetch_earcut_hpp)
     add_library(earcut INTERFACE)
     target_include_directories(earcut INTERFACE ${EARCUT_DIR}/include)
 endfunction()
+
+function(fetch_glew)
+    set(GLEW_EGL ON)
+    set(GLEW_GLX ON)
+    set(BUILD_UTILS OFF)
+    set(BUILD_SHARED_LIBS OFF)
+
+    getLatestPackageVersion(https://github.com/nigels-com/glew glew-2.3.*)
+
+    FetchContent_Declare(
+            GLEW
+            URL https://github.com/nigels-com/glew/releases/download/${LATEST_RELEASE}/${LATEST_RELEASE}.tgz
+            SOURCE_SUBDIR "build/cmake"
+            DOWNLOAD_EXTRACT_TIMESTAMP
+            EXCLUDE_FROM_ALL
+            SYSTEM
+    )
+    FetchContent_MakeAvailable(GLEW)
+endfunction()

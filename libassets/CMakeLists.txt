@@ -3,10 +3,41 @@ project(assets)
 
 set(CMAKE_CXX_STANDARD 20)
 
-find_package(ZLIB REQUIRED)
-find_package(assimp REQUIRED)
-find_package(glslang CONFIG REQUIRED)
-find_package(Vulkan REQUIRED)
+set(BUILD_SHARED_LIBS OFF)
+
+include(${CMAKE_SOURCE_DIR}/cmake/FindOrFetchPackage.cmake)
+
+fetchPackage(https://github.com/nlohmann/json.git v3.*.* JSON)
+
+if (WIN32)
+    find_package(ZLIB REQUIRED)
+    find_package(assimp REQUIRED)
+else()
+    set(ASSIMP_BUILD_TESTS OFF)
+    set(ASSIMP_WARNINGS_AS_ERRORS OFF)
+    set(ASSIMP_BUILD_ZLIB ON)
+    set(ASSIMP_NO_EXPORT ON)
+    set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
+    set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF)
+    set(ASSIMP_BUILD_OBJ_IMPORTER ON)
+    set(ASSIMP_BUILD_FBX_IMPORTER ON)
+    set(ASSIMP_BUILD_GLTF_IMPORTER ON)
+    set(ASSIMP_BUILD_COLLADA_IMPORTER ON)
+    set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
+    fetchPackage(https://github.com/assimp/assimp.git v6.*.* assimp)
+endif()
+
+set(ENABLE_GLSLANG_BINARIES OFF)
+set(ENABLE_HLSL OFF)
+set(ENABLE_SPIRV ON)
+set(ENABLE_OPT OFF)
+fetchPackage(https://github.com/KhronosGroup/glslang.git 16.*.* glslang)
+
+find_package(Vulkan QUIET)
+if (Vulkan_INCLUDE_DIRS STREQUAL "Vulkan_INCLUDE_DIR-NOTFOUND")
+    fetchPackage(https://github.com/KhronosGroup/Vulkan-Headers.git vulkan-sdk-1.4.*.* VulkanHeaders)
+    set(Vulkan_INCLUDE_DIRS ${VULKAN_HEADERS_SOURCE_DIR}/include)
+endif ()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
@@ -82,7 +113,7 @@ add_library(assets STATIC include/libassets/libassets.h
         include/libassets/asset/LevelMaterialAsset.h
 )
 
-target_link_libraries(assets PRIVATE ZLIB::ZLIB assimp::assimp glslang::glslang Vulkan::Vulkan nlohmann_json::nlohmann_json)
+target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json)
 
-target_include_directories(assets PUBLIC "include")
-target_include_directories(assets PRIVATE ${ZLIB_INCLUDE_DIRS} ${ASSIMP_INCLUDE_DIRS} "../lib/stb")
+target_include_directories(assets PUBLIC ${Vulkan_INCLUDE_DIRS} "include")
+target_include_directories(assets PRIVATE ${ASSIMP_INCLUDE_DIRS} "${CMAKE_SOURCE_DIR}/lib/stb")

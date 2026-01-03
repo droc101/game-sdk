@@ -10,7 +10,7 @@ add_executable(shdedit shdedit.cpp
         BatchDecompileWindow.h
         $<$<BOOL:${WIN32}>:shdedit.rc>)
 
-set_target_properties(shdedit PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(shdedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
 target_link_libraries(shdedit PRIVATE shared imgui_sdl3_renderer)
 

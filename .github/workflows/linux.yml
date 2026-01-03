@@ -20,31 +20,29 @@ jobs:
             zip_name: game-sdk.linux.release
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: 'true'
 
+    - name: Cache Dependencies
+      uses: actions/cache@v5
+      with:
+        path: build-${{ matrix.build_type }}/_deps
+        key: linux-${{ matrix.build_type }}-deps-${{ hashFiles('**/.git/HEAD') }}
+
     - name: Install Packages
       run: |
-        wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
-        sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-noble.list https://packages.lunarg.com/vulkan/lunarg-vulkan-noble.list
         sudo apt-get update
-        sudo apt install -y vulkan-sdk libglm-dev libglew-dev zlib1g-dev cmake gcc
-
-    - name: Cache Dependencies
-      uses: actions/cache@v4
-      with:
-        path: ${{github.workspace}}/build-${{ matrix.build_type }}/_deps
-        key: linux-deps-${{ hashFiles('**/.git/HEAD') }}
+        sudo apt install -y libglm-dev glslang-dev libglew-dev cmake gcc
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build-${{ matrix.build_type }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      run: cmake -B ${{github.workspace}}/build-${{ matrix.build_type }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DSDL_RENDER_DEFAULT=OFF -DSDL_HIDAPI_DEFAULT=OFF -DSDL_DIALOG_DEFAULT=OFF -DSDL_X11_XCURSOR=OFF -DSDL_X11_XINPUT=OFF -DSDL_X11_XFIXES=OFF -DSDL_X11_XSCRNSAVER=OFF -DSDL_X11_XRANDR=OFF -DSDL_X11_XTEST=OFF -DSDL_VIDEO_DEFAULT=OFF -DSDL_UNIX_CONSOLE_BUILD=ON
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build-${{ matrix.build_type }} --config ${{ matrix.build_type }}
+      run: cmake --build ${{github.workspace}}/build-${{ matrix.build_type }} --config ${{ matrix.build_type }} -j $(nproc)
 
     - name: Upload results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: ${{ matrix.zip_name }}
         path: |

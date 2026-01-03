@@ -17,15 +17,12 @@ add_executable(mapcomp mapcomp.cpp
         SectorCollisionBuilder.h
 )
 
-set_target_properties(mapcomp PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(mapcomp PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
 target_link_libraries(mapcomp PRIVATE
         earcut
         assets
-        nlohmann_json::nlohmann_json
         glm::glm
-        assimp::assimp
-        ZLIB::ZLIB
 )
 
 add_dependencies(mapcomp assets)
