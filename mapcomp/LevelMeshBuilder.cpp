@@ -128,7 +128,7 @@ void LevelMeshBuilder::AddWallBase(const std::array<float, 2> &startPoint,
     {
         ModelVertex v{};
         v.color = lightColor;
-        v.normal[0] = wallNormalVector[0];
+        v.normal[0] = -wallNormalVector[0];
         v.normal[1] = 0;
         v.normal[2] = -wallNormalVector[1];
 
