@@ -19,11 +19,9 @@ uniform vec4 ALBEDO;
 uniform int displayMode;
 
 float calculate_shading() {
-    vec3 light_dir = normalize(vec3(0.0, 0.0, -1.0));
-    float shading = dot(normalize(NORMAL), light_dir);
-    shading = (shading + 1.0) * 0.5;
-    shading = pow(shading, 1.5);
-    shading = mix(0.2, 1.0, shading);
+    vec3 light_dir = normalize(vec3(0.0, -1.0, 1.0));
+    float shading = 1 - pow(2, 10 * dot(normalize(NORMAL), light_dir));
+    shading = max(0.6, shading);
     return shading;
 }
 
