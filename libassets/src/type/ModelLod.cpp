@@ -58,8 +58,7 @@ ModelLod::ModelLod(const std::string &filePath, const float distance)
                                      aiProcess_JoinIdenticalVertices |
                                      aiProcess_SortByPType |
                                      aiProcess_ValidateDataStructure |
-                                     aiProcess_FlipUVs |
-                                     aiProcess_GenSmoothNormals;
+                                     aiProcess_GenNormals;
     const aiScene *scene = importer.ReadFile(filePath, importFlags);
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
@@ -170,5 +169,13 @@ void ModelLod::Write(DataWriter &writer) const
     for (const std::vector<uint32_t> &lodIndices: materialIndices)
     {
         writer.WriteBuffer<uint32_t>(lodIndices);
+    }
+}
+
+void ModelLod::FlipVerticalUVs()
+{
+    for (ModelVertex &v: vertices)
+    {
+        v.uv.at(1) = 1.0f - v.uv.at(1);
     }
 }

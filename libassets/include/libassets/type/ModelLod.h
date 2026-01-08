@@ -24,6 +24,8 @@ class ModelLod
 
         void Write(DataWriter &writer) const;
 
+        void FlipVerticalUVs();
+
         float distance{};
 
         std::vector<ModelVertex> vertices{};

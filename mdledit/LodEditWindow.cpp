@@ -17,6 +17,7 @@
 #include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
 #include <string>
+#include <utility>
 #include "DialogFilters.h"
 #include "ModelRenderer.h"
 
@@ -57,10 +58,17 @@ void LodEditWindow::Render(SDL_Window *window)
             }
             ImGui::Dummy(ImVec2(0.0f, 2.0f));
             const ImVec2 space = ImGui::GetContentRegionAvail();
-            const float buttonWidth = space.x / 2.0f;
+            const float buttonWidth = space.x / 3.0f;
             if (ImGui::Button(std::format("Export##{}", lodIndex).c_str(), ImVec2(buttonWidth, 0)))
             {
                 SDL_ShowSaveFileDialog(saveLodCallback, &lod, window, DialogFilters::objFilters.data(), 1, nullptr);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button(std::format("Flip UVs##{}", lodIndex).c_str(), ImVec2(buttonWidth, 0)))
+            {
+                ModelAsset model = ModelRenderer::GetModel();
+                model.GetLod(lodIndex).FlipVerticalUVs();
+                ModelRenderer::LoadModel(std::move(model));
             }
             if (ModelRenderer::GetModel().GetLodCount() != 1)
             {
