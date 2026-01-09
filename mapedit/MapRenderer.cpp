@@ -3,13 +3,25 @@
 //
 
 #include "MapRenderer.h"
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <glm/ext.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <libassets/asset/ModelAsset.h>
+#include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
+#include <libassets/type/ModelLod.h>
+#include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <ranges>
+#include <string>
 #include <vector>
 #include "GLHelper.h"
 #include "imgui.h"
 #include "MapEditor.h"
+#include "Options.h"
+#include "SharedMgr.h"
 #include "Viewport.h"
 
 bool MapRenderer::Init()
@@ -89,6 +101,15 @@ bool MapRenderer::Init()
     workBuffer = GLHelper::CreateIndexedBuffer();
     workBufferNonIndexed = GLHelper::CreateBuffer();
 
+    const std::vector<std::string> modelsPaths = SharedMgr::ScanFolder(Options::gamePath + "/assets/model",
+                                                                       ".gmdl",
+                                                                       true);
+    for (const std::string &modelPath: modelsPaths)
+    {
+        const ModelBuffer buf = LoadModel(Options::gamePath + "/assets/model/" + modelPath);
+        modelBuffers[modelPath.substr(0, modelPath.length() - 5)] = buf;
+    }
+
     return true;
 }
 
@@ -98,6 +119,15 @@ void MapRenderer::Destroy()
     glDeleteProgram(lineProgram);
     GLHelper::DestroyBuffer(axisHelperBuffer);
     GLHelper::DestroyBuffer(worldBorderBuffer);
+    for (const ModelBuffer &buffer: modelBuffers | std::views::values)
+    {
+        glDeleteVertexArrays(1, &buffer.vao);
+        glDeleteBuffers(1, &buffer.vbo);
+        for (const GLuint &ebo: buffer.ebos)
+        {
+            glDeleteBuffers(1, &ebo);
+        }
+    }
 }
 
 void MapRenderer::RenderViewport(const Viewport &vp)
@@ -119,7 +149,7 @@ void MapRenderer::RenderViewport(const Viewport &vp)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLineWidth(1);
 
-    const glm::mat4 view = vp.GetMatrix();
+    glm::mat4 view = vp.GetMatrix();
 
     glDisable(GL_DEPTH_TEST);
 
@@ -173,20 +203,23 @@ void MapRenderer::RenderViewport(const Viewport &vp)
 
     glClear(GL_DEPTH_BUFFER_BIT);
     glDisable(GL_CULL_FACE);
+
+    // RenderModel(testModel, view, identity);
 }
 
 void MapRenderer::RenderLine(const glm::vec3 start,
-                               const glm::vec3 end,
-                               Color color,
-                               glm::mat4 &matrix,
-                               const float thickness)
+                             const glm::vec3 end,
+                             Color color,
+                             glm::mat4 &matrix,
+                             const float thickness)
 {
     glUseProgram(genericProgram);
 
     glLineWidth(thickness);
 
     glUniform4fv(glGetUniformLocation(genericProgram, "alb"), 1, color.GetDataPointer());
-    glUniformMatrix4fv(glGetUniformLocation(genericProgram, "MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
+    glUniformMatrix4fv(glGetUniformLocation(genericProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
+    glUniformMatrix4fv(glGetUniformLocation(genericProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(identity));
 
     const std::vector<float> vertices = {
         start.x,
@@ -208,17 +241,15 @@ void MapRenderer::RenderLine(const glm::vec3 start,
     glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(vertices.size()));
 }
 
-void MapRenderer::RenderBillboardPoint(const glm::vec3 position,
-                                         const float pointSize,
-                                         Color color,
-                                         glm::mat4 &matrix)
+void MapRenderer::RenderBillboardPoint(const glm::vec3 position, const float pointSize, Color color, glm::mat4 &matrix)
 {
     glUseProgram(genericProgram);
 
     glPointSize(pointSize);
 
     glUniform4fv(glGetUniformLocation(genericProgram, "alb"), 1, color.GetDataPointer());
-    glUniformMatrix4fv(glGetUniformLocation(genericProgram, "MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
+    glUniformMatrix4fv(glGetUniformLocation(genericProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
+    glUniformMatrix4fv(glGetUniformLocation(genericProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(identity));
 
     const std::vector<float> vertices = {position.x, position.y, position.z};
 
@@ -252,11 +283,105 @@ void MapRenderer::RenderUnitVector(const glm::vec3 origin,
     RenderLine(origin, origin + lenVector, color, matrix, thickness);
 }
 
-void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix, const Color &c)
+void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix)
 {
     const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
-    RenderBillboardPoint(pos, 10, c, matrix);
     const glm::vec3 actorRotation = glm::vec3(a.rotation[0], a.rotation[1], a.rotation[2]);
-    RenderUnitVector(pos, actorRotation, c, matrix, 2, 1);
+    const ActorDefinition &definition = SharedMgr::actorDefinitions.at(a.className);
+    Color c = definition.renderDefinition.color;
+    if (!definition.renderDefinition.colorSourceParam.empty() && a.params.contains(definition.renderDefinition.colorSourceParam))
+    {
+        c = a.params.at(definition.renderDefinition.colorSourceParam).Get<Color>(definition.renderDefinition.color);
+    }
+
+    if (definition.renderDefinition.model.empty() && definition.renderDefinition.modelSourceParam.empty())
+    {
+        RenderBillboardPoint(pos, 10, c, matrix);
+        RenderUnitVector(pos, actorRotation, c, matrix, 2, 1);
+    } else
+    {
+        std::string model = definition.renderDefinition.model;
+        if (!definition.renderDefinition.modelSourceParam.empty() && a.params.contains(definition.renderDefinition.modelSourceParam))
+        {
+            model = a.params.at(definition.renderDefinition.modelSourceParam).Get<std::string>(definition.renderDefinition.model);
+        }
+        if (!modelBuffers.contains(model))
+        {
+            model = "error";
+        }
+        glm::mat4 worldMatrix = glm::identity<glm::mat4>();
+        worldMatrix = glm::translate(worldMatrix, pos);
+        worldMatrix = glm::rotate(worldMatrix, glm::radians(actorRotation.y), glm::vec3(0, 1, 0));
+        worldMatrix = glm::rotate(worldMatrix, glm::radians(actorRotation.x), glm::vec3(1, 0, 0));
+        worldMatrix = glm::rotate(worldMatrix, glm::radians(actorRotation.z), glm::vec3(0, 0, 1));
+
+        RenderModel(modelBuffers.at(model), matrix, worldMatrix, c);
+
+
+        RenderBillboardPoint(pos, 10, c, matrix);
+    }
 }
 
+MapRenderer::ModelBuffer MapRenderer::LoadModel(const std::string &path)
+{
+    ModelBuffer buf{};
+    const Error::ErrorCode e = ModelAsset::CreateFromAsset(path, buf.model);
+    assert(e == Error::ErrorCode::OK); // TODO proper handling
+    glGenVertexArrays(1, &buf.vao);
+    glBindVertexArray(buf.vao);
+
+    glGenBuffers(1, &buf.vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, buf.vbo);
+
+    DataWriter writer;
+    buf.model.GetVertexBuffer(0, writer);
+    std::vector<uint8_t> buffer;
+    writer.CopyToVector(buffer);
+    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(writer.GetBufferSize()), buffer.data(), GL_STATIC_DRAW);
+
+    const ModelLod &lod = buf.model.GetLod(0);
+    for (size_t i = 0; i < lod.indexCounts.size(); i++)
+    {
+        GLuint ebo = 0;
+        glGenBuffers(1, &ebo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                     static_cast<GLsizeiptr>(lod.indexCounts.at(i) * sizeof(uint32_t)),
+                     lod.materialIndices.at(i).data(),
+                     GL_STATIC_DRAW);
+        buf.ebos.push_back(ebo);
+    }
+
+    return buf;
+}
+
+void MapRenderer::RenderModel(ModelBuffer &buffer, glm::mat4 &viewMatrix, glm::mat4 &worldMatrix, Color &c)
+{
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glUseProgram(genericProgram);
+
+    glLineWidth(1);
+
+    glUniform4fv(glGetUniformLocation(genericProgram, "alb"), 1, c.GetDataPointer());
+    glUniformMatrix4fv(glGetUniformLocation(genericProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(genericProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+
+    glBindVertexArray(buffer.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer.vbo);
+
+    const GLint posAttrib = glGetAttribLocation(genericProgram, "VERTEX");
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(posAttrib);
+
+    for (size_t i = 0; i < buffer.ebos.size(); i++)
+    {
+        const GLuint ebo = buffer.ebos.at(i);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glDrawElements(GL_TRIANGLES,
+                       static_cast<GLsizei>(buffer.model.GetLod(0).indexCounts.at(i)),
+                       GL_UNSIGNED_INT,
+                       nullptr);
+    }
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}

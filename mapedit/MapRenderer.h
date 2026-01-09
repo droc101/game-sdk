@@ -5,8 +5,11 @@
 #pragma once
 
 #include <GL/glew.h>
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
+#include <libassets/asset/ModelAsset.h>
 #include <libassets/type/Color.h>
+#include <vector>
 #include "GLHelper.h"
 #include "libassets/type/Actor.h"
 #include "tools/AddActorTool.h"
@@ -33,9 +36,17 @@ class MapRenderer
                                      float thickness,
                                      float length);
 
-        static void RenderActor(const Actor &a, glm::mat4 &matrix, const Color &c);
+        static void RenderActor(const Actor &a, glm::mat4 &matrix);
 
     private:
+        struct ModelBuffer
+        {
+                ModelAsset model;
+                GLuint vao;
+                GLuint vbo;
+                std::vector<GLuint> ebos;
+        };
+
         static inline GLuint genericProgram = 0;
         static inline GLuint lineProgram = 0;
         static inline GLuint gridProgram = 0;
@@ -45,4 +56,12 @@ class MapRenderer
 
         static inline GLHelper::GL_IndexedBuffer workBuffer{};
         static inline GLHelper::GL_Buffer workBufferNonIndexed{};
+
+        static inline std::unordered_map<std::string, ModelBuffer> modelBuffers{};
+
+        static inline glm::mat4 identity = glm::identity<glm::mat4>();
+
+        static ModelBuffer LoadModel(const std::string &path);
+
+        static void RenderModel(ModelBuffer &buffer, glm::mat4 &viewMatrix, glm::mat4 &worldMatrix, Color &c);
 };

@@ -38,6 +38,8 @@ class Color
 
         [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 
+        void DiscardAlpha();
+
     private:
         std::array<float, 4> color = {1.0f, 1.0f, 1.0f, 1.0f};
 };

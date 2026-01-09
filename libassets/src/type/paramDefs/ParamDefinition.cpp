@@ -100,7 +100,6 @@ ParamDefinition *ParamDefinition::Create(const nlohmann::json &json, Error::Erro
             e = Error::ErrorCode::INCORRECT_FORMAT;
             return nullptr;
         }
-        // TODO: color
     }
 
     output->description = desc;

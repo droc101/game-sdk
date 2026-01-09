@@ -119,7 +119,7 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
 
     for (Actor &a: MapEditor::map.actors)
     {
-        MapRenderer::RenderActor(a, matrix, Color(0.7, 1, 0.7, 1));
+        MapRenderer::RenderActor(a, matrix);
     }
 
     if (hasDrawnShape)

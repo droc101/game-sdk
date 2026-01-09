@@ -6,6 +6,7 @@
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
+#include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Error.h>
 #include <nlohmann/json.hpp>
@@ -38,6 +39,20 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
     definition.description = definition_json.value("description", "");
     definition.isVirtual = definition_json.value("virtual", false);
 
+    if (definition_json.contains("display"))
+    {
+        const nlohmann::json &renderDef = definition_json.at("display");
+        Error::ErrorCode e = Error::ErrorCode::OK;
+        definition.renderDefinition = RenderDefinition::Create(renderDef, e);
+        if (e != Error::ErrorCode::OK)
+        {
+            return e;
+        }
+    } else
+    {
+        definition.renderDefinition.color = Color(0x00ff00ff);
+    }
+
     if (definition_json.contains("inputs"))
     {
         nlohmann::json inputs = definition_json.at("inputs");
@@ -55,7 +70,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         for (const auto &[key, value]: outputs.items())
         {
             const SignalDefinition signal = SignalDefinition(value.value("description", ""),
-                                                       Param::ParseType(value.value("type", "none")));
+                                                             Param::ParseType(value.value("type", "none")));
             definition.outputs[key] = signal;
         }
     }

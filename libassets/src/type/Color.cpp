@@ -99,3 +99,8 @@ nlohmann::ordered_json Color::GenerateJson() const
     j["a"] = color[3];
     return j;
 }
+
+void Color::DiscardAlpha()
+{
+    color[3] = 1.0f;
+}

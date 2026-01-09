@@ -5,6 +5,7 @@
 #pragma once
 
 #include <libassets/type/paramDefs/ParamDefinition.h>
+#include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Error.h>
 #include <string>
@@ -22,6 +23,8 @@ class ActorDefinition
 
         std::string parentClassName;
         ActorDefinition *parentClass = nullptr;
+
+        RenderDefinition renderDefinition{};
 
         bool isVirtual = false;
 

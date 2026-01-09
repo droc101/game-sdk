@@ -9,10 +9,8 @@
 #include <memory>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
-#include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_messagebox.h>
-#include <SDL3/SDL_process.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include "ActorBrowserWindow.h"
@@ -24,7 +22,6 @@
 #include "OpenGLImGuiTextureAssetCache.h"
 #include "Options.h"
 #include "SharedMgr.h"
-#include "TextureBrowserWindow.h"
 #include "tools/AddActorTool.h"
 #include "tools/AddPolygonTool.h"
 #include "tools/AddPrimitiveTool.h"
@@ -471,12 +468,6 @@ int main()
 
     SharedMgr::InitSharedMgr<OpenGLImGuiTextureAssetCache>();
     MapEditor::mat = WallMaterial(Options::defaultMaterial);
-
-    // Actor a = Actor();
-    // a.className = "logic_counter";
-    // a.ApplyDefinition(SharedMgr::actorDefinitions.at(a.className));
-    // a.params.at("name").Set<std::string>("counter");
-    // MapEditor::level.actors.push_back(a);
 
     const char *glslVersion = "#version 130";
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0))

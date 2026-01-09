@@ -111,6 +111,8 @@ add_library(assets STATIC include/libassets/libassets.h
         src/type/paramDefs/ParamDefinition.cpp
         src/asset/LevelMaterialAsset.cpp
         include/libassets/asset/LevelMaterialAsset.h
+        include/libassets/type/renderDefs/RenderDefinition.h
+        src/type/renderDefs/RenderDefinition.cpp
 )
 
 target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json)
