@@ -14,8 +14,10 @@ class RenderDefinition
     public:
         std::string modelSourceParam{};
         std::string colorSourceParam{};
-        std::string model;
-        Color color;
+        std::string textureSourceParam{};
+        std::string model{};
+        std::string texture{};
+        Color color{};
 
         virtual ~RenderDefinition() = default;
 

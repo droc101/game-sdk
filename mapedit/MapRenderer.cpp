@@ -9,6 +9,7 @@
 #include <glm/ext.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <libassets/asset/ModelAsset.h>
+#include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/ModelLod.h>
@@ -20,6 +21,7 @@
 #include "GLHelper.h"
 #include "imgui.h"
 #include "MapEditor.h"
+#include "OpenGLImGuiTextureAssetCache.h"
 #include "Options.h"
 #include "SharedMgr.h"
 #include "Viewport.h"
@@ -42,9 +44,15 @@ bool MapRenderer::Init()
     const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/mapedit/generic.frag",
                                                                           "assets/mapedit/generic.vert",
                                                                           genericProgram);
+
+    const Error::ErrorCode spriteProgramErrorCode = GLHelper::CreateProgram("assets/mapedit/sprite.frag",
+                                                                            "assets/mapedit/sprite.vert",
+                                                                            spriteProgram);
+
     if (cubeProgramErrorCode != Error::ErrorCode::OK ||
         linesProgramErrorCode != Error::ErrorCode::OK ||
-        gridProgramErrorCode != Error::ErrorCode::OK)
+        gridProgramErrorCode != Error::ErrorCode::OK ||
+        spriteProgramErrorCode != Error::ErrorCode::OK)
     {
         return false;
     }
@@ -117,6 +125,8 @@ void MapRenderer::Destroy()
 {
     glDeleteProgram(genericProgram);
     glDeleteProgram(lineProgram);
+    glDeleteProgram(gridProgram);
+    glDeleteProgram(spriteProgram);
     GLHelper::DestroyBuffer(axisHelperBuffer);
     GLHelper::DestroyBuffer(worldBorderBuffer);
     for (const ModelBuffer &buffer: modelBuffers | std::views::values)
@@ -264,6 +274,42 @@ void MapRenderer::RenderBillboardPoint(const glm::vec3 position, const float poi
     glDrawArrays(GL_POINTS, 0, 1);
 }
 
+void MapRenderer::RenderBillboardSprite(const glm::vec3 position,
+                                        const float pointSize,
+                                        const std::string &texture,
+                                        Color color,
+                                        glm::mat4 &matrix)
+{
+    glUseProgram(spriteProgram);
+
+    glPointSize(pointSize);
+
+    OpenGLImGuiTextureAssetCache *cache = dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache.get());
+
+    GLuint textureId = -1;
+    const Error::ErrorCode e = cache->GetTextureGLuint("texture/" + texture + ".gtex", textureId);
+    assert(e == Error::ErrorCode::OK); // TODO handle properly
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    glUniform1i(glGetUniformLocation(spriteProgram, "sprite"), 0);
+    glUniform4fv(glGetUniformLocation(spriteProgram, "color"), 1, color.GetDataPointer());
+    glUniformMatrix4fv(glGetUniformLocation(spriteProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
+    glUniformMatrix4fv(glGetUniformLocation(spriteProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(identity));
+
+    const std::vector<float> vertices = {position.x, position.y, position.z};
+
+    GLHelper::BindBuffer(workBufferNonIndexed);
+    glBufferData(GL_ARRAY_BUFFER,
+                 static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)),
+                 vertices.data(),
+                 GL_STREAM_DRAW);
+    const GLint posAttrLoc = glGetAttribLocation(spriteProgram, "VERTEX");
+    glVertexAttribPointer(posAttrLoc, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+    glEnableVertexAttribArray(posAttrLoc);
+    glDrawArrays(GL_POINTS, 0, 1);
+}
+
 void MapRenderer::RenderUnitVector(const glm::vec3 origin,
                                    const glm::vec3 eulerAngles,
                                    const Color color,
@@ -289,21 +335,38 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix)
     const glm::vec3 actorRotation = glm::vec3(a.rotation[0], a.rotation[1], a.rotation[2]);
     const ActorDefinition &definition = SharedMgr::actorDefinitions.at(a.className);
     Color c = definition.renderDefinition.color;
-    if (!definition.renderDefinition.colorSourceParam.empty() && a.params.contains(definition.renderDefinition.colorSourceParam))
+    if (!definition.renderDefinition.colorSourceParam.empty() &&
+        a.params.contains(definition.renderDefinition.colorSourceParam))
     {
         c = a.params.at(definition.renderDefinition.colorSourceParam).Get<Color>(definition.renderDefinition.color);
+    }
+    std::string texture = definition.renderDefinition.texture;
+    if (!definition.renderDefinition.textureSourceParam.empty() &&
+        a.params.contains(definition.renderDefinition.textureSourceParam))
+    {
+        texture = a.params.at(definition.renderDefinition.textureSourceParam)
+                          .Get<std::string>(definition.renderDefinition.texture);
+    }
+
+    if (texture.empty())
+    {
+        RenderBillboardPoint(pos, 10, c, matrix);
+    } else
+    {
+        RenderBillboardSprite(pos, 20, texture, c, matrix);
     }
 
     if (definition.renderDefinition.model.empty() && definition.renderDefinition.modelSourceParam.empty())
     {
-        RenderBillboardPoint(pos, 10, c, matrix);
         RenderUnitVector(pos, actorRotation, c, matrix, 2, 1);
     } else
     {
         std::string model = definition.renderDefinition.model;
-        if (!definition.renderDefinition.modelSourceParam.empty() && a.params.contains(definition.renderDefinition.modelSourceParam))
+        if (!definition.renderDefinition.modelSourceParam.empty() &&
+            a.params.contains(definition.renderDefinition.modelSourceParam))
         {
-            model = a.params.at(definition.renderDefinition.modelSourceParam).Get<std::string>(definition.renderDefinition.model);
+            model = a.params.at(definition.renderDefinition.modelSourceParam)
+                            .Get<std::string>(definition.renderDefinition.model);
         }
         if (!modelBuffers.contains(model))
         {
@@ -316,9 +379,6 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix)
         worldMatrix = glm::rotate(worldMatrix, glm::radians(actorRotation.z), glm::vec3(0, 0, 1));
 
         RenderModel(modelBuffers.at(model), matrix, worldMatrix, c);
-
-
-        RenderBillboardPoint(pos, 10, c, matrix);
     }
 }
 

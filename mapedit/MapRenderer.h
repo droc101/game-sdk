@@ -29,6 +29,8 @@ class MapRenderer
 
         static void RenderBillboardPoint(glm::vec3 position, float pointSize, Color color, glm::mat4 &matrix);
 
+        static void RenderBillboardSprite(glm::vec3 position, float pointSize, const std::string &texture, Color color, glm::mat4 &matrix);
+
         static void RenderUnitVector(glm::vec3 origin,
                                      glm::vec3 eulerAngles,
                                      Color color,
@@ -50,6 +52,7 @@ class MapRenderer
         static inline GLuint genericProgram = 0;
         static inline GLuint lineProgram = 0;
         static inline GLuint gridProgram = 0;
+        static inline GLuint spriteProgram = 0;
 
         static inline GLHelper::GL_Buffer axisHelperBuffer{};
         static inline GLHelper::GL_Buffer worldBorderBuffer{};
