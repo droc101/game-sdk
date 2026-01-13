@@ -1,16 +1,16 @@
 include(FetchContent)
 
-macro(getLatestPackageVersion gitRepo versionSplat)
+macro(get_latest_package_version git_repo version_glob)
     find_package(Git 2.18 REQUIRED)
     if (WIN32)
-        execute_process(COMMAND powershell -command "((& '${GIT_EXECUTABLE}' -c 'versionsort.suffix=-' ls-remote --exit-code --refs --sort=version:refname --tags ${gitRepo} '${versionSplat}' | Select-Object -Last 1) -Split '/')[2]" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE LATEST_RELEASE)
+        execute_process(COMMAND powershell -command "((& '${GIT_EXECUTABLE}' -c 'versionsort.suffix=-' ls-remote --exit-code --refs --sort=version:refname --tags ${git_repo} '${version_glob}' | Select-Object -Last 1) -Split '/')[2]" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE LATEST_RELEASE)
     else ()
-        execute_process(COMMAND ${GIT_EXECUTABLE} -c "versionsort.suffix=-" ls-remote --exit-code --refs --sort=version:refname --tags ${gitRepo} "${versionSplat}" COMMAND tail --lines=1 COMMAND cut --delimiter=/ --fields=3 COMMAND tr -d "\n" OUTPUT_VARIABLE LATEST_RELEASE)
+        execute_process(COMMAND ${GIT_EXECUTABLE} -c "versionsort.suffix=-" ls-remote --exit-code --refs --sort=version:refname --tags ${git_repo} "${version_glob}" COMMAND tail --lines=1 COMMAND cut --delimiter=/ --fields=3 COMMAND tr -d "\n" OUTPUT_VARIABLE LATEST_RELEASE)
     endif ()
 endmacro()
 
-macro(findOrFetchPackage gitRepo versionSplat packageName)
-    getLatestPackageVersion(${gitRepo} ${versionSplat})
+macro(find_or_fetch_package gitRepo versionSplat packageName)
+    get_latest_package_version(${gitRepo} ${versionSplat})
 
     FetchContent_Declare(
             ${packageName}
@@ -25,8 +25,8 @@ macro(findOrFetchPackage gitRepo versionSplat packageName)
     FetchContent_MakeAvailable(${packageName})
 endmacro()
 
-macro(fetchPackage gitRepo versionSplat packageName)
-    getLatestPackageVersion(${gitRepo} ${versionSplat})
+macro(fetch_package gitRepo versionSplat packageName)
+    get_latest_package_version(${gitRepo} ${versionSplat})
 
     FetchContent_Declare(
             ${packageName}
@@ -38,15 +38,6 @@ macro(fetchPackage gitRepo versionSplat packageName)
             SYSTEM
     )
     FetchContent_MakeAvailable(${packageName})
-endmacro()
-
-macro(get_latest_package_version git_repo version_glob)
-    find_package(Git 2.18 REQUIRED)
-    if (WIN32)
-        execute_process(COMMAND powershell -command "((& '${GIT_EXECUTABLE}' -c 'versionsort.suffix=-' ls-remote --exit-code --refs --sort=version:refname --tags ${git_repo} '${version_glob}' | Select-Object -Last 1) -Split '/')[2]" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE LATEST_RELEASE)
-    else ()
-        execute_process(COMMAND ${GIT_EXECUTABLE} -c "versionsort.suffix=-" ls-remote --exit-code --refs --sort=version:refname --tags ${git_repo} "${version_glob}" COMMAND tail --lines=1 COMMAND cut --delimiter=/ --fields=3 COMMAND tr -d "\n" OUTPUT_VARIABLE LATEST_RELEASE)
-    endif ()
 endmacro()
 
 function(fetch_earcut_hpp)
@@ -65,7 +56,7 @@ function(fetch_glew)
     set(BUILD_UTILS OFF)
     set(BUILD_SHARED_LIBS OFF)
 
-    getLatestPackageVersion(https://github.com/nigels-com/glew glew-2.3.*)
+    get_latest_package_version(https://github.com/nigels-com/glew glew-2.3.*)
 
     FetchContent_Declare(
             GLEW

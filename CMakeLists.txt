@@ -73,13 +73,13 @@ set(SDL_OFFSCREEN OFF)
 set(SDL_LIBUDEV OFF)
 set(SDL_TEST_LIBRARY OFF)
 set(SDL_EXAMPLES OFF)
-findOrFetchPackage(https://github.com/libsdl-org/SDL.git release-3.*.* SDL3 CONFIG)
+find_or_fetch_package(https://github.com/libsdl-org/SDL.git release-3.*.* SDL3 CONFIG)
 
-fetchPackage(https://github.com/mackron/miniaudio.git 0.*.* miniaudio)
+fetch_package(https://github.com/mackron/miniaudio.git 0.*.* miniaudio)
 
 fetch_glew()
 
-findOrFetchPackage(https://github.com/g-truc/glm.git 1.*.* glm)
+find_or_fetch_package(https://github.com/g-truc/glm.git 1.*.* glm)
 
 find_package(OpenGL REQUIRED)
 
