@@ -7,7 +7,7 @@ set(BUILD_SHARED_LIBS OFF)
 
 include(${CMAKE_SOURCE_DIR}/cmake/FindOrFetchPackage.cmake)
 
-fetchPackage(https://github.com/nlohmann/json.git v3.*.* JSON)
+fetch_package(https://github.com/nlohmann/json.git v3.*.* JSON)
 
 if (WIN32)
     find_package(ZLIB REQUIRED)
@@ -24,18 +24,18 @@ else()
     set(ASSIMP_BUILD_GLTF_IMPORTER ON)
     set(ASSIMP_BUILD_COLLADA_IMPORTER ON)
     set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
-    fetchPackage(https://github.com/assimp/assimp.git v6.*.* assimp)
+    fetch_package(https://github.com/assimp/assimp.git v6.*.* assimp)
 endif()
 
 set(ENABLE_GLSLANG_BINARIES OFF)
 set(ENABLE_HLSL OFF)
 set(ENABLE_SPIRV ON)
 set(ENABLE_OPT OFF)
-fetchPackage(https://github.com/KhronosGroup/glslang.git 16.*.* glslang)
+fetch_package(https://github.com/KhronosGroup/glslang.git 16.*.* glslang)
 
 find_package(Vulkan QUIET)
 if (Vulkan_INCLUDE_DIRS STREQUAL "Vulkan_INCLUDE_DIR-NOTFOUND")
-    fetchPackage(https://github.com/KhronosGroup/Vulkan-Headers.git vulkan-sdk-1.4.*.* VulkanHeaders)
+    fetch_package(https://github.com/KhronosGroup/Vulkan-Headers.git vulkan-sdk-1.4.*.* VulkanHeaders)
     set(Vulkan_INCLUDE_DIRS ${VULKAN_HEADERS_SOURCE_DIR}/include)
 endif ()
 
@@ -118,4 +118,4 @@ add_library(assets STATIC include/libassets/libassets.h
 target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json)
 
 target_include_directories(assets PUBLIC ${Vulkan_INCLUDE_DIRS} "include")
-target_include_directories(assets PRIVATE ${ASSIMP_INCLUDE_DIRS} "${CMAKE_SOURCE_DIR}/lib/stb")
+target_include_directories(assets PRIVATE "${CMAKE_SOURCE_DIR}/lib/stb")
