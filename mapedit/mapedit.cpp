@@ -78,7 +78,7 @@ static void saveJsonCallback(void * /*userdata*/, const char *const *fileList, i
     {
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
-                                      std::format("Failed to save the level!\n{}", errorCode).c_str(),
+                                      std::format("Failed to save the map!\n{}", errorCode).c_str(),
                                       window))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
@@ -99,7 +99,7 @@ static void openJsonCallback(void * /*userdata*/, const char *const *fileList, i
     {
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
-                                      std::format("Failed to open the level!\n{}", errorCode).c_str(),
+                                      std::format("Failed to open the map!\n{}", errorCode).c_str(),
                                       window))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
@@ -109,6 +109,19 @@ static void openJsonCallback(void * /*userdata*/, const char *const *fileList, i
     MapEditor::mapFile = fileList[0];
     for (Actor &actor: MapEditor::map.actors)
     {
+        if (!SharedMgr::actorDefinitions.contains(actor.className))
+        {
+            if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to open the map because it contains an unknown actor class \"{}\"", actor.className).c_str(),
+                                      window))
+            {
+                printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+            }
+            MapEditor::map = MapAsset();
+            return;
+        }
+
         actor.ApplyDefinition(SharedMgr::actorDefinitions.at(actor.className), false);
     }
 }
