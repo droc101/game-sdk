@@ -68,18 +68,49 @@ static inline bool loadTexture()
     return true;
 }
 
+static void openGtex(const std::string &path)
+{
+    const Error::ErrorCode errorCode = TextureAsset::CreateFromAsset(path.c_str(), texture);
+    if (errorCode != Error::ErrorCode::OK)
+    {
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to open the texture!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
+        return;
+    }
+    if (!loadTexture())
+    {
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to load the texture!\n{}", SDL_GetError()).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
+    }
+}
+
 static void openGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
-    const Error::ErrorCode errorCode = TextureAsset::CreateFromAsset(fileList[0], texture);
+    openGtex(fileList[0]);
+}
+
+static void importImage(const std::string &path)
+{
+    const Error::ErrorCode errorCode = TextureAsset::CreateFromImage(path.c_str(), texture);
     if (errorCode != Error::ErrorCode::OK)
     {
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
-                                      std::format("Failed to open the texture!\n{}", errorCode).c_str(),
+                                      std::format("Failed to import the texture!\n{}", errorCode).c_str(),
                                       window))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
@@ -104,28 +135,7 @@ static void importCallback(void * /*userdata*/, const char *const *fileList, int
     {
         return;
     }
-    const Error::ErrorCode errorCode = TextureAsset::CreateFromImage(fileList[0], texture);
-    if (errorCode != Error::ErrorCode::OK)
-    {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to import the texture!\n{}", errorCode).c_str(),
-                                      window))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
-        return;
-    }
-    if (!loadTexture())
-    {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to load the texture!\n{}", SDL_GetError()).c_str(),
-                                      window))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
-    }
+    importImage(fileList[0]);
 }
 
 static void saveGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -293,7 +303,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     ImGui::End();
 }
 
-int main()
+int main(int argc, char **argv)
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
@@ -340,6 +350,19 @@ int main()
 
     ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer3_Init(renderer);
+
+    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gtex"});
+    if (!openPath.empty())
+    {
+        openGtex(openPath);
+    } else
+    {
+        const std::string &importPath = DesktopInterface::GetFileArgument(argc, argv, {".png", ".jpg", ".jpeg", ".tga"});
+        if (!importPath.empty())
+        {
+            importImage(importPath);
+        }
+    }
 
     bool done = false;
     while (!done)

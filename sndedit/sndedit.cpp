@@ -57,18 +57,49 @@ static bool loadSound()
     return true;
 }
 
+static void openGsnd(const std::string &path)
+{
+    const Error::ErrorCode errorCode = SoundAsset::CreateFromAsset(path.c_str(), soundAsset);
+    if (errorCode != Error::ErrorCode::OK)
+    {
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to open the sound!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
+        return;
+    }
+    if (!loadSound())
+    {
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
+    }
+}
+
 static void openGsndCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
-    const Error::ErrorCode errorCode = SoundAsset::CreateFromAsset(fileList[0], soundAsset);
+    openGsnd(fileList[0]);
+}
+
+static void importWav(const std::string &path)
+{
+    const Error::ErrorCode errorCode = SoundAsset::CreateFromWAV(path.c_str(), soundAsset);
     if (errorCode != Error::ErrorCode::OK)
     {
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
-                                      std::format("Failed to open the sound!\n{}", errorCode).c_str(),
+                                      std::format("Failed to import the sound!\n{}", errorCode).c_str(),
                                       window))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
@@ -93,28 +124,7 @@ static void importCallback(void * /*userdata*/, const char *const *fileList, int
     {
         return;
     }
-    const Error::ErrorCode errorCode = SoundAsset::CreateFromWAV(fileList[0], soundAsset);
-    if (errorCode != Error::ErrorCode::OK)
-    {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to import the sound!\n{}", errorCode).c_str(),
-                                      window))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
-        return;
-    }
-    if (!loadSound())
-    {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN).c_str(),
-                                      window))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
-    }
+    importWav(fileList[0]);
 }
 
 static void saveGsndCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -294,7 +304,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     ImGui::End();
 }
 
-int main()
+int main(int argc, char **argv)
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
@@ -348,6 +358,19 @@ int main()
 
     ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer3_Init(renderer);
+
+    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gsnd"});
+    if (!openPath.empty())
+    {
+        openGsnd(openPath);
+    } else
+    {
+        const std::string &importPath = DesktopInterface::GetFileArgument(argc, argv, {".wav"});
+        if (!importPath.empty())
+        {
+            importWav(importPath);
+        }
+    }
 
     bool done = false;
     while (!done)

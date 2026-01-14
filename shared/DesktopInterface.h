@@ -25,6 +25,8 @@ class DesktopInterface
 
         static bool OpenURL(const std::string &url);
 
+        static std::string GetFileArgument(int argc, char **argv, const std::vector<std::string> &extensions);
+
         static void InitDesktopInterface();
 
     private:

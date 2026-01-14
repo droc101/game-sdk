@@ -380,7 +380,7 @@ static void HandleMenuAndShortcuts()
     }
 }
 
-int main()
+int main(int argc, char **argv)
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
@@ -476,6 +476,33 @@ int main()
     ImGui_ImplOpenGL3_Init(glslVersion);
 
     ModelRenderer::ResizeWindow(800, 600);
+
+    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gmdl"});
+    if (!openPath.empty())
+    {
+        SDL_Event event;
+        event.type = ModelRenderer::EVENT_RELOAD_MODEL;
+        event.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_GMDL;
+        event.user.data1 = new std::string(openPath);
+        if (!SDL_PushEvent(&event))
+        {
+            printf("Error: SDL_PushEvent(): %s\n", SDL_GetError());
+        }
+    } else
+    {
+        const std::string &importPath = DesktopInterface::GetFileArgument(argc, argv, {".obj", ".fbx", ".gltf", ".dae"});
+        if (!importPath.empty())
+        {
+            SDL_Event event;
+            event.type = ModelRenderer::EVENT_RELOAD_MODEL;
+            event.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL;
+            event.user.data1 = new std::string(importPath);
+            if (!SDL_PushEvent(&event))
+            {
+                printf("Error: SDL_PushEvent(): %s\n", SDL_GetError());
+            }
+        }
+    }
 
     // ReSharper disable once CppDFALoopConditionNotUpdated Wrong again
     while (!done)

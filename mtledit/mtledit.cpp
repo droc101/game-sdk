@@ -28,13 +28,9 @@ static LevelMaterialAsset material{};
 static SDL_Renderer *renderer = nullptr;
 static SDL_Window *window = nullptr;
 
-static void openGmtlCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void openGmtl(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = LevelMaterialAsset::CreateFromAsset(fileList[0], material);
+    const Error::ErrorCode errorCode = LevelMaterialAsset::CreateFromAsset(path.c_str(), material);
     if (errorCode != Error::ErrorCode::OK)
     {
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
@@ -44,8 +40,16 @@ static void openGmtlCallback(void * /*userdata*/, const char *const *fileList, i
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
+    }
+}
+
+static void openGmtlCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+{
+    if (fileList == nullptr || fileList[0] == nullptr)
+    {
         return;
     }
+    openGmtl(fileList[0]);
 }
 
 static void saveGmtlCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -134,7 +138,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     ImGui::End();
 }
 
-int main()
+int main(int argc, char **argv)
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
@@ -181,6 +185,12 @@ int main()
 
     ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer3_Init(renderer);
+
+    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gmtl"});
+    if (!openPath.empty())
+    {
+        openGmtl(openPath);
+    }
 
     bool done = false;
     while (!done)

@@ -28,13 +28,9 @@ static bool configLoaded = false;
 static SDL_Renderer *renderer = nullptr;
 static SDL_Window *window = nullptr;
 
-static void openGameCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void openGame(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = GameConfigAsset::CreateFromAsset(fileList[0], config);
+    const Error::ErrorCode errorCode = GameConfigAsset::CreateFromAsset(path.c_str(), config);
     if (errorCode != Error::ErrorCode::OK)
     {
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
@@ -47,6 +43,15 @@ static void openGameCallback(void * /*userdata*/, const char *const *fileList, i
         return;
     }
     configLoaded = true;
+}
+
+static void openGameCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+{
+    if (fileList == nullptr || fileList[0] == nullptr)
+    {
+        return;
+    }
+    openGame(fileList[0]);
 }
 
 static void saveGameCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -140,7 +145,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     ImGui::End();
 }
 
-int main()
+int main(int argc, char **argv)
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
@@ -187,6 +192,12 @@ int main()
 
     ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer3_Init(renderer);
+
+    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".game"});
+    if (!openPath.empty())
+    {
+        openGame(openPath);
+    }
 
     bool done = false;
     while (!done)

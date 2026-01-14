@@ -30,18 +30,40 @@ static bool shaderLoaded = false;
 static SDL_Renderer *renderer = nullptr;
 static SDL_Window *window = nullptr;
 
+static void openGshd(const std::string &path)
+{
+    const Error::ErrorCode errorCode = ShaderAsset::CreateFromAsset(path.c_str(), shader);
+    if (errorCode != Error::ErrorCode::OK)
+    {
+        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                      "Error",
+                                      std::format("Failed to open the shader!\n{}", errorCode).c_str(),
+                                      window))
+        {
+            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
+        }
+        return;
+    }
+    shaderLoaded = true;
+}
+
 static void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
-    const Error::ErrorCode errorCode = ShaderAsset::CreateFromAsset(fileList[0], shader);
+    openGshd(fileList[0]);
+}
+
+static void importGlsl(const std::string &path)
+{
+    const Error::ErrorCode errorCode = ShaderAsset::CreateFromGlsl(path.c_str(), shader);
     if (errorCode != Error::ErrorCode::OK)
     {
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
-                                      std::format("Failed to open the shader!\n{}", errorCode).c_str(),
+                                      std::format("Failed to import the shader!\n{}", errorCode).c_str(),
                                       window))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
@@ -57,19 +79,7 @@ static void importCallback(void * /*userdata*/, const char *const *fileList, int
     {
         return;
     }
-    const Error::ErrorCode errorCode = ShaderAsset::CreateFromGlsl(fileList[0], shader);
-    if (errorCode != Error::ErrorCode::OK)
-    {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to import the shader!\n{}", errorCode).c_str(),
-                                      window))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
-        return;
-    }
-    shaderLoaded = true;
+    importGlsl(fileList[0]);
 }
 
 static void saveGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -245,7 +255,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     ImGui::End();
 }
 
-int main()
+int main(int argc, char **argv)
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
@@ -292,6 +302,19 @@ int main()
 
     ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer3_Init(renderer);
+
+    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gshd"});
+    if (!openPath.empty())
+    {
+        openGshd(openPath);
+    } else
+    {
+        const std::string &importPath = DesktopInterface::GetFileArgument(argc, argv, {".glsl", ".frag", ".vert", ".comp"});
+        if (!importPath.empty())
+        {
+            importGlsl(importPath);
+        }
+    }
 
     bool done = false;
     while (!done)

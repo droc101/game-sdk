@@ -88,13 +88,9 @@ static void saveJsonCallback(void * /*userdata*/, const char *const *fileList, i
     MapEditor::mapFile = fileList[0];
 }
 
-static void openJsonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void openJson(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = MapAsset::CreateFromMapSrc(fileList[0], MapEditor::map);
+    const Error::ErrorCode errorCode = MapAsset::CreateFromMapSrc(path.c_str(), MapEditor::map);
     if (errorCode != Error::ErrorCode::OK)
     {
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
@@ -106,7 +102,7 @@ static void openJsonCallback(void * /*userdata*/, const char *const *fileList, i
         }
         return;
     }
-    MapEditor::mapFile = fileList[0];
+    MapEditor::mapFile = path;
     for (Actor &actor: MapEditor::map.actors)
     {
         if (!SharedMgr::actorDefinitions.contains(actor.className))
@@ -124,6 +120,15 @@ static void openJsonCallback(void * /*userdata*/, const char *const *fileList, i
 
         actor.ApplyDefinition(SharedMgr::actorDefinitions.at(actor.className), false);
     }
+}
+
+static void openJsonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+{
+    if (fileList == nullptr || fileList[0] == nullptr)
+    {
+        return;
+    }
+    openJson(fileList[0]);
 }
 
 static void Render(bool &done, SDL_Window *sdlWindow)
@@ -471,7 +476,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     MapCompileWindow::Render(sdlWindow);
 }
 
-int main()
+int main(int argc, char **argv)
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
@@ -570,6 +575,12 @@ int main()
     vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
     vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;
     vpSide.GetZoom() = MapEditor::DEFAULT_ZOOM;
+
+    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".json"});
+    if (!openPath.empty())
+    {
+        openJson(openPath);
+    }
 
     bool done = false;
     while (!done)

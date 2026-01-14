@@ -64,6 +64,22 @@ bool DesktopInterface::OpenURL(const std::string &url)
     return SDL_OpenURL(url.c_str());
 }
 
+std::string DesktopInterface::GetFileArgument(const int argc, char **argv, const std::vector<std::string> &extensions)
+{
+    for (int i = 0; i < argc; i++)
+    {
+        const std::string argument = std::string(argv[i]);
+        for (const std::string &extension: extensions)
+        {
+            if (argument.ends_with(extension) && std::filesystem::exists(argument))
+            {
+                return argument;
+            }
+        }
+    }
+    return "";
+}
+
 bool DesktopInterface::OpenFilesystemPath(const std::string &path)
 {
 #ifdef WIN32
