@@ -151,6 +151,9 @@ target_sources(shared INTERFACE
         shared/DesktopInterface.h
         shared/DesktopInterface.cpp
 )
+if (WIN32)
+    target_sources(shared INTERFACE app.manifest)
+endif ()
 target_link_libraries(shared INTERFACE
         SDL3::SDL3
         miniaudio
