@@ -19,7 +19,6 @@ class MapCompileWindow
     private:
         static inline bool visible = false;
         static inline SDL_Process *compilerProcess = nullptr;
-        static inline bool overrideGameDir = false;
         static inline bool playMap = true;
         static inline std::string gameDir{};
         static inline std::string log{};

@@ -31,7 +31,15 @@ void OptionsWindow::gamePathCallback(void * /*userdata*/, const char *const *fil
         return;
     }
     Options::gamePath = filelist[0];
-    Options::Save();
+}
+
+void OptionsWindow::assetsPathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
+{
+    if (filelist == nullptr || filelist[0] == nullptr)
+    {
+        return;
+    }
+    Options::assetsPath = filelist[0];
 }
 
 void OptionsWindow::Render(SDL_Window *window)
@@ -52,6 +60,19 @@ void OptionsWindow::Render(SDL_Window *window)
         {
             SDL_ShowOpenFolderDialog(gamePathCallback, nullptr, window, nullptr, false);
         }
+
+        ImGui::Checkbox("Override Assets Directory", &Options::overrideAssetsPath);
+        ImGui::SameLine();
+        ImGui::TextDisabled("(no trailing slash)");
+        ImGui::BeginDisabled(!Options::overrideAssetsPath);
+        ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
+        ImGui::InputText("##assetspathinput", &Options::assetsPath);
+        ImGui::SameLine();
+        if (ImGui::Button("...##assets", ImVec2(40, 0)))
+        {
+            SDL_ShowOpenFolderDialog(assetsPathCallback, nullptr, window, nullptr, false);
+        }
+        ImGui::EndDisabled();
 
         ImGui::TextUnformatted("Default Texture");
         TextureBrowserWindow::InputTexture("##defaulttexinput", Options::defaultTexture);

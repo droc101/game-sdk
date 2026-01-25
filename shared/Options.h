@@ -27,7 +27,11 @@ class Options
 
         static bool ValidateGamePath();
 
+        static std::string GetAssetsPath();
+
         static inline std::string gamePath;
+        static inline bool overrideAssetsPath;
+        static inline std::string assetsPath;
 
         static inline std::string defaultTexture;
         static inline std::string defaultMaterial;

@@ -34,6 +34,8 @@ void Options::Load()
     } else
     {
         gamePath = savedata.value("game_path", std::string());
+        overrideAssetsPath = savedata.value("override_assets_path", false);
+        assetsPath = savedata.value("assets_path", std::string());
         defaultTexture = savedata.value("default_texture", std::string("texture/level/wall_test.gtex"));
         defaultMaterial = savedata.value("default_material", std::string("material/dev/wall_test.gmtl"));
         theme = savedata.value("theme", Theme::SYSTEM);
@@ -46,6 +48,8 @@ void Options::LoadDefault()
     gamePath = std::string();
     defaultTexture = "texture/level/wall_test.gtex";
     defaultMaterial = "material/dev/wall_test.gmtl";
+    overrideAssetsPath = false;
+    assetsPath = "";
     theme = Theme::SYSTEM;
 }
 
@@ -56,6 +60,8 @@ void Options::Save()
         {"default_texture", defaultTexture},
         {"default_material", defaultMaterial},
         {"theme", theme},
+        {"override_assets_path", overrideAssetsPath},
+        {"assets_path", assetsPath},
     };
     char *prefix = SDL_GetPrefPath("Droc101 Development", "GAME SDK");
     const std::string path = prefix + std::string("options.json");
@@ -68,6 +74,15 @@ void Options::Save()
     }
     file << savedata.dump(); // a shift operator should not write to a stream this is not ok
     file.close();
+}
+
+std::string Options::GetAssetsPath()
+{
+    if (overrideAssetsPath)
+    {
+        return assetsPath;
+    }
+    return gamePath + "/assets";
 }
 
 bool Options::ValidateGamePath()

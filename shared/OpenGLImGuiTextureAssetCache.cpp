@@ -70,7 +70,7 @@ Error::ErrorCode OpenGLImGuiTextureAssetCache::GetTextureID(const std::string &r
         outTexture = textureBuffers.at(std::string(relPath));
         return Error::ErrorCode::OK;
     }
-    const std::string texturePath = Options::gamePath + std::string("/assets/") + relPath;
+    const std::string texturePath = Options::GetAssetsPath() + "/" + relPath;
     if (!std::filesystem::exists(texturePath))
     {
         outTexture = missingTexture;

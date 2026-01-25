@@ -21,4 +21,6 @@ class OptionsWindow
         static inline bool visible = false;
 
         static void gamePathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/);
+
+        static void assetsPathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/);
 };

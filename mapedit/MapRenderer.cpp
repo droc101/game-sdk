@@ -109,12 +109,12 @@ bool MapRenderer::Init()
     workBuffer = GLHelper::CreateIndexedBuffer();
     workBufferNonIndexed = GLHelper::CreateBuffer();
 
-    const std::vector<std::string> modelsPaths = SharedMgr::ScanFolder(Options::gamePath + "/assets/model",
+    const std::vector<std::string> modelsPaths = SharedMgr::ScanFolder(Options::GetAssetsPath() + "/model",
                                                                        ".gmdl",
                                                                        true);
     for (const std::string &modelPath: modelsPaths)
     {
-        const ModelBuffer buf = LoadModel(Options::gamePath + "/assets/model/" + modelPath);
+        const ModelBuffer buf = LoadModel(Options::GetAssetsPath() + "/model/" + modelPath);
         modelBuffers[modelPath.substr(0, modelPath.length() - 5)] = buf;
     }
 

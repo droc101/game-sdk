@@ -158,13 +158,13 @@ void SharedMgr::ApplyTheme()
 
 void SharedMgr::LoadOptionDefinitions()
 {
-    const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::gamePath + "/assets/defs/options",
+    const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::GetAssetsPath() + "/defs/options",
                                                                 ".json",
                                                                 true);
     for (const std::string &path: defs)
     {
         OptionDefinition def{};
-        std::string fullPath = Options::gamePath + "/assets/defs/options/" + path;
+        std::string fullPath = Options::GetAssetsPath() + "/defs/options/" + path;
         const Error::ErrorCode e = OptionDefinition::Create(fullPath, def);
         if (e == Error::ErrorCode::OK)
         {
@@ -179,13 +179,13 @@ void SharedMgr::LoadOptionDefinitions()
 
 void SharedMgr::LoadActorDefinitions()
 {
-    const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::gamePath + "/assets/defs/actors",
+    const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::GetAssetsPath() + "/defs/actors",
                                                                 ".json",
                                                                 true);
     for (const std::string &path: defs)
     {
         ActorDefinition def{};
-        const std::string fullPath = Options::gamePath + "/assets/defs/actors/" + path;
+        const std::string fullPath = Options::GetAssetsPath() + "/defs/actors/" + path;
         const Error::ErrorCode e = ActorDefinition::Create(fullPath, def);
         if (e == Error::ErrorCode::OK)
         {

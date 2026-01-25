@@ -33,11 +33,7 @@ void MapCompileWindow::StartCompile(SDL_Window *window)
 #endif
 
             const std::string srcArgument = "--map-source=" + MapEditor::mapFile;
-            std::string dirArgument = "--assets-dir=" + Options::gamePath + "/assets";
-            if (overrideGameDir)
-            {
-                dirArgument = "--assets-dir=" + gameDir + "/assets";
-            }
+            const std::string dirArgument = "--assets-dir=" + Options::GetAssetsPath();
             const char *args[4] = {compilerPath.c_str(), srcArgument.c_str(), dirArgument.c_str(), nullptr};
             compilerProcess = SDL_CreateProcess(args, true);
             if (compilerProcess == nullptr)
@@ -52,18 +48,15 @@ void MapCompileWindow::StartCompile(SDL_Window *window)
             compilerProcess = nullptr;
             if (exitCode == 0 && playMap)
             {
-                std::string optPath = Options::gamePath;
-                if (overrideGameDir)
-                {
-                    optPath = gameDir + "/..";
-                }
-                std::string gameBinary = "/game";
 #ifdef WIN32
-                gameBinary += ".exe";
+                const std::string gameBinary = "/game.exe";
+#else
+                const std::string gameBinary = "/game";
 #endif
                 const std::string mapName = std::filesystem::path(MapEditor::mapFile).stem().string();
                 const std::string mapArg = "--map=" + mapName;
-                if (!DesktopInterface::ExecuteProcessNonBlocking(optPath + gameBinary, {mapArg.c_str(), "--nosteam"}))
+                const std::string gameArg = "--game=" + Options::GetAssetsPath();
+                if (!DesktopInterface::ExecuteProcessNonBlocking(Options::gamePath + gameBinary, {mapArg.c_str(), "--nosteam", gameArg}))
                 {
                     log += "Failed to execute game binary";
                 }

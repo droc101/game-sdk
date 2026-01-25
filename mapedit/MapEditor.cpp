@@ -120,7 +120,7 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
     LevelMaterialAsset mat;
-    LevelMaterialAsset::CreateFromAsset((Options::gamePath + "/assets/" + wallMat.material).c_str(), mat); // TODO improve
+    LevelMaterialAsset::CreateFromAsset((Options::GetAssetsPath() + "/" + wallMat.material).c_str(), mat); // TODO improve
     const Error::ErrorCode e = SharedMgr::textureCache->GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e == Error::ErrorCode::OK)
