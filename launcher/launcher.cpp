@@ -21,7 +21,9 @@
 #include <string>
 #include "DesktopInterface.h"
 #include "Options.h"
+#include "OptionsWindow.h"
 #include "SDLRendererImGuiTextureAssetCache.h"
+#include "SetupWindow.h"
 #include "SharedMgr.h"
 
 static SDL_Renderer *renderer = nullptr;
@@ -157,7 +159,12 @@ static void Render()
         ImGui::EndChild();
     }
 
-    ImGui::TextDisabled("GAME SDK for Beta Testers\nVersion %s", LIBASSETS_VERSION_STRING);
+    if (ImGui::Button("Options", ImVec2(80, 32)))
+    {
+        SetupWindow::Show(false);
+    }
+    // ImGui::SameLine();
+    // ImGui::TextDisabled("GAME SDK\nVersion %s", LIBASSETS_VERSION_STRING);
     ImGui::SameLine();
     wndArea = ImGui::GetContentRegionAvail();
     ImGui::Dummy(ImVec2(wndArea.x - 80 - 8, 1));

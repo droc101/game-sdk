@@ -11,9 +11,10 @@
 
 #include "Options.h"
 
-void SetupWindow::Show()
+void SetupWindow::Show(bool required)
 {
     visible = true;
+    SetupWindow::required = required;
 }
 
 void SetupWindow::gamePathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
@@ -23,7 +24,15 @@ void SetupWindow::gamePathCallback(void * /*userdata*/, const char *const *filel
         return;
     }
     Options::gamePath = filelist[0];
-    Options::Save();
+}
+
+void SetupWindow::assetsPathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
+{
+    if (filelist == nullptr || filelist[0] == nullptr)
+    {
+        return;
+    }
+    Options::assetsPath = filelist[0];
 }
 
 void SetupWindow::Render(SDL_Window *window)
@@ -60,6 +69,18 @@ void SetupWindow::Render(SDL_Window *window)
         ImGui::Text(" ");
     }
 
+    ImGui::Checkbox("Override Assets Directory", &Options::overrideAssetsPath);
+    ImGui::SameLine();
+    ImGui::TextDisabled("(no trailing slash)");
+    ImGui::BeginDisabled(!Options::overrideAssetsPath);
+    ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
+    ImGui::InputText("##assetspathinput", &Options::assetsPath);
+    ImGui::SameLine();
+    if (ImGui::Button("...##assets", ImVec2(40, 0)))
+    {
+        SDL_ShowOpenFolderDialog(assetsPathCallback, nullptr, window, nullptr, false);
+    }
+    ImGui::EndDisabled();
 
 
     ImGui::Dummy(ImVec2(0, 16));
@@ -75,13 +96,21 @@ void SetupWindow::Render(SDL_Window *window)
     }
     ImGui::EndDisabled();
     ImGui::SameLine();
-    if (ImGui::Button("Quit", ImVec2(60, 0)))
+    if (required)
     {
-        Options::Load();
-        exit(1);
+        if (ImGui::Button("Quit", ImVec2(60, 0)))
+        {
+            Options::Load();
+            exit(1);
+        }
+    } else
+    {
+        if (ImGui::Button("Cancel", ImVec2(60, 0)))
+        {
+            Options::Load();
+            visible = false;
+        }
     }
-
-
 
     ImGui::EndPopup();
 }

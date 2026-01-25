@@ -10,10 +10,13 @@ class SetupWindow
 {
     public:
         SetupWindow() = delete;
-        static void Show();
+        static void Show(bool required = true);
         static void Render(SDL_Window *window);
     private:
         inline static bool visible = false;
+        inline static bool required = true;
 
         static void gamePathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/);
+
+        static void assetsPathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/);
 };
