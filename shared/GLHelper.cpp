@@ -4,6 +4,7 @@
 
 #include "GLHelper.h"
 #include <array>
+#include <cassert>
 #include <cstdio>
 #include <fstream>
 #include <glm/vec2.hpp>
@@ -165,6 +166,98 @@ void GLHelper::BindIndexedBuffer(const GL_IndexedBuffer &buffer)
     glBindVertexArray(buffer.vao);
     glBindBuffer(GL_ARRAY_BUFFER, buffer.vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.ebo);
+}
+
+GLHelper::GL_Framebuffer GLHelper::CreateFramebuffer(const glm::vec2 size)
+{
+    GL_Framebuffer fb{};
+    glGenFramebuffers(1, &fb.fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fb.fbo);
+    glGenRenderbuffers(1, &fb.rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, fb.rbo);
+
+    glGenTextures(1, &fb.colorTexture);
+    glBindTexture(GL_TEXTURE_2D, fb.colorTexture);
+
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB8,
+                 static_cast<GLsizei>(size.x),
+                 static_cast<GLsizei>(size.y),
+                 0,
+                 GL_RGB,
+                 GL_UNSIGNED_BYTE,
+                 nullptr);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fb.colorTexture, 0);
+
+    glRenderbufferStorage(GL_RENDERBUFFER,
+                          GL_DEPTH24_STENCIL8,
+                          static_cast<GLsizei>(size.x),
+                          static_cast<GLsizei>(size.y));
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fb.rbo);
+
+    const GLenum frameBufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    assert(frameBufferStatus == GL_FRAMEBUFFER_COMPLETE);
+
+    UnbindFramebuffer();
+
+    fb.size = size;
+    fb.created = true;
+
+    return fb;
+}
+
+void GLHelper::UnbindFramebuffer()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
+    glBindRenderbuffer(GL_RENDERBUFFER, GL_NONE);
+}
+
+void GLHelper::BindFramebuffer(const GL_Framebuffer &framebuffer)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.fbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, framebuffer.rbo);
+    glViewport(0, 0, static_cast<GLsizei>(framebuffer.size.x), static_cast<GLsizei>(framebuffer.size.y));
+}
+
+void GLHelper::ResizeFramebuffer(GL_Framebuffer &framebuffer, const glm::vec2 newSize)
+{
+    GLint boundRbo = GL_NONE;
+    glGetIntegerv(GL_RENDERBUFFER_BINDING, &boundRbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, framebuffer.rbo);
+
+    glBindTexture(GL_TEXTURE_2D, framebuffer.colorTexture);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB8,
+                 static_cast<GLsizei>(newSize.x),
+                 static_cast<GLsizei>(newSize.y),
+                 0,
+                 GL_RGB,
+                 GL_UNSIGNED_BYTE,
+                 nullptr);
+
+    glRenderbufferStorage(GL_RENDERBUFFER,
+                          GL_DEPTH24_STENCIL8,
+                          static_cast<GLsizei>(newSize.x),
+                          static_cast<GLsizei>(newSize.y));
+
+    glBindRenderbuffer(GL_RENDERBUFFER, boundRbo);
+
+    framebuffer.size = newSize;
+}
+
+void GLHelper::DestroyFramebuffer(GL_Framebuffer &framebuffer)
+{
+    framebuffer.created = false;
+    glDeleteFramebuffers(1, &framebuffer.fbo);
+    glDeleteRenderbuffers(1, &framebuffer.rbo);
 }
 
 glm::vec2 GLHelper::ScreenToNDC(const glm::vec2 screenPos, const glm::vec2 screenSize)

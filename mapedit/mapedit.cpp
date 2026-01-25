@@ -618,7 +618,6 @@ int main(int argc, char **argv)
         SharedMgr::RenderSharedUI(window);
 
         ImGui::Render();
-        // glClearColor(0, 0, 0, 1);
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         if (!SDL_GL_SwapWindow(window))

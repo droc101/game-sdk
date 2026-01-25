@@ -24,6 +24,14 @@ class GLHelper
                 GLuint vbo;
         };
 
+        struct GL_Framebuffer
+        {
+            bool created = false;
+            glm::vec2 size;
+            GLuint colorTexture;
+            GLuint fbo;
+            GLuint rbo;
+        };
 
         GLHelper() = delete;
 
@@ -41,6 +49,13 @@ class GLHelper
         static void DestroyIndexedBuffer(const GL_IndexedBuffer &buffer);
         static void BindBuffer(const GL_Buffer &buffer);
         static void BindIndexedBuffer(const GL_IndexedBuffer &buffer);
+
+        [[nodiscard]] static GL_Framebuffer CreateFramebuffer(const glm::vec2 size);
+        static void ResizeFramebuffer(GL_Framebuffer &framebuffer, const glm::vec2 newSize);
+        static void BindFramebuffer(const GL_Framebuffer &framebuffer);
+        static void DestroyFramebuffer(GL_Framebuffer &framebuffer);
+
+        static void UnbindFramebuffer();
 
         [[nodiscard]] static glm::vec2 ScreenToNDC(glm::vec2 screenPos, glm::vec2 screenSize);
 };

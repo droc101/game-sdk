@@ -22,6 +22,11 @@ Viewport::Viewport(const ImVec2 gridPos, const ImVec2 gridSize, const ViewportTy
     this->type = type;
 }
 
+Viewport::~Viewport()
+{
+    GLHelper::DestroyFramebuffer(framebuffer);
+}
+
 void Viewport::GetWindowRect(ImVec2 &pos, ImVec2 &size) const
 {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
@@ -47,6 +52,15 @@ void Viewport::RenderImGui()
     ImVec2 WindowSize;
     ImVec2 WindowPos;
     GetWindowRect(WindowPos, WindowSize);
+
+    if (!framebuffer.created)
+    {
+        this->framebuffer = GLHelper::CreateFramebuffer({WindowSize.x, WindowSize.y});
+    } else if (glm::vec2(WindowSize.x, WindowSize.y) != framebuffer.size)
+    {
+        GLHelper::ResizeFramebuffer(framebuffer, {WindowSize.x, WindowSize.y});
+    }
+
     ImGui::SetNextWindowSize(WindowSize);
     ImGui::SetNextWindowPos(WindowPos);
     std::string title;
@@ -73,6 +87,17 @@ void Viewport::RenderImGui()
     ImGui::Begin(("##_" + title).c_str(), nullptr, windowFlags);
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();
+
+    GLHelper::BindFramebuffer(framebuffer);
+
+    MapEditor::tool->RenderViewport(*this);
+
+    GLHelper::UnbindFramebuffer();
+
+    const ImVec2 origCursor = ImGui::GetCursorPos();
+    ImGui::SetCursorPos({0,0});
+    ImGui::Image(framebuffer.colorTexture, {framebuffer.size.x, framebuffer.size.y}, {0, 1}, {1, 0});
+    ImGui::SetCursorPos(origCursor);
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetColorU32(ImGuiCol_WindowBg));
 
@@ -134,8 +159,6 @@ void Viewport::RenderImGui()
         ClampZoom();
     }
 
-    MapEditor::tool->RenderViewport(*this);
-
     ImGui::End();
 }
 
@@ -188,10 +211,10 @@ glm::vec2 Viewport::WorldToScreenPos(const glm::vec3 worldPos) const
 
 glm::mat4 Viewport::GetMatrix() const
 {
-    ImVec2 WindowSize;
-    ImVec2 WindowPos;
-    GetWindowRect(WindowPos, WindowSize);
-    const float aspect = (WindowSize.y != 0.0f) ? (WindowSize.x / WindowSize.y) : 1.0f;
+    // ImVec2 WindowSize;
+    // ImVec2 WindowPos;
+    // GetWindowRect(WindowPos, WindowSize);
+    const float aspect = (framebuffer.size.y != 0.0f) ? (framebuffer.size.x / framebuffer.size.y) : 1.0f;
     const float halfHeight = zoom / 2.0f;
     const float halfWidth = aspect * halfHeight;
 

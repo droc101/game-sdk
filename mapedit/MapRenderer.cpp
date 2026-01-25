@@ -142,20 +142,8 @@ void MapRenderer::Destroy()
 
 void MapRenderer::RenderViewport(const Viewport &vp)
 {
-    ImVec2 WindowSize;
-    ImVec2 WindowPos;
-    vp.GetWindowRect(WindowPos, WindowSize);
-    WindowPos.y = ImGui::GetMainViewport()->Size.y - 1 - (WindowPos.y + WindowSize.y);
     glClearColor(0, 0, 0, 1);
-    glViewport(static_cast<GLint>(WindowPos.x),
-               static_cast<GLint>(WindowPos.y),
-               static_cast<GLint>(WindowSize.x),
-               static_cast<GLint>(WindowSize.y));
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(static_cast<GLint>(WindowPos.x),
-              static_cast<GLint>(WindowPos.y),
-              static_cast<GLint>(WindowSize.x),
-              static_cast<GLint>(WindowSize.y));
+    // glDisable(GL_SCISSOR_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLineWidth(1);
 

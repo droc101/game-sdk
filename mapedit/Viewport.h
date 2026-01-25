@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <glm/mat4x4.hpp>
 #include "imgui.h"
+#include "GLHelper.h"
 
 class Viewport
 {
@@ -21,11 +22,12 @@ class Viewport
         Viewport() = delete;
         Viewport(ImVec2 gridPos, ImVec2 gridSize, ViewportType type);
 
-        ~Viewport() = default;
+        ~Viewport();
 
         void RenderImGui();
 
         void GetWindowRect(ImVec2 &pos, ImVec2 &size) const;
+
         [[nodiscard]] ViewportType GetType() const;
 
         [[nodiscard]] glm::mat4 GetMatrix() const;
@@ -53,6 +55,8 @@ class Viewport
         ImVec2 gridSize;
         bool fullscreen = false;
         ViewportType type;
+
+        GLHelper::GL_Framebuffer framebuffer;
 
         ImVec2 scrollCenterPos{};
         float zoom = 10.0f;
