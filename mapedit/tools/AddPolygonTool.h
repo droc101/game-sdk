@@ -8,7 +8,6 @@
 #include <vector>
 #include "../Viewport.h"
 #include "EditorTool.h"
-#include "Options.h"
 
 class AddPolygonTool final: public EditorTool
 {

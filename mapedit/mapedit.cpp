@@ -190,10 +190,20 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         vpTopDown.ToggleFullscreen();
     }
 
+    bool canCutCopy = MapEditor::toolType == MapEditor::EditorToolType::SELECT;
+    if (canCutCopy)
+    {
+        canCutCopy &= dynamic_cast<SelectTool *>(MapEditor::tool.get())->IsCopyableSelected();
+    }
+    bool canPaste = MapEditor::clipboard.has_value() && MapEditor::toolType == MapEditor::EditorToolType::SELECT;
+
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N, ImGuiInputFlags_RouteGlobal);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O, ImGuiInputFlags_RouteGlobal);
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N, ImGuiInputFlags_RouteGlobal);
     bool compilePressed = ImGui::Shortcut(ImGuiKey_F5, ImGuiInputFlags_RouteGlobal);
+    bool cutPressed = canCutCopy && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_X, ImGuiInputFlags_RouteGlobal);
+    bool copyPressed = canCutCopy && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_C, ImGuiInputFlags_RouteGlobal);
+    bool pastePressed = canPaste && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_V, ImGuiInputFlags_RouteGlobal);
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -243,6 +253,10 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             {
                 MapEditor::gridSpacingIndex = MapEditor::DEFAULT_GRID_SPACING_INDEX;
             }
+            ImGui::Separator();
+            cutPressed |= ImGui::MenuItem("Cut", "Ctrl+X", false, canCutCopy);
+            copyPressed |= ImGui::MenuItem("Copy", "Ctrl+C", false, canCutCopy);
+            pastePressed |= ImGui::MenuItem("Paste", "Ctrl+V", false, canPaste);
 
             ImGui::EndMenu();
         }
@@ -383,6 +397,18 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     if (compilePressed)
     {
         MapCompileWindow::Show();
+    }
+    if (cutPressed)
+    {
+        dynamic_cast<SelectTool *>(MapEditor::tool.get())->Cut();
+    }
+    if (copyPressed)
+    {
+        dynamic_cast<SelectTool *>(MapEditor::tool.get())->Copy();
+    }
+    if (pastePressed)
+    {
+        dynamic_cast<SelectTool *>(MapEditor::tool.get())->Paste();
     }
 
     const ImGuiViewport *viewport = ImGui::GetMainViewport();

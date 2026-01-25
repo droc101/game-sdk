@@ -8,7 +8,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <libassets/asset/MapAsset.h>
+#include <libassets/type/WallMaterial.h>
+#include <string>
 #include <memory>
+#include <variant>
+#include <vector>
+#include "libassets/type/Sector.h"
 #include "tools/EditorTool.h"
 #include "tools/SelectTool.h"
 
@@ -41,8 +46,8 @@ class MapEditor
         static constexpr size_t HOVER_DISTANCE_PIXELS = 10;
         static constexpr size_t TOOLBAR_HEIGHT = 48;
         static constexpr size_t SIDEBAR_WIDTH = 300;
-        static constexpr size_t DEFAULT_GRID_SPACING_INDEX =  0;
-        static constexpr size_t DEFAULT_ZOOM =  10.0f;
+        static constexpr size_t DEFAULT_GRID_SPACING_INDEX = 0;
+        static constexpr size_t DEFAULT_ZOOM = 10.0f;
         static constexpr std::array<float, 9> GRID_SPACING_VALUES = {0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0};
         static constexpr float MAP_HALF_SIZE = MapAsset::MAP_MAX_HALF_EXTENTS;
         static constexpr float MAP_SIZE = MAP_HALF_SIZE * 2;
@@ -55,6 +60,8 @@ class MapEditor
         static inline std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new SelectTool());
 
         static inline WallMaterial mat{};
+
+        static inline std::optional<std::variant<Sector, Actor>> clipboard{};
 
         [[nodiscard]] static float SnapToGrid(float f);
 

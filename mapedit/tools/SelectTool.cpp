@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
+#include <variant>
 
 #include "../ActorBrowserWindow.h"
 #include "../EditActorWindow.h"
@@ -682,5 +683,55 @@ void SelectTool::RenderToolWindow()
             break;
         default:
             ImGui::Text("The current selection has no properties");
+    }
+}
+
+bool SelectTool::IsCopyableSelected() const
+{
+    return selectionType == ItemType::ACTOR || selectionType == ItemType::SECTOR;
+}
+
+void SelectTool::Copy() const
+{
+    if (selectionType == ItemType::ACTOR)
+    {
+        MapEditor::clipboard = MapEditor::map.actors.at(selectionIndex);
+    } else if (selectionType == ItemType::SECTOR)
+    {
+        MapEditor::clipboard = MapEditor::map.sectors.at(selectionIndex);
+    }
+}
+
+void SelectTool::Cut()
+{
+    Copy();
+    if (selectionType == ItemType::ACTOR)
+    {
+        MapEditor::map.actors.erase(MapEditor::map.actors.begin() + selectionIndex);
+    } else if (selectionType == ItemType::SECTOR)
+    {
+        MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + selectionIndex);
+    }
+    selectionType = ItemType::NONE;
+}
+
+void SelectTool::Paste()
+{
+    // TODO somehow get mouse position (which VP is focused?) and paste at cursor
+    if (!MapEditor::clipboard.has_value())
+    {
+        return;
+    }
+    const std::variant<Sector, Actor> &clipboard = MapEditor::clipboard.value();
+    if (std::holds_alternative<Actor>(clipboard))
+    {
+        MapEditor::map.actors.push_back(std::get<Actor>(clipboard));
+        selectionIndex = MapEditor::map.actors.size() - 1;
+        selectionType = ItemType::ACTOR;
+    } else if (std::holds_alternative<Sector>(clipboard))
+    {
+        MapEditor::map.sectors.push_back(std::get<Sector>(clipboard));
+        selectionIndex = MapEditor::map.sectors.size() - 1;
+        selectionType = ItemType::SECTOR;
     }
 }

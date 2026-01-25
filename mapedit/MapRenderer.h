@@ -8,11 +8,12 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
 #include <libassets/asset/ModelAsset.h>
+#include <libassets/type/Actor.h>
 #include <libassets/type/Color.h>
+#include <string>
+#include <unordered_map>
 #include <vector>
 #include "GLHelper.h"
-#include "libassets/type/Actor.h"
-#include "tools/AddActorTool.h"
 #include "Viewport.h"
 
 class MapRenderer
@@ -29,7 +30,11 @@ class MapRenderer
 
         static void RenderBillboardPoint(glm::vec3 position, float pointSize, Color color, glm::mat4 &matrix);
 
-        static void RenderBillboardSprite(glm::vec3 position, float pointSize, const std::string &texture, Color color, glm::mat4 &matrix);
+        static void RenderBillboardSprite(glm::vec3 position,
+                                          float pointSize,
+                                          const std::string &texture,
+                                          Color color,
+                                          glm::mat4 &matrix);
 
         static void RenderUnitVector(glm::vec3 origin,
                                      glm::vec3 eulerAngles,

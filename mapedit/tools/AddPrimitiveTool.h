@@ -11,7 +11,6 @@
 #include <libassets/type/WallMaterial.h>
 #include "../Viewport.h"
 #include "EditorTool.h"
-#include "Options.h"
 
 class AddPrimitiveTool final: public EditorTool
 {

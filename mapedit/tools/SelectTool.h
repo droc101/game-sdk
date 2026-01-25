@@ -7,10 +7,8 @@
 #include <cstddef>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
-#include <libassets/type/WallMaterial.h>
 #include "../Viewport.h"
 #include "EditorTool.h"
-
 
 class Actor;
 class SelectTool final: public EditorTool
@@ -42,10 +40,10 @@ class SelectTool final: public EditorTool
                                 bool &haveAddedNewVertex);
 
         void ProcessActorHover(const Viewport &viewport,
-                               const glm::vec2 vertexScreenSpace,
-                               const glm::vec2 screenSpaceHover,
+                               glm::vec2 vertexScreenSpace,
+                               glm::vec2 screenSpaceHover,
                                Actor &actor,
-                               const size_t actorIndex,
+                               size_t actorIndex,
                                Color &vertexColor);
 
         void RenderViewportSelectMode(const Viewport &vp,
@@ -62,6 +60,14 @@ class SelectTool final: public EditorTool
         void RenderViewport(Viewport &vp) override;
 
         void RenderToolWindow() override;
+
+        bool IsCopyableSelected() const;
+
+        void Copy() const;
+
+        void Cut();
+
+        void Paste();
 
     private:
         bool sectorFocusMode = false;
