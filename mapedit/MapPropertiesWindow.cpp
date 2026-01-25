@@ -3,9 +3,8 @@
 //
 
 #include "MapPropertiesWindow.h"
-
+#include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
-#include "imgui.h"
 #include "MapEditor.h"
 #include "TextureBrowserWindow.h"
 
