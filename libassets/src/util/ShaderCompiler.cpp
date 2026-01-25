@@ -67,7 +67,10 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv) con
         return Error::ErrorCode::SHADER_LINK_ERROR;
     }
 
-    glslang::GlslangToSpv(*program.getIntermediate(shaderType), outputSpirv);
+    glslang::SpvOptions options{};
+    options.disableOptimizer = false;
+
+    glslang::GlslangToSpv(*program.getIntermediate(shaderType), outputSpirv, &options);
     glslang::FinalizeProcess();
 
     return Error::ErrorCode::OK;
