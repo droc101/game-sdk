@@ -260,9 +260,9 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
             {
                 if (addPointMode)
                 {
-                    const glm::vec2 newVertexPos = MapEditor::SnapToGrid(worldSpaceHover);
+                    const glm::vec3 newVertexPos = MapEditor::SnapToGrid(worldSpaceHover);
                     sector.points.insert(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex) + 1,
-                                         {newVertexPos.x, newVertexPos.y});
+                                         {newVertexPos.x, newVertexPos.z});
                     sector.wallMaterials.insert(sector.wallMaterials.begin() + static_cast<ptrdiff_t>(vertexIndex) + 1,
                                                 sector.wallMaterials.at(vertexIndex));
                     selectionVertexIndex = vertexIndex + 1;
