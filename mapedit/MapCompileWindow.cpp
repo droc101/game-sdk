@@ -56,7 +56,8 @@ void MapCompileWindow::StartCompile(SDL_Window *window)
                 const std::string mapName = std::filesystem::path(MapEditor::mapFile).stem().string();
                 const std::string mapArg = "--map=" + mapName;
                 const std::string gameArg = "--game=" + Options::GetAssetsPath();
-                if (!DesktopInterface::ExecuteProcessNonBlocking(Options::gamePath + gameBinary, {mapArg.c_str(), "--nosteam", gameArg}))
+                if (!DesktopInterface::ExecuteProcessNonBlocking(Options::gamePath + gameBinary,
+                                                                 {mapArg.c_str(), "--nosteam", gameArg}))
                 {
                     log += "Failed to execute game binary";
                 }
@@ -77,7 +78,9 @@ void MapCompileWindow::Render(SDL_Window *window)
         return;
     }
     ImGui::SetNextWindowSize(ImVec2(500, -1));
-    ImGui::Begin("Compile Map", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+    ImGui::Begin("Compile Map",
+                 &visible,
+                 ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking);
 
     ImGui::BeginDisabled(compilerProcess != nullptr);
     // ImGui::Checkbox("Custom Game Directory", &overrideGameDir);

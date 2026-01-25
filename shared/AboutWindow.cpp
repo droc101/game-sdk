@@ -24,7 +24,10 @@ void AboutWindow::Render()
         ImGui::SetNextWindowSize(ImVec2(300, -1));
         ImGui::Begin("About the GAME SDK",
                      &visible,
-                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
+                     ImGuiWindowFlags_NoCollapse |
+                             ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoSavedSettings |
+                             ImGuiWindowFlags_NoDocking);
         ImGui::TextUnformatted("Development & Authoring tools for");
         ImGui::SameLine();
         ImGui::TextLinkOpenURL("GAME", "https://github.com/droc101/c-game-engine");

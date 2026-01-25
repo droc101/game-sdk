@@ -30,7 +30,7 @@ void ActorBrowserWindow::Render()
         return;
     }
 
-    ImGui::Begin("Actor Class Browser", &visible, ImGuiWindowFlags_NoCollapse);
+    ImGui::Begin("Actor Class Browser", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
 
     if (SharedMgr::actorDefinitions.size() == 0 || !SharedMgr::actorDefinitions.contains("actor"))
     {

@@ -49,7 +49,10 @@ void OptionsWindow::Render(SDL_Window *window)
         ImGui::SetNextWindowSize(ImVec2(400, -1));
         ImGui::Begin("GAME SDK Options",
                      &visible,
-                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
+                     ImGuiWindowFlags_NoCollapse |
+                             ImGuiWindowFlags_NoResize |
+                             ImGuiWindowFlags_NoSavedSettings |
+                             ImGuiWindowFlags_NoDocking);
         ImGui::TextUnformatted("Folder with GAME executable");
         ImGui::SameLine();
         ImGui::TextDisabled("(no trailing slash)");

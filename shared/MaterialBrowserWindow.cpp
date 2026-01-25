@@ -28,7 +28,8 @@ void MaterialBrowserWindow::Show(std::string &material)
     for (const std::string &path: materialPaths)
     {
         LevelMaterialAsset mat;
-        const Error::ErrorCode e = LevelMaterialAsset::CreateFromAsset((Options::GetAssetsPath() + "/material/" + path).c_str(), mat);
+        const Error::ErrorCode
+                e = LevelMaterialAsset::CreateFromAsset((Options::GetAssetsPath() + "/material/" + path).c_str(), mat);
         if (e != Error::ErrorCode::OK)
         {
             printf("Failed to load level material asset \"%s\"\n", path.c_str());
@@ -46,12 +47,13 @@ void MaterialBrowserWindow::Render()
         ImGui::SetNextWindowSize(ImVec2(600, 500), ImGuiCond_Appearing);
         ImGui::SetNextWindowSizeConstraints(ImVec2(192, 192), ImVec2(FLT_MAX, FLT_MAX));
         constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
-                                                 ImGuiWindowFlags_NoSavedSettings;
+                                                 ImGuiWindowFlags_NoSavedSettings |
+                                                 ImGuiWindowFlags_NoDocking;
         if (ImGui::BeginPopupModal("Choose Material", &visible, windowFlags))
         {
             ImGui::PushItemWidth(-1);
             ImGui::InputTextWithHint("##search", "Filter", &filter);
-            ImGui::Dummy({0,4});
+            ImGui::Dummy({0, 4});
             if (ImGui::BeginChild("##picker", ImVec2(-1, -32), ImGuiChildFlags_Borders, 0))
             {
                 const float spacing = ImGui::GetStyle().ItemSpacing.x;
@@ -60,13 +62,15 @@ void MaterialBrowserWindow::Render()
 
                 for (size_t i = 0; i < materialPaths.size(); i++)
                 {
-                    if (materialPaths.at(i).find(filter) == std::string::npos) {continue;}
+                    if (materialPaths.at(i).find(filter) == std::string::npos)
+                    {
+                        continue;
+                    }
 
                     const std::string textureName = materials.at(i).texture;
 
                     ImVec2 texSize;
-                    if (SharedMgr::textureCache->GetTextureSize(textureName, texSize) !=
-                        Error::ErrorCode::OK)
+                    if (SharedMgr::textureCache->GetTextureSize(textureName, texSize) != Error::ErrorCode::OK)
                     {
                         continue;
                     }
@@ -86,7 +90,10 @@ void MaterialBrowserWindow::Render()
 
                     const float cursor = ImGui::GetCursorPosX();
 
-                    if (ImGui::Selectable("##tile", "material/" + materialPaths[i] == *str, 0, ImVec2(tileSize, tileSize)))
+                    if (ImGui::Selectable("##tile",
+                                          "material/" + materialPaths[i] == *str,
+                                          0,
+                                          ImVec2(tileSize, tileSize)))
                     {
                         *str = "material/" + materialPaths[i];
                     }
@@ -124,8 +131,8 @@ void MaterialBrowserWindow::Render()
 
                     ImGui::SameLine(0.0f, spacing);
                     ImGui::SetCursorPosX(cursor + tileSize + spacing);
-                    ImGui::Dummy(ImVec2(0,0));
-                    ImGui::SameLine(0,0);
+                    ImGui::Dummy(ImVec2(0, 0));
+                    ImGui::SameLine(0, 0);
                     ImGui::PopID();
 
                     foundResults = true;
@@ -138,7 +145,7 @@ void MaterialBrowserWindow::Render()
 
                 ImGui::EndChild();
             }
-            ImGui::Dummy({0,4});
+            ImGui::Dummy({0, 4});
 
             const float sizeX = ImGui::GetContentRegionAvail().x;
 
@@ -164,4 +171,3 @@ void MaterialBrowserWindow::InputMaterial(const char *label, std::string &materi
         Show(material);
     }
 }
-

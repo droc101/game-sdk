@@ -3,7 +3,6 @@
 //
 
 #include "Viewport.h"
-#include <cassert>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <string>
@@ -13,12 +12,6 @@
 
 Viewport::Viewport(const ImVec2 gridPos, const ImVec2 gridSize, const ViewportType type)
 {
-    assert(gridPos.x >= 0 && gridPos.x < 2);
-    assert(gridPos.y >= 0 && gridPos.y < 2);
-    assert(gridSize.x > 0 && gridSize.x <= 2);
-    assert(gridSize.y > 0 && gridSize.y <= 2);
-    this->gridPos = gridPos;
-    this->gridSize = gridSize;
     this->type = type;
 }
 
@@ -29,40 +22,12 @@ Viewport::~Viewport()
 
 void Viewport::GetWindowRect(ImVec2 &pos, ImVec2 &size) const
 {
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
-    const float sidebarSize = MapEditor::showSidebar ? MapEditor::SIDEBAR_WIDTH : 0;
-    const ImVec2 GridTopLeft = ImVec2(viewport->WorkPos.x + sidebarSize,
-                                      viewport->WorkPos.y + MapEditor::TOOLBAR_HEIGHT);
-    const ImVec2 GridCellSize = ImVec2((viewport->WorkSize.x - sidebarSize) / 2,
-                                       (viewport->WorkSize.y - MapEditor::TOOLBAR_HEIGHT) / 2);
-    if (fullscreen)
-    {
-        pos = ImVec2(GridTopLeft.x, GridTopLeft.y);
-        size = ImVec2(GridCellSize.x * 2, GridCellSize.y * 2);
-    } else
-    {
-        pos = ImVec2(GridTopLeft.x + (GridCellSize.x * gridPos.x), GridTopLeft.y + (GridCellSize.y * gridPos.y));
-        size = ImVec2(GridCellSize.x * gridSize.x, GridCellSize.y * gridSize.y);
-    }
+    pos = windowPos;
+    size = windowSize;
 }
-
 
 void Viewport::RenderImGui()
 {
-    ImVec2 WindowSize;
-    ImVec2 WindowPos;
-    GetWindowRect(WindowPos, WindowSize);
-
-    if (!framebuffer.created)
-    {
-        this->framebuffer = GLHelper::CreateFramebuffer({WindowSize.x, WindowSize.y});
-    } else if (glm::vec2(WindowSize.x, WindowSize.y) != framebuffer.size)
-    {
-        GLHelper::ResizeFramebuffer(framebuffer, {WindowSize.x, WindowSize.y});
-    }
-
-    ImGui::SetNextWindowSize(WindowSize);
-    ImGui::SetNextWindowPos(WindowPos);
     std::string title;
     if (type == ViewportType::TOP_DOWN_XZ)
     {
@@ -78,15 +43,23 @@ void Viewport::RenderImGui()
     ImGui::PushStyleColor(ImGuiCol_WindowBg, 0);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 4);
     constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
-                                             ImGuiWindowFlags_NoResize |
                                              ImGuiWindowFlags_NoMove |
-                                             ImGuiWindowFlags_NoSavedSettings |
                                              ImGuiWindowFlags_NoBringToFrontOnFocus |
-                                             ImGuiWindowFlags_NoDocking |
                                              ImGuiWindowFlags_NoDecoration;
-    ImGui::Begin(("##_" + title).c_str(), nullptr, windowFlags);
+    ImGui::Begin(("" + title).c_str(), nullptr, windowFlags);
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();
+
+    windowPos = ImGui::GetWindowPos();
+    windowSize = ImGui::GetWindowSize();
+
+    if (!framebuffer.created)
+    {
+        this->framebuffer = GLHelper::CreateFramebuffer({windowSize.x, windowSize.y});
+    } else if (glm::vec2(windowSize.x, windowSize.y) != framebuffer.size)
+    {
+        GLHelper::ResizeFramebuffer(framebuffer, {windowSize.x, windowSize.y});
+    }
 
     GLHelper::BindFramebuffer(framebuffer);
 
@@ -95,7 +68,7 @@ void Viewport::RenderImGui()
     GLHelper::UnbindFramebuffer();
 
     const ImVec2 origCursor = ImGui::GetCursorPos();
-    ImGui::SetCursorPos({0,0});
+    ImGui::SetCursorPos({0, 0});
     ImGui::Image(framebuffer.colorTexture, {framebuffer.size.x, framebuffer.size.y}, {0, 1}, {1, 0});
     ImGui::SetCursorPos(origCursor);
 
@@ -134,7 +107,7 @@ void Viewport::RenderImGui()
         {
             const ImVec2 mouseDelta = ImGui::GetIO().MouseDelta;
 
-            const float unitsPerPixel = zoom / WindowSize.y;
+            const float unitsPerPixel = zoom / windowSize.y;
             scrollCenterPos = ImVec2(scrollCenterPos.x + (mouseDelta.x * -unitsPerPixel),
                                      scrollCenterPos.y + (mouseDelta.y * unitsPerPixel));
             if (scrollCenterPos.x > 550)
@@ -288,16 +261,6 @@ ImVec2 Viewport::GetLocalMousePos()
     const ImVec2 wPos = ImGui::GetWindowPos();
     const ImVec2 mPos = ImGui::GetMousePos();
     return {mPos.x - wPos.x, mPos.y - wPos.y};
-}
-
-bool Viewport::IsFullscreen() const
-{
-    return fullscreen;
-}
-
-void Viewport::ToggleFullscreen()
-{
-    fullscreen = !fullscreen;
 }
 
 glm::vec3 Viewport::GetWorldSpaceMousePos() const

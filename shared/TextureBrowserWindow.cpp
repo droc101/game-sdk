@@ -35,12 +35,13 @@ void TextureBrowserWindow::Render()
         ImGui::SetNextWindowSize(ImVec2(600, 500), ImGuiCond_Appearing);
         ImGui::SetNextWindowSizeConstraints(ImVec2(192, 192), ImVec2(FLT_MAX, FLT_MAX));
         constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
-                                                 ImGuiWindowFlags_NoSavedSettings;
+                                                 ImGuiWindowFlags_NoSavedSettings |
+                                                 ImGuiWindowFlags_NoDocking;
         if (ImGui::BeginPopupModal("Choose Texture", &visible, windowFlags))
         {
             ImGui::PushItemWidth(-1);
             ImGui::InputTextWithHint("##search", "Filter", &filter);
-            ImGui::Dummy({0,4});
+            ImGui::Dummy({0, 4});
             if (ImGui::BeginChild("##picker", ImVec2(-1, -32), ImGuiChildFlags_Borders, 0))
             {
                 const float spacing = ImGui::GetStyle().ItemSpacing.x;
@@ -49,7 +50,10 @@ void TextureBrowserWindow::Render()
 
                 for (size_t i = 0; i < textures.size(); i++)
                 {
-                    if (textures.at(i).find(filter) == std::string::npos) {continue;}
+                    if (textures.at(i).find(filter) == std::string::npos)
+                    {
+                        continue;
+                    }
 
                     ImVec2 texSize;
                     if (SharedMgr::textureCache->GetTextureSize("texture/" + textures[i], texSize) !=
@@ -111,8 +115,8 @@ void TextureBrowserWindow::Render()
 
                     ImGui::SameLine(0.0f, spacing);
                     ImGui::SetCursorPosX(cursor + tileSize + spacing);
-                    ImGui::Dummy(ImVec2(0,0));
-                    ImGui::SameLine(0,0);
+                    ImGui::Dummy(ImVec2(0, 0));
+                    ImGui::SameLine(0, 0);
                     ImGui::PopID();
 
                     foundResults = true;
@@ -125,7 +129,7 @@ void TextureBrowserWindow::Render()
 
                 ImGui::EndChild();
             }
-            ImGui::Dummy({0,4});
+            ImGui::Dummy({0, 4});
 
             const float sizeX = ImGui::GetContentRegionAvail().x;
 

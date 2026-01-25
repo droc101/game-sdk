@@ -41,7 +41,7 @@ void EditActorWindow::Render(Actor &actor)
         return;
     }
 
-    ImGui::Begin("Actor Properties", &visible, ImGuiWindowFlags_NoCollapse);
+    ImGui::Begin("Actor Properties", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
 
     if (SharedMgr::actorDefinitions.empty() || !SharedMgr::actorDefinitions.contains("actor"))
     {

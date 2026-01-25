@@ -4,10 +4,10 @@
 
 #include "MapPropertiesWindow.h"
 
+#include <misc/cpp/imgui_stdlib.h>
 #include "imgui.h"
 #include "MapEditor.h"
 #include "TextureBrowserWindow.h"
-#include <misc/cpp/imgui_stdlib.h>
 
 void MapPropertiesWindow::Render()
 {
@@ -17,7 +17,9 @@ void MapPropertiesWindow::Render()
     }
 
     ImGui::SetNextWindowSize(ImVec2(400, -1));
-    ImGui::Begin("Map Properties", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+    ImGui::Begin("Map Properties",
+                 &visible,
+                 ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking);
 
     ImGui::Text("Sky Texture");
     TextureBrowserWindow::InputTexture("##skyTexture", MapEditor::map.sky_texture);
@@ -30,4 +32,3 @@ void MapPropertiesWindow::Render()
 
     ImGui::End();
 }
-

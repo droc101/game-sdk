@@ -15,6 +15,7 @@
 #include <SDL3/SDL_video.h>
 #include "ActorBrowserWindow.h"
 #include "DialogFilters.h"
+#include "imgui_internal.h"
 #include "MapCompileWindow.h"
 #include "MapEditor.h"
 #include "MapPropertiesWindow.h"
@@ -108,9 +109,12 @@ static void openJson(const std::string &path)
         if (!SharedMgr::actorDefinitions.contains(actor.className))
         {
             if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to open the map because it contains an unknown actor class \"{}\"", actor.className).c_str(),
-                                      window))
+                                          "Error",
+                                          std::format("Failed to open the map because it contains an unknown actor "
+                                                      "class \"{}\"",
+                                                      actor.className)
+                                                  .c_str(),
+                                          window))
             {
                 printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
             }
@@ -129,6 +133,37 @@ static void openJsonCallback(void * /*userdata*/, const char *const *fileList, i
         return;
     }
     openJson(fileList[0]);
+}
+
+static ImGuiID dockspaceId;
+static ImGuiID rootDockspaceID;
+static bool dockspaceSetup = false;
+
+void SetupDockspace()
+{
+    if (dockspaceSetup)
+    {
+        return;
+    }
+    dockspaceSetup = true;
+    dockspaceId = ImGui::GetID("dockspace");
+    rootDockspaceID = dockspaceId;
+    ImGui::DockBuilderRemoveNode(dockspaceId);
+    ImGui::DockBuilderAddNode(dockspaceId, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_NoCloseButton);
+    ImGui::DockBuilderSetNodeSize(dockspaceId, ImGui::GetMainViewport()->Size);
+
+    ImGuiID lowerLeftDock = ImGui::DockBuilderSplitNode(dockspaceId, ImGuiDir_Down, 0.5f, nullptr, &dockspaceId);
+    const ImGuiID lowerRightDock = ImGui::DockBuilderSplitNode(lowerLeftDock,
+                                                               ImGuiDir_Right,
+                                                               0.5f,
+                                                               nullptr,
+                                                               &lowerLeftDock);
+
+    ImGui::DockBuilderDockWindow("Top down (XZ)", dockspaceId);
+    ImGui::DockBuilderDockWindow("Front (XY)", lowerLeftDock);
+    ImGui::DockBuilderDockWindow("Side (YZ)", lowerRightDock);
+
+    ImGui::DockBuilderFinish(rootDockspaceID);
 }
 
 static void Render(bool &done, SDL_Window *sdlWindow)
@@ -183,11 +218,6 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         vpTopDown.CenterPosition(glm::vec3(0));
         vpFront.CenterPosition(glm::vec3(0));
         vpSide.CenterPosition(glm::vec3(0));
-    }
-
-    if (ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_V, ImGuiInputFlags_RouteGlobal))
-    {
-        vpTopDown.ToggleFullscreen();
     }
 
     bool canCutCopy = MapEditor::toolType == MapEditor::EditorToolType::SELECT;
@@ -342,10 +372,6 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                 MapEditor::gridSpacingIndex = 3;
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Show Secondary Viewports", "Alt+V", !vpTopDown.IsFullscreen()))
-            {
-                vpTopDown.ToggleFullscreen();
-            }
             if (ImGui::MenuItem("Show Sidebar", "", MapEditor::showSidebar))
             {
                 MapEditor::showSidebar = !MapEditor::showSidebar;
@@ -376,23 +402,18 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     if (openPressed)
     {
         SDL_ShowOpenFileDialog(openJsonCallback,
-                                       nullptr,
-                                       sdlWindow,
-                                       DialogFilters::jsonFilters.data(),
-                                       1,
-                                       nullptr,
-                                       false);
+                               nullptr,
+                               sdlWindow,
+                               DialogFilters::jsonFilters.data(),
+                               1,
+                               nullptr,
+                               false);
         MapEditor::toolType = MapEditor::EditorToolType::SELECT;
         MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
     }
     if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveJsonCallback,
-                                       nullptr,
-                                       sdlWindow,
-                                       DialogFilters::jsonFilters.data(),
-                                       1,
-                                       nullptr);
+        SDL_ShowSaveFileDialog(saveJsonCallback, nullptr, sdlWindow, DialogFilters::jsonFilters.data(), 1, nullptr);
     }
     if (compilePressed)
     {
@@ -483,19 +504,37 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                      ImGuiWindowFlags_NoMove |
                              ImGuiWindowFlags_NoResize |
                              ImGuiWindowFlags_NoCollapse |
-                             ImGuiWindowFlags_NoDecoration);
+                             ImGuiWindowFlags_NoDecoration |
+                             ImGuiWindowFlags_NoDocking);
 
         MapEditor::tool->RenderToolWindow();
 
         ImGui::End();
     }
 
+    const float sidebarSize = MapEditor::showSidebar ? MapEditor::SIDEBAR_WIDTH : 0;
+    const ImVec2 VpAreaTopLeft = ImVec2(viewport->WorkPos.x + sidebarSize,
+                                        viewport->WorkPos.y + MapEditor::TOOLBAR_HEIGHT);
+    const ImVec2 VpAreaSize = ImVec2((viewport->WorkSize.x - sidebarSize),
+                                     (viewport->WorkSize.y - MapEditor::TOOLBAR_HEIGHT));
+    ImGui::PushStyleVarX(ImGuiStyleVar_WindowPadding, 0.0f);
+    ImGui::PushStyleVarY(ImGuiStyleVar_WindowPadding, 0.0f);
+    ImGui::SetNextWindowPos(VpAreaTopLeft);
+    ImGui::SetNextWindowSize(VpAreaSize);
+    ImGui::Begin("CentralDock",
+                 nullptr,
+                 ImGuiWindowFlags_NoSavedSettings |
+                         ImGuiWindowFlags_NoDecoration |
+                         ImGuiWindowFlags_NoMove |
+                         ImGuiWindowFlags_NoCollapse);
+    ImGui::DockSpace(rootDockspaceID);
+    ImGui::End();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleVar();
+
     vpTopDown.RenderImGui();
-    if (!vpTopDown.IsFullscreen())
-    {
-        vpFront.RenderImGui();
-        vpSide.RenderImGui();
-    }
+    vpFront.RenderImGui();
+    vpSide.RenderImGui();
 
     ActorBrowserWindow::Render();
     MapPropertiesWindow::Render();
@@ -587,6 +626,7 @@ int main(int argc, char **argv)
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     SharedMgr::ApplyTheme();
 
@@ -634,6 +674,8 @@ int main(int argc, char **argv)
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
+
+        SetupDockspace();
 
         const ImGuiViewport *viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(viewport->WorkPos);

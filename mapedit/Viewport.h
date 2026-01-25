@@ -6,8 +6,8 @@
 
 #include <cstdint>
 #include <glm/mat4x4.hpp>
-#include "imgui.h"
 #include "GLHelper.h"
+#include "imgui.h"
 
 class Viewport
 {
@@ -42,18 +42,13 @@ class Viewport
 
         void ClampZoom();
 
-        [[nodiscard]] bool IsFullscreen() const;
-
-        void ToggleFullscreen();
-
         [[nodiscard]] glm::vec3 GetWorldSpaceMousePos() const;
 
         static ImVec2 GetLocalMousePos();
 
     private:
-        ImVec2 gridPos;
-        ImVec2 gridSize;
-        bool fullscreen = false;
+        ImVec2 windowPos;
+        ImVec2 windowSize;
         ViewportType type;
 
         GLHelper::GL_Framebuffer framebuffer;

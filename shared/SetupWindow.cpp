@@ -5,9 +5,9 @@
 #include "SetupWindow.h"
 #include <cstdlib>
 #include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_video.h>
-#include <misc/cpp/imgui_stdlib.h>
 
 #include "Options.h"
 
@@ -37,16 +37,23 @@ void SetupWindow::assetsPathCallback(void * /*userdata*/, const char *const *fil
 
 void SetupWindow::Render(SDL_Window *window)
 {
-    if (!visible) return;
+    if (!visible)
+    {
+        return;
+    }
     ImGui::OpenPopup("Setup");
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoMove |
                                              ImGuiWindowFlags_NoSavedSettings |
                                              ImGuiWindowFlags_NoCollapse |
-                                             ImGuiWindowFlags_NoResize;
+                                             ImGuiWindowFlags_NoResize |
+                                             ImGuiWindowFlags_NoDocking;
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    if (!ImGui::BeginPopupModal("Setup", nullptr, windowFlags)) return;
+    if (!ImGui::BeginPopupModal("Setup", nullptr, windowFlags))
+    {
+        return;
+    }
     ImGui::PopStyleVar();
 
     ImGui::TextUnformatted("Folder with GAME executable");
@@ -63,7 +70,7 @@ void SetupWindow::Render(SDL_Window *window)
     if (!Options::ValidateGamePath())
     {
         valid = false;
-        ImGui::TextColored(ImVec4(1,0,0,1), "Invalid game path");
+        ImGui::TextColored(ImVec4(1, 0, 0, 1), "Invalid game path");
     } else
     {
         ImGui::Text(" ");
