@@ -51,7 +51,7 @@ void Viewport::RenderImGui()
     ImGui::PopStyleColor();
 
     windowPos = ImGui::GetWindowPos();
-    windowSize = ImGui::GetWindowSize();
+    windowSize = ImGui::GetContentRegionMax();
 
     if (!framebuffer.created)
     {
@@ -184,9 +184,6 @@ glm::vec2 Viewport::WorldToScreenPos(const glm::vec3 worldPos) const
 
 glm::mat4 Viewport::GetMatrix() const
 {
-    // ImVec2 WindowSize;
-    // ImVec2 WindowPos;
-    // GetWindowRect(WindowPos, WindowSize);
     const float aspect = (framebuffer.size.y != 0.0f) ? (framebuffer.size.x / framebuffer.size.y) : 1.0f;
     const float halfHeight = zoom / 2.0f;
     const float halfWidth = aspect * halfHeight;
