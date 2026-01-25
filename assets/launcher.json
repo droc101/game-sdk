@@ -5,11 +5,15 @@
         "binary": "$GAMEDIR/game",
         "workdir": "$GAMEDIR",
         "arguments": [
-          "--nosteam"
+          "--nosteam",
+          "--game=$ASSETSDIR"
         ]
       },
       "GAME Directory": {
         "folder": "$GAMEDIR"
+      },
+      "Assets Directory": {
+        "folder": "$ASSETSDIR"
       },
       "GAME Log": {
         "file": "$GAMEDIR/game.log"

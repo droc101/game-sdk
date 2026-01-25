@@ -86,6 +86,7 @@ static void StringReplace(std::string &string, const std::string &find, const st
 static void ParsePath(std::string &path)
 {
     StringReplace(path, "$GAMEDIR", Options::gamePath);
+    StringReplace(path, "$ASSETSDIR", Options::GetAssetsPath());
     StringReplace(path, "$SDKDIR", sdkPath);
 }
 
@@ -106,7 +107,12 @@ static void LaunchSelectedTool()
 #ifdef WIN32
         folder += ".exe";
 #endif
-        std::vector<std::string> args = item.value("arguments", std::vector<std::string>{});
+        std::vector<std::string> args{};
+        for (std::string &arg: item.value("arguments", std::vector<std::string>{}))
+        {
+            ParsePath(arg);
+            args.push_back(arg);
+        }
         printf("Launching process \"%s\"...\n", folder.c_str());
         DesktopInterface::ExecuteProcessNonBlocking(folder, args);
     } else if (item.contains("file"))
