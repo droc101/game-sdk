@@ -39,13 +39,6 @@ class SelectTool final: public EditorTool
                                 Color &lineColor,
                                 bool &haveAddedNewVertex);
 
-        void ProcessActorHover(const Viewport &viewport,
-                               glm::vec2 vertexScreenSpace,
-                               glm::vec2 screenSpaceHover,
-                               Actor &actor,
-                               size_t actorIndex,
-                               Color &vertexColor);
-
         void RenderViewportSelectMode(const Viewport &vp,
                                       glm::mat4 &matrix,
                                       bool isHovered,

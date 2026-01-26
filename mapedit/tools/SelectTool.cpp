@@ -290,39 +290,6 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
     }
 }
 
-void SelectTool::ProcessActorHover(const Viewport &viewport,
-                                   const glm::vec2 vertexScreenSpace,
-                                   const glm::vec2 screenSpaceHover,
-                                   Actor &actor,
-                                   const size_t actorIndex,
-                                   Color &vertexColor)
-{
-    if (viewport.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
-    {
-        if (glm::distance(vertexScreenSpace, screenSpaceHover) <= MapEditor::HOVER_DISTANCE_PIXELS)
-        {
-            hoverType = ItemType::ACTOR;
-            hoverIndex = actorIndex;
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-            vertexColor = Color(1, 0.5, .5, 1);
-            if (ImGui::BeginTooltip())
-            {
-                ImGui::Text("Actor %ld\n%.2f, %.2f, %.2f",
-                            actorIndex + 1,
-                            actor.position[0],
-                            actor.position[1],
-                            actor.position[2]);
-                ImGui::EndTooltip();
-            }
-            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-            {
-                selectionIndex = actorIndex;
-                selectionType = ItemType::ACTOR;
-            }
-        }
-    }
-}
-
 void SelectTool::RenderViewportVertexMode(Viewport &vp,
                                           glm::mat4 &matrix,
                                           bool isHovered,
@@ -435,9 +402,8 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
         }
     }
 
-    for (Actor &a: MapEditor::map.actors)
+    for (const Actor &a: MapEditor::map.actors)
     {
-        const Color vertexColor = Color(0.7, 1, 0.7, 1);
         MapRenderer::RenderActor(a, matrix);
     }
 
@@ -470,7 +436,7 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
         Actor &a = MapEditor::map.actors.at(actorIndex);
         const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
         const glm::vec2 posScreenSpace = vp.WorldToScreenPos(pos);
-        const ImVec2 hoverScreenSpaceIV = vp.GetLocalMousePos();
+        const ImVec2 hoverScreenSpaceIV = Viewport::GetLocalMousePos();
         const glm::vec2 hoverScreenSpace = glm::vec2(hoverScreenSpaceIV.x, hoverScreenSpaceIV.y);
 
         if (hoverType == ItemType::NONE &&
@@ -480,16 +446,23 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
             hoverIndex = actorIndex;
             hoverType = ItemType::ACTOR;
+            if (ImGui::BeginTooltip())
+            {
+                if (a.params.contains("name") && !a.params.at("name").Get<std::string>("").empty())
+                {
+                    ImGui::Text("%s: %s", a.params.at("name").Get<std::string>("").c_str(), a.className.c_str());
+                } else
+                {
+                    ImGui::Text("%s", a.className.c_str());
+                }
+                ImGui::Text("%.2f, %.2f, %.2f",
+                            a.position.at(0),
+                            a.position.at(1),
+                            a.position.at(2));
+                ImGui::EndTooltip();
+            }
         }
 
-        Color c = Color(0.7, 1, 0.7, 1);
-        if (selectionType == ItemType::ACTOR && selectionIndex == actorIndex)
-        {
-            c = Color(0, 1, 0, 1);
-        } else if (hoverType == ItemType::ACTOR && hoverIndex == actorIndex)
-        {
-            c = Color(0.4, .8, 0.4, 1);
-        }
         MapRenderer::RenderActor(a, matrix);
     }
 

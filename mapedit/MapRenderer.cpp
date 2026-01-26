@@ -344,10 +344,9 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix)
         RenderBillboardSprite(pos, 20, texture, c, matrix);
     }
 
-    if (definition.renderDefinition.model.empty() && definition.renderDefinition.modelSourceParam.empty())
-    {
-        RenderUnitVector(pos, actorRotation, c, matrix, 2, 1);
-    } else
+    RenderUnitVector(pos, actorRotation, c, matrix, 2, 1);
+
+    if (!definition.renderDefinition.model.empty() || !definition.renderDefinition.modelSourceParam.empty())
     {
         std::string model = definition.renderDefinition.model;
         if (!definition.renderDefinition.modelSourceParam.empty() &&
