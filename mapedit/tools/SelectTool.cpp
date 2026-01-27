@@ -455,10 +455,7 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
                 {
                     ImGui::Text("%s", a.className.c_str());
                 }
-                ImGui::Text("%.2f, %.2f, %.2f",
-                            a.position.at(0),
-                            a.position.at(1),
-                            a.position.at(2));
+                ImGui::Text("%.2f, %.2f, %.2f", a.position.at(0), a.position.at(1), a.position.at(2));
                 ImGui::EndTooltip();
             }
         }
@@ -506,20 +503,23 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
         }
     }
 
-    if (isHovered && vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+    if (isHovered)
     {
-        if ((hoverType == ItemType::NONE && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) ||
-            ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
+        if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
         {
-            selectionType = ItemType::NONE;
-        } else if (hoverType == ItemType::SECTOR && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-        {
-            selectionIndex = hoverIndex;
-            selectionType = ItemType::SECTOR;
-            if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+            if ((hoverType == ItemType::NONE && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) ||
+                ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
             {
-                focusedSectorIndex = selectionIndex;
-                sectorFocusMode = true;
+                selectionType = ItemType::NONE;
+            } else if (hoverType == ItemType::SECTOR && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            {
+                selectionIndex = hoverIndex;
+                selectionType = ItemType::SECTOR;
+                if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                {
+                    focusedSectorIndex = selectionIndex;
+                    sectorFocusMode = true;
+                }
             }
         } else if (hoverType == ItemType::ACTOR && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         {
