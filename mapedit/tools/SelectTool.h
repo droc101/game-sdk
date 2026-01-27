@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
+#include <vector>
 #include "../Viewport.h"
 #include "EditorTool.h"
 
@@ -54,7 +55,7 @@ class SelectTool final: public EditorTool
 
         void RenderToolWindow() override;
 
-        bool IsCopyableSelected() const;
+        [[nodiscard]] bool IsCopyableSelected() const;
 
         void Copy() const;
 
@@ -77,6 +78,9 @@ class SelectTool final: public EditorTool
         glm::vec2 lineDragModeSecondVertexOffset{};
         /// The difference from the mouse to the 1st vertex (worldSpaceMouse - lineDragModeMouseOffset = firstVertex)
         glm::vec2 lineDragModeMouseOffset{};
+
+        glm::vec2 sectorDragMouseOffset{};
+        std::vector<glm::vec2> sectorDragVertexOffsets{};
 
         bool dragging = false;
 };

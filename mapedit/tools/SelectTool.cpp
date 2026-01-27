@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
+#include <string>
 #include <variant>
 
 #include "../ActorBrowserWindow.h"
@@ -75,6 +76,53 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
                 dragging = true;
             } else
             {
+                dragging = false;
+            }
+        } else if (selectionType == ItemType::SECTOR && (hoverType == ItemType::SECTOR && hoverIndex == selectionIndex || dragging))
+        {
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            {
+                Sector &sector = MapEditor::map.sectors.at(selectionIndex);
+                if (sectorDragVertexOffsets.empty())
+                {
+                    const glm::vec2 worldHover2D{worldSpaceHover.x, worldSpaceHover.z};
+                    const glm::vec2 firstVertex = {
+                        sector.points.at(0).at(0),
+                        sector.points.at(0).at(1),
+                    };
+                    sectorDragMouseOffset = {
+                        worldHover2D.x - firstVertex.x,
+                        worldHover2D.y - firstVertex.y,
+                    };
+
+                    sectorDragVertexOffsets.clear();
+
+                    for (std::array<float, 2> &point: MapEditor::map.sectors.at(selectionIndex).points)
+                    {
+                        const glm::vec2 glmPoint = {
+                            point.at(0),
+                            point.at(1)
+                        };
+                        sectorDragVertexOffsets.push_back(firstVertex - glmPoint);
+                    }
+                }
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+                const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
+                glm::vec2 startPos = worldHover2D - sectorDragMouseOffset;
+                for (size_t i = 0; i < sector.points.size(); i++)
+                {
+                    std::array<float, 2> &point = sector.points.at(i);
+                    glm::vec2 glmPoint = glm::vec2(point.at(0), point.at(1));
+                    glmPoint = startPos - sectorDragVertexOffsets.at(i);
+                    glm::vec3 snapped = MapEditor::SnapToGrid(glm::vec3(glmPoint.x, 0, glmPoint.y));
+                    point.at(0) = snapped.x;
+                    point.at(1) = snapped.z;
+                }
+
+                dragging = true;
+            } else
+            {
+                sectorDragVertexOffsets.clear();
                 dragging = false;
             }
         }
