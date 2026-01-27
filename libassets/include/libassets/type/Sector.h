@@ -36,6 +36,8 @@ class Sector
 
         [[nodiscard]] double CalculateArea() const;
 
+        [[nodiscard]] std::array<float, 3> GetCenter() const;
+
     private:
         enum class SegmentOrientation : uint8_t
         {

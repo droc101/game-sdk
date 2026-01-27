@@ -63,6 +63,10 @@ class SelectTool final: public EditorTool
 
         void Paste();
 
+        [[nodiscard]] bool HasSelection();
+
+        [[nodiscard]] glm::vec3 SelectionCenter();
+
     private:
         bool sectorFocusMode = false;
         size_t focusedSectorIndex = 0;

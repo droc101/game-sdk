@@ -123,10 +123,13 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                 } else
                 {
                     const glm::vec2 worldSpacePoint = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
-                    // TODO don't allow placing the same point twice
                     if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                     {
-                        points.push_back(MapEditor::SnapToGrid(worldSpacePoint));
+                        const glm::vec2 point = MapEditor::SnapToGrid(worldSpacePoint);
+                        if (std::ranges::find(points, point) == points.end())
+                        {
+                            points.push_back(point);
+                        }
                     }
                 }
             }

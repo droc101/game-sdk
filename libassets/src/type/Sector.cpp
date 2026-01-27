@@ -182,6 +182,20 @@ double Sector::CalculateArea() const
     return area * 0.5;
 }
 
+std::array<float, 3> Sector::GetCenter() const
+{
+    std::array<float, 3> center{};
+    center[1] = ceilingHeight + floorHeight / 2.0f;
+    for (const std::array<float, 2> &point: points)
+    {
+        center[0] += point[0];
+        center[2] += point[1];
+    }
+    center[0] /= static_cast<float>(points.size());
+    center[2] /= static_cast<float>(points.size());
+    return center;
+}
+
 std::array<float, 2> Sector::SegmentNormal(const int segmentIndex) const
 {
     const std::array<float, 2> p0 = points[segmentIndex];

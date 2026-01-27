@@ -45,7 +45,9 @@ void Viewport::RenderImGui()
     constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
                                              ImGuiWindowFlags_NoMove |
                                              ImGuiWindowFlags_NoBringToFrontOnFocus |
-                                             ImGuiWindowFlags_NoDecoration;
+                                             ImGuiWindowFlags_NoDecoration |
+                                             ImGuiWindowFlags_NoScrollbar |
+                                             ImGuiWindowFlags_NoScrollWithMouse;
     ImGui::Begin(("" + title).c_str(), nullptr, windowFlags);
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();
@@ -80,17 +82,13 @@ void Viewport::RenderImGui()
                                            ImGuiChildFlags_AutoResizeX |
                                            ImGuiChildFlags_AutoResizeY |
                                            ImGuiChildFlags_Borders;
-    if (ImGui::BeginChild("_vp_stats", ImVec2(0, 0), childFlags))
+    if (MapEditor::drawViewportInfo && ImGui::BeginChild("_vp_stats", ImVec2(0, 0), childFlags))
     {
-        ImGui::TextUnformatted(title.c_str());
-        if (MapEditor::drawViewportInfo)
-        {
-            ImGui::Text("Pos: %.2f, %.2f\nZoom: %.2f units/screen\nGrid: %.2f units",
-                        scrollCenterPos.x,
-                        scrollCenterPos.y,
-                        zoom,
-                        MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex));
-        }
+        ImGui::Text("Pos: %.2f, %.2f\nZoom: %.2f units/screen\nGrid: %.2f units",
+                    scrollCenterPos.x,
+                    scrollCenterPos.y,
+                    zoom,
+                    MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex));
         ImGui::EndChild();
     }
     ImGui::PopStyleColor();
@@ -112,21 +110,21 @@ void Viewport::RenderImGui()
             const float unitsPerPixel = zoom / windowSize.y;
             scrollCenterPos = ImVec2(scrollCenterPos.x + (mouseDelta.x * -unitsPerPixel),
                                      scrollCenterPos.y + (mouseDelta.y * unitsPerPixel));
-            if (scrollCenterPos.x > 550)
+            if (scrollCenterPos.x > MapEditor::MAP_HALF_SIZE + 50)
             {
-                scrollCenterPos.x = 550;
+                scrollCenterPos.x = MapEditor::MAP_HALF_SIZE + 50;
             }
-            if (scrollCenterPos.y > 550)
+            if (scrollCenterPos.y > MapEditor::MAP_HALF_SIZE + 50)
             {
-                scrollCenterPos.y = 550;
+                scrollCenterPos.y = MapEditor::MAP_HALF_SIZE + 50;
             }
-            if (scrollCenterPos.x < -550)
+            if (scrollCenterPos.x < -(MapEditor::MAP_HALF_SIZE + 50))
             {
-                scrollCenterPos.x = -550;
+                scrollCenterPos.x = -(MapEditor::MAP_HALF_SIZE + 50);
             }
-            if (scrollCenterPos.y < -550)
+            if (scrollCenterPos.y < -(MapEditor::MAP_HALF_SIZE + 50))
             {
-                scrollCenterPos.y = -550;
+                scrollCenterPos.y = -(MapEditor::MAP_HALF_SIZE + 50);
             }
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
         }
@@ -226,7 +224,7 @@ void Viewport::CenterPosition(glm::vec3 pos)
     switch (type)
     {
         case ViewportType::TOP_DOWN_XZ:
-            scrollCenterPos = {pos.x, pos.z};
+            scrollCenterPos = {-pos.x, pos.z};
             break;
         case ViewportType::FRONT_XY:
             scrollCenterPos = {pos.x, pos.y};

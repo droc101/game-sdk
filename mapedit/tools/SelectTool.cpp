@@ -10,14 +10,12 @@
 #include <libassets/type/Sector.h>
 #include <string>
 #include <variant>
-
-#include "../ActorBrowserWindow.h"
 #include "../EditActorWindow.h"
 #include "../MapEditor.h"
 #include "../MapRenderer.h"
 #include "../Viewport.h"
-#include "AddActorTool.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 
 void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {
@@ -78,7 +76,8 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             {
                 dragging = false;
             }
-        } else if (selectionType == ItemType::SECTOR && (hoverType == ItemType::SECTOR && hoverIndex == selectionIndex || dragging))
+        } else if (selectionType == ItemType::SECTOR &&
+                   ((hoverType == ItemType::SECTOR && hoverIndex == selectionIndex) || dragging))
         {
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
@@ -99,24 +98,18 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
 
                     for (std::array<float, 2> &point: MapEditor::map.sectors.at(selectionIndex).points)
                     {
-                        const glm::vec2 glmPoint = {
-                            point.at(0),
-                            point.at(1)
-                        };
+                        const glm::vec2 glmPoint = {point.at(0), point.at(1)};
                         sectorDragVertexOffsets.push_back(firstVertex - glmPoint);
                     }
                 }
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
                 const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
-                glm::vec2 startPos = worldHover2D - sectorDragMouseOffset;
+                const glm::vec2 startPos = worldHover2D - sectorDragMouseOffset;
                 for (size_t i = 0; i < sector.points.size(); i++)
                 {
-                    std::array<float, 2> &point = sector.points.at(i);
-                    glm::vec2 glmPoint = glm::vec2(point.at(0), point.at(1));
-                    glmPoint = startPos - sectorDragVertexOffsets.at(i);
-                    glm::vec3 snapped = MapEditor::SnapToGrid(glm::vec3(glmPoint.x, 0, glmPoint.y));
-                    point.at(0) = snapped.x;
-                    point.at(1) = snapped.z;
+                    glm::vec2 glmPoint = startPos - sectorDragVertexOffsets.at(i);
+                    const glm::vec3 snapped = MapEditor::SnapToGrid(glm::vec3(glmPoint.x, 0, glmPoint.y));
+                    sector.points.at(i) = {snapped.x, snapped.z};
                 }
 
                 dragging = true;
@@ -569,7 +562,8 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
                     sectorFocusMode = true;
                 }
             }
-        } else if (hoverType == ItemType::ACTOR && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        }
+        if (hoverType == ItemType::ACTOR && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         {
             selectionIndex = hoverIndex;
             selectionType = ItemType::ACTOR;
@@ -755,4 +749,43 @@ void SelectTool::Paste()
         selectionIndex = MapEditor::map.sectors.size() - 1;
         selectionType = ItemType::SECTOR;
     }
+}
+
+bool SelectTool::HasSelection()
+{
+    return selectionType != ItemType::NONE;
+}
+
+glm::vec3 SelectTool::SelectionCenter()
+{
+    if (selectionType == ItemType::ACTOR)
+    {
+        const Actor &a = MapEditor::map.actors.at(selectionIndex);
+        return {a.position[0], a.position[1], a.position[2]};
+    }
+    if (selectionType == ItemType::SECTOR)
+    {
+        const Sector &s = MapEditor::map.sectors.at(selectionIndex);
+        const std::array<float, 3> center = s.GetCenter();
+        return {center[0], center[1], center[2]};
+    }
+    if (selectionType == ItemType::LINE || selectionType == ItemType::VERTEX)
+    {
+        const Sector &s = MapEditor::map.sectors.at(focusedSectorIndex);
+        const std::array<float, 3> center = s.GetCenter();
+        return {center[0], center[1], center[2]};
+    }
+    if (selectionType == ItemType::CEILING)
+    {
+        const Sector &s = MapEditor::map.sectors.at(focusedSectorIndex);
+        const std::array<float, 3> center = s.GetCenter();
+        return {center[0], s.ceilingHeight, center[2]};
+    }
+    if (selectionType == ItemType::FLOOR)
+    {
+        const Sector &s = MapEditor::map.sectors.at(focusedSectorIndex);
+        const std::array<float, 3> center = s.GetCenter();
+        return {center[0], s.floorHeight, center[2]};
+    }
+    assert(false);
 }

@@ -83,10 +83,6 @@ void MapCompileWindow::Render(SDL_Window *window)
                  ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking);
 
     ImGui::BeginDisabled(compilerProcess != nullptr);
-    // ImGui::Checkbox("Custom Game Directory", &overrideGameDir);
-    // ImGui::BeginDisabled(!overrideGameDir);
-    // ImGui::InputText("##customAssets", &gameDir);
-    // ImGui::EndDisabled();
     ImGui::Checkbox("Play after compile", &playMap);
 
     if (ImGui::Button("Compile"))
@@ -95,14 +91,15 @@ void MapCompileWindow::Render(SDL_Window *window)
     }
     ImGui::EndDisabled();
 
-    ImGui::Separator();
-    ImGui::Text("Compiler Output:");
-    ImGui::InputTextMultiline("##output",
+    if (ImGui::CollapsingHeader("Compiler Output"))
+    {
+        ImGui::InputTextMultiline("##output",
                               &log,
                               ImVec2(-1, 300),
                               ImGuiInputTextFlags_ReadOnly |
                                       ImGuiInputTextFlags_WordWrap |
                                       ImGuiInputTextFlags_NoHorizontalScroll);
+    }
 
     ImGui::End();
 }

@@ -226,6 +226,11 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         canCutCopy &= dynamic_cast<SelectTool *>(MapEditor::tool.get())->IsCopyableSelected();
     }
     bool canPaste = MapEditor::clipboard.has_value() && MapEditor::toolType == MapEditor::EditorToolType::SELECT;
+    bool canCenterSelection = MapEditor::toolType == MapEditor::EditorToolType::SELECT;
+    if (canCenterSelection)
+    {
+        canCenterSelection &= dynamic_cast<SelectTool *>(MapEditor::tool.get())->HasSelection();
+    }
 
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N, ImGuiInputFlags_RouteGlobal);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O, ImGuiInputFlags_RouteGlobal);
@@ -333,7 +338,13 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                 vpFront.CenterPosition(glm::vec3(0));
                 vpSide.CenterPosition(glm::vec3(0));
             }
-            // ImGui::MenuItem("Center Selection TODO");
+            if (ImGui::MenuItem("Center Selection", "", false, canCenterSelection))
+            {
+                const glm::vec3 center = dynamic_cast<SelectTool *>(MapEditor::tool.get())->SelectionCenter();
+                vpTopDown.CenterPosition(center);
+                vpFront.CenterPosition(center);
+                vpSide.CenterPosition(center);
+            }
             ImGui::Separator();
             if (ImGui::MenuItem("Show Viewport Information", "", MapEditor::drawViewportInfo))
             {
@@ -380,7 +391,6 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         }
         if (ImGui::BeginMenu("Tools"))
         {
-            // ImGui::MenuItem("Generate Benchmark TODO");
             if (ImGui::MenuItem("Actor Class Browser"))
             {
                 ActorBrowserWindow::visible = true;
