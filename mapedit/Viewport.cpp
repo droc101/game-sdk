@@ -10,7 +10,7 @@
 #include "imgui.h"
 #include "MapEditor.h"
 
-Viewport::Viewport(const ImVec2 gridPos, const ImVec2 gridSize, const ViewportType type)
+Viewport::Viewport(const ViewportType type)
 {
     this->type = type;
 }
@@ -52,6 +52,8 @@ void Viewport::RenderImGui()
 
     windowPos = ImGui::GetWindowPos();
     windowSize = ImGui::GetContentRegionMax();
+    windowSize.x += 8;
+    windowSize.y += 8;
 
     if (!framebuffer.created)
     {

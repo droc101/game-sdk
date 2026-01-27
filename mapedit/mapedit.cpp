@@ -33,9 +33,9 @@
 static SDL_Window *window = nullptr;
 static SDL_GLContext glContext = nullptr;
 
-static Viewport vpTopDown = Viewport(ImVec2(0, 0), ImVec2(2, 1), Viewport::ViewportType::TOP_DOWN_XZ);
-static Viewport vpFront = Viewport(ImVec2(0, 1), ImVec2(1, 1), Viewport::ViewportType::FRONT_XY);
-static Viewport vpSide = Viewport(ImVec2(1, 1), ImVec2(1, 1), Viewport::ViewportType::SIDE_YZ);
+static Viewport vpTopDown = Viewport(Viewport::ViewportType::TOP_DOWN_XZ);
+static Viewport vpFront = Viewport(Viewport::ViewportType::FRONT_XY);
+static Viewport vpSide = Viewport(Viewport::ViewportType::SIDE_YZ);
 
 static bool ToolbarToolButton(const char *id,
                               const char *tooltip,

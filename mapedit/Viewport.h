@@ -20,7 +20,7 @@ class Viewport
         };
 
         Viewport() = delete;
-        Viewport(ImVec2 gridPos, ImVec2 gridSize, ViewportType type);
+        Viewport(ViewportType type);
 
         ~Viewport();
 
