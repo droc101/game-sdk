@@ -306,7 +306,12 @@ static Param *GetSelection(const std::filesystem::path &path)
         {
             if (param->GetType() == Param::ParamType::PARAM_TYPE_ARRAY)
             {
+#ifdef WIN32
+                const std::string componentString = component.string(); // STOP BEING WIDE
+                const size_t index = strtoull(componentString.c_str(), nullptr, 10);
+#else
                 const size_t index = strtoull(component.c_str(), nullptr, 10);
+#endif
                 param = param->ArrayElementPointer(index);
             } else if (param->GetType() == Param::ParamType::PARAM_TYPE_KV_LIST)
             {
@@ -384,11 +389,11 @@ static void RenderSidebar()
                 } else if (parent->GetType() == Param::ParamType::PARAM_TYPE_KV_LIST)
                 {
                     KvList *list = parent->GetPointer<KvList>();
-                    list->erase(path.filename());
+                    list->erase(path.filename().string());
                 }
             } else
             {
-                dataAsset.data.erase(path.filename());
+                dataAsset.data.erase(path.filename().string());
             }
         }
     }
