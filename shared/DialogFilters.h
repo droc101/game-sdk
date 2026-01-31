@@ -20,7 +20,7 @@ class DialogFilters
         static constexpr std::array<SDL_DialogFileFilter, 1> gmapFilters = {
             SDL_DialogFileFilter{"Compiled GAME map (*.gmap)", "gmap"},
         };
-        static constexpr std::array<SDL_DialogFileFilter, 1> jsonFilters = {
+        static constexpr std::array<SDL_DialogFileFilter, 1> mapJsonFilters = {
             SDL_DialogFileFilter{"GAME map source (*.json)", "json"},
         };
 
@@ -77,5 +77,13 @@ class DialogFilters
         // cfgedit
         static constexpr std::array<SDL_DialogFileFilter, 1> gameFilters = {
             SDL_DialogFileFilter{"GAME configuration (*.game)", "game"},
+        };
+
+        // kvledit
+        static constexpr std::array<SDL_DialogFileFilter, 1> gkvlFilters = {
+            SDL_DialogFileFilter{"KvList Asset (*.gkvl)", "gkvl"},
+        };
+        static constexpr std::array<SDL_DialogFileFilter, 1> kvlJsonFilters = {
+            SDL_DialogFileFilter{"KvList source (*.json)", "json"},
         };
 };

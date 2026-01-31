@@ -41,11 +41,7 @@ Actor::Actor(nlohmann::ordered_json j)
     {
         connections.emplace_back(conn);
     }
-    nlohmann::ordered_json jParams = j.at("params");
-    for (const auto &[key, value]: jParams.items())
-    {
-        params[key] = Param(value);
-    }
+    params = Param::KvListFromJson(j["params"]);
 }
 
 
@@ -136,11 +132,7 @@ nlohmann::ordered_json Actor::GenerateJson() const
     {
         j["connections"].push_back(connection.GenerateJson());
     }
-    j["params"] = nlohmann::ordered_json::object();
-    for (const std::pair<const std::string, Param> &pair: params)
-    {
-        j["params"][pair.first] = pair.second.GetJson();
-    }
+    j["params"] = Param::GenerateKvListJson(params);
     return j;
 }
 
@@ -157,10 +149,5 @@ void Actor::Write(DataWriter &writer) const
     {
         connection.Write(writer);
     }
-    writer.Write<size_t>(params.size());
-    for (const std::pair<const std::string, Param> &kv: params)
-    {
-        writer.WriteString(kv.first);
-        kv.second.Write(writer);
-    }
+    Param::WriteKvList(writer, params);
 }

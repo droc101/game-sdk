@@ -19,7 +19,7 @@ class Actor
         explicit Actor(nlohmann::ordered_json j);
 
         std::string className;
-        std::unordered_map<std::string, Param> params{};
+        KvList params{};
         std::vector<IOConnection> connections{};
         std::array<float, 3> position{};
         std::array<float, 3> rotation{};

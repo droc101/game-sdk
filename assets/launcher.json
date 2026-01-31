@@ -36,6 +36,9 @@
       "Sound Editor": {
         "binary": "$SDKDIR/sndedit"
       },
+      "Key-Value List Editor": {
+        "binary": "$SDKDIR/kvledit"
+      },
       "GAME Config Editor": {
         "binary": "$SDKDIR/cfgedit"
       },

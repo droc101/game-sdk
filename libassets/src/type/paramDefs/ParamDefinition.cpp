@@ -68,7 +68,7 @@ ParamDefinition *ParamDefinition::Create(const nlohmann::json &json, Error::Erro
         {
             StringParamDefinition *stringDef = new StringParamDefinition();
             stringDef->defaultValue = json.value("default", "");
-            const std::string hint = json.value("hint", "none");
+            const std::string hint = json.value("string_hint", "none");
             if (hint == "texture")
             {
                 stringDef->hintType = StringParamDefinition::StringParamHint::TEXTURE;

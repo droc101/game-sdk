@@ -10,14 +10,23 @@
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <string>
+#include <unordered_map>
 #include <variant>
+#include <vector>
+
+class Param;
+
+using ParamVector = std::vector<Param>;
+using KvList = std::unordered_map<std::string, Param>;
 
 template<typename T> concept ParamTypeTemplate = std::same_as<T, uint8_t> ||
                                                  std::same_as<T, int32_t> ||
                                                  std::same_as<T, float> ||
                                                  std::same_as<T, bool> ||
                                                  std::same_as<T, std::string> ||
-                                                 std::same_as<T, Color>;
+                                                 std::same_as<T, Color> ||
+                                                 std::same_as<T, KvList> ||
+                                                 std::same_as<T, ParamVector>;
 
 class Param
 {
@@ -30,7 +39,21 @@ class Param
             PARAM_TYPE_BOOL,
             PARAM_TYPE_STRING,
             PARAM_TYPE_NONE,
-            PARAM_TYPE_COLOR
+            PARAM_TYPE_COLOR,
+            PARAM_TYPE_KV_LIST,
+            PARAM_TYPE_ARRAY
+        };
+
+        static inline const std::unordered_map<ParamType, std::string> paramTypeNames = {
+            {ParamType::PARAM_TYPE_BYTE, "byte"},
+            {ParamType::PARAM_TYPE_INTEGER, "int"},
+            {ParamType::PARAM_TYPE_FLOAT, "float"},
+            {ParamType::PARAM_TYPE_BOOL, "bool"},
+            {ParamType::PARAM_TYPE_STRING, "string"},
+            {ParamType::PARAM_TYPE_NONE, "none"},
+            {ParamType::PARAM_TYPE_COLOR, "Color"},
+            {ParamType::PARAM_TYPE_ARRAY, "Array"},
+            {ParamType::PARAM_TYPE_KV_LIST, "KvList"}
         };
 
         Param();
@@ -54,6 +77,8 @@ class Param
 
         [[nodiscard]] nlohmann::ordered_json GetJson() const;
 
+        [[nodiscard]] std::string GetTypeName() const;
+
         template<ParamTypeTemplate T> [[nodiscard]] T Get(T defaultValue) const
         {
             if ((std::same_as<T, uint8_t> && type != ParamType::PARAM_TYPE_BYTE) ||
@@ -61,11 +86,45 @@ class Param
                 (std::same_as<T, float> && type != ParamType::PARAM_TYPE_FLOAT) ||
                 (std::same_as<T, bool> && type != ParamType::PARAM_TYPE_BOOL) ||
                 (std::same_as<T, std::string> && type != ParamType::PARAM_TYPE_STRING) ||
-                (std::same_as<T, Color> && type != ParamType::PARAM_TYPE_COLOR))
+                (std::same_as<T, Color> && type != ParamType::PARAM_TYPE_COLOR) ||
+                (std::same_as<T, KvList> && type != ParamType::PARAM_TYPE_KV_LIST) ||
+                (std::same_as<T, ParamVector> && type != ParamType::PARAM_TYPE_ARRAY))
             {
                 return defaultValue;
             }
             return std::get<T>(value);
+        }
+
+        template<ParamTypeTemplate T> [[nodiscard]] T &GetRef(T defaultValue)
+        {
+            if ((std::same_as<T, uint8_t> && type != ParamType::PARAM_TYPE_BYTE) ||
+                (std::same_as<T, int32_t> && type != ParamType::PARAM_TYPE_INTEGER) ||
+                (std::same_as<T, float> && type != ParamType::PARAM_TYPE_FLOAT) ||
+                (std::same_as<T, bool> && type != ParamType::PARAM_TYPE_BOOL) ||
+                (std::same_as<T, std::string> && type != ParamType::PARAM_TYPE_STRING) ||
+                (std::same_as<T, Color> && type != ParamType::PARAM_TYPE_COLOR) ||
+                (std::same_as<T, KvList> && type != ParamType::PARAM_TYPE_KV_LIST) ||
+                (std::same_as<T, ParamVector> && type != ParamType::PARAM_TYPE_ARRAY))
+            {
+                return defaultValue;
+            }
+            return std::get<T>(value);
+        }
+
+        template<ParamTypeTemplate T> [[nodiscard]] T *GetPointer()
+        {
+            if ((std::same_as<T, uint8_t> && type != ParamType::PARAM_TYPE_BYTE) ||
+                (std::same_as<T, int32_t> && type != ParamType::PARAM_TYPE_INTEGER) ||
+                (std::same_as<T, float> && type != ParamType::PARAM_TYPE_FLOAT) ||
+                (std::same_as<T, bool> && type != ParamType::PARAM_TYPE_BOOL) ||
+                (std::same_as<T, std::string> && type != ParamType::PARAM_TYPE_STRING) ||
+                (std::same_as<T, Color> && type != ParamType::PARAM_TYPE_COLOR) ||
+                (std::same_as<T, KvList> && type != ParamType::PARAM_TYPE_KV_LIST) ||
+                (std::same_as<T, ParamVector> && type != ParamType::PARAM_TYPE_ARRAY))
+            {
+                return nullptr;
+            }
+            return &std::get<T>(value);
         }
 
         template<ParamTypeTemplate T> void Set(T newValue)
@@ -94,20 +153,29 @@ class Param
             {
                 value = newValue;
                 type = ParamType::PARAM_TYPE_COLOR;
+            } else if (std::same_as<T, KvList>)
+            {
+                value = newValue;
+                type = ParamType::PARAM_TYPE_KV_LIST;
+            } else if (std::same_as<T, ParamVector>)
+            {
+                value = newValue;
+                type = ParamType::PARAM_TYPE_ARRAY;
             }
         }
 
-    private:
-        union ParamValue
-        {
-                uint8_t byteValue;
-                int32_t intValue;
-                float floatValue;
-                bool boolValue;
-                std::string stringValue;
-                Color colorValue;
-        };
+        static void WriteKvList(DataWriter &writer, const KvList &list);
 
+        static KvList ReadKvList(DataReader &reader);
+
+        static nlohmann::ordered_json GenerateKvListJson(const KvList &list);
+
+        static KvList KvListFromJson(const nlohmann::ordered_json &json);
+
+        Param *ArrayElementPointer(const size_t index);
+        Param *KvListElementPointer(const std::string &key);
+
+    private:
         ParamType type = ParamType::PARAM_TYPE_NONE;
-        std::variant<uint8_t, int32_t, float, bool, std::string, Color> value;
+        std::variant<uint8_t, int32_t, float, bool, std::string, Color, KvList, ParamVector> value;
 };

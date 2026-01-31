@@ -414,7 +414,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         SDL_ShowOpenFileDialog(openJsonCallback,
                                nullptr,
                                sdlWindow,
-                               DialogFilters::jsonFilters.data(),
+                               DialogFilters::mapJsonFilters.data(),
                                1,
                                nullptr,
                                false);
@@ -423,7 +423,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     }
     if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveJsonCallback, nullptr, sdlWindow, DialogFilters::jsonFilters.data(), 1, nullptr);
+        SDL_ShowSaveFileDialog(saveJsonCallback, nullptr, sdlWindow, DialogFilters::mapJsonFilters.data(), 1, nullptr);
     }
     if (compilePressed)
     {
