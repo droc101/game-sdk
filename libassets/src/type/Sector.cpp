@@ -116,7 +116,7 @@ std::array<float, 2> Sector::SegmentNormal(const int segmentIndex) const
 
     std::array<float, 2> nrm = ccw ? right : left;
 
-    const float len = std::sqrt(nrm.at(0) * nrm.at(0) + nrm.at(1) * nrm.at(1)());
+    const float len = std::sqrt(nrm.at(0) * nrm.at(0) + nrm.at(1) * nrm.at(1));
     if (len > 1e-12f)
     {
         nrm.at(0) /= len;
