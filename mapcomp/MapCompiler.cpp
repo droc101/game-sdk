@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <glm/detail/func_geometric.inl>
 #include <glm/vec2.hpp>
+#include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Asset.h>
@@ -21,9 +22,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
 #include "LevelMeshBuilder.h"
-#include "libassets/asset/LevelMaterialAsset.h"
 #include "SectorCollisionBuilder.h"
 
 MapCompiler::MapCompiler(const std::string &assetsDirectory)
@@ -74,15 +73,14 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     printf("Found %zu sectors\n", map.sectors.size());
     printf("Found %zu actors\n", map.actors.size());
 
-    // TODO sector.IsValid seems to be broken :(
-    // for (const Sector &sector: map.sectors)
-    // {
-    //     if (!sector.IsValid())
-    //     {
-    //         printf("Compile Error: Invalid Sector\n");
-    //         return Error::ErrorCode::INCORRECT_FORMAT;
-    //     }
-    // }
+    for (const Sector &sector: map.sectors)
+    {
+        if (!sector.IsValid())
+        {
+            printf("Compile Error: Invalid Sector\n");
+            return Error::ErrorCode::INCORRECT_FORMAT;
+        }
+    }
 
     DataWriter writer = DataWriter();
 
@@ -116,7 +114,8 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
         }
         if (!insideSector)
         {
-            printf("Compile Warning: Found an actor that is not inside any sector.\n");
+            printf("Compile Warning: Found an actor of type \"%s\" that is not inside any sector.\n",
+                   actor.className.c_str());
         }
     }
 
@@ -161,7 +160,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
                         (wallStartV == otherWallEndV && wallEndV == otherWallStartV))
                     {
                         // MATCH FOUND!!!
-                        printf("Found adjacent walls %zu,%zu and %zu,%zu\n", sectorIndex, i, otherSectorIndex, j);
+                        // printf("Found adjacent walls %zu,%zu and %zu,%zu\n", sectorIndex, i, otherSectorIndex, j);
                         foundAdjWall = true;
                         adjFloor = otherSector.floorHeight;
                         adjCeil = otherSector.ceilingHeight;

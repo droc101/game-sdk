@@ -4,7 +4,9 @@
 
 #include <algorithm>
 #include <array>
+#include <cfloat>
 #include <cstddef>
+#include <cstdlib>
 #include <libassets/type/Sector.h>
 #include <nlohmann/json.hpp>
 #include <vector>
@@ -28,103 +30,6 @@ Sector::Sector(nlohmann::ordered_json j)
     }
 }
 
-
-bool Sector::IsValid() const
-{
-    if (points.size() < 3)
-    {
-        return false;
-    }
-
-    std::vector<std::array<float, 2>> points_copy = points;
-    const std::vector<std::array<float, 2>>::iterator it = std::ranges::unique(points_copy).begin();
-    if (it != points_copy.end())
-    {
-        return false;
-    }
-
-    for (size_t i = 0; i < points.size(); i++)
-    {
-        const std::array<float, 2> &edge1_start = points[i];
-        const std::array<float, 2> &edge1_end = points[(i + 1) % points.size()];
-        for (size_t j = i + 1; j < points.size(); j++)
-        {
-            const std::array<float, 2> &edge2_start = points[j];
-            const std::array<float, 2> &edge2_end = points[(j + 1) % points.size()];
-
-            if (j == i || (j + 1) % points.size() == i || (i + 1) % points.size() == j)
-            {
-                continue;
-            }
-
-            if (CheckIntersection(edge1_start, edge1_end, edge2_start, edge2_end))
-            {
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
-
-Sector::SegmentOrientation Sector::GetOrientation(const std::array<float, 2> &pointA,
-                                                  const std::array<float, 2> &pointB,
-                                                  const std::array<float, 2> &pointC)
-{
-    const float cross = ((pointB[1] - pointA[1]) * (pointC[0] - pointB[0]) -
-                         (pointB[0] - pointA[0]) * (pointC[1] - pointB[1]));
-    if (cross == 0)
-    {
-        return SegmentOrientation::COLINEAR;
-    }
-    return cross > 0 ? SegmentOrientation::CLOCKWISE : SegmentOrientation::COUNTERCLOCKWISE;
-}
-
-bool Sector::OnSegment(const std::array<float, 2> &segment_start,
-                       const std::array<float, 2> &point,
-                       const std::array<float, 2> &segment_end)
-{
-    const bool xBoundsCheckA = std::min(segment_start[0], segment_end[0]) <= point[0];
-    const bool xBoundsCheckB = point[0] <= std::max(segment_start[0], segment_end[0]);
-    const bool yBoundsCheckA = std::min(segment_start[1], segment_end[1]) <= point[1];
-    const bool yBoundsCheckB = point[0] <= std::max(segment_start[1], segment_end[1]);
-    return xBoundsCheckA && xBoundsCheckB && yBoundsCheckA && yBoundsCheckB;
-}
-
-bool Sector::CheckIntersection(const std::array<float, 2> &segmentAStart,
-                               const std::array<float, 2> &segmentAEnd,
-                               const std::array<float, 2> &segmentBStart,
-                               const std::array<float, 2> &segmentBEnd)
-{
-    const SegmentOrientation orientationA = GetOrientation(segmentAStart, segmentAEnd, segmentBStart);
-    const SegmentOrientation orientationB = GetOrientation(segmentAStart, segmentAEnd, segmentBEnd);
-    const SegmentOrientation orientationC = GetOrientation(segmentBStart, segmentBEnd, segmentAStart);
-    const SegmentOrientation orientationD = GetOrientation(segmentBStart, segmentBEnd, segmentAEnd);
-
-    if (orientationA != orientationB && orientationC != orientationD)
-    {
-        return true;
-    }
-
-    if (orientationA == SegmentOrientation::COLINEAR && OnSegment(segmentAStart, segmentBStart, segmentAEnd))
-    {
-        return true;
-    }
-    if (orientationB == SegmentOrientation::COLINEAR && OnSegment(segmentAStart, segmentBEnd, segmentAEnd))
-    {
-        return true;
-    }
-    if (orientationC == SegmentOrientation::COLINEAR && OnSegment(segmentBStart, segmentAStart, segmentBEnd))
-    {
-        return true;
-    }
-    if (orientationD == SegmentOrientation::COLINEAR && OnSegment(segmentBStart, segmentBEnd, segmentAEnd))
-    {
-        return true;
-    }
-    return false;
-}
-
 bool Sector::ContainsPoint(const std::array<float, 2> point) const
 {
     bool inside = false;
@@ -132,11 +37,12 @@ bool Sector::ContainsPoint(const std::array<float, 2> point) const
     for (size_t i = 0; i < n; i++)
     {
         const size_t j = (i + n - 1) % n;
-        const std::array<float, 2> &pi = points[i];
-        const std::array<float, 2> &pj = points[j];
+        const std::array<float, 2> &pi = points.at(i);
+        const std::array<float, 2> &pj = points.at(j);
 
-        const bool intersect = ((pi[1] > point[1]) != (pj[1] > point[1])) &&
-                               (point[0] < (pj[0] - pi[0]) * (point[1] - pi[1]) / (pj[1] - pi[1]) + pi[0]);
+        const bool intersect = ((pi.at(1) > point.at(1)) != (pj.at(1) > point.at(1))) &&
+                               (point.at(0) <
+                                (pj.at(0) - pi.at(0)) * (point.at(1) - pi.at(1)) / (pj.at(1) - pi.at(1)) + pi.at(0));
 
         if (intersect)
         {
@@ -173,11 +79,11 @@ nlohmann::ordered_json Sector::GenerateJson() const
 double Sector::CalculateArea() const
 {
     double area = 0;
-    const int numPoints = points.size();
-    for (int i = 0; i < numPoints; i++)
+    const size_t numPoints = points.size();
+    for (size_t i = 0; i < numPoints; i++)
     {
-        int j = (i + 1) % numPoints;
-        area += points[i][0] * points[j][1] - points[j][0] * points[i][1];
+        const size_t j = (i + 1) % numPoints;
+        area += points.at(i).at(0) * points.at(j).at(1) - points.at(j).at(0) * points.at(i).at(1);
     }
     return area * 0.5;
 }
@@ -185,36 +91,140 @@ double Sector::CalculateArea() const
 std::array<float, 3> Sector::GetCenter() const
 {
     std::array<float, 3> center{};
-    center[1] = ceilingHeight + floorHeight / 2.0f;
+    center.at(1) = ceilingHeight + floorHeight / 2.0f;
     for (const std::array<float, 2> &point: points)
     {
-        center[0] += point[0];
-        center[2] += point[1];
+        center.at(0) += point.at(0);
+        center.at(2) += point.at(1);
     }
-    center[0] /= static_cast<float>(points.size());
-    center[2] /= static_cast<float>(points.size());
+    center.at(0) /= static_cast<float>(points.size());
+    center.at(2) /= static_cast<float>(points.size());
     return center;
 }
 
 std::array<float, 2> Sector::SegmentNormal(const int segmentIndex) const
 {
-    const std::array<float, 2> p0 = points[segmentIndex];
-    const std::array<float, 2> p1 = points[(segmentIndex + 1) % points.size()];
+    const std::array<float, 2> p0 = points.at(segmentIndex);
+    const std::array<float, 2> p1 = points.at((segmentIndex + 1) % points.size());
 
-    const std::array<float, 2> edgeDir = {p1[0] - p0[0], p1[1] - p0[1]};
+    const std::array<float, 2> edgeDir = {p1.at(0) - p0.at(0), p1.at(1) - p0.at(1)};
 
-    const std::array<float, 2> left = {-edgeDir[1], edgeDir[0]};
-    const std::array<float, 2> right = {edgeDir[1], -edgeDir[0]};
+    const std::array<float, 2> left = {-edgeDir.at(1), edgeDir.at(0)};
+    const std::array<float, 2> right = {edgeDir.at(1), -edgeDir.at(0)};
 
     const bool ccw = CalculateArea() > 0;
 
     std::array<float, 2> nrm = ccw ? right : left;
 
-    const float len = std::sqrt(nrm[0] * nrm[0] + nrm[1] * nrm[1]);
+    const float len = std::sqrt(nrm.at(0) * nrm.at(0) + nrm.at(1) * nrm.at(1)());
     if (len > 1e-12f)
     {
-        nrm[0] /= len;
-        nrm[1] /= len;
+        nrm.at(0) /= len;
+        nrm.at(1) /= len;
     }
     return nrm;
+}
+
+Sector::SegmentOrientation Sector::GetOrientation(const std::array<float, 2> &pointA,
+                                                  const std::array<float, 2> &pointB,
+                                                  const std::array<float, 2> &pointC)
+{
+    const float cross = ((pointB.at(1) - pointA.at(1)) * (pointC.at(0) - pointB.at(0)) -
+                         (pointB.at(0) - pointA.at(0)) * (pointC.at(1) - pointB.at(1)));
+    if (std::abs(cross) <= FLT_EPSILON)
+    {
+        return SegmentOrientation::COLINEAR;
+    }
+    return cross > 0 ? SegmentOrientation::CLOCKWISE : SegmentOrientation::COUNTERCLOCKWISE;
+}
+
+bool Sector::PointsEqual(const std::array<float, 2> &a, const std::array<float, 2> &b)
+{
+    return std::abs(a.at(0) - b.at(0)) <= FLT_EPSILON && std::abs(a.at(1) - b.at(1)) <= FLT_EPSILON;
+}
+
+bool Sector::PointOnSegment(const std::array<float, 2> &a, const std::array<float, 2> &b, const std::array<float, 2> &c)
+{
+    return c.at(0) <= std::max(a.at(0), b.at(0)) + FLT_EPSILON &&
+           c.at(0) >= std::min(a.at(0), b.at(0)) - FLT_EPSILON &&
+           c.at(1) <= std::max(a.at(1), b.at(1)) + FLT_EPSILON &&
+           c.at(1) >= std::min(a.at(1), b.at(1)) - FLT_EPSILON;
+}
+
+bool Sector::CheckIntersection(const std::array<float, 2> &segmentAStart,
+                               const std::array<float, 2> &segmentAEnd,
+                               const std::array<float, 2> &segmentBStart,
+                               const std::array<float, 2> &segmentBEnd)
+{
+    if (PointsEqual(segmentAStart, segmentBStart) ||
+        PointsEqual(segmentAStart, segmentBEnd) ||
+        PointsEqual(segmentAEnd, segmentBStart) ||
+        PointsEqual(segmentAEnd, segmentBEnd))
+    {
+        return false;
+    }
+
+
+    const SegmentOrientation orientationABC = GetOrientation(segmentAStart, segmentAEnd, segmentBStart);
+    const SegmentOrientation orientationABD = GetOrientation(segmentAStart, segmentAEnd, segmentBEnd);
+    const SegmentOrientation orientationCDA = GetOrientation(segmentBStart, segmentBEnd, segmentAStart);
+    const SegmentOrientation orientationCDB = GetOrientation(segmentBStart, segmentBEnd, segmentAEnd);
+
+    if (orientationABC != orientationABD && orientationCDA != orientationCDB)
+    {
+        return true;
+    }
+
+    if (orientationABC == SegmentOrientation::COLINEAR && PointOnSegment(segmentAStart, segmentAEnd, segmentBStart))
+    {
+        return true;
+    }
+    if (orientationABD == SegmentOrientation::COLINEAR && PointOnSegment(segmentAStart, segmentAEnd, segmentBEnd))
+    {
+        return true;
+    }
+    if (orientationCDA == SegmentOrientation::COLINEAR && PointOnSegment(segmentBStart, segmentBEnd, segmentAStart))
+    {
+        return true;
+    }
+    if (orientationCDB == SegmentOrientation::COLINEAR && PointOnSegment(segmentBStart, segmentBEnd, segmentAEnd))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool Sector::IsValid() const
+{
+    const size_t n = points.size();
+    for (size_t i = 0; i < n; i++)
+    {
+        const size_t iNext = (i + n - 1) % n;
+        const std::array<float, 2> &aStart = points.at(i);
+        const std::array<float, 2> &aEnd = points.at(iNext);
+
+        for (size_t j = 0; j < n; j++)
+        {
+            if (i == j)
+            {
+                continue;
+            }
+            const size_t jNext = (j + n - 1) % n;
+            const std::array<float, 2> &bStart = points.at(j);
+            const std::array<float, 2> &bEnd = points.at(jNext);
+
+            if (PointsEqual(aStart, bStart) && PointsEqual(aEnd, bEnd))
+            {
+                continue; // exact overlaps allowed
+            }
+
+            if (CheckIntersection(aStart, aEnd, bStart, bEnd))
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }

@@ -25,7 +25,6 @@ class Sector
         WallMaterial ceilingMaterial{};
         Color lightColor = Color(-1);
 
-        /// Expensive!
         [[nodiscard]] bool IsValid() const;
 
         [[nodiscard]] bool ContainsPoint(std::array<float, 2> point) const;
@@ -47,15 +46,15 @@ class Sector
         };
 
         [[nodiscard]] static SegmentOrientation GetOrientation(const std::array<float, 2> &pointA,
-                                                 const std::array<float, 2> &pointB,
-                                                 const std::array<float, 2> &pointC);
+                                                               const std::array<float, 2> &pointB,
+                                                               const std::array<float, 2> &pointC);
 
-        [[nodiscard]] static bool OnSegment(const std::array<float, 2> &segment_start,
-                              const std::array<float, 2> &point,
-                              const std::array<float, 2> &segment_end);
+        [[nodiscard]] static bool PointsEqual(const std::array<float, 2> &a, const std::array<float, 2> &b);
+
+        [[nodiscard]] static bool PointOnSegment(const std::array<float, 2> &a, const std::array<float, 2> &b, const std::array<float, 2> &c);
 
         [[nodiscard]] static bool CheckIntersection(const std::array<float, 2> &segmentAStart,
-                                      const std::array<float, 2> &segmentAEnd,
-                                      const std::array<float, 2> &segmentBStart,
-                                      const std::array<float, 2> &segmentBEnd);
+                                                    const std::array<float, 2> &segmentAEnd,
+                                                    const std::array<float, 2> &segmentBStart,
+                                                    const std::array<float, 2> &segmentBEnd);
 };
