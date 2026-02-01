@@ -309,7 +309,9 @@ int main(int argc, char **argv)
         openGshd(openPath);
     } else
     {
-        const std::string &importPath = DesktopInterface::GetFileArgument(argc, argv, {".glsl", ".frag", ".vert", ".comp"});
+        const std::string &importPath = DesktopInterface::GetFileArgument(argc,
+                                                                          argv,
+                                                                          {".glsl", ".frag", ".vert", ".comp"});
         if (!importPath.empty())
         {
             importGlsl(importPath);

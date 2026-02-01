@@ -132,4 +132,3 @@ Error::ErrorCode SDLRendererImGuiTextureAssetCache::RegisterPng(const std::strin
     textureBuffers.insert({name, reinterpret_cast<ImTextureID>(sdlTex)});
     return Error::ErrorCode::OK;
 }
-

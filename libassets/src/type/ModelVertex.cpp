@@ -12,17 +12,10 @@
 
 ModelVertex::ModelVertex(DataReader &reader)
 {
-    for (float &pos: position)
-    {
-        pos = reader.Read<float>();
-    }
-    uv.at(0) = reader.Read<float>();
-    uv.at(1) = reader.Read<float>();
+    position = reader.ReadVec3();
+    uv = reader.ReadVec2();
     color = Color(reader, true);
-    for (float &norm: normal)
-    {
-        norm = reader.Read<float>();
-    }
+    normal = reader.ReadVec3();
 }
 
 ModelVertex::ModelVertex(const aiMesh *mesh, const uint32_t vertexIndex)
@@ -47,9 +40,8 @@ bool ModelVertex::operator==(const ModelVertex &other) const
 
 void ModelVertex::Write(DataWriter &writer) const
 {
-    writer.WriteBuffer<float, 3>(position);
-    writer.WriteBuffer<float, 2>(uv);
+    writer.WriteVec3(position);
+    writer.WriteVec2(uv);
     color.WriteFloats(writer);
-    writer.WriteBuffer<float, 3>(normal);
+    writer.WriteVec3(normal);
 }
-

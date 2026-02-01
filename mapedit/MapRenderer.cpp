@@ -319,8 +319,6 @@ void MapRenderer::RenderUnitVector(const glm::vec3 origin,
 
 void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix)
 {
-    const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
-    const glm::vec3 actorRotation = glm::vec3(a.rotation[0], a.rotation[1], a.rotation[2]);
     const ActorDefinition &definition = SharedMgr::actorDefinitions.at(a.className);
     Color c = definition.renderDefinition.color;
     if (!definition.renderDefinition.colorSourceParam.empty() &&
@@ -338,13 +336,13 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix)
 
     if (texture.empty())
     {
-        RenderBillboardPoint(pos, 10, c, matrix);
+        RenderBillboardPoint(a.position, 10, c, matrix);
     } else
     {
-        RenderBillboardSprite(pos, 20, texture, c, matrix);
+        RenderBillboardSprite(a.position, 20, texture, c, matrix);
     }
 
-    RenderUnitVector(pos, actorRotation, c, matrix, 2, 1);
+    RenderUnitVector(a.position, a.rotation, c, matrix, 2, 1);
 
     if (!definition.renderDefinition.model.empty() || !definition.renderDefinition.modelSourceParam.empty())
     {
@@ -360,10 +358,10 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix)
             model = "error";
         }
         glm::mat4 worldMatrix = glm::identity<glm::mat4>();
-        worldMatrix = glm::translate(worldMatrix, pos);
-        worldMatrix = glm::rotate(worldMatrix, glm::radians(actorRotation.y), glm::vec3(0, 1, 0));
-        worldMatrix = glm::rotate(worldMatrix, glm::radians(actorRotation.x), glm::vec3(1, 0, 0));
-        worldMatrix = glm::rotate(worldMatrix, glm::radians(actorRotation.z), glm::vec3(0, 0, 1));
+        worldMatrix = glm::translate(worldMatrix, a.rotation);
+        worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.y), glm::vec3(0, 1, 0));
+        worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.x), glm::vec3(1, 0, 0));
+        worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.z), glm::vec3(0, 0, 1));
 
         RenderModel(modelBuffers.at(model), matrix, worldMatrix, c);
     }

@@ -7,6 +7,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <glm/vec2.hpp>
 #include <libassets/libassets.h>
 #include <libassets/util/Primitive.h>
 #include <string>
@@ -57,6 +58,10 @@ class DataWriter
         void WriteString(const std::string &str);
 
         [[nodiscard]] size_t GetBufferSize() const;
+
+        void WriteVec2(const glm::vec2 &vec);
+
+        void WriteVec3(const glm::vec3 &vec);
 
     private:
         std::vector<uint8_t> data{};

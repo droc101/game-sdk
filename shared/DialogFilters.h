@@ -45,13 +45,12 @@ class DialogFilters
         };
 
         // shdedit
-        static constexpr std::array<SDL_DialogFileFilter, 5> glslFilters = {
-            SDL_DialogFileFilter{"GLSL source files (*.glsl, *.vert, *.frag)", "glsl;vert;frag;comp"},
-            SDL_DialogFileFilter{"GLSL source (*.glsl)", "glsl"},
-            SDL_DialogFileFilter{"GLSL fragment (*.frag)", "frag"},
-            SDL_DialogFileFilter{"GLSL vertex (*.vert)", "vert"},
-            SDL_DialogFileFilter{"GLSL compute (*.comp)", "comp"}
-        };
+        static constexpr std::array<SDL_DialogFileFilter, 5> glslFilters =
+                {SDL_DialogFileFilter{"GLSL source files (*.glsl, *.vert, *.frag)", "glsl;vert;frag;comp"},
+                 SDL_DialogFileFilter{"GLSL source (*.glsl)", "glsl"},
+                 SDL_DialogFileFilter{"GLSL fragment (*.frag)", "frag"},
+                 SDL_DialogFileFilter{"GLSL vertex (*.vert)", "vert"},
+                 SDL_DialogFileFilter{"GLSL compute (*.comp)", "comp"}};
         static constexpr std::array<SDL_DialogFileFilter, 1> gshdFilters = {
             SDL_DialogFileFilter{"GAME shader (*.gshd)", "gshd"},
         };

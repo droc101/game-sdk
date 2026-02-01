@@ -187,10 +187,10 @@ void ModelAsset::GetVertexBuffer(const uint32_t lodIndex, DataWriter &writer)
     const ModelLod &lod = GetLod(lodIndex);
     for (const ModelVertex &vertex: lod.vertices)
     {
-        writer.WriteBuffer<float, 3>(vertex.position);
-        writer.WriteBuffer<float, 2>(vertex.uv);
+        writer.WriteVec3(vertex.position);
+        writer.WriteVec2(vertex.uv);
         vertex.color.WriteFloats(writer);
-        writer.WriteBuffer<float, 3>(vertex.normal);
+        writer.WriteVec3(vertex.normal);
     }
 }
 

@@ -3,6 +3,7 @@
 //
 
 #include "AddPolygonTool.h"
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <imgui.h>
@@ -113,8 +114,7 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                             s.lightColor = Color(1, 1, 1, 1);
                             for (const glm::vec2 &glmPoint: points)
                             {
-                                const std::array<float, 2> point = {glmPoint.x, glmPoint.y};
-                                s.points.push_back(point);
+                                s.points.push_back(glmPoint);
                                 s.wallMaterials.push_back(mat);
                             }
                             MapEditor::map.sectors.push_back(s);
@@ -140,19 +140,19 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
     {
         for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
         {
-            const std::array<float, 2> &start2 = sector.points[vertexIndex];
-            const std::array<float, 2> &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
-            const glm::vec3 startCeiling = glm::vec3(start2.at(0), sector.ceilingHeight, start2.at(1));
-            const glm::vec3 endCeiling = glm::vec3(end2.at(0), sector.ceilingHeight, end2.at(1));
-            const glm::vec3 startFloor = glm::vec3(start2.at(0), sector.floorHeight, start2.at(1));
-            const glm::vec3 endFloor = glm::vec3(end2.at(0), sector.floorHeight, end2.at(1));
+            const glm::vec2 &start2 = sector.points[vertexIndex];
+            const glm::vec2 &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
+            const glm::vec3 startCeiling = glm::vec3(start2.x, sector.ceilingHeight, start2.y);
+            const glm::vec3 endCeiling = glm::vec3(end2.x, sector.ceilingHeight, end2.y);
+            const glm::vec3 startFloor = glm::vec3(start2.x, sector.floorHeight, start2.y);
+            const glm::vec3 endFloor = glm::vec3(end2.x, sector.floorHeight, end2.y);
 
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
                 MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
-                                                    10,
-                                                    Color(1, 0.7, 0.7, 1),
-                                                    matrix);
+                                                  10,
+                                                  Color(1, 0.7, 0.7, 1),
+                                                  matrix);
             }
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {

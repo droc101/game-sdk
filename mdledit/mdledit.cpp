@@ -490,7 +490,9 @@ int main(int argc, char **argv)
         }
     } else
     {
-        const std::string &importPath = DesktopInterface::GetFileArgument(argc, argv, {".obj", ".fbx", ".gltf", ".dae"});
+        const std::string &importPath = DesktopInterface::GetFileArgument(argc,
+                                                                          argv,
+                                                                          {".obj", ".fbx", ".gltf", ".dae"});
         if (!importPath.empty())
         {
             SDL_Event event;

@@ -135,4 +135,3 @@ Error::ErrorCode OpenGLImGuiTextureAssetCache::RegisterPng(const std::string &pn
     textureBuffers.insert({name, glTex});
     return Error::ErrorCode::OK;
 }
-

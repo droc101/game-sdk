@@ -48,9 +48,9 @@ StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath)
             {
                 const uint32_t vertexIndex = face.mIndices[faceIndexIndex];
                 const aiVector3d vert = mesh->mVertices[vertexIndex];
-                const std::array<float, 3> point = {static_cast<float>(vert.x),
-                                                    static_cast<float>(vert.y),
-                                                    static_cast<float>(vert.z)};
+                const glm::vec3 point = {static_cast<float>(vert.x),
+                                         static_cast<float>(vert.y),
+                                         static_cast<float>(vert.z)};
                 vertices.push_back(point);
             }
         }
@@ -64,7 +64,7 @@ StaticCollisionMesh::StaticCollisionMesh(DataReader &reader)
     {
         for (int v = 0; v < 3; v++)
         {
-            const std::array<float, 3> vertex = {
+            const glm::vec3 vertex = {
                 reader.Read<float>(),
                 reader.Read<float>(),
                 reader.Read<float>(),
@@ -77,22 +77,20 @@ StaticCollisionMesh::StaticCollisionMesh(DataReader &reader)
 void StaticCollisionMesh::Write(DataWriter &writer) const
 {
     writer.Write<size_t>(vertices.size() / 3);
-    for (const std::array<float, 3> &vertex: vertices)
+    for (const glm::vec3 &vertex: vertices)
     {
-        writer.Write<float>(vertex.at(0));
-        writer.Write<float>(vertex.at(1));
-        writer.Write<float>(vertex.at(2));
+        writer.WriteVec3(vertex);
     }
 }
 
 std::vector<float> StaticCollisionMesh::GetVerticesForRender() const
 {
     std::vector<float> points{};
-    for (const std::array<float, 3> &vertex: vertices)
+    for (const glm::vec3 &vertex: vertices)
     {
-        points.push_back(vertex.at(0));
-        points.push_back(vertex.at(1));
-        points.push_back(vertex.at(2));
+        points.push_back(vertex.x);
+        points.push_back(vertex.y);
+        points.push_back(vertex.z);
     }
     return points;
 }

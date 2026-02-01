@@ -7,8 +7,8 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
-#include <vector>
 #include <libassets/type/WallMaterial.h>
+#include <vector>
 #include "../Viewport.h"
 #include "EditorTool.h"
 

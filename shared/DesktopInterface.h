@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include <cstdint>
 #include <SDL3/SDL_process.h>
 #include <SDL3/SDL_timer.h>
-#include <cstdint>
 #include <string>
 #include <vector>
 

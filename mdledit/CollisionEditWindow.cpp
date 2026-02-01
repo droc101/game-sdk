@@ -5,6 +5,7 @@
 #include "CollisionEditWindow.h"
 #include <cstddef>
 #include <format>
+#include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/ConvexHull.h>
 #include <SDL3/SDL_dialog.h>
@@ -32,8 +33,8 @@ void CollisionEditWindow::Render(SDL_Window *window)
         ImGui::SetNextWindowSize(ImVec2(300, -1));
         ImGui::Begin("Collision Editor", &visible, ImGuiWindowFlags_NoCollapse);
         ImGui::Text("Bounding Box");
-        ImGui::InputFloat3("Origin", model.GetBoundingBox().origin.data());
-        ImGui::InputFloat3("Extents", model.GetBoundingBox().extents.data());
+        ImGui::InputFloat3("Origin", glm::value_ptr(model.GetBoundingBox().origin));
+        ImGui::InputFloat3("Extents", glm::value_ptr(model.GetBoundingBox().extents));
         if (ImGui::Button("Autocalculate"))
         {
             model.GetBoundingBox() = BoundingBox(model.GetLod(0).vertices);
@@ -128,7 +129,9 @@ void CollisionEditWindow::RenderCHullUI(SDL_Window *window)
                                false);
     }
     constexpr float panelHeight = 250.0f;
-    ImGui::BeginChild("ScrollableRegion", ImVec2(0, panelHeight), ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Borders);
+    ImGui::BeginChild("ScrollableRegion",
+                      ImVec2(0, panelHeight),
+                      ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Borders);
     for (size_t hullIndex = 0; hullIndex < ModelRenderer::GetModel().GetNumHulls(); hullIndex++)
     {
         const std::string title = std::format("Shape {}", hullIndex);

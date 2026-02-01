@@ -44,17 +44,16 @@ class Param
             PARAM_TYPE_ARRAY
         };
 
-        static inline const std::unordered_map<ParamType, std::string> paramTypeNames = {
-            {ParamType::PARAM_TYPE_BYTE, "byte"},
-            {ParamType::PARAM_TYPE_INTEGER, "int"},
-            {ParamType::PARAM_TYPE_FLOAT, "float"},
-            {ParamType::PARAM_TYPE_BOOL, "bool"},
-            {ParamType::PARAM_TYPE_STRING, "string"},
-            {ParamType::PARAM_TYPE_NONE, "none"},
-            {ParamType::PARAM_TYPE_COLOR, "Color"},
-            {ParamType::PARAM_TYPE_ARRAY, "Array"},
-            {ParamType::PARAM_TYPE_KV_LIST, "KvList"}
-        };
+        static inline const std::unordered_map<ParamType, std::string> paramTypeNames =
+                {{ParamType::PARAM_TYPE_BYTE, "byte"},
+                 {ParamType::PARAM_TYPE_INTEGER, "int"},
+                 {ParamType::PARAM_TYPE_FLOAT, "float"},
+                 {ParamType::PARAM_TYPE_BOOL, "bool"},
+                 {ParamType::PARAM_TYPE_STRING, "string"},
+                 {ParamType::PARAM_TYPE_NONE, "none"},
+                 {ParamType::PARAM_TYPE_COLOR, "Color"},
+                 {ParamType::PARAM_TYPE_ARRAY, "Array"},
+                 {ParamType::PARAM_TYPE_KV_LIST, "KvList"}};
 
         Param();
         explicit Param(DataReader &reader);

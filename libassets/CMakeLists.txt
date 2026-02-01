@@ -39,6 +39,8 @@ if (Vulkan_INCLUDE_DIRS STREQUAL "Vulkan_INCLUDE_DIR-NOTFOUND")
     set(Vulkan_INCLUDE_DIRS ${VULKAN_HEADERS_SOURCE_DIR}/include)
 endif ()
 
+find_or_fetch_package(https://github.com/g-truc/glm.git 1.*.* glm)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 add_library(assets STATIC include/libassets/libassets.h
@@ -117,7 +119,7 @@ add_library(assets STATIC include/libassets/libassets.h
         include/libassets/asset/DataAsset.h
 )
 
-target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json)
+target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json glm::glm)
 
 target_include_directories(assets PUBLIC ${Vulkan_INCLUDE_DIRS} "include")
 target_include_directories(assets PRIVATE "${CMAKE_SOURCE_DIR}/lib/stb")

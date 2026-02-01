@@ -6,15 +6,18 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <glm/detail/func_geometric.inl>
 #include <glm/vec2.hpp>
-#include <libassets/asset/LevelMaterialAsset.h>
+#include <libassets/type/Color.h>
 #include <libassets/type/ModelVertex.h>
 #include <libassets/type/Sector.h>
+#include <libassets/type/WallMaterial.h>
+#include <libassets/util/DataWriter.h>
 #include <mapbox/earcut.hpp>
+#include <string>
 #include <utility>
 #include <vector>
-#include "libassets/type/Color.h"
 
 void LevelMeshBuilder::AddCeiling(const Sector &sector)
 {
@@ -37,10 +40,10 @@ void LevelMeshBuilder::AddWallWithGap(const Sector &sector, size_t wallIndex, fl
 
     const WallMaterial &mat = sector.wallMaterials[wallIndex];
 
-    const std::array<float, 2> &startPoint = sector.points.at(wallIndex);
-    const std::array<float, 2> &endPoint = sector.points.at((wallIndex + 1) % (sector.points.size()));
+    const glm::vec2 &startPoint = sector.points.at(wallIndex);
+    const glm::vec2 &endPoint = sector.points.at((wallIndex + 1) % (sector.points.size()));
 
-    const std::array<float, 2> normal = sector.SegmentNormal(wallIndex);
+    const glm::vec2 normal = sector.SegmentNormal(wallIndex);
     const bool ccw = sector.CalculateArea() > 0;
 
     if (adjFloor > sector.floorHeight)
@@ -60,10 +63,10 @@ void LevelMeshBuilder::AddWall(const Sector &sector, const size_t wallIndex)
 
     const WallMaterial &mat = sector.wallMaterials[wallIndex];
 
-    const std::array<float, 2> &startPoint = sector.points.at(wallIndex);
-    const std::array<float, 2> &endPoint = sector.points.at((wallIndex + 1) % (sector.points.size()));
+    const glm::vec2 &startPoint = sector.points.at(wallIndex);
+    const glm::vec2 &endPoint = sector.points.at((wallIndex + 1) % (sector.points.size()));
 
-    const std::array<float, 2> normal = sector.SegmentNormal(wallIndex);
+    const glm::vec2 normal = sector.SegmentNormal(wallIndex);
     const bool ccw = sector.CalculateArea() > 0;
 
     AddWallBase(startPoint,
@@ -82,20 +85,18 @@ float LevelMeshBuilder::CalculateSLength(const Sector &sector, const size_t wall
     float sLength = 0;
     for (size_t i = 0; i < wallIndex; i++)
     {
-        const std::array<float, 2> &startPoint = sector.points.at(i);
-        const std::array<float, 2> &endPoint = sector.points.at((i + 1) % (sector.points.size()));
-        const glm::vec2 startPointV = {startPoint[0], startPoint[1]};
-        const glm::vec2 endPointV = {endPoint[0], endPoint[1]};
-        sLength += glm::distance(startPointV, endPointV);
+        const glm::vec2 &startPoint = sector.points.at(i);
+        const glm::vec2 &endPoint = sector.points.at((i + 1) % (sector.points.size()));
+        sLength += glm::distance(startPoint, endPoint);
     }
     return sLength;
 }
 
 
-void LevelMeshBuilder::AddWallBase(const std::array<float, 2> &startPoint,
-                                   const std::array<float, 2> &endPoint,
+void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
+                                   const glm::vec2 &endPoint,
                                    const WallMaterial &wallMaterial,
-                                   const std::array<float, 2> wallNormalVector,
+                                   const glm::vec2 wallNormalVector,
                                    const float previousWallsLength,
                                    const float floorHeight,
                                    const float ceilingHeight,
@@ -113,37 +114,37 @@ void LevelMeshBuilder::AddWallBase(const std::array<float, 2> &startPoint,
         return;
     }
 
-    std::array<std::array<float, 3>, 4> wallPoints{};
-    wallPoints.at(0) = {startPoint[0], ceilingHeight, startPoint[1]}; // SC
-    wallPoints.at(1) = {endPoint[0], ceilingHeight, endPoint[1]}; // EC
+    std::array<glm::vec3, 4> wallPoints{};
+    wallPoints.at(0) = {startPoint.x, ceilingHeight, startPoint.y}; // SC
+    wallPoints.at(1) = {endPoint.x, ceilingHeight, endPoint.y}; // EC
 
-    wallPoints.at(2) = {startPoint[0], floorHeight, startPoint[1]}; // SF
-    wallPoints.at(3) = {endPoint[0], floorHeight, endPoint[1]}; // EF
+    wallPoints.at(2) = {startPoint.x, floorHeight, startPoint.y}; // SF
+    wallPoints.at(3) = {endPoint.x, floorHeight, endPoint.y}; // EF
 
-    const glm::vec2 startPointV = {startPoint[0], startPoint[1]};
-    const glm::vec2 endPointV = {endPoint[0], endPoint[1]};
+    const glm::vec2 startPointV = {startPoint.x, startPoint.y};
+    const glm::vec2 endPointV = {endPoint.x, endPoint.y};
     const float wallLength = glm::distance(startPointV, endPointV);
 
-    for (const std::array<float, 3> &point: wallPoints)
+    for (const glm::vec3 &point: wallPoints)
     {
         ModelVertex v{};
         v.color = lightColor;
-        v.normal[0] = -wallNormalVector[0];
-        v.normal[1] = 0;
-        v.normal[2] = -wallNormalVector[1];
+        v.normal.x = -wallNormalVector.x;
+        v.normal.y = 0;
+        v.normal.z = -wallNormalVector.y;
 
-        v.uv[0] = previousWallsLength;
-        if (point[0] == endPoint[0] && point[2] == endPoint[1])
+        v.uv.x = previousWallsLength;
+        if (point.x == endPoint.x && point.z == endPoint.y)
         {
-            v.uv[0] += wallLength;
+            v.uv.x += wallLength;
         }
-        v.uv[1] = -point[1];
+        v.uv.y = -point.y;
 
-        v.uv[0] += wallMaterial.uvOffset[0];
-        v.uv[1] += wallMaterial.uvOffset[1];
+        v.uv.x += wallMaterial.uvOffset.x;
+        v.uv.y += wallMaterial.uvOffset.y;
 
-        v.uv[0] *= wallMaterial.uvScale[0];
-        v.uv[1] *= wallMaterial.uvScale[1]; // TODO is this the correct way to offset+scale?
+        v.uv.x *= wallMaterial.uvScale.x;
+        v.uv.y *= wallMaterial.uvScale.y; // TODO is this the correct way to offset+scale?
 
         v.position = point;
         vertices.push_back(v);
@@ -171,31 +172,35 @@ void LevelMeshBuilder::AddWallBase(const std::array<float, 2> &startPoint,
 
 void LevelMeshBuilder::AddSectorBase(const Sector &sector, const bool isFloor)
 {
-    const std::vector<std::vector<std::array<float, 2>>> polygon{sector.points};
+    std::vector<std::vector<std::array<float, 2>>> polygon{{}};
+    for (const glm::vec2 &point: sector.points)
+    {
+        polygon.at(0).push_back({point.x, point.y});
+    }
     std::vector<uint32_t> idx = mapbox::earcut<uint32_t>(polygon);
 
     const WallMaterial &mat = isFloor ? sector.floorMaterial : sector.ceilingMaterial;
 
-    for (const std::array<float, 2> &point: sector.points)
+    for (const glm::vec2 &point: sector.points)
     {
         ModelVertex v{};
         v.color = sector.lightColor;
-        v.normal[0] = 0;
-        v.normal[2] = 0;
+        v.normal.x = 0;
+        v.normal.z = 0;
         if (isFloor)
         {
-            v.normal[1] = 1;
+            v.normal.y = 1;
         } else
         {
-            v.normal[1] = -1;
+            v.normal.y = -1;
         }
-        v.uv = {point.at(0), point.at(1)};
-        v.position = {point.at(0), isFloor ? sector.floorHeight : sector.ceilingHeight, point.at(1)};
-        v.uv[0] += mat.uvOffset[0];
-        v.uv[1] += mat.uvOffset[1];
+        v.uv = point;
+        v.position = {point.x, isFloor ? sector.floorHeight : sector.ceilingHeight, point.y};
+        v.uv.x += mat.uvOffset.x;
+        v.uv.y += mat.uvOffset.y;
 
-        v.uv[0] *= mat.uvScale[0];
-        v.uv[1] *= mat.uvScale[1]; // TODO is this the correct way to offset+scale?
+        v.uv.x *= mat.uvScale.x;
+        v.uv.y *= mat.uvScale.y; // TODO is this the correct way to offset+scale?
         vertices.push_back(v);
     }
 
@@ -230,4 +235,3 @@ bool LevelMeshBuilder::IsEmpty() const
 {
     return vertices.empty() || indices.size() < 3;
 }
-

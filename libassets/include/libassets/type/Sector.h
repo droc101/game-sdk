@@ -6,6 +6,8 @@
 
 #include <array>
 #include <cstdint>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 #include <libassets/type/Color.h>
 #include <libassets/type/WallMaterial.h>
 #include <nlohmann/json.hpp>
@@ -17,7 +19,7 @@ class Sector
         Sector() = default;
         explicit Sector(nlohmann::ordered_json j);
 
-        std::vector<std::array<float, 2>> points{};
+        std::vector<glm::vec2> points{};
         std::vector<WallMaterial> wallMaterials{};
         float floorHeight = -1.0;
         float ceilingHeight = 1.0;
@@ -27,15 +29,15 @@ class Sector
 
         [[nodiscard]] bool IsValid() const;
 
-        [[nodiscard]] bool ContainsPoint(std::array<float, 2> point) const;
+        [[nodiscard]] bool ContainsPoint(glm::vec2 point) const;
 
         [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 
-        [[nodiscard]] std::array<float, 2> SegmentNormal(int segmentIndex) const;
+        [[nodiscard]] glm::vec2 SegmentNormal(int segmentIndex) const;
 
         [[nodiscard]] double CalculateArea() const;
 
-        [[nodiscard]] std::array<float, 3> GetCenter() const;
+        [[nodiscard]] glm::vec3 GetCenter() const;
 
     private:
         enum class SegmentOrientation : uint8_t
@@ -45,16 +47,16 @@ class Sector
             COUNTERCLOCKWISE = 2
         };
 
-        [[nodiscard]] static SegmentOrientation GetOrientation(const std::array<float, 2> &pointA,
-                                                               const std::array<float, 2> &pointB,
-                                                               const std::array<float, 2> &pointC);
+        [[nodiscard]] static SegmentOrientation GetOrientation(const glm::vec2 &pointA,
+                                                               const glm::vec2 &pointB,
+                                                               const glm::vec2 &pointC);
 
-        [[nodiscard]] static bool PointsEqual(const std::array<float, 2> &a, const std::array<float, 2> &b);
+        [[nodiscard]] static bool PointsEqual(const glm::vec2 &a, const glm::vec2 &b);
 
-        [[nodiscard]] static bool PointOnSegment(const std::array<float, 2> &a, const std::array<float, 2> &b, const std::array<float, 2> &c);
+        [[nodiscard]] static bool PointOnSegment(const glm::vec2 &a, const glm::vec2 &b, const glm::vec2 &c);
 
-        [[nodiscard]] static bool CheckIntersection(const std::array<float, 2> &segmentAStart,
-                                                    const std::array<float, 2> &segmentAEnd,
-                                                    const std::array<float, 2> &segmentBStart,
-                                                    const std::array<float, 2> &segmentBEnd);
+        [[nodiscard]] static bool CheckIntersection(const glm::vec2 &segmentAStart,
+                                                    const glm::vec2 &segmentAEnd,
+                                                    const glm::vec2 &segmentBStart,
+                                                    const glm::vec2 &segmentBEnd);
 };

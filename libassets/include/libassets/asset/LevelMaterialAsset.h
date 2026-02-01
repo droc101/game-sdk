@@ -7,6 +7,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <glm/vec2.hpp>
 #include <libassets/type/Material.h>
 #include <libassets/util/Error.h>
 #include <string>
@@ -29,7 +30,7 @@ class LevelMaterialAsset
         static constexpr uint8_t LEVEL_MATERIAL_ASSET_VERSION = 1;
 
         std::string texture{};
-        std::array<float, 2> baseScale = {1, 1};
+        glm::vec2 baseScale = {1, 1};
         Material::MaterialShader shader = Material::MaterialShader::SHADER_SHADED;
         SoundClass soundClass = SoundClass::DEFAULT;
         bool compileInvisible = false; // skip generating visual geometry for faces with this material

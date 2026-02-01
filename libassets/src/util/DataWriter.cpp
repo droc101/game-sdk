@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <glm/vec3.hpp>
 #include <libassets/util/DataWriter.h>
 #include <string>
 #include <vector>
@@ -26,4 +27,17 @@ void DataWriter::WriteString(const std::string &str)
 size_t DataWriter::GetBufferSize() const
 {
     return data.size();
+}
+
+void DataWriter::WriteVec2(const glm::vec2 &vec)
+{
+    Write<float>(vec.x);
+    Write<float>(vec.y);
+}
+
+void DataWriter::WriteVec3(const glm::vec3 &vec)
+{
+    Write<float>(vec.x);
+    Write<float>(vec.y);
+    Write<float>(vec.z);
 }

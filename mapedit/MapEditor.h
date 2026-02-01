@@ -9,8 +9,8 @@
 #include <cstdint>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/WallMaterial.h>
-#include <string>
 #include <memory>
+#include <string>
 #include <variant>
 #include <vector>
 #include "libassets/type/Sector.h"

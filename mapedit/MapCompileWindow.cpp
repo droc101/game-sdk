@@ -94,11 +94,11 @@ void MapCompileWindow::Render(SDL_Window *window)
     if (ImGui::CollapsingHeader("Compiler Output"))
     {
         ImGui::InputTextMultiline("##output",
-                              &log,
-                              ImVec2(-1, 300),
-                              ImGuiInputTextFlags_ReadOnly |
-                                      ImGuiInputTextFlags_WordWrap |
-                                      ImGuiInputTextFlags_NoHorizontalScroll);
+                                  &log,
+                                  ImVec2(-1, 300),
+                                  ImGuiInputTextFlags_ReadOnly |
+                                          ImGuiInputTextFlags_WordWrap |
+                                          ImGuiInputTextFlags_NoHorizontalScroll);
     }
 
     ImGui::End();

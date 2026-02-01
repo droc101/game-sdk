@@ -23,16 +23,10 @@
 ConvexHull::ConvexHull(DataReader &reader)
 {
     const size_t numPoints = reader.Read<size_t>();
-    offset.at(0) = reader.Read<float>();
-    offset.at(1) = reader.Read<float>();
-    offset.at(2) = reader.Read<float>();
+    offset = reader.ReadVec3();
     for (size_t i = 0; i < numPoints; i++)
     {
-        std::array<float, 3> point{};
-        point.at(0) = reader.Read<float>();
-        point.at(1) = reader.Read<float>();
-        point.at(2) = reader.Read<float>();
-        points.push_back(point);
+        points.push_back(reader.ReadVec3());
     }
 }
 
@@ -60,10 +54,7 @@ ConvexHull::ConvexHull(const std::string &objPath)
         for (size_t v = 0; v < mesh->mNumVertices; v++)
         {
             const aiVector3d vert = mesh->mVertices[v];
-            const std::array<float, 3> point = {static_cast<float>(vert.x),
-                                                static_cast<float>(vert.y),
-                                                static_cast<float>(vert.z)};
-            points.push_back(point);
+            points.push_back({static_cast<float>(vert.x), static_cast<float>(vert.y), static_cast<float>(vert.z)});
         }
     }
 
@@ -75,10 +66,7 @@ ConvexHull::ConvexHull(const aiMesh *mesh)
     for (size_t v = 0; v < mesh->mNumVertices; v++)
     {
         const aiVector3d vert = mesh->mVertices[v];
-        const std::array<float, 3> point = {static_cast<float>(vert.x),
-                                            static_cast<float>(vert.y),
-                                            static_cast<float>(vert.z)};
-        points.push_back(point);
+        points.push_back({static_cast<float>(vert.x), static_cast<float>(vert.y), static_cast<float>(vert.z)});
     }
     CalculateOffset();
 }
@@ -87,16 +75,14 @@ ConvexHull::ConvexHull(const aiMesh *mesh)
 void ConvexHull::Write(DataWriter &writer) const
 {
     writer.Write<size_t>(points.size());
-    writer.Write<float>(offset.at(0));
-    writer.Write<float>(offset.at(1));
-    writer.Write<float>(offset.at(2));
-    for (const std::array<float, 3> &point: points)
+    writer.WriteVec3(offset);
+    for (const glm::vec3 &point: points)
     {
-        writer.WriteBuffer<float>(point);
+        writer.WriteVec3(point);
     }
 }
 
-std::vector<std::array<float, 3>> &ConvexHull::GetPoints()
+std::vector<glm::vec3> &ConvexHull::GetPoints()
 {
     return points;
 }
@@ -104,11 +90,11 @@ std::vector<std::array<float, 3>> &ConvexHull::GetPoints()
 std::vector<float> ConvexHull::GetPointsForRender() const
 {
     std::vector<float> buffer{};
-    for (const std::array<float, 3> &point: points)
+    for (const glm::vec3 &point: points)
     {
-        buffer.push_back(point.at(0));
-        buffer.push_back(point.at(1));
-        buffer.push_back(point.at(2));
+        buffer.push_back(point.x);
+        buffer.push_back(point.y);
+        buffer.push_back(point.z);
     }
     return buffer;
 }

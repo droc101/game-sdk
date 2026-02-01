@@ -6,12 +6,12 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/Error.h>
 #include <limits>
 #include <vector>
-
 #include "MaterialBrowserWindow.h"
 #include "SharedMgr.h"
 #include "TextureBrowserWindow.h"
@@ -120,7 +120,8 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
     LevelMaterialAsset mat;
-    LevelMaterialAsset::CreateFromAsset((Options::GetAssetsPath() + "/" + wallMat.material).c_str(), mat); // TODO improve
+    LevelMaterialAsset::CreateFromAsset((Options::GetAssetsPath() + "/" + wallMat.material).c_str(),
+                                        mat); // TODO improve
     const Error::ErrorCode e = SharedMgr::textureCache->GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e == Error::ErrorCode::OK)
@@ -150,7 +151,7 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
     MaterialBrowserWindow::InputMaterial("##Texture", wallMat.material);
     ImGui::Separator();
     ImGui::Text("UV Offset");
-    ImGui::InputFloat2("##uvOffset", wallMat.uvOffset.data());
+    ImGui::InputFloat2("##uvOffset", glm::value_ptr(wallMat.uvOffset));
     ImGui::Text("UV Scale");
-    ImGui::InputFloat2("##uvScale", wallMat.uvScale.data());
+    ImGui::InputFloat2("##uvScale", glm::value_ptr(wallMat.uvScale));
 }

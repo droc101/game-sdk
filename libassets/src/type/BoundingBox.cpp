@@ -14,22 +14,16 @@
 
 BoundingBox::BoundingBox(DataReader &reader)
 {
-    for (int i = 0; i < 3; i++)
-    {
-        origin.at(i) = reader.Read<float>();
-    }
-    for (int i = 0; i < 3; i++)
-    {
-        extents.at(i) = reader.Read<float>();
-    }
+    origin = reader.ReadVec3();
+    extents = reader.ReadVec3();
 }
 
-BoundingBox::BoundingBox(const std::array<float, 3> extents)
+BoundingBox::BoundingBox(const glm::vec3 extents)
 {
     this->extents = extents;
 }
 
-BoundingBox::BoundingBox(const std::array<float, 3> origin, const std::array<float, 3> extents)
+BoundingBox::BoundingBox(const glm::vec3 origin, const glm::vec3 extents)
 {
     this->origin = origin;
     this->extents = extents;
@@ -38,8 +32,8 @@ BoundingBox::BoundingBox(const std::array<float, 3> origin, const std::array<flo
 
 void BoundingBox::Write(DataWriter &writer) const
 {
-    writer.WriteBuffer<float, 3>(origin);
-    writer.WriteBuffer<float, 3>(extents);
+    writer.WriteVec3(origin);
+    writer.WriteVec3(extents);
 }
 
 BoundingBox::BoundingBox(const std::vector<ModelVertex> &verts)
@@ -49,12 +43,12 @@ BoundingBox::BoundingBox(const std::vector<ModelVertex> &verts)
         printf("WARN: Tried to create AABB with 0 points!");
         return;
     }
-    std::array<float, 3> minPoint = {
+    glm::vec3 minPoint = {
         std::numeric_limits<float>::max(),
         std::numeric_limits<float>::max(),
         std::numeric_limits<float>::max(),
     };
-    std::array<float, 3> maxPoint = {
+    glm::vec3 maxPoint = {
         std::numeric_limits<float>::lowest(),
         std::numeric_limits<float>::lowest(),
         std::numeric_limits<float>::lowest(),
@@ -64,76 +58,107 @@ BoundingBox::BoundingBox(const std::vector<ModelVertex> &verts)
     {
         for (uint8_t i = 0; i < 3; i++)
         {
-            const float &val = vert.position.at(i);
-            if (val < minPoint.at(i))
+            if (vert.position.x < minPoint.x)
             {
-                minPoint.at(i) = val;
+                minPoint.x = vert.position.x;
             }
-            if (val > maxPoint.at(i))
+            if (vert.position.x > maxPoint.x)
             {
-                maxPoint.at(i) = val;
+                maxPoint.x = vert.position.x;
+            }
+
+            if (vert.position.y < minPoint.y)
+            {
+                minPoint.y = vert.position.y;
+            }
+            if (vert.position.y > maxPoint.y)
+            {
+                maxPoint.y = vert.position.y;
+            }
+
+            if (vert.position.z < minPoint.z)
+            {
+                minPoint.z = vert.position.z;
+            }
+            if (vert.position.z > maxPoint.z)
+            {
+                maxPoint.z = vert.position.z;
             }
         }
     }
 
     origin = {
-        (minPoint.at(0) + maxPoint.at(0)) * 0.5f,
-        (minPoint.at(1) + maxPoint.at(1)) * 0.5f,
-        (minPoint.at(2) + maxPoint.at(2)) * 0.5f,
+        (minPoint.x + maxPoint.x) * 0.5f,
+        (minPoint.y + maxPoint.y) * 0.5f,
+        (minPoint.z + maxPoint.z) * 0.5f,
     };
     extents = {
-        (maxPoint.at(0) - minPoint.at(0)) * 0.5f,
-        (maxPoint.at(1) - minPoint.at(1)) * 0.5f,
-        (maxPoint.at(2) - minPoint.at(2)) * 0.5f,
+        (maxPoint.x - minPoint.x) * 0.5f,
+        (maxPoint.y - minPoint.y) * 0.5f,
+        (maxPoint.z - minPoint.z) * 0.5f,
     };
 }
 
-BoundingBox::BoundingBox(const std::vector<std::array<float, 3>> &verts)
+BoundingBox::BoundingBox(const std::vector<glm::vec3> &verts)
 {
     if (verts.empty())
     {
         printf("WARN: Tried to create AABB with 0 points!");
         return;
     }
-    std::array<float, 3> minPoint = {std::numeric_limits<float>::max(),
-                                     std::numeric_limits<float>::max(),
-                                     std::numeric_limits<float>::max()};
-    std::array<float, 3> maxPoint = {std::numeric_limits<float>::lowest(),
-                                     std::numeric_limits<float>::lowest(),
-                                     std::numeric_limits<float>::lowest()};
+    glm::vec3 minPoint = {std::numeric_limits<float>::max(),
+                          std::numeric_limits<float>::max(),
+                          std::numeric_limits<float>::max()};
+    glm::vec3 maxPoint = {std::numeric_limits<float>::lowest(),
+                          std::numeric_limits<float>::lowest(),
+                          std::numeric_limits<float>::lowest()};
 
-    for (const std::array<float, 3> &vert: verts)
+    for (const glm::vec3 &vert: verts)
     {
-        for (uint8_t i = 0; i < 3; i++)
+        if (vert.x < minPoint.x)
         {
-            const float &val = vert.at(i);
-            if (val < minPoint.at(i))
-            {
-                minPoint.at(i) = val;
-            }
-            if (val > maxPoint.at(i))
-            {
-                maxPoint.at(i) = val;
-            }
+            minPoint.x = vert.x;
+        }
+        if (vert.x > maxPoint.x)
+        {
+            maxPoint.x = vert.x;
+        }
+
+        if (vert.y < minPoint.y)
+        {
+            minPoint.y = vert.y;
+        }
+        if (vert.y > maxPoint.y)
+        {
+            maxPoint.y = vert.y;
+        }
+
+        if (vert.z < minPoint.z)
+        {
+            minPoint.z = vert.z;
+        }
+        if (vert.z > maxPoint.z)
+        {
+            maxPoint.z = vert.z;
         }
     }
 
     origin = {
-        (minPoint.at(0) + maxPoint.at(0)) * 0.5f,
-        (minPoint.at(1) + maxPoint.at(1)) * 0.5f,
-        (minPoint.at(2) + maxPoint.at(2)) * 0.5f,
+        (minPoint.x + maxPoint.x) * 0.5f,
+        (minPoint.y + maxPoint.y) * 0.5f,
+        (minPoint.z + maxPoint.z) * 0.5f,
     };
     extents = {
-        (maxPoint.at(0) - minPoint.at(0)) * 0.5f,
-        (maxPoint.at(1) - minPoint.at(1)) * 0.5f,
-        (maxPoint.at(2) - minPoint.at(2)) * 0.5f,
+        (maxPoint.x - minPoint.x) * 0.5f,
+        (maxPoint.y - minPoint.y) * 0.5f,
+        (maxPoint.z - minPoint.z) * 0.5f,
     };
 }
 
 
-std::array<std::array<float, 3>, 8> BoundingBox::GetPoints() const
+std::array<glm::vec3, 8> BoundingBox::GetPoints() const
 {
-    std::array<std::array<float, 3>, 8> points{};
+    std::array<glm::vec3, 8> points{};
 
     int i = 0;
     // fun™ for loops
@@ -144,9 +169,9 @@ std::array<std::array<float, 3>, 8> BoundingBox::GetPoints() const
             for (const int dz: {-1, 1})
             {
                 points.at(i) = {
-                    origin.at(0) + static_cast<float>(dx) * extents.at(0),
-                    origin.at(1) + static_cast<float>(dy) * extents.at(1),
-                    origin.at(2) + static_cast<float>(dz) * extents.at(2),
+                    origin.x + static_cast<float>(dx) * extents.x,
+                    origin.y + static_cast<float>(dy) * extents.y,
+                    origin.z + static_cast<float>(dz) * extents.z,
                 };
                 i++;
             }
@@ -158,15 +183,13 @@ std::array<std::array<float, 3>, 8> BoundingBox::GetPoints() const
 
 std::array<float, 24> BoundingBox::GetPointsFlat() const
 {
-    const std::array<std::array<float, 3>, 8> points = GetPoints();
+    const std::array<glm::vec3, 8> points = GetPoints();
     std::array<float, 24> flatPoints{};
     for (int i = 0; i < 8; i++)
     {
-        for (int j = 0; j < 3; j++)
-        {
-            const float value = points.at(i).at(j);
-            flatPoints.at((i * 3) + j) = value;
-        }
+        flatPoints.at((i * 3) + 0) = points.at(i).x;
+        flatPoints.at((i * 3) + 0) = points.at(i).y;
+        flatPoints.at((i * 3) + 0) = points.at(i).z;
     }
     return flatPoints;
 }

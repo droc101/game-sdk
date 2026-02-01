@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
+#include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
@@ -94,9 +95,9 @@ void EditActorWindow::Render(Actor &actor)
         if (ImGui::BeginTabItem("Position"))
         {
             ImGui::Text("Position");
-            ImGui::InputFloat3("##position", actor.position.data());
+            ImGui::InputFloat3("##position", glm::value_ptr(actor.position));
             ImGui::Text("Rotation");
-            ImGui::InputFloat3("##rotation", actor.rotation.data());
+            ImGui::InputFloat3("##rotation", glm::value_ptr(actor.rotation));
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();

@@ -22,9 +22,9 @@ nlohmann::ordered_json WallMaterial::GenerateJson() const
 {
     nlohmann::ordered_json j{};
     j["material"] = material;
-    j["uvOffset"]["x"] = uvOffset.at(0);
-    j["uvOffset"]["y"] = uvOffset.at(1);
-    j["uvScale"]["x"] = uvScale.at(0);
-    j["uvScale"]["y"] = uvScale.at(1);
+    j["uvOffset"]["x"] = uvOffset.x;
+    j["uvOffset"]["y"] = uvOffset.y;
+    j["uvScale"]["x"] = uvScale.x;
+    j["uvScale"]["y"] = uvScale.y;
     return j;
 }

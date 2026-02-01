@@ -3,10 +3,10 @@
 //
 
 #include "AddActorTool.h"
-#include <array>
 #include <cstddef>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
+#include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
 #include <memory>
@@ -16,7 +16,6 @@
 #include "../MapRenderer.h"
 #include "../Viewport.h"
 #include "EditorTool.h"
-#include "libassets/type/ActorDefinition.h"
 #include "SelectTool.h"
 #include "SharedMgr.h"
 
@@ -107,19 +106,19 @@ void AddActorTool::RenderViewport(Viewport &vp)
     {
         for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
         {
-            const std::array<float, 2> &start2 = sector.points[vertexIndex];
-            const std::array<float, 2> &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
-            const glm::vec3 startCeiling = glm::vec3(start2.at(0), sector.ceilingHeight, start2.at(1));
-            const glm::vec3 endCeiling = glm::vec3(end2.at(0), sector.ceilingHeight, end2.at(1));
-            const glm::vec3 startFloor = glm::vec3(start2.at(0), sector.floorHeight, start2.at(1));
-            const glm::vec3 endFloor = glm::vec3(end2.at(0), sector.floorHeight, end2.at(1));
+            const glm::vec2 &start2 = sector.points[vertexIndex];
+            const glm::vec2 &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
+            const glm::vec3 startCeiling = glm::vec3(start2.x, sector.ceilingHeight, start2.y);
+            const glm::vec3 endCeiling = glm::vec3(end2.x, sector.ceilingHeight, end2.y);
+            const glm::vec3 startFloor = glm::vec3(start2.x, sector.floorHeight, start2.y);
+            const glm::vec3 endFloor = glm::vec3(end2.x, sector.floorHeight, end2.y);
 
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
                 MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
-                                                    10,
-                                                    Color(1, 0.7, 0.7, 1),
-                                                    matrix);
+                                                  10,
+                                                  Color(1, 0.7, 0.7, 1),
+                                                  matrix);
             }
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {

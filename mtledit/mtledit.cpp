@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <format>
+#include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
@@ -121,7 +122,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
     TextureBrowserWindow::InputTexture("##texture", material.texture);
     ImGui::Text("Base Scale");
     ImGui::PushItemWidth(-1);
-    ImGui::InputFloat2("##baseScale", material.baseScale.data());
+    ImGui::InputFloat2("##baseScale", glm::value_ptr(material.baseScale));
     // TODO soundClass (when more exist)
     bool unshaded = material.shader == Material::MaterialShader::SHADER_UNSHADED;
     if (ImGui::Checkbox("Unshaded", &unshaded))

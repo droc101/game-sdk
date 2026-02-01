@@ -357,7 +357,9 @@ int main(int argc, char **argv)
         openGtex(openPath);
     } else
     {
-        const std::string &importPath = DesktopInterface::GetFileArgument(argc, argv, {".png", ".jpg", ".jpeg", ".tga"});
+        const std::string &importPath = DesktopInterface::GetFileArgument(argc,
+                                                                          argv,
+                                                                          {".png", ".jpg", ".jpeg", ".tga"});
         if (!importPath.empty())
         {
             importImage(importPath);

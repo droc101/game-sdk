@@ -135,10 +135,8 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
         SectorCollisionBuilder builder = SectorCollisionBuilder(sector);
         for (size_t i = 0; i < sector.points.size(); i++)
         {
-            const std::array<float, 2> &wallStart = sector.points.at(i);
-            const std::array<float, 2> &wallEnd = sector.points.at((i + 1) % sector.points.size());
-            const glm::vec2 wallStartV = glm::vec2(wallStart[0], wallStart[1]);
-            const glm::vec2 wallEndV = glm::vec2(wallEnd[0], wallEnd[1]);
+            const glm::vec2 &wallStart = sector.points.at(i);
+            const glm::vec2 &wallEnd = sector.points.at((i + 1) % sector.points.size());
             bool foundAdjWall = false;
             float adjFloor = 0;
             float adjCeil = 0;
@@ -151,13 +149,10 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
                     {
                         continue; // same sector and wall
                     }
-                    const std::array<float, 2> &otherWallStart = otherSector.points.at(j);
-                    const std::array<float, 2> &otherWallEnd = otherSector.points.at((j + 1) %
-                                                                                     otherSector.points.size());
-                    const glm::vec2 otherWallStartV = glm::vec2(otherWallStart[0], otherWallStart[1]);
-                    const glm::vec2 otherWallEndV = glm::vec2(otherWallEnd[0], otherWallEnd[1]);
-                    if ((wallStartV == otherWallStartV && wallEndV == otherWallEndV) ||
-                        (wallStartV == otherWallEndV && wallEndV == otherWallStartV))
+                    const glm::vec2 &otherWallStart = otherSector.points.at(j);
+                    const glm::vec2 &otherWallEnd = otherSector.points.at((j + 1) % otherSector.points.size());
+                    if ((wallStart == otherWallStart && wallEnd == otherWallEnd) ||
+                        (wallStart == otherWallEnd && wallEnd == otherWallStart))
                     {
                         // MATCH FOUND!!!
                         // printf("Found adjacent walls %zu,%zu and %zu,%zu\n", sectorIndex, i, otherSectorIndex, j);

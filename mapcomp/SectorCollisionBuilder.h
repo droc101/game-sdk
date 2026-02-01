@@ -8,12 +8,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <libassets/type/Sector.h>
+#include <libassets/util/DataWriter.h>
 #include <vector>
 
 class SectorCollisionBuilder
 {
     public:
-        SectorCollisionBuilder(const Sector &sector);
+        explicit SectorCollisionBuilder(const Sector &sector);
 
         void AddWallWithGap(size_t wallIndex, float adjFloor, float adjCeil);
         void AddWall(size_t wallIndex);
@@ -28,16 +29,16 @@ class SectorCollisionBuilder
         struct SubShape
         {
             public:
-                std::vector<std::array<float, 3>> vertices{};
+                std::vector<glm::vec3> vertices{};
                 std::vector<uint32_t> indices{};
                 uint32_t currentIndex = 0;
         };
-        const Sector * sector;
-        std::array<float, 3> sectorCenter;
+        const Sector *sector;
+        glm::vec3 sectorCenter;
         std::vector<SubShape> shapes{};
 
-        void AddWallBase(const std::array<float, 2> &startPoint,
-                         const std::array<float, 2> &endPoint,
+        void AddWallBase(const glm::vec2 &startPoint,
+                         const glm::vec2 &endPoint,
                          float floorHeight,
                          float ceilingHeight,
                          bool counterClockWise);
@@ -45,5 +46,5 @@ class SectorCollisionBuilder
 
         void WriteIndex(size_t index, DataWriter &writer, const SubShape &shape) const;
 
-        SectorCollisionBuilder::SubShape &CurrentShape();
+        SubShape &CurrentShape();
 };

@@ -4,9 +4,9 @@
 
 #pragma once
 #include <array>
+#include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
-#include <libassets/type/ModelVertex.h>
 #include <vector>
 
 /**
@@ -24,14 +24,14 @@ class BoundingBox
          * Create a new bounding box at the origin (0,0,0) with the given extents
          * @param extents The extents (half-size) of the bounding box
          */
-        explicit BoundingBox(std::array<float, 3> extents);
+        explicit BoundingBox(glm::vec3 extents);
 
         /**
          * Create a new bounding box with the given origin and extents
          * @param origin The origin of the box
          * @param extents The extents of the box
          */
-        BoundingBox(std::array<float, 3> origin, std::array<float, 3> extents);
+        BoundingBox(glm::vec3 origin, glm::vec3 extents);
 
         /**
          * Create a bounding box of the given vertices
@@ -43,7 +43,7 @@ class BoundingBox
          * Create a bounding box of the given vertices
          * @param verts The vertices to create a box for
          */
-        explicit BoundingBox(const std::vector<std::array<float, 3>> &verts);
+        explicit BoundingBox(const std::vector<glm::vec3> &verts);
 
         /**
          * Create a bounding box from a DataReader
@@ -54,7 +54,7 @@ class BoundingBox
         /**
          * Get the 8 corners of the bounding box
          */
-        [[nodiscard]] std::array<std::array<float, 3>, 8> GetPoints() const;
+        [[nodiscard]] std::array<glm::vec3, 8> GetPoints() const;
 
         /**
          * Get the 8 corners of the bounding box in a single array, useful for rendering
@@ -67,6 +67,6 @@ class BoundingBox
          */
         void Write(DataWriter &writer) const;
 
-        std::array<float, 3> origin{};
-        std::array<float, 3> extents = {0.5, 0.5, 0.5};
+        glm::vec3 origin{};
+        glm::vec3 extents = {0.5, 0.5, 0.5};
 };

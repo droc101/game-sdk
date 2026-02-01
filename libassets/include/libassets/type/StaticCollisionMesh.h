@@ -6,6 +6,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <glm/vec3.hpp>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <string>
@@ -25,5 +26,5 @@ class StaticCollisionMesh
         [[nodiscard]] size_t GetNumTriangles() const;
 
     private:
-        std::vector<std::array<float, 3>> vertices{};
+        std::vector<glm::vec3> vertices{};
 };

@@ -26,11 +26,11 @@ class GLHelper
 
         struct GL_Framebuffer
         {
-            bool created = false;
-            glm::vec2 size;
-            GLuint colorTexture;
-            GLuint fbo;
-            GLuint rbo;
+                bool created = false;
+                glm::vec2 size;
+                GLuint colorTexture;
+                GLuint fbo;
+                GLuint rbo;
         };
 
         GLHelper() = delete;
