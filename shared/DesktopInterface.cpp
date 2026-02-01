@@ -14,8 +14,8 @@
 #include <vector>
 
 #ifdef WIN32
-#include <shellapi.h>
 #include <windows.h>
+#include <shellapi.h>
 #endif
 
 bool DesktopInterface::ExecuteProcess(const std::string &executable,
