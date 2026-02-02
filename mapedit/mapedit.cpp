@@ -536,7 +536,8 @@ static void Render(bool &done, SDL_Window *sdlWindow)
                  ImGuiWindowFlags_NoSavedSettings |
                          ImGuiWindowFlags_NoDecoration |
                          ImGuiWindowFlags_NoMove |
-                         ImGuiWindowFlags_NoCollapse);
+                         ImGuiWindowFlags_NoCollapse |
+                         ImGuiWindowFlags_NoBringToFrontOnFocus);
     ImGui::DockSpace(rootDockspaceID);
     ImGui::End();
     ImGui::PopStyleVar();

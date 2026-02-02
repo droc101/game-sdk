@@ -139,12 +139,18 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
             const std::array<float, 2> &wallEnd = sector.points.at((i + 1) % sector.points.size());
             const glm::vec2 wallStartV = glm::vec2(wallStart[0], wallStart[1]);
             const glm::vec2 wallEndV = glm::vec2(wallEnd[0], wallEnd[1]);
-            bool foundAdjWall = false;
-            float adjFloor = 0;
-            float adjCeil = 0;
+            std::vector<std::array<float, 2>> gaps{};
             for (size_t otherSectorIndex = 0; otherSectorIndex < map.sectors.size(); otherSectorIndex++)
             {
                 const Sector &otherSector = map.sectors[otherSectorIndex];
+
+                if ((otherSector.ceilingHeight < sector.floorHeight &&
+                     otherSector.floorHeight < sector.floorHeight) ||
+                    (otherSector.ceilingHeight > sector.ceilingHeight && otherSector.floorHeight > sector.ceilingHeight))
+                {
+                    continue; // Other sector is completely above or below this one, do not consider it
+                }
+
                 for (size_t j = 0; j < otherSector.points.size(); j++)
                 {
                     if (sectorIndex == otherSectorIndex && i == j)
@@ -160,36 +166,55 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
                         (wallStartV == otherWallEndV && wallEndV == otherWallStartV))
                     {
                         // MATCH FOUND!!!
-                        // printf("Found adjacent walls %zu,%zu and %zu,%zu\n", sectorIndex, i, otherSectorIndex, j);
-                        foundAdjWall = true;
-                        adjFloor = otherSector.floorHeight;
-                        adjCeil = otherSector.ceilingHeight;
-                        break;
+                        gaps.push_back({otherSector.floorHeight, otherSector.ceilingHeight});
+                        break; // break here because only 1 wall per (well-formed) sector can overlap
                     }
                 }
+            }
+
+            std::vector<std::array<float, 2>> solidSegments{};
+            if (!gaps.empty())
+            {
+                std::ranges::sort(gaps, SectorFloorCeilingCompare);
+                float firstFloor = gaps.at(0).at(0);
+                if (sector.floorHeight < firstFloor)
+                {
+                    solidSegments.push_back({sector.floorHeight, firstFloor});
+                }
+                for (size_t gapIndex = 0; gapIndex < gaps.size(); gapIndex++)
+                {
+                    if (gapIndex < gaps.size() - 1)
+                    {
+                        const float adjCeil = gaps.at(gapIndex).at(1);
+                        const float nextFloor = gaps.at(gapIndex + 1).at(0);
+                        solidSegments.push_back({adjCeil, nextFloor});
+                    }
+                }
+                float lastCeil = gaps.at(gaps.size() - 1).at(1);
+                if (sector.ceilingHeight > lastCeil)
+                {
+                    solidSegments.push_back({lastCeil, sector.ceilingHeight});
+                }
+            } else
+            {
+                solidSegments.push_back({sector.floorHeight, sector.ceilingHeight});
             }
 
             const WallMaterial &mat = sector.wallMaterials.at(i);
             const LevelMaterialAsset mapMaterial = GetMapMaterial(mat.material);
             if (!mapMaterial.compileInvisible)
             {
-                if (foundAdjWall)
+                for (const std::array<float, 2> &segment: solidSegments)
                 {
-                    meshBuilders[mat.material].AddWallWithGap(sector, i, adjFloor, adjCeil);
-                } else
-                {
-                    meshBuilders[mat.material].AddWall(sector, i);
+                    meshBuilders[mat.material].AddWall(sector, i, segment.at(0), segment.at(1));
                 }
             }
 
             if (!mapMaterial.compileNoClip)
             {
-                if (foundAdjWall)
+                for (const std::array<float, 2> &segment: solidSegments)
                 {
-                    builder.AddWallWithGap(i, adjFloor, adjCeil);
-                } else
-                {
-                    builder.AddWall(i);
+                    builder.AddWall(i, segment.at(0), segment.at(1));
                 }
             }
         }
@@ -236,4 +261,9 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
 
     writer.CopyToVector(buffer);
     return Error::ErrorCode::OK;
+}
+
+bool MapCompiler::SectorFloorCeilingCompare(const std::array<float, 2> &a, const std::array<float, 2> &b)
+{
+    return a.at(0) < b.at(0) && a.at(1) < b.at(1);
 }

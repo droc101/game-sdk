@@ -75,38 +75,15 @@ void SectorCollisionBuilder::AddSectorBase(const bool isFloor)
     CurrentShape().currentIndex += sector->points.size();
 }
 
-void SectorCollisionBuilder::AddWall(const size_t wallIndex)
+void SectorCollisionBuilder::AddWall(const size_t wallIndex, const float floorHeight, const float ceilingHeight)
 {
     const std::array<float, 2> &startPoint = sector->points.at(wallIndex);
     const std::array<float, 2> &endPoint = sector->points.at((wallIndex + 1) % (sector->points.size()));
 
     const bool ccw = sector->CalculateArea() > 0;
 
-    AddWallBase(startPoint, endPoint, sector->floorHeight, sector->ceilingHeight, ccw);
+    AddWallBase(startPoint, endPoint, floorHeight, ceilingHeight, ccw);
 }
-
-void SectorCollisionBuilder::AddWallWithGap(const size_t wallIndex, const float adjFloor, const float adjCeil)
-{
-    if (adjFloor == sector->floorHeight && adjCeil == sector->ceilingHeight)
-    {
-        return;
-    }
-
-    const std::array<float, 2> &startPoint = sector->points.at(wallIndex);
-    const std::array<float, 2> &endPoint = sector->points.at((wallIndex + 1) % (sector->points.size()));
-
-    const bool ccw = sector->CalculateArea() > 0;
-
-    if (adjFloor > sector->floorHeight)
-    {
-        AddWallBase(startPoint, endPoint, sector->floorHeight, adjFloor, ccw);
-    }
-    if (adjCeil < sector->ceilingHeight)
-    {
-        AddWallBase(startPoint, endPoint, adjCeil, sector->ceilingHeight, ccw);
-    }
-}
-
 
 void SectorCollisionBuilder::AddWallBase(const std::array<float, 2> &startPoint,
                                          const std::array<float, 2> &endPoint,

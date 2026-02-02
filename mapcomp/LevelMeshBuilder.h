@@ -17,8 +17,7 @@ class LevelMeshBuilder
     public:
         LevelMeshBuilder() = default;
 
-        void AddWallWithGap(const Sector &sector, size_t wallIndex, float adjFloor, float adjCeil);
-        void AddWall(const Sector &sector, size_t wallIndex);
+        void AddWall(const Sector &sector, size_t wallIndex, float floorHeight, float ceilingHeight);
         void AddFloor(const Sector &sector);
         void AddCeiling(const Sector &sector);
 

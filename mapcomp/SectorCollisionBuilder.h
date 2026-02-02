@@ -15,8 +15,7 @@ class SectorCollisionBuilder
     public:
         SectorCollisionBuilder(const Sector &sector);
 
-        void AddWallWithGap(size_t wallIndex, float adjFloor, float adjCeil);
-        void AddWall(size_t wallIndex);
+        void AddWall(size_t wallIndex, float floorHeight, float ceilingHeight);
         void AddFloor();
         void AddCeiling();
 
@@ -32,7 +31,7 @@ class SectorCollisionBuilder
                 std::vector<uint32_t> indices{};
                 uint32_t currentIndex = 0;
         };
-        const Sector * sector;
+        const Sector *sector;
         std::array<float, 3> sectorCenter;
         std::vector<SubShape> shapes{};
 

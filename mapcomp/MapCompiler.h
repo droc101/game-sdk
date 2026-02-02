@@ -27,4 +27,6 @@ class MapCompiler
         Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer) const;
 
         LevelMaterialAsset GetMapMaterial(const std::string &path) const;
+
+        [[nodiscard]] static bool SectorFloorCeilingCompare(const std::array<float, 2> &a, const std::array<float, 2> &b);
 };

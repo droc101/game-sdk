@@ -9,6 +9,7 @@
 
 int main(const int argc, const char **argv)
 {
+    printf("GAME SDK Map Compiler\n");
     const ArgumentParser args = ArgumentParser(argc, argv);
 
     if (!args.hasFlagWithValue("--map-source"))
