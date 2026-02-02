@@ -8,7 +8,6 @@
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/type/ConvexHull.h>
 #include <libassets/util/Error.h>
-#include <oneapi/tbb/detail/_utils.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
