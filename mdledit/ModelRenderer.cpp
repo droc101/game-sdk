@@ -34,6 +34,8 @@ bool ModelRenderer::Init()
         return false;
     }
 
+    framebuffer = GLHelper::CreateFramebuffer({windowWidth, windowHeight});
+
     const Error::ErrorCode modelProgramErrorCode = GLHelper::CreateProgram("assets/mdledit/model.frag",
                                                                            "assets/mdledit/model.vert",
                                                                            program);
@@ -61,12 +63,7 @@ bool ModelRenderer::Init()
 
 void ModelRenderer::LoadBBox()
 {
-    glGenVertexArrays(1, &bboxVao);
-    glBindVertexArray(bboxVao);
-
-    glGenBuffers(1, &bboxVbo);
-    glGenBuffers(1, &bboxEbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bboxEbo);
+    bboxBuffer = GLHelper::CreateIndexedBuffer();
     const std::array<GLuint, 36> indices = {
         0, 1, 3, 0, 3, 2, 4, 7, 5, 4, 6, 7, 0, 5, 1, 0, 4, 5, 2, 3, 7, 2, 7, 6, 0, 2, 6, 0, 6, 4, 1, 7, 3, 1, 5, 7,
     };
@@ -82,7 +79,11 @@ ModelAsset &ModelRenderer::GetModel()
 void ModelRenderer::Destroy()
 {
     UnloadModel();
+    GLHelper::DestroyFramebuffer(framebuffer);
+    GLHelper::DestroyBuffer(cubeBuffer);
+    GLHelper::DestroyIndexedBuffer(bboxBuffer);
     glDeleteProgram(program);
+    glDeleteProgram(linesProgram);
 }
 
 void ModelRenderer::UpdateView(const float pitchDegrees, const float yawDegrees, const float cameraDistance)
@@ -180,6 +181,8 @@ void ModelRenderer::LoadModel(ModelAsset &&newModel)
 
 void ModelRenderer::Render()
 {
+    GLHelper::BindFramebuffer(framebuffer);
+
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     if (cullBackfaces)
@@ -200,7 +203,8 @@ void ModelRenderer::Render()
     }
 
     glUseProgram(program);
-    glViewport(0, PANEL_SIZE, windowWidth, windowHeight - PANEL_SIZE);
+    const float *color = backgroundColor.GetDataPointer();
+    glClearColor(color[0], color[1], color[2], color[3]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     const GLModelLod &glod = lods.at(lodIndex);
@@ -267,8 +271,7 @@ void ModelRenderer::Render()
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glUseProgram(linesProgram);
-        glBindVertexArray(cubeVao);
-        glBindBuffer(GL_ARRAY_BUFFER, cubeVbo);
+        GLHelper::BindBuffer(cubeBuffer);
         posAttrib = glGetAttribLocation(linesProgram, "VERTEX");
         glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
         glEnableVertexAttribArray(posAttrib);
@@ -328,14 +331,12 @@ void ModelRenderer::Render()
     if (showBoundingBox)
     {
         glDisable(GL_CULL_FACE);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bboxEbo);
-        glBindBuffer(GL_ARRAY_BUFFER, bboxVbo);
+        GLHelper::BindIndexedBuffer(bboxBuffer);
         const std::array<float, 24> points = model.GetBoundingBox().GetPointsFlat();
         glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * points.size(), points.data(), GL_STATIC_DRAW);
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glUseProgram(linesProgram);
-        glBindVertexArray(bboxVao);
         posAttrib = glGetAttribLocation(linesProgram, "VERTEX");
         glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
         glEnableVertexAttribArray(posAttrib);
@@ -348,13 +349,16 @@ void ModelRenderer::Render()
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
     }
+
+    GLHelper::UnbindFramebuffer();
 }
 
 void ModelRenderer::ResizeWindow(const GLsizei width, const GLsizei height)
 {
     windowWidth = width;
     windowHeight = height;
-    windowAspect = static_cast<float>(width) / static_cast<float>(height - PANEL_SIZE);
+    windowAspect = static_cast<float>(width) / static_cast<float>(height);
+    GLHelper::ResizeFramebuffer(framebuffer, {width, height});
     UpdateMatrix();
 }
 
@@ -396,11 +400,7 @@ void ModelRenderer::LoadCube()
     };
     // clang-format on
 
-    glGenVertexArrays(1, &cubeVao);
-    glBindVertexArray(cubeVao);
-
-    glGenBuffers(1, &cubeVbo);
-    glBindBuffer(GL_ARRAY_BUFFER, cubeVbo);
+    cubeBuffer = GLHelper::CreateBuffer();
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * cubeVerts.size(), cubeVerts.data(), GL_STATIC_DRAW);
 }
 
@@ -438,4 +438,14 @@ void ModelRenderer::LoadStaticCollision()
                  static_cast<GLsizeiptr>(sizeof(GLfloat) * verts.size()),
                  verts.data(),
                  GL_STATIC_DRAW);
+}
+
+ImTextureID ModelRenderer::GetFramebufferTexture()
+{
+    return framebuffer.colorTexture;
+}
+
+ImVec2 ModelRenderer::GetFramebufferSize()
+{
+    return {framebuffer.size.x, framebuffer.size.y};
 }

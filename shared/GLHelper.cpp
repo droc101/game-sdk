@@ -228,6 +228,11 @@ void GLHelper::BindFramebuffer(const GL_Framebuffer &framebuffer)
 
 void GLHelper::ResizeFramebuffer(GL_Framebuffer &framebuffer, const glm::vec2 newSize)
 {
+    if (framebuffer.size == newSize)
+    {
+        return;
+    }
+
     GLint boundRbo = GL_NONE;
     glGetIntegerv(GL_RENDERBUFFER_BINDING, &boundRbo);
     glBindRenderbuffer(GL_RENDERBUFFER, framebuffer.rbo);

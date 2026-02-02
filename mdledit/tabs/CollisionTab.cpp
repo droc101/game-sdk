@@ -2,7 +2,6 @@
 // Created by droc101 on 8/20/25.
 //
 
-#include "CollisionEditWindow.h"
 #include <cstddef>
 #include <format>
 #include <glm/gtc/type_ptr.hpp>
@@ -12,83 +11,70 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_video.h>
 #include <string>
+#include "../ModelRenderer.h"
+#include "CollisionTab.h"
 #include "DialogFilters.h"
-#include "ModelRenderer.h"
 
-void CollisionEditWindow::Show()
+void CollisionTab::Render(SDL_Window *window)
 {
-    visible = true;
-}
-
-void CollisionEditWindow::Hide()
-{
-    visible = false;
-}
-
-void CollisionEditWindow::Render(SDL_Window *window)
-{
-    if (visible)
+    ModelAsset &model = ModelRenderer::GetModel();
+    ImGui::Begin("Collision",
+                 nullptr,
+                 ImGuiWindowFlags_NoCollapse |
+                         ImGuiWindowFlags_NoMove |
+                         ImGuiWindowFlags_NoBringToFrontOnFocus |
+                         ImGuiWindowFlags_NoDecoration |
+                         ImGuiWindowFlags_NoScrollbar |
+                         ImGuiWindowFlags_NoScrollWithMouse);
+    ImGui::Text("Bounding Box");
+    ImGui::InputFloat3("Origin", glm::value_ptr(model.GetBoundingBox().origin));
+    ImGui::InputFloat3("Extents", glm::value_ptr(model.GetBoundingBox().extents));
+    if (ImGui::Button("Autocalculate"))
     {
-        ModelAsset &model = ModelRenderer::GetModel();
-        ImGui::SetNextWindowSize(ImVec2(300, -1));
-        ImGui::Begin("Collision Editor", &visible, ImGuiWindowFlags_NoCollapse);
-        ImGui::Text("Bounding Box");
-        ImGui::InputFloat3("Origin", glm::value_ptr(model.GetBoundingBox().origin));
-        ImGui::InputFloat3("Extents", glm::value_ptr(model.GetBoundingBox().extents));
-        if (ImGui::Button("Autocalculate"))
-        {
-            model.GetBoundingBox() = BoundingBox(model.GetLod(0).vertices);
-        }
-        ImGui::Separator();
-        ImGui::Text("Collision Model Type:");
-        if (ImGui::RadioButton("None", model.GetCollisionModelType() == ModelAsset::CollisionModelType::NONE))
-        {
-            model.GetCollisionModelType() = ModelAsset::CollisionModelType::NONE;
-        }
-        ImGui::SameLine();
-        if (ImGui::RadioButton("Static",
-                               model.GetCollisionModelType() == ModelAsset::CollisionModelType::STATIC_SINGLE_CONCAVE))
-        {
-            model.GetCollisionModelType() = ModelAsset::CollisionModelType::STATIC_SINGLE_CONCAVE;
-        }
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::SetTooltip("Static collision models are a single arbitrary mesh that is allowed to be "
-                              "concave.\nThis model type can not be used on moving actors.");
-        }
-        ImGui::SameLine();
-        if (ImGui::RadioButton("Dynamic",
-                               model.GetCollisionModelType() ==
-                                       ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX))
-        {
-            model.GetCollisionModelType() = ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX;
-        }
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::SetTooltip("Dynamic collision models are a collection of convex hulls.\nConcave shapes can only be "
-                              "created using multiple hulls.\nIt is up to you to ensure the imported hulls are "
-                              "actually convex.");
-        }
-
-        if (model.GetCollisionModelType() == ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX)
-        {
-            RenderCHullUI(window);
-        } else if (model.GetCollisionModelType() == ModelAsset::CollisionModelType::STATIC_SINGLE_CONCAVE)
-        {
-            RenderStaticMeshUI(window);
-        }
-        ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 60, 0));
-        ImGui::SameLine();
-        if (ImGui::Button("OK", ImVec2(60, 0)))
-        {
-            visible = false;
-        }
-
-        ImGui::End();
+        model.GetBoundingBox() = BoundingBox(model.GetLod(0).vertices);
     }
+    ImGui::Separator();
+    ImGui::Text("Collision Model Type:");
+    if (ImGui::RadioButton("None", model.GetCollisionModelType() == ModelAsset::CollisionModelType::NONE))
+    {
+        model.GetCollisionModelType() = ModelAsset::CollisionModelType::NONE;
+    }
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Static",
+                           model.GetCollisionModelType() == ModelAsset::CollisionModelType::STATIC_SINGLE_CONCAVE))
+    {
+        model.GetCollisionModelType() = ModelAsset::CollisionModelType::STATIC_SINGLE_CONCAVE;
+    }
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Static collision models are a single arbitrary mesh that is allowed to be "
+                          "concave.\nThis model type can not be used on moving actors.");
+    }
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Dynamic",
+                           model.GetCollisionModelType() == ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX))
+    {
+        model.GetCollisionModelType() = ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX;
+    }
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Dynamic collision models are a collection of convex hulls.\nConcave shapes can only be "
+                          "created using multiple hulls.\nIt is up to you to ensure the imported hulls are "
+                          "actually convex.");
+    }
+
+    if (model.GetCollisionModelType() == ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX)
+    {
+        RenderCHullUI(window);
+    } else if (model.GetCollisionModelType() == ModelAsset::CollisionModelType::STATIC_SINGLE_CONCAVE)
+    {
+        RenderStaticMeshUI(window);
+    }
+
+    ImGui::End();
 }
 
-void CollisionEditWindow::RenderStaticMeshUI(SDL_Window *window)
+void CollisionTab::RenderStaticMeshUI(SDL_Window *window)
 {
     ModelAsset &model = ModelRenderer::GetModel();
     if (ImGui::Button("Import Collision Mesh"))
@@ -105,7 +91,7 @@ void CollisionEditWindow::RenderStaticMeshUI(SDL_Window *window)
 }
 
 
-void CollisionEditWindow::RenderCHullUI(SDL_Window *window)
+void CollisionTab::RenderCHullUI(SDL_Window *window)
 {
     if (ImGui::Button("Import Hull"))
     {
@@ -150,7 +136,7 @@ void CollisionEditWindow::RenderCHullUI(SDL_Window *window)
     ImGui::EndChild();
 }
 
-void CollisionEditWindow::ImportStaticMeshCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+void CollisionTab::ImportStaticMeshCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
@@ -166,7 +152,7 @@ void CollisionEditWindow::ImportStaticMeshCallback(void * /*userdata*/, const ch
     }
 }
 
-void CollisionEditWindow::AddSingleHullCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+void CollisionTab::AddSingleHullCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
@@ -182,7 +168,7 @@ void CollisionEditWindow::AddSingleHullCallback(void * /*userdata*/, const char 
     }
 }
 
-void CollisionEditWindow::AddMultipleHullsCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+void CollisionTab::AddMultipleHullsCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {

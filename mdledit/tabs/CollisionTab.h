@@ -6,20 +6,14 @@
 
 #include <SDL3/SDL_video.h>
 
-class CollisionEditWindow
+class CollisionTab
 {
     public:
-        CollisionEditWindow() = delete;
-
-        static void Show();
-
-        static void Hide();
+        CollisionTab() = delete;
 
         static void Render(SDL_Window *window);
 
     private:
-        static inline bool visible = false;
-
         static void RenderCHullUI(SDL_Window *window);
 
         static void RenderStaticMeshUI(SDL_Window *window);

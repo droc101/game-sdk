@@ -9,8 +9,9 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <libassets/asset/ModelAsset.h>
-#include <libassets/util/Error.h>
 #include <vector>
+#include "GLHelper.h"
+#include "imgui.h"
 
 class ModelRenderer
 {
@@ -49,6 +50,10 @@ class ModelRenderer
 
         static void LoadStaticCollision();
 
+        static ImTextureID GetFramebufferTexture();
+
+        static ImVec2 GetFramebufferSize();
+
         static inline int lodIndex = 0;
         static inline int skinIndex = 0;
 
@@ -59,7 +64,7 @@ class ModelRenderer
         static inline bool showBoundingBox = false;
         static inline bool showCollisionModel = false;
 
-        static constexpr int PANEL_SIZE = 100;
+        static inline Color backgroundColor = Color(0,0,0,1);
 
         static inline uint32_t EVENT_RELOAD_MODEL;
         static constexpr int32_t EVENT_RELOAD_MODEL_CODE_GMDL = 0;
@@ -88,12 +93,9 @@ class ModelRenderer
 
         static inline ModelAsset model{};
 
-        static inline GLuint cubeVao = 0;
-        static inline GLuint cubeVbo = 0;
+        static inline GLHelper::GL_Buffer cubeBuffer;
 
-        static inline GLuint bboxVao = 0;
-        static inline GLuint bboxVbo = 0;
-        static inline GLuint bboxEbo = 0;
+        static inline GLHelper::GL_IndexedBuffer bboxBuffer;
 
         static inline GLuint staticCollisionVao = 0;
         static inline GLuint staticCollisionVbo = 0;
@@ -115,6 +117,8 @@ class ModelRenderer
         static inline GLsizei windowWidth = 800;
         static inline GLsizei windowHeight = 600;
         static inline float windowAspect = 4.0 / 3.0;
+
+        static inline GLHelper::GL_Framebuffer framebuffer;
 
         static void UpdateMatrix();
 

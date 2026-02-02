@@ -6,20 +6,14 @@
 
 #include <SDL3/SDL_video.h>
 
-class LodEditWindow
+class LodsTab
 {
     public:
-        LodEditWindow() = delete;
-
-        static void Show();
-
-        static void Hide();
+        LodsTab() = delete;
 
         static void Render(SDL_Window *window);
 
     private:
-        static inline bool visible;
-
         static void addLodCallback(void *userdata, const char *const *fileList, int filter);
 
         static void saveLodCallback(void *userdata, const char *const *fileList, int filter);

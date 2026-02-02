@@ -18,15 +18,17 @@
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <utility>
-#include "CollisionEditWindow.h"
 #include "DialogFilters.h"
-#include "LodEditWindow.h"
-#include "MaterialEditWindow.h"
+#include "imgui_internal.h"
 #include "ModelRenderer.h"
 #include "OpenGLImGuiTextureAssetCache.h"
 #include "Options.h"
 #include "SharedMgr.h"
-#include "SkinEditWindow.h"
+#include "tabs/CollisionTab.h"
+#include "tabs/LodsTab.h"
+#include "tabs/MaterialsTab.h"
+#include "tabs/PreviewOptionsTab.h"
+#include "tabs/SkinsTab.h"
 
 static bool modelLoaded = false;
 static bool dragging = false;
@@ -37,8 +39,13 @@ static bool done = false;
 static bool openPressed = false;
 static bool newPressed = false;
 static bool savePressed = false;
+static bool previewFocused = false;
 
-static inline void destroyExistingModel()
+static ImGuiID dockspaceId;
+static ImGuiID rootDockspaceID;
+static bool dockspaceSetup = false;
+
+static void destroyExistingModel()
 {
     if (!modelLoaded)
     {
@@ -48,7 +55,7 @@ static inline void destroyExistingModel()
     modelLoaded = false;
 }
 
-static inline void openGmdlCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void openGmdlCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
@@ -199,17 +206,7 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
     {
         done = true;
     }
-    if (event->type == SDL_EVENT_WINDOW_RESIZED)
-    {
-        int width = 0;
-        int height = 0;
-        if (!SDL_GetWindowSize(window, &width, &height))
-        {
-            printf("Error: SDL_GetWindowSize(): %s\n", SDL_GetError());
-        }
-        ModelRenderer::ResizeWindow(width, height);
-    }
-    if (!io.WantCaptureMouse)
+    if (previewFocused)
     {
         if (event->type == SDL_EVENT_MOUSE_WHEEL)
         {
@@ -233,14 +230,17 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
         {
             ModelRenderer::UpdateViewRel(event->motion.yrel / 5.0f, event->motion.xrel / -5.0f, 0);
         }
+    } else
+    {
+        dragging = false;
     }
 }
 
 static void HandleMenuAndShortcuts()
 {
-    newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N);
-    openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
-    savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && modelLoaded;
+    newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N, ImGuiInputFlags_RouteGlobal);
+    openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O, ImGuiInputFlags_RouteGlobal);
+    savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S, ImGuiInputFlags_RouteGlobal) && modelLoaded;
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -254,26 +254,6 @@ static void HandleMenuAndShortcuts()
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
                 done = true;
-            }
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("Edit", modelLoaded))
-        {
-            if (ImGui::MenuItem("LOD Editor"))
-            {
-                LodEditWindow::Show();
-            }
-            if (ImGui::MenuItem("Material Editor"))
-            {
-                MaterialEditWindow::Show();
-            }
-            if (ImGui::MenuItem("Skin Editor"))
-            {
-                SkinEditWindow::Show();
-            }
-            if (ImGui::MenuItem("Collision Editor"))
-            {
-                CollisionEditWindow::Show();
             }
             ImGui::EndMenu();
         }
@@ -380,6 +360,109 @@ static void HandleMenuAndShortcuts()
     }
 }
 
+void SetupDockspace()
+{
+    if (dockspaceSetup)
+    {
+        return;
+    }
+    dockspaceSetup = true;
+    dockspaceId = ImGui::GetID("dockspace");
+    rootDockspaceID = dockspaceId;
+    ImGui::DockBuilderRemoveNode(dockspaceId);
+    ImGui::DockBuilderAddNode(dockspaceId, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_NoCloseButton);
+    ImGui::DockBuilderSetNodeSize(dockspaceId, ImGui::GetMainViewport()->Size);
+
+    const ImGuiID rightDock = ImGui::DockBuilderSplitNode(dockspaceId, ImGuiDir_Right, 0.4f, nullptr, &dockspaceId);
+
+    ImGui::DockBuilderDockWindow("Model Preview", dockspaceId);
+    ImGui::DockBuilderDockWindow("Preview Options", rightDock);
+    ImGui::DockBuilderDockWindow("Collision", rightDock);
+    ImGui::DockBuilderDockWindow("LODs", rightDock);
+    ImGui::DockBuilderDockWindow("Materials", rightDock);
+    ImGui::DockBuilderDockWindow("Skins", rightDock);
+
+    ImGui::DockBuilderFinish(rootDockspaceID);
+}
+
+static void Render()
+{
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+    const ImVec2 VpAreaTopLeft = ImVec2(viewport->WorkPos.x, viewport->WorkPos.y);
+    const ImVec2 VpAreaSize = ImVec2((viewport->WorkSize.x), (viewport->WorkSize.y));
+    ImGui::SetNextWindowPos(VpAreaTopLeft);
+    ImGui::SetNextWindowSize(VpAreaSize);
+
+    if (!modelLoaded)
+    {
+        ImGui::Begin("CentralDock",
+                     nullptr,
+                     ImGuiWindowFlags_NoSavedSettings |
+                             ImGuiWindowFlags_NoDecoration |
+                             ImGuiWindowFlags_NoMove |
+                             ImGuiWindowFlags_NoCollapse |
+                             ImGuiWindowFlags_NoBringToFrontOnFocus);
+        ImGui::TextDisabled("No model is open. Open or create one from the File menu.");
+        ImGui::End();
+
+        HandleMenuAndShortcuts();
+
+        return;
+    }
+
+    ImGui::PushStyleVarX(ImGuiStyleVar_WindowPadding, 0.0f);
+    ImGui::PushStyleVarY(ImGuiStyleVar_WindowPadding, 0.0f);
+    ImGui::Begin("CentralDock",
+                 nullptr,
+                 ImGuiWindowFlags_NoSavedSettings |
+                         ImGuiWindowFlags_NoDecoration |
+                         ImGuiWindowFlags_NoMove |
+                         ImGuiWindowFlags_NoCollapse |
+                         ImGuiWindowFlags_NoBringToFrontOnFocus);
+    ImGui::DockSpace(rootDockspaceID);
+    ImGui::End();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleVar();
+
+    HandleMenuAndShortcuts();
+
+    PreviewOptionsTab::Render();
+    MaterialsTab::Render();
+    SkinsTab::Render();
+    LodsTab::Render(window);
+    CollisionTab::Render(window);
+
+    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
+                                             ImGuiWindowFlags_NoMove |
+                                             ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                             ImGuiWindowFlags_NoDecoration |
+                                             ImGuiWindowFlags_NoScrollbar |
+                                             ImGuiWindowFlags_NoScrollWithMouse;
+    ImGui::PushStyleVarX(ImGuiStyleVar_WindowPadding, 0.0f);
+    ImGui::PushStyleVarY(ImGuiStyleVar_WindowPadding, 0.0f);
+    if (ImGui::Begin("Model Preview", nullptr, windowFlags))
+    {
+        ImVec2 windowSize = ImGui::GetContentRegionMax();
+        windowSize.x += 8;
+        windowSize.y += 8;
+        ModelRenderer::ResizeWindow(static_cast<GLsizei>(windowSize.x), static_cast<GLsizei>(windowSize.y));
+
+        previewFocused = ImGui::IsWindowHovered();
+        ImGui::Image(ModelRenderer::GetFramebufferTexture(), ModelRenderer::GetFramebufferSize(), {0, 1}, {1, 0});
+    }
+    ImGui::End();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleVar();
+
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+    if (modelLoaded)
+    {
+        ModelRenderer::Render();
+    }
+}
+
 int main(int argc, char **argv)
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
@@ -421,7 +504,7 @@ int main(int argc, char **argv)
     }
 
     constexpr SDL_WindowFlags sdlWindowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
-    window = SDL_CreateWindow("mdledit", 800, 600, sdlWindowFlags);
+    window = SDL_CreateWindow("mdledit", 1366, 768, sdlWindowFlags);
     if (window == nullptr)
     {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
@@ -451,10 +534,6 @@ int main(int argc, char **argv)
     {
         printf("Error: SDL_GL_SetSwapInterval(): %s\n", SDL_GetError());
     }
-    if (!SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED))
-    {
-        printf("Error: SDL_SetWindowPosition(): %s\n", SDL_GetError());
-    }
     if (!SDL_ShowWindow(window))
     {
         printf("Error: SDL_ShowWindow(): %s\n", SDL_GetError());
@@ -474,8 +553,6 @@ int main(int argc, char **argv)
 
     ImGui_ImplSDL3_InitForOpenGL(window, glContext);
     ImGui_ImplOpenGL3_Init(glslVersion);
-
-    ModelRenderer::ResizeWindow(800, 600);
 
     const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gmdl"});
     if (!openPath.empty())
@@ -525,57 +602,12 @@ int main(int argc, char **argv)
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
-        constexpr float modelPaneSize = ModelRenderer::PANEL_SIZE;
-        const ImVec2 workSize{viewport->WorkSize.x, modelPaneSize};
-        const ImVec2 workPos{viewport->WorkPos.x, (viewport->WorkPos.y + viewport->WorkSize.y) - modelPaneSize};
-        ImGui::SetNextWindowPos(workPos);
-        ImGui::SetNextWindowSize(workSize);
-        {
-            constexpr ImGuiWindowFlags imGuiWindowFlags = ImGuiWindowFlags_NoDecoration |
-                                                          ImGuiWindowFlags_NoMove |
-                                                          ImGuiWindowFlags_NoSavedSettings |
-                                                          ImGuiWindowFlags_NoBringToFrontOnFocus;
-            ImGui::Begin("mdledit", nullptr, imGuiWindowFlags);
+        SetupDockspace();
 
-            HandleMenuAndShortcuts();
-
-            if (modelLoaded)
-            {
-                ImGui::PushItemWidth(-1);
-                ImGui::TextUnformatted("LOD");
-                ImGui::SliderInt("##LOD",
-                                 &ModelRenderer::lodIndex,
-                                 0,
-                                 static_cast<int>(ModelRenderer::GetModel().GetLodCount() - 1));
-                ImGui::TextUnformatted("Skin");
-                ImGui::SliderInt("##Skin",
-                                 &ModelRenderer::skinIndex,
-                                 0,
-                                 static_cast<int>(ModelRenderer::GetModel().GetSkinCount() - 1));
-            } else
-            {
-                ImGui::TextDisabled("No model is open. Open or create one from the File menu.");
-            }
-
-            ImGui::End();
-        }
+        Render();
 
         SharedMgr::RenderSharedUI(window);
-        SkinEditWindow::Render();
-        LodEditWindow::Render(window);
-        MaterialEditWindow::Render();
-        CollisionEditWindow::Render(window);
-
         ImGui::Render();
-        glClearColor(0, 0, 0, 1);
-        if (modelLoaded)
-        {
-            ModelRenderer::Render();
-        } else
-        {
-            glClear(GL_COLOR_BUFFER_BIT);
-        }
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         if (!SDL_GL_SwapWindow(window))
