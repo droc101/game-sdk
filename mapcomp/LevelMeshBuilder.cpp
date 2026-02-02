@@ -29,35 +29,10 @@ void LevelMeshBuilder::AddFloor(const Sector &sector)
     AddSectorBase(sector, true);
 }
 
-void LevelMeshBuilder::AddWallWithGap(const Sector &sector, size_t wallIndex, float adjFloor, float adjCeil)
-{
-    if (adjFloor == sector.floorHeight && adjCeil == sector.ceilingHeight)
-    {
-        return;
-    }
-
-    const float sLength = CalculateSLength(sector, wallIndex);
-
-    const WallMaterial &mat = sector.wallMaterials[wallIndex];
-
-    const glm::vec2 &startPoint = sector.points.at(wallIndex);
-    const glm::vec2 &endPoint = sector.points.at((wallIndex + 1) % (sector.points.size()));
-
-    const glm::vec2 normal = sector.SegmentNormal(wallIndex);
-    const bool ccw = sector.CalculateArea() > 0;
-
-    if (adjFloor > sector.floorHeight)
-    {
-        AddWallBase(startPoint, endPoint, mat, normal, sLength, sector.floorHeight, adjFloor, sector.lightColor, ccw);
-    }
-    if (adjCeil < sector.ceilingHeight)
-    {
-        AddWallBase(startPoint, endPoint, mat, normal, sLength, adjCeil, sector.ceilingHeight, sector.lightColor, ccw);
-    }
-}
-
-
-void LevelMeshBuilder::AddWall(const Sector &sector, const size_t wallIndex)
+void LevelMeshBuilder::AddWall(const Sector &sector,
+                               const size_t wallIndex,
+                               const float floorHeight,
+                               const float ceilingHeight)
 {
     const float sLength = CalculateSLength(sector, wallIndex);
 
@@ -69,15 +44,7 @@ void LevelMeshBuilder::AddWall(const Sector &sector, const size_t wallIndex)
     const glm::vec2 normal = sector.SegmentNormal(wallIndex);
     const bool ccw = sector.CalculateArea() > 0;
 
-    AddWallBase(startPoint,
-                endPoint,
-                mat,
-                normal,
-                sLength,
-                sector.floorHeight,
-                sector.ceilingHeight,
-                sector.lightColor,
-                ccw);
+    AddWallBase(startPoint, endPoint, mat, normal, sLength, floorHeight, ceilingHeight, sector.lightColor, ccw);
 }
 
 float LevelMeshBuilder::CalculateSLength(const Sector &sector, const size_t wallIndex)
@@ -105,7 +72,7 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
 {
     if (floorHeight > ceilingHeight)
     {
-        printf("Compile Error: Wall with ceiling below floor, will be skipped");
+        printf("Compile Error: Wall with ceiling below floor, will be skipped\n");
         return;
     }
 

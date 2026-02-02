@@ -16,8 +16,7 @@ class SectorCollisionBuilder
     public:
         explicit SectorCollisionBuilder(const Sector &sector);
 
-        void AddWallWithGap(size_t wallIndex, float adjFloor, float adjCeil);
-        void AddWall(size_t wallIndex);
+        void AddWall(size_t wallIndex, float floorHeight, float ceilingHeight);
         void AddFloor();
         void AddCeiling();
 
