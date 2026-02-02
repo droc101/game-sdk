@@ -19,17 +19,17 @@
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <utility>
-#include "CollisionEditWindow.h"
 #include "DialogFilters.h"
 #include "imgui_internal.h"
-#include "LodEditWindow.h"
-#include "MaterialEditWindow.h"
 #include "ModelRenderer.h"
 #include "OpenGLImGuiTextureAssetCache.h"
 #include "Options.h"
-#include "PreviewOptionsWindow.h"
 #include "SharedMgr.h"
-#include "SkinEditWindow.h"
+#include "tabs/CollisionTab.h"
+#include "tabs/LodsTab.h"
+#include "tabs/MaterialsTab.h"
+#include "tabs/PreviewOptionsTab.h"
+#include "tabs/SkinsTab.h"
 
 static bool modelLoaded = false;
 static bool dragging = false;
@@ -41,6 +41,10 @@ static bool openPressed = false;
 static bool newPressed = false;
 static bool savePressed = false;
 static bool previewFocused = false;
+
+static ImGuiID dockspaceId;
+static ImGuiID rootDockspaceID;
+static bool dockspaceSetup = false;
 
 static void destroyExistingModel()
 {
@@ -357,10 +361,6 @@ static void HandleMenuAndShortcuts()
     }
 }
 
-static ImGuiID dockspaceId;
-static ImGuiID rootDockspaceID;
-static bool dockspaceSetup = false;
-
 void SetupDockspace()
 {
     if (dockspaceSetup)
@@ -428,11 +428,11 @@ static void Render()
 
     HandleMenuAndShortcuts();
 
-    PreviewOptionsWindow::Render();
-    MaterialEditWindow::Render();
-    SkinEditWindow::Render();
-    LodEditWindow::Render(window);
-    CollisionEditWindow::Render(window);
+    PreviewOptionsTab::Render();
+    MaterialsTab::Render();
+    SkinsTab::Render();
+    LodsTab::Render(window);
+    CollisionTab::Render(window);
 
     constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
                                              ImGuiWindowFlags_NoMove |

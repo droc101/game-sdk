@@ -4,10 +4,10 @@
 
 #pragma once
 
-class PreviewOptionsWindow
+class PreviewOptionsTab
 {
     public:
-        PreviewOptionsWindow() = delete;
+        PreviewOptionsTab() = delete;
 
         static void Render();
 };

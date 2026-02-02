@@ -2,7 +2,7 @@
 // Created by droc101 on 7/4/25.
 //
 
-#include "LodEditWindow.h"
+#include "LodsTab.h"
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -18,10 +18,10 @@
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <utility>
+#include "../ModelRenderer.h"
 #include "DialogFilters.h"
-#include "ModelRenderer.h"
 
-void LodEditWindow::Render(SDL_Window *window)
+void LodsTab::Render(SDL_Window *window)
 {
     ImGui::Begin("LODs",
                  nullptr,
@@ -109,7 +109,7 @@ void LodEditWindow::Render(SDL_Window *window)
     ImGui::End();
 }
 
-void LodEditWindow::addLodCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+void LodsTab::addLodCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
@@ -125,7 +125,7 @@ void LodEditWindow::addLodCallback(void * /*userdata*/, const char *const *fileL
     }
 }
 
-void LodEditWindow::saveLodCallback(void *userdata, const char *const *fileList, int /*filter*/)
+void LodsTab::saveLodCallback(void *userdata, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {

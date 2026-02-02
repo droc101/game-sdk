@@ -6,10 +6,10 @@
 
 #include <cstddef>
 
-class MaterialEditWindow
+class MaterialsTab
 {
     public:
-        MaterialEditWindow() = delete;
+        MaterialsTab() = delete;
 
         static void Render();
 

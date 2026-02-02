@@ -6,10 +6,10 @@
 
 #include <SDL3/SDL_video.h>
 
-class LodEditWindow
+class LodsTab
 {
     public:
-        LodEditWindow() = delete;
+        LodsTab() = delete;
 
         static void Render(SDL_Window *window);
 

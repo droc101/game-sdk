@@ -2,7 +2,6 @@
 // Created by droc101 on 7/31/25.
 //
 
-#include "MaterialEditWindow.h"
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -10,12 +9,13 @@
 #include <imgui.h>
 #include <libassets/type/Material.h>
 #include <string>
-#include "ModelRenderer.h"
+#include "../ModelRenderer.h"
+#include "MaterialsTab.h"
 #include "Options.h"
 #include "SharedMgr.h"
 #include "TextureBrowserWindow.h"
 
-void MaterialEditWindow::Render()
+void MaterialsTab::Render()
 {
     ImGui::Begin("Materials",
                  nullptr,

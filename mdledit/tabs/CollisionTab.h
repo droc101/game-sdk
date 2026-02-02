@@ -6,10 +6,10 @@
 
 #include <SDL3/SDL_video.h>
 
-class CollisionEditWindow
+class CollisionTab
 {
     public:
-        CollisionEditWindow() = delete;
+        CollisionTab() = delete;
 
         static void Render(SDL_Window *window);
 

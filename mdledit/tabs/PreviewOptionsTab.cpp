@@ -2,11 +2,11 @@
 // Created by droc101 on 2/2/26.
 //
 
-#include "PreviewOptionsWindow.h"
+#include "../ModelRenderer.h"
 #include "imgui.h"
-#include "ModelRenderer.h"
+#include "PreviewOptionsTab.h"
 
-void PreviewOptionsWindow::Render()
+void PreviewOptionsTab::Render()
 {
     ImGui::Begin("Preview Options",
                  nullptr,

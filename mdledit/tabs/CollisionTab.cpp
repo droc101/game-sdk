@@ -2,7 +2,6 @@
 // Created by droc101 on 8/20/25.
 //
 
-#include "CollisionEditWindow.h"
 #include <cstddef>
 #include <format>
 #include <imgui.h>
@@ -11,10 +10,11 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_video.h>
 #include <string>
+#include "../ModelRenderer.h"
+#include "CollisionTab.h"
 #include "DialogFilters.h"
-#include "ModelRenderer.h"
 
-void CollisionEditWindow::Render(SDL_Window *window)
+void CollisionTab::Render(SDL_Window *window)
 {
     ModelAsset &model = ModelRenderer::GetModel();
     ImGui::Begin("Collision",
@@ -73,7 +73,7 @@ void CollisionEditWindow::Render(SDL_Window *window)
     ImGui::End();
 }
 
-void CollisionEditWindow::RenderStaticMeshUI(SDL_Window *window)
+void CollisionTab::RenderStaticMeshUI(SDL_Window *window)
 {
     ModelAsset &model = ModelRenderer::GetModel();
     if (ImGui::Button("Import Collision Mesh"))
@@ -90,7 +90,7 @@ void CollisionEditWindow::RenderStaticMeshUI(SDL_Window *window)
 }
 
 
-void CollisionEditWindow::RenderCHullUI(SDL_Window *window)
+void CollisionTab::RenderCHullUI(SDL_Window *window)
 {
     if (ImGui::Button("Import Hull"))
     {
@@ -135,7 +135,7 @@ void CollisionEditWindow::RenderCHullUI(SDL_Window *window)
     ImGui::EndChild();
 }
 
-void CollisionEditWindow::ImportStaticMeshCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+void CollisionTab::ImportStaticMeshCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
@@ -151,7 +151,7 @@ void CollisionEditWindow::ImportStaticMeshCallback(void * /*userdata*/, const ch
     }
 }
 
-void CollisionEditWindow::AddSingleHullCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+void CollisionTab::AddSingleHullCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
@@ -167,7 +167,7 @@ void CollisionEditWindow::AddSingleHullCallback(void * /*userdata*/, const char 
     }
 }
 
-void CollisionEditWindow::AddMultipleHullsCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+void CollisionTab::AddMultipleHullsCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {

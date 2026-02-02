@@ -93,12 +93,9 @@ class ModelRenderer
 
         static inline ModelAsset model{};
 
-        static inline GLuint cubeVao = 0;
-        static inline GLuint cubeVbo = 0;
+        static inline GLHelper::GL_Buffer cubeBuffer;
 
-        static inline GLuint bboxVao = 0;
-        static inline GLuint bboxVbo = 0;
-        static inline GLuint bboxEbo = 0;
+        static inline GLHelper::GL_IndexedBuffer bboxBuffer;
 
         static inline GLuint staticCollisionVao = 0;
         static inline GLuint staticCollisionVbo = 0;

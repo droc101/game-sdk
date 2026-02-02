@@ -2,16 +2,16 @@
 // Created by droc101 on 7/1/25.
 //
 
-#include "SkinEditWindow.h"
 #include <cstddef>
 #include <cstdint>
 #include <format>
 #include <imgui.h>
 #include <imgui_internal.h>
-#include "ModelRenderer.h"
+#include "../ModelRenderer.h"
 #include "SharedMgr.h"
+#include "SkinsTab.h"
 
-void SkinEditWindow::Render()
+void SkinsTab::Render()
 {
     ImGui::Begin("Skins",
                  nullptr,

@@ -6,17 +6,17 @@ set(CMAKE_CXX_STANDARD 20)
 add_executable(mdledit mdledit.cpp
         ModelRenderer.cpp
         ModelRenderer.h
-        SkinEditWindow.cpp
-        SkinEditWindow.h
-        LodEditWindow.cpp
-        LodEditWindow.h
-        MaterialEditWindow.cpp
-        MaterialEditWindow.h
-        CollisionEditWindow.cpp
-        CollisionEditWindow.h
+        tabs/SkinsTab.cpp
+        tabs/SkinsTab.h
+        tabs/LodEditWindow.cpp
+        tabs/LodsTab.h
+        tabs/MaterialsTab.cpp
+        tabs/MaterialsTab.h
+        tabs/CollisionTab.cpp
+        tabs/CollisionTab.h
         $<$<BOOL:${WIN32}>:mdledit.rc>
-        PreviewOptionsWindow.cpp
-        PreviewOptionsWindow.h
+        tabs/PreviewOptionsTab.cpp
+        tabs/PreviewOptionsTab.h
 )
 
 set_target_properties(mdledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")

@@ -5,8 +5,7 @@
 #pragma once
 #include <GL/glew.h>
 #include <glm/vec2.hpp>
-#include "libassets/util/Error.h"
-
+#include <libassets/util/Error.h>
 
 class GLHelper
 {
@@ -26,11 +25,11 @@ class GLHelper
 
         struct GL_Framebuffer
         {
-            bool created = false;
-            glm::vec2 size;
-            GLuint colorTexture;
-            GLuint fbo;
-            GLuint rbo;
+                bool created = false;
+                glm::vec2 size;
+                GLuint colorTexture;
+                GLuint fbo;
+                GLuint rbo;
         };
 
         GLHelper() = delete;
@@ -50,8 +49,8 @@ class GLHelper
         static void BindBuffer(const GL_Buffer &buffer);
         static void BindIndexedBuffer(const GL_IndexedBuffer &buffer);
 
-        [[nodiscard]] static GL_Framebuffer CreateFramebuffer(const glm::vec2 size);
-        static void ResizeFramebuffer(GL_Framebuffer &framebuffer, const glm::vec2 newSize);
+        [[nodiscard]] static GL_Framebuffer CreateFramebuffer(glm::vec2 size);
+        static void ResizeFramebuffer(GL_Framebuffer &framebuffer, glm::vec2 newSize);
         static void BindFramebuffer(const GL_Framebuffer &framebuffer);
         static void DestroyFramebuffer(GL_Framebuffer &framebuffer);
 

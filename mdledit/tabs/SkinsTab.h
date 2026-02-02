@@ -4,10 +4,10 @@
 
 #pragma once
 
-class SkinEditWindow
+class SkinsTab
 {
     public:
-        SkinEditWindow() = delete;
+        SkinsTab() = delete;
 
         static void Render();
 };
