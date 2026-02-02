@@ -15,6 +15,8 @@ add_executable(mdledit mdledit.cpp
         CollisionEditWindow.cpp
         CollisionEditWindow.h
         $<$<BOOL:${WIN32}>:mdledit.rc>
+        PreviewOptionsWindow.cpp
+        PreviewOptionsWindow.h
 )
 
 set_target_properties(mdledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")

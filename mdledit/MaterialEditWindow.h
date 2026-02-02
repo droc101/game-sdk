@@ -4,17 +4,15 @@
 
 #pragma once
 
+#include <cstddef>
+
 class MaterialEditWindow
 {
     public:
         MaterialEditWindow() = delete;
 
-        static void Show();
-
-        static void Hide();
-
         static void Render();
 
     private:
-        static inline bool visible;
+        static inline size_t selectedIndex = 0;
 };

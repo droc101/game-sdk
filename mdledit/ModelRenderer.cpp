@@ -34,6 +34,8 @@ bool ModelRenderer::Init()
         return false;
     }
 
+    framebuffer = GLHelper::CreateFramebuffer({windowWidth, windowHeight});
+
     const Error::ErrorCode modelProgramErrorCode = GLHelper::CreateProgram("assets/mdledit/model.frag",
                                                                            "assets/mdledit/model.vert",
                                                                            program);
@@ -82,6 +84,7 @@ ModelAsset &ModelRenderer::GetModel()
 void ModelRenderer::Destroy()
 {
     UnloadModel();
+    GLHelper::DestroyFramebuffer(framebuffer);
     glDeleteProgram(program);
 }
 
@@ -180,6 +183,8 @@ void ModelRenderer::LoadModel(ModelAsset &&newModel)
 
 void ModelRenderer::Render()
 {
+    GLHelper::BindFramebuffer(framebuffer);
+
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     if (cullBackfaces)
@@ -200,7 +205,6 @@ void ModelRenderer::Render()
     }
 
     glUseProgram(program);
-    glViewport(0, PANEL_SIZE, windowWidth, windowHeight - PANEL_SIZE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     const GLModelLod &glod = lods.at(lodIndex);
@@ -348,13 +352,16 @@ void ModelRenderer::Render()
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
     }
+
+    GLHelper::UnbindFramebuffer();
 }
 
 void ModelRenderer::ResizeWindow(const GLsizei width, const GLsizei height)
 {
     windowWidth = width;
     windowHeight = height;
-    windowAspect = static_cast<float>(width) / static_cast<float>(height - PANEL_SIZE);
+    windowAspect = static_cast<float>(width) / static_cast<float>(height);
+    GLHelper::ResizeFramebuffer(framebuffer, {width, height});
     UpdateMatrix();
 }
 
@@ -438,4 +445,14 @@ void ModelRenderer::LoadStaticCollision()
                  static_cast<GLsizeiptr>(sizeof(GLfloat) * verts.size()),
                  verts.data(),
                  GL_STATIC_DRAW);
+}
+
+ImTextureID ModelRenderer::GetFramebufferTexture()
+{
+    return framebuffer.colorTexture;
+}
+
+ImVec2 ModelRenderer::GetFramebufferSize()
+{
+    return {framebuffer.size.x, framebuffer.size.y};
 }

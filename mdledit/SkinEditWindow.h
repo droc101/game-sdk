@@ -9,12 +9,5 @@ class SkinEditWindow
     public:
         SkinEditWindow() = delete;
 
-        static void Show();
-
-        static void Hide();
-
         static void Render();
-
-    private:
-        static inline bool visible;
 };
