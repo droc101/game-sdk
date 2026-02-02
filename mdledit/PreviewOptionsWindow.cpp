@@ -29,11 +29,23 @@ void PreviewOptionsWindow::Render()
                      static_cast<int>(ModelRenderer::GetModel().GetSkinCount() - 1));
 
     ImGui::SeparatorText("Display Options");
-    ImGui::Checkbox("Wireframe", &ModelRenderer::wireframe);
-    ImGui::Checkbox("Cull Backfaces", &ModelRenderer::cullBackfaces);
-    ImGui::Checkbox("Show Unit Cube", &ModelRenderer::showUnitCube);
-    ImGui::Checkbox("Show Bounding Box", &ModelRenderer::showBoundingBox);
-    ImGui::Checkbox("Show Collision Model", &ModelRenderer::showCollisionModel);
+    if (ImGui::BeginTable("##optionsGrid", 3))
+    {
+        ImGui::TableNextColumn();
+        ImGui::Checkbox("Wireframe", &ModelRenderer::wireframe);
+        ImGui::TableNextColumn();
+        ImGui::Checkbox("Cull Backfaces", &ModelRenderer::cullBackfaces);
+        ImGui::TableNextColumn();
+        ImGui::Checkbox("Show Unit Cube", &ModelRenderer::showUnitCube);
+        ImGui::TableNextColumn();
+        ImGui::Checkbox("Show Bounding Box", &ModelRenderer::showBoundingBox);
+        ImGui::TableNextColumn();
+        ImGui::Checkbox("Show Collision Model", &ModelRenderer::showCollisionModel);
+        ImGui::EndTable();
+    }
+
+    ImGui::Text("Background Color");
+    ImGui::ColorEdit3("##bgColor", ModelRenderer::backgroundColor.GetDataPointer());
 
     ImGui::SeparatorText("Display Mode");
     if (ImGui::RadioButton("Unshaded", ModelRenderer::displayMode == ModelRenderer::DisplayMode::COLORED))

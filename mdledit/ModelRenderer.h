@@ -64,6 +64,8 @@ class ModelRenderer
         static inline bool showBoundingBox = false;
         static inline bool showCollisionModel = false;
 
+        static inline Color backgroundColor = Color(0,0,0,1);
+
         static inline uint32_t EVENT_RELOAD_MODEL;
         static constexpr int32_t EVENT_RELOAD_MODEL_CODE_GMDL = 0;
         static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL = 1;
