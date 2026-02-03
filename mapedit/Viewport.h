@@ -5,9 +5,9 @@
 #pragma once
 
 #include <cstdint>
+#include <game_sdk/gl/GLHelper.h>
 #include <glm/mat4x4.hpp>
-#include "GLHelper.h"
-#include "imgui.h"
+#include <imgui.h>
 
 class Viewport
 {

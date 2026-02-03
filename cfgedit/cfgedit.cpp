@@ -2,21 +2,18 @@
 // Created by droc101 on 10/4/25.
 //
 
-#include <cstdio>
 #include <format>
+#include <game_sdk/DesktopInterface.h>
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <libassets/asset/GameConfigAsset.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
 #include <string>
-#include "DesktopInterface.h"
-#include "DialogFilters.h"
-#include "SDKWindow.h"
-#include "SharedMgr.h"
 
 static SDKWindow sdkWindow{};
 
@@ -28,13 +25,7 @@ static void openGame(const std::string &path)
     const Error::ErrorCode errorCode = GameConfigAsset::CreateFromAsset(path.c_str(), config);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to open the gane configuration!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Failed to show SDL Error messagebox with error \"%s\"\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to open the game configuration!\n{}", errorCode));
         return;
     }
     configLoaded = true;
@@ -58,13 +49,7 @@ static void saveGameCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = config.SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to save the game configuration!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Failed to show SDL Error messagebox with error \"%s\"\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to save the game configuration!\n{}", errorCode));
     }
 }
 

@@ -2,14 +2,13 @@
 // Created by droc101 on 11/12/25.
 //
 
-#include "SetupWindow.h"
 #include <cstdlib>
+#include <game_sdk/Options.h>
+#include <game_sdk/windows/SetupWindow.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_video.h>
-
-#include "Options.h"
 
 void SetupWindow::Show(bool required)
 {

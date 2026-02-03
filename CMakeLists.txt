@@ -108,7 +108,7 @@ add_custom_target(
 )
 
 add_subdirectory(libassets)
-add_subdirectory(shared)
+add_subdirectory(game_sdk_shared)
 add_subdirectory(texedit)
 add_subdirectory(mdledit)
 add_subdirectory(sndedit)

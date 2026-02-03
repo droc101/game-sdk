@@ -7,7 +7,7 @@ add_executable(cfgedit cfgedit.cpp $<$<BOOL:${WIN32}>:cfgedit.rc>)
 
 set_target_properties(cfgedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
-target_link_libraries(cfgedit PRIVATE shared)
+target_link_libraries(cfgedit PRIVATE game_sdk_shared)
 
 add_dependencies(cfgedit assets)
 

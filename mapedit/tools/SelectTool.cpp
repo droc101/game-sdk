@@ -8,6 +8,7 @@
 #include <cfloat>
 #include <cstddef>
 #include <glm/gtc/type_ptr.hpp>
+#include <imgui.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
 #include <string>
@@ -16,8 +17,6 @@
 #include "../MapEditor.h"
 #include "../MapRenderer.h"
 #include "../Viewport.h"
-#include "imgui.h"
-#include "imgui_internal.h"
 
 void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {

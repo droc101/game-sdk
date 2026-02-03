@@ -5,6 +5,10 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <game_sdk/DesktopInterface.h>
+#include <game_sdk/Options.h>
+#include <game_sdk/SDKWindow.h>
+#include <game_sdk/windows/SetupWindow.h>
 #include <imgui.h>
 #include <libassets/util/Error.h>
 #include <nlohmann/json.hpp>
@@ -13,11 +17,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "DesktopInterface.h"
-#include "Options.h"
-#include "SDKWindow.h"
-#include "SetupWindow.h"
 
 static SDKWindow sdkWindow{};
 

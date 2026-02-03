@@ -7,7 +7,7 @@ add_executable(fonedit fonedit.cpp $<$<BOOL:${WIN32}>:fonedit.rc>)
 
 set_target_properties(fonedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
-target_link_libraries(fonedit PRIVATE shared)
+target_link_libraries(fonedit PRIVATE game_sdk_shared)
 
 add_dependencies(fonedit assets)
 

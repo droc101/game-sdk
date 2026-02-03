@@ -1,28 +1,26 @@
+#include <SDL3/SDL_error.h>
 #include <array>
 #include <cstdio>
 #include <format>
+#include <game_sdk/DesktopInterface.h>
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/Options.h>
+#include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
 #include <GL/glew.h>
 #include <imgui.h>
-#include <imgui_impl_sdl3.h>
+#include <imgui_internal.h>
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/type/ConvexHull.h>
+#include <libassets/type/StaticCollisionMesh.h>
 #include <libassets/util/Error.h>
 #include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
-#include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_mouse.h>
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <utility>
-#include "DesktopInterface.h"
-#include "DialogFilters.h"
-#include "imgui_internal.h"
-#include "libassets/type/StaticCollisionMesh.h"
 #include "ModelRenderer.h"
-#include "Options.h"
-#include "SDKWindow.h"
-#include "SharedMgr.h"
 #include "tabs/CollisionTab.h"
 #include "tabs/LodsTab.h"
 #include "tabs/MaterialsTab.h"
@@ -94,13 +92,7 @@ static void saveGmdlCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = ModelRenderer::GetModel().SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to save the model!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to save the model!\n{}", errorCode));
     }
 }
 
@@ -117,13 +109,7 @@ static bool ProcessEvent(SDL_Event *event)
             const Error::ErrorCode errorCode = ModelAsset::CreateFromAsset(*path, model);
             if (errorCode != Error::ErrorCode::OK)
             {
-                if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                              "Error",
-                                              std::format("Failed to open the model!\n{}", errorCode).c_str(),
-                                              sdkWindow.GetWindow()))
-                {
-                    printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-                }
+                sdkWindow.ErrorMessage(std::format("Failed to open the model!\n{}", errorCode));
                 delete path;
                 return true;
             }
@@ -134,13 +120,7 @@ static bool ProcessEvent(SDL_Event *event)
                                                                                    Options::defaultTexture);
             if (errorCode != Error::ErrorCode::OK)
             {
-                if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                              "Error",
-                                              std::format("Failed to import the model!\n{}", errorCode).c_str(),
-                                              sdkWindow.GetWindow()))
-                {
-                    printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-                }
+                sdkWindow.ErrorMessage(std::format("Failed to import the model!\n{}", errorCode));
                 delete path;
                 return true;
             }
@@ -149,13 +129,7 @@ static bool ProcessEvent(SDL_Event *event)
             model = ModelRenderer::GetModel();
             if (!model.AddLod(*path))
             {
-                if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                              "Error",
-                                              std::format("Failed to import model LOD!").c_str(),
-                                              sdkWindow.GetWindow()))
-                {
-                    printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-                }
+                sdkWindow.ErrorMessage(std::format("Failed to import model LOD!"));
                 delete path;
                 return true;
             }
@@ -184,13 +158,7 @@ static bool ProcessEvent(SDL_Event *event)
         const Error::ErrorCode errorCode = ModelRenderer::GetModel().SaveAsAsset(*path);
         if (errorCode != Error::ErrorCode::OK)
         {
-            if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                          "Error",
-                                          std::format("Failed to save the model!\n{}", errorCode).c_str(),
-                                          sdkWindow.GetWindow()))
-            {
-                printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-            }
+            sdkWindow.ErrorMessage(std::format("Failed to save the model!\n{}", errorCode));
             delete path;
             return true;
         }
@@ -346,15 +314,10 @@ static void HandleMenuAndShortcuts()
     {
         if (!ModelRenderer::GetModel().ValidateLodDistances())
         {
-            if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                          "Invalid Model",
-                                          "LOD distances are invalid! Please fix them in the LOD editor and make sure "
-                                          "that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the "
-                                          "same distance",
-                                          sdkWindow.GetWindow()))
-            {
-                printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-            }
+            sdkWindow.ErrorMessage("LOD distances are invalid! Please fix them in the LOD editor and make sure "
+                                   "that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the "
+                                   "same distance",
+                                   "Invalid Model");
         } else
         {
             SDL_ShowSaveFileDialog(saveGmdlCallback,

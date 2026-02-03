@@ -2,8 +2,8 @@
 // Created by droc101 on 7/15/2025.
 //
 
-#include "GLDebug.h"
 #include <cstdio>
+#include <game_sdk/gl/GLDebug.h>
 #include <GL/glew.h>
 #include <string>
 

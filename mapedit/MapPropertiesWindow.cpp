@@ -3,10 +3,10 @@
 //
 
 #include "MapPropertiesWindow.h"
+#include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include "MapEditor.h"
-#include "TextureBrowserWindow.h"
 
 void MapPropertiesWindow::Render()
 {

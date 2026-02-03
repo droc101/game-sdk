@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <game_sdk/gl/GLHelper.h>
 #include <GL/glew.h>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
@@ -13,7 +14,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "GLHelper.h"
 #include "Viewport.h"
 
 class MapRenderer

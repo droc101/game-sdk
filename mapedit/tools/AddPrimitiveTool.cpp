@@ -14,7 +14,6 @@
 #include <memory>
 #include <numbers>
 #include <vector>
-
 #include "../MapEditor.h"
 #include "../MapRenderer.h"
 #include "../Viewport.h"

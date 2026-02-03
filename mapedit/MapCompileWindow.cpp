@@ -3,13 +3,13 @@
 //
 
 #include "MapCompileWindow.h"
+#include <game_sdk/DesktopInterface.h>
+#include <game_sdk/Options.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_messagebox.h>
-#include "DesktopInterface.h"
 #include "MapEditor.h"
-#include "Options.h"
 
 void MapCompileWindow::StartCompile(SDL_Window *window)
 {
