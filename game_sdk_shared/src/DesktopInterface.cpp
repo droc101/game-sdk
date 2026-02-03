@@ -13,8 +13,10 @@
 #include <vector>
 
 #ifdef WIN32
-#include <shellapi.h>
+// clang-format off
 #include <windows.h>
+#include <shellapi.h>
+// clang-format on
 #endif
 
 bool DesktopInterface::ExecuteProcess(const std::string &executable,
