@@ -12,22 +12,22 @@
 #include <nlohmann/json.hpp>
 #include <vector>
 
-Sector::Sector(nlohmann::ordered_json j)
+Sector::Sector(nlohmann::ordered_json json)
 {
-    floorHeight = j.value("floorHeight", -1.0f);
-    ceilingHeight = j.value("ceilingHeight", 1.0f);
-    floorMaterial = WallMaterial(j["floorMaterial"]);
-    ceilingMaterial = WallMaterial(j["ceilingMaterial"]);
-    lightColor = Color(j["lightColor"]);
-    const nlohmann::ordered_json mats = j.at("wallMaterials");
+    floorHeight = json.value("floorHeight", -1.0f);
+    ceilingHeight = json.value("ceilingHeight", 1.0f);
+    floorMaterial = WallMaterial(json["floorMaterial"]);
+    ceilingMaterial = WallMaterial(json["ceilingMaterial"]);
+    lightColor = Color(json["lightColor"]);
+    const nlohmann::ordered_json mats = json.at("wallMaterials");
     for (const nlohmann::basic_json<nlohmann::ordered_map> &material: mats)
     {
         wallMaterials.emplace_back(material);
     }
-    const nlohmann::ordered_json jPoints = j.at("points");
+    const nlohmann::ordered_json jPoints = json.at("points");
     for (const nlohmann::basic_json<nlohmann::ordered_map> &point: jPoints)
     {
-        points.push_back({point.value("x", 0.0f), point.value("z", 0.0f)});
+        points.emplace_back(point.value("x", 0.0f), point.value("z", 0.0f));
     }
 }
 
@@ -38,11 +38,12 @@ bool Sector::ContainsPoint(const glm::vec2 point) const
     for (size_t i = 0; i < n; i++)
     {
         const size_t j = (i + n - 1) % n;
-        const glm::vec2 &pi = points.at(i);
-        const glm::vec2 &pj = points.at(j);
+        const glm::vec2 &pointI = points.at(i);
+        const glm::vec2 &pointJ = points.at(j);
 
-        const bool intersect = ((pi.y > point.y) != (pj.y > point.y)) &&
-                               (point.x < (pj.x - pi.x) * (point.y - pi.y) / (pj.y - pi.y) + pi.x);
+        const bool intersect = ((pointI.y > point.y) != (pointJ.y > point.y)) &&
+                               (point.x <
+                                (pointJ.x - pointI.x) * (point.y - pointI.y) / (pointJ.y - pointI.y) + pointI.x);
 
         if (intersect)
         {
@@ -54,26 +55,26 @@ bool Sector::ContainsPoint(const glm::vec2 point) const
 
 nlohmann::ordered_json Sector::GenerateJson() const
 {
-    nlohmann::ordered_json j = nlohmann::ordered_json();
-    j["floorHeight"] = floorHeight;
-    j["ceilingHeight"] = ceilingHeight;
-    j["floorMaterial"] = floorMaterial.GenerateJson();
-    j["ceilingMaterial"] = ceilingMaterial.GenerateJson();
-    j["lightColor"] = lightColor.GenerateJson();
-    j["wallMaterials"] = nlohmann::ordered_json::array();
+    nlohmann::ordered_json json = nlohmann::ordered_json();
+    json["floorHeight"] = floorHeight;
+    json["ceilingHeight"] = ceilingHeight;
+    json["floorMaterial"] = floorMaterial.GenerateJson();
+    json["ceilingMaterial"] = ceilingMaterial.GenerateJson();
+    json["lightColor"] = lightColor.GenerateJson();
+    json["wallMaterials"] = nlohmann::ordered_json::array();
     for (const WallMaterial &material: wallMaterials)
     {
-        j["wallMaterials"].push_back(material.GenerateJson());
+        json["wallMaterials"].push_back(material.GenerateJson());
     }
-    j["points"] = nlohmann::ordered_json::array();
+    json["points"] = nlohmann::ordered_json::array();
     for (const glm::vec2 &point: points)
     {
         nlohmann::ordered_json jPoint{};
         jPoint["x"] = point.x;
         jPoint["z"] = point.y;
-        j["points"].push_back(jPoint);
+        json["points"].push_back(jPoint);
     }
-    return j;
+    return json;
 }
 
 double Sector::CalculateArea() const
@@ -107,7 +108,7 @@ glm::vec2 Sector::SegmentNormal(const int segmentIndex) const
     const glm::vec2 p0 = points.at(segmentIndex);
     const glm::vec2 p1 = points.at((segmentIndex + 1) % points.size());
 
-    const glm::vec2 edgeDir = {p1.x - p0.x, p1.y - p0.y};
+    const glm::vec2 edgeDir = p1 - p0;
 
     const glm::vec2 left = {-edgeDir.y, edgeDir.x};
     const glm::vec2 right = {edgeDir.y, -edgeDir.x};
@@ -144,10 +145,7 @@ bool Sector::PointsEqual(const glm::vec2 &a, const glm::vec2 &b)
 
 bool Sector::PointOnSegment(const glm::vec2 &a, const glm::vec2 &b, const glm::vec2 &c)
 {
-    return c.x <= std::max(a.x, b.x) + FLT_EPSILON &&
-           c.x >= std::min(a.x, b.x) - FLT_EPSILON &&
-           c.y <= std::max(a.y, b.y) + FLT_EPSILON &&
-           c.y >= std::min(a.y, b.y) - FLT_EPSILON;
+    return std::abs(c.x - std::max(a.x, b.x)) <= FLT_EPSILON && std::abs(c.y - std::max(a.y, b.y)) <= FLT_EPSILON;
 }
 
 bool Sector::CheckIntersection(const glm::vec2 &segmentAStart,

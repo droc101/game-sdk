@@ -41,14 +41,18 @@ template<> struct std::hash<ModelVertex>
         {
             constexpr size_t goldenRatio = 0x9e3779b9;
             size_t hashValue = 0;
+
             hashValue ^= std::hash<float>()(vertex.position.x) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
             hashValue ^= std::hash<float>()(vertex.position.y) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
             hashValue ^= std::hash<float>()(vertex.position.z) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
+
             hashValue ^= std::hash<float>()(vertex.normal.x) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
             hashValue ^= std::hash<float>()(vertex.normal.y) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
             hashValue ^= std::hash<float>()(vertex.normal.z) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
+
             hashValue ^= std::hash<float>()(vertex.uv.x) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
             hashValue ^= std::hash<float>()(vertex.uv.y) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
+
             for (const float color: vertex.color.CopyData())
             {
                 hashValue ^= std::hash<float>()(color) + goldenRatio + (hashValue << 6) + (hashValue >> 2);

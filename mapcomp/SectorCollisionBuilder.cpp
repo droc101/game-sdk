@@ -3,7 +3,6 @@
 //
 
 #include "SectorCollisionBuilder.h"
-
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -22,14 +21,13 @@ SectorCollisionBuilder::SectorCollisionBuilder(const Sector &sector)
     glm::vec2 sums{};
     for (const glm::vec2 &point: sector.points)
     {
-        sums.x += point.x;
-        sums.y += point.y;
+        sums += point;
     }
 
     sectorCenter = {};
     sectorCenter.x = sums.x / sector.points.size();
-    sectorCenter.z = sums.y / sector.points.size();
     sectorCenter.y = (sector.floorHeight + sector.ceilingHeight) / 2.0f;
+    sectorCenter.z = sums.y / sector.points.size();
 
     NextShape();
 }
@@ -156,11 +154,7 @@ void SectorCollisionBuilder::Write(DataWriter &writer)
 
 void SectorCollisionBuilder::WriteIndex(const size_t index, DataWriter &writer, const SubShape &shape) const
 {
-    glm::vec3 vertex = shape.vertices.at(index);
-    vertex.x -= sectorCenter.x;
-    vertex.y -= sectorCenter.y;
-    vertex.z -= sectorCenter.z;
-    writer.WriteVec3(vertex);
+    writer.WriteVec3(shape.vertices.at(index) - sectorCenter);
 }
 
 SectorCollisionBuilder::SubShape &SectorCollisionBuilder::CurrentShape()

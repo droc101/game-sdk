@@ -99,6 +99,7 @@ target_include_directories(imgui PUBLIC
         lib/imgui/backends
 )
 set_target_properties(imgui PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+target_link_libraries(imgui PRIVATE SDL3::SDL3)
 
 add_custom_target(
         copy_assets

@@ -22,6 +22,7 @@
 #include <libassets/type/paramDefs/StringParamDefinition.h>
 #include <libassets/util/Error.h>
 #include <memory>
+#include <numbers>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -149,9 +150,7 @@ void Actor::Write(DataWriter &writer) const
 {
     writer.WriteString(className);
     writer.WriteVec3(position);
-    writer.Write<float>(rotation.x * (M_PI / 180.0f));
-    writer.Write<float>(rotation.y * (M_PI / 180.0f));
-    writer.Write<float>(rotation.z * (M_PI / 180.0f));
+    writer.WriteVec3(rotation * (std::numbers::pi_v<float> / 180.0f));
     writer.Write<size_t>(connections.size());
     for (const IOConnection &connection: connections)
     {

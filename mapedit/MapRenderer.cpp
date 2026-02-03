@@ -350,7 +350,7 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix)
             model = "error";
         }
         glm::mat4 worldMatrix = glm::identity<glm::mat4>();
-        worldMatrix = glm::translate(worldMatrix, a.rotation);
+        worldMatrix = glm::translate(worldMatrix, a.position);
         worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.y), glm::vec3(0, 1, 0));
         worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.x), glm::vec3(1, 0, 0));
         worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.z), glm::vec3(0, 0, 1));

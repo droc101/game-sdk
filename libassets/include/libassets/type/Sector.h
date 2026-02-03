@@ -17,7 +17,7 @@ class Sector
 {
     public:
         Sector() = default;
-        explicit Sector(nlohmann::ordered_json j);
+        explicit Sector(nlohmann::ordered_json json);
 
         std::vector<glm::vec2> points{};
         std::vector<WallMaterial> wallMaterials{};

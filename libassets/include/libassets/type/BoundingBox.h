@@ -3,10 +3,14 @@
 //
 
 #pragma once
+
 #include <array>
+#include <concepts>
+#include <cstdio>
 #include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <limits>
 #include <vector>
 
 /**
@@ -37,13 +41,67 @@ class BoundingBox
          * Create a bounding box of the given vertices
          * @param verts The vertices to create a box for
          */
-        explicit BoundingBox(const std::vector<ModelVertex> &verts);
+        template<typename T> requires(std::same_as<T, ModelVertex> || std::same_as<T, glm::vec3>)
+        explicit BoundingBox(const std::vector<T> &verts)
+        {
+            if (verts.empty())
+            {
+                printf("WARN: Tried to create AABB with 0 points!");
+                return;
+            }
+            glm::vec3 minPoint = {
+                std::numeric_limits<float>::max(),
+                std::numeric_limits<float>::max(),
+                std::numeric_limits<float>::max(),
+            };
+            glm::vec3 maxPoint = {
+                std::numeric_limits<float>::lowest(),
+                std::numeric_limits<float>::lowest(),
+                std::numeric_limits<float>::lowest(),
+            };
 
-        /**
-         * Create a bounding box of the given vertices
-         * @param verts The vertices to create a box for
-         */
-        explicit BoundingBox(const std::vector<glm::vec3> &verts);
+            for (const T &vert: verts)
+            {
+                glm::vec3 point;
+                if constexpr (std::same_as<T, ModelVertex>)
+                {
+                    point = vert.position;
+                } else
+                {
+                    point = vert;
+                }
+
+                if (point.x < minPoint.x)
+                {
+                    minPoint.x = point.x;
+                }
+                if (point.x > maxPoint.x)
+                {
+                    maxPoint.x = point.x;
+                }
+
+                if (point.y < minPoint.y)
+                {
+                    minPoint.y = point.y;
+                }
+                if (point.y > maxPoint.y)
+                {
+                    maxPoint.y = point.y;
+                }
+
+                if (point.z < minPoint.z)
+                {
+                    minPoint.z = point.z;
+                }
+                if (point.z > maxPoint.z)
+                {
+                    maxPoint.z = point.z;
+                }
+            }
+
+            origin = (minPoint + maxPoint) * 0.5f;
+            extents = (maxPoint + minPoint) * 0.5f;
+        }
 
         /**
          * Create a bounding box from a DataReader

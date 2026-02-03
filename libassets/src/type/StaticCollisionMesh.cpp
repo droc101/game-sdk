@@ -48,9 +48,7 @@ StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath)
             {
                 const uint32_t vertexIndex = face.mIndices[faceIndexIndex];
                 const aiVector3d vert = mesh->mVertices[vertexIndex];
-                const glm::vec3 point = {static_cast<float>(vert.x),
-                                         static_cast<float>(vert.y),
-                                         static_cast<float>(vert.z)};
+                const glm::vec3 point = {vert.x, vert.y, vert.z};
                 vertices.push_back(point);
             }
         }
@@ -64,12 +62,7 @@ StaticCollisionMesh::StaticCollisionMesh(DataReader &reader)
     {
         for (int v = 0; v < 3; v++)
         {
-            const glm::vec3 vertex = {
-                reader.Read<float>(),
-                reader.Read<float>(),
-                reader.Read<float>(),
-            };
-            vertices.push_back(vertex);
+            vertices.push_back(reader.ReadVec3());
         }
     }
 }

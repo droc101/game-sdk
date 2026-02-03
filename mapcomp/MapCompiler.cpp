@@ -157,6 +157,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
                     }
                     const glm::vec2 &otherWallStart = otherSector.points.at(j);
                     const glm::vec2 &otherWallEnd = otherSector.points.at((j + 1) % otherSector.points.size());
+                    // TODO: This should probably use an epsilon
                     if ((wallStart == otherWallStart && wallEnd == otherWallEnd) ||
                         (wallStart == otherWallEnd && wallEnd == otherWallStart))
                     {
