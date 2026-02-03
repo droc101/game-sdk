@@ -8,7 +8,7 @@ add_executable(mdledit mdledit.cpp
         ModelRenderer.h
         tabs/SkinsTab.cpp
         tabs/SkinsTab.h
-        tabs/LodEditWindow.cpp
+        tabs/LodsTab.cpp
         tabs/LodsTab.h
         tabs/MaterialsTab.cpp
         tabs/MaterialsTab.h

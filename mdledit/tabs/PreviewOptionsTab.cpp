@@ -10,12 +10,7 @@ void PreviewOptionsTab::Render()
 {
     ImGui::Begin("Preview Options",
                  nullptr,
-                 ImGuiWindowFlags_NoCollapse |
-                         ImGuiWindowFlags_NoMove |
-                         ImGuiWindowFlags_NoBringToFrontOnFocus |
-                         ImGuiWindowFlags_NoDecoration |
-                         ImGuiWindowFlags_NoScrollbar |
-                         ImGuiWindowFlags_NoScrollWithMouse);
+                 ImGuiWindowFlags_NoCollapse);
     ImGui::PushItemWidth(-1);
     ImGui::TextUnformatted("LOD");
     ImGui::SliderInt("##LOD",

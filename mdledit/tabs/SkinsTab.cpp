@@ -15,12 +15,7 @@ void SkinsTab::Render()
 {
     ImGui::Begin("Skins",
                  nullptr,
-                 ImGuiWindowFlags_NoCollapse |
-                         ImGuiWindowFlags_NoMove |
-                         ImGuiWindowFlags_NoBringToFrontOnFocus |
-                         ImGuiWindowFlags_NoDecoration |
-                         ImGuiWindowFlags_NoScrollbar |
-                         ImGuiWindowFlags_NoScrollWithMouse);
+                 ImGuiWindowFlags_NoCollapse);
 
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 60 - 60 - 16);
     ImGui::TextUnformatted("Skin");

@@ -19,12 +19,7 @@ void MaterialsTab::Render()
 {
     ImGui::Begin("Materials",
                  nullptr,
-                 ImGuiWindowFlags_NoCollapse |
-                         ImGuiWindowFlags_NoMove |
-                         ImGuiWindowFlags_NoBringToFrontOnFocus |
-                         ImGuiWindowFlags_NoDecoration |
-                         ImGuiWindowFlags_NoScrollbar |
-                         ImGuiWindowFlags_NoScrollWithMouse);
+                 ImGuiWindowFlags_NoCollapse);
 
     if (ImGui::Button("Add", ImVec2(60, 0)))
     {

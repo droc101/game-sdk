@@ -2,6 +2,7 @@
 // Created by droc101 on 8/20/25.
 //
 
+#include "CollisionTab.h"
 #include <cstddef>
 #include <format>
 #include <imgui.h>
@@ -11,20 +12,12 @@
 #include <SDL3/SDL_video.h>
 #include <string>
 #include "../ModelRenderer.h"
-#include "CollisionTab.h"
 #include "DialogFilters.h"
 
 void CollisionTab::Render(SDL_Window *window)
 {
     ModelAsset &model = ModelRenderer::GetModel();
-    ImGui::Begin("Collision",
-                 nullptr,
-                 ImGuiWindowFlags_NoCollapse |
-                         ImGuiWindowFlags_NoMove |
-                         ImGuiWindowFlags_NoBringToFrontOnFocus |
-                         ImGuiWindowFlags_NoDecoration |
-                         ImGuiWindowFlags_NoScrollbar |
-                         ImGuiWindowFlags_NoScrollWithMouse);
+    ImGui::Begin("Collision", nullptr, ImGuiWindowFlags_NoCollapse);
     ImGui::Text("Bounding Box");
     ImGui::InputFloat3("Origin", model.GetBoundingBox().origin.data());
     ImGui::InputFloat3("Extents", model.GetBoundingBox().extents.data());

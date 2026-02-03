@@ -2,7 +2,6 @@
 // Created by droc101 on 7/4/25.
 //
 
-#include "LodsTab.h"
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -20,19 +19,12 @@
 #include <utility>
 #include "../ModelRenderer.h"
 #include "DialogFilters.h"
+#include "LodsTab.h"
 
 void LodsTab::Render(SDL_Window *window)
 {
-    ImGui::Begin("LODs",
-                 nullptr,
-                 ImGuiWindowFlags_NoCollapse |
-                         ImGuiWindowFlags_NoMove |
-                         ImGuiWindowFlags_NoBringToFrontOnFocus |
-                         ImGuiWindowFlags_NoDecoration |
-                         ImGuiWindowFlags_NoScrollbar |
-                         ImGuiWindowFlags_NoScrollWithMouse);
+    ImGui::Begin("LODs", nullptr, ImGuiWindowFlags_NoCollapse);
     ImGui::PushItemWidth(-1);
-
     if (ImGui::Button("Add", ImVec2(70, 0)))
     {
         SDL_ShowOpenFileDialog(addLodCallback,
@@ -44,7 +36,13 @@ void LodsTab::Render(SDL_Window *window)
                                false);
     }
     ImGui::SameLine();
-    ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 70, 0));
+    ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 70);
+    ImGui::SliderInt("##LOD",
+                     &ModelRenderer::lodIndex,
+                     0,
+                     static_cast<int>(ModelRenderer::GetModel().GetLodCount() - 1));
+    ImGui::SameLine();
+    // ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 70, 0));
     ImGui::SameLine();
     if (ImGui::Button("Validate", ImVec2(70, 0)))
     {
