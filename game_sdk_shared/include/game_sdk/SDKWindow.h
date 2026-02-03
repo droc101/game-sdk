@@ -31,9 +31,9 @@ class SDKWindow
 
         void ErrorMessage(const std::string &body, const std::string &title = "Error") const;
 
-        void WarningMessage(const std::string &body, const std::string &title = "Error") const;
+        void WarningMessage(const std::string &body, const std::string &title = "Warning") const;
 
-        void InfoMessage(const std::string &body, const std::string &title = "Error") const;
+        void InfoMessage(const std::string &body, const std::string &title) const;
 
     private:
         bool initDone = false;

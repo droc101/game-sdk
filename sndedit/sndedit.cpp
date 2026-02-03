@@ -11,8 +11,6 @@
 #include <libassets/util/Error.h>
 #include <miniaudio.h>
 #include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
 #include <string>
 
@@ -58,24 +56,12 @@ static void openGsnd(const std::string &path)
     const Error::ErrorCode errorCode = SoundAsset::CreateFromAsset(path.c_str(), soundAsset);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to open the sound!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to open the sound!\n{}", errorCode));
         return;
     }
     if (!loadSound())
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN));
     }
 }
 
@@ -93,24 +79,12 @@ static void importWav(const std::string &path)
     const Error::ErrorCode errorCode = SoundAsset::CreateFromWAV(path.c_str(), soundAsset);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to import the sound!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to import the sound!\n{}", errorCode));
         return;
     }
     if (!loadSound())
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN));
     }
 }
 
@@ -132,13 +106,7 @@ static void saveGsndCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = soundAsset.SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to save the sound!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to save the sound!\n{}", errorCode));
     }
 }
 
@@ -151,13 +119,7 @@ static void exportCallback(void * /*userdata*/, const char *const *fileList, int
     const Error::ErrorCode errorCode = soundAsset.SaveAsWAV(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to export the sound!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to export the sound!\n{}", errorCode));
     }
 }
 

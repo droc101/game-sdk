@@ -19,7 +19,6 @@
 #include <libassets/util/Error.h>
 #include <libassets/util/VectorMove.h>
 #include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_error.h>
 #include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
 #include <string>
@@ -36,13 +35,7 @@ static void openGfon(const std::string &path)
     const Error::ErrorCode errorCode = FontAsset::CreateFromAsset(path.c_str(), font);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to open the font!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Failed to show SDL Error messagebox with error \"%s\"\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to open the font!\n{}", errorCode));
         return;
     }
     fontLoaded = true;
@@ -66,13 +59,7 @@ static void saveGfonCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = font.SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to save the font!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Failed to show SDL Error messagebox with error \"%s\"\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to save the font!\n{}", errorCode));
     }
 }
 
