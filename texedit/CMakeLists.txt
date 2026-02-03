@@ -7,10 +7,11 @@ add_executable(texedit texedit.cpp $<$<BOOL:${WIN32}>:texedit.rc>)
 
 set_target_properties(texedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
-target_link_libraries(texedit PRIVATE shared imgui_sdl3_renderer)
+target_link_libraries(texedit PRIVATE shared)
 
 add_dependencies(texedit assets)
 
 if (WIN32)
     add_dependencies(texedit copydlls)
+    target_sources(texedit PRIVATE ../app.manifest)
 endif()

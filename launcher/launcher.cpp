@@ -6,28 +6,20 @@
 #include <filesystem>
 #include <fstream>
 #include <imgui.h>
-#include <imgui_impl_sdl3.h>
-#include <imgui_impl_sdlrenderer3.h>
 #include <libassets/util/Error.h>
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_events.h>
+#include <nlohmann/json.hpp>
 #include <SDL3/SDL_filesystem.h>
-#include <SDL3/SDL_init.h>
-#include <SDL3/SDL_misc.h>
-#include <SDL3/SDL_render.h>
-#include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <sstream>
 #include <string>
+#include <vector>
+
 #include "DesktopInterface.h"
 #include "Options.h"
-#include "OptionsWindow.h"
-#include "SDLRendererImGuiTextureAssetCache.h"
+#include "SDKWindow.h"
 #include "SetupWindow.h"
-#include "SharedMgr.h"
 
-static SDL_Renderer *renderer = nullptr;
-static SDL_Window *window = nullptr;
+static SDKWindow sdkWindow{};
 
 static std::string sdkPath;
 static nlohmann::ordered_json launcher_json;
@@ -131,8 +123,11 @@ static void LaunchSelectedTool()
     }
 }
 
-static void Render()
+static void Render(SDL_Window * /*window*/)
 {
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
     constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
                                              ImGuiWindowFlags_NoMove |
                                              ImGuiWindowFlags_NoSavedSettings |
@@ -185,30 +180,11 @@ static void Render()
 
 int main()
 {
-    if (!SDL_Init(SDL_INIT_VIDEO))
+    if (!sdkWindow.Init("GAME SDK", {350, 400}, 0))
     {
-        printf("Error: SDL_Init(): %s\n", SDL_GetError());
         return -1;
     }
 
-    window = SDL_CreateWindow("GAME SDK", 350, 400, 0);
-    if (window == nullptr)
-    {
-        printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
-        return -1;
-    }
-    renderer = SDL_CreateRenderer(window, nullptr);
-    if (!SDL_SetRenderVSync(renderer, 1))
-    {
-        printf("Error: SDL_SetRenderVSync(): %s\n", SDL_GetError());
-    }
-    if (renderer == nullptr)
-    {
-        printf("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
-        return -1;
-    }
-
-    SharedMgr::InitSharedMgr<SDLRendererImGuiTextureAssetCache>(renderer);
     sdkPath = SDL_GetBasePath();
     sdkPath.pop_back();
 
@@ -219,78 +195,9 @@ int main()
         return -1;
     }
 
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    sdkWindow.MainLoop(Render);
 
-    SharedMgr::ApplyTheme();
+    sdkWindow.Destroy();
 
-    ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
-    ImGui_ImplSDLRenderer3_Init(renderer);
-
-    bool done = false;
-    while (!done)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            ImGui_ImplSDL3_ProcessEvent(&event);
-            if (event.type == SDL_EVENT_QUIT)
-            {
-                done = true;
-            }
-            if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
-            {
-                done = true;
-            }
-        }
-
-        if ((SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0)
-        {
-            SDL_Delay(10);
-            continue;
-        }
-
-        ImGui_ImplSDLRenderer3_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();
-
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->WorkPos);
-        ImGui::SetNextWindowSize(viewport->WorkSize);
-
-        Render();
-
-        SharedMgr::RenderSharedUI(window);
-
-        ImGui::Render();
-        if (!SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y))
-        {
-            printf("Error: SDL_SetRenderScale(): %s\n", SDL_GetError());
-        }
-        if (!SDL_SetRenderDrawColorFloat(renderer, 0, 0, 0, 1))
-        {
-            printf("Error: SDL_SetRenderDrawColorFloat(): %s\n", SDL_GetError());
-        }
-        if (!SDL_RenderClear(renderer))
-        {
-            printf("Error: SDL_RenderClear(): %s\n", SDL_GetError());
-        }
-        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
-        if (!SDL_RenderPresent(renderer))
-        {
-            printf("Error: SDL_RenderPresent(): %s\n", SDL_GetError());
-        }
-    }
-
-    SharedMgr::DestroySharedMgr();
-
-    ImGui_ImplSDLRenderer3_Shutdown();
-    ImGui_ImplSDL3_Shutdown();
-    ImGui::DestroyContext();
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
     return 0;
 }

@@ -2,6 +2,7 @@
 // Created by droc101 on 7/31/25.
 //
 
+#include "MaterialsTab.h"
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -10,7 +11,6 @@
 #include <libassets/type/Material.h>
 #include <string>
 #include "../ModelRenderer.h"
-#include "MaterialsTab.h"
 #include "Options.h"
 #include "SharedMgr.h"
 #include "TextureBrowserWindow.h"
@@ -47,7 +47,7 @@ void MaterialsTab::Render()
         {
             Material &mat = ModelRenderer::GetModel().GetMaterial(m);
             ImTextureID textureId;
-            SharedMgr::textureCache->GetTextureID(mat.texture, textureId);
+            SharedMgr::textureCache.GetTextureID(mat.texture, textureId);
             const std::string title = std::format("##picker_{}", m);
             bool selected = ImGui::Selectable(title.c_str(),
                                               selectedIndex == m,
@@ -71,13 +71,13 @@ void MaterialsTab::Render()
 
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
-    const Error::ErrorCode e = SharedMgr::textureCache->GetTextureID(mat.texture, tid);
+    const Error::ErrorCode e = SharedMgr::textureCache.GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e == Error::ErrorCode::OK)
     {
         constexpr int imagePanelHeight = 128;
         ImVec2 imageSize{};
-        SharedMgr::textureCache->GetTextureSize(mat.texture, imageSize);
+        SharedMgr::textureCache.GetTextureSize(mat.texture, imageSize);
         const glm::vec2 scales = {(sz.x - 16) / imageSize.x, imagePanelHeight / imageSize.y};
         const float scale = std::ranges::min(scales.x, scales.y);
         float *color = mat.color.GetDataPointer();

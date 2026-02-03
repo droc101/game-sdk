@@ -26,10 +26,17 @@ void Options::Load()
     std::ostringstream ss;
     ss << file.rdbuf();
     const std::string j = ss.str();
+    if (j.empty())
+    {
+        printf("options.json was empty, loading defaults.\n");
+        LoadDefault();
+        file.close();
+        return;
+    }
     const nlohmann::json savedata = nlohmann::json::parse(j);
     if (savedata.is_discarded())
     {
-        printf("Failed to parse options JSON, loading defaults.");
+        printf("Failed to parse options JSON, loading defaults.\n");
         LoadDefault();
     } else
     {

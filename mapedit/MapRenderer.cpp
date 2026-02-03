@@ -21,18 +21,12 @@
 #include "GLHelper.h"
 #include "imgui.h"
 #include "MapEditor.h"
-#include "OpenGLImGuiTextureAssetCache.h"
 #include "Options.h"
 #include "SharedMgr.h"
 #include "Viewport.h"
 
 bool MapRenderer::Init()
 {
-    if (!GLHelper::Init())
-    {
-        return false;
-    }
-
     const Error::ErrorCode linesProgramErrorCode = GLHelper::CreateProgram("assets/mapedit/basicVertexColor.frag",
                                                                            "assets/mapedit/basicVertexColor.vert",
                                                                            lineProgram);
@@ -272,10 +266,8 @@ void MapRenderer::RenderBillboardSprite(const glm::vec3 position,
 
     glPointSize(pointSize);
 
-    OpenGLImGuiTextureAssetCache *cache = dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache.get());
-
     GLuint textureId = -1;
-    const Error::ErrorCode e = cache->GetTextureGLuint("texture/" + texture + ".gtex", textureId);
+    const Error::ErrorCode e = SharedMgr::textureCache.GetTextureGLuint("texture/" + texture + ".gtex", textureId);
     assert(e == Error::ErrorCode::OK); // TODO handle properly
 
     glActiveTexture(GL_TEXTURE0);

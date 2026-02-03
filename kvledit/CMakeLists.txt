@@ -7,10 +7,11 @@ add_executable(kvledit kvledit.cpp $<$<BOOL:${WIN32}>:kvledit.rc>)
 
 set_target_properties(kvledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
-target_link_libraries(kvledit PRIVATE shared imgui_sdl3_renderer)
+target_link_libraries(kvledit PRIVATE shared)
 
 add_dependencies(kvledit assets)
 
 if (WIN32)
     add_dependencies(kvledit copydlls)
+    target_sources(kvledit PRIVATE ../app.manifest)
 endif()

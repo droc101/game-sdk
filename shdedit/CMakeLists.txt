@@ -12,10 +12,11 @@ add_executable(shdedit shdedit.cpp
 
 set_target_properties(shdedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
-target_link_libraries(shdedit PRIVATE shared imgui_sdl3_renderer)
+target_link_libraries(shdedit PRIVATE shared)
 
 add_dependencies(shdedit assets)
 
 if (WIN32)
     add_dependencies(shdedit copydlls)
+    target_sources(shdedit PRIVATE ../app.manifest)
 endif()

@@ -13,6 +13,7 @@
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/util/Error.h>
 #include <ranges>
+#include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_misc.h>
 #include <SDL3/SDL_video.h>
 #include <stdexcept>
@@ -20,11 +21,30 @@
 #include <utility>
 #include <vector>
 #include "AboutWindow.h"
+#include "DesktopInterface.h"
 #include "MaterialBrowserWindow.h"
 #include "Options.h"
 #include "OptionsWindow.h"
 #include "SetupWindow.h"
 #include "TextureBrowserWindow.h"
+#ifdef WIN32
+#include <direct.h> // provides chdir
+#else
+#include <unistd.h>
+#endif
+
+void SharedMgr::InitSharedMgr()
+{
+    chdir(SDL_GetBasePath());
+    Options::Load();
+    LoadOptionDefinitions();
+    LoadActorDefinitions();
+    DesktopInterface::InitDesktopInterface();
+    if (!Options::ValidateGamePath())
+    {
+        SetupWindow::Show();
+    }
+}
 
 void SharedMgr::DestroySharedMgr()
 {

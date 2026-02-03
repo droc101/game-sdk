@@ -3,30 +3,26 @@
 #include <cstdio>
 #include <format>
 #include <imgui.h>
-#include <imgui_impl_sdl3.h>
-#include <imgui_impl_sdlrenderer3.h>
 #include <libassets/asset/SoundAsset.h>
 #include <libassets/util/Error.h>
 #include <miniaudio.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_init.h>
 #include <SDL3/SDL_messagebox.h>
-#include <SDL3/SDL_render.h>
-#include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
+#include <string>
+#include "DesktopInterface.h"
 #include "DialogFilters.h"
-#include "SDLRendererImGuiTextureAssetCache.h"
+#include "SDKWindow.h"
 #include "SharedMgr.h"
 
-static SoundAsset soundAsset{};
+static SDKWindow sdkWindow{};
+static ma_engine engine{};
 static ma_decoder decoder{};
+
+static SoundAsset soundAsset{};
 static ma_sound sound{};
 static bool soundLoaded = false;
-static SDL_Renderer *renderer{};
-static SDL_Window *window{};
-static ma_engine engine{};
 
 static void destroyExistingSound()
 {
@@ -65,7 +61,7 @@ static void openGsnd(const std::string &path)
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to open the sound!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
@@ -76,7 +72,7 @@ static void openGsnd(const std::string &path)
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
@@ -100,7 +96,7 @@ static void importWav(const std::string &path)
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to import the sound!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
@@ -111,7 +107,7 @@ static void importWav(const std::string &path)
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
@@ -139,7 +135,7 @@ static void saveGsndCallback(void * /*userdata*/, const char *const *fileList, i
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to save the sound!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
@@ -158,15 +154,18 @@ static void exportCallback(void * /*userdata*/, const char *const *fileList, int
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to export the sound!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
     }
 }
 
-static void Render(bool &done, SDL_Window *sdlWindow)
+static void Render(SDL_Window *sdlWindow)
 {
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
     constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
                                              ImGuiWindowFlags_NoMove |
                                              ImGuiWindowFlags_NoSavedSettings |
@@ -188,7 +187,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                done = true;
+                sdkWindow.PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -306,58 +305,16 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
 int main(int argc, char **argv)
 {
-    if (!SDL_Init(SDL_INIT_VIDEO))
+    if (!sdkWindow.Init("sndedit"))
     {
-        printf("Error: SDL_Init(): %s\n", SDL_GetError());
         return -1;
     }
-
     const ma_result res = ma_engine_init(nullptr, &engine);
     if (res != MA_SUCCESS)
     {
         printf("Error: ma_engine_init(): %d\n", res);
         return -1;
     }
-
-    constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
-    window = SDL_CreateWindow("sndedit", 800, 600, windowFlags);
-    if (window == nullptr)
-    {
-        printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
-        return -1;
-    }
-    renderer = SDL_CreateRenderer(window, nullptr);
-    if (!SDL_SetRenderVSync(renderer, 1))
-    {
-        printf("Error: SDL_SetRenderVSync(): %s\n", SDL_GetError());
-    }
-    if (renderer == nullptr)
-    {
-        printf("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
-        return -1;
-    }
-
-    SharedMgr::InitSharedMgr<SDLRendererImGuiTextureAssetCache>(renderer);
-
-    if (!SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED))
-    {
-        printf("Error: SDL_SetWindowPosition(): %s\n", SDL_GetError());
-    }
-    if (!SDL_ShowWindow(window))
-    {
-        printf("Error: SDL_ShowWindow(): %s\n", SDL_GetError());
-        return -1;
-    }
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-
-    SharedMgr::ApplyTheme();
-
-    ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
-    ImGui_ImplSDLRenderer3_Init(renderer);
 
     const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gsnd"});
     if (!openPath.empty())
@@ -372,69 +329,11 @@ int main(int argc, char **argv)
         }
     }
 
-    bool done = false;
-    while (!done)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            ImGui_ImplSDL3_ProcessEvent(&event);
-            if (event.type == SDL_EVENT_QUIT)
-            {
-                done = true;
-            }
-            if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
-            {
-                done = true;
-            }
-        }
+    sdkWindow.MainLoop(Render);
 
-        if ((SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0)
-        {
-            SDL_Delay(10);
-            continue;
-        }
-
-        ImGui_ImplSDLRenderer3_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();
-
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->WorkPos);
-        ImGui::SetNextWindowSize(viewport->WorkSize);
-
-        Render(done, window);
-
-        SharedMgr::RenderSharedUI(window);
-
-        ImGui::Render();
-        if (!SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y))
-        {
-            printf("Error: SDL_SetRenderScale(): %s\n", SDL_GetError());
-        }
-        if (!SDL_SetRenderDrawColorFloat(renderer, 0, 0, 0, 1))
-        {
-            printf("Error: SDL_SetRenderDrawColorFloat(): %s\n", SDL_GetError());
-        }
-        if (!SDL_RenderClear(renderer))
-        {
-            printf("Error: SDL_RenderClear(): %s\n", SDL_GetError());
-        }
-        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
-        if (!SDL_RenderPresent(renderer))
-        {
-            printf("Error: SDL_RenderPresent(): %s\n", SDL_GetError());
-        }
-    }
-
-    SharedMgr::DestroySharedMgr();
-
-    ImGui_ImplSDLRenderer3_Shutdown();
-    ImGui_ImplSDL3_Shutdown();
-    ImGui::DestroyContext();
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
     ma_engine_uninit(&engine);
-    SDL_Quit();
+
+    sdkWindow.Destroy();
+
     return 0;
 }

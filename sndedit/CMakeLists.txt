@@ -7,10 +7,11 @@ add_executable(sndedit sndedit.cpp $<$<BOOL:${WIN32}>:sndedit.rc>)
 
 set_target_properties(sndedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
-target_link_libraries(sndedit PRIVATE shared imgui_sdl3_renderer)
+target_link_libraries(sndedit PRIVATE shared)
 
 add_dependencies(sndedit assets)
 
 if (WIN32)
     add_dependencies(sndedit copydlls)
+    target_sources(sndedit PRIVATE ../app.manifest)
 endif()

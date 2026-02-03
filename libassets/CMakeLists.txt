@@ -41,9 +41,8 @@ endif ()
 
 find_or_fetch_package(https://github.com/g-truc/glm.git 1.*.* glm)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-
-add_library(assets STATIC include/libassets/libassets.h
+add_library(assets SHARED
+        include/libassets/libassets.h
         src/util/AssetReader.cpp
         include/libassets/util/AssetReader.h
         include/libassets/asset/TextureAsset.h
@@ -118,6 +117,8 @@ add_library(assets STATIC include/libassets/libassets.h
         src/asset/DataAsset.cpp
         include/libassets/asset/DataAsset.h
 )
+
+set_target_properties(assets PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json glm::glm)
 

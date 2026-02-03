@@ -13,6 +13,7 @@
 #include <limits>
 #include <vector>
 #include "MaterialBrowserWindow.h"
+#include "Options.h"
 #include "SharedMgr.h"
 #include "TextureBrowserWindow.h"
 
@@ -122,13 +123,13 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
     LevelMaterialAsset mat;
     LevelMaterialAsset::CreateFromAsset((Options::GetAssetsPath() + "/" + wallMat.material).c_str(),
                                         mat); // TODO improve
-    const Error::ErrorCode e = SharedMgr::textureCache->GetTextureID(mat.texture, tid);
+    const Error::ErrorCode e = SharedMgr::textureCache.GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e == Error::ErrorCode::OK)
     {
         constexpr int imagePanelHeight = 128;
         ImVec2 imageSize{};
-        SharedMgr::textureCache->GetTextureSize(mat.texture, imageSize);
+        SharedMgr::textureCache.GetTextureSize(mat.texture, imageSize);
         const glm::vec2 scales = {(sz.x - 16) / imageSize.x, imagePanelHeight / imageSize.y};
         const float scale = std::ranges::min(scales.x, scales.y);
 
