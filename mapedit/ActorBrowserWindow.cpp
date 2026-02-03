@@ -107,7 +107,7 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
         size_t i = 0;
         for (const std::string &key: paramNamesV)
         {
-            ParamDefinition *param = nullptr;
+            std::shared_ptr<ParamDefinition> param = nullptr;
             const Error::ErrorCode e = def.GetParam(key, param);
             if (e != Error::ErrorCode::OK)
             {
@@ -155,14 +155,14 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
         ImGui::SetCursorPos(cursorPos);
         if (!paramNamesV.empty())
         {
-            ParamDefinition *param = nullptr;
+            std::shared_ptr<ParamDefinition> param = nullptr;
             const Error::ErrorCode e = def.GetParam(paramNamesV.at(selectedParam), param);
             if (e == Error::ErrorCode::OK)
             {
                 ImGui::SetCursorPosX(cursorPos.x);
                 ImGui::TextWrapped("%s", param->description.empty() ? "No Description" : param->description.c_str());
                 ImGui::SetCursorPosX(cursorPos.x);
-                const OptionParamDefinition *opt = dynamic_cast<OptionParamDefinition *>(param);
+                const OptionParamDefinition *opt = dynamic_cast<OptionParamDefinition *>(param.get());
                 if (opt != nullptr)
                 {
                     ImGui::Text("Options List: %s", opt->optionListName.c_str());
@@ -181,7 +181,7 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
                 {
                     if (param->type == Param::ParamType::PARAM_TYPE_BYTE)
                     {
-                        const ByteParamDefinition *p = dynamic_cast<ByteParamDefinition *>(param);
+                        const ByteParamDefinition *p = dynamic_cast<ByteParamDefinition *>(param.get());
                         ImGui::Text("Minimum: %d", p->minimumValue);
                         ImGui::SetCursorPosX(cursorPos.x);
                         ImGui::Text("Maximum: %d", p->maximumValue);
@@ -189,7 +189,7 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
                         ImGui::Text("Default: %d", p->defaultValue);
                     } else if (param->type == Param::ParamType::PARAM_TYPE_INTEGER)
                     {
-                        const IntParamDefinition *p = dynamic_cast<IntParamDefinition *>(param);
+                        const IntParamDefinition *p = dynamic_cast<IntParamDefinition *>(param.get());
                         ImGui::Text("Minimum: %d", p->minimumValue);
                         ImGui::SetCursorPosX(cursorPos.x);
                         ImGui::Text("Maximum: %d", p->maximumValue);
@@ -197,7 +197,7 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
                         ImGui::Text("Default: %d", p->defaultValue);
                     } else if (param->type == Param::ParamType::PARAM_TYPE_FLOAT)
                     {
-                        const FloatParamDefinition *p = dynamic_cast<FloatParamDefinition *>(param);
+                        const FloatParamDefinition *p = dynamic_cast<FloatParamDefinition *>(param.get());
                         ImGui::TextWrapped("Minimum: %.3f", p->minimumValue);
                         ImGui::SetCursorPosX(cursorPos.x);
                         ImGui::TextWrapped("Maximum: %.3f", p->maximumValue);
@@ -207,11 +207,11 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
                         ImGui::TextWrapped("Step: %.3f", p->step);
                     } else if (param->type == Param::ParamType::PARAM_TYPE_BOOL)
                     {
-                        const BoolParamDefinition *p = dynamic_cast<BoolParamDefinition *>(param);
+                        const BoolParamDefinition *p = dynamic_cast<BoolParamDefinition *>(param.get());
                         ImGui::Text("Default: %s", p->defaultValue ? "true" : "false");
                     } else if (param->type == Param::ParamType::PARAM_TYPE_STRING)
                     {
-                        const StringParamDefinition *p = dynamic_cast<StringParamDefinition *>(param);
+                        const StringParamDefinition *p = dynamic_cast<StringParamDefinition *>(param.get());
                         ImGui::TextWrapped("Default: \"%s\"", p->defaultValue.c_str());
                         ImGui::SetCursorPosX(cursorPos.x);
                         switch (p->hintType)
@@ -234,7 +234,7 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
                         }
                     } else if (param->type == Param::ParamType::PARAM_TYPE_COLOR)
                     {
-                        const ColorParamDefinition *p = dynamic_cast<ColorParamDefinition *>(param);
+                        const ColorParamDefinition *p = dynamic_cast<ColorParamDefinition *>(param.get());
                         ImGui::Text("Show Alpha: %s", p->showAlpha ? "Yes" : "No");
                         ImGui::SetCursorPosX(cursorPos.x);
                         ImGui::Text("Default: %x", p->defaultValue.GetUint32());

@@ -31,6 +31,7 @@ set(ENABLE_GLSLANG_BINARIES OFF)
 set(ENABLE_HLSL OFF)
 set(ENABLE_SPIRV ON)
 set(ENABLE_OPT OFF)
+set(ENABLE_RTTI ON)
 fetch_package(https://github.com/KhronosGroup/glslang.git 16.*.* glslang)
 
 find_package(Vulkan QUIET)

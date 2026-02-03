@@ -11,6 +11,15 @@ class FloatParamDefinition final: public ParamDefinition
 {
     public:
         FloatParamDefinition() = default;
+        FloatParamDefinition(const float minimumValue,
+                             const float maximumValue,
+                             const float defaultValue,
+                             const float step):
+            minimumValue(minimumValue),
+            maximumValue(maximumValue),
+            defaultValue(defaultValue),
+            step(step)
+        {}
 
         float minimumValue = FLT_MAX;
         float maximumValue = -FLT_MAX;

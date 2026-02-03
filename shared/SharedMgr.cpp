@@ -227,9 +227,9 @@ void SharedMgr::LoadActorDefinitions()
             def.second.parentClass = &actorDefinitions.at(def.second.parentClassName);
         }
 
-        for (ParamDefinition *val: def.second.params | std::views::values)
+        for (const std::shared_ptr<ParamDefinition> &val: def.second.params | std::views::values)
         {
-            OptionParamDefinition *opt = dynamic_cast<OptionParamDefinition *>(val);
+            OptionParamDefinition *opt = dynamic_cast<OptionParamDefinition *>(val.get());
             if (opt != nullptr)
             {
                 opt->definition = &optionDefinitions.at(opt->optionListName);

@@ -5,6 +5,7 @@
 #include <cfloat>
 #include <cstdint>
 #include <cstdio>
+#include <libassets/type/Color.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/BoolParamDefinition.h>
 #include <libassets/type/paramDefs/ByteParamDefinition.h>
@@ -15,11 +16,14 @@
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/type/paramDefs/StringParamDefinition.h>
 #include <libassets/util/Error.h>
+#include <memory>
 #include <string>
 
-ParamDefinition *ParamDefinition::Create(const nlohmann::json &json, Error::ErrorCode &e, const std::string &paramName)
+std::unique_ptr<ParamDefinition> ParamDefinition::Create(const nlohmann::json &json,
+                                                         Error::ErrorCode &e,
+                                                         const std::string &paramName)
 {
-    ParamDefinition *output = nullptr;
+    std::unique_ptr<ParamDefinition> output = nullptr;
     const Param::ParamType type = Param::ParseType(json.value("type", "int"));
     if (type == Param::ParamType::PARAM_TYPE_NONE)
     {
@@ -31,70 +35,36 @@ ParamDefinition *ParamDefinition::Create(const nlohmann::json &json, Error::Erro
     const std::string displayName = json.value("display", paramName);
     if (json.contains("options"))
     {
-        OptionParamDefinition *optionDef = new OptionParamDefinition();
-        optionDef->defaultValue = json.value("default", "");
-        optionDef->optionListName = json.value("options", "");
-        output = optionDef;
+        output = std::make_unique<OptionParamDefinition>(json.value("options", ""), json.value("default", ""));
     } else
     {
         if (type == Param::ParamType::PARAM_TYPE_BYTE)
         {
-            ByteParamDefinition *byteDef = new ByteParamDefinition();
-            byteDef->minimumValue = json.value("minimum", static_cast<uint8_t>(0));
-            byteDef->maximumValue = json.value("maximum", static_cast<uint8_t>(UINT8_MAX));
-            byteDef->defaultValue = json.value("default", static_cast<uint8_t>(0));
-            output = byteDef;
+            output = std::make_unique<ByteParamDefinition>(json.value("minimum", static_cast<uint8_t>(0)),
+                                                           json.value("maximum", static_cast<uint8_t>(UINT8_MAX)),
+                                                           json.value("default", static_cast<uint8_t>(0)));
         } else if (type == Param::ParamType::PARAM_TYPE_INTEGER)
         {
-            IntParamDefinition *intDef = new IntParamDefinition();
-            intDef->minimumValue = json.value("minimum", 0);
-            intDef->maximumValue = json.value("maximum", INT32_MAX);
-            intDef->defaultValue = json.value("default", 0);
-            output = intDef;
+            output = std::make_unique<IntParamDefinition>(json.value("minimum", 0),
+                                                          json.value("maximum", INT32_MAX),
+                                                          json.value("default", 0));
         } else if (type == Param::ParamType::PARAM_TYPE_FLOAT)
         {
-            FloatParamDefinition *floatDef = new FloatParamDefinition();
-            floatDef->minimumValue = json.value("minimum", -FLT_MAX);
-            floatDef->maximumValue = json.value("maximum", FLT_MAX);
-            floatDef->defaultValue = json.value("default", 0.0f);
-            floatDef->step = json.value("step", 0.1f);
-            output = floatDef;
+            output = std::make_unique<FloatParamDefinition>(json.value("minimum", -FLT_MAX),
+                                                            json.value("maximum", FLT_MAX),
+                                                            json.value("default", 0.0f),
+                                                            json.value("step", 0.1f));
         } else if (type == Param::ParamType::PARAM_TYPE_BOOL)
         {
-            BoolParamDefinition *boolDef = new BoolParamDefinition();
-            boolDef->defaultValue = json.value("default", false);
-            output = boolDef;
+            output = std::make_unique<BoolParamDefinition>(json.value("default", false));
         } else if (type == Param::ParamType::PARAM_TYPE_STRING)
         {
-            StringParamDefinition *stringDef = new StringParamDefinition();
-            stringDef->defaultValue = json.value("default", "");
-            const std::string hint = json.value("string_hint", "none");
-            if (hint == "texture")
-            {
-                stringDef->hintType = StringParamDefinition::StringParamHint::TEXTURE;
-            } else if (hint == "model")
-            {
-                stringDef->hintType = StringParamDefinition::StringParamHint::MODEL;
-            } else if (hint == "sound")
-            {
-                stringDef->hintType = StringParamDefinition::StringParamHint::SOUND;
-            } else if (hint == "actor")
-            {
-                stringDef->hintType = StringParamDefinition::StringParamHint::ACTOR;
-            } else if (hint == "material")
-            {
-                stringDef->hintType = StringParamDefinition::StringParamHint::MATERIAL;
-            } else
-            {
-                stringDef->hintType = StringParamDefinition::StringParamHint::NONE;
-            }
-            output = stringDef;
+            output = std::make_unique<StringParamDefinition>(json.value("default", ""),
+                                                             json.value("string_hint", "none"));
         } else if (type == Param::ParamType::PARAM_TYPE_COLOR)
         {
-            ColorParamDefinition *colorDef = new ColorParamDefinition();
-            colorDef->defaultValue = Color(json.value("default", 0xFFFFFFFF));
-            colorDef->showAlpha = json.value("showAlpha", true);
-            output = colorDef;
+            output = std::make_unique<ColorParamDefinition>(Color(json.value("default", 0xFFFFFFFF)),
+                                                            json.value("showAlpha", true));
         } else
         {
             e = Error::ErrorCode::INCORRECT_FORMAT;

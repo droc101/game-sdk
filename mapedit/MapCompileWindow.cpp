@@ -42,9 +42,11 @@ void MapCompileWindow::StartCompile(SDL_Window *window)
             }
             size_t outputSize = 0;
             int exitCode = -1;
-            void *output = SDL_ReadProcess(compilerProcess, &outputSize, &exitCode);
-            log += std::string(static_cast<char *>(output));
+            char *output = static_cast<char *>(SDL_ReadProcess(compilerProcess, &outputSize, &exitCode));
+            log += std::string(output);
+            SDL_free(output);
             log += std::format("\nProcess exited with code {}", exitCode);
+            SDL_DestroyProcess(compilerProcess);
             compilerProcess = nullptr;
             if (exitCode == 0 && playMap)
             {

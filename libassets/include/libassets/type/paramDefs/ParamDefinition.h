@@ -6,6 +6,7 @@
 
 #include <libassets/type/Param.h>
 #include <libassets/util/Error.h>
+#include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
 
@@ -18,7 +19,7 @@ class ParamDefinition
         Param::ParamType type = Param::ParamType::PARAM_TYPE_NONE;
         std::string description;
 
-        [[nodiscard]] static ParamDefinition *Create(const nlohmann::json &json,
-                                                     Error::ErrorCode &e,
-                                                     const std::string &paramName);
+        [[nodiscard]] static std::unique_ptr<ParamDefinition> Create(const nlohmann::json &json,
+                                                                     Error::ErrorCode &e,
+                                                                     const std::string &paramName);
 };
