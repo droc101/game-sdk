@@ -45,7 +45,3 @@ target_link_libraries(shared PUBLIC
 )
 set_target_properties(shared PROPERTIES OUTPUT_NAME "game_sdk" PREFIX "")
 target_include_directories(shared PUBLIC ${CMAKE_SOURCE_DIR}/shared)
-
-if (WIN32)
-    add_dependencies(texedit copydlls)
-endif()
