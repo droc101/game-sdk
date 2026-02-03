@@ -4,15 +4,19 @@
 
 #pragma once
 
-#include <cstddef>
 #include <libassets/type/OptionDefinition.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <string>
+#include <utility>
 
 class OptionParamDefinition final: public ParamDefinition
 {
     public:
         OptionParamDefinition() = default;
+        OptionParamDefinition(std::string &&optionListName, std::string &&defaultValue):
+            optionListName(std::move(optionListName)),
+            defaultValue(std::move(defaultValue))
+        {}
 
         std::string optionListName;
         OptionDefinition *definition = nullptr;

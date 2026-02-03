@@ -10,6 +10,7 @@ class BoolParamDefinition final: public ParamDefinition
 {
     public:
         BoolParamDefinition() = default;
+        explicit BoolParamDefinition(const bool defaultValue): defaultValue(defaultValue) {}
 
         bool defaultValue = true;
 };

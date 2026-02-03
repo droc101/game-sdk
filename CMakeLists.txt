@@ -5,11 +5,11 @@ option(GAME_SDK_BUILD_PLUGINS "Builds GAME SDK plugins" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_CXX_FLAGS "-Wpedantic -Wall -Wextra -Wno-missing-field-initializers -march=x86-64-v3")
+set(CMAKE_CXX_FLAGS "-Wpedantic -Wall -Wextra -Wno-missing-field-initializers -march=x86-64-v3 ${CMAKE_CXX_FLAGS}")
 
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DBUILDSTYLE_DEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-g0 -O3 -s -DNDEBUG -DBUILDSTYLE_RELEASE")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -DBUILDSTYLE_DEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DBUILDSTYLE_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
+set(CMAKE_CXX_FLAGS_RELEASE "-g0 -O3 -s -DNDEBUG -DBUILDSTYLE_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -DBUILDSTYLE_DEBUG ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
@@ -73,8 +73,8 @@ find_or_fetch_package(https://github.com/g-truc/glm.git 1.*.* glm)
 
 find_package(OpenGL REQUIRED)
 
-add_library(imgui INTERFACE)
-target_sources(imgui INTERFACE
+add_library(imgui STATIC)
+target_sources(imgui PRIVATE
         lib/imgui/imconfig.h
         lib/imgui/imgui.cpp
         lib/imgui/imgui.h
@@ -94,10 +94,11 @@ target_sources(imgui INTERFACE
         lib/imgui/backends/imgui_impl_opengl3.cpp
         lib/imgui/backends/imgui_impl_opengl3_loader.h
 )
-target_include_directories(imgui INTERFACE
+target_include_directories(imgui PUBLIC
         lib/imgui
         lib/imgui/backends
 )
+set_target_properties(imgui PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 add_custom_target(
         copy_assets

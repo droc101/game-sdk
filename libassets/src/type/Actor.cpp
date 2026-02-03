@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
@@ -20,6 +21,7 @@
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/type/paramDefs/StringParamDefinition.h>
 #include <libassets/util/Error.h>
+#include <memory>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -62,7 +64,7 @@ void Actor::ApplyDefinition(const ActorDefinition &definition, const bool overwr
         {
             continue;
         }
-        ParamDefinition *param = nullptr;
+        std::shared_ptr<ParamDefinition> param = nullptr;
         const Error::ErrorCode e = definition.GetParam(key, param);
         if (e != Error::ErrorCode::OK)
         {
@@ -70,44 +72,50 @@ void Actor::ApplyDefinition(const ActorDefinition &definition, const bool overwr
             continue;
         }
 
-        const OptionParamDefinition *optionParam = dynamic_cast<OptionParamDefinition *>(param);
+        const OptionParamDefinition *optionParam = dynamic_cast<OptionParamDefinition *>(param.get());
         if (optionParam != nullptr)
         {
             const OptionDefinition *def = optionParam->definition;
             params[key] = def->GetValue(optionParam->defaultValue);
         } else if (param->type == Param::ParamType::PARAM_TYPE_BYTE)
         {
-            const ByteParamDefinition *byteParam = dynamic_cast<ByteParamDefinition *>(param);
+            const ByteParamDefinition *byteParam = dynamic_cast<ByteParamDefinition *>(param.get());
+            assert(byteParam);
             Param p{};
             p.Set<uint8_t>(byteParam->defaultValue);
             params[key] = p;
         } else if (param->type == Param::ParamType::PARAM_TYPE_INTEGER)
         {
-            const IntParamDefinition *intParam = dynamic_cast<IntParamDefinition *>(param);
+            const IntParamDefinition *intParam = dynamic_cast<IntParamDefinition *>(param.get());
+            assert(intParam);
             Param p{};
             p.Set<int32_t>(intParam->defaultValue);
             params[key] = p;
         } else if (param->type == Param::ParamType::PARAM_TYPE_FLOAT)
         {
-            const FloatParamDefinition *floatParam = dynamic_cast<FloatParamDefinition *>(param);
+            const FloatParamDefinition *floatParam = dynamic_cast<FloatParamDefinition *>(param.get());
+            assert(floatParam);
             Param p{};
             p.Set<float>(floatParam->defaultValue);
             params[key] = p;
         } else if (param->type == Param::ParamType::PARAM_TYPE_BOOL)
         {
-            const BoolParamDefinition *boolParam = dynamic_cast<BoolParamDefinition *>(param);
+            const BoolParamDefinition *boolParam = dynamic_cast<BoolParamDefinition *>(param.get());
+            assert(boolParam);
             Param p{};
             p.Set<bool>(boolParam->defaultValue);
             params[key] = p;
         } else if (param->type == Param::ParamType::PARAM_TYPE_STRING)
         {
-            const StringParamDefinition *stringParam = dynamic_cast<StringParamDefinition *>(param);
+            const StringParamDefinition *stringParam = dynamic_cast<StringParamDefinition *>(param.get());
+            assert(stringParam);
             Param p{};
             p.Set<std::string>(stringParam->defaultValue);
             params[key] = p;
         } else if (param->type == Param::ParamType::PARAM_TYPE_COLOR)
         {
-            const ColorParamDefinition *colorParam = dynamic_cast<ColorParamDefinition *>(param);
+            const ColorParamDefinition *colorParam = dynamic_cast<ColorParamDefinition *>(param.get());
+            assert(colorParam);
             Param p{};
             p.Set<Color>(colorParam->defaultValue);
             params[key] = p;

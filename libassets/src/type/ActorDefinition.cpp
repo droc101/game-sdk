@@ -9,7 +9,9 @@
 #include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Error.h>
+#include <memory>
 #include <nlohmann/json.hpp>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -81,7 +83,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         for (const auto &[key, value]: params.items())
         {
             Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
-            ParamDefinition *param = ParamDefinition::Create(value, e, key);
+            std::unique_ptr<ParamDefinition> param = ParamDefinition::Create(value, e, key);
             if (e != Error::ErrorCode::OK)
             {
                 // TODO delete any existing params
@@ -91,7 +93,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
             {
                 return Error::ErrorCode::UNKNOWN;
             }
-            definition.params[key] = param;
+            definition.params[key] = std::move(param);
         }
     }
 
@@ -129,9 +131,9 @@ void ActorDefinition::GetParamNames(std::unordered_set<std::string> &out) const
     {
         parentClass->GetParamNames(out);
     }
-    for (const std::pair<std::string, ParamDefinition *> kv: params)
+    for (const std::string &key: params | std::views::keys)
     {
-        out.insert(kv.first);
+        out.insert(key);
     }
 }
 
@@ -163,7 +165,7 @@ Error::ErrorCode ActorDefinition::GetOutput(const std::string &name, SignalDefin
     return Error::ErrorCode::NOT_FOUND;
 }
 
-Error::ErrorCode ActorDefinition::GetParam(const std::string &name, ParamDefinition *&param) const
+Error::ErrorCode ActorDefinition::GetParam(const std::string &name, std::shared_ptr<ParamDefinition> &param) const
 {
     if (params.contains(name))
     {

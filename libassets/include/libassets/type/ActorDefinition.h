@@ -8,6 +8,7 @@
 #include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Error.h>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -36,9 +37,9 @@ class ActorDefinition
 
         [[nodiscard]] Error::ErrorCode GetInput(const std::string &name, SignalDefinition &input) const;
         [[nodiscard]] Error::ErrorCode GetOutput(const std::string &name, SignalDefinition &output) const;
-        [[nodiscard]] Error::ErrorCode GetParam(const std::string &name, ParamDefinition *&param) const;
+        [[nodiscard]] Error::ErrorCode GetParam(const std::string &name, std::shared_ptr<ParamDefinition> &param) const;
 
         std::unordered_map<std::string, SignalDefinition> inputs{};
         std::unordered_map<std::string, SignalDefinition> outputs{};
-        std::unordered_map<std::string, ParamDefinition *> params{};
+        std::unordered_map<std::string, std::shared_ptr<ParamDefinition>> params{};
 };

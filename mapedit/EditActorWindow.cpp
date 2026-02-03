@@ -126,7 +126,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
         size_t i = 0;
         for (const std::string &key: paramNamesV)
         {
-            ParamDefinition *paramDef = nullptr;
+            std::shared_ptr<ParamDefinition> paramDef = nullptr;
             const Error::ErrorCode e = definition.GetParam(key, paramDef);
             if (e != Error::ErrorCode::OK)
             {
@@ -143,7 +143,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
 
             ImGui::TableNextColumn();
             const Param &param = actor.params.at(key);
-            const OptionParamDefinition *optionDef = dynamic_cast<OptionParamDefinition *>(paramDef);
+            const OptionParamDefinition *optionDef = dynamic_cast<OptionParamDefinition *>(paramDef.get());
             if (optionDef != nullptr)
             {
                 const OptionDefinition *options = optionDef->definition;
@@ -178,7 +178,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
         ImGui::SetCursorPos(cursorPos);
         if (!paramNamesV.empty())
         {
-            ParamDefinition *paramDef = nullptr;
+            std::shared_ptr<ParamDefinition> paramDef = nullptr;
             const Error::ErrorCode e = definition.GetParam(paramNamesV.at(selectedParam), paramDef);
             if (e == Error::ErrorCode::OK)
             {
@@ -188,7 +188,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                                    paramDef->description.empty() ? "No Description" : paramDef->description.c_str());
                 ImGui::SetCursorPosX(cursorPos.x);
                 ImGui::PushItemWidth(-1);
-                const OptionParamDefinition *optionDef = dynamic_cast<OptionParamDefinition *>(paramDef);
+                const OptionParamDefinition *optionDef = dynamic_cast<OptionParamDefinition *>(paramDef.get());
                 if (optionDef != nullptr)
                 {
                     const OptionDefinition *options = optionDef->definition;
@@ -211,7 +211,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                     }
                 } else if (paramDef->type == Param::ParamType::PARAM_TYPE_BYTE)
                 {
-                    const ByteParamDefinition *byteDef = dynamic_cast<ByteParamDefinition *>(paramDef);
+                    const ByteParamDefinition *byteDef = dynamic_cast<ByteParamDefinition *>(paramDef.get());
                     uint8_t val = param.Get<uint8_t>(byteDef->defaultValue);
                     if (ImGui::InputScalar("##value", ImGuiDataType_U8, &val))
                     {
@@ -220,7 +220,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                     }
                 } else if (paramDef->type == Param::ParamType::PARAM_TYPE_INTEGER)
                 {
-                    const IntParamDefinition *intDef = dynamic_cast<IntParamDefinition *>(paramDef);
+                    const IntParamDefinition *intDef = dynamic_cast<IntParamDefinition *>(paramDef.get());
                     int32_t val = param.Get<int32_t>(intDef->defaultValue);
                     if (ImGui::InputScalar("##value", ImGuiDataType_S32, &val))
                     {
@@ -229,7 +229,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                     }
                 } else if (paramDef->type == Param::ParamType::PARAM_TYPE_FLOAT)
                 {
-                    const FloatParamDefinition *floatDef = dynamic_cast<FloatParamDefinition *>(paramDef);
+                    const FloatParamDefinition *floatDef = dynamic_cast<FloatParamDefinition *>(paramDef.get());
                     float val = param.Get<float>(floatDef->defaultValue);
                     if (ImGui::InputFloat("##value", &val, floatDef->step))
                     {
@@ -238,7 +238,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                     }
                 } else if (paramDef->type == Param::ParamType::PARAM_TYPE_BOOL)
                 {
-                    const BoolParamDefinition *boolDef = dynamic_cast<BoolParamDefinition *>(paramDef);
+                    const BoolParamDefinition *boolDef = dynamic_cast<BoolParamDefinition *>(paramDef.get());
                     bool val = param.Get<bool>(boolDef->defaultValue);
                     if (ImGui::Checkbox("##value", &val))
                     {
@@ -247,7 +247,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                 } else if (paramDef->type == Param::ParamType::PARAM_TYPE_STRING)
                 {
                     // TODO hints
-                    const StringParamDefinition *stringDef = dynamic_cast<StringParamDefinition *>(paramDef);
+                    const StringParamDefinition *stringDef = dynamic_cast<StringParamDefinition *>(paramDef.get());
                     std::string val = param.Get<std::string>(stringDef->defaultValue);
                     if (ImGui::InputText("##value", &val))
                     {
@@ -255,7 +255,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                     }
                 } else if (paramDef->type == Param::ParamType::PARAM_TYPE_COLOR)
                 {
-                    const ColorParamDefinition *colorDef = dynamic_cast<ColorParamDefinition *>(paramDef);
+                    const ColorParamDefinition *colorDef = dynamic_cast<ColorParamDefinition *>(paramDef.get());
                     Color col = param.Get<Color>(Color(-1));
                     std::array<float, 4> colorData = col.CopyData();
                     if (ImGui::ColorEdit4("##color",

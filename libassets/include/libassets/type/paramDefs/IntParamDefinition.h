@@ -11,6 +11,11 @@ class IntParamDefinition final: public ParamDefinition
 {
     public:
         IntParamDefinition() = default;
+        IntParamDefinition(const int32_t minimumValue, const int32_t maximumValue, const int32_t defaultValue):
+            minimumValue(minimumValue),
+            maximumValue(maximumValue),
+            defaultValue(defaultValue)
+        {}
 
         int32_t minimumValue = INT32_MIN;
         int32_t maximumValue = INT32_MAX;
