@@ -6,12 +6,12 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <game_sdk/gl/GLHelper.h>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
+#include <imgui.h>
 #include <libassets/asset/ModelAsset.h>
 #include <vector>
-#include "GLHelper.h"
-#include "imgui.h"
 
 class ModelRenderer
 {
@@ -64,7 +64,7 @@ class ModelRenderer
         static inline bool showBoundingBox = false;
         static inline bool showCollisionModel = false;
 
-        static inline Color backgroundColor = Color(0,0,0,1);
+        static inline Color backgroundColor = Color(0, 0, 0, 1);
 
         static inline uint32_t EVENT_RELOAD_MODEL;
         static constexpr int32_t EVENT_RELOAD_MODEL_CODE_GMDL = 0;

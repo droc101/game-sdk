@@ -7,7 +7,7 @@ add_executable(launcher launcher.cpp $<$<BOOL:${WIN32}>:launcher.rc>)
 
 set_target_properties(launcher PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
-target_link_libraries(launcher PRIVATE shared)
+target_link_libraries(launcher PRIVATE game_sdk_shared)
 
 add_dependencies(launcher assets copy_assets)
 

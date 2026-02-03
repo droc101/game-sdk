@@ -6,21 +6,14 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
+#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include "../ModelRenderer.h"
-#include "SharedMgr.h"
 
 void SkinsTab::Render()
 {
-    ImGui::Begin("Skins",
-                 nullptr,
-                 ImGuiWindowFlags_NoCollapse |
-                         ImGuiWindowFlags_NoMove |
-                         ImGuiWindowFlags_NoBringToFrontOnFocus |
-                         ImGuiWindowFlags_NoDecoration |
-                         ImGuiWindowFlags_NoScrollbar |
-                         ImGuiWindowFlags_NoScrollWithMouse);
+    ImGui::Begin("Skins", nullptr, ImGuiWindowFlags_NoCollapse);
 
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 60 - 60 - 16);
     ImGui::TextUnformatted("Skin");

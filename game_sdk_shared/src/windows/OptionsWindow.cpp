@@ -2,17 +2,16 @@
 // Created by droc101 on 6/29/25.
 //
 
-#include "OptionsWindow.h"
 #include <array>
+#include <game_sdk/Options.h>
+#include <game_sdk/SharedMgr.h>
+#include <game_sdk/windows/MaterialBrowserWindow.h>
+#include <game_sdk/windows/OptionsWindow.h>
+#include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_video.h>
-
-#include "MaterialBrowserWindow.h"
-#include "Options.h"
-#include "SharedMgr.h"
-#include "TextureBrowserWindow.h"
 
 void OptionsWindow::Show()
 {

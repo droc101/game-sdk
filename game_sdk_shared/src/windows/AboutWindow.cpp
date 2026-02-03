@@ -2,8 +2,8 @@
 // Created by droc101 on 6/29/25.
 //
 
-#include "AboutWindow.h"
 #include <format>
+#include <game_sdk/windows/AboutWindow.h>
 #include <imgui.h>
 #include <libassets/libassets.h>
 

@@ -4,6 +4,7 @@
 
 #include "AddActorTool.h"
 #include <cstddef>
+#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
@@ -17,7 +18,6 @@
 #include "../Viewport.h"
 #include "EditorTool.h"
 #include "SelectTool.h"
-#include "SharedMgr.h"
 
 void AddActorTool::RenderViewport(Viewport &vp)
 {

@@ -2,16 +2,16 @@
 // Created by droc101 on 11/16/25.
 //
 
-#include "MaterialBrowserWindow.h"
 #include <cstddef>
 #include <format>
+#include <game_sdk/Options.h>
+#include <game_sdk/SharedMgr.h>
+#include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <imgui.h>
+#include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
-#include "libassets/asset/LevelMaterialAsset.h"
-#include "Options.h"
-#include "SharedMgr.h"
 
 constexpr int tileSize = 128;
 static std::string filter = "";

@@ -3,11 +3,11 @@
 //
 
 #include "Viewport.h"
+#include <game_sdk/gl/GLHelper.h>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <imgui.h>
 #include <string>
-#include "GLHelper.h"
-#include "imgui.h"
 #include "MapEditor.h"
 
 Viewport::Viewport(const ViewportType type)

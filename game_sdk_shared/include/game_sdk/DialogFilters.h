@@ -3,6 +3,7 @@
 //
 
 #pragma once
+
 #include <array>
 #include <SDL3/SDL_dialog.h>
 

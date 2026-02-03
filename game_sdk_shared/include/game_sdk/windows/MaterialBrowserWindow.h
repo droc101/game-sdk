@@ -4,10 +4,9 @@
 
 #pragma once
 
+#include <libassets/asset/LevelMaterialAsset.h>
 #include <string>
 #include <vector>
-
-#include "libassets/asset/LevelMaterialAsset.h"
 
 class MaterialBrowserWindow
 {

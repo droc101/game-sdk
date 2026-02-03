@@ -1,24 +1,23 @@
 #include <array>
 #include <cassert>
 #include <cstdio>
+#include <format>
+#include <game_sdk/DesktopInterface.h>
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/Options.h>
+#include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
 #include "ActorBrowserWindow.h"
-#include "DesktopInterface.h"
-#include "DialogFilters.h"
-#include "imgui_internal.h"
 #include "MapCompileWindow.h"
 #include "MapEditor.h"
 #include "MapPropertiesWindow.h"
 #include "MapRenderer.h"
-#include "Options.h"
-#include "SDKWindow.h"
-#include "SharedMgr.h"
 #include "tools/AddActorTool.h"
 #include "tools/AddPolygonTool.h"
 #include "tools/AddPrimitiveTool.h"
@@ -76,13 +75,7 @@ static void saveJsonCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = MapEditor::map.SaveAsMapSrc(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to save the map!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to save the map!\n{}", errorCode));
         return;
     }
     MapEditor::mapFile = fileList[0];
@@ -93,13 +86,7 @@ static void openJson(const std::string &path)
     const Error::ErrorCode errorCode = MapAsset::CreateFromMapSrc(path.c_str(), MapEditor::map);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to open the map!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to open the map!\n{}", errorCode));
         return;
     }
     MapEditor::mapFile = path;
@@ -107,16 +94,9 @@ static void openJson(const std::string &path)
     {
         if (!SharedMgr::actorDefinitions.contains(actor.className))
         {
-            if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                          "Error",
-                                          std::format("Failed to open the map because it contains an unknown actor "
-                                                      "class \"{}\"",
-                                                      actor.className)
-                                                  .c_str(),
-                                          sdkWindow.GetWindow()))
-            {
-                printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-            }
+            sdkWindow.ErrorMessage(std::format("Failed to open the map because it contains an unknown actor "
+                                               "class \"{}\"",
+                                               actor.className));
             MapEditor::map = MapAsset();
             return;
         }

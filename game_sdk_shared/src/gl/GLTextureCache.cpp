@@ -2,9 +2,10 @@
 // Created by droc101 on 7/22/25.
 //
 
-#include "ImGuiTextureAssetCache.h"
 #include <cstdint>
 #include <filesystem>
+#include <game_sdk/gl/GLTextureCache.h>
+#include <game_sdk/Options.h>
 #include <imgui.h>
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/util/Error.h>
@@ -12,9 +13,8 @@
 #include <SDL3/SDL_endian.h>
 #include <string>
 #include <vector>
-#include "Options.h"
 
-ImGuiTextureAssetCache::~ImGuiTextureAssetCache()
+GLTextureCache::~GLTextureCache()
 {
     for (const ImTextureID &textureId: textureBuffers | std::views::values)
     {
@@ -24,7 +24,7 @@ ImGuiTextureAssetCache::~ImGuiTextureAssetCache()
     textureBuffers.clear();
 }
 
-void ImGuiTextureAssetCache::InitMissingTexture()
+void GLTextureCache::InitMissingTexture()
 {
     TextureAsset texture;
     TextureAsset::CreateMissingTexture(texture);
@@ -32,7 +32,7 @@ void ImGuiTextureAssetCache::InitMissingTexture()
 }
 
 
-GLuint ImGuiTextureAssetCache::CreateTexture(const TextureAsset &textureAsset)
+GLuint GLTextureCache::CreateTexture(const TextureAsset &textureAsset)
 {
     std::vector<uint32_t> pixels;
     textureAsset.GetPixelsRGBA(pixels);
@@ -61,7 +61,7 @@ GLuint ImGuiTextureAssetCache::CreateTexture(const TextureAsset &textureAsset)
     return glTexture;
 }
 
-Error::ErrorCode ImGuiTextureAssetCache::GetTextureID(const std::string &relPath, ImTextureID &outTexture)
+Error::ErrorCode GLTextureCache::GetTextureID(const std::string &relPath, ImTextureID &outTexture)
 {
     if (textureBuffers.contains(relPath))
     {
@@ -86,7 +86,7 @@ Error::ErrorCode ImGuiTextureAssetCache::GetTextureID(const std::string &relPath
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode ImGuiTextureAssetCache::GetTextureSize(const std::string &relPath, ImVec2 &outSize)
+Error::ErrorCode GLTextureCache::GetTextureSize(const std::string &relPath, ImVec2 &outSize)
 {
     ImTextureID texture = 0;
     const Error::ErrorCode error = GetTextureID(relPath, texture);
@@ -103,7 +103,7 @@ Error::ErrorCode ImGuiTextureAssetCache::GetTextureSize(const std::string &relPa
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode ImGuiTextureAssetCache::GetTextureGLuint(const std::string &relPath, GLuint &outTexture)
+Error::ErrorCode GLTextureCache::GetTextureGLuint(const std::string &relPath, GLuint &outTexture)
 {
     ImTextureID texture = 0;
     const Error::ErrorCode error = GetTextureID(relPath, texture);
@@ -115,13 +115,13 @@ Error::ErrorCode ImGuiTextureAssetCache::GetTextureGLuint(const std::string &rel
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode ImGuiTextureAssetCache::LoadTexture(const std::string &relPath)
+Error::ErrorCode GLTextureCache::LoadTexture(const std::string &relPath)
 {
     ImTextureID unused = 0;
     return GetTextureID(relPath, unused);
 }
 
-Error::ErrorCode ImGuiTextureAssetCache::RegisterPng(const std::string &pngPath, const std::string &name)
+Error::ErrorCode GLTextureCache::RegisterPng(const std::string &pngPath, const std::string &name)
 {
     TextureAsset tex;
     const Error::ErrorCode e = TextureAsset::CreateFromImage(pngPath.c_str(), tex);

@@ -5,21 +5,19 @@
 #include <array>
 #include <cstdio>
 #include <format>
+#include <game_sdk/DesktopInterface.h>
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
 #include <string>
 #include "BatchCompileWindow.h"
 #include "BatchDecompileWindow.h"
-#include "DesktopInterface.h"
-#include "DialogFilters.h"
-#include "SDKWindow.h"
-#include "SharedMgr.h"
 
 static SDKWindow sdkWindow{};
 
@@ -31,13 +29,7 @@ static void openGshd(const std::string &path)
     const Error::ErrorCode errorCode = ShaderAsset::CreateFromAsset(path.c_str(), shader);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to open the shader!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to open the shader!\n{}", errorCode));
         return;
     }
     shaderLoaded = true;
@@ -57,13 +49,7 @@ static void importGlsl(const std::string &path)
     const Error::ErrorCode errorCode = ShaderAsset::CreateFromGlsl(path.c_str(), shader);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to import the shader!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to import the shader!\n{}", errorCode));
         return;
     }
     shaderLoaded = true;
@@ -87,13 +73,7 @@ static void saveGfonCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = shader.SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to save the shader!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to save the shader!\n{}", errorCode));
     }
 }
 
@@ -106,13 +86,7 @@ static void exportCallback(void * /*userdata*/, const char *const *fileList, int
     const Error::ErrorCode errorCode = shader.SaveAsGlsl(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to export the shader!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to export the shader!\n{}", errorCode));
     }
 }
 

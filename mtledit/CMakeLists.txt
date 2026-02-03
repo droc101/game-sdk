@@ -7,7 +7,7 @@ add_executable(mtledit mtledit.cpp $<$<BOOL:${WIN32}>:mtledit.rc>)
 
 set_target_properties(mtledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
-target_link_libraries(mtledit PRIVATE shared)
+target_link_libraries(mtledit PRIVATE game_sdk_shared)
 
 add_dependencies(mtledit assets)
 

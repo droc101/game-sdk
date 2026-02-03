@@ -9,6 +9,10 @@
 #include <cstdlib>
 #include <filesystem>
 #include <format>
+#include <game_sdk/DesktopInterface.h>
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <libassets/asset/DataAsset.h>
 #include <libassets/type/Color.h>
@@ -16,15 +20,9 @@
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <utility>
-#include "DesktopInterface.h"
-#include "DialogFilters.h"
-#include "SDKWindow.h"
-#include "SharedMgr.h"
 
 static SDKWindow sdkWindow{};
 
@@ -36,13 +34,7 @@ static void openGkvl(const std::string &path)
     const Error::ErrorCode errorCode = DataAsset::CreateFromAsset(path.c_str(), dataAsset);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to open the KvList!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to open the KvList!\n{}", errorCode));
     }
 }
 
@@ -60,14 +52,7 @@ static void importJson(const std::string &path)
     const Error::ErrorCode errorCode = DataAsset::CreateFromJson(path.c_str(), dataAsset);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to import the KvList!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
-        return;
+        sdkWindow.ErrorMessage(std::format("Failed to import the KvList!\n{}", errorCode));
     }
 }
 
@@ -89,13 +74,7 @@ static void saveGkvlCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = dataAsset.SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to save the KvList!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to save the KvList!\n{}", errorCode));
     }
 }
 
@@ -108,13 +87,7 @@ static void exportCallback(void * /*userdata*/, const char *const *fileList, int
     const Error::ErrorCode errorCode = dataAsset.SaveAsJson(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to export the KvList!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to export the KvList!\n{}", errorCode));
     }
 }
 

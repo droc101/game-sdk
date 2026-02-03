@@ -8,7 +8,7 @@ add_executable(mdledit mdledit.cpp
         ModelRenderer.h
         tabs/SkinsTab.cpp
         tabs/SkinsTab.h
-        tabs/LodEditWindow.cpp
+        tabs/LodsTab.cpp
         tabs/LodsTab.h
         tabs/MaterialsTab.cpp
         tabs/MaterialsTab.h
@@ -21,7 +21,7 @@ add_executable(mdledit mdledit.cpp
 
 set_target_properties(mdledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
-target_link_libraries(mdledit PRIVATE shared)
+target_link_libraries(mdledit PRIVATE game_sdk_shared)
 
 add_dependencies(mdledit assets)
 

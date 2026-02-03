@@ -4,6 +4,7 @@
 
 #include "ActorBrowserWindow.h"
 #include <cstddef>
+#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Param.h>
@@ -21,7 +22,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include "SharedMgr.h"
 
 void ActorBrowserWindow::Render()
 {

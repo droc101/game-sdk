@@ -2,21 +2,19 @@
 #include <cstdint>
 #include <cstdio>
 #include <format>
+#include <game_sdk/DesktopInterface.h>
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
 #include <GL/glew.h>
 #include <imgui.h>
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/util/Error.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_endian.h>
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <vector>
-#include "DesktopInterface.h"
-#include "DialogFilters.h"
-#include "SDKWindow.h"
-#include "SharedMgr.h"
 
 static SDKWindow sdkWindow{};
 static float zoom = 1.0f;
@@ -69,13 +67,7 @@ static void openGtex(const std::string &path)
     const Error::ErrorCode errorCode = TextureAsset::CreateFromAsset(path.c_str(), texture);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to open the texture!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to open the texture!\n{}", errorCode));
         return;
     }
     loadTexture();
@@ -95,13 +87,7 @@ static void importImage(const std::string &path)
     const Error::ErrorCode errorCode = TextureAsset::CreateFromImage(path.c_str(), texture);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to import the texture!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to import the texture!\n{}", errorCode));
         return;
     }
     loadTexture();
@@ -125,13 +111,7 @@ static void saveGtexCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = texture.SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to save the texture!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to save the texture!\n{}", errorCode));
     }
 }
 
@@ -144,13 +124,7 @@ static void exportCallback(void * /*userdata*/, const char *const *fileList, int
     const Error::ErrorCode errorCode = texture.SaveAsImage(fileList[0], TextureAsset::ImageFormat::IMAGE_FORMAT_PNG);
     if (errorCode != Error::ErrorCode::OK)
     {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to export the texture!\n{}", errorCode).c_str(),
-                                      sdkWindow.GetWindow()))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
+        sdkWindow.ErrorMessage(std::format("Failed to export the texture!\n{}", errorCode));
     }
 }
 
