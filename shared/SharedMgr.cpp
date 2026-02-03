@@ -29,6 +29,8 @@
 #include "TextureBrowserWindow.h"
 #ifdef WIN32
 #include <direct.h> // provides chdir
+#else
+#include <unistd.h>
 #endif
 
 void SharedMgr::InitSharedMgr()

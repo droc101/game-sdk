@@ -67,4 +67,5 @@ function(fetch_glew)
             SYSTEM
     )
     FetchContent_MakeAvailable(GLEW)
+    set_target_properties(glew_s PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 endfunction()

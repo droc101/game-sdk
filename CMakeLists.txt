@@ -12,18 +12,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-g0 -O3 -s -DNDEBUG -DBUILDSTYLE_RELEASE")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -DBUILDSTYLE_DEBUG")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-#set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/plugin) # This puts the libraries built on GitHub actions (such as SDL3) in the bin directory. We need to figure out how to not cause that side effect.
-
-if (CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-    include(CheckIPOSupported)
-    check_ipo_supported(RESULT result)
-    if (result)
-        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-        message(STATUS "IPO/LTO is supported")
-    else ()
-        message(WARNING "IPO/LTO is not supported")
-    endif ()
-endif ()
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 if (WIN32)
     message(STATUS "Win32 detected")
@@ -110,48 +99,6 @@ target_include_directories(imgui INTERFACE
         lib/imgui/backends
 )
 
-add_library(shared INTERFACE)
-target_sources(shared INTERFACE
-        shared/Options.cpp
-        shared/Options.h
-        shared/OptionsWindow.cpp
-        shared/OptionsWindow.h
-        shared/AboutWindow.cpp
-        shared/AboutWindow.h
-        shared/SharedMgr.cpp
-        shared/SharedMgr.h
-        shared/TextureBrowserWindow.cpp
-        shared/TextureBrowserWindow.h
-        shared/ImGuiTextureAssetCache.h
-        shared/ImGuiTextureAssetCache.cpp
-        shared/GLHelper.cpp
-        shared/GLHelper.h
-        shared/GLDebug.cpp
-        shared/GLDebug.h
-        shared/DialogFilters.h
-        shared/SetupWindow.cpp
-        shared/SetupWindow.h
-        shared/MaterialBrowserWindow.h
-        shared/MaterialBrowserWindow.cpp
-        shared/DesktopInterface.h
-        shared/DesktopInterface.cpp
-        shared/SDKWindow.cpp
-        shared/SDKWindow.h
-)
-if (WIN32)
-    target_sources(shared INTERFACE app.manifest)
-endif ()
-target_link_libraries(shared INTERFACE
-        SDL3::SDL3
-        miniaudio
-        assets
-        glm::glm
-        OpenGL::GL
-        glew_s
-        imgui
-)
-target_include_directories(shared INTERFACE shared)
-
 add_custom_target(
         copy_assets
         COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/bin/assets
@@ -159,6 +106,7 @@ add_custom_target(
 )
 
 add_subdirectory(libassets)
+add_subdirectory(shared)
 add_subdirectory(texedit)
 add_subdirectory(mdledit)
 add_subdirectory(sndedit)

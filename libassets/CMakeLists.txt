@@ -39,9 +39,8 @@ if (Vulkan_INCLUDE_DIRS STREQUAL "Vulkan_INCLUDE_DIR-NOTFOUND")
     set(Vulkan_INCLUDE_DIRS ${VULKAN_HEADERS_SOURCE_DIR}/include)
 endif ()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-
-add_library(assets STATIC include/libassets/libassets.h
+add_library(assets SHARED
+        include/libassets/libassets.h
         src/util/AssetReader.cpp
         include/libassets/util/AssetReader.h
         include/libassets/asset/TextureAsset.h
@@ -116,6 +115,8 @@ add_library(assets STATIC include/libassets/libassets.h
         src/asset/DataAsset.cpp
         include/libassets/asset/DataAsset.h
 )
+
+set_target_properties(assets PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json)
 
