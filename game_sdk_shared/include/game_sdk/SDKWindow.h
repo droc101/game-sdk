@@ -21,13 +21,19 @@ class SDKWindow
                                 glm::ivec2 windowSize = {800, 600},
                                 SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE);
 
-        void MainLoop(SDKWindowRenderFunction Render, SDKWindowProcessEventFunction ProcessEvent = nullptr) const;
+        void MainLoop(SDKWindowRenderFunction Render, SDKWindowProcessEventFunction ProcessEvent = nullptr);
 
-        [[nodiscard]] SDL_Window *GetWindow();
+        [[nodiscard]] SDL_Window *GetWindow() const;
 
         void PostQuit();
 
         void Destroy() const;
+
+        void ErrorMessage(const std::string &body, const std::string &title = "Error") const;
+
+        void WarningMessage(const std::string &body, const std::string &title = "Error") const;
+
+        void InfoMessage(const std::string &body, const std::string &title = "Error") const;
 
     private:
         bool initDone = false;

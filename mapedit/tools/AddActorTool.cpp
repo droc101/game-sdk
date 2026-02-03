@@ -5,8 +5,10 @@
 #include "AddActorTool.h"
 #include <array>
 #include <cstddef>
+#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
+#include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
 #include <memory>
@@ -16,9 +18,7 @@
 #include "../MapRenderer.h"
 #include "../Viewport.h"
 #include "EditorTool.h"
-#include "libassets/type/ActorDefinition.h"
 #include "SelectTool.h"
-#include "SharedMgr.h"
 
 void AddActorTool::RenderViewport(Viewport &vp)
 {
@@ -117,9 +117,9 @@ void AddActorTool::RenderViewport(Viewport &vp)
             if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
             {
                 MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
-                                                    10,
-                                                    Color(1, 0.7, 0.7, 1),
-                                                    matrix);
+                                                  10,
+                                                  Color(1, 0.7, 0.7, 1),
+                                                  matrix);
             }
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {

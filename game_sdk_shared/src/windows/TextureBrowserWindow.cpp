@@ -2,15 +2,15 @@
 // Created by droc101 on 7/6/25.
 //
 
-#include "TextureBrowserWindow.h"
 #include <cstddef>
 #include <format>
+#include <game_sdk/Options.h>
+#include <game_sdk/SharedMgr.h>
+#include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
-#include "Options.h"
-#include "SharedMgr.h"
 
 constexpr int tileSize = 128;
 static std::string filter = "";

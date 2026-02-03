@@ -12,7 +12,7 @@ add_executable(shdedit shdedit.cpp
 
 set_target_properties(shdedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
-target_link_libraries(shdedit PRIVATE shared)
+target_link_libraries(shdedit PRIVATE game_sdk_shared)
 
 add_dependencies(shdedit assets)
 

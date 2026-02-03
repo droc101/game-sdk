@@ -5,6 +5,11 @@
 #include <cstdint>
 #include <cstdio>
 #include <format>
+#include <game_sdk/DesktopInterface.h>
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
+#include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/type/Material.h>
@@ -14,11 +19,6 @@
 #include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
 #include <string>
-#include "DesktopInterface.h"
-#include "DialogFilters.h"
-#include "SDKWindow.h"
-#include "SharedMgr.h"
-#include "TextureBrowserWindow.h"
 
 static SDKWindow sdkWindow{};
 

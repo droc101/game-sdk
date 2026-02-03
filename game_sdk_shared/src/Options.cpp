@@ -2,10 +2,10 @@
 // Created by droc101 on 6/29/25.
 //
 
-#include "Options.h"
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <game_sdk/Options.h>
 #include <nlohmann/json.hpp>
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_stdinc.h>

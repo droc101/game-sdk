@@ -4,13 +4,13 @@
 
 #pragma once
 
+#include <game_sdk/gl/GLTextureCache.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/OptionDefinition.h>
 #include <map>
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <vector>
-#include "ImGuiTextureAssetCache.h"
 
 class SharedMgr
 {
@@ -35,7 +35,7 @@ class SharedMgr
 
         static void LoadActorDefinitions();
 
-        static inline ImGuiTextureAssetCache textureCache{};
+        static inline GLTextureCache textureCache{};
 
         static inline std::map<std::string, OptionDefinition> optionDefinitions{};
 

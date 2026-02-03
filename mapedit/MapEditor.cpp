@@ -6,16 +6,15 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <game_sdk/Options.h>
+#include <game_sdk/SharedMgr.h>
+#include <game_sdk/windows/MaterialBrowserWindow.h>
+#include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/Error.h>
 #include <limits>
 #include <vector>
-
-#include "MaterialBrowserWindow.h"
-#include "Options.h"
-#include "SharedMgr.h"
-#include "TextureBrowserWindow.h"
 
 float MapEditor::SnapToGrid(const float f)
 {

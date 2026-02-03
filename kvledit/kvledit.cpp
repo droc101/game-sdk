@@ -9,6 +9,10 @@
 #include <cstdlib>
 #include <filesystem>
 #include <format>
+#include <game_sdk/DesktopInterface.h>
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <libassets/asset/DataAsset.h>
 #include <libassets/type/Color.h>
@@ -21,10 +25,6 @@
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <utility>
-#include "DesktopInterface.h"
-#include "DialogFilters.h"
-#include "SDKWindow.h"
-#include "SharedMgr.h"
 
 static SDKWindow sdkWindow{};
 

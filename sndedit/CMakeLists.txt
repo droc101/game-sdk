@@ -7,7 +7,7 @@ add_executable(sndedit sndedit.cpp $<$<BOOL:${WIN32}>:sndedit.rc>)
 
 set_target_properties(sndedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
-target_link_libraries(sndedit PRIVATE shared)
+target_link_libraries(sndedit PRIVATE game_sdk_shared)
 
 add_dependencies(sndedit assets)
 

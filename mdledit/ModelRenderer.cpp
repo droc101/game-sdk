@@ -8,6 +8,9 @@
 #include <cstdint>
 #include <cstdio>
 #include <fstream>
+#include <game_sdk/gl/GLDebug.h>
+#include <game_sdk/gl/GLHelper.h>
+#include <game_sdk/SharedMgr.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <ios>
@@ -20,9 +23,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "../shared/GLDebug.h"
-#include "GLHelper.h"
-#include "SharedMgr.h"
 
 // #define GL_CHECK_ERROR if (glGetError() != GL_NO_ERROR) {printf(reinterpret_cast<const char *>(glewGetErrorString(glGetError()))); fflush(stdout); __debugbreak();}
 

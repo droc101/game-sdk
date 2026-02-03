@@ -5,6 +5,10 @@
 #include <array>
 #include <cstdio>
 #include <format>
+#include <game_sdk/DesktopInterface.h>
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
@@ -16,10 +20,6 @@
 #include <string>
 #include "BatchCompileWindow.h"
 #include "BatchDecompileWindow.h"
-#include "DesktopInterface.h"
-#include "DialogFilters.h"
-#include "SDKWindow.h"
-#include "SharedMgr.h"
 
 static SDKWindow sdkWindow{};
 

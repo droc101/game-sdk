@@ -7,19 +7,17 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
+#include <game_sdk/Options.h>
+#include <game_sdk/SharedMgr.h>
+#include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/type/Material.h>
 #include <string>
 #include "../ModelRenderer.h"
-#include "Options.h"
-#include "SharedMgr.h"
-#include "TextureBrowserWindow.h"
 
 void MaterialsTab::Render()
 {
-    ImGui::Begin("Materials",
-                 nullptr,
-                 ImGuiWindowFlags_NoCollapse);
+    ImGui::Begin("Materials", nullptr, ImGuiWindowFlags_NoCollapse);
 
     if (ImGui::Button("Add", ImVec2(60, 0)))
     {

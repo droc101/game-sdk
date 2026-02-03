@@ -2,11 +2,13 @@
 // Created by droc101 on 7/4/25.
 //
 
+#include "LodsTab.h"
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <format>
+#include <game_sdk/DialogFilters.h>
 #include <imgui.h>
 #include <libassets/type/ModelLod.h>
 #include <numeric>
@@ -18,8 +20,6 @@
 #include <string>
 #include <utility>
 #include "../ModelRenderer.h"
-#include "DialogFilters.h"
-#include "LodsTab.h"
 
 void LodsTab::Render(SDL_Window *window)
 {

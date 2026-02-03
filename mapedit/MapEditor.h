@@ -8,12 +8,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <libassets/asset/MapAsset.h>
+#include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
-#include <string>
 #include <memory>
+#include <string>
 #include <variant>
 #include <vector>
-#include "libassets/type/Sector.h"
 #include "tools/EditorTool.h"
 #include "tools/SelectTool.h"
 

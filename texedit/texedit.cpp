@@ -2,6 +2,10 @@
 #include <cstdint>
 #include <cstdio>
 #include <format>
+#include <game_sdk/DesktopInterface.h>
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
 #include <GL/glew.h>
 #include <imgui.h>
 #include <libassets/asset/TextureAsset.h>
@@ -13,10 +17,6 @@
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <vector>
-#include "DesktopInterface.h"
-#include "DialogFilters.h"
-#include "SDKWindow.h"
-#include "SharedMgr.h"
 
 static SDKWindow sdkWindow{};
 static float zoom = 1.0f;

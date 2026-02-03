@@ -99,7 +99,7 @@ target_include_directories(imgui PUBLIC
         lib/imgui/backends
 )
 set_target_properties(imgui PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
-target_link_libraries(imgui PRIVATE SDL3)
+target_link_libraries(imgui PRIVATE SDL3::SDL3)
 
 add_custom_target(
         copy_assets
@@ -108,7 +108,7 @@ add_custom_target(
 )
 
 add_subdirectory(libassets)
-add_subdirectory(shared)
+add_subdirectory(game_sdk_shared)
 add_subdirectory(texedit)
 add_subdirectory(mdledit)
 add_subdirectory(sndedit)

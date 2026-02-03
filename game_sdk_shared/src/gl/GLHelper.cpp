@@ -2,16 +2,16 @@
 // Created by droc101 on 9/5/25.
 //
 
-#include "GLHelper.h"
 #include <array>
 #include <cassert>
 #include <cstdio>
 #include <fstream>
+#include <game_sdk/gl/GLDebug.h>
+#include <game_sdk/gl/GLHelper.h>
 #include <glm/vec2.hpp>
 #include <ios>
+#include <libassets/util/Error.h>
 #include <vector>
-#include "GLDebug.h"
-#include "libassets/util/Error.h"
 
 bool GLHelper::Init()
 {

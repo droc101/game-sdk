@@ -2,22 +2,29 @@
 // Created by droc101 on 2/2/26.
 //
 
-#include "SDKWindow.h"
 #include <cstdio>
+#include <game_sdk/gl/GLHelper.h>
+#include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
+#include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl3.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
+#include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_init.h>
+#include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <string>
-#include "GLHelper.h"
-#include "imgui.h"
-#include "SharedMgr.h"
 
 bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, const SDL_WindowFlags windowFlags)
 {
+#ifdef SDL_PLATFORM_LINUX
+    (void)SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "wayland,x11");
+    (void)SDL_SetHint(SDL_HINT_VIDEO_FORCE_EGL, "1");
+#endif
+
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
         printf("Error: SDL_Init(): %s\n", SDL_GetError());
@@ -26,7 +33,7 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
 
     SharedMgr::InitSharedMgr();
 
-    const char *glslVersion = "#version 130";
+    const char *glslVersion = "#version 330";
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0))
     {
         printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
@@ -63,6 +70,7 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
         return false;
     }
+
     glContext = SDL_GL_CreateContext(window);
     if (glContext == nullptr)
     {
@@ -109,21 +117,21 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
     return true;
 }
 
-void SDKWindow::MainLoop(const SDKWindowRenderFunction Render, const SDKWindowProcessEventFunction ProcessEvent) const
+void SDKWindow::MainLoop(const SDKWindowRenderFunction Render, const SDKWindowProcessEventFunction ProcessEvent)
 {
-    bool done = false;
-    while (!done)
+    assert(initDone);
+    while (true)
     {
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_EVENT_QUIT)
             {
-                done = true;
+                quitRequest = true;
             }
             if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
             {
-                done = true;
+                quitRequest = true;
             } else if (ProcessEvent == nullptr || !ProcessEvent(&event))
             {
                 ImGui_ImplSDL3_ProcessEvent(&event);
@@ -153,12 +161,12 @@ void SDKWindow::MainLoop(const SDKWindowRenderFunction Render, const SDKWindowPr
 
         if (quitRequest)
         {
-            done = true;
+            break;
         }
     }
 }
 
-SDL_Window *SDKWindow::GetWindow()
+SDL_Window *SDKWindow::GetWindow() const
 {
     return window;
 }
@@ -170,17 +178,30 @@ void SDKWindow::PostQuit()
 
 void SDKWindow::Destroy() const
 {
-    if (initDone)
+    assert(initDone);
+    SharedMgr::DestroySharedMgr();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
+    if (!SDL_GL_DestroyContext(glContext))
     {
-        SharedMgr::DestroySharedMgr();
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplSDL3_Shutdown();
-        ImGui::DestroyContext();
-        if (!SDL_GL_DestroyContext(glContext))
-        {
-            printf("Error: SDL_GL_DestroyContext(): %s\n", SDL_GetError());
-        }
-        SDL_DestroyWindow(window);
-        SDL_Quit();
+        printf("Error: SDL_GL_DestroyContext(): %s\n", SDL_GetError());
     }
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+}
+
+void SDKWindow::ErrorMessage(const std::string &body, const std::string &title) const
+{
+    (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title.c_str(), body.c_str(), window);
+}
+
+void SDKWindow::WarningMessage(const std::string &body, const std::string &title) const
+{
+    (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, title.c_str(), body.c_str(), window);
+}
+
+void SDKWindow::InfoMessage(const std::string &body, const std::string &title) const
+{
+    (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, title.c_str(), body.c_str(), window);
 }

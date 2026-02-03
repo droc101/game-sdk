@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <format>
+#include <game_sdk/DialogFilters.h>
 #include <imgui.h>
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
@@ -17,8 +18,6 @@
 #include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
 #include <string>
-#include <SDL3/SDL_messagebox.h>
-#include "DialogFilters.h"
 
 void BatchDecompileWindow::Show()
 {

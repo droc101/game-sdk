@@ -11,12 +11,12 @@
 #include <string>
 #include <unordered_map>
 
-class ImGuiTextureAssetCache
+class GLTextureCache
 {
     public:
-        ImGuiTextureAssetCache() = default;
+        GLTextureCache() = default;
 
-        ~ImGuiTextureAssetCache();
+        ~GLTextureCache();
 
         void InitMissingTexture();
 

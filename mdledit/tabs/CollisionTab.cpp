@@ -5,6 +5,7 @@
 #include "CollisionTab.h"
 #include <cstddef>
 #include <format>
+#include <game_sdk/DialogFilters.h>
 #include <imgui.h>
 #include <libassets/type/ConvexHull.h>
 #include <SDL3/SDL_dialog.h>
@@ -12,7 +13,6 @@
 #include <SDL3/SDL_video.h>
 #include <string>
 #include "../ModelRenderer.h"
-#include "DialogFilters.h"
 
 void CollisionTab::Render(SDL_Window *window)
 {

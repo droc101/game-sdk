@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
+#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
@@ -32,7 +33,6 @@
 #include <utility>
 #include <vector>
 #include "MapEditor.h"
-#include "SharedMgr.h"
 
 void EditActorWindow::Render(Actor &actor)
 {

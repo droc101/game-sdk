@@ -2,10 +2,17 @@
 // Created by droc101 on 7/1/25.
 //
 
-#include "SharedMgr.h"
 #include <algorithm>
 #include <cstdio>
 #include <filesystem>
+#include <game_sdk/DesktopInterface.h>
+#include <game_sdk/Options.h>
+#include <game_sdk/SharedMgr.h>
+#include <game_sdk/windows/AboutWindow.h>
+#include <game_sdk/windows/MaterialBrowserWindow.h>
+#include <game_sdk/windows/OptionsWindow.h>
+#include <game_sdk/windows/SetupWindow.h>
+#include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/OptionDefinition.h>
@@ -20,13 +27,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "AboutWindow.h"
-#include "DesktopInterface.h"
-#include "MaterialBrowserWindow.h"
-#include "Options.h"
-#include "OptionsWindow.h"
-#include "SetupWindow.h"
-#include "TextureBrowserWindow.h"
 #ifdef WIN32
 #include <direct.h> // provides chdir
 #else

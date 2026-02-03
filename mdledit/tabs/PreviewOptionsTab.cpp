@@ -2,15 +2,13 @@
 // Created by droc101 on 2/2/26.
 //
 
-#include "../ModelRenderer.h"
-#include "imgui.h"
 #include "PreviewOptionsTab.h"
+#include <imgui.h>
+#include "../ModelRenderer.h"
 
 void PreviewOptionsTab::Render()
 {
-    ImGui::Begin("Preview Options",
-                 nullptr,
-                 ImGuiWindowFlags_NoCollapse);
+    ImGui::Begin("Preview Options", nullptr, ImGuiWindowFlags_NoCollapse);
     ImGui::PushItemWidth(-1);
     ImGui::TextUnformatted("LOD");
     ImGui::SliderInt("##LOD",

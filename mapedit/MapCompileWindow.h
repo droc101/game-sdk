@@ -4,10 +4,10 @@
 
 #ifndef GAME_SDK_MAPCOMPILEWINDOW_H
 #define GAME_SDK_MAPCOMPILEWINDOW_H
+
 #include <SDL3/SDL_process.h>
 #include <SDL3/SDL_video.h>
 #include <string>
-
 
 class MapCompileWindow
 {
