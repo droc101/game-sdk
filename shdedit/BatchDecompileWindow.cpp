@@ -19,6 +19,8 @@
 #include <SDL3/SDL_video.h>
 #include <string>
 
+#include "game_sdk/SDKWindow.h"
+
 void BatchDecompileWindow::Show()
 {
     visible = true;
@@ -167,13 +169,7 @@ void BatchDecompileWindow::Render(SDL_Window *window)
                     visible = false;
                 } else
                 {
-                    if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                                  "Error",
-                                                  std::format("Failed to decompile shaders!\n{}", e).c_str(),
-                                                  window))
-                    {
-                        printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-                    }
+                    SDKWindow::ErrorMessage(std::format("Failed to decompile shaders!\n{}", e));
                 }
             }
             ImGui::SameLine();

@@ -9,13 +9,14 @@
 #include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_messagebox.h>
+#include "game_sdk/SDKWindow.h"
 #include "MapEditor.h"
 
 void MapCompileWindow::StartCompile(SDL_Window *window)
 {
     if (MapEditor::mapFile.empty())
     {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "The level must be saved before compiling", window);
+        SDKWindow::ErrorMessage("The level must be saved before compiling");
     } else
     {
         const Error::ErrorCode errorCode = MapEditor::map.SaveAsMapSrc(MapEditor::mapFile.c_str());

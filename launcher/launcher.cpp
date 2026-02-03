@@ -18,8 +18,6 @@
 #include <string>
 #include <vector>
 
-static SDKWindow sdkWindow{};
-
 static std::string sdkPath;
 static nlohmann::ordered_json launcher_json;
 
@@ -179,7 +177,7 @@ static void Render(SDL_Window * /*window*/)
 
 int main()
 {
-    if (!sdkWindow.Init("GAME SDK", {350, 400}, 0))
+    if (!SDKWindow::Init("GAME SDK", {350, 400}, 0))
     {
         return -1;
     }
@@ -194,9 +192,9 @@ int main()
         return -1;
     }
 
-    sdkWindow.MainLoop(Render);
+    SDKWindow::MainLoop(Render);
 
-    sdkWindow.Destroy();
+    SDKWindow::Destroy();
 
     return 0;
 }

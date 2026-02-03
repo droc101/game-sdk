@@ -27,8 +27,6 @@
 #include "tabs/PreviewOptionsTab.h"
 #include "tabs/SkinsTab.h"
 
-static SDKWindow sdkWindow{};
-
 static bool modelLoaded = false;
 static bool dragging = false;
 
@@ -92,7 +90,7 @@ static void saveGmdlCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = ModelRenderer::GetModel().SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to save the model!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to save the model!\n{}", errorCode));
     }
 }
 
@@ -109,7 +107,7 @@ static bool ProcessEvent(SDL_Event *event)
             const Error::ErrorCode errorCode = ModelAsset::CreateFromAsset(*path, model);
             if (errorCode != Error::ErrorCode::OK)
             {
-                sdkWindow.ErrorMessage(std::format("Failed to open the model!\n{}", errorCode));
+                SDKWindow::ErrorMessage(std::format("Failed to open the model!\n{}", errorCode));
                 delete path;
                 return true;
             }
@@ -120,7 +118,7 @@ static bool ProcessEvent(SDL_Event *event)
                                                                                    Options::defaultTexture);
             if (errorCode != Error::ErrorCode::OK)
             {
-                sdkWindow.ErrorMessage(std::format("Failed to import the model!\n{}", errorCode));
+                SDKWindow::ErrorMessage(std::format("Failed to import the model!\n{}", errorCode));
                 delete path;
                 return true;
             }
@@ -129,7 +127,7 @@ static bool ProcessEvent(SDL_Event *event)
             model = ModelRenderer::GetModel();
             if (!model.AddLod(*path))
             {
-                sdkWindow.ErrorMessage(std::format("Failed to import model LOD!"));
+                SDKWindow::ErrorMessage(std::format("Failed to import model LOD!"));
                 delete path;
                 return true;
             }
@@ -158,7 +156,7 @@ static bool ProcessEvent(SDL_Event *event)
         const Error::ErrorCode errorCode = ModelRenderer::GetModel().SaveAsAsset(*path);
         if (errorCode != Error::ErrorCode::OK)
         {
-            sdkWindow.ErrorMessage(std::format("Failed to save the model!\n{}", errorCode));
+            SDKWindow::ErrorMessage(std::format("Failed to save the model!\n{}", errorCode));
             delete path;
             return true;
         }
@@ -217,7 +215,7 @@ static void HandleMenuAndShortcuts()
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                sdkWindow.PostQuit();
+                SDKWindow::PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -296,7 +294,7 @@ static void HandleMenuAndShortcuts()
     {
         SDL_ShowOpenFileDialog(openGmdlCallback,
                                nullptr,
-                               sdkWindow.GetWindow(),
+                               SDKWindow::GetWindow(),
                                DialogFilters::gmdlFilters.data(),
                                1,
                                nullptr,
@@ -305,7 +303,7 @@ static void HandleMenuAndShortcuts()
     {
         SDL_ShowOpenFileDialog(importCallback,
                                nullptr,
-                               sdkWindow.GetWindow(),
+                               SDKWindow::GetWindow(),
                                DialogFilters::modelFilters.data(),
                                DialogFilters::modelFilters.size(),
                                nullptr,
@@ -314,7 +312,7 @@ static void HandleMenuAndShortcuts()
     {
         if (!ModelRenderer::GetModel().ValidateLodDistances())
         {
-            sdkWindow.ErrorMessage("LOD distances are invalid! Please fix them in the LOD editor and make sure "
+            SDKWindow::ErrorMessage("LOD distances are invalid! Please fix them in the LOD editor and make sure "
                                    "that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the "
                                    "same distance",
                                    "Invalid Model");
@@ -322,7 +320,7 @@ static void HandleMenuAndShortcuts()
         {
             SDL_ShowSaveFileDialog(saveGmdlCallback,
                                    nullptr,
-                                   sdkWindow.GetWindow(),
+                                   SDKWindow::GetWindow(),
                                    DialogFilters::gmdlFilters.data(),
                                    1,
                                    nullptr);
@@ -437,7 +435,7 @@ static void Render(SDL_Window *window)
 
 int main(int argc, char **argv)
 {
-    if (!sdkWindow.Init("mdledit", {1366, 768}))
+    if (!SDKWindow::Init("GAME SDK Model Editor", {1366, 768}))
     {
         return -1;
     }
@@ -479,10 +477,10 @@ int main(int argc, char **argv)
         }
     }
 
-    sdkWindow.MainLoop(Render, ProcessEvent);
+    SDKWindow::MainLoop(Render, ProcessEvent);
 
     destroyExistingModel();
     ModelRenderer::Destroy();
-    sdkWindow.Destroy();
+    SDKWindow::Destroy();
     return 0;
 }

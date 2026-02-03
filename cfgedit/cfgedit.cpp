@@ -15,8 +15,6 @@
 #include <SDL3/SDL_video.h>
 #include <string>
 
-static SDKWindow sdkWindow{};
-
 static GameConfigAsset config{};
 static bool configLoaded = false;
 
@@ -25,7 +23,7 @@ static void openGame(const std::string &path)
     const Error::ErrorCode errorCode = GameConfigAsset::CreateFromAsset(path.c_str(), config);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to open the game configuration!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to open the game configuration!\n{}", errorCode));
         return;
     }
     configLoaded = true;
@@ -49,7 +47,7 @@ static void saveGameCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = config.SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to save the game configuration!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to save the game configuration!\n{}", errorCode));
     }
 }
 
@@ -78,7 +76,7 @@ static void Render(SDL_Window *sdlWindow)
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                sdkWindow.PostQuit();
+                SDKWindow::PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -130,7 +128,7 @@ static void Render(SDL_Window *sdlWindow)
 
 int main(int argc, char **argv)
 {
-    if (!sdkWindow.Init("cfgedit", {400, 200}, 0))
+    if (!SDKWindow::Init("GAME SDK Game Config Editor", {400, 200}, 0))
     {
         return -1;
     }
@@ -141,9 +139,9 @@ int main(int argc, char **argv)
         openGame(openPath);
     }
 
-    sdkWindow.MainLoop(Render);
+    SDKWindow::MainLoop(Render);
 
-    sdkWindow.Destroy();
+    SDKWindow::Destroy();
 
     return 0;
 }

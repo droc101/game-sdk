@@ -15,29 +15,29 @@ using SDKWindowProcessEventFunction = bool (*)(SDL_Event *window);
 class SDKWindow
 {
     public:
-        SDKWindow() = default;
+        SDKWindow() = delete;
 
-        [[nodiscard]] bool Init(const std::string &appName,
+        [[nodiscard]] static bool Init(const std::string &appName,
                                 glm::ivec2 windowSize = {800, 600},
                                 SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE);
 
-        void MainLoop(SDKWindowRenderFunction Render, SDKWindowProcessEventFunction ProcessEvent = nullptr);
+        static void MainLoop(SDKWindowRenderFunction Render, SDKWindowProcessEventFunction ProcessEvent = nullptr);
 
-        [[nodiscard]] SDL_Window *GetWindow() const;
+        [[nodiscard]] static SDL_Window *GetWindow();
 
-        void PostQuit();
+        static void PostQuit();
 
-        void Destroy() const;
+        static void Destroy();
 
-        void ErrorMessage(const std::string &body, const std::string &title = "Error") const;
+        static void ErrorMessage(const std::string &body, const std::string &title = "Error");
 
-        void WarningMessage(const std::string &body, const std::string &title = "Warning") const;
+        static void WarningMessage(const std::string &body, const std::string &title = "Warning");
 
-        void InfoMessage(const std::string &body, const std::string &title) const;
+        static void InfoMessage(const std::string &body, const std::string &title);
 
     private:
-        bool initDone = false;
-        SDL_Window *window = nullptr;
-        SDL_GLContext glContext = nullptr;
-        bool quitRequest = false;
+        static inline bool initDone = false;
+        static inline SDL_Window *window = nullptr;
+        static inline SDL_GLContext glContext = nullptr;
+        static inline bool quitRequest = false;
 };

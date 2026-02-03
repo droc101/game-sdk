@@ -19,8 +19,6 @@
 #include <SDL3/SDL_video.h>
 #include <string>
 
-static SDKWindow sdkWindow{};
-
 static LevelMaterialAsset material{};
 
 static void openGmtl(const std::string &path)
@@ -28,7 +26,7 @@ static void openGmtl(const std::string &path)
     const Error::ErrorCode errorCode = LevelMaterialAsset::CreateFromAsset(path.c_str(), material);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to open the material!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to open the material!\n{}", errorCode));
     }
 }
 
@@ -50,7 +48,7 @@ static void saveGmtlCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = material.SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to save the material!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to save the material!\n{}", errorCode));
     }
 }
 
@@ -78,7 +76,7 @@ static void Render(SDL_Window *sdlWindow)
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                sdkWindow.PostQuit();
+                SDKWindow::PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -126,7 +124,7 @@ static void Render(SDL_Window *sdlWindow)
 
 int main(int argc, char **argv)
 {
-    if (!sdkWindow.Init("mtledit"))
+    if (!SDKWindow::Init("GAME SDK Material Editor"))
     {
         return -1;
     }
@@ -137,9 +135,9 @@ int main(int argc, char **argv)
         openGmtl(openPath);
     }
 
-    sdkWindow.MainLoop(Render);
+    SDKWindow::MainLoop(Render);
 
-    sdkWindow.Destroy();
+    SDKWindow::Destroy();
 
     return 0;
 }

@@ -25,8 +25,6 @@
 #include "tools/SelectTool.h"
 #include "Viewport.h"
 
-static SDKWindow sdkWindow{};
-
 static Viewport vpTopDown = Viewport(Viewport::ViewportType::TOP_DOWN_XZ);
 static Viewport vpFront = Viewport(Viewport::ViewportType::FRONT_XY);
 static Viewport vpSide = Viewport(Viewport::ViewportType::SIDE_YZ);
@@ -75,7 +73,7 @@ static void saveJsonCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = MapEditor::map.SaveAsMapSrc(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to save the map!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to save the map!\n{}", errorCode));
         return;
     }
     MapEditor::mapFile = fileList[0];
@@ -86,7 +84,7 @@ static void openJson(const std::string &path)
     const Error::ErrorCode errorCode = MapAsset::CreateFromMapSrc(path.c_str(), MapEditor::map);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to open the map!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to open the map!\n{}", errorCode));
         return;
     }
     MapEditor::mapFile = path;
@@ -94,7 +92,7 @@ static void openJson(const std::string &path)
     {
         if (!SharedMgr::actorDefinitions.contains(actor.className))
         {
-            sdkWindow.ErrorMessage(std::format("Failed to open the map because it contains an unknown actor "
+            SDKWindow::ErrorMessage(std::format("Failed to open the map because it contains an unknown actor "
                                                "class \"{}\"",
                                                actor.className));
             MapEditor::map = MapAsset();
@@ -234,7 +232,7 @@ static void Render(SDL_Window *sdlWindow)
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                sdkWindow.PostQuit();
+                SDKWindow::PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -534,7 +532,7 @@ static void Render(SDL_Window *sdlWindow)
 
 int main(int argc, char **argv)
 {
-    if (!sdkWindow.Init("mapedit", {1366, 768}, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED))
+    if (!SDKWindow::Init("GAME SDK Map Editor", {1366, 768}, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED))
     {
         return -1;
     }
@@ -545,12 +543,12 @@ int main(int argc, char **argv)
         printf("Failed to start renderer!\n");
         return -1;
     }
-    SDL_SetWindowMinimumSize(sdkWindow.GetWindow(), 640, 480);
+    (void)SDL_SetWindowMinimumSize(SDKWindow::GetWindow(), 640, 480);
 
-    SharedMgr::textureCache.RegisterPng("assets/mapedit/select.png", MapEditor::SELECT_ICON_NAME);
-    SharedMgr::textureCache.RegisterPng("assets/mapedit/actors.png", MapEditor::ACTOR_ICON_NAME);
-    SharedMgr::textureCache.RegisterPng("assets/mapedit/primitives.png", MapEditor::PRIMITIVE_ICON_NAME);
-    SharedMgr::textureCache.RegisterPng("assets/mapedit/polygon.png", MapEditor::POLYGON_ICON_NAME);
+    (void)SharedMgr::textureCache.RegisterPng("assets/mapedit/select.png", MapEditor::SELECT_ICON_NAME);
+    (void)SharedMgr::textureCache.RegisterPng("assets/mapedit/actors.png", MapEditor::ACTOR_ICON_NAME);
+    (void)SharedMgr::textureCache.RegisterPng("assets/mapedit/primitives.png", MapEditor::PRIMITIVE_ICON_NAME);
+    (void)SharedMgr::textureCache.RegisterPng("assets/mapedit/polygon.png", MapEditor::POLYGON_ICON_NAME);
 
     vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
     vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;
@@ -562,9 +560,9 @@ int main(int argc, char **argv)
         openJson(openPath);
     }
 
-    sdkWindow.MainLoop(Render);
+    SDKWindow::MainLoop(Render);
 
     MapRenderer::Destroy();
-    sdkWindow.Destroy();
+    SDKWindow::Destroy();
     return 0;
 }

@@ -19,8 +19,6 @@
 #include "BatchCompileWindow.h"
 #include "BatchDecompileWindow.h"
 
-static SDKWindow sdkWindow{};
-
 static ShaderAsset shader{};
 static bool shaderLoaded = false;
 
@@ -29,7 +27,7 @@ static void openGshd(const std::string &path)
     const Error::ErrorCode errorCode = ShaderAsset::CreateFromAsset(path.c_str(), shader);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to open the shader!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to open the shader!\n{}", errorCode));
         return;
     }
     shaderLoaded = true;
@@ -49,7 +47,7 @@ static void importGlsl(const std::string &path)
     const Error::ErrorCode errorCode = ShaderAsset::CreateFromGlsl(path.c_str(), shader);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to import the shader!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to import the shader!\n{}", errorCode));
         return;
     }
     shaderLoaded = true;
@@ -73,7 +71,7 @@ static void saveGfonCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = shader.SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to save the shader!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to save the shader!\n{}", errorCode));
     }
 }
 
@@ -86,7 +84,7 @@ static void exportCallback(void * /*userdata*/, const char *const *fileList, int
     const Error::ErrorCode errorCode = shader.SaveAsGlsl(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to export the shader!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to export the shader!\n{}", errorCode));
     }
 }
 
@@ -119,7 +117,7 @@ static void Render(SDL_Window *sdlWindow)
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                sdkWindow.PostQuit();
+                SDKWindow::PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -233,7 +231,7 @@ static void Render(SDL_Window *sdlWindow)
 
 int main(int argc, char **argv)
 {
-    if (!sdkWindow.Init("shdedit"))
+    if (!SDKWindow::Init("GAME SDK Shader Editor"))
     {
         return -1;
     }
@@ -258,9 +256,9 @@ int main(int argc, char **argv)
         }
     }
 
-    sdkWindow.MainLoop(Render);
+    SDKWindow::MainLoop(Render);
 
-    sdkWindow.Destroy();
+    SDKWindow::Destroy();
 
     return 0;
 }

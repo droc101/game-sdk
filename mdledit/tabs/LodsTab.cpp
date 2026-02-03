@@ -20,6 +20,7 @@
 #include <string>
 #include <utility>
 #include "../ModelRenderer.h"
+#include "game_sdk/SDKWindow.h"
 
 void LodsTab::Render(SDL_Window *window)
 {
@@ -48,15 +49,12 @@ void LodsTab::Render(SDL_Window *window)
     {
         if (!ModelRenderer::GetModel().ValidateLodDistances())
         {
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING,
-                                     "Warning",
-                                     "LOD distances are invalid! Make sure that:\n"
+            SDKWindow::WarningMessage("LOD distances are invalid! Make sure that:\n"
                                      "- The first LOD (LOD 0) has a distance of 0\n"
-                                     "- No two LODs have the same distance",
-                                     window);
+                                     "- No two LODs have the same distance");
         } else
         {
-            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Success", "LOD distances are valid!", window);
+            SDKWindow::InfoMessage("LOD distances are valid", "Success");
         }
     }
 

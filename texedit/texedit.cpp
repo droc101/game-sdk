@@ -16,7 +16,6 @@
 #include <string>
 #include <vector>
 
-static SDKWindow sdkWindow{};
 static float zoom = 1.0f;
 
 static TextureAsset texture{};
@@ -67,7 +66,7 @@ static void openGtex(const std::string &path)
     const Error::ErrorCode errorCode = TextureAsset::CreateFromAsset(path.c_str(), texture);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to open the texture!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to open the texture!\n{}", errorCode));
         return;
     }
     loadTexture();
@@ -87,7 +86,7 @@ static void importImage(const std::string &path)
     const Error::ErrorCode errorCode = TextureAsset::CreateFromImage(path.c_str(), texture);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to import the texture!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to import the texture!\n{}", errorCode));
         return;
     }
     loadTexture();
@@ -111,7 +110,7 @@ static void saveGtexCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = texture.SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to save the texture!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to save the texture!\n{}", errorCode));
     }
 }
 
@@ -124,7 +123,7 @@ static void exportCallback(void * /*userdata*/, const char *const *fileList, int
     const Error::ErrorCode errorCode = texture.SaveAsImage(fileList[0], TextureAsset::ImageFormat::IMAGE_FORMAT_PNG);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to export the texture!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to export the texture!\n{}", errorCode));
     }
 }
 
@@ -158,7 +157,7 @@ static void Render(SDL_Window *sdlWindow)
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                sdkWindow.PostQuit();
+                SDKWindow::PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -260,7 +259,7 @@ static void Render(SDL_Window *sdlWindow)
 
 int main(int argc, char **argv)
 {
-    if (!sdkWindow.Init("texedit"))
+    if (!SDKWindow::Init("GAME SDK Texture Editor"))
     {
         return -1;
     }
@@ -285,11 +284,11 @@ int main(int argc, char **argv)
         }
     }
 
-    sdkWindow.MainLoop(Render);
+    SDKWindow::MainLoop(Render);
 
     destroyExistingTexture();
 
-    sdkWindow.Destroy();
+    SDKWindow::Destroy();
 
     return 0;
 }

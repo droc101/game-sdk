@@ -24,7 +24,6 @@
 #include <string>
 #include <vector>
 
-static SDKWindow sdkWindow{};
 static std::vector<std::string> charDisplayList{};
 
 static FontAsset font{};
@@ -35,7 +34,7 @@ static void openGfon(const std::string &path)
     const Error::ErrorCode errorCode = FontAsset::CreateFromAsset(path.c_str(), font);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to open the font!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to open the font!\n{}", errorCode));
         return;
     }
     fontLoaded = true;
@@ -59,7 +58,7 @@ static void saveGfonCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = font.SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to save the font!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to save the font!\n{}", errorCode));
     }
 }
 
@@ -99,7 +98,7 @@ static void Render(SDL_Window *sdlWindow)
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                sdkWindow.PostQuit();
+                SDKWindow::PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -269,7 +268,7 @@ static void Render(SDL_Window *sdlWindow)
 
 int main(int argc, char **argv)
 {
-    if (!sdkWindow.Init("fonedit"))
+    if (!SDKWindow::Init("GAME SDK Font Editor"))
     {
         return -1;
     }
@@ -282,9 +281,9 @@ int main(int argc, char **argv)
         openGfon(openPath);
     }
 
-    sdkWindow.MainLoop(Render);
+    SDKWindow::MainLoop(Render);
 
-    sdkWindow.Destroy();
+    SDKWindow::Destroy();
 
     return 0;
 }

@@ -2,6 +2,7 @@
 // Created by droc101 on 2/2/26.
 //
 
+#include <cassert>
 #include <cstdio>
 #include <game_sdk/gl/GLHelper.h>
 #include <game_sdk/SDKWindow.h>
@@ -20,6 +21,10 @@
 
 bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, const SDL_WindowFlags windowFlags)
 {
+    assert(!initDone);
+
+    printf("Starting %s...\n", appName.c_str());
+
 #ifdef SDL_PLATFORM_LINUX
     (void)SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "wayland,x11");
     (void)SDL_SetHint(SDL_HINT_VIDEO_FORCE_EGL, "1");
@@ -166,17 +171,19 @@ void SDKWindow::MainLoop(const SDKWindowRenderFunction Render, const SDKWindowPr
     }
 }
 
-SDL_Window *SDKWindow::GetWindow() const
+SDL_Window *SDKWindow::GetWindow()
 {
+    assert(initDone);
     return window;
 }
 
 void SDKWindow::PostQuit()
 {
+    assert(initDone);
     quitRequest = true;
 }
 
-void SDKWindow::Destroy() const
+void SDKWindow::Destroy()
 {
     assert(initDone);
     SharedMgr::DestroySharedMgr();
@@ -191,17 +198,17 @@ void SDKWindow::Destroy() const
     SDL_Quit();
 }
 
-void SDKWindow::ErrorMessage(const std::string &body, const std::string &title) const
+void SDKWindow::ErrorMessage(const std::string &body, const std::string &title)
 {
     (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title.c_str(), body.c_str(), window);
 }
 
-void SDKWindow::WarningMessage(const std::string &body, const std::string &title) const
+void SDKWindow::WarningMessage(const std::string &body, const std::string &title)
 {
     (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, title.c_str(), body.c_str(), window);
 }
 
-void SDKWindow::InfoMessage(const std::string &body, const std::string &title) const
+void SDKWindow::InfoMessage(const std::string &body, const std::string &title)
 {
     (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, title.c_str(), body.c_str(), window);
 }

@@ -14,7 +14,6 @@
 #include <SDL3/SDL_video.h>
 #include <string>
 
-static SDKWindow sdkWindow{};
 static ma_engine engine{};
 static ma_decoder decoder{};
 
@@ -56,12 +55,12 @@ static void openGsnd(const std::string &path)
     const Error::ErrorCode errorCode = SoundAsset::CreateFromAsset(path.c_str(), soundAsset);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to open the sound!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to open the sound!\n{}", errorCode));
         return;
     }
     if (!loadSound())
     {
-        sdkWindow.ErrorMessage(std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN));
+        SDKWindow::ErrorMessage(std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN));
     }
 }
 
@@ -79,12 +78,12 @@ static void importWav(const std::string &path)
     const Error::ErrorCode errorCode = SoundAsset::CreateFromWAV(path.c_str(), soundAsset);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to import the sound!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to import the sound!\n{}", errorCode));
         return;
     }
     if (!loadSound())
     {
-        sdkWindow.ErrorMessage(std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN));
+        SDKWindow::ErrorMessage(std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN));
     }
 }
 
@@ -106,7 +105,7 @@ static void saveGsndCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = soundAsset.SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to save the sound!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to save the sound!\n{}", errorCode));
     }
 }
 
@@ -119,7 +118,7 @@ static void exportCallback(void * /*userdata*/, const char *const *fileList, int
     const Error::ErrorCode errorCode = soundAsset.SaveAsWAV(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to export the sound!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to export the sound!\n{}", errorCode));
     }
 }
 
@@ -149,7 +148,7 @@ static void Render(SDL_Window *sdlWindow)
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                sdkWindow.PostQuit();
+                SDKWindow::PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -267,7 +266,7 @@ static void Render(SDL_Window *sdlWindow)
 
 int main(int argc, char **argv)
 {
-    if (!sdkWindow.Init("sndedit"))
+    if (!SDKWindow::Init("GAME SDK Sound Editor"))
     {
         return -1;
     }
@@ -291,11 +290,11 @@ int main(int argc, char **argv)
         }
     }
 
-    sdkWindow.MainLoop(Render);
+    SDKWindow::MainLoop(Render);
 
     ma_engine_uninit(&engine);
 
-    sdkWindow.Destroy();
+    SDKWindow::Destroy();
 
     return 0;
 }

@@ -24,8 +24,6 @@
 #include <string>
 #include <utility>
 
-static SDKWindow sdkWindow{};
-
 static DataAsset dataAsset{};
 static std::string selectedPath = "/";
 
@@ -34,7 +32,7 @@ static void openGkvl(const std::string &path)
     const Error::ErrorCode errorCode = DataAsset::CreateFromAsset(path.c_str(), dataAsset);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to open the KvList!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to open the KvList!\n{}", errorCode));
     }
 }
 
@@ -52,7 +50,7 @@ static void importJson(const std::string &path)
     const Error::ErrorCode errorCode = DataAsset::CreateFromJson(path.c_str(), dataAsset);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to import the KvList!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to import the KvList!\n{}", errorCode));
     }
 }
 
@@ -74,7 +72,7 @@ static void saveGkvlCallback(void * /*userdata*/, const char *const *fileList, i
     const Error::ErrorCode errorCode = dataAsset.SaveAsAsset(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to save the KvList!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to save the KvList!\n{}", errorCode));
     }
 }
 
@@ -87,7 +85,7 @@ static void exportCallback(void * /*userdata*/, const char *const *fileList, int
     const Error::ErrorCode errorCode = dataAsset.SaveAsJson(fileList[0]);
     if (errorCode != Error::ErrorCode::OK)
     {
-        sdkWindow.ErrorMessage(std::format("Failed to export the KvList!\n{}", errorCode));
+        SDKWindow::ErrorMessage(std::format("Failed to export the KvList!\n{}", errorCode));
     }
 }
 
@@ -379,7 +377,7 @@ static void Render(SDL_Window *sdlWindow)
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                sdkWindow.PostQuit();
+                SDKWindow::PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -439,7 +437,7 @@ static void Render(SDL_Window *sdlWindow)
 
 int main(int argc, char **argv)
 {
-    if (!sdkWindow.Init("kvledit"))
+    if (!SDKWindow::Init("GAME SDK Key-Value List Editor"))
     {
         return -1;
     }
@@ -457,9 +455,9 @@ int main(int argc, char **argv)
         }
     }
 
-    sdkWindow.MainLoop(Render);
+    SDKWindow::MainLoop(Render);
 
-    sdkWindow.Destroy();
+    SDKWindow::Destroy();
 
     return 0;
 }
