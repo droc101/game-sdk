@@ -77,3 +77,19 @@ void DataReader::ReadStringWithSize(std::string &buffer)
     ReadString(buffer, stringLength);
 }
 
+glm::vec2 DataReader::ReadVec2()
+{
+    glm::vec2 v{};
+    v.x = Read<float>();
+    v.y = Read<float>();
+    return v;
+}
+
+glm::vec3 DataReader::ReadVec3()
+{
+    glm::vec3 v{};
+    v.x = Read<float>();
+    v.y = Read<float>();
+    v.z = Read<float>();
+    return v;
+}

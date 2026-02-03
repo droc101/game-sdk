@@ -6,8 +6,10 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <libassets/type/Color.h>
 #include <libassets/type/ModelVertex.h>
 #include <libassets/type/Sector.h>
+#include <libassets/type/WallMaterial.h>
 #include <libassets/util/DataWriter.h>
 #include <string>
 #include <vector>
@@ -23,7 +25,7 @@ class LevelMeshBuilder
 
         void Write(DataWriter &writer, const std::string &materialPath) const;
 
-        bool IsEmpty() const;
+        [[nodiscard]] bool IsEmpty() const;
 
     private:
         std::vector<ModelVertex> vertices{};
@@ -31,10 +33,10 @@ class LevelMeshBuilder
         uint32_t currentIndex = 0;
 
         static float CalculateSLength(const Sector &sector, size_t wallIndex);
-        void AddWallBase(const std::array<float, 2> &startPoint,
-                         const std::array<float, 2> &endPoint,
+        void AddWallBase(const glm::vec2 &startPoint,
+                         const glm::vec2 &endPoint,
                          const WallMaterial &wallMaterial,
-                         std::array<float, 2> wallNormalVector,
+                         glm::vec2 wallNormalVector,
                          float previousWallsLength,
                          float floorHeight,
                          float ceilingHeight,

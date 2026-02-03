@@ -61,8 +61,8 @@ Error::ErrorCode OptionDefinition::Create(std::string &path, OptionDefinition &d
             e = def.LoadOptions<std::string>(definition_json);
             break;
         case Param::ParamType::PARAM_TYPE_COLOR: // TODO color options
-                // e = def.LoadOptions<Color>(definition_json);
-                // break;
+            // e = def.LoadOptions<Color>(definition_json);
+            // break;
         default:
             e = Error::ErrorCode::INCORRECT_FORMAT;
             break;
@@ -114,5 +114,3 @@ std::string OptionDefinition::Find(const Param &value) const
     }
     return "";
 }
-
-

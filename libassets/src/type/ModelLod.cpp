@@ -176,6 +176,6 @@ void ModelLod::FlipVerticalUVs()
 {
     for (ModelVertex &v: vertices)
     {
-        v.uv.at(1) = 1.0f - v.uv.at(1);
+        v.uv.y = 1.0f - v.uv.y;
     }
 }

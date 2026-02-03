@@ -10,6 +10,7 @@
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
+#include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/type/Material.h>
@@ -106,7 +107,7 @@ static void Render(SDL_Window *sdlWindow)
     TextureBrowserWindow::InputTexture("##texture", material.texture);
     ImGui::Text("Base Scale");
     ImGui::PushItemWidth(-1);
-    ImGui::InputFloat2("##baseScale", material.baseScale.data());
+    ImGui::InputFloat2("##baseScale", glm::value_ptr(material.baseScale));
     // TODO soundClass (when more exist)
     bool unshaded = material.shader == Material::MaterialShader::SHADER_UNSHADED;
     if (ImGui::Checkbox("Unshaded", &unshaded))

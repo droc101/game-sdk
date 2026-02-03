@@ -51,7 +51,7 @@ class DialogFilters
             SDL_DialogFileFilter{"GLSL source (*.glsl)", "glsl"},
             SDL_DialogFileFilter{"GLSL fragment (*.frag)", "frag"},
             SDL_DialogFileFilter{"GLSL vertex (*.vert)", "vert"},
-            SDL_DialogFileFilter{"GLSL compute (*.comp)", "comp"}
+            SDL_DialogFileFilter{"GLSL compute (*.comp)", "comp"},
         };
         static constexpr std::array<SDL_DialogFileFilter, 1> gshdFilters = {
             SDL_DialogFileFilter{"GAME shader (*.gshd)", "gshd"},

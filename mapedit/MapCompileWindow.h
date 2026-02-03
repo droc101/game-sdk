@@ -16,6 +16,7 @@ class MapCompileWindow
 
         static void Show();
         static void Render(SDL_Window *window);
+
     private:
         static inline bool visible = false;
         static inline SDL_Process *compilerProcess = nullptr;

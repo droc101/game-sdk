@@ -8,6 +8,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 #include <libassets/util/Primitive.h>
 #include <stdexcept>
 #include <string>
@@ -37,6 +39,10 @@ class DataReader
         void ReadString(std::string &buffer, size_t characterCount);
 
         void ReadStringWithSize(std::string &buffer);
+
+        [[nodiscard]] glm::vec2 ReadVec2();
+
+        [[nodiscard]] glm::vec3 ReadVec3();
 
         template<Primitive T> [[nodiscard]] T Read()
         {

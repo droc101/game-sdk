@@ -3,7 +3,6 @@
 //
 
 #include "SectorCollisionBuilder.h"
-
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -19,16 +18,16 @@
 SectorCollisionBuilder::SectorCollisionBuilder(const Sector &sector)
 {
     this->sector = &sector;
-    std::array<float, 2> sums{};
-    for (const std::array<float, 2> &point: sector.points)
+    glm::vec2 sums{};
+    for (const glm::vec2 &point: sector.points)
     {
-        sums[0] += point[0];
-        sums[1] += point[1];
+        sums += point;
     }
 
-    sectorCenter[0] = sums[0] / sector.points.size();
-    sectorCenter[2] = sums[1] / sector.points.size();
-    sectorCenter[1] = (sector.floorHeight + sector.ceilingHeight) / 2.0f;
+    sectorCenter = {};
+    sectorCenter.x = sums.x / sector.points.size();
+    sectorCenter.y = (sector.floorHeight + sector.ceilingHeight) / 2.0f;
+    sectorCenter.z = sums.y / sector.points.size();
 
     NextShape();
 }
@@ -50,14 +49,16 @@ void SectorCollisionBuilder::AddFloor()
 
 void SectorCollisionBuilder::AddSectorBase(const bool isFloor)
 {
-    const std::vector<std::vector<std::array<float, 2>>> polygon{sector->points};
+    std::vector<std::vector<std::array<float, 2>>> polygon{{}};
+    for (const glm::vec2 &point: sector->points)
+    {
+        polygon.at(0).push_back({point.x, point.y});
+    }
     std::vector<uint32_t> idx = mapbox::earcut<uint32_t>(polygon);
 
-    for (const std::array<float, 2> &point: sector->points)
+    for (const glm::vec2 &point: sector->points)
     {
-        CurrentShape().vertices.push_back({point.at(0),
-                                           isFloor ? sector->floorHeight : sector->ceilingHeight,
-                                           point.at(1)});
+        CurrentShape().vertices.emplace_back(point.x, isFloor ? sector->floorHeight : sector->ceilingHeight, point.y);
     }
 
     if (isFloor)
@@ -77,16 +78,16 @@ void SectorCollisionBuilder::AddSectorBase(const bool isFloor)
 
 void SectorCollisionBuilder::AddWall(const size_t wallIndex, const float floorHeight, const float ceilingHeight)
 {
-    const std::array<float, 2> &startPoint = sector->points.at(wallIndex);
-    const std::array<float, 2> &endPoint = sector->points.at((wallIndex + 1) % (sector->points.size()));
+    const glm::vec2 &startPoint = sector->points.at(wallIndex);
+    const glm::vec2 &endPoint = sector->points.at((wallIndex + 1) % (sector->points.size()));
 
     const bool ccw = sector->CalculateArea() > 0;
 
     AddWallBase(startPoint, endPoint, floorHeight, ceilingHeight, ccw);
 }
 
-void SectorCollisionBuilder::AddWallBase(const std::array<float, 2> &startPoint,
-                                         const std::array<float, 2> &endPoint,
+void SectorCollisionBuilder::AddWallBase(const glm::vec2 &startPoint,
+                                         const glm::vec2 &endPoint,
                                          const float floorHeight,
                                          const float ceilingHeight,
                                          const bool counterClockWise)
@@ -102,14 +103,14 @@ void SectorCollisionBuilder::AddWallBase(const std::array<float, 2> &startPoint,
         return;
     }
 
-    std::array<std::array<float, 3>, 4> wallPoints{};
-    wallPoints.at(0) = {startPoint[0], ceilingHeight, startPoint[1]}; // SC
-    wallPoints.at(1) = {endPoint[0], ceilingHeight, endPoint[1]}; // EC
+    std::array<glm::vec3, 4> wallPoints{};
+    wallPoints.at(0) = {startPoint.x, ceilingHeight, startPoint.y}; // SC
+    wallPoints.at(1) = {endPoint.x, ceilingHeight, endPoint.y}; // EC
 
-    wallPoints.at(2) = {startPoint[0], floorHeight, startPoint[1]}; // SF
-    wallPoints.at(3) = {endPoint[0], floorHeight, endPoint[1]}; // EF
+    wallPoints.at(2) = {startPoint.x, floorHeight, startPoint.y}; // SF
+    wallPoints.at(3) = {endPoint.x, floorHeight, endPoint.y}; // EF
 
-    for (const std::array<float, 3> &point: wallPoints)
+    for (const glm::vec3 &point: wallPoints)
     {
         CurrentShape().vertices.push_back(point);
     }
@@ -137,7 +138,7 @@ void SectorCollisionBuilder::Write(DataWriter &writer)
 {
     std::erase_if(shapes, [](const SubShape &s) { return s.indices.size() < 3 || s.vertices.empty(); });
 
-    writer.WriteBuffer<float>(sectorCenter);
+    writer.WriteVec3(sectorCenter);
     writer.Write<size_t>(shapes.size());
     for (const SubShape &shape: shapes)
     {
@@ -153,11 +154,7 @@ void SectorCollisionBuilder::Write(DataWriter &writer)
 
 void SectorCollisionBuilder::WriteIndex(const size_t index, DataWriter &writer, const SubShape &shape) const
 {
-    std::array<float, 3> vertex = shape.vertices.at(index);
-    vertex.at(0) -= sectorCenter.at(0);
-    vertex.at(1) -= sectorCenter.at(1);
-    vertex.at(2) -= sectorCenter.at(2);
-    writer.WriteBuffer<float>(vertex);
+    writer.WriteVec3(shape.vertices.at(index) - sectorCenter);
 }
 
 SectorCollisionBuilder::SubShape &SectorCollisionBuilder::CurrentShape()

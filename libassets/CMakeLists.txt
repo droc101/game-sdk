@@ -40,6 +40,8 @@ if (Vulkan_INCLUDE_DIRS STREQUAL "Vulkan_INCLUDE_DIR-NOTFOUND")
     set(Vulkan_INCLUDE_DIRS ${VULKAN_HEADERS_SOURCE_DIR}/include)
 endif ()
 
+find_or_fetch_package(https://github.com/g-truc/glm.git 1.*.* glm)
+
 add_library(assets SHARED
         include/libassets/libassets.h
         src/util/AssetReader.cpp
@@ -119,7 +121,7 @@ add_library(assets SHARED
 
 set_target_properties(assets PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
-target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json)
+target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json glm::glm)
 
 target_include_directories(assets PUBLIC ${Vulkan_INCLUDE_DIRS} "include")
 target_include_directories(assets PRIVATE "${CMAKE_SOURCE_DIR}/lib/stb")

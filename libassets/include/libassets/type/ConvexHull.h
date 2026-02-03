@@ -20,15 +20,15 @@ class ConvexHull
 
         void Write(DataWriter &writer) const;
 
-        std::vector<std::array<float, 3>> &GetPoints();
+        std::vector<glm::vec3> &GetPoints();
 
         [[nodiscard]] std::vector<float> GetPointsForRender() const;
 
         static void ImportMultiple(const std::string &path, std::vector<ConvexHull> &output);
 
     private:
-        std::array<float, 3> offset{};
-        std::vector<std::array<float, 3>> points{};
+        glm::vec3 offset{};
+        std::vector<glm::vec3> points{};
 
         void CalculateOffset();
 };

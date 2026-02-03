@@ -5,6 +5,7 @@
 #pragma once
 
 #include <array>
+#include <glm/vec2.hpp>
 #include <nlohmann/json.hpp>
 #include <string>
 
@@ -16,8 +17,8 @@ class WallMaterial
         explicit WallMaterial(nlohmann::ordered_json json);
 
         std::string material;
-        std::array<float, 2> uvOffset{};
-        std::array<float, 2> uvScale = {1,1};
+        glm::vec2 uvOffset{};
+        glm::vec2 uvScale = {1, 1};
 
         [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 };

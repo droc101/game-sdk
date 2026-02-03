@@ -53,7 +53,7 @@ class Param
             {ParamType::PARAM_TYPE_NONE, "none"},
             {ParamType::PARAM_TYPE_COLOR, "Color"},
             {ParamType::PARAM_TYPE_ARRAY, "Array"},
-            {ParamType::PARAM_TYPE_KV_LIST, "KvList"}
+            {ParamType::PARAM_TYPE_KV_LIST, "KvList"},
         };
 
         Param();

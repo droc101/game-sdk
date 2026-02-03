@@ -42,7 +42,7 @@ void LevelMaterialAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
 {
     DataWriter writer{};
     writer.WriteString(texture);
-    writer.WriteBuffer<float>(baseScale);
+    writer.WriteVec2(baseScale);
     writer.Write<uint8_t>(static_cast<uint8_t>(shader));
     writer.Write<uint8_t>(static_cast<uint8_t>(soundClass));
     writer.Write<uint8_t>(compileInvisible ? 1 : 0);

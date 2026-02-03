@@ -10,6 +10,7 @@
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
+#include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/Error.h>
@@ -151,7 +152,7 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
     MaterialBrowserWindow::InputMaterial("##Texture", wallMat.material);
     ImGui::Separator();
     ImGui::Text("UV Offset");
-    ImGui::InputFloat2("##uvOffset", wallMat.uvOffset.data());
+    ImGui::InputFloat2("##uvOffset", glm::value_ptr(wallMat.uvOffset));
     ImGui::Text("UV Scale");
-    ImGui::InputFloat2("##uvScale", wallMat.uvScale.data());
+    ImGui::InputFloat2("##uvScale", glm::value_ptr(wallMat.uvScale));
 }

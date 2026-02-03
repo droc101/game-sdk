@@ -25,6 +25,7 @@ class GameConfigAsset final
         std::string gameCopyright{};
 
         size_t discordAppId = 0;
+
     private:
         void SaveToBuffer(std::vector<uint8_t> &buffer) const;
 };

@@ -3,6 +3,7 @@
 //
 
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <libassets/type/Actor.h>
@@ -21,6 +22,7 @@
 #include <libassets/type/paramDefs/StringParamDefinition.h>
 #include <libassets/util/Error.h>
 #include <memory>
+#include <numbers>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -129,12 +131,12 @@ nlohmann::ordered_json Actor::GenerateJson() const
 {
     nlohmann::ordered_json j{};
     j["class"] = className;
-    j["position"]["x"] = position.at(0);
-    j["position"]["y"] = position.at(1);
-    j["position"]["z"] = position.at(2);
-    j["rotation"]["x"] = rotation.at(0);
-    j["rotation"]["y"] = rotation.at(1);
-    j["rotation"]["z"] = rotation.at(2);
+    j["position"]["x"] = position.x;
+    j["position"]["y"] = position.y;
+    j["position"]["z"] = position.z;
+    j["rotation"]["x"] = rotation.x;
+    j["rotation"]["y"] = rotation.y;
+    j["rotation"]["z"] = rotation.z;
     j["connections"] = nlohmann::ordered_json::array();
     for (const IOConnection &connection: connections)
     {
@@ -147,11 +149,8 @@ nlohmann::ordered_json Actor::GenerateJson() const
 void Actor::Write(DataWriter &writer) const
 {
     writer.WriteString(className);
-    writer.WriteBuffer<float>(position);
-    for (const float x: rotation)
-    {
-        writer.Write<float>(x * (M_PI / 180.0f));
-    }
+    writer.WriteVec3(position);
+    writer.WriteVec3(rotation * (std::numbers::pi_v<float> / 180.0f));
     writer.Write<size_t>(connections.size());
     for (const IOConnection &connection: connections)
     {

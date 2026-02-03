@@ -29,8 +29,7 @@ class OptionDefinition
         std::string Find(const Param &value) const;
 
     private:
-        template<ParamTypeTemplate T>
-        [[nodiscard]] Error::ErrorCode LoadOptions(const nlohmann::json &definition_json)
+        template<ParamTypeTemplate T> [[nodiscard]] Error::ErrorCode LoadOptions(const nlohmann::json &definition_json)
         {
             const std::vector<std::pair<T, std::string>>
                     json_options = definition_json.value("options", std::vector<std::pair<T, std::string>>());

@@ -4,12 +4,11 @@
 
 #pragma once
 
-#include <array>
+#include <glm/vec3.hpp>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/IOConnection.h>
 #include <libassets/type/Param.h>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 class Actor
@@ -21,8 +20,8 @@ class Actor
         std::string className;
         KvList params{};
         std::vector<IOConnection> connections{};
-        std::array<float, 3> position{};
-        std::array<float, 3> rotation{};
+        glm::vec3 position{};
+        glm::vec3 rotation{};
 
         void ApplyDefinition(const ActorDefinition &definition, bool overwrite);
 

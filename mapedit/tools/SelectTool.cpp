@@ -4,8 +4,10 @@
 
 #include "SelectTool.h"
 #include <array>
+#include <cassert>
 #include <cfloat>
 #include <cstddef>
+#include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
@@ -85,8 +87,8 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
                 {
                     const glm::vec2 worldHover2D{worldSpaceHover.x, worldSpaceHover.z};
                     const glm::vec2 firstVertex = {
-                        sector.points.at(0).at(0),
-                        sector.points.at(0).at(1),
+                        sector.points.at(0).x,
+                        sector.points.at(0).y,
                     };
                     sectorDragMouseOffset = {
                         worldHover2D.x - firstVertex.x,
@@ -95,10 +97,9 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
 
                     sectorDragVertexOffsets.clear();
 
-                    for (std::array<float, 2> &point: MapEditor::map.sectors.at(selectionIndex).points)
+                    for (glm::vec2 &point: MapEditor::map.sectors.at(selectionIndex).points)
                     {
-                        const glm::vec2 glmPoint = {point.at(0), point.at(1)};
-                        sectorDragVertexOffsets.push_back(firstVertex - glmPoint);
+                        sectorDragVertexOffsets.push_back(firstVertex - point);
                     }
                 }
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
@@ -313,12 +314,12 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
                 {
                     selectionVertexIndex = vertexIndex;
                     const glm::vec2 startPoint{
-                        sector.points.at(vertexIndex).at(0),
-                        sector.points.at(vertexIndex).at(1),
+                        sector.points.at(vertexIndex).x,
+                        sector.points.at(vertexIndex).y,
                     };
                     const glm::vec2 endPoint{
-                        sector.points.at((vertexIndex + 1) % sector.points.size()).at(0),
-                        sector.points.at((vertexIndex + 1) % sector.points.size()).at(1),
+                        sector.points.at((vertexIndex + 1) % sector.points.size()).x,
+                        sector.points.at((vertexIndex + 1) % sector.points.size()).y,
                     };
                     const glm::vec2 worldHover2D{worldSpaceHover.x, worldSpaceHover.z};
                     lineDragModeSecondVertexOffset = startPoint - endPoint;
@@ -348,12 +349,12 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
 
         for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
         {
-            const std::array<float, 2> &start2 = sector.points[vertexIndex];
-            const std::array<float, 2> &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
-            const glm::vec3 startCeiling = glm::vec3(start2.at(0), sector.ceilingHeight, start2.at(1));
-            const glm::vec3 endCeiling = glm::vec3(end2.at(0), sector.ceilingHeight, end2.at(1));
-            const glm::vec3 startFloor = glm::vec3(start2.at(0), sector.floorHeight, start2.at(1));
-            const glm::vec3 endFloor = glm::vec3(end2.at(0), sector.floorHeight, end2.at(1));
+            const glm::vec2 &start2 = sector.points[vertexIndex];
+            const glm::vec2 &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
+            const glm::vec3 startCeiling = glm::vec3(start2.x, sector.ceilingHeight, start2.y);
+            const glm::vec3 endCeiling = glm::vec3(end2.x, sector.ceilingHeight, end2.y);
+            const glm::vec3 startFloor = glm::vec3(start2.x, sector.floorHeight, start2.y);
+            const glm::vec3 endFloor = glm::vec3(end2.x, sector.floorHeight, end2.y);
 
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
@@ -387,12 +388,12 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
 
         for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
         {
-            const std::array<float, 2> &start2 = sector.points[vertexIndex];
-            const std::array<float, 2> &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
-            const glm::vec3 startCeiling = glm::vec3(start2.at(0), sector.ceilingHeight, start2.at(1));
-            const glm::vec3 endCeiling = glm::vec3(end2.at(0), sector.ceilingHeight, end2.at(1));
-            const glm::vec3 startFloor = glm::vec3(start2.at(0), sector.floorHeight, start2.at(1));
-            const glm::vec3 endFloor = glm::vec3(end2.at(0), sector.floorHeight, end2.at(1));
+            const glm::vec2 &start2 = sector.points[vertexIndex];
+            const glm::vec2 &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
+            const glm::vec3 startCeiling = glm::vec3(start2.x, sector.ceilingHeight, start2.y);
+            const glm::vec3 endCeiling = glm::vec3(end2.x, sector.ceilingHeight, end2.y);
+            const glm::vec3 startFloor = glm::vec3(start2.x, sector.floorHeight, start2.y);
+            const glm::vec3 endFloor = glm::vec3(end2.x, sector.floorHeight, end2.y);
 
             const glm::vec2 vertexScreenSpace = vp.WorldToScreenPos(startCeiling);
             const glm::vec2 endVertexScreenSpace = vp.WorldToScreenPos(endCeiling);
@@ -474,8 +475,7 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
     for (size_t actorIndex = 0; actorIndex < MapEditor::map.actors.size(); actorIndex++)
     {
         Actor &a = MapEditor::map.actors.at(actorIndex);
-        const glm::vec3 pos = glm::vec3(a.position.at(0), a.position.at(1), a.position.at(2));
-        const glm::vec2 posScreenSpace = vp.WorldToScreenPos(pos);
+        const glm::vec2 posScreenSpace = vp.WorldToScreenPos(a.position);
         const ImVec2 hoverScreenSpaceIV = Viewport::GetLocalMousePos();
         const glm::vec2 hoverScreenSpace = glm::vec2(hoverScreenSpaceIV.x, hoverScreenSpaceIV.y);
 
@@ -495,7 +495,7 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
                 {
                     ImGui::Text("%s", a.className.c_str());
                 }
-                ImGui::Text("%.2f, %.2f, %.2f", a.position.at(0), a.position.at(1), a.position.at(2));
+                ImGui::Text("%.2f, %.2f, %.2f", a.position.x, a.position.y, a.position.z);
                 ImGui::EndTooltip();
             }
         }
@@ -526,12 +526,12 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
 
         for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
         {
-            const std::array<float, 2> &start2 = sector.points[vertexIndex];
-            const std::array<float, 2> &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
-            const glm::vec3 startCeiling = glm::vec3(start2.at(0), sector.ceilingHeight, start2.at(1));
-            const glm::vec3 endCeiling = glm::vec3(end2.at(0), sector.ceilingHeight, end2.at(1));
-            const glm::vec3 startFloor = glm::vec3(start2.at(0), sector.floorHeight, start2.at(1));
-            const glm::vec3 endFloor = glm::vec3(end2.at(0), sector.floorHeight, end2.at(1));
+            const glm::vec2 &start2 = sector.points[vertexIndex];
+            const glm::vec2 &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
+            const glm::vec3 startCeiling = glm::vec3(start2.x, sector.ceilingHeight, start2.y);
+            const glm::vec3 endCeiling = glm::vec3(end2.x, sector.ceilingHeight, end2.y);
+            const glm::vec3 startFloor = glm::vec3(start2.x, sector.floorHeight, start2.y);
+            const glm::vec3 endFloor = glm::vec3(end2.x, sector.floorHeight, end2.y);
 
             if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
             {
@@ -651,7 +651,8 @@ void SelectTool::RenderToolWindow()
             break;
         case ItemType::VERTEX:
             ImGui::InputFloat2("##vertexPosition",
-                               MapEditor::map.sectors.at(focusedSectorIndex).points.at(selectionVertexIndex).data());
+                               glm::value_ptr(MapEditor::map.sectors.at(focusedSectorIndex)
+                                                      .points.at(selectionVertexIndex)));
             break;
         case ItemType::LINE:
             MapEditor::MaterialToolWindow(MapEditor::map.sectors.at(focusedSectorIndex)
@@ -685,9 +686,9 @@ void SelectTool::RenderToolWindow()
             break;
         case ItemType::ACTOR:
             ImGui::Text("Position");
-            ImGui::InputFloat3("##position", MapEditor::map.actors.at(selectionIndex).position.data());
+            ImGui::InputFloat3("##position", glm::value_ptr(MapEditor::map.actors.at(selectionIndex).position));
             ImGui::Text("Rotation");
-            ImGui::InputFloat3("##rotation", MapEditor::map.actors.at(selectionIndex).rotation.data());
+            ImGui::InputFloat3("##rotation", glm::value_ptr(MapEditor::map.actors.at(selectionIndex).rotation));
             ImGui::Separator();
             if (ImGui::Button("Actor Properties"))
             {
@@ -760,31 +761,27 @@ glm::vec3 SelectTool::SelectionCenter()
     if (selectionType == ItemType::ACTOR)
     {
         const Actor &a = MapEditor::map.actors.at(selectionIndex);
-        return {a.position[0], a.position[1], a.position[2]};
+        return a.position;
     }
     if (selectionType == ItemType::SECTOR)
     {
         const Sector &s = MapEditor::map.sectors.at(selectionIndex);
-        const std::array<float, 3> center = s.GetCenter();
-        return {center[0], center[1], center[2]};
+        return s.GetCenter();
     }
     if (selectionType == ItemType::LINE || selectionType == ItemType::VERTEX)
     {
         const Sector &s = MapEditor::map.sectors.at(focusedSectorIndex);
-        const std::array<float, 3> center = s.GetCenter();
-        return {center[0], center[1], center[2]};
+        return s.GetCenter();
     }
     if (selectionType == ItemType::CEILING)
     {
         const Sector &s = MapEditor::map.sectors.at(focusedSectorIndex);
-        const std::array<float, 3> center = s.GetCenter();
-        return {center[0], s.ceilingHeight, center[2]};
+        return s.GetCenter();
     }
     if (selectionType == ItemType::FLOOR)
     {
         const Sector &s = MapEditor::map.sectors.at(focusedSectorIndex);
-        const std::array<float, 3> center = s.GetCenter();
-        return {center[0], s.floorHeight, center[2]};
+        return s.GetCenter();
     }
     assert(false);
 }
