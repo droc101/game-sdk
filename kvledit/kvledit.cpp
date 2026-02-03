@@ -486,5 +486,7 @@ int main(int argc, char **argv)
 
     sdkWindow.MainLoop(Render);
 
+    sdkWindow.Destroy();
+
     return 0;
 }

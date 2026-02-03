@@ -38,4 +38,5 @@ add_dependencies(mapedit assets copy_assets mapcomp)
 
 if (WIN32)
     add_dependencies(mapedit copydlls)
+    target_sources(mapedit PRIVATE ../app.manifest)
 endif()

@@ -13,4 +13,5 @@ add_dependencies(kvledit assets)
 
 if (WIN32)
     add_dependencies(kvledit copydlls)
+    target_sources(kvledit PRIVATE ../app.manifest)
 endif()

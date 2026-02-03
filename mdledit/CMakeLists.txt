@@ -29,4 +29,5 @@ add_dependencies(mdledit copy_assets)
 
 if (WIN32)
     add_dependencies(mdledit copydlls)
+    target_sources(mdledit PRIVATE ../app.manifest)
 endif()

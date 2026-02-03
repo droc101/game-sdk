@@ -13,4 +13,5 @@ add_dependencies(sndedit assets)
 
 if (WIN32)
     add_dependencies(sndedit copydlls)
+    target_sources(sndedit PRIVATE ../app.manifest)
 endif()

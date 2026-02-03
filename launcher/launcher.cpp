@@ -197,5 +197,7 @@ int main()
 
     sdkWindow.MainLoop(Render);
 
+    sdkWindow.Destroy();
+
     return 0;
 }

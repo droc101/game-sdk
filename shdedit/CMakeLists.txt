@@ -18,4 +18,5 @@ add_dependencies(shdedit assets)
 
 if (WIN32)
     add_dependencies(shdedit copydlls)
+    target_sources(shdedit PRIVATE ../app.manifest)
 endif()

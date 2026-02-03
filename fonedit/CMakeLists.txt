@@ -13,4 +13,5 @@ add_dependencies(fonedit assets)
 
 if (WIN32)
     add_dependencies(fonedit copydlls)
+    target_sources(fonedit PRIVATE ../app.manifest)
 endif()

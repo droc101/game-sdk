@@ -315,5 +315,7 @@ int main(int argc, char **argv)
 
     destroyExistingTexture();
 
+    sdkWindow.Destroy();
+
     return 0;
 }

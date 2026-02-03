@@ -585,5 +585,6 @@ int main(int argc, char **argv)
     sdkWindow.MainLoop(Render);
 
     MapRenderer::Destroy();
+    sdkWindow.Destroy();
     return 0;
 }

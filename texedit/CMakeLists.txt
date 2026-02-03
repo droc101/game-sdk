@@ -13,4 +13,5 @@ add_dependencies(texedit assets)
 
 if (WIN32)
     add_dependencies(texedit copydlls)
+    target_sources(texedit PRIVATE ../app.manifest)
 endif()

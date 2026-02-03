@@ -332,5 +332,8 @@ int main(int argc, char **argv)
     sdkWindow.MainLoop(Render);
 
     ma_engine_uninit(&engine);
+
+    sdkWindow.Destroy();
+
     return 0;
 }

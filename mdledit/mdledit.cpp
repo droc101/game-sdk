@@ -520,5 +520,6 @@ int main(int argc, char **argv)
 
     destroyExistingModel();
     ModelRenderer::Destroy();
+    sdkWindow.Destroy();
     return 0;
 }

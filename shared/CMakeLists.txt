@@ -31,9 +31,6 @@ target_sources(shared PRIVATE
         SDKWindow.cpp
         SDKWindow.h
 )
-if (WIN32)
-    target_sources(shared PRIVATE app.manifest)
-endif ()
 target_link_libraries(shared PUBLIC
         SDL3::SDL3
         miniaudio

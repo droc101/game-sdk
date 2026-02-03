@@ -168,7 +168,7 @@ void SDKWindow::PostQuit()
     quitRequest = true;
 }
 
-SDKWindow::~SDKWindow()
+void SDKWindow::Destroy() const
 {
     if (initDone)
     {

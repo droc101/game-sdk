@@ -13,4 +13,5 @@ add_dependencies(mtledit assets)
 
 if (WIN32)
     add_dependencies(mtledit copydlls)
+    target_sources(mtledit PRIVATE ../app.manifest)
 endif()

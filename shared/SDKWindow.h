@@ -27,7 +27,7 @@ class SDKWindow
 
         void PostQuit();
 
-        ~SDKWindow();
+        void Destroy() const;
 
     private:
         bool initDone = false;

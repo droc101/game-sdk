@@ -13,4 +13,5 @@ add_dependencies(cfgedit assets)
 
 if (WIN32)
     add_dependencies(cfgedit copydlls)
+    target_sources(cfgedit PRIVATE ../app.manifest)
 endif()

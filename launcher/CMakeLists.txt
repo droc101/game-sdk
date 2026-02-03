@@ -13,4 +13,5 @@ add_dependencies(launcher assets copy_assets)
 
 if (WIN32)
     add_dependencies(launcher copydlls)
+    target_sources(launcher PRIVATE ../app.manifest)
 endif()
