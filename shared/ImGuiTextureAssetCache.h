@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include <GL/glew.h>
 #include <imgui.h>
+#include <libassets/asset/TextureAsset.h>
 #include <libassets/util/Error.h>
 #include <string>
 #include <unordered_map>
@@ -14,16 +16,24 @@ class ImGuiTextureAssetCache
     public:
         ImGuiTextureAssetCache() = default;
 
-        virtual ~ImGuiTextureAssetCache() = default;
+        ~ImGuiTextureAssetCache();
 
-        virtual Error::ErrorCode GetTextureID(const std::string & /*relPath*/, ImTextureID & /*outTexture*/) = 0;
+        void InitMissingTexture();
 
-        virtual Error::ErrorCode GetTextureSize(const std::string & /*relPath*/, ImVec2 & /*outSize*/) = 0;
+        [[nodiscard]] Error::ErrorCode GetTextureID(const std::string &relPath, ImTextureID &outTexture);
 
-        virtual Error::ErrorCode RegisterPng(const std::string & /*pngPath*/, const std::string & /*name*/) = 0;
+        [[nodiscard]] Error::ErrorCode GetTextureSize(const std::string &relPath, ImVec2 &outSize);
 
-    protected:
+        [[nodiscard]] Error::ErrorCode GetTextureGLuint(const std::string &relPath, GLuint &outTexture);
+
+        [[nodiscard]] Error::ErrorCode LoadTexture(const std::string &relPath);
+
+        [[nodiscard]] Error::ErrorCode RegisterPng(const std::string &pngPath, const std::string &name);
+
+    private:
         std::unordered_map<std::string, ImTextureID> textureBuffers{};
 
         ImTextureID missingTexture{};
+
+        [[nodiscard]] static GLuint CreateTexture(const TextureAsset &textureAsset);
 };

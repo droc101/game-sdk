@@ -2,7 +2,7 @@
 // Created by droc101 on 7/22/25.
 //
 
-#include "OpenGLImGuiTextureAssetCache.h"
+#include "ImGuiTextureAssetCache.h"
 #include <cstdint>
 #include <filesystem>
 #include <imgui.h>
@@ -14,9 +14,7 @@
 #include <vector>
 #include "Options.h"
 
-OpenGLImGuiTextureAssetCache::OpenGLImGuiTextureAssetCache(): ImGuiTextureAssetCache() {}
-
-OpenGLImGuiTextureAssetCache::~OpenGLImGuiTextureAssetCache()
+ImGuiTextureAssetCache::~ImGuiTextureAssetCache()
 {
     for (const ImTextureID &textureId: textureBuffers | std::views::values)
     {
@@ -26,7 +24,7 @@ OpenGLImGuiTextureAssetCache::~OpenGLImGuiTextureAssetCache()
     textureBuffers.clear();
 }
 
-void OpenGLImGuiTextureAssetCache::InitMissingTexture()
+void ImGuiTextureAssetCache::InitMissingTexture()
 {
     TextureAsset texture;
     TextureAsset::CreateMissingTexture(texture);
@@ -34,7 +32,7 @@ void OpenGLImGuiTextureAssetCache::InitMissingTexture()
 }
 
 
-GLuint OpenGLImGuiTextureAssetCache::CreateTexture(const TextureAsset &textureAsset)
+GLuint ImGuiTextureAssetCache::CreateTexture(const TextureAsset &textureAsset)
 {
     std::vector<uint32_t> pixels;
     textureAsset.GetPixelsRGBA(pixels);
@@ -63,7 +61,7 @@ GLuint OpenGLImGuiTextureAssetCache::CreateTexture(const TextureAsset &textureAs
     return glTexture;
 }
 
-Error::ErrorCode OpenGLImGuiTextureAssetCache::GetTextureID(const std::string &relPath, ImTextureID &outTexture)
+Error::ErrorCode ImGuiTextureAssetCache::GetTextureID(const std::string &relPath, ImTextureID &outTexture)
 {
     if (textureBuffers.contains(relPath))
     {
@@ -88,7 +86,7 @@ Error::ErrorCode OpenGLImGuiTextureAssetCache::GetTextureID(const std::string &r
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode OpenGLImGuiTextureAssetCache::GetTextureSize(const std::string &relPath, ImVec2 &outSize)
+Error::ErrorCode ImGuiTextureAssetCache::GetTextureSize(const std::string &relPath, ImVec2 &outSize)
 {
     ImTextureID texture = 0;
     const Error::ErrorCode error = GetTextureID(relPath, texture);
@@ -105,7 +103,7 @@ Error::ErrorCode OpenGLImGuiTextureAssetCache::GetTextureSize(const std::string 
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode OpenGLImGuiTextureAssetCache::GetTextureGLuint(const std::string &relPath, GLuint &outTexture)
+Error::ErrorCode ImGuiTextureAssetCache::GetTextureGLuint(const std::string &relPath, GLuint &outTexture)
 {
     ImTextureID texture = 0;
     const Error::ErrorCode error = GetTextureID(relPath, texture);
@@ -117,13 +115,13 @@ Error::ErrorCode OpenGLImGuiTextureAssetCache::GetTextureGLuint(const std::strin
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode OpenGLImGuiTextureAssetCache::LoadTexture(const std::string &relPath)
+Error::ErrorCode ImGuiTextureAssetCache::LoadTexture(const std::string &relPath)
 {
     ImTextureID unused = 0;
     return GetTextureID(relPath, unused);
 }
 
-Error::ErrorCode OpenGLImGuiTextureAssetCache::RegisterPng(const std::string &pngPath, const std::string &name)
+Error::ErrorCode ImGuiTextureAssetCache::RegisterPng(const std::string &pngPath, const std::string &name)
 {
     TextureAsset tex;
     const Error::ErrorCode e = TextureAsset::CreateFromImage(pngPath.c_str(), tex);
@@ -135,4 +133,3 @@ Error::ErrorCode OpenGLImGuiTextureAssetCache::RegisterPng(const std::string &pn
     textureBuffers.insert({name, glTex});
     return Error::ErrorCode::OK;
 }
-

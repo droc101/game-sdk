@@ -70,12 +70,12 @@ void MaterialBrowserWindow::Render()
                     const std::string textureName = materials.at(i).texture;
 
                     ImVec2 texSize;
-                    if (SharedMgr::textureCache->GetTextureSize(textureName, texSize) != Error::ErrorCode::OK)
+                    if (SharedMgr::textureCache.GetTextureSize(textureName, texSize) != Error::ErrorCode::OK)
                     {
                         continue;
                     }
                     ImTextureID tex = 0;
-                    if (SharedMgr::textureCache->GetTextureID(textureName, tex) != Error::ErrorCode::OK)
+                    if (SharedMgr::textureCache.GetTextureID(textureName, tex) != Error::ErrorCode::OK)
                     {
                         continue;
                     }

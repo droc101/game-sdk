@@ -22,18 +22,12 @@
 #include <vector>
 #include "../shared/GLDebug.h"
 #include "GLHelper.h"
-#include "OpenGLImGuiTextureAssetCache.h"
 #include "SharedMgr.h"
 
 // #define GL_CHECK_ERROR if (glGetError() != GL_NO_ERROR) {printf(reinterpret_cast<const char *>(glewGetErrorString(glGetError()))); fflush(stdout); __debugbreak();}
 
 bool ModelRenderer::Init()
 {
-    if (!GLHelper::Init())
-    {
-        return false;
-    }
-
     framebuffer = GLHelper::CreateFramebuffer({windowWidth, windowHeight});
 
     const Error::ErrorCode modelProgramErrorCode = GLHelper::CreateProgram("assets/mdledit/model.frag",
@@ -153,8 +147,7 @@ void ModelRenderer::LoadModel(ModelAsset &&newModel)
             {
                 const size_t matIndex = model.GetSkin(j)[k];
                 const Material &mat = model.GetMaterial(matIndex);
-                (void)dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache.get())
-                        ->LoadTexture(mat.texture);
+                (void)SharedMgr::textureCache.LoadTexture(mat.texture);
             }
         }
 
@@ -250,8 +243,7 @@ void ModelRenderer::Render()
         glUniform4fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetDataPointer());
 
         GLuint texture = 0;
-        const Error::ErrorCode code = dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache.get())
-                                              ->GetTextureGLuint(mat.texture, texture);
+        const Error::ErrorCode code = SharedMgr::textureCache.GetTextureGLuint(mat.texture, texture);
         if (code != Error::ErrorCode::OK)
         {
             continue;

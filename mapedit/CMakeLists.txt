@@ -32,7 +32,7 @@ add_executable(mapedit mapedit.cpp
 
 set_target_properties(mapedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
-target_link_libraries(mapedit PRIVATE shared imgui_opengl3)
+target_link_libraries(mapedit PRIVATE shared)
 
 add_dependencies(mapedit assets copy_assets mapcomp)
 

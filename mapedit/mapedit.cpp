@@ -1,27 +1,23 @@
-#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstdio>
 #include <imgui.h>
-#include <imgui_impl_opengl3.h>
-#include <imgui_impl_sdl3.h>
 #include <libassets/util/Error.h>
 #include <memory>
+#include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_init.h>
 #include <SDL3/SDL_messagebox.h>
-#include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include "ActorBrowserWindow.h"
+#include "DesktopInterface.h"
 #include "DialogFilters.h"
 #include "imgui_internal.h"
 #include "MapCompileWindow.h"
 #include "MapEditor.h"
 #include "MapPropertiesWindow.h"
 #include "MapRenderer.h"
-#include "OpenGLImGuiTextureAssetCache.h"
 #include "Options.h"
+#include "SDKWindow.h"
 #include "SharedMgr.h"
 #include "tools/AddActorTool.h"
 #include "tools/AddPolygonTool.h"
@@ -30,12 +26,15 @@
 #include "tools/SelectTool.h"
 #include "Viewport.h"
 
-static SDL_Window *window = nullptr;
-static SDL_GLContext glContext = nullptr;
+static SDKWindow sdkWindow{};
 
 static Viewport vpTopDown = Viewport(Viewport::ViewportType::TOP_DOWN_XZ);
 static Viewport vpFront = Viewport(Viewport::ViewportType::FRONT_XY);
 static Viewport vpSide = Viewport(Viewport::ViewportType::SIDE_YZ);
+
+static ImGuiID dockspaceId;
+static ImGuiID rootDockspaceID;
+static bool dockspaceSetup = false;
 
 static bool ToolbarToolButton(const char *id,
                               const char *tooltip,
@@ -58,7 +57,7 @@ static bool ToolbarToolButton(const char *id,
         ImGui::EndTooltip();
     }
     ImTextureID tex = 0;
-    const Error::ErrorCode e = SharedMgr::textureCache->GetTextureID(icon, tex);
+    const Error::ErrorCode e = SharedMgr::textureCache.GetTextureID(icon, tex);
     assert(e == Error::ErrorCode::OK);
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 40);
@@ -80,7 +79,7 @@ static void saveJsonCallback(void * /*userdata*/, const char *const *fileList, i
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to save the map!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
@@ -97,7 +96,7 @@ static void openJson(const std::string &path)
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to open the map!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
@@ -114,7 +113,7 @@ static void openJson(const std::string &path)
                                                       "class \"{}\"",
                                                       actor.className)
                                                   .c_str(),
-                                          window))
+                                          sdkWindow.GetWindow()))
             {
                 printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
             }
@@ -135,11 +134,7 @@ static void openJsonCallback(void * /*userdata*/, const char *const *fileList, i
     openJson(fileList[0]);
 }
 
-static ImGuiID dockspaceId;
-static ImGuiID rootDockspaceID;
-static bool dockspaceSetup = false;
-
-void SetupDockspace()
+static void SetupDockspace()
 {
     if (dockspaceSetup)
     {
@@ -166,8 +161,14 @@ void SetupDockspace()
     ImGui::DockBuilderFinish(rootDockspaceID);
 }
 
-static void Render(bool &done, SDL_Window *sdlWindow)
+static void Render(SDL_Window *sdlWindow)
 {
+    SetupDockspace();
+
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+
     if (ImGui::Shortcut(ImGuiKey_RightBracket, ImGuiInputFlags_RouteGlobal))
     {
         MapEditor::gridSpacingIndex += 1;
@@ -253,7 +254,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                done = true;
+                sdkWindow.PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -442,7 +443,6 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         dynamic_cast<SelectTool *>(MapEditor::tool.get())->Paste();
     }
 
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
     const ImVec2 workSize{viewport->WorkSize.x, MapEditor::TOOLBAR_HEIGHT};
     const ImVec2 workPos{viewport->WorkPos.x, viewport->WorkPos.y};
     ImGui::SetNextWindowPos(workPos);
@@ -554,100 +554,23 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
 int main(int argc, char **argv)
 {
-    if (!SDL_Init(SDL_INIT_VIDEO))
+    if (!sdkWindow.Init("mapedit", {1366, 768}, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED))
     {
-        printf("Error: SDL_Init(): %s\n", SDL_GetError());
         return -1;
     }
 
-    SharedMgr::InitSharedMgr<OpenGLImGuiTextureAssetCache>();
     MapEditor::mat = WallMaterial(Options::defaultMaterial);
-
-    const char *glslVersion = "#version 130";
-    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0))
-    {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE))
-    {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3))
-    {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3))
-    {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1))
-    {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24))
-    {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0))
-    {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
-    }
-
-    constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN |
-                                            SDL_WINDOW_OPENGL |
-                                            SDL_WINDOW_RESIZABLE |
-                                            SDL_WINDOW_MAXIMIZED;
-    window = SDL_CreateWindow("mapedit", 1366, 778, windowFlags);
-    if (window == nullptr)
-    {
-        printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
-        return -1;
-    }
-    SDL_SetWindowMinimumSize(window, 640, 480);
-    glContext = SDL_GL_CreateContext(window);
-    if (glContext == nullptr)
-    {
-        printf("Error: SDL_GL_CreateContext(): %s\n", SDL_GetError());
-        return -1;
-    }
-
-    if (!SDL_GL_MakeCurrent(window, glContext))
-    {
-        printf("Error: SDL_GL_MakeCurrent(): %s\n", SDL_GetError());
-        return -1;
-    }
     if (!MapRenderer::Init())
     {
         printf("Failed to start renderer!\n");
         return -1;
     }
-    if (!SDL_GL_SetSwapInterval(1)) // Enable vsync
-    {
-        printf("Error: SDL_GL_SetSwapInterval(): %s\n", SDL_GetError());
-    }
-    if (!SDL_ShowWindow(window))
-    {
-        printf("Error: SDL_ShowWindow(): %s\n", SDL_GetError());
-        return -1;
-    }
+    SDL_SetWindowMinimumSize(sdkWindow.GetWindow(), 640, 480);
 
-    dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache.get())->InitMissingTexture();
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-
-    SharedMgr::ApplyTheme();
-
-    ImGui_ImplSDL3_InitForOpenGL(window, glContext);
-    ImGui_ImplOpenGL3_Init(glslVersion);
-
-    SharedMgr::textureCache->RegisterPng("assets/mapedit/select.png", MapEditor::SELECT_ICON_NAME);
-    SharedMgr::textureCache->RegisterPng("assets/mapedit/actors.png", MapEditor::ACTOR_ICON_NAME);
-    SharedMgr::textureCache->RegisterPng("assets/mapedit/primitives.png", MapEditor::PRIMITIVE_ICON_NAME);
-    SharedMgr::textureCache->RegisterPng("assets/mapedit/polygon.png", MapEditor::POLYGON_ICON_NAME);
+    SharedMgr::textureCache.RegisterPng("assets/mapedit/select.png", MapEditor::SELECT_ICON_NAME);
+    SharedMgr::textureCache.RegisterPng("assets/mapedit/actors.png", MapEditor::ACTOR_ICON_NAME);
+    SharedMgr::textureCache.RegisterPng("assets/mapedit/primitives.png", MapEditor::PRIMITIVE_ICON_NAME);
+    SharedMgr::textureCache.RegisterPng("assets/mapedit/polygon.png", MapEditor::POLYGON_ICON_NAME);
 
     vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
     vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;
@@ -659,63 +582,8 @@ int main(int argc, char **argv)
         openJson(openPath);
     }
 
-    bool done = false;
-    while (!done)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            ImGui_ImplSDL3_ProcessEvent(&event);
-            if (event.type == SDL_EVENT_QUIT)
-            {
-                done = true;
-            }
-            if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
-            {
-                done = true;
-            }
-        }
-
-        if ((SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0)
-        {
-            SDL_Delay(10);
-            continue;
-        }
-
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();
-
-        SetupDockspace();
-
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->WorkPos);
-        ImGui::SetNextWindowSize(viewport->WorkSize);
-
-        Render(done, window);
-
-        SharedMgr::RenderSharedUI(window);
-
-        ImGui::Render();
-
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        if (!SDL_GL_SwapWindow(window))
-        {
-            printf("Error: SDL_GL_SwapWindow(): %s\n", SDL_GetError());
-        }
-    }
-
-    SharedMgr::DestroySharedMgr();
+    sdkWindow.MainLoop(Render);
 
     MapRenderer::Destroy();
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL3_Shutdown();
-    ImGui::DestroyContext();
-    if (!SDL_GL_DestroyContext(glContext))
-    {
-        printf("Error: SDL_GL_DestroyContext(): %s\n", SDL_GetError());
-    }
-    SDL_DestroyWindow(window);
-    SDL_Quit();
     return 0;
 }

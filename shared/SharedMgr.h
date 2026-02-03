@@ -6,36 +6,18 @@
 
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/OptionDefinition.h>
-#include <memory>
-#include <SDL3/SDL_filesystem.h>
+#include <map>
 #include <SDL3/SDL_video.h>
 #include <string>
-#include <unistd.h>
-#include <unordered_map>
 #include <vector>
-#include "DesktopInterface.h"
 #include "ImGuiTextureAssetCache.h"
-#include "Options.h"
-#include "SetupWindow.h"
 
 class SharedMgr
 {
     public:
         SharedMgr() = delete;
 
-        template<typename T, typename... Args> static void InitSharedMgr(Args... args)
-        {
-            chdir(SDL_GetBasePath());
-            Options::Load();
-            textureCache = std::make_unique<T>(args...);
-            LoadOptionDefinitions();
-            LoadActorDefinitions();
-            DesktopInterface::InitDesktopInterface();
-            if (!Options::ValidateGamePath())
-            {
-                SetupWindow::Show();
-            }
-        }
+        static void InitSharedMgr();
 
         static void SharedMenuUI(const std::string &programName);
 
@@ -53,7 +35,7 @@ class SharedMgr
 
         static void LoadActorDefinitions();
 
-        static inline std::unique_ptr<ImGuiTextureAssetCache> textureCache{};
+        static inline ImGuiTextureAssetCache textureCache{};
 
         static inline std::map<std::string, OptionDefinition> optionDefinitions{};
 

@@ -2,70 +2,66 @@
 #include <cstdint>
 #include <cstdio>
 #include <format>
+#include <GL/glew.h>
 #include <imgui.h>
-#include <imgui_impl_sdl3.h>
-#include <imgui_impl_sdlrenderer3.h>
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/util/Error.h>
 #include <SDL3/SDL_dialog.h>
+#include <SDL3/SDL_endian.h>
 #include <SDL3/SDL_error.h>
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_init.h>
 #include <SDL3/SDL_messagebox.h>
-#include <SDL3/SDL_pixels.h>
-#include <SDL3/SDL_render.h>
-#include <SDL3/SDL_surface.h>
-#include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
+#include <string>
+#include <vector>
+#include "DesktopInterface.h"
 #include "DialogFilters.h"
-#include "SDLRendererImGuiTextureAssetCache.h"
+#include "SDKWindow.h"
 #include "SharedMgr.h"
+
+static SDKWindow sdkWindow{};
+static float zoom = 1.0f;
 
 static TextureAsset texture{};
 static bool textureLoaded = false;
-static SDL_Renderer *renderer = nullptr;
-static SDL_Window *window = nullptr;
-static SDL_Texture *sdlTexture = nullptr;
-static SDL_Surface *sdlSurface = nullptr;
-static float zoom = 1.0f;
+static GLuint glTexture;
 
-
-static inline void destroyExistingTexture()
+static void destroyExistingTexture()
 {
     if (!textureLoaded)
     {
         return;
     }
-    SDL_DestroyTexture(sdlTexture);
-    SDL_DestroySurface(sdlSurface);
+    glDeleteTextures(1, &glTexture);
     textureLoaded = false;
 }
 
-static inline bool loadTexture()
+static void loadTexture()
 {
     destroyExistingTexture();
-    SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(texture.GetWidth()),
-                                                 static_cast<int>(texture.GetHeight()),
-                                                 SDL_PIXELFORMAT_RGBA8888,
-                                                 texture.GetPixels(),
-                                                 static_cast<int>(texture.GetWidth() * sizeof(uint32_t)));
-    if (surface == nullptr)
+
+    std::vector<uint32_t> pixels;
+    texture.GetPixelsRGBA(pixels);
+    for (uint32_t &pixel: pixels)
     {
-        return false;
+        pixel = SDL_Swap32BE(pixel);
     }
-    sdlTexture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (sdlTexture == nullptr)
-    {
-        return false;
-    }
-    if (!SDL_SetTextureScaleMode(sdlTexture, SDL_SCALEMODE_NEAREST))
-    {
-        printf("Error: SDL_SetTextureScaleMode(): %s\n", SDL_GetError());
-        return false;
-    }
-    sdlSurface = surface;
+
+    glGenTextures(1, &glTexture);
+    glBindTexture(GL_TEXTURE_2D, glTexture);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGBA,
+                 static_cast<GLsizei>(texture.GetWidth()),
+                 static_cast<GLsizei>(texture.GetHeight()),
+                 0,
+                 GL_RGBA,
+                 GL_UNSIGNED_BYTE,
+                 pixels.data());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     textureLoaded = true;
-    return true;
 }
 
 static void openGtex(const std::string &path)
@@ -76,22 +72,13 @@ static void openGtex(const std::string &path)
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to open the texture!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
         return;
     }
-    if (!loadTexture())
-    {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to load the texture!\n{}", SDL_GetError()).c_str(),
-                                      window))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
-    }
+    loadTexture();
 }
 
 static void openGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -111,22 +98,13 @@ static void importImage(const std::string &path)
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to import the texture!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
         return;
     }
-    if (!loadTexture())
-    {
-        if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                      "Error",
-                                      std::format("Failed to load the texture!\n{}", SDL_GetError()).c_str(),
-                                      window))
-        {
-            printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
-        }
-    }
+    loadTexture();
 }
 
 static void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
@@ -150,7 +128,7 @@ static void saveGtexCallback(void * /*userdata*/, const char *const *fileList, i
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to save the texture!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
@@ -169,15 +147,18 @@ static void exportCallback(void * /*userdata*/, const char *const *fileList, int
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to export the texture!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
     }
 }
 
-static void Render(bool &done, SDL_Window *sdlWindow)
+static void Render(SDL_Window *sdlWindow)
 {
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
     constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
                                              ImGuiWindowFlags_NoMove |
                                              ImGuiWindowFlags_NoSavedSettings |
@@ -203,7 +184,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                done = true;
+                sdkWindow.PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -275,7 +256,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
         {
             const ImVec2 imageSize{static_cast<float>(texture.GetWidth()) * zoom,
                                    static_cast<float>(texture.GetHeight()) * zoom};
-            ImGui::Image(sdlTexture, imageSize);
+            ImGui::Image(glTexture, imageSize);
         }
         ImGui::EndChild();
         ImGui::SameLine();
@@ -305,51 +286,10 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
 int main(int argc, char **argv)
 {
-    if (!SDL_Init(SDL_INIT_VIDEO))
+    if (!sdkWindow.Init("texedit"))
     {
-        printf("Error: SDL_Init(): %s\n", SDL_GetError());
         return -1;
     }
-
-    constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
-    window = SDL_CreateWindow("texedit", 800, 600, windowFlags);
-    if (window == nullptr)
-    {
-        printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
-        return -1;
-    }
-    renderer = SDL_CreateRenderer(window, nullptr);
-    if (!SDL_SetRenderVSync(renderer, 1))
-    {
-        printf("Error: SDL_SetRenderVSync(): %s\n", SDL_GetError());
-    }
-    if (renderer == nullptr)
-    {
-        printf("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
-        return -1;
-    }
-
-    SharedMgr::InitSharedMgr<SDLRendererImGuiTextureAssetCache>(renderer);
-
-    if (!SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED))
-    {
-        printf("Error: SDL_SetWindowPosition(): %s\n", SDL_GetError());
-    }
-    if (!SDL_ShowWindow(window))
-    {
-        printf("Error: SDL_ShowWindow(): %s\n", SDL_GetError());
-        return -1;
-    }
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-
-    SharedMgr::ApplyTheme();
-
-    ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
-    ImGui_ImplSDLRenderer3_Init(renderer);
 
     const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gtex"});
     if (!openPath.empty())
@@ -357,76 +297,23 @@ int main(int argc, char **argv)
         openGtex(openPath);
     } else
     {
-        const std::string &importPath = DesktopInterface::GetFileArgument(argc, argv, {".png", ".jpg", ".jpeg", ".tga"});
+        const std::string &importPath = DesktopInterface::GetFileArgument(argc,
+                                                                          argv,
+                                                                          {
+                                                                              ".png",
+                                                                              ".jpg",
+                                                                              ".jpeg",
+                                                                              ".tga",
+                                                                          });
         if (!importPath.empty())
         {
             importImage(importPath);
         }
     }
 
-    bool done = false;
-    while (!done)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            ImGui_ImplSDL3_ProcessEvent(&event);
-            if (event.type == SDL_EVENT_QUIT)
-            {
-                done = true;
-            }
-            if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
-            {
-                done = true;
-            }
-        }
+    sdkWindow.MainLoop(Render);
 
-        if ((SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0)
-        {
-            SDL_Delay(10);
-            continue;
-        }
-
-        ImGui_ImplSDLRenderer3_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();
-
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->WorkPos);
-        ImGui::SetNextWindowSize(viewport->WorkSize);
-
-        Render(done, window);
-
-        SharedMgr::RenderSharedUI(window);
-
-        ImGui::Render();
-        if (!SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y))
-        {
-            printf("Error: SDL_SetRenderScale(): %s\n", SDL_GetError());
-        }
-        if (!SDL_SetRenderDrawColorFloat(renderer, 0, 0, 0, 1))
-        {
-            printf("Error: SDL_SetRenderDrawColorFloat(): %s\n", SDL_GetError());
-        }
-        if (!SDL_RenderClear(renderer))
-        {
-            printf("Error: SDL_RenderClear(): %s\n", SDL_GetError());
-        }
-        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
-        if (!SDL_RenderPresent(renderer))
-        {
-            printf("Error: SDL_RenderPresent(): %s\n", SDL_GetError());
-        }
-    }
-
-    SharedMgr::DestroySharedMgr();
-
-    ImGui_ImplSDLRenderer3_Shutdown();
-    ImGui_ImplSDL3_Shutdown();
-    ImGui::DestroyContext();
     destroyExistingTexture();
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+
     return 0;
 }

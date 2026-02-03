@@ -56,13 +56,13 @@ void TextureBrowserWindow::Render()
                     }
 
                     ImVec2 texSize;
-                    if (SharedMgr::textureCache->GetTextureSize("texture/" + textures[i], texSize) !=
+                    if (SharedMgr::textureCache.GetTextureSize("texture/" + textures[i], texSize) !=
                         Error::ErrorCode::OK)
                     {
                         continue;
                     }
                     ImTextureID tex = 0;
-                    if (SharedMgr::textureCache->GetTextureID("texture/" + textures[i], tex) != Error::ErrorCode::OK)
+                    if (SharedMgr::textureCache.GetTextureID("texture/" + textures[i], tex) != Error::ErrorCode::OK)
                     {
                         continue;
                     }

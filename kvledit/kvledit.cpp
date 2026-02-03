@@ -10,8 +10,6 @@
 #include <filesystem>
 #include <format>
 #include <imgui.h>
-#include <imgui_impl_sdl3.h>
-#include <imgui_impl_sdlrenderer3.h>
 #include <libassets/asset/DataAsset.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/Param.h>
@@ -19,22 +17,18 @@
 #include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_init.h>
 #include <SDL3/SDL_messagebox.h>
-#include <SDL3/SDL_render.h>
-#include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <utility>
 #include "DesktopInterface.h"
 #include "DialogFilters.h"
-#include "SDLRendererImGuiTextureAssetCache.h"
+#include "SDKWindow.h"
 #include "SharedMgr.h"
 
+static SDKWindow sdkWindow{};
+
 static DataAsset dataAsset{};
-static SDL_Renderer *renderer = nullptr;
-static SDL_Window *window = nullptr;
 static std::string selectedPath = "/";
 
 static void openGkvl(const std::string &path)
@@ -45,7 +39,7 @@ static void openGkvl(const std::string &path)
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to open the KvList!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
@@ -69,7 +63,7 @@ static void importJson(const std::string &path)
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to import the KvList!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
@@ -98,7 +92,7 @@ static void saveGkvlCallback(void * /*userdata*/, const char *const *fileList, i
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to save the KvList!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
@@ -117,7 +111,7 @@ static void exportCallback(void * /*userdata*/, const char *const *fileList, int
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to export the KvList!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
@@ -175,7 +169,7 @@ static void RenderArray(ParamVector &vector, const std::string &path)
 
 static void RenderKvList(KvList &list, const std::string &path)
 {
-    if (list.size() == 0)
+    if (list.empty())
     {
         ImGui::TextDisabled("No Elements");
     }
@@ -239,23 +233,7 @@ static void RenderParam(Param &param, const std::string &displayName, const std:
     if (param.GetType() == Param::ParamType::PARAM_TYPE_ARRAY)
     {
         const bool arrayOpen = ImGui::TreeNodeEx((displayName + "##" + path).c_str(), tnf);
-        bool clicked = ImGui::IsItemClicked();
-        // ImGui::SameLine();
-        // if (ImGui::SmallButton(std::format("+##{}", path + name).c_str()))
-        // {
-        //     clicked = false;
-        // }
-        // ImGui::SameLine();
-        // if (ImGui::SmallButton(std::format("-##{}", path + name).c_str()))
-        // {
-        //     clicked = false;
-        // }
-        // ImGui::SameLine();
-        // if (ImGui::SmallButton(std::format("x##{}", path + name).c_str()))
-        // {
-        //     clicked = false;
-        // }
-        if (clicked)
+        if (ImGui::IsItemClicked())
         {
             selectedPath = (path + name);
         }
@@ -399,8 +377,11 @@ static void RenderSidebar()
     }
 }
 
-static void Render(bool &done, SDL_Window *sdlWindow)
+static void Render(SDL_Window *sdlWindow)
 {
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
     constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
                                              ImGuiWindowFlags_NoMove |
                                              ImGuiWindowFlags_NoSavedSettings |
@@ -425,7 +406,7 @@ static void Render(bool &done, SDL_Window *sdlWindow)
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                done = true;
+                sdkWindow.PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -485,46 +466,10 @@ static void Render(bool &done, SDL_Window *sdlWindow)
 
 int main(int argc, char **argv)
 {
-    if (!SDL_Init(SDL_INIT_VIDEO))
+    if (!sdkWindow.Init("kvledit"))
     {
-        printf("Error: SDL_Init(): %s\n", SDL_GetError());
         return -1;
     }
-
-    constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
-    window = SDL_CreateWindow("kvledit", 800, 600, windowFlags);
-    if (window == nullptr)
-    {
-        printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
-        return -1;
-    }
-    renderer = SDL_CreateRenderer(window, nullptr);
-    if (!SDL_SetRenderVSync(renderer, 1))
-    {
-        printf("Error: SDL_SetRenderVSync(): %s\n", SDL_GetError());
-    }
-    if (renderer == nullptr)
-    {
-        printf("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
-        return -1;
-    }
-
-    SharedMgr::InitSharedMgr<SDLRendererImGuiTextureAssetCache>(renderer);
-    if (!SDL_ShowWindow(window))
-    {
-        printf("Error: SDL_ShowWindow(): %s\n", SDL_GetError());
-        return -1;
-    }
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-
-    SharedMgr::ApplyTheme();
-
-    ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
-    ImGui_ImplSDLRenderer3_Init(renderer);
 
     const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gkvl"});
     if (!openPath.empty())
@@ -539,68 +484,7 @@ int main(int argc, char **argv)
         }
     }
 
-    bool done = false;
-    while (!done)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            ImGui_ImplSDL3_ProcessEvent(&event);
-            if (event.type == SDL_EVENT_QUIT)
-            {
-                done = true;
-            }
-            if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
-            {
-                done = true;
-            }
-        }
+    sdkWindow.MainLoop(Render);
 
-        if ((SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0)
-        {
-            SDL_Delay(10);
-            continue;
-        }
-
-        ImGui_ImplSDLRenderer3_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();
-
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->WorkPos);
-        ImGui::SetNextWindowSize(viewport->WorkSize);
-
-        Render(done, window);
-
-        SharedMgr::RenderSharedUI(window);
-
-        ImGui::Render();
-        if (!SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y))
-        {
-            printf("Error: SDL_SetRenderScale(): %s\n", SDL_GetError());
-        }
-        if (!SDL_SetRenderDrawColorFloat(renderer, 0, 0, 0, 1))
-        {
-            printf("Error: SDL_SetRenderDrawColorFloat(): %s\n", SDL_GetError());
-        }
-        if (!SDL_RenderClear(renderer))
-        {
-            printf("Error: SDL_RenderClear(): %s\n", SDL_GetError());
-        }
-        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
-        if (!SDL_RenderPresent(renderer))
-        {
-            printf("Error: SDL_RenderPresent(): %s\n", SDL_GetError());
-        }
-    }
-
-    SharedMgr::DestroySharedMgr();
-
-    ImGui_ImplSDLRenderer3_Shutdown();
-    ImGui_ImplSDL3_Shutdown();
-    ImGui::DestroyContext();
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
     return 0;
 }

@@ -21,7 +21,7 @@ add_executable(mdledit mdledit.cpp
 
 set_target_properties(mdledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
-target_link_libraries(mdledit PRIVATE shared imgui_opengl3)
+target_link_libraries(mdledit PRIVATE shared)
 
 add_dependencies(mdledit assets)
 

@@ -2,6 +2,7 @@
 // Created by droc101 on 7/1/25.
 //
 
+#include "SkinsTab.h"
 #include <cstddef>
 #include <cstdint>
 #include <format>
@@ -9,7 +10,6 @@
 #include <imgui_internal.h>
 #include "../ModelRenderer.h"
 #include "SharedMgr.h"
-#include "SkinsTab.h"
 
 void SkinsTab::Render()
 {
@@ -61,7 +61,7 @@ void SkinsTab::Render()
         size_t currentMaterialIndex = ModelRenderer::GetModel().GetSkin(ModelRenderer::skinIndex).at(i);
         Material &currentMaterial = ModelRenderer::GetModel().GetMaterial(currentMaterialIndex);
         ImTextureID currentTextureId;
-        SharedMgr::textureCache->GetTextureID(currentMaterial.texture, currentTextureId);
+        SharedMgr::textureCache.GetTextureID(currentMaterial.texture, currentTextureId);
         float *currentColor = currentMaterial.color.GetDataPointer();
         ImGui::Image(currentTextureId,
                      {18, 18},
@@ -78,7 +78,7 @@ void SkinsTab::Render()
             {
                 Material &mat = ModelRenderer::GetModel().GetMaterial(m);
                 ImTextureID textureId;
-                SharedMgr::textureCache->GetTextureID(mat.texture, textureId);
+                SharedMgr::textureCache.GetTextureID(mat.texture, textureId);
                 const std::string title = std::format("##picker_{}_{}", m, i);
                 bool selected = ImGui::Selectable(title.c_str(),
                                                   ModelRenderer::GetModel().GetSkin(ModelRenderer::skinIndex).at(i) ==

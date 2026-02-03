@@ -3,7 +3,6 @@
 #include <format>
 #include <GL/glew.h>
 #include <imgui.h>
-#include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl3.h>
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/type/ConvexHull.h>
@@ -11,18 +10,18 @@
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
-#include <SDL3/SDL_init.h>
 #include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_mouse.h>
-#include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <utility>
+#include "DesktopInterface.h"
 #include "DialogFilters.h"
 #include "imgui_internal.h"
+#include "libassets/type/StaticCollisionMesh.h"
 #include "ModelRenderer.h"
-#include "OpenGLImGuiTextureAssetCache.h"
 #include "Options.h"
+#include "SDKWindow.h"
 #include "SharedMgr.h"
 #include "tabs/CollisionTab.h"
 #include "tabs/LodsTab.h"
@@ -30,12 +29,11 @@
 #include "tabs/PreviewOptionsTab.h"
 #include "tabs/SkinsTab.h"
 
+static SDKWindow sdkWindow{};
+
 static bool modelLoaded = false;
 static bool dragging = false;
 
-static SDL_Window *window = nullptr;
-static SDL_GLContext glContext = nullptr;
-static bool done = false;
 static bool openPressed = false;
 static bool newPressed = false;
 static bool savePressed = false;
@@ -99,17 +97,16 @@ static void saveGmdlCallback(void * /*userdata*/, const char *const *fileList, i
         if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                       "Error",
                                       std::format("Failed to save the model!\n{}", errorCode).c_str(),
-                                      window))
+                                      sdkWindow.GetWindow()))
         {
             printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
         }
     }
 }
 
-static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
+static bool ProcessEvent(SDL_Event *event)
 {
-    ImGui_ImplSDL3_ProcessEvent(event);
-    io = ImGui::GetIO();
+    const ImGuiIO io = ImGui::GetIO();
     if (event->type == ModelRenderer::EVENT_RELOAD_MODEL)
     {
         destroyExistingModel();
@@ -123,12 +120,12 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
                 if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                               "Error",
                                               std::format("Failed to open the model!\n{}", errorCode).c_str(),
-                                              window))
+                                              sdkWindow.GetWindow()))
                 {
                     printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
                 }
                 delete path;
-                return;
+                return true;
             }
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL)
         {
@@ -140,12 +137,12 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
                 if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                               "Error",
                                               std::format("Failed to import the model!\n{}", errorCode).c_str(),
-                                              window))
+                                              sdkWindow.GetWindow()))
                 {
                     printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
                 }
                 delete path;
-                return;
+                return true;
             }
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_LOD)
         {
@@ -155,12 +152,12 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
                 if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                               "Error",
                                               std::format("Failed to import model LOD!").c_str(),
-                                              window))
+                                              sdkWindow.GetWindow()))
                 {
                     printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
                 }
                 delete path;
-                return;
+                return true;
             }
         } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_HULL)
         {
@@ -179,6 +176,7 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
         ModelRenderer::LoadModel(std::move(model));
         modelLoaded = true;
         delete path;
+        return true;
     }
     if (event->type == ModelRenderer::EVENT_SAVE_MODEL)
     {
@@ -189,22 +187,15 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
             if (!SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                           "Error",
                                           std::format("Failed to save the model!\n{}", errorCode).c_str(),
-                                          window))
+                                          sdkWindow.GetWindow()))
             {
                 printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
             }
             delete path;
-            return;
+            return true;
         }
         delete path;
-    }
-    if (event->type == SDL_EVENT_QUIT)
-    {
-        done = true;
-    }
-    if (event->type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event->window.windowID == SDL_GetWindowID(window))
-    {
-        done = true;
+        return true;
     }
     if (previewFocused)
     {
@@ -212,28 +203,33 @@ static void ProcessEvent(const SDL_Event *event, ImGuiIO &io)
         {
             const SDL_MouseWheelEvent &mouseWheelEvent = event->wheel;
             ModelRenderer::UpdateViewRel(0, 0, mouseWheelEvent.y / -10.0f);
+            return true;
         }
         if (event->type == SDL_EVENT_MOUSE_BUTTON_UP)
         {
             if (event->button.button == SDL_BUTTON_LEFT)
             {
                 dragging = false;
+                return true;
             }
         } else if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN)
         {
             if (event->button.button == SDL_BUTTON_LEFT)
             {
                 dragging = true;
+                return true;
             }
         }
         if (dragging && event->type == SDL_EVENT_MOUSE_MOTION)
         {
             ModelRenderer::UpdateViewRel(event->motion.yrel / 5.0f, event->motion.xrel / -5.0f, 0);
+            return true;
         }
     } else
     {
         dragging = false;
     }
+    return false;
 }
 
 static void HandleMenuAndShortcuts()
@@ -253,7 +249,7 @@ static void HandleMenuAndShortcuts()
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                done = true;
+                sdkWindow.PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -330,12 +326,18 @@ static void HandleMenuAndShortcuts()
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGmdlCallback, nullptr, window, DialogFilters::gmdlFilters.data(), 1, nullptr, false);
+        SDL_ShowOpenFileDialog(openGmdlCallback,
+                               nullptr,
+                               sdkWindow.GetWindow(),
+                               DialogFilters::gmdlFilters.data(),
+                               1,
+                               nullptr,
+                               false);
     } else if (newPressed)
     {
         SDL_ShowOpenFileDialog(importCallback,
                                nullptr,
-                               window,
+                               sdkWindow.GetWindow(),
                                DialogFilters::modelFilters.data(),
                                DialogFilters::modelFilters.size(),
                                nullptr,
@@ -349,18 +351,23 @@ static void HandleMenuAndShortcuts()
                                           "LOD distances are invalid! Please fix them in the LOD editor and make sure "
                                           "that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the "
                                           "same distance",
-                                          window))
+                                          sdkWindow.GetWindow()))
             {
                 printf("Error: SDL_ShowSimpleMessageBox(): %s\n", SDL_GetError());
             }
         } else
         {
-            SDL_ShowSaveFileDialog(saveGmdlCallback, nullptr, window, DialogFilters::gmdlFilters.data(), 1, nullptr);
+            SDL_ShowSaveFileDialog(saveGmdlCallback,
+                                   nullptr,
+                                   sdkWindow.GetWindow(),
+                                   DialogFilters::gmdlFilters.data(),
+                                   1,
+                                   nullptr);
         }
     }
 }
 
-void SetupDockspace()
+static void SetupDockspace()
 {
     if (dockspaceSetup)
     {
@@ -385,8 +392,10 @@ void SetupDockspace()
     ImGui::DockBuilderFinish(rootDockspaceID);
 }
 
-static void Render()
+static void Render(SDL_Window *window)
 {
+    SetupDockspace();
+
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
 
     const ImVec2 VpAreaTopLeft = ImVec2(viewport->WorkPos.x, viewport->WorkPos.y);
@@ -465,94 +474,18 @@ static void Render()
 
 int main(int argc, char **argv)
 {
-    if (!SDL_Init(SDL_INIT_VIDEO))
+    if (!sdkWindow.Init("mdledit", {1366, 768}))
     {
-        printf("Error: SDL_Init(): %s\n", SDL_GetError());
-        return -1;
-    }
-
-    SharedMgr::InitSharedMgr<OpenGLImGuiTextureAssetCache>();
-
-    const char *glslVersion = "#version 130";
-    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0))
-    {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE))
-    {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3))
-    {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3))
-    {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1))
-    {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24))
-    {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0))
-    {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
-    }
-
-    constexpr SDL_WindowFlags sdlWindowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
-    window = SDL_CreateWindow("mdledit", 1366, 768, sdlWindowFlags);
-    if (window == nullptr)
-    {
-        printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
-        return -1;
-    }
-    glContext = SDL_GL_CreateContext(window);
-    if (glContext == nullptr)
-    {
-        printf("Error: SDL_GL_CreateContext(): %s\n", SDL_GetError());
         return -1;
     }
 
     ModelRenderer::EVENT_RELOAD_MODEL = SDL_RegisterEvents(2);
     ModelRenderer::EVENT_SAVE_MODEL = ModelRenderer::EVENT_RELOAD_MODEL + 1;
-
-    if (!SDL_GL_MakeCurrent(window, glContext))
-    {
-        printf("Error: SDL_GL_MakeCurrent(): %s\n", SDL_GetError());
-        return -1;
-    }
     if (!ModelRenderer::Init())
     {
         printf("Failed to start renderer!\n");
         return -1;
     }
-    if (!SDL_GL_SetSwapInterval(1)) // Enable vsync
-    {
-        printf("Error: SDL_GL_SetSwapInterval(): %s\n", SDL_GetError());
-    }
-    if (!SDL_ShowWindow(window))
-    {
-        printf("Error: SDL_ShowWindow(): %s\n", SDL_GetError());
-        return -1;
-    }
-
-    dynamic_cast<OpenGLImGuiTextureAssetCache *>(SharedMgr::textureCache.get())->InitMissingTexture();
-
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-
-    SharedMgr::ApplyTheme();
-
-    ImGui_ImplSDL3_InitForOpenGL(window, glContext);
-    ImGui_ImplOpenGL3_Init(glslVersion);
 
     const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gmdl"});
     if (!openPath.empty())
@@ -583,51 +516,9 @@ int main(int argc, char **argv)
         }
     }
 
-    // ReSharper disable once CppDFALoopConditionNotUpdated Wrong again
-    while (!done)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            ProcessEvent(&event, io);
-        }
+    sdkWindow.MainLoop(Render, ProcessEvent);
 
-        if ((SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0)
-        {
-            SDL_Delay(10);
-            continue;
-        }
-
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();
-
-        SetupDockspace();
-
-        Render();
-
-        SharedMgr::RenderSharedUI(window);
-        ImGui::Render();
-
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        if (!SDL_GL_SwapWindow(window))
-        {
-            printf("Error: SDL_GL_SwapWindow(): %s\n", SDL_GetError());
-        }
-    }
-
-    SharedMgr::DestroySharedMgr();
-
-    ModelRenderer::Destroy();
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL3_Shutdown();
-    ImGui::DestroyContext();
-    if (!SDL_GL_DestroyContext(glContext))
-    {
-        printf("Error: SDL_GL_DestroyContext(): %s\n", SDL_GetError());
-    }
-    SDL_DestroyWindow(window);
-    SDL_Quit();
     destroyExistingModel();
+    ModelRenderer::Destroy();
     return 0;
 }

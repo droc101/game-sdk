@@ -73,6 +73,7 @@ set(SDL_OFFSCREEN OFF)
 set(SDL_LIBUDEV OFF)
 set(SDL_TEST_LIBRARY OFF)
 set(SDL_EXAMPLES OFF)
+set(SDL_RENDER_DEFAULT OFF)
 find_or_fetch_package(https://github.com/libsdl-org/SDL.git release-3.*.* SDL3 CONFIG)
 
 fetch_package(https://github.com/mackron/miniaudio.git 0.*.* miniaudio)
@@ -83,8 +84,7 @@ find_or_fetch_package(https://github.com/g-truc/glm.git 1.*.* glm)
 
 find_package(OpenGL REQUIRED)
 
-add_library(imgui INTERFACE
-        mtledit/mtledit.cpp)
+add_library(imgui INTERFACE)
 target_sources(imgui INTERFACE
         lib/imgui/imconfig.h
         lib/imgui/imgui.cpp
@@ -101,25 +101,13 @@ target_sources(imgui INTERFACE
         lib/imgui/misc/cpp/imgui_stdlib.h
         lib/imgui/backends/imgui_impl_sdl3.cpp
         lib/imgui/backends/imgui_impl_sdl3.h
+        lib/imgui/backends/imgui_impl_opengl3.h
+        lib/imgui/backends/imgui_impl_opengl3.cpp
+        lib/imgui/backends/imgui_impl_opengl3_loader.h
 )
 target_include_directories(imgui INTERFACE
         lib/imgui
         lib/imgui/backends
-)
-
-add_library(imgui_sdl3_renderer INTERFACE)
-target_link_libraries(imgui_sdl3_renderer INTERFACE imgui)
-target_sources(imgui_sdl3_renderer INTERFACE
-        lib/imgui/backends/imgui_impl_sdlrenderer3.h
-        lib/imgui/backends/imgui_impl_sdlrenderer3.cpp
-)
-
-add_library(imgui_opengl3 INTERFACE)
-target_link_libraries(imgui_opengl3 INTERFACE imgui)
-target_sources(imgui_opengl3 INTERFACE
-        lib/imgui/backends/imgui_impl_opengl3.h
-        lib/imgui/backends/imgui_impl_opengl3.cpp
-        lib/imgui/backends/imgui_impl_opengl3_loader.h
 )
 
 add_library(shared INTERFACE)
@@ -135,10 +123,7 @@ target_sources(shared INTERFACE
         shared/TextureBrowserWindow.cpp
         shared/TextureBrowserWindow.h
         shared/ImGuiTextureAssetCache.h
-        shared/SDLRendererImGuiTextureAssetCache.cpp
-        shared/SDLRendererImGuiTextureAssetCache.h
-        shared/OpenGLImGuiTextureAssetCache.cpp
-        shared/OpenGLImGuiTextureAssetCache.h
+        shared/ImGuiTextureAssetCache.cpp
         shared/GLHelper.cpp
         shared/GLHelper.h
         shared/GLDebug.cpp
@@ -150,6 +135,8 @@ target_sources(shared INTERFACE
         shared/MaterialBrowserWindow.cpp
         shared/DesktopInterface.h
         shared/DesktopInterface.cpp
+        shared/SDKWindow.cpp
+        shared/SDKWindow.h
 )
 if (WIN32)
     target_sources(shared INTERFACE app.manifest)
@@ -161,6 +148,7 @@ target_link_libraries(shared INTERFACE
         glm::glm
         OpenGL::GL
         glew_s
+        imgui
 )
 target_include_directories(shared INTERFACE shared)
 
