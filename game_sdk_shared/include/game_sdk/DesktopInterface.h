@@ -15,18 +15,48 @@ class DesktopInterface
     public:
         DesktopInterface() = delete;
 
+        /**
+         * Execute a process, blocking until completion
+         * @param executable Executable to run
+         * @param arguments Arguments to pass to the process
+         * @param exitCode Where to store the process's exit code, can be nullptr
+         */
         static bool ExecuteProcess(const std::string &executable,
                                    const std::vector<std::string> &arguments,
                                    int *exitCode);
 
+        /**
+         * Execute a process, do not block
+         * @param executable Executable to run
+         * @param arguments Arguments to pass to the process
+         * @note You cannot later block on this process or obtain its exit code
+         */
         static bool ExecuteProcessNonBlocking(const std::string &executable, const std::vector<std::string> &arguments);
 
+        /**
+         * Open a filesystem path in the default program
+         * @param path The path to open
+         */
         static bool OpenFilesystemPath(const std::string &path);
 
+        /**
+         * Open a URL in the default program
+         * @param url The URL to open
+         */
         static bool OpenURL(const std::string &url);
 
+        /**
+         * Get a file path argument
+         * @param argc main function argc
+         * @param argv main function argv
+         * @param extensions list of accepted extensions
+         * @return file path on success, empty string otherwise
+         */
         static std::string GetFileArgument(int argc, char **argv, const std::vector<std::string> &extensions);
 
+        /**
+         * Initialize the desktop interface
+         */
         static void InitDesktopInterface();
 
     private:

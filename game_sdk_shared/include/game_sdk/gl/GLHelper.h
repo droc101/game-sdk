@@ -3,6 +3,7 @@
 //
 
 #pragma once
+
 #include <GL/glew.h>
 #include <glm/vec2.hpp>
 #include <libassets/util/Error.h>

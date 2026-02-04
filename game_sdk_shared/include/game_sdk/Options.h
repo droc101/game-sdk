@@ -19,14 +19,29 @@ class Options
 
         Options() = delete;
 
+        /**
+         * Load (or reload) options from disk
+         */
         static void Load();
 
+        /**
+         * Load default options
+         */
         static void LoadDefault();
 
+        /**
+         * Save options to disk
+         */
         static void Save();
 
+        /**
+         * Do basic validation checks on the game path
+         */
         static bool ValidateGamePath();
 
+        /**
+         * Get the absolute path to the assets folder
+         */
         static std::string GetAssetsPath();
 
         static inline std::string gamePath;

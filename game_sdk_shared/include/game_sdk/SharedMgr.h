@@ -16,23 +16,42 @@ class SharedMgr
     public:
         SharedMgr() = delete;
 
+        /**
+         * Initialize the SDK shared manager
+         */
         static void InitSharedMgr();
 
+        /**
+         * Render the shared ImGui menu options
+         * @param programName The program name, matching its entry on the Droc101 Development wiki
+         */
         static void SharedMenuUI(const std::string &programName);
 
+        /**
+         * Render shared ImGui windows
+         */
         static void RenderSharedUI();
 
+        /**
+         * Clean up the SDK shared manager
+         */
         static void DestroySharedMgr();
 
+        /**
+         * Apply the ImGui theme from options
+         */
         static void ApplyTheme();
 
+        /**
+         * Recursively scan a directory for files of a certain type
+         * @param directoryPath The path to the directory
+         * @param extension The extension to scan for
+         * @param isRoot Set this to true
+         * @return A vector of file paths
+         */
         static std::vector<std::string> ScanFolder(const std::string &directoryPath,
                                                    const std::string &extension,
                                                    bool isRoot);
-
-        static void LoadOptionDefinitions();
-
-        static void LoadActorDefinitions();
 
         static inline GLTextureCache textureCache{};
 
@@ -43,4 +62,8 @@ class SharedMgr
     private:
         static inline bool metricsVisible = false;
         static inline bool demoVisible = false;
+
+        static void LoadOptionDefinitions();
+
+        static void LoadActorDefinitions();
 };
