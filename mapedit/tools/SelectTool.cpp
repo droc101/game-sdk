@@ -3,20 +3,25 @@
 //
 
 #include "SelectTool.h"
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cfloat>
 #include <cstddef>
+#include <format>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
 #include <string>
+#include <tuple>
 #include <variant>
+#include <vector>
 #include "../EditActorWindow.h"
 #include "../MapEditor.h"
 #include "../MapRenderer.h"
 #include "../Viewport.h"
+#include "EditorTool.h"
 
 void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {
@@ -464,28 +469,163 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
     }
 }
 
+std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::DetermineHoveredItem(const Viewport &vp,
+                                                                                              const bool isHovered,
+                                                                                              const glm::vec3
+                                                                                                      &worldSpaceHover)
+{
+    hoverType = ItemType::NONE;
+    bool selectionHovered = false;
+    std::vector<std::tuple<ItemType, size_t, float>> actorHoverStack{};
+    std::vector<std::tuple<ItemType, size_t, float>> sectorHoverStack{};
+
+    for (size_t actorIndex = 0; actorIndex < MapEditor::map.actors.size(); actorIndex++)
+    {
+        const Actor &a = MapEditor::map.actors.at(actorIndex);
+        const glm::vec2 posScreenSpace = vp.WorldToScreenPos(a.position);
+        const ImVec2 hoverScreenSpaceIV = Viewport::GetLocalMousePos();
+        const glm::vec2 hoverScreenSpace = glm::vec2(hoverScreenSpaceIV.x, hoverScreenSpaceIV.y);
+
+        if (distance(posScreenSpace, hoverScreenSpace) <= MapEditor::HOVER_DISTANCE_PIXELS && isHovered)
+        {
+            if (selectionType == ItemType::ACTOR && selectionIndex == actorIndex)
+            {
+                selectionHovered = true;
+                // This actor will be later added with the highest priority
+            } else
+            {
+                if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+                {
+                    actorHoverStack.emplace_back(ItemType::ACTOR, actorIndex, a.position.y);
+                } else if (vp.GetType() == Viewport::ViewportType::FRONT_XY)
+                {
+                    actorHoverStack.emplace_back(ItemType::ACTOR, actorIndex, a.position.z);
+                } else if (vp.GetType() == Viewport::ViewportType::SIDE_YZ)
+                {
+                    sectorHoverStack.emplace_back(ItemType::ACTOR, actorIndex, a.position.x);
+                }
+            }
+        }
+    }
+
+    if (!actorHoverStack.empty())
+    {
+        std::ranges::sort(actorHoverStack,
+                          [](const std::tuple<ItemType, size_t, float> &a,
+                             const std::tuple<ItemType, size_t, float> &b) {
+                              return std::get<float>(a) > std::get<float>(b);
+                          });
+    }
+
+    if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+    {
+        for (size_t sectorIndex = 0; sectorIndex < MapEditor::map.sectors.size(); sectorIndex++)
+        {
+            const Sector &sector = MapEditor::map.sectors.at(sectorIndex);
+            if (sector.ContainsPoint({worldSpaceHover.x, worldSpaceHover.z}) && isHovered)
+            {
+                if (selectionType == ItemType::SECTOR && selectionIndex == sectorIndex)
+                {
+                    selectionHovered = true;
+                } else
+                {
+                    sectorHoverStack.emplace_back(ItemType::SECTOR, sectorIndex, sector.ceilingHeight);
+                }
+            }
+        }
+
+        if (!sectorHoverStack.empty())
+        {
+            std::ranges::sort(sectorHoverStack,
+                              [](const std::tuple<ItemType, size_t, float> &a,
+                                 const std::tuple<ItemType, size_t, float> &b) {
+                                  return std::get<float>(a) > std::get<float>(b);
+                              });
+        }
+    }
+
+    std::vector<std::tuple<ItemType, size_t, float>> hoverStack{};
+    hoverStack.reserve(actorHoverStack.size() + sectorHoverStack.size() + 1);
+    if (selectionHovered)
+    {
+        hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);
+    }
+
+    hoverStack.insert(hoverStack.end(), actorHoverStack.begin(), actorHoverStack.end());
+    hoverStack.insert(hoverStack.end(), sectorHoverStack.begin(), sectorHoverStack.end());
+
+    if (!hoverStack.empty())
+    {
+        hoverType = std::get<ItemType>(hoverStack.at(0));
+        hoverIndex = std::get<size_t>(hoverStack.at(0));
+    }
+
+    return hoverStack;
+}
 
 void SelectTool::RenderViewportSelectMode(const Viewport &vp,
                                           glm::mat4 &matrix,
                                           const bool isHovered,
                                           const glm::vec3 &worldSpaceHover)
 {
-    hoverType = ItemType::NONE;
+    const std::vector<std::tuple<ItemType, size_t, float>> &hoverStack = DetermineHoveredItem(vp,
+                                                                                              isHovered,
+                                                                                              worldSpaceHover);
+
+    if (hoverStack.size() > 1 && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+    {
+        menuHoveredItems = hoverStack;
+        ImGui::OpenPopup("hoverSelectionRClick");
+    }
+
+    if (ImGui::BeginPopup("hoverSelectionRClick"))
+    {
+        for (const std::tuple<ItemType, size_t, float> &item: menuHoveredItems)
+        {
+            std::string text{};
+            const ItemType type = std::get<ItemType>(item);
+            size_t index = std::get<size_t>(item);
+            if (type == ItemType::ACTOR)
+            {
+                const Actor &a = MapEditor::map.actors.at(std::get<size_t>(item));
+                if (a.params.contains("name") && !a.params.at("name").Get<std::string>("").empty())
+                {
+                    text = std::format("\"{}\": {}##{}", a.params.at("name").Get<std::string>(""), a.className, index);
+                } else
+                {
+                    text = std::format("{}##{}", a.className, index);
+                }
+            } else if (type == ItemType::SECTOR)
+            {
+                text = std::format("Sector {}", index);
+            } else
+            {
+                text = "???";
+            }
+            const bool itemClicked = ImGui::MenuItem(text.c_str());
+            if (ImGui::IsItemHovered())
+            {
+                hoverType = type;
+                hoverIndex = index;
+            }
+            if (itemClicked)
+            {
+                selectionType = type;
+                selectionIndex = index;
+                menuHoveredItems.clear();
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        ImGui::EndPopup();
+    }
 
     for (size_t actorIndex = 0; actorIndex < MapEditor::map.actors.size(); actorIndex++)
     {
         Actor &a = MapEditor::map.actors.at(actorIndex);
-        const glm::vec2 posScreenSpace = vp.WorldToScreenPos(a.position);
-        const ImVec2 hoverScreenSpaceIV = Viewport::GetLocalMousePos();
-        const glm::vec2 hoverScreenSpace = glm::vec2(hoverScreenSpaceIV.x, hoverScreenSpaceIV.y);
 
-        if (hoverType == ItemType::NONE &&
-            distance(posScreenSpace, hoverScreenSpace) <= MapEditor::HOVER_DISTANCE_PIXELS &&
-            isHovered)
+        if (hoverType == ItemType::ACTOR && hoverIndex == actorIndex && isHovered)
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-            hoverIndex = actorIndex;
-            hoverType = ItemType::ACTOR;
             if (ImGui::BeginTooltip())
             {
                 if (a.params.contains("name") && !a.params.at("name").Get<std::string>("").empty())
@@ -506,21 +646,15 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
     for (size_t sectorIndex = 0; sectorIndex < MapEditor::map.sectors.size(); sectorIndex++)
     {
         Sector &sector = MapEditor::map.sectors.at(sectorIndex);
-        if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ &&
-            hoverType == ItemType::NONE &&
-            sector.ContainsPoint({worldSpaceHover.x, worldSpaceHover.z}) &&
-            isHovered)
-        {
-            hoverIndex = sectorIndex;
-            hoverType = ItemType::SECTOR;
-        }
 
         Color c = Color(0.6, 0.6, 0.6, 1);
         if (selectionType == ItemType::SECTOR && selectionIndex == sectorIndex)
         {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
             c = Color(1, 1, 1, 1);
         } else if (hoverType == ItemType::SECTOR && hoverIndex == sectorIndex)
         {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
             c = Color(.8, .8, .8, 1);
         }
 

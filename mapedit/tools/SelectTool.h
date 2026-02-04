@@ -7,11 +7,11 @@
 #include <cstddef>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
+#include <tuple>
 #include <vector>
 #include "../Viewport.h"
 #include "EditorTool.h"
 
-class Actor;
 class SelectTool final: public EditorTool
 {
     public:
@@ -39,6 +39,10 @@ class SelectTool final: public EditorTool
                                 glm::vec3 startCeiling,
                                 Color &lineColor,
                                 bool &haveAddedNewVertex);
+
+        std::vector<std::tuple<ItemType, size_t, float>> DetermineHoveredItem(const Viewport &vp,
+                                                                              bool isHovered,
+                                                                              const glm::vec3 &worldSpaceHover);
 
         void RenderViewportSelectMode(const Viewport &vp,
                                       glm::mat4 &matrix,
@@ -85,6 +89,8 @@ class SelectTool final: public EditorTool
 
         glm::vec2 sectorDragMouseOffset{};
         std::vector<glm::vec2> sectorDragVertexOffsets{};
+
+        std::vector<std::tuple<ItemType, size_t, float>> menuHoveredItems{};
 
         bool dragging = false;
 };
