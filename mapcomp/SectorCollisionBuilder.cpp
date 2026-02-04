@@ -10,10 +10,10 @@
 #include <glm/detail/func_geometric.inl>
 #include <glm/vec2.hpp>
 #include <libassets/type/Sector.h>
-#include <mapbox/earcut.hpp>
+#include <libassets/util/DataWriter.h>
 #include <utility>
 #include <vector>
-#include "libassets/util/DataWriter.h"
+#include "SectorClipper.h"
 
 SectorCollisionBuilder::SectorCollisionBuilder(const Sector &sector)
 {
@@ -37,26 +37,28 @@ void SectorCollisionBuilder::NextShape()
     shapes.emplace_back();
 }
 
-void SectorCollisionBuilder::AddCeiling()
+void SectorCollisionBuilder::AddCeiling(const std::vector<const Sector *> &overlapping)
 {
-    AddSectorBase(false);
+    AddSectorBase(false, overlapping);
 }
 
-void SectorCollisionBuilder::AddFloor()
+void SectorCollisionBuilder::AddFloor(const std::vector<const Sector *> &overlapping)
 {
-    AddSectorBase(true);
+    AddSectorBase(true, overlapping);
 }
 
-void SectorCollisionBuilder::AddSectorBase(const bool isFloor)
+void SectorCollisionBuilder::AddSectorBase(const bool isFloor, const std::vector<const Sector *> &overlapping)
 {
-    std::vector<std::vector<std::array<float, 2>>> polygon{{}};
-    for (const glm::vec2 &point: sector->points)
+    SectorClipper clipper = SectorClipper(*sector);
+    for (const Sector *s: overlapping)
     {
-        polygon.at(0).push_back({point.x, point.y});
+        clipper.AddHole(s);
     }
-    std::vector<uint32_t> idx = mapbox::earcut<uint32_t>(polygon);
+    std::vector<glm::vec2> points{};
+    std::vector<uint32_t> idx{};
+    clipper.ProcessAndMesh(points, idx);
 
-    for (const glm::vec2 &point: sector->points)
+    for (const glm::vec2 &point: points)
     {
         CurrentShape().vertices.emplace_back(point.x, isFloor ? sector->floorHeight : sector->ceilingHeight, point.y);
     }
@@ -73,7 +75,7 @@ void SectorCollisionBuilder::AddSectorBase(const bool isFloor)
     {
         CurrentShape().indices.push_back(i + CurrentShape().currentIndex);
     }
-    CurrentShape().currentIndex += sector->points.size();
+    CurrentShape().currentIndex += points.size();
 }
 
 void SectorCollisionBuilder::AddWall(const size_t wallIndex, const float floorHeight, const float ceilingHeight)

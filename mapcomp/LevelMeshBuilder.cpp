@@ -4,7 +4,6 @@
 
 #include "LevelMeshBuilder.h"
 #include <array>
-#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <glm/detail/func_geometric.inl>
@@ -14,19 +13,18 @@
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/DataWriter.h>
-#include <mapbox/earcut.hpp>
 #include <string>
-#include <utility>
 #include <vector>
+#include "SectorClipper.h"
 
-void LevelMeshBuilder::AddCeiling(const Sector &sector)
+void LevelMeshBuilder::AddCeiling(const Sector &sector, const std::vector<const Sector *> &overlapping)
 {
-    AddSectorBase(sector, false);
+    AddSectorBase(sector, false, overlapping);
 }
 
-void LevelMeshBuilder::AddFloor(const Sector &sector)
+void LevelMeshBuilder::AddFloor(const Sector &sector, const std::vector<const Sector *> &overlapping)
 {
-    AddSectorBase(sector, true);
+    AddSectorBase(sector, true, overlapping);
 }
 
 void LevelMeshBuilder::AddWall(const Sector &sector,
@@ -137,18 +135,22 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
 }
 
 
-void LevelMeshBuilder::AddSectorBase(const Sector &sector, const bool isFloor)
+void LevelMeshBuilder::AddSectorBase(const Sector &sector,
+                                     const bool isFloor,
+                                     const std::vector<const Sector *> &overlapping)
 {
-    std::vector<std::vector<std::array<float, 2>>> polygon{{}};
-    for (const glm::vec2 &point: sector.points)
+    SectorClipper clipper = SectorClipper(sector);
+    for (const Sector *s: overlapping)
     {
-        polygon.at(0).push_back({point.x, point.y});
+        clipper.AddHole(s);
     }
-    std::vector<uint32_t> idx = mapbox::earcut<uint32_t>(polygon);
+    std::vector<glm::vec2> points{};
+    std::vector<uint32_t> idx{};
+    clipper.ProcessAndMesh(points, idx);
 
     const WallMaterial &mat = isFloor ? sector.floorMaterial : sector.ceilingMaterial;
 
-    for (const glm::vec2 &point: sector.points)
+    for (const glm::vec2 &point: points)
     {
         ModelVertex v{};
         v.color = sector.lightColor;
@@ -183,7 +185,7 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector, const bool isFloor)
     {
         indices.push_back(i + currentIndex);
     }
-    currentIndex += sector.points.size();
+    currentIndex += points.size();
 }
 
 void LevelMeshBuilder::Write(DataWriter &writer, const std::string &materialPath) const

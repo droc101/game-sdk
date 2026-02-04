@@ -17,8 +17,8 @@ class SectorCollisionBuilder
         explicit SectorCollisionBuilder(const Sector &sector);
 
         void AddWall(size_t wallIndex, float floorHeight, float ceilingHeight);
-        void AddFloor();
-        void AddCeiling();
+        void AddFloor(const std::vector<const Sector *> &overlapping);
+        void AddCeiling(const std::vector<const Sector *> &overlapping);
 
         void NextShape();
 
@@ -41,7 +41,7 @@ class SectorCollisionBuilder
                          float floorHeight,
                          float ceilingHeight,
                          bool counterClockWise);
-        void AddSectorBase(bool isFloor);
+        void AddSectorBase(bool isFloor, const std::vector<const Sector *> &overlapping);
 
         void WriteIndex(size_t index, DataWriter &writer, const SubShape &shape) const;
 

@@ -20,8 +20,8 @@ class LevelMeshBuilder
         LevelMeshBuilder() = default;
 
         void AddWall(const Sector &sector, size_t wallIndex, float floorHeight, float ceilingHeight);
-        void AddFloor(const Sector &sector);
-        void AddCeiling(const Sector &sector);
+        void AddFloor(const Sector &sector, const std::vector<const Sector *> &overlapping);
+        void AddCeiling(const Sector &sector, const std::vector<const Sector *> &overlapping);
 
         void Write(DataWriter &writer, const std::string &materialPath) const;
 
@@ -42,5 +42,5 @@ class LevelMeshBuilder
                          float ceilingHeight,
                          const Color &lightColor,
                          bool counterClockWise);
-        void AddSectorBase(const Sector &sector, bool isFloor);
+        void AddSectorBase(const Sector &sector, bool isFloor, const std::vector<const Sector *> &overlapping);
 };

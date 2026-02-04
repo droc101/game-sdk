@@ -132,6 +132,8 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     for (size_t sectorIndex = 0; sectorIndex < map.sectors.size(); sectorIndex++)
     {
         const Sector &sector = map.sectors[sectorIndex];
+        std::vector<const Sector *> overlappingCeilings{};
+        std::vector<const Sector *> overlappingFloors{};
         SectorCollisionBuilder builder = SectorCollisionBuilder(sector);
         for (size_t i = 0; i < sector.points.size(); i++)
         {
@@ -142,9 +144,20 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
             {
                 const Sector &otherSector = map.sectors[otherSectorIndex];
 
-                if ((otherSector.ceilingHeight < sector.floorHeight &&
-                     otherSector.floorHeight < sector.floorHeight) ||
-                    (otherSector.ceilingHeight > sector.ceilingHeight && otherSector.floorHeight > sector.ceilingHeight))
+                if (sectorIndex != otherSectorIndex)
+                {
+                    if (sector.floorHeight == otherSector.ceilingHeight)
+                    {
+                        overlappingCeilings.push_back(&otherSector);
+                    } else if (sector.ceilingHeight == otherSector.floorHeight)
+                    {
+                        overlappingFloors.push_back(&otherSector);
+                    }
+                }
+
+                if ((otherSector.ceilingHeight < sector.floorHeight && otherSector.floorHeight < sector.floorHeight) ||
+                    (otherSector.ceilingHeight > sector.ceilingHeight &&
+                     otherSector.floorHeight > sector.ceilingHeight))
                 {
                     continue; // Other sector is completely above or below this one, do not consider it
                 }
@@ -219,22 +232,22 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
         const LevelMaterialAsset ceilingMaterial = GetMapMaterial(sector.ceilingMaterial.material);
         if (!ceilingMaterial.compileInvisible)
         {
-            meshBuilders[sector.ceilingMaterial.material].AddCeiling(sector);
+            meshBuilders[sector.ceilingMaterial.material].AddCeiling(sector, overlappingFloors);
         }
         if (!ceilingMaterial.compileNoClip)
         {
-            builder.AddCeiling();
+            builder.AddCeiling(overlappingFloors);
         }
 
         const LevelMaterialAsset floorMaterial = GetMapMaterial(sector.floorMaterial.material);
         if (!floorMaterial.compileInvisible)
         {
-            meshBuilders[sector.floorMaterial.material].AddFloor(sector);
+            meshBuilders[sector.floorMaterial.material].AddFloor(sector, overlappingCeilings);
         }
         if (!floorMaterial.compileNoClip)
         {
             // builder.NextShape();
-            builder.AddFloor();
+            builder.AddFloor(overlappingCeilings);
         }
 
         collisionBuilders.push_back(builder);

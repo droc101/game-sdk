@@ -50,6 +50,26 @@ function(fetch_earcut_hpp)
     target_include_directories(earcut INTERFACE ${EARCUT_DIR}/include)
 endfunction()
 
+function(fetch_clipper2)
+    set(CLIPPER2_UTILS OFF)
+    set(CLIPPER2_EXAMPLES OFF)
+    set(CLIPPER2_TESTS OFF)
+
+    get_latest_package_version(https://github.com/AngusJohnson/Clipper2.git Clipper2_2.*.*)
+
+    FetchContent_Declare(
+            Clipper2
+            GIT_REPOSITORY https://github.com/AngusJohnson/Clipper2.git
+            GIT_TAG ${LATEST_RELEASE}
+            GIT_SHALLOW TRUE
+            GIT_PROGRESS TRUE
+            SOURCE_SUBDIR "CPP"
+            EXCLUDE_FROM_ALL
+            SYSTEM
+    )
+    FetchContent_MakeAvailable(Clipper2)
+endfunction()
+
 function(fetch_glew)
     set(GLEW_EGL ON)
     set(GLEW_GLX ON)
