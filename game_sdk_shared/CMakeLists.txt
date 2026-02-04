@@ -39,5 +39,5 @@ target_link_libraries(game_sdk_shared PUBLIC
         glew_s
         imgui
 )
-set_target_properties(game_sdk_shared PROPERTIES OUTPUT_NAME "game_sdk" PREFIX "")
+set_target_properties(game_sdk_shared PROPERTIES OUTPUT_NAME "game_sdk" PREFIX "" POSITION_INDEPENDENT_CODE ON)
 target_include_directories(game_sdk_shared PUBLIC ${CMAKE_SOURCE_DIR}/game_sdk_shared/include)

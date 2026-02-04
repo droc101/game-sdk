@@ -28,7 +28,6 @@ if (WIN32)
             libstdc++-6.dll
             libgcc_s_seh-1.dll
             libwinpthread-1.dll
-            SDL3.dll
             libassimp-6.dll
             zlib1.dll
             libminizip-1.dll
@@ -52,18 +51,28 @@ include(cmake/FindOrFetchPackage.cmake)
 
 set(SDL_AUDIO_DEFAULT OFF)
 set(SDL_GPU_DEFAULT OFF)
+set(SDL_RENDER_DEFAULT OFF)
 set(SDL_CAMERA_DEFAULT OFF)
+set(SDL_HIDAPI_DEFAULT OFF)
+set(SDL_POWER_DEFAULT OFF)
 set(SDL_JOYSTICK_DEFAULT OFF)
 set(SDL_HAPTIC_DEFAULT OFF)
-set(SDL_POWER_DEFAULT OFF)
 set(SDL_SENSOR_DEFAULT OFF)
-set(SDL_PIPEWIRE OFF)
+set(SDL_TRAY_DEFAULT OFF)
+set(SDL_DISKAUDIO OFF)
+set(SDL_DUMMYAUDIO OFF)
+set(SDL_DUMMYVIDEO OFF)
+set(SDL_OPENGLES OFF)
+set(SDL_DIRECTX OFF)
+set(SDL_VIVANTE OFF)
 set(SDL_OFFSCREEN OFF)
-set(SDL_LIBUDEV OFF)
-set(SDL_TEST_LIBRARY OFF)
-set(SDL_EXAMPLES OFF)
-set(SDL_RENDER_DEFAULT OFF)
-find_or_fetch_package(https://github.com/libsdl-org/SDL.git release-3.*.* SDL3 CONFIG)
+set(SDL_DUMMYCAMERA OFF)
+set(SDL_HIDAPI OFF)
+set(SDL_VIRTUAL_JOYSTICK OFF)
+set(SDL_VULKAN OFF)
+set(SDL_KMSDRM OFF)
+set(SDL_CCACHE ON)
+fetch_package(https://github.com/libsdl-org/SDL.git release-3.*.* SDL3 CONFIG)
 
 fetch_package(https://github.com/mackron/miniaudio.git 0.*.* miniaudio)
 
