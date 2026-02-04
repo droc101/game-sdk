@@ -30,13 +30,13 @@ target_sources(game_sdk_shared PRIVATE
         src/windows/TextureBrowserWindow.cpp
         include/game_sdk/windows/TextureBrowserWindow.h
 )
+target_link_libraries(game_sdk_shared PRIVATE glew_s)
 target_link_libraries(game_sdk_shared PUBLIC
         SDL3::SDL3
-        miniaudio
-        assets
         glm::glm
         OpenGL::GL
-        glew_s
+        assets
+        miniaudio
         imgui
 )
 set_target_properties(game_sdk_shared PROPERTIES OUTPUT_NAME "game_sdk" PREFIX "" POSITION_INDEPENDENT_CODE ON)
