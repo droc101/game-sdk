@@ -18,9 +18,6 @@
 #include <libassets/asset/FontAsset.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/VectorMove.h>
-#include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_messagebox.h>
-#include <SDL3/SDL_video.h>
 #include <string>
 #include <vector>
 
@@ -40,22 +37,9 @@ static void openGfon(const std::string &path)
     fontLoaded = true;
 }
 
-static void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void saveGfon(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    openGfon(fileList[0]);
-}
-
-static void saveGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = font.SaveAsAsset(fileList[0]);
+    const Error::ErrorCode errorCode = font.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::ErrorMessage(std::format("Failed to save the font!\n{}", errorCode));
@@ -73,7 +57,7 @@ static bool ComboGetter(void *data, const int index, const char **out_text)
     return true;
 }
 
-static void Render(SDL_Window *sdlWindow)
+static void Render()
 {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -108,16 +92,10 @@ static void Render(SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGfonCallback,
-                               nullptr,
-                               sdlWindow,
-                               DialogFilters::gfonFilters.data(),
-                               1,
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(openGfon, DialogFilters::gfonFilters);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGfonCallback, nullptr, sdlWindow, DialogFilters::gfonFilters.data(), 1, nullptr);
+        SDKWindow::SaveFileDialog(saveGfon, DialogFilters::gfonFilters);
     } else if (newPressed)
     {
         font = FontAsset();

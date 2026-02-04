@@ -13,7 +13,6 @@
 #include <libassets/util/Error.h>
 #include <nlohmann/json.hpp>
 #include <SDL3/SDL_filesystem.h>
-#include <SDL3/SDL_video.h>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -120,7 +119,7 @@ static void LaunchSelectedTool()
     }
 }
 
-static void Render(SDL_Window * /*window*/)
+static void Render()
 {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);

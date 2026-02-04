@@ -9,32 +9,25 @@
 #include <cstdio>
 #include <format>
 #include <game_sdk/DialogFilters.h>
+#include <game_sdk/SDKWindow.h>
 #include <imgui.h>
 #include <libassets/type/ModelLod.h>
 #include <numeric>
-#include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
-#include <SDL3/SDL_messagebox.h>
-#include <SDL3/SDL_video.h>
 #include <string>
 #include <utility>
 #include "../ModelRenderer.h"
-#include "game_sdk/SDKWindow.h"
 
-void LodsTab::Render(SDL_Window *window)
+// from mdledit.cpp
+void importLod(const std::string &path);
+
+void LodsTab::Render()
 {
     ImGui::Begin("LODs", nullptr, ImGuiWindowFlags_NoCollapse);
     ImGui::PushItemWidth(-1);
     if (ImGui::Button("Add", ImVec2(70, 0)))
     {
-        SDL_ShowOpenFileDialog(addLodCallback,
-                               nullptr,
-                               window,
-                               DialogFilters::modelFilters.data(),
-                               DialogFilters::modelFilters.size(),
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(importLod, DialogFilters::modelFilters);
     }
     ImGui::SameLine();
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 70);
@@ -50,8 +43,8 @@ void LodsTab::Render(SDL_Window *window)
         if (!ModelRenderer::GetModel().ValidateLodDistances())
         {
             SDKWindow::WarningMessage("LOD distances are invalid! Make sure that:\n"
-                                     "- The first LOD (LOD 0) has a distance of 0\n"
-                                     "- No two LODs have the same distance");
+                                      "- The first LOD (LOD 0) has a distance of 0\n"
+                                      "- No two LODs have the same distance");
         } else
         {
             SDKWindow::InfoMessage("LOD distances are valid", "Success");
@@ -82,7 +75,8 @@ void LodsTab::Render(SDL_Window *window)
         const float buttonWidth = (space.x / 3.0f) - 6.0f;
         if (ImGui::Button(std::format("Export##{}", lodIndex).c_str(), ImVec2(buttonWidth, 0)))
         {
-            SDL_ShowSaveFileDialog(saveLodCallback, &lod, window, DialogFilters::objFilters.data(), 1, nullptr);
+            lodToExport = &lod;
+            SDKWindow::SaveFileDialog(saveLodCallback, DialogFilters::objFilters);
         }
         ImGui::SameLine();
         if (ImGui::Button(std::format("Flip UVs##{}", lodIndex).c_str(), ImVec2(buttonWidth, 0)))
@@ -105,27 +99,7 @@ void LodsTab::Render(SDL_Window *window)
     ImGui::End();
 }
 
-void LodsTab::addLodCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+void LodsTab::saveLodCallback(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    SDL_Event event;
-    event.type = ModelRenderer::EVENT_RELOAD_MODEL;
-    event.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_LOD;
-    event.user.data1 = new std::string(fileList[0]);
-    if (!SDL_PushEvent(&event))
-    {
-        printf("Error: SDL_PushEvent(): %s\n", SDL_GetError());
-    }
-}
-
-void LodsTab::saveLodCallback(void *userdata, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    static_cast<ModelLod *>(userdata)->Export(fileList[0]);
+    lodToExport->Export(path.c_str());
 }

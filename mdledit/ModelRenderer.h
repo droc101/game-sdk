@@ -11,6 +11,7 @@
 #include <glm/glm.hpp>
 #include <imgui.h>
 #include <libassets/asset/ModelAsset.h>
+#include <libassets/type/Color.h>
 #include <vector>
 
 class ModelRenderer
@@ -65,16 +66,6 @@ class ModelRenderer
         static inline bool showCollisionModel = false;
 
         static inline Color backgroundColor = Color(0, 0, 0, 1);
-
-        static inline uint32_t EVENT_RELOAD_MODEL;
-        static constexpr int32_t EVENT_RELOAD_MODEL_CODE_GMDL = 0;
-        static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL = 1;
-        static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_LOD = 2;
-        static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_HULL = 3;
-        static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_HULL_MULTI = 4;
-        static constexpr int32_t EVENT_RELOAD_MODEL_CODE_IMPORT_STATIC_COLLIDER = 5;
-
-        static inline uint32_t EVENT_SAVE_MODEL;
 
     private:
         struct GLModelLod

@@ -11,7 +11,6 @@
 #include <imgui_internal.h>
 #include <libassets/util/Error.h>
 #include <memory>
-#include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_video.h>
 #include "ActorBrowserWindow.h"
 #include "MapCompileWindow.h"
@@ -64,19 +63,15 @@ static bool ToolbarToolButton(const char *id,
     return r;
 }
 
-static void saveJsonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void saveJson(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = MapEditor::map.SaveAsMapSrc(fileList[0]);
+    const Error::ErrorCode errorCode = MapEditor::map.SaveAsMapSrc(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::ErrorMessage(std::format("Failed to save the map!\n{}", errorCode));
         return;
     }
-    MapEditor::mapFile = fileList[0];
+    MapEditor::mapFile = path;
 }
 
 static void openJson(const std::string &path)
@@ -101,15 +96,6 @@ static void openJson(const std::string &path)
 
         actor.ApplyDefinition(SharedMgr::actorDefinitions.at(actor.className), false);
     }
-}
-
-static void openJsonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    openJson(fileList[0]);
 }
 
 static void SetupDockspace()
@@ -139,7 +125,7 @@ static void SetupDockspace()
     ImGui::DockBuilderFinish(rootDockspaceID);
 }
 
-static void Render(SDL_Window *sdlWindow)
+static void Render()
 {
     SetupDockspace();
 
@@ -390,19 +376,13 @@ static void Render(SDL_Window *sdlWindow)
     }
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openJsonCallback,
-                               nullptr,
-                               sdlWindow,
-                               DialogFilters::mapJsonFilters.data(),
-                               1,
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(openJson, DialogFilters::mapJsonFilters);
         MapEditor::toolType = MapEditor::EditorToolType::SELECT;
         MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
     }
     if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveJsonCallback, nullptr, sdlWindow, DialogFilters::mapJsonFilters.data(), 1, nullptr);
+        SDKWindow::SaveFileDialog(saveJson, DialogFilters::mapJsonFilters);
     }
     if (compilePressed)
     {
@@ -527,7 +507,7 @@ static void Render(SDL_Window *sdlWindow)
 
     ActorBrowserWindow::Render();
     MapPropertiesWindow::Render();
-    MapCompileWindow::Render(sdlWindow);
+    MapCompileWindow::Render();
 }
 
 int main(int argc, char **argv)

@@ -6,16 +6,18 @@
 #include <cstddef>
 #include <format>
 #include <game_sdk/DialogFilters.h>
+#include <game_sdk/SDKWindow.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/ConvexHull.h>
-#include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_video.h>
 #include <string>
 #include "../ModelRenderer.h"
 
-void CollisionTab::Render(SDL_Window *window)
+void importSingleHull(const std::string &path);
+void importMultipleHulls(const std::string &path);
+void importStaticCollider(const std::string &path);
+
+void CollisionTab::Render()
 {
     ModelAsset &model = ModelRenderer::GetModel();
     ImGui::Begin("Collision", nullptr, ImGuiWindowFlags_NoCollapse);
@@ -58,54 +60,36 @@ void CollisionTab::Render(SDL_Window *window)
 
     if (model.GetCollisionModelType() == ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX)
     {
-        RenderCHullUI(window);
+        RenderCHullUI();
     } else if (model.GetCollisionModelType() == ModelAsset::CollisionModelType::STATIC_SINGLE_CONCAVE)
     {
-        RenderStaticMeshUI(window);
+        RenderStaticMeshUI();
     }
 
     ImGui::End();
 }
 
-void CollisionTab::RenderStaticMeshUI(SDL_Window *window)
+void CollisionTab::RenderStaticMeshUI()
 {
     ModelAsset &model = ModelRenderer::GetModel();
     if (ImGui::Button("Import Collision Mesh"))
     {
-        SDL_ShowOpenFileDialog(ImportStaticMeshCallback,
-                               nullptr,
-                               window,
-                               DialogFilters::modelFilters.data(),
-                               DialogFilters::modelFilters.size(),
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(importStaticCollider, DialogFilters::modelFilters);
     }
     ImGui::Text("%zu triangles", model.GetStaticCollisionMesh().GetNumTriangles());
 }
 
 
-void CollisionTab::RenderCHullUI(SDL_Window *window)
+void CollisionTab::RenderCHullUI()
 {
     if (ImGui::Button("Import Hull"))
     {
-        SDL_ShowOpenFileDialog(AddSingleHullCallback,
-                               nullptr,
-                               window,
-                               DialogFilters::modelFilters.data(),
-                               DialogFilters::modelFilters.size(),
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(importSingleHull, DialogFilters::modelFilters);
     }
     ImGui::SameLine();
     if (ImGui::Button("Import Hulls"))
     {
-        SDL_ShowOpenFileDialog(AddMultipleHullsCallback,
-                               nullptr,
-                               window,
-                               DialogFilters::modelFilters.data(),
-                               DialogFilters::modelFilters.size(),
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(importMultipleHulls, DialogFilters::modelFilters);
     }
     constexpr float panelHeight = 250.0f;
     ImGui::BeginChild("ScrollableRegion",
@@ -127,52 +111,4 @@ void CollisionTab::RenderCHullUI(SDL_Window *window)
         }
     }
     ImGui::EndChild();
-}
-
-void CollisionTab::ImportStaticMeshCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    SDL_Event event;
-    event.type = ModelRenderer::EVENT_RELOAD_MODEL;
-    event.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_STATIC_COLLIDER;
-    event.user.data1 = new std::string(fileList[0]);
-    if (!SDL_PushEvent(&event))
-    {
-        printf("Error: SDL_PushEvent(): %s\n", SDL_GetError());
-    }
-}
-
-void CollisionTab::AddSingleHullCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    SDL_Event event;
-    event.type = ModelRenderer::EVENT_RELOAD_MODEL;
-    event.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_HULL;
-    event.user.data1 = new std::string(fileList[0]);
-    if (!SDL_PushEvent(&event))
-    {
-        printf("Error: SDL_PushEvent(): %s\n", SDL_GetError());
-    }
-}
-
-void CollisionTab::AddMultipleHullsCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    SDL_Event event;
-    event.type = ModelRenderer::EVENT_RELOAD_MODEL;
-    event.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_HULL_MULTI;
-    event.user.data1 = new std::string(fileList[0]);
-    if (!SDL_PushEvent(&event))
-    {
-        printf("Error: SDL_PushEvent(): %s\n", SDL_GetError());
-    }
 }

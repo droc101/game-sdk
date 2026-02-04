@@ -2,7 +2,6 @@
 // Created by droc101 on 1/20/26.
 //
 
-#include <array>
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
@@ -19,8 +18,6 @@
 #include <libassets/type/Param.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
-#include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_video.h>
 #include <string>
 #include <utility>
 
@@ -36,15 +33,6 @@ static void openGkvl(const std::string &path)
     }
 }
 
-static void openGkvlCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    openGkvl(fileList[0]);
-}
-
 static void importJson(const std::string &path)
 {
     const Error::ErrorCode errorCode = DataAsset::CreateFromJson(path.c_str(), dataAsset);
@@ -54,35 +42,18 @@ static void importJson(const std::string &path)
     }
 }
 
-static void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void saveGkvl(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    importJson(fileList[0]);
-}
-
-static void saveGkvlCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = dataAsset.SaveAsAsset(fileList[0]);
+    const Error::ErrorCode errorCode = dataAsset.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::ErrorMessage(std::format("Failed to save the KvList!\n{}", errorCode));
     }
 }
 
-static void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void exportJson(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = dataAsset.SaveAsJson(fileList[0]);
+    const Error::ErrorCode errorCode = dataAsset.SaveAsJson(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::ErrorMessage(std::format("Failed to export the KvList!\n{}", errorCode));
@@ -348,7 +319,7 @@ static void RenderSidebar()
     }
 }
 
-static void Render(SDL_Window *sdlWindow)
+static void Render()
 {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -390,28 +361,16 @@ static void Render(SDL_Window *sdlWindow)
         dataAsset = DataAsset();
     } else if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGkvlCallback,
-                               nullptr,
-                               sdlWindow,
-                               DialogFilters::gkvlFilters.data(),
-                               1,
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(openGkvl, DialogFilters::gkvlFilters);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback,
-                               nullptr,
-                               sdlWindow,
-                               DialogFilters::kvlJsonFilters.data(),
-                               1,
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(importJson, DialogFilters::kvlJsonFilters);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGkvlCallback, nullptr, sdlWindow, DialogFilters::gkvlFilters.data(), 1, nullptr);
+        SDKWindow::SaveFileDialog(saveGkvl, DialogFilters::gkvlFilters);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, DialogFilters::kvlJsonFilters.data(), 1, nullptr);
+        SDKWindow::SaveFileDialog(exportJson, DialogFilters::kvlJsonFilters);
     }
 
     const ImVec2 &availableSize = ImGui::GetContentRegionAvail();

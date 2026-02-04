@@ -1,4 +1,3 @@
-#include <SDL3/SDL_error.h>
 #include <array>
 #include <cstdio>
 #include <format>
@@ -14,10 +13,8 @@
 #include <libassets/type/ConvexHull.h>
 #include <libassets/type/StaticCollisionMesh.h>
 #include <libassets/util/Error.h>
-#include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_mouse.h>
-#include <SDL3/SDL_video.h>
 #include <string>
 #include <utility>
 #include "ModelRenderer.h"
@@ -49,120 +46,93 @@ static void destroyExistingModel()
     modelLoaded = false;
 }
 
-static void openGmdlCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void openGmdl(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
+    ModelAsset model;
+    const Error::ErrorCode errorCode = ModelAsset::CreateFromAsset(path.c_str(), model);
+    if (errorCode != Error::ErrorCode::OK)
     {
+        SDKWindow::ErrorMessage(std::format("Failed to open the model!\n{}", errorCode));
         return;
     }
-    SDL_Event event;
-    event.type = ModelRenderer::EVENT_RELOAD_MODEL;
-    event.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_GMDL;
-    event.user.data1 = new std::string(fileList[0]);
-    if (!SDL_PushEvent(&event))
-    {
-        printf("Error: SDL_PushEvent(): %s\n", SDL_GetError());
-    }
+    destroyExistingModel();
+    ModelRenderer::LoadModel(std::move(model));
+    modelLoaded = true;
 }
 
-static void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void importModel(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
+    ModelAsset model;
+    const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(path.c_str(),
+                                                                           model,
+                                                                           Options::defaultTexture);
+    if (errorCode != Error::ErrorCode::OK)
     {
+        SDKWindow::ErrorMessage(std::format("Failed to import the model!\n{}", errorCode));
         return;
     }
-    SDL_Event event;
-    event.type = ModelRenderer::EVENT_RELOAD_MODEL;
-    event.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL;
-    event.user.data1 = new std::string(fileList[0]);
-    if (!SDL_PushEvent(&event))
-    {
-        printf("Error: SDL_PushEvent(): %s\n", SDL_GetError());
-    }
+    destroyExistingModel();
+    ModelRenderer::LoadModel(std::move(model));
+    modelLoaded = true;
 }
 
-static void saveGmdlCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void saveGmdl(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = ModelRenderer::GetModel().SaveAsAsset(fileList[0]);
+    const Error::ErrorCode errorCode = ModelRenderer::GetModel().SaveAsAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::ErrorMessage(std::format("Failed to save the model!\n{}", errorCode));
     }
 }
 
+#pragma region functions that CANNOT BE STATIC AND ARE USED DO NOT BELEIVE THE LIES
+
+void importLod(const std::string &path)
+{
+    ModelAsset model = ModelRenderer::GetModel();
+    if (!model.AddLod(path))
+    {
+        SDKWindow::ErrorMessage(std::format("Failed to import model LOD!"));
+        return;
+    }
+    destroyExistingModel();
+    ModelRenderer::LoadModel(std::move(model));
+    modelLoaded = true;
+}
+
+void importSingleHull(const std::string &path)
+{
+    ModelAsset model = ModelRenderer::GetModel();
+    const ConvexHull hull = ConvexHull(path);
+    model.AddHull(hull);
+    destroyExistingModel();
+    ModelRenderer::LoadModel(std::move(model));
+    modelLoaded = true;
+}
+
+void importMultipleHulls(const std::string &path)
+{
+    ModelAsset model = ModelRenderer::GetModel();
+    model.AddHulls(path);
+    destroyExistingModel();
+    ModelRenderer::LoadModel(std::move(model));
+    modelLoaded = true;
+}
+
+void importStaticCollider(const std::string &path)
+{
+    ModelAsset model = ModelRenderer::GetModel();
+    model.SetStaticCollisionMesh(StaticCollisionMesh(path));
+    destroyExistingModel();
+    ModelRenderer::LoadModel(std::move(model));
+    modelLoaded = true;
+}
+
+#pragma endregion
+
 static bool ProcessEvent(SDL_Event *event)
 {
     const ImGuiIO io = ImGui::GetIO();
-    if (event->type == ModelRenderer::EVENT_RELOAD_MODEL)
-    {
-        destroyExistingModel();
-        ModelAsset model;
-        const std::string *path = static_cast<std::string *>(event->user.data1);
-        if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_GMDL)
-        {
-            const Error::ErrorCode errorCode = ModelAsset::CreateFromAsset(*path, model);
-            if (errorCode != Error::ErrorCode::OK)
-            {
-                SDKWindow::ErrorMessage(std::format("Failed to open the model!\n{}", errorCode));
-                delete path;
-                return true;
-            }
-        } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL)
-        {
-            const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(*path,
-                                                                                   model,
-                                                                                   Options::defaultTexture);
-            if (errorCode != Error::ErrorCode::OK)
-            {
-                SDKWindow::ErrorMessage(std::format("Failed to import the model!\n{}", errorCode));
-                delete path;
-                return true;
-            }
-        } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_LOD)
-        {
-            model = ModelRenderer::GetModel();
-            if (!model.AddLod(*path))
-            {
-                SDKWindow::ErrorMessage(std::format("Failed to import model LOD!"));
-                delete path;
-                return true;
-            }
-        } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_HULL)
-        {
-            model = ModelRenderer::GetModel();
-            const ConvexHull hull = ConvexHull(*path);
-            model.AddHull(hull);
-        } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_HULL_MULTI)
-        {
-            model = ModelRenderer::GetModel();
-            model.AddHulls(*path);
-        } else if (event->user.code == ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_STATIC_COLLIDER)
-        {
-            model = ModelRenderer::GetModel();
-            model.SetStaticCollisionMesh(StaticCollisionMesh(*path));
-        }
-        ModelRenderer::LoadModel(std::move(model));
-        modelLoaded = true;
-        delete path;
-        return true;
-    }
-    if (event->type == ModelRenderer::EVENT_SAVE_MODEL)
-    {
-        const std::string *path = static_cast<std::string *>(event->user.data1);
-        const Error::ErrorCode errorCode = ModelRenderer::GetModel().SaveAsAsset(*path);
-        if (errorCode != Error::ErrorCode::OK)
-        {
-            SDKWindow::ErrorMessage(std::format("Failed to save the model!\n{}", errorCode));
-            delete path;
-            return true;
-        }
-        delete path;
-        return true;
-    }
     if (previewFocused)
     {
         if (event->type == SDL_EVENT_MOUSE_WHEEL)
@@ -292,38 +262,21 @@ static void HandleMenuAndShortcuts()
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGmdlCallback,
-                               nullptr,
-                               SDKWindow::GetWindow(),
-                               DialogFilters::gmdlFilters.data(),
-                               1,
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(openGmdl, DialogFilters::gmdlFilters);
     } else if (newPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback,
-                               nullptr,
-                               SDKWindow::GetWindow(),
-                               DialogFilters::modelFilters.data(),
-                               DialogFilters::modelFilters.size(),
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(importModel, DialogFilters::modelFilters);
     } else if (savePressed)
     {
         if (!ModelRenderer::GetModel().ValidateLodDistances())
         {
             SDKWindow::ErrorMessage("LOD distances are invalid! Please fix them in the LOD editor and make sure "
-                                   "that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the "
-                                   "same distance",
-                                   "Invalid Model");
+                                    "that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the "
+                                    "same distance",
+                                    "Invalid Model");
         } else
         {
-            SDL_ShowSaveFileDialog(saveGmdlCallback,
-                                   nullptr,
-                                   SDKWindow::GetWindow(),
-                                   DialogFilters::gmdlFilters.data(),
-                                   1,
-                                   nullptr);
+            SDKWindow::SaveFileDialog(saveGmdl, DialogFilters::gmdlFilters);
         }
     }
 }
@@ -353,7 +306,7 @@ static void SetupDockspace()
     ImGui::DockBuilderFinish(rootDockspaceID);
 }
 
-static void Render(SDL_Window *window)
+static void Render()
 {
     SetupDockspace();
 
@@ -400,8 +353,8 @@ static void Render(SDL_Window *window)
     PreviewOptionsTab::Render();
     MaterialsTab::Render();
     SkinsTab::Render();
-    LodsTab::Render(window);
-    CollisionTab::Render(window);
+    LodsTab::Render();
+    CollisionTab::Render();
 
     constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
                                              ImGuiWindowFlags_NoMove |
@@ -439,9 +392,6 @@ int main(int argc, char **argv)
     {
         return -1;
     }
-
-    ModelRenderer::EVENT_RELOAD_MODEL = SDL_RegisterEvents(2);
-    ModelRenderer::EVENT_SAVE_MODEL = ModelRenderer::EVENT_RELOAD_MODEL + 1;
     if (!ModelRenderer::Init())
     {
         printf("Failed to start renderer!\n");
@@ -451,14 +401,7 @@ int main(int argc, char **argv)
     const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gmdl"});
     if (!openPath.empty())
     {
-        SDL_Event event;
-        event.type = ModelRenderer::EVENT_RELOAD_MODEL;
-        event.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_GMDL;
-        event.user.data1 = new std::string(openPath);
-        if (!SDL_PushEvent(&event))
-        {
-            printf("Error: SDL_PushEvent(): %s\n", SDL_GetError());
-        }
+        openGmdl(openPath);
     } else
     {
         const std::string &importPath = DesktopInterface::GetFileArgument(argc,
@@ -466,14 +409,7 @@ int main(int argc, char **argv)
                                                                           {".obj", ".fbx", ".gltf", ".dae"});
         if (!importPath.empty())
         {
-            SDL_Event event;
-            event.type = ModelRenderer::EVENT_RELOAD_MODEL;
-            event.user.code = ModelRenderer::EVENT_RELOAD_MODEL_CODE_IMPORT_MODEL;
-            event.user.data1 = new std::string(importPath);
-            if (!SDL_PushEvent(&event))
-            {
-                printf("Error: SDL_PushEvent(): %s\n", SDL_GetError());
-            }
+            importModel(importPath);
         }
     }
 

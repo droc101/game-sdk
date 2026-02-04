@@ -6,7 +6,6 @@
 #define GAME_SDK_MAPCOMPILEWINDOW_H
 
 #include <SDL3/SDL_process.h>
-#include <SDL3/SDL_video.h>
 #include <string>
 
 class MapCompileWindow
@@ -15,7 +14,7 @@ class MapCompileWindow
         MapCompileWindow() = delete;
 
         static void Show();
-        static void Render(SDL_Window *window);
+        static void Render();
 
     private:
         static inline bool visible = false;
@@ -24,7 +23,7 @@ class MapCompileWindow
         static inline std::string gameDir{};
         static inline std::string log{};
 
-        static void StartCompile(SDL_Window *window);
+        static void StartCompile();
 };
 
 

@@ -11,8 +11,6 @@
 #include <libassets/asset/GameConfigAsset.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
-#include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_video.h>
 #include <string>
 
 static GameConfigAsset config{};
@@ -29,29 +27,16 @@ static void openGame(const std::string &path)
     configLoaded = true;
 }
 
-static void openGameCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void saveGame(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    openGame(fileList[0]);
-}
-
-static void saveGameCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = config.SaveAsAsset(fileList[0]);
+    const Error::ErrorCode errorCode = config.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::ErrorMessage(std::format("Failed to save the game configuration!\n{}", errorCode));
     }
 }
 
-static void Render(SDL_Window *sdlWindow)
+static void Render()
 {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -86,16 +71,10 @@ static void Render(SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGameCallback,
-                               nullptr,
-                               sdlWindow,
-                               DialogFilters::gameFilters.data(),
-                               1,
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(openGame, DialogFilters::gameFilters);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGameCallback, nullptr, sdlWindow, DialogFilters::gameFilters.data(), 1, nullptr);
+        SDKWindow::SaveFileDialog(saveGame, DialogFilters::gameFilters);
     } else if (newPressed)
     {
         config = GameConfigAsset();

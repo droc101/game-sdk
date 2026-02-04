@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <SDL3/SDL_video.h>
-
 class OptionsWindow
 {
     public:
@@ -15,12 +13,12 @@ class OptionsWindow
 
         static void Hide();
 
-        static void Render(SDL_Window *window);
+        static void Render();
 
     private:
         static inline bool visible = false;
 
-        static void gamePathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/);
+        static void gamePathCallback(const std::string &path);
 
-        static void assetsPathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/);
+        static void assetsPathCallback(const std::string &path);
 };

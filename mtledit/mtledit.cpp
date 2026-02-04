@@ -15,8 +15,6 @@
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/type/Material.h>
 #include <libassets/util/Error.h>
-#include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_video.h>
 #include <string>
 
 static LevelMaterialAsset material{};
@@ -30,29 +28,16 @@ static void openGmtl(const std::string &path)
     }
 }
 
-static void openGmtlCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void saveGmtl(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    openGmtl(fileList[0]);
-}
-
-static void saveGmtlCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = material.SaveAsAsset(fileList[0]);
+    const Error::ErrorCode errorCode = material.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::ErrorMessage(std::format("Failed to save the material!\n{}", errorCode));
     }
 }
 
-static void Render(SDL_Window *sdlWindow)
+static void Render()
 {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -86,16 +71,10 @@ static void Render(SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGmtlCallback,
-                               nullptr,
-                               sdlWindow,
-                               DialogFilters::gmtlFilters.data(),
-                               1,
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(openGmtl, DialogFilters::gmtlFilters);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGmtlCallback, nullptr, sdlWindow, DialogFilters::gmtlFilters.data(), 1, nullptr);
+        SDKWindow::SaveFileDialog(saveGmtl, DialogFilters::gmtlFilters);
     } else if (newPressed)
     {
         material = LevelMaterialAsset();

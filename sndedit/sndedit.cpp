@@ -10,8 +10,6 @@
 #include <libassets/asset/SoundAsset.h>
 #include <libassets/util/Error.h>
 #include <miniaudio.h>
-#include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_video.h>
 #include <string>
 
 static ma_engine engine{};
@@ -64,15 +62,6 @@ static void openGsnd(const std::string &path)
     }
 }
 
-static void openGsndCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    openGsnd(fileList[0]);
-}
-
 static void importWav(const std::string &path)
 {
     const Error::ErrorCode errorCode = SoundAsset::CreateFromWAV(path.c_str(), soundAsset);
@@ -87,42 +76,25 @@ static void importWav(const std::string &path)
     }
 }
 
-static void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void saveGsnd(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    importWav(fileList[0]);
-}
-
-static void saveGsndCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = soundAsset.SaveAsAsset(fileList[0]);
+    const Error::ErrorCode errorCode = soundAsset.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::ErrorMessage(std::format("Failed to save the sound!\n{}", errorCode));
     }
 }
 
-static void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void exportWav(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = soundAsset.SaveAsWAV(fileList[0]);
+    const Error::ErrorCode errorCode = soundAsset.SaveAsWAV(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::ErrorMessage(std::format("Failed to export the sound!\n{}", errorCode));
     }
 }
 
-static void Render(SDL_Window *sdlWindow)
+static void Render()
 {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -158,22 +130,16 @@ static void Render(SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGsndCallback,
-                               nullptr,
-                               sdlWindow,
-                               DialogFilters::gsndFilters.data(),
-                               1,
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(openGsnd, DialogFilters::gsndFilters);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback, nullptr, sdlWindow, DialogFilters::wavFilters.data(), 1, nullptr, false);
+        SDKWindow::OpenFileDialog(importWav, DialogFilters::wavFilters);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGsndCallback, nullptr, sdlWindow, DialogFilters::gsndFilters.data(), 1, nullptr);
+        SDKWindow::SaveFileDialog(saveGsnd, DialogFilters::gsndFilters);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, DialogFilters::wavFilters.data(), 1, nullptr);
+        SDKWindow::SaveFileDialog(exportWav, DialogFilters::wavFilters);
     }
 
     if (soundLoaded)

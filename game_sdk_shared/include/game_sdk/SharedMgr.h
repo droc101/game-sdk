@@ -8,7 +8,6 @@
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/OptionDefinition.h>
 #include <map>
-#include <SDL3/SDL_video.h>
 #include <string>
 #include <vector>
 
@@ -21,7 +20,7 @@ class SharedMgr
 
         static void SharedMenuUI(const std::string &programName);
 
-        static void RenderSharedUI(SDL_Window *window);
+        static void RenderSharedUI();
 
         static void DestroySharedMgr();
 

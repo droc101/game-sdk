@@ -13,8 +13,6 @@
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
-#include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_video.h>
 #include <string>
 #include "BatchCompileWindow.h"
 #include "BatchDecompileWindow.h"
@@ -33,15 +31,6 @@ static void openGshd(const std::string &path)
     shaderLoaded = true;
 }
 
-static void openGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    openGshd(fileList[0]);
-}
-
 static void importGlsl(const std::string &path)
 {
     const Error::ErrorCode errorCode = ShaderAsset::CreateFromGlsl(path.c_str(), shader);
@@ -53,42 +42,25 @@ static void importGlsl(const std::string &path)
     shaderLoaded = true;
 }
 
-static void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void saveGshd(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    importGlsl(fileList[0]);
-}
-
-static void saveGfonCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = shader.SaveAsAsset(fileList[0]);
+    const Error::ErrorCode errorCode = shader.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::ErrorMessage(std::format("Failed to save the shader!\n{}", errorCode));
     }
 }
 
-static void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void exportGlsl(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = shader.SaveAsGlsl(fileList[0]);
+    const Error::ErrorCode errorCode = shader.SaveAsGlsl(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::ErrorMessage(std::format("Failed to export the shader!\n{}", errorCode));
     }
 }
 
-static void Render(SDL_Window *sdlWindow)
+static void Render()
 {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -140,28 +112,16 @@ static void Render(SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGfonCallback,
-                               nullptr,
-                               sdlWindow,
-                               DialogFilters::gshdFilters.data(),
-                               1,
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(openGshd, DialogFilters::gshdFilters);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback,
-                               nullptr,
-                               sdlWindow,
-                               DialogFilters::glslFilters.data(),
-                               4,
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(importGlsl, DialogFilters::glslFilters);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGfonCallback, nullptr, sdlWindow, DialogFilters::gshdFilters.data(), 1, nullptr);
+        SDKWindow::SaveFileDialog(saveGshd, DialogFilters::gshdFilters);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, DialogFilters::glslFilters.data(), 4, nullptr);
+        SDKWindow::SaveFileDialog(exportGlsl, DialogFilters::glslFilters);
     } else if (newPressed)
     {
         shader = ShaderAsset();
@@ -225,8 +185,8 @@ static void Render(SDL_Window *sdlWindow)
 
     ImGui::End();
 
-    BatchCompileWindow::Render(sdlWindow);
-    BatchDecompileWindow::Render(sdlWindow);
+    BatchCompileWindow::Render();
+    BatchDecompileWindow::Render();
 }
 
 int main(int argc, char **argv)

@@ -4,11 +4,10 @@
 
 #include <cstdlib>
 #include <game_sdk/Options.h>
+#include <game_sdk/SDKWindow.h>
 #include <game_sdk/windows/SetupWindow.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
-#include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_video.h>
 
 void SetupWindow::Show(bool required)
 {
@@ -16,25 +15,17 @@ void SetupWindow::Show(bool required)
     SetupWindow::required = required;
 }
 
-void SetupWindow::gamePathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
+void SetupWindow::gamePathCallback(const std::string &path)
 {
-    if (filelist == nullptr || filelist[0] == nullptr)
-    {
-        return;
-    }
-    Options::gamePath = filelist[0];
+    Options::gamePath = path;
 }
 
-void SetupWindow::assetsPathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
+void SetupWindow::assetsPathCallback(const std::string &path)
 {
-    if (filelist == nullptr || filelist[0] == nullptr)
-    {
-        return;
-    }
-    Options::assetsPath = filelist[0];
+    Options::assetsPath = path;
 }
 
-void SetupWindow::Render(SDL_Window *window)
+void SetupWindow::Render()
 {
     if (!visible)
     {
@@ -63,7 +54,7 @@ void SetupWindow::Render(SDL_Window *window)
     ImGui::SameLine();
     if (ImGui::Button("...", ImVec2(40, 0)))
     {
-        SDL_ShowOpenFolderDialog(gamePathCallback, nullptr, window, nullptr, false);
+        SDKWindow::OpenFolderDialog(gamePathCallback);
     }
     bool valid = true;
     if (!Options::ValidateGamePath())
@@ -84,7 +75,7 @@ void SetupWindow::Render(SDL_Window *window)
     ImGui::SameLine();
     if (ImGui::Button("...##assets", ImVec2(40, 0)))
     {
-        SDL_ShowOpenFolderDialog(assetsPathCallback, nullptr, window, nullptr, false);
+        SDKWindow::OpenFolderDialog(assetsPathCallback);
     }
     ImGui::EndDisabled();
 

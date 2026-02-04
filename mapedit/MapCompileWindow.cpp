@@ -5,14 +5,13 @@
 #include "MapCompileWindow.h"
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/Options.h>
+#include <game_sdk/SDKWindow.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_filesystem.h>
-#include <SDL3/SDL_messagebox.h>
-#include "game_sdk/SDKWindow.h"
 #include "MapEditor.h"
 
-void MapCompileWindow::StartCompile(SDL_Window *window)
+void MapCompileWindow::StartCompile()
 {
     if (MapEditor::mapFile.empty())
     {
@@ -74,7 +73,7 @@ void MapCompileWindow::Show()
     visible = true;
 }
 
-void MapCompileWindow::Render(SDL_Window *window)
+void MapCompileWindow::Render()
 {
     if (!visible)
     {
@@ -90,7 +89,7 @@ void MapCompileWindow::Render(SDL_Window *window)
 
     if (ImGui::Button("Compile"))
     {
-        StartCompile(window);
+        StartCompile();
     }
     ImGui::EndDisabled();
 

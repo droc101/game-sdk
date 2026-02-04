@@ -4,23 +4,18 @@
 
 #include "BatchCompileWindow.h"
 #include <algorithm>
-#include <array>
 #include <cstddef>
 #include <cstdio>
 #include <filesystem>
 #include <format>
 #include <game_sdk/DialogFilters.h>
+#include <game_sdk/SDKWindow.h>
 #include <imgui.h>
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
-#include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_messagebox.h>
-#include <SDL3/SDL_video.h>
 #include <string>
-
-#include "game_sdk/SDKWindow.h"
+#include <vector>
 
 void BatchCompileWindow::Show()
 {
@@ -31,15 +26,10 @@ void BatchCompileWindow::Show()
     outputFolder = "";
 }
 
-void BatchCompileWindow::selectCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+void BatchCompileWindow::selectCallback(const std::vector<std::string> &paths)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
+    for (const std::string &file: paths)
     {
-        return;
-    }
-    while (*fileList != nullptr)
-    {
-        const std::string file = std::string(*fileList);
         if (std::ranges::find(files, file) == files.end())
         {
             files.emplace_back(file);
@@ -56,17 +46,12 @@ void BatchCompileWindow::selectCallback(void * /*userdata*/, const char *const *
             }
             types.emplace_back(t);
         }
-        fileList++;
     }
 }
 
-void BatchCompileWindow::outPathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
+void BatchCompileWindow::outPathCallback(const std::string &path)
 {
-    if (filelist == nullptr || filelist[0] == nullptr)
-    {
-        return;
-    }
-    outputFolder = filelist[0];
+    outputFolder = path;
 }
 
 Error::ErrorCode BatchCompileWindow::Execute()
@@ -108,7 +93,7 @@ Error::ErrorCode BatchCompileWindow::Execute()
 }
 
 
-void BatchCompileWindow::Render(SDL_Window *window)
+void BatchCompileWindow::Render()
 {
     if (visible)
     {
@@ -125,7 +110,7 @@ void BatchCompileWindow::Render(SDL_Window *window)
             ImGui::SameLine();
             if (ImGui::Button("...", ImVec2(40, 0)))
             {
-                SDL_ShowOpenFolderDialog(outPathCallback, nullptr, window, nullptr, false);
+                SDKWindow::OpenFolderDialog(outPathCallback);
             }
 
             ImGui::Text("Rendering API");
@@ -146,13 +131,7 @@ void BatchCompileWindow::Render(SDL_Window *window)
             ImGui::SameLine();
             if (ImGui::Button("Add", ImVec2(60, 0)))
             {
-                SDL_ShowOpenFileDialog(selectCallback,
-                                       nullptr,
-                                       window,
-                                       DialogFilters::glslFilters.data(),
-                                       DialogFilters::glslFilters.size(),
-                                       nullptr,
-                                       true);
+                SDKWindow::OpenMultiFileDialog(selectCallback, DialogFilters::glslFilters);
             }
             if (ImGui::BeginChild("##picker", ImVec2(-1, 250), ImGuiChildFlags_Borders, 0))
             {

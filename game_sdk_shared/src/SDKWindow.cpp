@@ -10,6 +10,7 @@
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl3.h>
+#include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_hints.h>
@@ -18,6 +19,7 @@
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <string>
+#include <vector>
 
 bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, const SDL_WindowFlags windowFlags)
 {
@@ -153,9 +155,9 @@ void SDKWindow::MainLoop(const SDKWindowRenderFunction Render, const SDKWindowPr
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        Render(window);
+        Render();
 
-        SharedMgr::RenderSharedUI(window);
+        SharedMgr::RenderSharedUI();
         ImGui::Render();
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -211,4 +213,105 @@ void SDKWindow::WarningMessage(const std::string &body, const std::string &title
 void SDKWindow::InfoMessage(const std::string &body, const std::string &title)
 {
     (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, title.c_str(), body.c_str(), window);
+}
+
+void SDKWindow::FileDialogMainThreadCallback(void *userdata)
+{
+    const FileDialogMainThreadCallbackData *data = static_cast<FileDialogMainThreadCallbackData *>(userdata);
+    data->Callback(data->path);
+}
+
+void SDKWindow::MultiFileDialogMainThreadCallback(void *userdata)
+{
+    const MultiFileDialogMainThreadCallbackData *data = static_cast<MultiFileDialogMainThreadCallbackData *>(userdata);
+    data->Callback(data->paths);
+}
+
+void SDKWindow::MultiFileDialogCallback(void *userdata, const char *const *fileList, int filter)
+{
+    if (fileList == nullptr || fileList[0] == nullptr)
+    {
+        return;
+    }
+
+    std::vector<std::string> files{};
+    while (*fileList != nullptr)
+    {
+        files.emplace_back(*fileList);
+        fileList++;
+    }
+
+    const SDKWindowMultiFileDialogCallback Callback = reinterpret_cast<SDKWindowMultiFileDialogCallback>(userdata);
+    if (SDL_IsMainThread())
+    {
+        Callback(files);
+    } else
+    {
+        MultiFileDialogMainThreadCallbackData data = {.Callback = Callback, .paths = files};
+        if (!SDL_RunOnMainThread(MultiFileDialogMainThreadCallback, &data, true))
+        {
+            printf("Failed to call MultiFileDialogMainThreadCallback on main thread: %s\n", SDL_GetError());
+        }
+    }
+}
+
+void SDKWindow::FileDialogCallback(void *userdata, const char *const *fileList, int filter)
+{
+    if (fileList == nullptr || fileList[0] == nullptr)
+    {
+        return;
+    }
+
+    const SDKWindowFileDialogCallback Callback = reinterpret_cast<SDKWindowFileDialogCallback>(userdata);
+    if (SDL_IsMainThread())
+    {
+        Callback(fileList[0]);
+    } else
+    {
+        FileDialogMainThreadCallbackData data = {.Callback = Callback, .path = fileList[0]};
+        if (!SDL_RunOnMainThread(FileDialogMainThreadCallback, &data, true))
+        {
+            printf("Failed to call FileDialogMainThreadCallback on main thread: %s\n", SDL_GetError());
+        }
+    }
+}
+
+void SDKWindow::OpenFileDialog(const SDKWindowFileDialogCallback Callback,
+                               const std::vector<SDL_DialogFileFilter> &filters)
+{
+    SDL_ShowOpenFileDialog(FileDialogCallback,
+                           reinterpret_cast<void *>(Callback),
+                           GetWindow(),
+                           filters.data(),
+                           static_cast<int>(filters.size()),
+                           nullptr,
+                           false);
+}
+
+void SDKWindow::OpenMultiFileDialog(SDKWindowMultiFileDialogCallback Callback,
+                                    const std::vector<SDL_DialogFileFilter> &filters)
+{
+    SDL_ShowOpenFileDialog(MultiFileDialogCallback,
+                           reinterpret_cast<void *>(Callback),
+                           GetWindow(),
+                           filters.data(),
+                           static_cast<int>(filters.size()),
+                           nullptr,
+                           true);
+}
+
+void SDKWindow::SaveFileDialog(const SDKWindowFileDialogCallback Callback,
+                               const std::vector<SDL_DialogFileFilter> &filters)
+{
+    SDL_ShowSaveFileDialog(FileDialogCallback,
+                           reinterpret_cast<void *>(Callback),
+                           GetWindow(),
+                           filters.data(),
+                           static_cast<int>(filters.size()),
+                           nullptr);
+}
+
+void SDKWindow::OpenFolderDialog(const SDKWindowFileDialogCallback Callback)
+{
+    SDL_ShowOpenFolderDialog(FileDialogCallback, reinterpret_cast<void *>(Callback), GetWindow(), nullptr, false);
 }

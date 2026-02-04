@@ -10,9 +10,7 @@
 #include <imgui.h>
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/util/Error.h>
-#include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_endian.h>
-#include <SDL3/SDL_video.h>
 #include <string>
 #include <vector>
 
@@ -72,15 +70,6 @@ static void openGtex(const std::string &path)
     loadTexture();
 }
 
-static void openGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    openGtex(fileList[0]);
-}
-
 static void importImage(const std::string &path)
 {
     const Error::ErrorCode errorCode = TextureAsset::CreateFromImage(path.c_str(), texture);
@@ -92,42 +81,25 @@ static void importImage(const std::string &path)
     loadTexture();
 }
 
-static void importCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void saveGtex(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    importImage(fileList[0]);
-}
-
-static void saveGtexCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = texture.SaveAsAsset(fileList[0]);
+    const Error::ErrorCode errorCode = texture.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::ErrorMessage(std::format("Failed to save the texture!\n{}", errorCode));
     }
 }
 
-static void exportCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/)
+static void exportPng(const std::string &path)
 {
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-    const Error::ErrorCode errorCode = texture.SaveAsImage(fileList[0], TextureAsset::ImageFormat::IMAGE_FORMAT_PNG);
+    const Error::ErrorCode errorCode = texture.SaveAsImage(path.c_str(), TextureAsset::ImageFormat::IMAGE_FORMAT_PNG);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::ErrorMessage(std::format("Failed to export the texture!\n{}", errorCode));
     }
 }
 
-static void Render(SDL_Window *sdlWindow)
+static void Render()
 {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -174,28 +146,16 @@ static void Render(SDL_Window *sdlWindow)
 
     if (openPressed)
     {
-        SDL_ShowOpenFileDialog(openGtexCallback,
-                               nullptr,
-                               sdlWindow,
-                               DialogFilters::gtexFilters.data(),
-                               1,
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(openGtex, DialogFilters::gtexFilters);
     } else if (importPressed)
     {
-        SDL_ShowOpenFileDialog(importCallback,
-                               nullptr,
-                               sdlWindow,
-                               DialogFilters::imageFilters.data(),
-                               4,
-                               nullptr,
-                               false);
+        SDKWindow::OpenFileDialog(importImage, DialogFilters::imageFilters);
     } else if (savePressed)
     {
-        SDL_ShowSaveFileDialog(saveGtexCallback, nullptr, sdlWindow, DialogFilters::gtexFilters.data(), 1, nullptr);
+        SDKWindow::SaveFileDialog(saveGtex, DialogFilters::gtexFilters);
     } else if (exportPressed)
     {
-        SDL_ShowSaveFileDialog(exportCallback, nullptr, sdlWindow, DialogFilters::pngFilters.data(), 1, nullptr);
+        SDKWindow::SaveFileDialog(exportPng, DialogFilters::pngFilters);
     } else if (zoomInPressed)
     {
         zoom += 0.1;

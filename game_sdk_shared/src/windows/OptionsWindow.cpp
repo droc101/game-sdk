@@ -4,14 +4,13 @@
 
 #include <array>
 #include <game_sdk/Options.h>
+#include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/OptionsWindow.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
-#include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_video.h>
 
 void OptionsWindow::Show()
 {
@@ -23,25 +22,17 @@ void OptionsWindow::Hide()
     visible = false;
 }
 
-void OptionsWindow::gamePathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
+void OptionsWindow::gamePathCallback(const std::string &path)
 {
-    if (filelist == nullptr || filelist[0] == nullptr)
-    {
-        return;
-    }
-    Options::gamePath = filelist[0];
+    Options::gamePath = path;
 }
 
-void OptionsWindow::assetsPathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/)
+void OptionsWindow::assetsPathCallback(const std::string &path)
 {
-    if (filelist == nullptr || filelist[0] == nullptr)
-    {
-        return;
-    }
-    Options::assetsPath = filelist[0];
+    Options::assetsPath = path;
 }
 
-void OptionsWindow::Render(SDL_Window *window)
+void OptionsWindow::Render()
 {
     if (visible)
     {
@@ -60,7 +51,7 @@ void OptionsWindow::Render(SDL_Window *window)
         ImGui::SameLine();
         if (ImGui::Button("...", ImVec2(40, 0)))
         {
-            SDL_ShowOpenFolderDialog(gamePathCallback, nullptr, window, nullptr, false);
+            SDKWindow::OpenFolderDialog(gamePathCallback);
         }
 
         ImGui::Checkbox("Override Assets Directory", &Options::overrideAssetsPath);
@@ -72,7 +63,7 @@ void OptionsWindow::Render(SDL_Window *window)
         ImGui::SameLine();
         if (ImGui::Button("...##assets", ImVec2(40, 0)))
         {
-            SDL_ShowOpenFolderDialog(assetsPathCallback, nullptr, window, nullptr, false);
+            SDKWindow::OpenFolderDialog(assetsPathCallback);
         }
         ImGui::EndDisabled();
 

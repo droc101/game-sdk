@@ -4,17 +4,18 @@
 
 #pragma once
 
-#include <SDL3/SDL_video.h>
+#include <libassets/type/ModelLod.h>
+#include <string>
 
 class LodsTab
 {
     public:
         LodsTab() = delete;
 
-        static void Render(SDL_Window *window);
+        static void Render();
 
     private:
-        static void addLodCallback(void *userdata, const char *const *fileList, int filter);
+        static inline ModelLod *lodToExport = nullptr;
 
-        static void saveLodCallback(void *userdata, const char *const *fileList, int filter);
+        static void saveLodCallback(const std::string &path);
 };

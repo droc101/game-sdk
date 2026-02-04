@@ -5,7 +5,6 @@
 #pragma once
 
 #include <libassets/asset/ShaderAsset.h>
-#include <SDL3/SDL_video.h>
 #include <string>
 #include <vector>
 
@@ -16,7 +15,7 @@ class BatchCompileWindow
 
         static void Show();
 
-        static void Render(SDL_Window *window);
+        static void Render();
 
     private:
         static inline bool visible = false;
@@ -25,7 +24,7 @@ class BatchCompileWindow
         static inline bool targetOpenGL = false;
         static inline std::string outputFolder;
 
-        static void selectCallback(void * /*userdata*/, const char *const *fileList, int /*filter*/);
-        static void outPathCallback(void * /*userdata*/, const char *const *filelist, int /*filter*/);
+        static void selectCallback(const std::vector<std::string> &paths);
+        static void outPathCallback(const std::string &path);
         static Error::ErrorCode Execute();
 };

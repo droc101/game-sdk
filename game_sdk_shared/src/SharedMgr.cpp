@@ -101,13 +101,13 @@ void SharedMgr::SharedMenuUI(const std::string &programName)
     }
 }
 
-void SharedMgr::RenderSharedUI(SDL_Window *window)
+void SharedMgr::RenderSharedUI()
 {
-    OptionsWindow::Render(window);
+    OptionsWindow::Render();
     AboutWindow::Render();
     TextureBrowserWindow::Render();
     MaterialBrowserWindow::Render();
-    SetupWindow::Render(window);
+    SetupWindow::Render();
     if (metricsVisible)
     {
         ImGui::ShowMetricsWindow(&metricsVisible);
