@@ -47,28 +47,14 @@ static Error::ErrorCode LoadLauncherConfig()
     return Error::ErrorCode::OK;
 }
 
-static void StringReplace(std::string &string, const std::string &find, const std::string &replace)
+static constexpr void StringReplace(std::string &string, const std::string &find, const std::string &replace)
 {
-    std::string buffer;
-    std::size_t pos = 0;
-    std::size_t prevPos = 0;
-    buffer.reserve(string.size());
-
-    while (true)
+    std::size_t pos = string.find(find, 0);
+    while (pos != std::string::npos)
     {
-        prevPos = pos;
-        pos = string.find(find, pos);
-        if (pos == std::string::npos)
-        {
-            break;
-        }
-        buffer.append(string, prevPos, pos - prevPos);
-        buffer += replace;
-        pos += find.size();
+        string.replace(pos, find.size(), replace);
+        pos = string.find(find, pos + find.size());
     }
-
-    buffer.append(string, prevPos, string.size() - prevPos);
-    string.swap(buffer);
 }
 
 static void ParsePath(std::string &path)
