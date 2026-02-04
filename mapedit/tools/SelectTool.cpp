@@ -13,6 +13,7 @@
 #include <imgui.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
+#include <misc/cpp/imgui_stdlib.h>
 #include <string>
 #include <tuple>
 #include <variant>
@@ -587,7 +588,7 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
             size_t index = std::get<size_t>(item);
             if (type == ItemType::ACTOR)
             {
-                const Actor &a = MapEditor::map.actors.at(std::get<size_t>(item));
+                const Actor &a = MapEditor::map.actors.at(index);
                 if (a.params.contains("name") && !a.params.at("name").Get<std::string>("").empty())
                 {
                     text = std::format("\"{}\": {}##{}", a.params.at("name").Get<std::string>(""), a.className, index);
@@ -597,7 +598,14 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
                 }
             } else if (type == ItemType::SECTOR)
             {
-                text = std::format("Sector {}", index);
+                const Sector &s = MapEditor::map.sectors.at(index);
+                if (s.name.empty())
+                {
+                    text = std::format("Sector {}", index);
+                } else
+                {
+                    text = std::format("Sector {}: {}", index, s.name);
+                }
             } else
             {
                 text = "???";
@@ -650,11 +658,21 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
         Color c = Color(0.6, 0.6, 0.6, 1);
         if (selectionType == ItemType::SECTOR && selectionIndex == sectorIndex)
         {
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
             c = Color(1, 1, 1, 1);
         } else if (hoverType == ItemType::SECTOR && hoverIndex == sectorIndex)
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            if (ImGui::BeginTooltip())
+            {
+                if (!sector.name.empty())
+                {
+                    ImGui::Text("Sector %zu: %s", sectorIndex, sector.name.c_str());
+                } else
+                {
+                    ImGui::Text("Sector %zu", sectorIndex);
+                }
+                ImGui::EndTooltip();
+            }
             c = Color(.8, .8, .8, 1);
         }
 
@@ -812,6 +830,13 @@ void SelectTool::RenderToolWindow()
             {
                 sectIndex = selectionIndex;
             }
+
+            ImGui::Text("Name");
+            ImGui::SameLine();
+            ImGui::TextDisabled("(editor only)");
+            ImGui::InputText("##sectorName", &MapEditor::map.sectors.at(sectIndex).name);
+
+            ImGui::Text("Tint Color");
             col = MapEditor::map.sectors.at(sectIndex).lightColor.CopyData();
             if (ImGui::ColorEdit4("##sectorColor", col.data()))
             {

@@ -19,6 +19,7 @@ class Sector
         Sector() = default;
         explicit Sector(nlohmann::ordered_json json);
 
+        std::string name;
         std::vector<glm::vec2> points{};
         std::vector<WallMaterial> wallMaterials{};
         float floorHeight = -1.0;

@@ -14,6 +14,7 @@
 
 Sector::Sector(nlohmann::ordered_json json)
 {
+    name = json.value("name", "");
     floorHeight = json.value("floorHeight", -1.0f);
     ceilingHeight = json.value("ceilingHeight", 1.0f);
     floorMaterial = WallMaterial(json["floorMaterial"]);
@@ -56,6 +57,7 @@ bool Sector::ContainsPoint(const glm::vec2 point) const
 nlohmann::ordered_json Sector::GenerateJson() const
 {
     nlohmann::ordered_json json = nlohmann::ordered_json();
+    json["name"] = name;
     json["floorHeight"] = floorHeight;
     json["ceilingHeight"] = ceilingHeight;
     json["floorMaterial"] = floorMaterial.GenerateJson();
