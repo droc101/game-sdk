@@ -24,7 +24,6 @@
 static std::vector<std::string> charDisplayList{};
 
 static FontAsset font{};
-static bool fontLoaded = false;
 
 static void openGfon(const std::string &path)
 {
@@ -34,7 +33,6 @@ static void openGfon(const std::string &path)
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the font!\n{}", errorCode));
         return;
     }
-    fontLoaded = true;
 }
 
 static void saveGfon(const std::string &path)
@@ -69,7 +67,7 @@ static void Render()
     ImGui::Begin("fonedit", nullptr, windowFlags);
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
-    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && fontLoaded;
+    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S);
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -78,7 +76,7 @@ static void Render()
             newPressed |= ImGui::MenuItem("New", "Ctrl+N");
             ImGui::Separator();
             openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
-            savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, fontLoaded);
+            savePressed |= ImGui::MenuItem("Save", "Ctrl+S");
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
@@ -99,147 +97,139 @@ static void Render()
     } else if (newPressed)
     {
         font = FontAsset();
-        fontLoaded = true;
     }
 
-    if (fontLoaded)
+    const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
+
+    constexpr float statsWidth = 300.0f;
+    const float imageWidth = availableSize.x - statsWidth - 8.0f;
+
+    ImGui::BeginChild("ImagePane",
+                      ImVec2(imageWidth, availableSize.y),
+                      ImGuiChildFlags_Borders,
+                      ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
     {
-        const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
-
-        constexpr float statsWidth = 300.0f;
-        const float imageWidth = availableSize.x - statsWidth - 8.0f;
-
-        ImGui::BeginChild("ImagePane",
-                          ImVec2(imageWidth, availableSize.y),
-                          ImGuiChildFlags_Borders,
-                          ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
+        if (ImGui::Button("Add Symbol"))
         {
-            if (ImGui::Button("Add Symbol"))
+            if (!font.chars.empty())
             {
-                if (!font.chars.empty())
-                {
-                    font.chars.push_back(static_cast<char>(font.chars.back() + 1));
-                } else
-                {
-                    font.chars.push_back('a');
-                }
+                font.chars.push_back(static_cast<char>(font.chars.back() + 1));
+            } else
+            {
+                font.chars.push_back('a');
+            }
 
-                font.charWidths.push_back(font.defaultSize);
-            }
-            const ImVec2 availSize = ImGui::GetContentRegionAvail();
-            if (ImGui::BeginTable("charTable", 4, ImGuiTableFlags_ScrollY, availSize))
-            {
-                ImGui::TableSetupColumn("Slot", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthFixed, 40);
-                ImGui::TableSetupColumn("Symbol", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
-                ImGui::TableSetupColumn("Display Width",
-                                        ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
-                ImGui::TableSetupColumn("Controls",
-                                        ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthFixed,
-                                        (40 * 3) + (ImGui::GetStyle().WindowPadding.x * 3));
-                ImGui::TableHeadersRow();
-                for (size_t i = 0; i < font.chars.size(); i++)
-                {
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::TextUnformatted(std::format("{}", i).c_str());
-                    ImGui::TableNextColumn();
-                    int charIndex = static_cast<int>(FontAsset::FONT_VALID_CHARS.find(font.chars.at(i)));
-                    ImGui::PushItemWidth(-1);
-                    if (ImGui::Combo(std::format("##Char_{}", i).c_str(),
-                                     &charIndex,
-                                     ComboGetter,
-                                     &charDisplayList,
-                                     static_cast<int>(charDisplayList.size())))
-                    {
-                        font.chars.at(i) = FontAsset::FONT_VALID_CHARS.at(charIndex);
-                    }
-                    ImGui::TableNextColumn();
-                    int width = font.charWidths.at(i);
-                    ImGui::PushItemWidth(-1);
-                    if (ImGui::SliderInt(std::format("##CharWidth_{}", i).c_str(), &width, 1, 32, "%d px"))
-                    {
-                        font.charWidths.at(i) = width;
-                    }
-                    ImGui::TableNextColumn();
-                    if (ImGui::Button(std::format("Up##{}", i).c_str(), ImVec2(40, 0)))
-                    {
-                        MoveBack<uint8_t>(font.charWidths, i);
-                        MoveBack<char>(font.chars, i);
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(std::format("Down##{}", i).c_str(), ImVec2(40, 0)))
-                    {
-                        MoveForward<uint8_t>(font.charWidths, i);
-                        MoveForward<char>(font.chars, i);
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(std::format("Del##{}", i).c_str(), ImVec2(40, 0)))
-                    {
-                        font.charWidths.erase(font.charWidths.begin() + static_cast<ptrdiff_t>(i));
-                        font.chars.erase(font.chars.begin() + static_cast<ptrdiff_t>(i));
-                    }
-                }
-                ImGui::EndTable();
-            }
+            font.charWidths.push_back(font.defaultSize);
         }
-        ImGui::EndChild();
-        ImGui::SameLine();
-
-        ImGui::BeginChild("StatsPane", ImVec2(statsWidth, availableSize.y));
+        const ImVec2 availSize = ImGui::GetContentRegionAvail();
+        if (ImGui::BeginTable("charTable", 4, ImGuiTableFlags_ScrollY, availSize))
         {
-            int charWidth = font.charWidth;
-            int textureHeight = font.textureHeight;
-            int baseline = font.baseline;
-            int charSpacing = font.charSpacing;
-            int lineSpacing = font.lineSpacing;
-            int spaceWidth = font.spaceWidth;
-            int defaultSize = font.defaultSize;
-
-            ImGui::PushItemWidth(-1);
-            ImGui::TextUnformatted("Char slot width in texture");
-            if (ImGui::SliderInt("##charWidth", &charWidth, 1, 32))
+            ImGui::TableSetupColumn("Slot", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthFixed, 40);
+            ImGui::TableSetupColumn("Symbol", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn("Display Width", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn("Controls",
+                                    ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthFixed,
+                                    (40 * 3) + (ImGui::GetStyle().WindowPadding.x * 3));
+            ImGui::TableHeadersRow();
+            for (size_t i = 0; i < font.chars.size(); i++)
             {
-                font.charWidth = charWidth;
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::TextUnformatted(std::format("{}", i).c_str());
+                ImGui::TableNextColumn();
+                int charIndex = static_cast<int>(FontAsset::FONT_VALID_CHARS.find(font.chars.at(i)));
+                ImGui::PushItemWidth(-1);
+                if (ImGui::Combo(std::format("##Char_{}", i).c_str(),
+                                 &charIndex,
+                                 ComboGetter,
+                                 &charDisplayList,
+                                 static_cast<int>(charDisplayList.size())))
+                {
+                    font.chars.at(i) = FontAsset::FONT_VALID_CHARS.at(charIndex);
+                }
+                ImGui::TableNextColumn();
+                int width = font.charWidths.at(i);
+                ImGui::PushItemWidth(-1);
+                if (ImGui::SliderInt(std::format("##CharWidth_{}", i).c_str(), &width, 1, 32, "%d px"))
+                {
+                    font.charWidths.at(i) = width;
+                }
+                ImGui::TableNextColumn();
+                if (ImGui::Button(std::format("Up##{}", i).c_str(), ImVec2(40, 0)))
+                {
+                    MoveBack<uint8_t>(font.charWidths, i);
+                    MoveBack<char>(font.chars, i);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button(std::format("Down##{}", i).c_str(), ImVec2(40, 0)))
+                {
+                    MoveForward<uint8_t>(font.charWidths, i);
+                    MoveForward<char>(font.chars, i);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button(std::format("Del##{}", i).c_str(), ImVec2(40, 0)))
+                {
+                    font.charWidths.erase(font.charWidths.begin() + static_cast<ptrdiff_t>(i));
+                    font.chars.erase(font.chars.begin() + static_cast<ptrdiff_t>(i));
+                }
             }
-            ImGui::TextUnformatted("Texture Height");
-            if (ImGui::SliderInt("##textureHeight", &textureHeight, 1, 32))
-            {
-                font.textureHeight = textureHeight;
-            }
-            ImGui::TextUnformatted("Baseline");
-            if (ImGui::SliderInt("##baseline", &baseline, 1, 32))
-            {
-                font.baseline = baseline;
-            }
-            ImGui::TextUnformatted("Symbol Spacing");
-            if (ImGui::SliderInt("##charSpacing", &charSpacing, 0, 8))
-            {
-                font.charSpacing = charSpacing;
-            }
-            ImGui::TextUnformatted("Line Spacing");
-            if (ImGui::SliderInt("##lineSpacing", &lineSpacing, 0, 8))
-            {
-                font.lineSpacing = lineSpacing;
-            }
-            ImGui::TextUnformatted("Space Width");
-            if (ImGui::SliderInt("##spaceWidth", &spaceWidth, 0, 32))
-            {
-                font.spaceWidth = spaceWidth;
-            }
-            ImGui::TextUnformatted("Default Font Size");
-            if (ImGui::SliderInt("##defaultSize", &defaultSize, 0, 32))
-            {
-                font.defaultSize = defaultSize;
-            }
-            ImGui::TextUnformatted("Font Texture");
-            TextureBrowserWindow::Get().InputTexture("##Texture", font.texture);
-            ImGui::Checkbox("Uppercase only", &font.uppercaseOnly);
+            ImGui::EndTable();
         }
-        ImGui::EndChild();
-    } else
-    {
-        ImGui::TextDisabled("No font is open. Open or create one from the File menu.");
     }
+    ImGui::EndChild();
+    ImGui::SameLine();
+
+    ImGui::BeginChild("StatsPane", ImVec2(statsWidth, availableSize.y));
+    {
+        int charWidth = font.charWidth;
+        int textureHeight = font.textureHeight;
+        int baseline = font.baseline;
+        int charSpacing = font.charSpacing;
+        int lineSpacing = font.lineSpacing;
+        int spaceWidth = font.spaceWidth;
+        int defaultSize = font.defaultSize;
+
+        ImGui::PushItemWidth(-1);
+        ImGui::TextUnformatted("Char slot width in texture");
+        if (ImGui::SliderInt("##charWidth", &charWidth, 1, 32))
+        {
+            font.charWidth = charWidth;
+        }
+        ImGui::TextUnformatted("Texture Height");
+        if (ImGui::SliderInt("##textureHeight", &textureHeight, 1, 32))
+        {
+            font.textureHeight = textureHeight;
+        }
+        ImGui::TextUnformatted("Baseline");
+        if (ImGui::SliderInt("##baseline", &baseline, 1, 32))
+        {
+            font.baseline = baseline;
+        }
+        ImGui::TextUnformatted("Symbol Spacing");
+        if (ImGui::SliderInt("##charSpacing", &charSpacing, 0, 8))
+        {
+            font.charSpacing = charSpacing;
+        }
+        ImGui::TextUnformatted("Line Spacing");
+        if (ImGui::SliderInt("##lineSpacing", &lineSpacing, 0, 8))
+        {
+            font.lineSpacing = lineSpacing;
+        }
+        ImGui::TextUnformatted("Space Width");
+        if (ImGui::SliderInt("##spaceWidth", &spaceWidth, 0, 32))
+        {
+            font.spaceWidth = spaceWidth;
+        }
+        ImGui::TextUnformatted("Default Font Size");
+        if (ImGui::SliderInt("##defaultSize", &defaultSize, 0, 32))
+        {
+            font.defaultSize = defaultSize;
+        }
+        ImGui::TextUnformatted("Font Texture");
+        TextureBrowserWindow::Get().InputTexture("##Texture", font.texture);
+        ImGui::Checkbox("Uppercase only", &font.uppercaseOnly);
+    }
+    ImGui::EndChild();
 
     ImGui::End();
 }
