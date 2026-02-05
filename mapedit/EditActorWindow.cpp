@@ -44,7 +44,7 @@ void EditActorWindow::Render(Actor &actor)
 
     ImGui::Begin("Actor Properties", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
 
-    if (SharedMgr::actorDefinitions.empty() || !SharedMgr::actorDefinitions.contains("actor"))
+    if (SharedMgr::Get().actorDefinitions.empty() || !SharedMgr::Get().actorDefinitions.contains("actor"))
     {
         ImGui::TextDisabled("No actor definitions are loaded. Is the game path set correctly?");
         ImGui::End();
@@ -54,7 +54,7 @@ void EditActorWindow::Render(Actor &actor)
     ImGui::Text("Class");
     if (ImGui::BeginCombo("##a", actor.className.c_str()))
     {
-        for (const std::pair<const std::string, ActorDefinition> &def: SharedMgr::actorDefinitions)
+        for (const std::pair<const std::string, ActorDefinition> &def: SharedMgr::Get().actorDefinitions)
         {
             if (def.second.isVirtual)
             {
@@ -74,7 +74,7 @@ void EditActorWindow::Render(Actor &actor)
         ImGui::EndCombo();
     }
 
-    const ActorDefinition &def = SharedMgr::actorDefinitions.at(actor.className);
+    const ActorDefinition &def = SharedMgr::Get().actorDefinitions.at(actor.className);
 
     ImGui::Text("%s", def.description.empty() ? "no description" : def.description.c_str());
 
@@ -84,12 +84,12 @@ void EditActorWindow::Render(Actor &actor)
     {
         if (ImGui::BeginTabItem("Params"))
         {
-            RenderParamsTab(actor, SharedMgr::actorDefinitions.at(actor.className));
+            RenderParamsTab(actor, SharedMgr::Get().actorDefinitions.at(actor.className));
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("I/O Connections"))
         {
-            RenderOutputsTab(actor, SharedMgr::actorDefinitions.at(actor.className));
+            RenderOutputsTab(actor, SharedMgr::Get().actorDefinitions.at(actor.className));
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Position"))
@@ -419,7 +419,7 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
             {
                 const Actor *targetActor = MapEditor::map.GetActor(connection.targetName);
                 assert(targetActor);
-                const ActorDefinition &targetDef = SharedMgr::actorDefinitions.at(targetActor->className);
+                const ActorDefinition &targetDef = SharedMgr::Get().actorDefinitions.at(targetActor->className);
                 std::unordered_set<std::string> targetInputNames{};
                 targetDef.GetInputNames(targetInputNames);
                 ImGui::Text("Target Input");

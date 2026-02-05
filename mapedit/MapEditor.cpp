@@ -121,15 +121,15 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
     LevelMaterialAsset mat;
-    LevelMaterialAsset::CreateFromAsset((Options::GetAssetsPath() + "/" + wallMat.material).c_str(),
+    LevelMaterialAsset::CreateFromAsset((Options::Get().GetAssetsPath() + "/" + wallMat.material).c_str(),
                                         mat); // TODO improve
-    const Error::ErrorCode e = SharedMgr::textureCache.GetTextureID(mat.texture, tid);
+    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e == Error::ErrorCode::OK)
     {
         constexpr int imagePanelHeight = 128;
         ImVec2 imageSize{};
-        SharedMgr::textureCache.GetTextureSize(mat.texture, imageSize);
+        SharedMgr::Get().textureCache.GetTextureSize(mat.texture, imageSize);
         const glm::vec2 scales = {(sz.x - 16) / imageSize.x, imagePanelHeight / imageSize.y};
         const float scale = std::ranges::min(scales.x, scales.y);
 
@@ -149,7 +149,7 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
         }
         ImGui::EndChild();
     }
-    MaterialBrowserWindow::InputMaterial("##Texture", wallMat.material);
+    MaterialBrowserWindow::Get().InputMaterial("##Texture", wallMat.material);
     ImGui::Separator();
     ImGui::Text("UV Offset");
     ImGui::InputFloat2("##uvOffset", glm::value_ptr(wallMat.uvOffset));

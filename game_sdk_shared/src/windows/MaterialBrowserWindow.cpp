@@ -16,6 +16,12 @@
 constexpr int tileSize = 128;
 static std::string filter = "";
 
+MaterialBrowserWindow &MaterialBrowserWindow::Get()
+{
+    static MaterialBrowserWindow materialBrowserWindowSingleton{};
+    return materialBrowserWindowSingleton;
+}
+
 void MaterialBrowserWindow::Hide()
 {
     visible = false;
@@ -24,12 +30,12 @@ void MaterialBrowserWindow::Hide()
 void MaterialBrowserWindow::Show(std::string &material)
 {
     str = &material;
-    materialPaths = SharedMgr::ScanFolder(Options::GetAssetsPath() + "/material", ".gmtl", true);
+    materialPaths = SharedMgr::Get().ScanFolder(Options::Get().GetAssetsPath() + "/material", ".gmtl", true);
     for (const std::string &path: materialPaths)
     {
         LevelMaterialAsset mat;
         const Error::ErrorCode
-                e = LevelMaterialAsset::CreateFromAsset((Options::GetAssetsPath() + "/material/" + path).c_str(), mat);
+                e = LevelMaterialAsset::CreateFromAsset((Options::Get().GetAssetsPath() + "/material/" + path).c_str(), mat);
         if (e != Error::ErrorCode::OK)
         {
             printf("Failed to load level material asset \"%s\"\n", path.c_str());
@@ -70,12 +76,12 @@ void MaterialBrowserWindow::Render()
                     const std::string textureName = materials.at(i).texture;
 
                     ImVec2 texSize;
-                    if (SharedMgr::textureCache.GetTextureSize(textureName, texSize) != Error::ErrorCode::OK)
+                    if (SharedMgr::Get().textureCache.GetTextureSize(textureName, texSize) != Error::ErrorCode::OK)
                     {
                         continue;
                     }
                     ImTextureID tex = 0;
-                    if (SharedMgr::textureCache.GetTextureID(textureName, tex) != Error::ErrorCode::OK)
+                    if (SharedMgr::Get().textureCache.GetTextureID(textureName, tex) != Error::ErrorCode::OK)
                     {
                         continue;
                     }

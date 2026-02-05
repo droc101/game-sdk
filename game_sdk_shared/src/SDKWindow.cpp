@@ -21,6 +21,13 @@
 #include <string>
 #include <vector>
 
+SDKWindow &SDKWindow::Get()
+{
+    static SDKWindow sdkWindowSingleton{};
+
+    return sdkWindowSingleton;
+}
+
 bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, const SDL_WindowFlags windowFlags)
 {
     assert(!initDone);
@@ -38,7 +45,7 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
         return false;
     }
 
-    SharedMgr::InitSharedMgr();
+    SharedMgr::Get().InitSharedMgr();
 
     const char *glslVersion = "#version 330";
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0))
@@ -101,7 +108,7 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
         printf("Error: SDL_GL_SetSwapInterval(): %s\n", SDL_GetError());
     }
 
-    SharedMgr::textureCache.InitMissingTexture();
+    SharedMgr::Get().textureCache.InitMissingTexture();
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -109,7 +116,7 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-    SharedMgr::ApplyTheme();
+    SharedMgr::Get().ApplyTheme();
 
     ImGui_ImplSDL3_InitForOpenGL(window, glContext);
     ImGui_ImplOpenGL3_Init(glslVersion);
@@ -157,7 +164,7 @@ void SDKWindow::MainLoop(const SDKWindowRenderFunction Render, const SDKWindowPr
 
         Render();
 
-        SharedMgr::RenderSharedUI();
+        SharedMgr::Get().RenderSharedUI();
         ImGui::Render();
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -188,7 +195,7 @@ void SDKWindow::PostQuit()
 void SDKWindow::Destroy()
 {
     assert(initDone);
-    SharedMgr::DestroySharedMgr();
+    SharedMgr::Get().DestroySharedMgr();
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();

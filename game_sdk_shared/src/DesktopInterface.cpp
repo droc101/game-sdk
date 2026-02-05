@@ -19,6 +19,13 @@
 // clang-format on
 #endif
 
+DesktopInterface &DesktopInterface::Get()
+{
+    static DesktopInterface desktopInterfaceSingleton{};
+
+    return desktopInterfaceSingleton;
+}
+
 bool DesktopInterface::ExecuteProcess(const std::string &executable,
                                       const std::vector<std::string> &arguments,
                                       int *exitCode)
@@ -103,14 +110,15 @@ bool DesktopInterface::OpenFilesystemPath(const std::string &path)
 
 uint32_t DesktopInterface::GarbageCollectorCallback(void *userdata, SDL_TimerID timer, uint32_t interval)
 {
-    std::vector<SDL_Process *>::iterator iter = processes.begin();
-    while (iter != processes.end())
+    DesktopInterface &interface = Get();
+    std::vector<SDL_Process *>::iterator iter = interface.processes.begin();
+    while (iter != interface.processes.end())
     {
         SDL_Process *p = *iter.base();
         if (SDL_WaitProcess(p, false, nullptr))
         {
             SDL_DestroyProcess(p);
-            iter = processes.erase(iter);
+            iter = interface.processes.erase(iter);
         } else
         {
             iter += 1;

@@ -7,6 +7,12 @@
 #include <imgui.h>
 #include <libassets/libassets.h>
 
+AboutWindow &AboutWindow::Get()
+{
+    static AboutWindow aboutWindowSingleton{};
+    return aboutWindowSingleton;
+}
+
 void AboutWindow::Show()
 {
     visible = true;

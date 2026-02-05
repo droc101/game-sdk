@@ -12,6 +12,12 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
+OptionsWindow &OptionsWindow::Get()
+{
+    static OptionsWindow optionsWindowSingleton{};
+    return optionsWindowSingleton;
+}
+
 void OptionsWindow::Show()
 {
     visible = true;
@@ -24,12 +30,12 @@ void OptionsWindow::Hide()
 
 void OptionsWindow::gamePathCallback(const std::string &path)
 {
-    Options::gamePath = path;
+    Options::Get().gamePath = path;
 }
 
 void OptionsWindow::assetsPathCallback(const std::string &path)
 {
-    Options::assetsPath = path;
+    Options::Get().assetsPath = path;
 }
 
 void OptionsWindow::Render()
@@ -47,38 +53,38 @@ void OptionsWindow::Render()
         ImGui::SameLine();
         ImGui::TextDisabled("(no trailing slash)");
         ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-        ImGui::InputText("##gamepathinput", &Options::gamePath);
+        ImGui::InputText("##gamepathinput", &Options::Get().gamePath);
         ImGui::SameLine();
         if (ImGui::Button("...", ImVec2(40, 0)))
         {
-            SDKWindow::OpenFolderDialog(gamePathCallback);
+            SDKWindow::Get().OpenFolderDialog(gamePathCallback);
         }
 
-        ImGui::Checkbox("Override Assets Directory", &Options::overrideAssetsPath);
+        ImGui::Checkbox("Override Assets Directory", &Options::Get().overrideAssetsPath);
         ImGui::SameLine();
         ImGui::TextDisabled("(no trailing slash)");
-        ImGui::BeginDisabled(!Options::overrideAssetsPath);
+        ImGui::BeginDisabled(!Options::Get().overrideAssetsPath);
         ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-        ImGui::InputText("##assetspathinput", &Options::assetsPath);
+        ImGui::InputText("##assetspathinput", &Options::Get().assetsPath);
         ImGui::SameLine();
         if (ImGui::Button("...##assets", ImVec2(40, 0)))
         {
-            SDKWindow::OpenFolderDialog(assetsPathCallback);
+            SDKWindow::Get().OpenFolderDialog(assetsPathCallback);
         }
         ImGui::EndDisabled();
 
         ImGui::TextUnformatted("Default Texture");
-        TextureBrowserWindow::InputTexture("##defaulttexinput", Options::defaultTexture);
+        TextureBrowserWindow::Get().InputTexture("##defaulttexinput", Options::Get().defaultTexture);
         ImGui::TextUnformatted("Default Material");
-        MaterialBrowserWindow::InputMaterial("##defaultmatinput", Options::defaultMaterial);
+        MaterialBrowserWindow::Get().InputMaterial("##defaultmatinput", Options::Get().defaultMaterial);
 
         ImGui::TextUnformatted("Theme");
-        int theme = static_cast<int>(Options::theme);
+        int theme = static_cast<int>(Options::Get().theme);
         const std::array<const char *, 3> options = {"System", "Light", "Dark"};
         if (ImGui::Combo("##theme", &theme, options.data(), 3))
         {
-            Options::theme = static_cast<Options::Theme>(theme);
-            SharedMgr::ApplyTheme();
+            Options::Get().theme = static_cast<Options::Theme>(theme);
+            SharedMgr::Get().ApplyTheme();
         }
 
         ImGui::Dummy(ImVec2(0, 16));
@@ -89,13 +95,13 @@ void OptionsWindow::Render()
         ImGui::SameLine();
         if (ImGui::Button("OK", ImVec2(60, 0)))
         {
-            Options::Save();
+            Options::Get().Save();
             visible = false;
         }
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(60, 0)))
         {
-            Options::Load();
+            Options::Get().Load();
             visible = false;
         }
 

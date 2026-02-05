@@ -7,14 +7,16 @@
 class AboutWindow
 {
     public:
-        AboutWindow() = delete;
+        static AboutWindow &Get();
 
-        static void Show();
+        void Show();
 
-        static void Hide();
+        void Hide();
 
-        static void Render();
+        void Render();
 
     private:
-        static inline bool visible = false;
+        AboutWindow() = default;
+
+        bool visible = false;
 };

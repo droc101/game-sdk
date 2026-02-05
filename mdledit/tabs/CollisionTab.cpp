@@ -74,7 +74,7 @@ void CollisionTab::RenderStaticMeshUI()
     ModelAsset &model = ModelRenderer::GetModel();
     if (ImGui::Button("Import Collision Mesh"))
     {
-        SDKWindow::OpenFileDialog(importStaticCollider, DialogFilters::modelFilters);
+        SDKWindow::Get().OpenFileDialog(importStaticCollider, DialogFilters::modelFilters);
     }
     ImGui::Text("%zu triangles", model.GetStaticCollisionMesh().GetNumTriangles());
 }
@@ -84,12 +84,12 @@ void CollisionTab::RenderCHullUI()
 {
     if (ImGui::Button("Import Hull"))
     {
-        SDKWindow::OpenFileDialog(importSingleHull, DialogFilters::modelFilters);
+        SDKWindow::Get().OpenFileDialog(importSingleHull, DialogFilters::modelFilters);
     }
     ImGui::SameLine();
     if (ImGui::Button("Import Hulls"))
     {
-        SDKWindow::OpenFileDialog(importMultipleHulls, DialogFilters::modelFilters);
+        SDKWindow::Get().OpenFileDialog(importMultipleHulls, DialogFilters::modelFilters);
     }
     constexpr float panelHeight = 250.0f;
     ImGui::BeginChild("ScrollableRegion",

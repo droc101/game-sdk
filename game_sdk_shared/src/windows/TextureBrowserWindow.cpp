@@ -15,6 +15,12 @@
 constexpr int tileSize = 128;
 static std::string filter = "";
 
+TextureBrowserWindow &TextureBrowserWindow::Get()
+{
+    static TextureBrowserWindow textureBrowserWindowSingleton{};
+    return textureBrowserWindowSingleton;
+}
+
 void TextureBrowserWindow::Hide()
 {
     visible = false;
@@ -23,7 +29,7 @@ void TextureBrowserWindow::Hide()
 void TextureBrowserWindow::Show(std::string &texture)
 {
     str = &texture;
-    textures = SharedMgr::ScanFolder(Options::GetAssetsPath() + "/texture", ".gtex", true);
+    textures = SharedMgr::Get().ScanFolder(Options::Get().GetAssetsPath() + "/texture", ".gtex", true);
     visible = true;
 }
 
@@ -56,13 +62,13 @@ void TextureBrowserWindow::Render()
                     }
 
                     ImVec2 texSize;
-                    if (SharedMgr::textureCache.GetTextureSize("texture/" + textures[i], texSize) !=
+                    if (SharedMgr::Get().textureCache.GetTextureSize("texture/" + textures[i], texSize) !=
                         Error::ErrorCode::OK)
                     {
                         continue;
                     }
                     ImTextureID tex = 0;
-                    if (SharedMgr::textureCache.GetTextureID("texture/" + textures[i], tex) != Error::ErrorCode::OK)
+                    if (SharedMgr::Get().textureCache.GetTextureID("texture/" + textures[i], tex) != Error::ErrorCode::OK)
                     {
                         continue;
                     }

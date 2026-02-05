@@ -9,6 +9,13 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
+
+SetupWindow &SetupWindow::Get()
+{
+    static SetupWindow setupWindowSingleton{};
+    return setupWindowSingleton;
+}
+
 void SetupWindow::Show(bool required)
 {
     visible = true;
@@ -17,12 +24,12 @@ void SetupWindow::Show(bool required)
 
 void SetupWindow::gamePathCallback(const std::string &path)
 {
-    Options::gamePath = path;
+    Options::Get().gamePath = path;
 }
 
 void SetupWindow::assetsPathCallback(const std::string &path)
 {
-    Options::assetsPath = path;
+    Options::Get().assetsPath = path;
 }
 
 void SetupWindow::Render()
@@ -50,14 +57,14 @@ void SetupWindow::Render()
     ImGui::SameLine();
     ImGui::TextDisabled("(no trailing slash)");
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::InputText("##gamepathinput", &Options::gamePath);
+    ImGui::InputText("##gamepathinput", &Options::Get().gamePath);
     ImGui::SameLine();
     if (ImGui::Button("...", ImVec2(40, 0)))
     {
-        SDKWindow::OpenFolderDialog(gamePathCallback);
+        SDKWindow::Get().OpenFolderDialog(gamePathCallback);
     }
     bool valid = true;
-    if (!Options::ValidateGamePath())
+    if (!Options::Get().ValidateGamePath())
     {
         valid = false;
         ImGui::TextColored(ImVec4(1, 0, 0, 1), "Invalid game path");
@@ -66,16 +73,16 @@ void SetupWindow::Render()
         ImGui::Text(" ");
     }
 
-    ImGui::Checkbox("Override Assets Directory", &Options::overrideAssetsPath);
+    ImGui::Checkbox("Override Assets Directory", &Options::Get().overrideAssetsPath);
     ImGui::SameLine();
     ImGui::TextDisabled("(no trailing slash)");
-    ImGui::BeginDisabled(!Options::overrideAssetsPath);
+    ImGui::BeginDisabled(!Options::Get().overrideAssetsPath);
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::InputText("##assetspathinput", &Options::assetsPath);
+    ImGui::InputText("##assetspathinput", &Options::Get().assetsPath);
     ImGui::SameLine();
     if (ImGui::Button("...##assets", ImVec2(40, 0)))
     {
-        SDKWindow::OpenFolderDialog(assetsPathCallback);
+        SDKWindow::Get().OpenFolderDialog(assetsPathCallback);
     }
     ImGui::EndDisabled();
 
@@ -88,7 +95,7 @@ void SetupWindow::Render()
     ImGui::BeginDisabled(!valid);
     if (ImGui::Button("OK", ImVec2(60, 0)))
     {
-        Options::Save();
+        Options::Get().Save();
         visible = false;
     }
     ImGui::EndDisabled();
@@ -97,14 +104,14 @@ void SetupWindow::Render()
     {
         if (ImGui::Button("Quit", ImVec2(60, 0)))
         {
-            Options::Load();
+            Options::Get().Load();
             exit(1);
         }
     } else
     {
         if (ImGui::Button("Cancel", ImVec2(60, 0)))
         {
-            Options::Load();
+            Options::Get().Load();
             visible = false;
         }
     }

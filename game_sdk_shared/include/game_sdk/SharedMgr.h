@@ -14,33 +14,33 @@
 class SharedMgr
 {
     public:
-        SharedMgr() = delete;
+        static SharedMgr &Get();
 
         /**
          * Initialize the SDK shared manager
          */
-        static void InitSharedMgr();
+        void InitSharedMgr();
 
         /**
          * Render the shared ImGui menu options
          * @param programName The program name, matching its entry on the Droc101 Development wiki
          */
-        static void SharedMenuUI(const std::string &programName);
+        void SharedMenuUI(const std::string &programName);
 
         /**
          * Render shared ImGui windows
          */
-        static void RenderSharedUI();
+        void RenderSharedUI();
 
         /**
          * Clean up the SDK shared manager
          */
-        static void DestroySharedMgr();
+        void DestroySharedMgr();
 
         /**
          * Apply the ImGui theme from options
          */
-        static void ApplyTheme();
+        void ApplyTheme();
 
         /**
          * Recursively scan a directory for files of a certain type
@@ -49,21 +49,23 @@ class SharedMgr
          * @param isRoot Set this to true
          * @return A vector of file paths
          */
-        static std::vector<std::string> ScanFolder(const std::string &directoryPath,
+        std::vector<std::string> ScanFolder(const std::string &directoryPath,
                                                    const std::string &extension,
                                                    bool isRoot);
 
-        static inline GLTextureCache textureCache{};
+        GLTextureCache textureCache{};
 
-        static inline std::map<std::string, OptionDefinition> optionDefinitions{};
+        std::map<std::string, OptionDefinition> optionDefinitions{};
 
-        static inline std::map<std::string, ActorDefinition> actorDefinitions{};
+        std::map<std::string, ActorDefinition> actorDefinitions{};
 
     private:
-        static inline bool metricsVisible = false;
-        static inline bool demoVisible = false;
+        bool metricsVisible = false;
+        bool demoVisible = false;
 
-        static void LoadOptionDefinitions();
+        SharedMgr() = default;
 
-        static void LoadActorDefinitions();
+        void LoadOptionDefinitions();
+
+        void LoadActorDefinitions();
 };

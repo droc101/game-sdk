@@ -53,7 +53,7 @@ static bool ToolbarToolButton(const char *id,
         ImGui::EndTooltip();
     }
     ImTextureID tex = 0;
-    const Error::ErrorCode e = SharedMgr::textureCache.GetTextureID(icon, tex);
+    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(icon, tex);
     assert(e == Error::ErrorCode::OK);
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 40);
@@ -68,7 +68,7 @@ static void saveJson(const std::string &path)
     const Error::ErrorCode errorCode = MapEditor::map.SaveAsMapSrc(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to save the map!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to save the map!\n{}", errorCode));
         return;
     }
     MapEditor::mapFile = path;
@@ -79,22 +79,22 @@ static void openJson(const std::string &path)
     const Error::ErrorCode errorCode = MapAsset::CreateFromMapSrc(path.c_str(), MapEditor::map);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to open the map!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to open the map!\n{}", errorCode));
         return;
     }
     MapEditor::mapFile = path;
     for (Actor &actor: MapEditor::map.actors)
     {
-        if (!SharedMgr::actorDefinitions.contains(actor.className))
+        if (!SharedMgr::Get().actorDefinitions.contains(actor.className))
         {
-            SDKWindow::ErrorMessage(std::format("Failed to open the map because it contains an unknown actor "
+            SDKWindow::Get().ErrorMessage(std::format("Failed to open the map because it contains an unknown actor "
                                                "class \"{}\"",
                                                actor.className));
             MapEditor::map = MapAsset();
             return;
         }
 
-        actor.ApplyDefinition(SharedMgr::actorDefinitions.at(actor.className), false);
+        actor.ApplyDefinition(SharedMgr::Get().actorDefinitions.at(actor.className), false);
     }
 }
 
@@ -218,7 +218,7 @@ static void Render()
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                SDKWindow::PostQuit();
+                SDKWindow::Get().PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -363,7 +363,7 @@ static void Render()
             ImGui::Separator();
             ImGui::EndMenu();
         }
-        SharedMgr::SharedMenuUI("mapedit");
+        SharedMgr::Get().SharedMenuUI("mapedit");
         ImGui::EndMainMenuBar();
     }
 
@@ -376,13 +376,13 @@ static void Render()
     }
     if (openPressed)
     {
-        SDKWindow::OpenFileDialog(openJson, DialogFilters::mapJsonFilters);
+        SDKWindow::Get().OpenFileDialog(openJson, DialogFilters::mapJsonFilters);
         MapEditor::toolType = MapEditor::EditorToolType::SELECT;
         MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
     }
     if (savePressed)
     {
-        SDKWindow::SaveFileDialog(saveJson, DialogFilters::mapJsonFilters);
+        SDKWindow::Get().SaveFileDialog(saveJson, DialogFilters::mapJsonFilters);
     }
     if (compilePressed)
     {
@@ -512,37 +512,37 @@ static void Render()
 
 int main(int argc, char **argv)
 {
-    if (!SDKWindow::Init("GAME SDK Map Editor", {1366, 768}, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED))
+    if (!SDKWindow::Get().Init("GAME SDK Map Editor", {1366, 768}, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED))
     {
         return -1;
     }
 
-    MapEditor::mat = WallMaterial(Options::defaultMaterial);
+    MapEditor::mat = WallMaterial(Options::Get().defaultMaterial);
     if (!MapRenderer::Init())
     {
         printf("Failed to start renderer!\n");
         return -1;
     }
-    (void)SDL_SetWindowMinimumSize(SDKWindow::GetWindow(), 640, 480);
+    (void)SDL_SetWindowMinimumSize(SDKWindow::Get().GetWindow(), 640, 480);
 
-    (void)SharedMgr::textureCache.RegisterPng("assets/mapedit/select.png", MapEditor::SELECT_ICON_NAME);
-    (void)SharedMgr::textureCache.RegisterPng("assets/mapedit/actors.png", MapEditor::ACTOR_ICON_NAME);
-    (void)SharedMgr::textureCache.RegisterPng("assets/mapedit/primitives.png", MapEditor::PRIMITIVE_ICON_NAME);
-    (void)SharedMgr::textureCache.RegisterPng("assets/mapedit/polygon.png", MapEditor::POLYGON_ICON_NAME);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/mapedit/select.png", MapEditor::SELECT_ICON_NAME);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/mapedit/actors.png", MapEditor::ACTOR_ICON_NAME);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/mapedit/primitives.png", MapEditor::PRIMITIVE_ICON_NAME);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/mapedit/polygon.png", MapEditor::POLYGON_ICON_NAME);
 
     vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
     vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;
     vpSide.GetZoom() = MapEditor::DEFAULT_ZOOM;
 
-    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".json"});
+    const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".json"});
     if (!openPath.empty())
     {
         openJson(openPath);
     }
 
-    SDKWindow::MainLoop(Render);
+    SDKWindow::Get().MainLoop(Render);
 
     MapRenderer::Destroy();
-    SDKWindow::Destroy();
+    SDKWindow::Get().Destroy();
     return 0;
 }

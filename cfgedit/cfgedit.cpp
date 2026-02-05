@@ -21,7 +21,7 @@ static void openGame(const std::string &path)
     const Error::ErrorCode errorCode = GameConfigAsset::CreateFromAsset(path.c_str(), config);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to open the game configuration!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to open the game configuration!\n{}", errorCode));
         return;
     }
     configLoaded = true;
@@ -32,7 +32,7 @@ static void saveGame(const std::string &path)
     const Error::ErrorCode errorCode = config.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to save the game configuration!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to save the game configuration!\n{}", errorCode));
     }
 }
 
@@ -61,20 +61,20 @@ static void Render()
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                SDKWindow::PostQuit();
+                SDKWindow::Get().PostQuit();
             }
             ImGui::EndMenu();
         }
-        SharedMgr::SharedMenuUI("cfgedit");
+        SharedMgr::Get().SharedMenuUI("cfgedit");
         ImGui::EndMainMenuBar();
     }
 
     if (openPressed)
     {
-        SDKWindow::OpenFileDialog(openGame, DialogFilters::gameFilters);
+        SDKWindow::Get().OpenFileDialog(openGame, DialogFilters::gameFilters);
     } else if (savePressed)
     {
-        SDKWindow::SaveFileDialog(saveGame, DialogFilters::gameFilters);
+        SDKWindow::Get().SaveFileDialog(saveGame, DialogFilters::gameFilters);
     } else if (newPressed)
     {
         config = GameConfigAsset();
@@ -107,20 +107,20 @@ static void Render()
 
 int main(int argc, char **argv)
 {
-    if (!SDKWindow::Init("GAME SDK Game Config Editor", {400, 200}, 0))
+    if (!SDKWindow::Get().Init("GAME SDK Game Config Editor", {400, 200}, 0))
     {
         return -1;
     }
 
-    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".game"});
+    const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".game"});
     if (!openPath.empty())
     {
         openGame(openPath);
     }
 
-    SDKWindow::MainLoop(Render);
+    SDKWindow::Get().MainLoop(Render);
 
-    SDKWindow::Destroy();
+    SDKWindow::Get().Destroy();
 
     return 0;
 }

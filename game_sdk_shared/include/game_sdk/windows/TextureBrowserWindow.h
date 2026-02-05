@@ -10,17 +10,19 @@
 class TextureBrowserWindow
 {
     public:
-        TextureBrowserWindow() = delete;
+        static TextureBrowserWindow &Get();
 
-        static void Show(std::string &texture);
-        static void Hide();
-        static void Render();
+        void Show(std::string &texture);
+        void Hide();
+        void Render();
 
-        static void InputTexture(const char *label, std::string &texture);
+        void InputTexture(const char *label, std::string &texture);
 
     private:
-        static inline bool visible = false;
-        static inline std::string *str = nullptr;
+        TextureBrowserWindow() = default;
 
-        static inline std::vector<std::string> textures;
+        bool visible = false;
+        std::string *str = nullptr;
+
+        std::vector<std::string> textures;
 };

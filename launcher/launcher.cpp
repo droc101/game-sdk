@@ -59,8 +59,8 @@ static constexpr void StringReplace(std::string &string, const std::string &find
 
 static void ParsePath(std::string &path)
 {
-    StringReplace(path, "$GAMEDIR", Options::gamePath);
-    StringReplace(path, "$ASSETSDIR", Options::GetAssetsPath());
+    StringReplace(path, "$GAMEDIR", Options::Get().gamePath);
+    StringReplace(path, "$ASSETSDIR", Options::Get().GetAssetsPath());
     StringReplace(path, "$SDKDIR", sdkPath);
 }
 
@@ -88,20 +88,20 @@ static void LaunchSelectedTool()
             args.push_back(arg);
         }
         printf("Launching process \"%s\"...\n", folder.c_str());
-        DesktopInterface::ExecuteProcessNonBlocking(folder, args);
+        DesktopInterface::Get().ExecuteProcessNonBlocking(folder, args);
     } else if (item.contains("file"))
     {
         std::string folder = item.value("file", "");
         ParsePath(folder);
-        DesktopInterface::OpenFilesystemPath(folder);
+        DesktopInterface::Get().OpenFilesystemPath(folder);
     } else if (item.contains("folder"))
     {
         std::string folder = item.value("folder", "");
         ParsePath(folder);
-        DesktopInterface::OpenFilesystemPath(folder);
+        DesktopInterface::Get().OpenFilesystemPath(folder);
     } else if (item.contains("url"))
     {
-        DesktopInterface::OpenURL(item.value("url", ""));
+        DesktopInterface::Get().OpenURL(item.value("url", ""));
     }
 }
 
@@ -144,7 +144,7 @@ static void Render()
 
     if (ImGui::Button("Options", ImVec2(80, 32)))
     {
-        SetupWindow::Show(false);
+        SetupWindow::Get().Show(false);
     }
     // ImGui::SameLine();
     // ImGui::TextDisabled("GAME SDK\nVersion %s", LIBASSETS_VERSION_STRING);
@@ -162,7 +162,7 @@ static void Render()
 
 int main()
 {
-    if (!SDKWindow::Init("GAME SDK", {350, 400}, 0))
+    if (!SDKWindow::Get().Init("GAME SDK", {350, 400}, 0))
     {
         return -1;
     }
@@ -177,9 +177,9 @@ int main()
         return -1;
     }
 
-    SDKWindow::MainLoop(Render);
+    SDKWindow::Get().MainLoop(Render);
 
-    SDKWindow::Destroy();
+    SDKWindow::Get().Destroy();
 
     return 0;
 }

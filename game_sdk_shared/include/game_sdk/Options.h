@@ -17,39 +17,41 @@ class Options
             DARK
         };
 
-        Options() = delete;
+        static Options &Get();
 
         /**
          * Load (or reload) options from disk
          */
-        static void Load();
+        void Load();
 
         /**
          * Load default options
          */
-        static void LoadDefault();
+        void LoadDefault();
 
         /**
          * Save options to disk
          */
-        static void Save();
+        void Save();
 
         /**
          * Do basic validation checks on the game path
          */
-        static bool ValidateGamePath();
+        bool ValidateGamePath();
 
         /**
          * Get the absolute path to the assets folder
          */
-        static std::string GetAssetsPath();
+        std::string GetAssetsPath();
 
-        static inline std::string gamePath;
-        static inline bool overrideAssetsPath;
-        static inline std::string assetsPath;
+        std::string gamePath{};
+        bool overrideAssetsPath = false;
+        std::string assetsPath{};
 
-        static inline std::string defaultTexture;
-        static inline std::string defaultMaterial;
+        std::string defaultTexture{};
+        std::string defaultMaterial{};
 
-        static inline Theme theme;
+        Theme theme = Theme::SYSTEM;
+    private:
+        Options() = default;
 };

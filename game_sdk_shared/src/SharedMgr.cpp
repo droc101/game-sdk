@@ -33,22 +33,29 @@
 #include <unistd.h>
 #endif
 
+SharedMgr &SharedMgr::Get()
+{
+    static SharedMgr sharedMgrSingleton{};
+
+    return sharedMgrSingleton;
+}
+
 void SharedMgr::InitSharedMgr()
 {
     chdir(SDL_GetBasePath());
-    Options::Load();
+    Options::Get().Load();
     LoadOptionDefinitions();
     LoadActorDefinitions();
-    DesktopInterface::InitDesktopInterface();
-    if (!Options::ValidateGamePath())
+    DesktopInterface::Get().InitDesktopInterface();
+    if (!Options::Get().ValidateGamePath())
     {
-        SetupWindow::Show();
+        SetupWindow::Get().Show();
     }
 }
 
 void SharedMgr::DestroySharedMgr()
 {
-    Options::Save();
+    Options::Get().Save();
 }
 
 void SharedMgr::SharedMenuUI(const std::string &programName)
@@ -57,7 +64,7 @@ void SharedMgr::SharedMenuUI(const std::string &programName)
     {
         if (ImGui::MenuItem("Options"))
         {
-            OptionsWindow::Show();
+            OptionsWindow::Get().Show();
         }
         ImGui::EndMenu();
     }
@@ -95,7 +102,7 @@ void SharedMgr::SharedMenuUI(const std::string &programName)
         }
         if (ImGui::MenuItem("About"))
         {
-            AboutWindow::Show();
+            AboutWindow::Get().Show();
         }
         ImGui::EndMenu();
     }
@@ -103,11 +110,11 @@ void SharedMgr::SharedMenuUI(const std::string &programName)
 
 void SharedMgr::RenderSharedUI()
 {
-    OptionsWindow::Render();
-    AboutWindow::Render();
-    TextureBrowserWindow::Render();
-    MaterialBrowserWindow::Render();
-    SetupWindow::Render();
+    OptionsWindow::Get().Render();
+    AboutWindow::Get().Render();
+    TextureBrowserWindow::Get().Render();
+    MaterialBrowserWindow::Get().Render();
+    SetupWindow::Get().Render();
     if (metricsVisible)
     {
         ImGui::ShowMetricsWindow(&metricsVisible);
@@ -158,7 +165,7 @@ std::vector<std::string> SharedMgr::ScanFolder(const std::string &directoryPath,
 
 void SharedMgr::ApplyTheme()
 {
-    if (Options::theme == Options::Theme::SYSTEM)
+    if (Options::Get().theme == Options::Theme::SYSTEM)
     {
         if (SDL_GetSystemTheme() == SDL_SYSTEM_THEME_DARK)
         {
@@ -167,7 +174,7 @@ void SharedMgr::ApplyTheme()
         {
             ImGui::StyleColorsLight();
         }
-    } else if (Options::theme == Options::Theme::LIGHT)
+    } else if (Options::Get().theme == Options::Theme::LIGHT)
     {
         ImGui::StyleColorsLight();
     } else
@@ -178,13 +185,13 @@ void SharedMgr::ApplyTheme()
 
 void SharedMgr::LoadOptionDefinitions()
 {
-    const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::GetAssetsPath() + "/defs/options",
+    const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::Get().GetAssetsPath() + "/defs/options",
                                                                 ".json",
                                                                 true);
     for (const std::string &path: defs)
     {
         OptionDefinition def{};
-        std::string fullPath = Options::GetAssetsPath() + "/defs/options/" + path;
+        std::string fullPath = Options::Get().GetAssetsPath() + "/defs/options/" + path;
         const Error::ErrorCode e = OptionDefinition::Create(fullPath, def);
         if (e == Error::ErrorCode::OK)
         {
@@ -199,13 +206,13 @@ void SharedMgr::LoadOptionDefinitions()
 
 void SharedMgr::LoadActorDefinitions()
 {
-    const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::GetAssetsPath() + "/defs/actors",
+    const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::Get().GetAssetsPath() + "/defs/actors",
                                                                 ".json",
                                                                 true);
     for (const std::string &path: defs)
     {
         ActorDefinition def{};
-        const std::string fullPath = Options::GetAssetsPath() + "/defs/actors/" + path;
+        const std::string fullPath = Options::Get().GetAssetsPath() + "/defs/actors/" + path;
         const Error::ErrorCode e = ActorDefinition::Create(fullPath, def);
         if (e == Error::ErrorCode::OK)
         {

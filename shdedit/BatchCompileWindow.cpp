@@ -110,7 +110,7 @@ void BatchCompileWindow::Render()
             ImGui::SameLine();
             if (ImGui::Button("...", ImVec2(40, 0)))
             {
-                SDKWindow::OpenFolderDialog(outPathCallback);
+                SDKWindow::Get().OpenFolderDialog(outPathCallback);
             }
 
             ImGui::Text("Rendering API");
@@ -131,7 +131,7 @@ void BatchCompileWindow::Render()
             ImGui::SameLine();
             if (ImGui::Button("Add", ImVec2(60, 0)))
             {
-                SDKWindow::OpenMultiFileDialog(selectCallback, DialogFilters::glslFilters);
+                SDKWindow::Get().OpenMultiFileDialog(selectCallback, DialogFilters::glslFilters);
             }
             if (ImGui::BeginChild("##picker", ImVec2(-1, 250), ImGuiChildFlags_Borders, 0))
             {
@@ -195,7 +195,7 @@ void BatchCompileWindow::Render()
                     visible = false;
                 } else
                 {
-                    SDKWindow::ErrorMessage(std::format("Failed to compile shaders!\n{}", e));
+                    SDKWindow::Get().ErrorMessage(std::format("Failed to compile shaders!\n{}", e));
                 }
             }
             ImGui::SameLine();

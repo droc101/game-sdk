@@ -31,7 +31,7 @@ static void openGfon(const std::string &path)
     const Error::ErrorCode errorCode = FontAsset::CreateFromAsset(path.c_str(), font);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to open the font!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to open the font!\n{}", errorCode));
         return;
     }
     fontLoaded = true;
@@ -42,7 +42,7 @@ static void saveGfon(const std::string &path)
     const Error::ErrorCode errorCode = font.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to save the font!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to save the font!\n{}", errorCode));
     }
 }
 
@@ -82,20 +82,20 @@ static void Render()
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                SDKWindow::PostQuit();
+                SDKWindow::Get().PostQuit();
             }
             ImGui::EndMenu();
         }
-        SharedMgr::SharedMenuUI("fonedit");
+        SharedMgr::Get().SharedMenuUI("fonedit");
         ImGui::EndMainMenuBar();
     }
 
     if (openPressed)
     {
-        SDKWindow::OpenFileDialog(openGfon, DialogFilters::gfonFilters);
+        SDKWindow::Get().OpenFileDialog(openGfon, DialogFilters::gfonFilters);
     } else if (savePressed)
     {
-        SDKWindow::SaveFileDialog(saveGfon, DialogFilters::gfonFilters);
+        SDKWindow::Get().SaveFileDialog(saveGfon, DialogFilters::gfonFilters);
     } else if (newPressed)
     {
         font = FontAsset();
@@ -232,7 +232,7 @@ static void Render()
                 font.defaultSize = defaultSize;
             }
             ImGui::TextUnformatted("Font Texture");
-            TextureBrowserWindow::InputTexture("##Texture", font.texture);
+            TextureBrowserWindow::Get().InputTexture("##Texture", font.texture);
             ImGui::Checkbox("Uppercase only", &font.uppercaseOnly);
         }
         ImGui::EndChild();
@@ -246,22 +246,22 @@ static void Render()
 
 int main(int argc, char **argv)
 {
-    if (!SDKWindow::Init("GAME SDK Font Editor"))
+    if (!SDKWindow::Get().Init("GAME SDK Font Editor"))
     {
         return -1;
     }
 
     charDisplayList = FontAsset::GetCharListForDisplay();
 
-    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gfon"});
+    const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gfon"});
     if (!openPath.empty())
     {
         openGfon(openPath);
     }
 
-    SDKWindow::MainLoop(Render);
+    SDKWindow::Get().MainLoop(Render);
 
-    SDKWindow::Destroy();
+    SDKWindow::Get().Destroy();
 
     return 0;
 }

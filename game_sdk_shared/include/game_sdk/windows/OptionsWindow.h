@@ -7,16 +7,18 @@
 class OptionsWindow
 {
     public:
-        OptionsWindow() = delete;
+        static OptionsWindow &Get();
 
-        static void Show();
+        void Show();
 
-        static void Hide();
+        void Hide();
 
-        static void Render();
+        void Render();
 
     private:
-        static inline bool visible = false;
+        OptionsWindow() = default;
+
+        bool visible = false;
 
         static void gamePathCallback(const std::string &path);
 

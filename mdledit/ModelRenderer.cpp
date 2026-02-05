@@ -147,7 +147,7 @@ void ModelRenderer::LoadModel(ModelAsset &&newModel)
             {
                 const size_t matIndex = model.GetSkin(j)[k];
                 const Material &mat = model.GetMaterial(matIndex);
-                (void)SharedMgr::textureCache.LoadTexture(mat.texture);
+                (void)SharedMgr::Get().textureCache.LoadTexture(mat.texture);
             }
         }
 
@@ -243,7 +243,7 @@ void ModelRenderer::Render()
         glUniform4fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetDataPointer());
 
         GLuint texture = 0;
-        const Error::ErrorCode code = SharedMgr::textureCache.GetTextureGLuint(mat.texture, texture);
+        const Error::ErrorCode code = SharedMgr::Get().textureCache.GetTextureGLuint(mat.texture, texture);
         if (code != Error::ErrorCode::OK)
         {
             continue;

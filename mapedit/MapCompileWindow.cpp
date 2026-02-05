@@ -15,7 +15,7 @@ void MapCompileWindow::StartCompile()
 {
     if (MapEditor::mapFile.empty())
     {
-        SDKWindow::ErrorMessage("The level must be saved before compiling");
+        SDKWindow::Get().ErrorMessage("The level must be saved before compiling");
     } else
     {
         const Error::ErrorCode errorCode = MapEditor::map.SaveAsMapSrc(MapEditor::mapFile.c_str());
@@ -33,7 +33,7 @@ void MapCompileWindow::StartCompile()
 #endif
 
             const std::string srcArgument = "--map-source=" + MapEditor::mapFile;
-            const std::string dirArgument = "--assets-dir=" + Options::GetAssetsPath();
+            const std::string dirArgument = "--assets-dir=" + Options::Get().GetAssetsPath();
             const char *args[4] = {compilerPath.c_str(), srcArgument.c_str(), dirArgument.c_str(), nullptr};
             compilerProcess = SDL_CreateProcess(args, true);
             if (compilerProcess == nullptr)
@@ -57,8 +57,8 @@ void MapCompileWindow::StartCompile()
 #endif
                 const std::string mapName = std::filesystem::path(MapEditor::mapFile).stem().string();
                 const std::string mapArg = "--map=" + mapName;
-                const std::string gameArg = "--game=" + Options::GetAssetsPath();
-                if (!DesktopInterface::ExecuteProcessNonBlocking(Options::gamePath + gameBinary,
+                const std::string gameArg = "--game=" + Options::Get().GetAssetsPath();
+                if (!DesktopInterface::Get().ExecuteProcessNonBlocking(Options::Get().gamePath + gameBinary,
                                                                  {mapArg.c_str(), "--nosteam", gameArg}))
                 {
                     log += "Failed to execute game binary";

@@ -25,7 +25,7 @@ static void openGshd(const std::string &path)
     const Error::ErrorCode errorCode = ShaderAsset::CreateFromAsset(path.c_str(), shader);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to open the shader!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to open the shader!\n{}", errorCode));
         return;
     }
     shaderLoaded = true;
@@ -36,7 +36,7 @@ static void importGlsl(const std::string &path)
     const Error::ErrorCode errorCode = ShaderAsset::CreateFromGlsl(path.c_str(), shader);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to import the shader!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to import the shader!\n{}", errorCode));
         return;
     }
     shaderLoaded = true;
@@ -47,7 +47,7 @@ static void saveGshd(const std::string &path)
     const Error::ErrorCode errorCode = shader.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to save the shader!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}", errorCode));
     }
 }
 
@@ -56,7 +56,7 @@ static void exportGlsl(const std::string &path)
     const Error::ErrorCode errorCode = shader.SaveAsGlsl(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to export the shader!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to export the shader!\n{}", errorCode));
     }
 }
 
@@ -89,7 +89,7 @@ static void Render()
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                SDKWindow::PostQuit();
+                SDKWindow::Get().PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -106,22 +106,22 @@ static void Render()
             ImGui::Separator();
             ImGui::EndMenu();
         }
-        SharedMgr::SharedMenuUI("shdedit");
+        SharedMgr::Get().SharedMenuUI("shdedit");
         ImGui::EndMainMenuBar();
     }
 
     if (openPressed)
     {
-        SDKWindow::OpenFileDialog(openGshd, DialogFilters::gshdFilters);
+        SDKWindow::Get().OpenFileDialog(openGshd, DialogFilters::gshdFilters);
     } else if (importPressed)
     {
-        SDKWindow::OpenFileDialog(importGlsl, DialogFilters::glslFilters);
+        SDKWindow::Get().OpenFileDialog(importGlsl, DialogFilters::glslFilters);
     } else if (savePressed)
     {
-        SDKWindow::SaveFileDialog(saveGshd, DialogFilters::gshdFilters);
+        SDKWindow::Get().SaveFileDialog(saveGshd, DialogFilters::gshdFilters);
     } else if (exportPressed)
     {
-        SDKWindow::SaveFileDialog(exportGlsl, DialogFilters::glslFilters);
+        SDKWindow::Get().SaveFileDialog(exportGlsl, DialogFilters::glslFilters);
     } else if (newPressed)
     {
         shader = ShaderAsset();
@@ -191,18 +191,18 @@ static void Render()
 
 int main(int argc, char **argv)
 {
-    if (!SDKWindow::Init("GAME SDK Shader Editor"))
+    if (!SDKWindow::Get().Init("GAME SDK Shader Editor"))
     {
         return -1;
     }
 
-    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gshd"});
+    const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gshd"});
     if (!openPath.empty())
     {
         openGshd(openPath);
     } else
     {
-        const std::string &importPath = DesktopInterface::GetFileArgument(argc,
+        const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc,
                                                                           argv,
                                                                           {
                                                                               ".glsl",
@@ -216,9 +216,9 @@ int main(int argc, char **argv)
         }
     }
 
-    SDKWindow::MainLoop(Render);
+    SDKWindow::Get().MainLoop(Render);
 
-    SDKWindow::Destroy();
+    SDKWindow::Get().Destroy();
 
     return 0;
 }

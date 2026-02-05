@@ -32,7 +32,7 @@ void ActorBrowserWindow::Render()
 
     ImGui::Begin("Actor Class Browser", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
 
-    if (SharedMgr::actorDefinitions.size() == 0 || !SharedMgr::actorDefinitions.contains("actor"))
+    if (SharedMgr::Get().actorDefinitions.size() == 0 || !SharedMgr::Get().actorDefinitions.contains("actor"))
     {
         ImGui::TextDisabled("No actor definitions are loaded. Is the game path set correctly?");
         ImGui::End();
@@ -42,7 +42,7 @@ void ActorBrowserWindow::Render()
     ImGui::Text("Class");
     if (ImGui::BeginCombo("##a", selectedClass.c_str()))
     {
-        for (const std::string &key: SharedMgr::actorDefinitions | std::views::keys)
+        for (const std::string &key: SharedMgr::Get().actorDefinitions | std::views::keys)
         {
             if (selectedClass == key)
             {
@@ -57,7 +57,7 @@ void ActorBrowserWindow::Render()
         ImGui::EndCombo();
     }
 
-    const ActorDefinition &def = SharedMgr::actorDefinitions.at(selectedClass);
+    const ActorDefinition &def = SharedMgr::Get().actorDefinitions.at(selectedClass);
 
     ImGui::Text("%s %s: %s",
                 def.isVirtual ? "Virtual class" : "Class",

@@ -103,12 +103,12 @@ bool MapRenderer::Init()
     workBuffer = GLHelper::CreateIndexedBuffer();
     workBufferNonIndexed = GLHelper::CreateBuffer();
 
-    const std::vector<std::string> modelsPaths = SharedMgr::ScanFolder(Options::GetAssetsPath() + "/model",
+    const std::vector<std::string> modelsPaths = SharedMgr::Get().ScanFolder(Options::Get().GetAssetsPath() + "/model",
                                                                        ".gmdl",
                                                                        true);
     for (const std::string &modelPath: modelsPaths)
     {
-        const ModelBuffer buf = LoadModel(Options::GetAssetsPath() + "/model/" + modelPath);
+        const ModelBuffer buf = LoadModel(Options::Get().GetAssetsPath() + "/model/" + modelPath);
         modelBuffers[modelPath.substr(0, modelPath.length() - 5)] = buf;
     }
 
@@ -267,7 +267,7 @@ void MapRenderer::RenderBillboardSprite(const glm::vec3 position,
     glPointSize(pointSize);
 
     GLuint textureId = -1;
-    const Error::ErrorCode e = SharedMgr::textureCache.GetTextureGLuint("texture/" + texture + ".gtex", textureId);
+    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureGLuint("texture/" + texture + ".gtex", textureId);
     assert(e == Error::ErrorCode::OK); // TODO handle properly
 
     glActiveTexture(GL_TEXTURE0);
@@ -311,7 +311,7 @@ void MapRenderer::RenderUnitVector(const glm::vec3 origin,
 
 void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix)
 {
-    const ActorDefinition &definition = SharedMgr::actorDefinitions.at(a.className);
+    const ActorDefinition &definition = SharedMgr::Get().actorDefinitions.at(a.className);
     Color c = definition.renderDefinition.color;
     if (!definition.renderDefinition.colorSourceParam.empty() &&
         a.params.contains(definition.renderDefinition.colorSourceParam))

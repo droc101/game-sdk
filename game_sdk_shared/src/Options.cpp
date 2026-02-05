@@ -12,6 +12,13 @@
 #include <sstream>
 #include <string>
 
+Options &Options::Get()
+{
+    static Options optionsSingleton{};
+
+    return optionsSingleton;
+}
+
 void Options::Load()
 {
     char *prefix = SDL_GetPrefPath("Droc101 Development", "GAME SDK");

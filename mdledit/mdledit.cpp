@@ -52,7 +52,7 @@ static void openGmdl(const std::string &path)
     const Error::ErrorCode errorCode = ModelAsset::CreateFromAsset(path.c_str(), model);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to open the model!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to open the model!\n{}", errorCode));
         return;
     }
     destroyExistingModel();
@@ -65,10 +65,10 @@ static void importModel(const std::string &path)
     ModelAsset model;
     const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(path.c_str(),
                                                                            model,
-                                                                           Options::defaultTexture);
+                                                                           Options::Get().defaultTexture);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to import the model!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to import the model!\n{}", errorCode));
         return;
     }
     destroyExistingModel();
@@ -81,7 +81,7 @@ static void saveGmdl(const std::string &path)
     const Error::ErrorCode errorCode = ModelRenderer::GetModel().SaveAsAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to save the model!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to save the model!\n{}", errorCode));
     }
 }
 
@@ -92,7 +92,7 @@ void importLod(const std::string &path)
     ModelAsset model = ModelRenderer::GetModel();
     if (!model.AddLod(path))
     {
-        SDKWindow::ErrorMessage(std::format("Failed to import model LOD!"));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to import model LOD!"));
         return;
     }
     destroyExistingModel();
@@ -185,7 +185,7 @@ static void HandleMenuAndShortcuts()
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                SDKWindow::PostQuit();
+                SDKWindow::Get().PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -256,27 +256,27 @@ static void HandleMenuAndShortcuts()
             }
             ImGui::EndMenu();
         }
-        SharedMgr::SharedMenuUI("mdledit");
+        SharedMgr::Get().SharedMenuUI("mdledit");
         ImGui::EndMainMenuBar();
     }
 
     if (openPressed)
     {
-        SDKWindow::OpenFileDialog(openGmdl, DialogFilters::gmdlFilters);
+        SDKWindow::Get().OpenFileDialog(openGmdl, DialogFilters::gmdlFilters);
     } else if (newPressed)
     {
-        SDKWindow::OpenFileDialog(importModel, DialogFilters::modelFilters);
+        SDKWindow::Get().OpenFileDialog(importModel, DialogFilters::modelFilters);
     } else if (savePressed)
     {
         if (!ModelRenderer::GetModel().ValidateLodDistances())
         {
-            SDKWindow::ErrorMessage("LOD distances are invalid! Please fix them in the LOD editor and make sure "
+            SDKWindow::Get().ErrorMessage("LOD distances are invalid! Please fix them in the LOD editor and make sure "
                                     "that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the "
                                     "same distance",
                                     "Invalid Model");
         } else
         {
-            SDKWindow::SaveFileDialog(saveGmdl, DialogFilters::gmdlFilters);
+            SDKWindow::Get().SaveFileDialog(saveGmdl, DialogFilters::gmdlFilters);
         }
     }
 }
@@ -388,7 +388,7 @@ static void Render()
 
 int main(int argc, char **argv)
 {
-    if (!SDKWindow::Init("GAME SDK Model Editor", {1366, 768}))
+    if (!SDKWindow::Get().Init("GAME SDK Model Editor", {1366, 768}))
     {
         return -1;
     }
@@ -398,13 +398,13 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gmdl"});
+    const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gmdl"});
     if (!openPath.empty())
     {
         openGmdl(openPath);
     } else
     {
-        const std::string &importPath = DesktopInterface::GetFileArgument(argc,
+        const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc,
                                                                           argv,
                                                                           {".obj", ".fbx", ".gltf", ".dae"});
         if (!importPath.empty())
@@ -413,10 +413,10 @@ int main(int argc, char **argv)
         }
     }
 
-    SDKWindow::MainLoop(Render, ProcessEvent);
+    SDKWindow::Get().MainLoop(Render, ProcessEvent);
 
     destroyExistingModel();
     ModelRenderer::Destroy();
-    SDKWindow::Destroy();
+    SDKWindow::Get().Destroy();
     return 0;
 }

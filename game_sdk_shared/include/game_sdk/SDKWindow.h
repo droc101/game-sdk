@@ -36,7 +36,7 @@ using SDKWindowMultiFileDialogCallback = void (*)(const std::vector<std::string>
 class SDKWindow
 {
     public:
-        SDKWindow() = delete;
+        static SDKWindow &Get();
 
         /**
          * Initialize GAME SDK and create the main window
@@ -45,7 +45,7 @@ class SDKWindow
          * @param windowFlags SDL window flags for the main window, SDL_WINDOW_RESIZABLE by default
          * @return True on success, false on failure
          */
-        [[nodiscard]] static bool Init(const std::string &appName,
+        [[nodiscard]] bool Init(const std::string &appName,
                                        glm::ivec2 windowSize = {800, 600},
                                        SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE);
 
@@ -54,43 +54,43 @@ class SDKWindow
          * @param Render The render function
          * @param ProcessEvent The event handler function, nullptr by default
          */
-        static void MainLoop(SDKWindowRenderFunction Render, SDKWindowProcessEventFunction ProcessEvent = nullptr);
+        void MainLoop(SDKWindowRenderFunction Render, SDKWindowProcessEventFunction ProcessEvent = nullptr);
 
         /**
          * Get the main window's pointer
          */
-        [[nodiscard]] static SDL_Window *GetWindow();
+        [[nodiscard]] SDL_Window *GetWindow();
 
         /**
          * Instruct the main loop to exit at the end of the current iteration
          */
-        static void PostQuit();
+        void PostQuit();
 
         /**
          * Destroy the SDKWindow resources
          */
-        static void Destroy();
+        void Destroy();
 
         /**
          * Show an error message
          * @param body Message text
          * @param title Message title
          */
-        static void ErrorMessage(const std::string &body, const std::string &title = "Error");
+        void ErrorMessage(const std::string &body, const std::string &title = "Error");
 
         /**
          * Show a warning message
          * @param body Message text
          * @param title Message title
          */
-        static void WarningMessage(const std::string &body, const std::string &title = "Warning");
+        void WarningMessage(const std::string &body, const std::string &title = "Warning");
 
         /**
          * Show an info message
          * @param body Message text
          * @param title Message title
          */
-        static void InfoMessage(const std::string &body, const std::string &title);
+        void InfoMessage(const std::string &body, const std::string &title);
 
         /**
          * Show an open file dialog
@@ -98,7 +98,7 @@ class SDKWindow
          * @param filters File type filters
          * @note The callback will only be called on success (user chose a file), and will be called on the main thread.
          */
-        static void OpenFileDialog(SDKWindowFileDialogCallback Callback,
+        void OpenFileDialog(SDKWindowFileDialogCallback Callback,
                                    const std::vector<SDL_DialogFileFilter> &filters);
 
         /**
@@ -107,7 +107,7 @@ class SDKWindow
          * @param filters File type filters
          * @note The callback will only be called on success (user chose one or more files), and will be called on the main thread.
          */
-        static void OpenMultiFileDialog(SDKWindowMultiFileDialogCallback Callback,
+        void OpenMultiFileDialog(SDKWindowMultiFileDialogCallback Callback,
                                         const std::vector<SDL_DialogFileFilter> &filters);
 
         /**
@@ -116,7 +116,7 @@ class SDKWindow
          * @param filters File type filters
          * @note The callback will only be called on success (user chose a file), and will be called on the main thread.
          */
-        static void SaveFileDialog(SDKWindowFileDialogCallback Callback,
+        void SaveFileDialog(SDKWindowFileDialogCallback Callback,
                                    const std::vector<SDL_DialogFileFilter> &filters);
 
         /**
@@ -124,13 +124,13 @@ class SDKWindow
          * @param Callback The callback to call on success
          * @note The callback will only be called on success (user chose a folder), and will be called on the main thread.
          */
-        static void OpenFolderDialog(SDKWindowFileDialogCallback Callback);
+        void OpenFolderDialog(SDKWindowFileDialogCallback Callback);
 
     private:
-        static inline bool initDone = false;
-        static inline SDL_Window *window = nullptr;
-        static inline SDL_GLContext glContext = nullptr;
-        static inline bool quitRequest = false;
+        bool initDone = false;
+        SDL_Window *window = nullptr;
+        SDL_GLContext glContext = nullptr;
+        bool quitRequest = false;
 
         struct FileDialogMainThreadCallbackData
         {
@@ -143,6 +143,8 @@ class SDKWindow
             SDKWindowMultiFileDialogCallback Callback;
             std::vector<std::string> paths;
         };
+
+        SDKWindow() = default;
 
         static void FileDialogMainThreadCallback(void *userdata);
 

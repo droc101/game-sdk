@@ -24,7 +24,7 @@ static void openGmtl(const std::string &path)
     const Error::ErrorCode errorCode = LevelMaterialAsset::CreateFromAsset(path.c_str(), material);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to open the material!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to open the material!\n{}", errorCode));
     }
 }
 
@@ -33,7 +33,7 @@ static void saveGmtl(const std::string &path)
     const Error::ErrorCode errorCode = material.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to save the material!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to save the material!\n{}", errorCode));
     }
 }
 
@@ -61,27 +61,27 @@ static void Render()
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                SDKWindow::PostQuit();
+                SDKWindow::Get().PostQuit();
             }
             ImGui::EndMenu();
         }
-        SharedMgr::SharedMenuUI("mtledit");
+        SharedMgr::Get().SharedMenuUI("mtledit");
         ImGui::EndMainMenuBar();
     }
 
     if (openPressed)
     {
-        SDKWindow::OpenFileDialog(openGmtl, DialogFilters::gmtlFilters);
+        SDKWindow::Get().OpenFileDialog(openGmtl, DialogFilters::gmtlFilters);
     } else if (savePressed)
     {
-        SDKWindow::SaveFileDialog(saveGmtl, DialogFilters::gmtlFilters);
+        SDKWindow::Get().SaveFileDialog(saveGmtl, DialogFilters::gmtlFilters);
     } else if (newPressed)
     {
         material = LevelMaterialAsset();
     }
 
     ImGui::Text("Texture");
-    TextureBrowserWindow::InputTexture("##texture", material.texture);
+    TextureBrowserWindow::Get().InputTexture("##texture", material.texture);
     ImGui::Text("Base Scale");
     ImGui::PushItemWidth(-1);
     ImGui::InputFloat2("##baseScale", glm::value_ptr(material.baseScale));
@@ -103,20 +103,20 @@ static void Render()
 
 int main(int argc, char **argv)
 {
-    if (!SDKWindow::Init("GAME SDK Material Editor"))
+    if (!SDKWindow::Get().Init("GAME SDK Material Editor"))
     {
         return -1;
     }
 
-    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gmtl"});
+    const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gmtl"});
     if (!openPath.empty())
     {
         openGmtl(openPath);
     }
 
-    SDKWindow::MainLoop(Render);
+    SDKWindow::Get().MainLoop(Render);
 
-    SDKWindow::Destroy();
+    SDKWindow::Get().Destroy();
 
     return 0;
 }

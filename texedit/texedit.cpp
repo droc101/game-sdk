@@ -64,7 +64,7 @@ static void openGtex(const std::string &path)
     const Error::ErrorCode errorCode = TextureAsset::CreateFromAsset(path.c_str(), texture);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to open the texture!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to open the texture!\n{}", errorCode));
         return;
     }
     loadTexture();
@@ -75,7 +75,7 @@ static void importImage(const std::string &path)
     const Error::ErrorCode errorCode = TextureAsset::CreateFromImage(path.c_str(), texture);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to import the texture!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to import the texture!\n{}", errorCode));
         return;
     }
     loadTexture();
@@ -86,7 +86,7 @@ static void saveGtex(const std::string &path)
     const Error::ErrorCode errorCode = texture.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to save the texture!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to save the texture!\n{}", errorCode));
     }
 }
 
@@ -95,7 +95,7 @@ static void exportPng(const std::string &path)
     const Error::ErrorCode errorCode = texture.SaveAsImage(path.c_str(), TextureAsset::ImageFormat::IMAGE_FORMAT_PNG);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to export the texture!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to export the texture!\n{}", errorCode));
     }
 }
 
@@ -129,7 +129,7 @@ static void Render()
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                SDKWindow::PostQuit();
+                SDKWindow::Get().PostQuit();
             }
             ImGui::EndMenu();
         }
@@ -140,22 +140,22 @@ static void Render()
             resetZoomPressed |= ImGui::MenuItem("Reset Zoom", "Ctrl+0");
             ImGui::EndMenu();
         }
-        SharedMgr::SharedMenuUI("texedit");
+        SharedMgr::Get().SharedMenuUI("texedit");
         ImGui::EndMainMenuBar();
     }
 
     if (openPressed)
     {
-        SDKWindow::OpenFileDialog(openGtex, DialogFilters::gtexFilters);
+        SDKWindow::Get().OpenFileDialog(openGtex, DialogFilters::gtexFilters);
     } else if (importPressed)
     {
-        SDKWindow::OpenFileDialog(importImage, DialogFilters::imageFilters);
+        SDKWindow::Get().OpenFileDialog(importImage, DialogFilters::imageFilters);
     } else if (savePressed)
     {
-        SDKWindow::SaveFileDialog(saveGtex, DialogFilters::gtexFilters);
+        SDKWindow::Get().SaveFileDialog(saveGtex, DialogFilters::gtexFilters);
     } else if (exportPressed)
     {
-        SDKWindow::SaveFileDialog(exportPng, DialogFilters::pngFilters);
+        SDKWindow::Get().SaveFileDialog(exportPng, DialogFilters::pngFilters);
     } else if (zoomInPressed)
     {
         zoom += 0.1;
@@ -219,18 +219,18 @@ static void Render()
 
 int main(int argc, char **argv)
 {
-    if (!SDKWindow::Init("GAME SDK Texture Editor"))
+    if (!SDKWindow::Get().Init("GAME SDK Texture Editor"))
     {
         return -1;
     }
 
-    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gtex"});
+    const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gtex"});
     if (!openPath.empty())
     {
         openGtex(openPath);
     } else
     {
-        const std::string &importPath = DesktopInterface::GetFileArgument(argc,
+        const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc,
                                                                           argv,
                                                                           {
                                                                               ".png",
@@ -244,11 +244,11 @@ int main(int argc, char **argv)
         }
     }
 
-    SDKWindow::MainLoop(Render);
+    SDKWindow::Get().MainLoop(Render);
 
     destroyExistingTexture();
 
-    SDKWindow::Destroy();
+    SDKWindow::Get().Destroy();
 
     return 0;
 }

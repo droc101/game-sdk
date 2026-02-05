@@ -53,12 +53,12 @@ static void openGsnd(const std::string &path)
     const Error::ErrorCode errorCode = SoundAsset::CreateFromAsset(path.c_str(), soundAsset);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to open the sound!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to open the sound!\n{}", errorCode));
         return;
     }
     if (!loadSound())
     {
-        SDKWindow::ErrorMessage(std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN));
     }
 }
 
@@ -67,12 +67,12 @@ static void importWav(const std::string &path)
     const Error::ErrorCode errorCode = SoundAsset::CreateFromWAV(path.c_str(), soundAsset);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to import the sound!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to import the sound!\n{}", errorCode));
         return;
     }
     if (!loadSound())
     {
-        SDKWindow::ErrorMessage(std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN));
     }
 }
 
@@ -81,7 +81,7 @@ static void saveGsnd(const std::string &path)
     const Error::ErrorCode errorCode = soundAsset.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to save the sound!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to save the sound!\n{}", errorCode));
     }
 }
 
@@ -90,7 +90,7 @@ static void exportWav(const std::string &path)
     const Error::ErrorCode errorCode = soundAsset.SaveAsWAV(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to export the sound!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to export the sound!\n{}", errorCode));
     }
 }
 
@@ -120,26 +120,26 @@ static void Render()
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                SDKWindow::PostQuit();
+                SDKWindow::Get().PostQuit();
             }
             ImGui::EndMenu();
         }
-        SharedMgr::SharedMenuUI("sndedit");
+        SharedMgr::Get().SharedMenuUI("sndedit");
         ImGui::EndMainMenuBar();
     }
 
     if (openPressed)
     {
-        SDKWindow::OpenFileDialog(openGsnd, DialogFilters::gsndFilters);
+        SDKWindow::Get().OpenFileDialog(openGsnd, DialogFilters::gsndFilters);
     } else if (importPressed)
     {
-        SDKWindow::OpenFileDialog(importWav, DialogFilters::wavFilters);
+        SDKWindow::Get().OpenFileDialog(importWav, DialogFilters::wavFilters);
     } else if (savePressed)
     {
-        SDKWindow::SaveFileDialog(saveGsnd, DialogFilters::gsndFilters);
+        SDKWindow::Get().SaveFileDialog(saveGsnd, DialogFilters::gsndFilters);
     } else if (exportPressed)
     {
-        SDKWindow::SaveFileDialog(exportWav, DialogFilters::wavFilters);
+        SDKWindow::Get().SaveFileDialog(exportWav, DialogFilters::wavFilters);
     }
 
     if (soundLoaded)
@@ -232,7 +232,7 @@ static void Render()
 
 int main(int argc, char **argv)
 {
-    if (!SDKWindow::Init("GAME SDK Sound Editor"))
+    if (!SDKWindow::Get().Init("GAME SDK Sound Editor"))
     {
         return -1;
     }
@@ -243,24 +243,24 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gsnd"});
+    const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gsnd"});
     if (!openPath.empty())
     {
         openGsnd(openPath);
     } else
     {
-        const std::string &importPath = DesktopInterface::GetFileArgument(argc, argv, {".wav"});
+        const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".wav"});
         if (!importPath.empty())
         {
             importWav(importPath);
         }
     }
 
-    SDKWindow::MainLoop(Render);
+    SDKWindow::Get().MainLoop(Render);
 
     ma_engine_uninit(&engine);
 
-    SDKWindow::Destroy();
+    SDKWindow::Get().Destroy();
 
     return 0;
 }

@@ -11,18 +11,20 @@
 class MaterialBrowserWindow
 {
     public:
-        MaterialBrowserWindow() = delete;
+        static MaterialBrowserWindow &Get();
 
-        static void Show(std::string &material);
-        static void Hide();
-        static void Render();
+        void Show(std::string &material);
+        void Hide();
+        void Render();
 
-        static void InputMaterial(const char *label, std::string &material);
+        void InputMaterial(const char *label, std::string &material);
 
     private:
-        static inline bool visible = false;
-        static inline std::string *str = nullptr;
+        MaterialBrowserWindow() = default;
 
-        static inline std::vector<std::string> materialPaths;
-        static inline std::vector<LevelMaterialAsset> materials;
+        bool visible = false;
+        std::string *str = nullptr;
+
+        std::vector<std::string> materialPaths{};
+        std::vector<LevelMaterialAsset> materials{};
 };

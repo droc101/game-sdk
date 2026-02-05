@@ -29,7 +29,7 @@ static void openGkvl(const std::string &path)
     const Error::ErrorCode errorCode = DataAsset::CreateFromAsset(path.c_str(), dataAsset);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to open the KvList!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to open the KvList!\n{}", errorCode));
     }
 }
 
@@ -38,7 +38,7 @@ static void importJson(const std::string &path)
     const Error::ErrorCode errorCode = DataAsset::CreateFromJson(path.c_str(), dataAsset);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to import the KvList!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to import the KvList!\n{}", errorCode));
     }
 }
 
@@ -47,7 +47,7 @@ static void saveGkvl(const std::string &path)
     const Error::ErrorCode errorCode = dataAsset.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to save the KvList!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to save the KvList!\n{}", errorCode));
     }
 }
 
@@ -56,7 +56,7 @@ static void exportJson(const std::string &path)
     const Error::ErrorCode errorCode = dataAsset.SaveAsJson(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::ErrorMessage(std::format("Failed to export the KvList!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to export the KvList!\n{}", errorCode));
     }
 }
 
@@ -348,11 +348,11 @@ static void Render()
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                SDKWindow::PostQuit();
+                SDKWindow::Get().PostQuit();
             }
             ImGui::EndMenu();
         }
-        SharedMgr::SharedMenuUI("kvledit");
+        SharedMgr::Get().SharedMenuUI("kvledit");
         ImGui::EndMainMenuBar();
     }
 
@@ -361,16 +361,16 @@ static void Render()
         dataAsset = DataAsset();
     } else if (openPressed)
     {
-        SDKWindow::OpenFileDialog(openGkvl, DialogFilters::gkvlFilters);
+        SDKWindow::Get().OpenFileDialog(openGkvl, DialogFilters::gkvlFilters);
     } else if (importPressed)
     {
-        SDKWindow::OpenFileDialog(importJson, DialogFilters::kvlJsonFilters);
+        SDKWindow::Get().OpenFileDialog(importJson, DialogFilters::kvlJsonFilters);
     } else if (savePressed)
     {
-        SDKWindow::SaveFileDialog(saveGkvl, DialogFilters::gkvlFilters);
+        SDKWindow::Get().SaveFileDialog(saveGkvl, DialogFilters::gkvlFilters);
     } else if (exportPressed)
     {
-        SDKWindow::SaveFileDialog(exportJson, DialogFilters::kvlJsonFilters);
+        SDKWindow::Get().SaveFileDialog(exportJson, DialogFilters::kvlJsonFilters);
     }
 
     const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
@@ -396,27 +396,27 @@ static void Render()
 
 int main(int argc, char **argv)
 {
-    if (!SDKWindow::Init("GAME SDK Key-Value List Editor"))
+    if (!SDKWindow::Get().Init("GAME SDK Key-Value List Editor"))
     {
         return -1;
     }
 
-    const std::string &openPath = DesktopInterface::GetFileArgument(argc, argv, {".gkvl"});
+    const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gkvl"});
     if (!openPath.empty())
     {
         openGkvl(openPath);
     } else
     {
-        const std::string &importPath = DesktopInterface::GetFileArgument(argc, argv, {".json"});
+        const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".json"});
         if (!importPath.empty())
         {
             importJson(importPath);
         }
     }
 
-    SDKWindow::MainLoop(Render);
+    SDKWindow::Get().MainLoop(Render);
 
-    SDKWindow::Destroy();
+    SDKWindow::Get().Destroy();
 
     return 0;
 }

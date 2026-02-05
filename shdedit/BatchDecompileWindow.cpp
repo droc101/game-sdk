@@ -95,7 +95,7 @@ void BatchDecompileWindow::Render()
             ImGui::SameLine();
             if (ImGui::Button("...", ImVec2(40, 0)))
             {
-                SDKWindow::OpenFolderDialog(outPathCallback);
+                SDKWindow::Get().OpenFolderDialog(outPathCallback);
             }
 
             ImGui::Text("Compiled Shader Files");
@@ -105,7 +105,7 @@ void BatchDecompileWindow::Render()
             ImGui::SameLine();
             if (ImGui::Button("Add", ImVec2(60, 0)))
             {
-                SDKWindow::OpenMultiFileDialog(selectCallback, DialogFilters::gshdFilters);
+                SDKWindow::Get().OpenMultiFileDialog(selectCallback, DialogFilters::gshdFilters);
             }
             if (ImGui::BeginChild("##picker", ImVec2(-1, 250), ImGuiChildFlags_Borders, 0))
             {
@@ -148,7 +148,7 @@ void BatchDecompileWindow::Render()
                     visible = false;
                 } else
                 {
-                    SDKWindow::ErrorMessage(std::format("Failed to decompile shaders!\n{}", e));
+                    SDKWindow::Get().ErrorMessage(std::format("Failed to decompile shaders!\n{}", e));
                 }
             }
             ImGui::SameLine();

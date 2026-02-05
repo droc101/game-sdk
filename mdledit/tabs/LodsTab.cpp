@@ -27,7 +27,7 @@ void LodsTab::Render()
     ImGui::PushItemWidth(-1);
     if (ImGui::Button("Add", ImVec2(70, 0)))
     {
-        SDKWindow::OpenFileDialog(importLod, DialogFilters::modelFilters);
+        SDKWindow::Get().OpenFileDialog(importLod, DialogFilters::modelFilters);
     }
     ImGui::SameLine();
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 70);
@@ -42,12 +42,12 @@ void LodsTab::Render()
     {
         if (!ModelRenderer::GetModel().ValidateLodDistances())
         {
-            SDKWindow::WarningMessage("LOD distances are invalid! Make sure that:\n"
+            SDKWindow::Get().WarningMessage("LOD distances are invalid! Make sure that:\n"
                                       "- The first LOD (LOD 0) has a distance of 0\n"
                                       "- No two LODs have the same distance");
         } else
         {
-            SDKWindow::InfoMessage("LOD distances are valid", "Success");
+            SDKWindow::Get().InfoMessage("LOD distances are valid", "Success");
         }
     }
 
@@ -76,7 +76,7 @@ void LodsTab::Render()
         if (ImGui::Button(std::format("Export##{}", lodIndex).c_str(), ImVec2(buttonWidth, 0)))
         {
             lodToExport = &lod;
-            SDKWindow::SaveFileDialog(saveLodCallback, DialogFilters::objFilters);
+            SDKWindow::Get().SaveFileDialog(saveLodCallback, DialogFilters::objFilters);
         }
         ImGui::SameLine();
         if (ImGui::Button(std::format("Flip UVs##{}", lodIndex).c_str(), ImVec2(buttonWidth, 0)))

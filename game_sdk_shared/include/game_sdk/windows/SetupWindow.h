@@ -7,13 +7,16 @@
 class SetupWindow
 {
     public:
-        SetupWindow() = delete;
-        static void Show(bool required = true);
-        static void Render();
+        static SetupWindow &Get();
+
+        void Show(bool required = true);
+        void Render();
 
     private:
-        static inline bool visible = false;
-        static inline bool required = true;
+        SetupWindow() = default;
+
+        bool visible = false;
+        bool required = true;
 
         static void gamePathCallback(const std::string &path);
 
