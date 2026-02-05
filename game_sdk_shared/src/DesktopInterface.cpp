@@ -110,15 +110,14 @@ bool DesktopInterface::OpenFilesystemPath(const std::string &path)
 
 uint32_t DesktopInterface::GarbageCollectorCallback(void *userdata, SDL_TimerID timer, uint32_t interval)
 {
-    DesktopInterface &interface = Get();
-    std::vector<SDL_Process *>::iterator iter = interface.processes.begin();
-    while (iter != interface.processes.end())
+    std::vector<SDL_Process *>::iterator iter = Get().processes.begin();
+    while (iter != Get().processes.end())
     {
         SDL_Process *p = *iter.base();
         if (SDL_WaitProcess(p, false, nullptr))
         {
             SDL_DestroyProcess(p);
-            iter = interface.processes.erase(iter);
+            iter = Get().processes.erase(iter);
         } else
         {
             iter += 1;
