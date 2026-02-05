@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/Options.h>
@@ -17,6 +18,8 @@
 #include <string>
 #include <vector>
 
+#include "game_sdk/SharedMgr.h"
+
 static std::string sdkPath;
 static nlohmann::ordered_json launcher_json;
 
@@ -25,7 +28,7 @@ static std::string selectionIndex;
 
 static Error::ErrorCode LoadLauncherConfig()
 {
-    std::ifstream file("assets/launcher.json");
+    std::ifstream file("assets/launcher/launcher.json");
     if (!file.is_open())
     {
         return Error::ErrorCode::CANT_OPEN_FILE;
@@ -127,16 +130,27 @@ static void Render()
             ImGui::SeparatorText(category.c_str());
             for (const auto &[key, value]: items.items())
             {
-                if (ImGui::Selectable(key.c_str(), selectionCategory == category && selectionIndex == key))
+                ImTextureID textureId = 0;
+                (void)SharedMgr::Get().textureCache.GetTextureID(value.value("icon", "file"), textureId);
+                const std::string title = std::format("##item_{}_{}", category, key);
+                const bool selected = ImGui::Selectable(title.c_str(),
+                                                  selectionCategory == category && selectionIndex == key,
+                                                  ImGuiSelectableFlags_AllowOverlap |
+                                                          ImGuiSelectableFlags_SpanAllColumns,
+                                                  {0, 18});
+                if (selected)
                 {
                     selectionCategory = category;
                     selectionIndex = key;
                 }
-
                 if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
                 {
                     LaunchSelectedTool();
                 }
+                ImGui::SameLine();
+                ImGui::Image(textureId, {18, 18});
+                ImGui::SameLine();
+                ImGui::Text("%s", key.c_str());
             }
         }
         ImGui::EndChild();
@@ -169,6 +183,14 @@ int main()
 
     sdkPath = SDL_GetBasePath();
     sdkPath.pop_back();
+
+    const std::vector<std::string> icons = SharedMgr::Get().ScanFolder("assets/launcher/icons", ".png", true);
+    for (const std::string &icon: icons)
+    {
+        const size_t dotIndex = icon.find_last_of('.');
+        const std::string basename = icon.substr(0, dotIndex);
+        (void)SharedMgr::Get().textureCache.RegisterPng("assets/launcher/icons/" + icon, basename);
+    }
 
     const Error::ErrorCode c = LoadLauncherConfig();
     if (c != Error::ErrorCode::OK)

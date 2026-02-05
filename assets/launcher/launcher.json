@@ -1,0 +1,85 @@
+{
+  "categories": {
+    "GAME": {
+      "Launch GAME": {
+        "binary": "$GAMEDIR/game",
+        "workdir": "$GAMEDIR",
+        "arguments": [
+          "--nosteam",
+          "--game=$ASSETSDIR"
+        ],
+        "icon": "game"
+      },
+      "GAME Directory": {
+        "folder": "$GAMEDIR",
+        "icon": "folder"
+      },
+      "Assets Directory": {
+        "folder": "$ASSETSDIR",
+        "icon": "folder"
+      },
+      "GAME Log": {
+        "file": "$GAMEDIR/game.log",
+        "icon": "file"
+      }
+    },
+
+    "SDK Tools": {
+      "Map Editor": {
+        "binary": "$SDKDIR/mapedit",
+        "icon": "mapedit"
+      },
+      "Texture Editor": {
+        "binary": "$SDKDIR/texedit",
+        "icon": "texedit"
+      },
+      "Material Editor": {
+        "binary": "$SDKDIR/mtledit",
+        "icon": "mtledit"
+      },
+      "Model Editor": {
+        "binary": "$SDKDIR/mdledit",
+        "icon": "mdledit"
+      },
+      "Sound Editor": {
+        "binary": "$SDKDIR/sndedit",
+        "icon": "sndedit"
+      },
+      "Key-Value List Editor": {
+        "binary": "$SDKDIR/kvledit",
+        "icon": "kvledit"
+      },
+      "GAME Config Editor": {
+        "binary": "$SDKDIR/cfgedit",
+        "icon": "sdk"
+      },
+      "Font Editor": {
+        "binary": "$SDKDIR/fonedit",
+        "icon": "fonedit"
+      },
+      "Shader Editor": {
+        "binary": "$SDKDIR/shdedit",
+        "icon": "shdedit"
+      },
+      "SDK Directory": {
+        "folder": "$SDKDIR",
+        "icon": "folder"
+      }
+    },
+
+    "Resources": {
+      "Droc101 Development Wiki": {
+        "url": "https://wiki.droc101.dev",
+        "icon": "website"
+      },
+      "Engine Source Code": {
+        "url": "https://github.com/droc101/c-game-engine",
+        "icon": "website"
+      },
+      "SDK Source Code": {
+        "url": "https://github.com/droc101/game-sdk",
+        "icon": "website"
+      }
+    }
+  }
+}
