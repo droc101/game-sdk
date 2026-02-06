@@ -39,6 +39,7 @@ void MapCompileWindow::StartCompile()
             if (compilerProcess == nullptr)
             {
                 log += std::format("Failed to launch compiler: {}\n", SDL_GetError());
+                return;
             }
             size_t outputSize = 0;
             int exitCode = -1;
@@ -93,7 +94,7 @@ void MapCompileWindow::Render()
     }
     ImGui::EndDisabled();
 
-    if (ImGui::CollapsingHeader("Compiler Output"))
+    if (ImGui::CollapsingHeader("Compiler Output", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::InputTextMultiline("##output",
                                   &log,

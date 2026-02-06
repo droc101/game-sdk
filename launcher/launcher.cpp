@@ -62,6 +62,7 @@ static constexpr void StringReplace(std::string &string, const std::string &find
 
 static void ParsePath(std::string &path)
 {
+    StringReplace(path, "/", "\\");
     StringReplace(path, "$GAMEDIR", Options::Get().gamePath);
     StringReplace(path, "$ASSETSDIR", Options::Get().GetAssetsPath());
     StringReplace(path, "$SDKDIR", sdkPath);
@@ -91,7 +92,10 @@ static void LaunchSelectedTool()
             args.push_back(arg);
         }
         printf("Launching process \"%s\"...\n", folder.c_str());
-        DesktopInterface::Get().ExecuteProcessNonBlocking(folder, args);
+        if (!DesktopInterface::Get().ExecuteProcessNonBlocking(folder, args))
+        {
+            SDKWindow::Get().ErrorMessage(std::format("Failed to launch process: {}", SDL_GetError()));
+        }
     } else if (item.contains("file"))
     {
         std::string folder = item.value("file", "");
