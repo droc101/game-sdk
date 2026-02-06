@@ -34,8 +34,9 @@ void MapCompileWindow::StartCompile()
 
             const std::string srcArgument = "--map-source=" + MapEditor::mapFile;
             const std::string dirArgument = "--assets-dir=" + Options::Get().GetAssetsPath();
-            const char *args[4] = {compilerPath.c_str(), srcArgument.c_str(), dirArgument.c_str(), nullptr};
-            compilerProcess = SDL_CreateProcess(args, true);
+
+            compilerProcess = DesktopInterface::Get().StartSDLProcess(compilerPath, {srcArgument, dirArgument});
+
             if (compilerProcess == nullptr)
             {
                 log += std::format("Failed to launch compiler: {}\n", SDL_GetError());

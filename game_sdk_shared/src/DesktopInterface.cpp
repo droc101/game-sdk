@@ -30,15 +30,7 @@ bool DesktopInterface::ExecuteProcess(const std::string &executable,
                                       const std::vector<std::string> &arguments,
                                       int *exitCode)
 {
-    std::vector<const char *> args{};
-    args.push_back(executable.c_str());
-    for (const std::string &argument: arguments)
-    {
-        args.push_back(argument.c_str());
-    }
-    args.push_back(nullptr);
-
-    SDL_Process *p = SDL_CreateProcess(args.data(), false);
+    SDL_Process *p = StartSDLProcess(executable, arguments);
     if (p == nullptr)
     {
         return false;
@@ -46,8 +38,7 @@ bool DesktopInterface::ExecuteProcess(const std::string &executable,
     return SDL_WaitProcess(p, true, exitCode);
 }
 
-bool DesktopInterface::ExecuteProcessNonBlocking(const std::string &executable,
-                                                 const std::vector<std::string> &arguments)
+SDL_Process *DesktopInterface::StartSDLProcess(const std::string &executable, const std::vector<std::string> &arguments)
 {
     std::vector<const char *> args{};
     args.push_back(executable.c_str());
@@ -57,7 +48,21 @@ bool DesktopInterface::ExecuteProcessNonBlocking(const std::string &executable,
     }
     args.push_back(nullptr);
 
-    SDL_Process *p = SDL_CreateProcess(args.data(), false);
+    const SDL_PropertiesID props = SDL_CreateProperties();
+    (void)SDL_SetPointerProperty(props, SDL_PROP_PROCESS_CREATE_ARGS_POINTER, reinterpret_cast<void *>(args.data()));
+    (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER, SDL_PROCESS_STDIO_APP);
+    (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDIN_NUMBER, SDL_PROCESS_STDIO_NULL);
+    (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDERR_NUMBER, SDL_PROCESS_STDIO_APP);
+    SDL_Process *p = SDL_CreateProcessWithProperties(props);
+    SDL_DestroyProperties(props);
+
+    return p;
+}
+
+bool DesktopInterface::ExecuteProcessNonBlocking(const std::string &executable,
+                                                 const std::vector<std::string> &arguments)
+{
+    SDL_Process *p = StartSDLProcess(executable, arguments);
     if (p == nullptr)
     {
         return false;
