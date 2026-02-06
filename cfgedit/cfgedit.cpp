@@ -14,7 +14,6 @@
 #include <string>
 
 static GameConfigAsset config{};
-static bool configLoaded = false;
 
 static void openGame(const std::string &path)
 {
@@ -24,7 +23,6 @@ static void openGame(const std::string &path)
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the game configuration!\n{}", errorCode));
         return;
     }
-    configLoaded = true;
 }
 
 static void saveGame(const std::string &path)
@@ -48,7 +46,7 @@ static void Render()
     ImGui::Begin("cfgedit", nullptr, windowFlags);
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
-    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && configLoaded;
+    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S);
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -57,7 +55,7 @@ static void Render()
             newPressed |= ImGui::MenuItem("New", "Ctrl+N");
             ImGui::Separator();
             openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
-            savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, configLoaded);
+            savePressed |= ImGui::MenuItem("Save", "Ctrl+S");
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
@@ -78,29 +76,22 @@ static void Render()
     } else if (newPressed)
     {
         config = GameConfigAsset();
-        configLoaded = true;
     }
 
-    if (configLoaded)
-    {
-        ImGui::PushItemWidth(-1);
-        ImGui::Text("Game Title");
-        ImGui::InputText("##gameTitle", &config.gameTitle);
-        ImGui::Text("Game Copyright");
-        ImGui::InputText("##gameCopyright", &config.gameCopyright);
+    ImGui::PushItemWidth(-1);
+    ImGui::Text("Game Title");
+    ImGui::InputText("##gameTitle", &config.gameTitle);
+    ImGui::Text("Game Copyright");
+    ImGui::InputText("##gameCopyright", &config.gameCopyright);
 
-        ImGui::Dummy({0, 12});
-        ImGui::Separator();
-        ImGui::Dummy({0, 12});
+    ImGui::Dummy({0, 12});
+    ImGui::Separator();
+    ImGui::Dummy({0, 12});
 
-        ImGui::Text("Discord Rich Presence App ID");
-        ImGui::SameLine();
-        ImGui::TextDisabled("(set to 0 to disable)");
-        ImGui::InputScalar("##appId", ImGuiDataType_U64, &config.discordAppId);
-    } else
-    {
-        ImGui::TextDisabled("No game configuration is open.\nOpen or create one from the File menu.");
-    }
+    ImGui::Text("Discord Rich Presence App ID");
+    ImGui::SameLine();
+    ImGui::TextDisabled("(set to 0 to disable)");
+    ImGui::InputScalar("##appId", ImGuiDataType_U64, &config.discordAppId);
 
     ImGui::End();
 }

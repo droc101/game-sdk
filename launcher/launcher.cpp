@@ -62,7 +62,9 @@ static constexpr void StringReplace(std::string &string, const std::string &find
 
 static void ParsePath(std::string &path)
 {
+#ifdef WIN32
     StringReplace(path, "/", "\\");
+#endif
     StringReplace(path, "$GAMEDIR", Options::Get().gamePath);
     StringReplace(path, "$ASSETSDIR", Options::Get().GetAssetsPath());
     StringReplace(path, "$SDKDIR", sdkPath);

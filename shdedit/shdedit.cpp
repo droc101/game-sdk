@@ -18,7 +18,6 @@
 #include "BatchDecompileWindow.h"
 
 static ShaderAsset shader{};
-static bool shaderLoaded = false;
 
 static void openGshd(const std::string &path)
 {
@@ -28,7 +27,6 @@ static void openGshd(const std::string &path)
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the shader!\n{}", errorCode));
         return;
     }
-    shaderLoaded = true;
 }
 
 static void importGlsl(const std::string &path)
@@ -39,7 +37,6 @@ static void importGlsl(const std::string &path)
         SDKWindow::Get().ErrorMessage(std::format("Failed to import the shader!\n{}", errorCode));
         return;
     }
-    shaderLoaded = true;
 }
 
 static void saveGshd(const std::string &path)
@@ -73,8 +70,8 @@ static void Render()
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
-    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && shaderLoaded;
-    bool exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && shaderLoaded;
+    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S);
+    bool exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S);
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -84,8 +81,8 @@ static void Render()
             ImGui::Separator();
             openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
             importPressed |= ImGui::MenuItem("Import", "Ctrl+Shift+O");
-            savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, shaderLoaded);
-            exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S", false, shaderLoaded);
+            savePressed |= ImGui::MenuItem("Save", "Ctrl+S");
+            exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S");
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
@@ -125,63 +122,56 @@ static void Render()
     } else if (newPressed)
     {
         shader = ShaderAsset();
-        shaderLoaded = true;
     }
 
-    if (shaderLoaded)
+    const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
+
+    constexpr float statsWidth = 150.0f;
+    const float imageWidth = availableSize.x - statsWidth - 8.0f;
+
+    ImGui::BeginChild("ImagePane",
+                      ImVec2(imageWidth, availableSize.y),
+                      ImGuiChildFlags_Borders,
+                      ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
     {
-        const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
+        ImGui::InputTextMultiline("##glsl", &shader.GetGLSL(), ImVec2(-1, -1), ImGuiInputTextFlags_AllowTabInput);
+    }
+    ImGui::EndChild();
+    ImGui::SameLine();
 
-        constexpr float statsWidth = 150.0f;
-        const float imageWidth = availableSize.x - statsWidth - 8.0f;
-
-        ImGui::BeginChild("ImagePane",
-                          ImVec2(imageWidth, availableSize.y),
-                          ImGuiChildFlags_Borders,
-                          ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
+    ImGui::BeginChild("StatsPane", ImVec2(statsWidth, availableSize.y));
+    {
+        ImGui::TextUnformatted("Platform");
+        if (ImGui::RadioButton("Vulkan", shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_VULKAN))
         {
-            ImGui::InputTextMultiline("##glsl", &shader.GetGLSL(), ImVec2(-1, -1), ImGuiInputTextFlags_AllowTabInput);
+            shader.platform = ShaderAsset::ShaderPlatform::PLATFORM_VULKAN;
         }
-        ImGui::EndChild();
-        ImGui::SameLine();
-
-        ImGui::BeginChild("StatsPane", ImVec2(statsWidth, availableSize.y));
+        if (ImGui::RadioButton("OpenGL", shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_OPENGL))
         {
-            ImGui::TextUnformatted("Platform");
-            if (ImGui::RadioButton("Vulkan", shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_VULKAN))
-            {
-                shader.platform = ShaderAsset::ShaderPlatform::PLATFORM_VULKAN;
-            }
-            if (ImGui::RadioButton("OpenGL", shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_OPENGL))
-            {
-                shader.platform = ShaderAsset::ShaderPlatform::PLATFORM_OPENGL;
-                if (shader.type == ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE)
-                {
-                    shader.type = ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT;
-                }
-            }
-
-            ImGui::TextUnformatted("Type");
-            if (ImGui::RadioButton("Fragment", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT))
+            shader.platform = ShaderAsset::ShaderPlatform::PLATFORM_OPENGL;
+            if (shader.type == ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE)
             {
                 shader.type = ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT;
             }
-            if (ImGui::RadioButton("Vertex", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_VERTEX))
-            {
-                shader.type = ShaderAsset::ShaderType::SHADER_TYPE_VERTEX;
-            }
-            ImGui::BeginDisabled(shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_OPENGL);
-            if (ImGui::RadioButton("Compute", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE))
-            {
-                shader.type = ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE;
-            }
-            ImGui::EndDisabled();
         }
-        ImGui::EndChild();
-    } else
-    {
-        ImGui::TextDisabled("No shader is open. Open, create, or import one from the File menu.");
+
+        ImGui::TextUnformatted("Type");
+        if (ImGui::RadioButton("Fragment", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT))
+        {
+            shader.type = ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT;
+        }
+        if (ImGui::RadioButton("Vertex", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_VERTEX))
+        {
+            shader.type = ShaderAsset::ShaderType::SHADER_TYPE_VERTEX;
+        }
+        ImGui::BeginDisabled(shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_OPENGL);
+        if (ImGui::RadioButton("Compute", shader.type == ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE))
+        {
+            shader.type = ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE;
+        }
+        ImGui::EndDisabled();
     }
+    ImGui::EndChild();
 
     ImGui::End();
 
@@ -203,13 +193,13 @@ int main(int argc, char **argv)
     } else
     {
         const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc,
-                                                                          argv,
-                                                                          {
-                                                                              ".glsl",
-                                                                              ".frag",
-                                                                              ".vert",
-                                                                              ".comp",
-                                                                          });
+                                                                                argv,
+                                                                                {
+                                                                                    ".glsl",
+                                                                                    ".frag",
+                                                                                    ".vert",
+                                                                                    ".comp",
+                                                                                });
         if (!importPath.empty())
         {
             importGlsl(importPath);
