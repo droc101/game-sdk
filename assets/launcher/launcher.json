@@ -49,10 +49,6 @@
         "binary": "$SDKDIR/kvledit",
         "icon": "kvledit"
       },
-      "GAME Config Editor": {
-        "binary": "$SDKDIR/cfgedit",
-        "icon": "sdk"
-      },
       "Font Editor": {
         "binary": "$SDKDIR/fonedit",
         "icon": "fonedit"

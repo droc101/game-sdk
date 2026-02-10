@@ -55,6 +55,9 @@ Param::Param(DataReader &reader)
         case ParamType::PARAM_TYPE_KV_LIST:
             Set<KvList>(ReadKvList(reader));
             break;
+        case ParamType::PARAM_TYPE_UINT_64:
+            Set<uint64_t>(reader.Read<uint64_t>());
+            break;
         case ParamType::PARAM_TYPE_NONE:
         default:
             break;
@@ -95,6 +98,9 @@ Param::Param(nlohmann::ordered_json j)
         case ParamType::PARAM_TYPE_KV_LIST:
             Set<KvList>(KvListFromJson(j["data"]));
             break;
+        case ParamType::PARAM_TYPE_UINT_64:
+            Set<uint64_t>(j["value"]);
+            break;
         case ParamType::PARAM_TYPE_NONE:
         default:
             break;
@@ -126,6 +132,8 @@ bool Param::operator==(const Param &param) const
             return Get<ParamVector>(ParamVector()) == param.Get<ParamVector>(ParamVector());
         case ParamType::PARAM_TYPE_KV_LIST:
             return Get<KvList>(KvList()) == param.Get<KvList>(KvList());
+        case ParamType::PARAM_TYPE_UINT_64:
+            return Get<uint64_t>(0) == param.Get<uint64_t>(0);
         default:
             return true;
     }
@@ -165,6 +173,9 @@ void Param::Write(DataWriter &writer) const
             break;
         case ParamType::PARAM_TYPE_KV_LIST:
             WriteKvList(writer, Get<KvList>(KvList()));
+            break;
+        case ParamType::PARAM_TYPE_UINT_64:
+            writer.Write<uint64_t>(Get<uint64_t>(0));
             break;
         case ParamType::PARAM_TYPE_NONE:
         default:
@@ -229,6 +240,10 @@ Param::ParamType Param::ParseType(const std::string &type)
     {
         return ParamType::PARAM_TYPE_KV_LIST;
     }
+    if (type == "uint64" || type == "uint64_t" || type == "size_t")
+    {
+        return ParamType::PARAM_TYPE_UINT_64;
+    }
     return ParamType::PARAM_TYPE_NONE;
 }
 
@@ -265,6 +280,9 @@ void Param::ClearToType(const ParamType dataType)
             break;
         case ParamType::PARAM_TYPE_KV_LIST:
             Set<KvList>(KvList());
+            break;
+        case ParamType::PARAM_TYPE_UINT_64:
+            Set<uint64_t>(0);
             break;
         case ParamType::PARAM_TYPE_NONE:
         default:
@@ -322,6 +340,10 @@ nlohmann::ordered_json Param::GetJson() const
         case ParamType::PARAM_TYPE_KV_LIST:
             j["data"] = GenerateKvListJson(Get<KvList>(KvList()));
             j["type"] = "dict";
+            break;
+        case ParamType::PARAM_TYPE_UINT_64:
+            j["type"] = "uint64";
+            j["value"] = Get<uint64_t>(0);
             break;
         case ParamType::PARAM_TYPE_NONE:
         default:

@@ -25,7 +25,7 @@ Error::ErrorCode DataAsset::CreateFromAsset(const char *assetPath, DataAsset &da
     {
         return error;
     }
-    if (asset.type != Asset::AssetType::ASSET_TYPE_WAV)
+    if (asset.type != Asset::AssetType::ASSET_TYPE_KV_LIST)
     {
         return Error::ErrorCode::INCORRECT_FORMAT;
     }
@@ -50,7 +50,7 @@ Error::ErrorCode DataAsset::SaveAsAsset(const char *assetPath) const
 {
     std::vector<uint8_t> buffer;
     SaveToBuffer(buffer);
-    return AssetReader::SaveToFile(assetPath, buffer, Asset::AssetType::ASSET_TYPE_WAV, DATA_ASSET_VERSION);
+    return AssetReader::SaveToFile(assetPath, buffer, Asset::AssetType::ASSET_TYPE_KV_LIST, DATA_ASSET_VERSION);
 }
 
 

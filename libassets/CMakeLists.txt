@@ -117,6 +117,7 @@ add_library(assets SHARED
         src/type/renderDefs/RenderDefinition.cpp
         src/asset/DataAsset.cpp
         include/libassets/asset/DataAsset.h
+        include/libassets/type/paramDefs/Uint64ParamDefinition.h
 )
 
 set_target_properties(assets PROPERTIES POSITION_INDEPENDENT_CODE TRUE)

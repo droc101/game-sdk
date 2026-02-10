@@ -294,6 +294,9 @@ static void RenderSidebar()
         } else if (type == Param::ParamType::PARAM_TYPE_COLOR)
         {
             ImGui::ColorEdit4("##value", p->GetPointer<Color>()->GetDataPointer());
+        } else if (type == Param::ParamType::PARAM_TYPE_UINT_64)
+        {
+            ImGui::InputScalar("##value", ImGuiDataType_U64, p->GetPointer<uint64_t>());
         }
 
         ImGui::Separator();

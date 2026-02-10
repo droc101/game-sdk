@@ -16,6 +16,7 @@
 #include <libassets/type/paramDefs/OptionParamDefinition.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/type/paramDefs/StringParamDefinition.h>
+#include <libassets/type/paramDefs/Uint64ParamDefinition.h>
 #include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Error.h>
 #include <ranges>
@@ -144,6 +145,9 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
                 case Param::ParamType::PARAM_TYPE_COLOR:
                     ImGui::Text("Color");
                     break;
+                case Param::ParamType::PARAM_TYPE_UINT_64:
+                    ImGui::Text("Uint64");
+                    break;
                 default:
                     ImGui::Text("Unknown");
             }
@@ -238,6 +242,14 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
                         ImGui::Text("Show Alpha: %s", p->showAlpha ? "Yes" : "No");
                         ImGui::SetCursorPosX(cursorPos.x);
                         ImGui::Text("Default: %x", p->defaultValue.GetUint32());
+                    } else if (param->type == Param::ParamType::PARAM_TYPE_UINT_64)
+                    {
+                        const Uint64ParamDefinition *p = dynamic_cast<Uint64ParamDefinition *>(param.get());
+                        ImGui::Text("Minimum: %zu", p->minimumValue);
+                        ImGui::SetCursorPosX(cursorPos.x);
+                        ImGui::Text("Maximum: %zu", p->maximumValue);
+                        ImGui::SetCursorPosX(cursorPos.x);
+                        ImGui::Text("Default: %zu", p->defaultValue);
                     }
                 }
             }
@@ -290,6 +302,9 @@ void ActorBrowserWindow::RenderInputsTab(const ActorDefinition &def)
                     break;
                 case Param::ParamType::PARAM_TYPE_COLOR:
                     ImGui::Text("Color");
+                    break;
+                case Param::ParamType::PARAM_TYPE_UINT_64:
+                    ImGui::Text("Uint64");
                     break;
                 default:
                     ImGui::Text("Unknown");
@@ -345,6 +360,9 @@ void ActorBrowserWindow::RenderOutputsTab(const ActorDefinition &def)
                     break;
                 case Param::ParamType::PARAM_TYPE_COLOR:
                     ImGui::Text("Color");
+                    break;
+                case Param::ParamType::PARAM_TYPE_UINT_64:
+                    ImGui::Text("Uint64");
                     break;
                 default:
                     ImGui::Text("Unknown");

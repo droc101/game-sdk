@@ -26,6 +26,7 @@
 #include <libassets/type/paramDefs/OptionParamDefinition.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/type/paramDefs/StringParamDefinition.h>
+#include <libassets/type/paramDefs/Uint64ParamDefinition.h>
 #include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
@@ -169,6 +170,9 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
             } else if (paramDef->type == Param::ParamType::PARAM_TYPE_COLOR)
             {
                 ImGui::TextWrapped("0x%x", param.Get<Color>(Color(-1)).GetUint32());
+            } else if (paramDef->type == Param::ParamType::PARAM_TYPE_UINT_64)
+            {
+                ImGui::TextWrapped("%zu", param.Get<uint64_t>(0));
             }
 
             i++;
@@ -265,6 +269,15 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                         col = Color(colorData[0], colorData[1], colorData[2], colorData[3]);
                         param.Set<Color>(col);
                     }
+                } else if (paramDef->type == Param::ParamType::PARAM_TYPE_UINT_64)
+                {
+                    const Uint64ParamDefinition *uintDef = dynamic_cast<Uint64ParamDefinition *>(paramDef.get());
+                    uint64_t val = param.Get<uint64_t>(uintDef->defaultValue);
+                    if (ImGui::InputScalar("##value", ImGuiDataType_U64, &val))
+                    {
+                        val = std::clamp(val, uintDef->minimumValue, uintDef->maximumValue);
+                        param.Set<uint64_t>(val);
+                    }
                 }
             }
         } else
@@ -324,6 +337,9 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
             } else if (param.GetType() == Param::ParamType::PARAM_TYPE_STRING)
             {
                 ImGui::TextWrapped("0x%x", param.Get<Color>(Color(-1)).GetUint32());
+            } else if (param.GetType() == Param::ParamType::PARAM_TYPE_UINT_64)
+            {
+                ImGui::TextWrapped("%zu", param.Get<uint64_t>(0));
             }
 
             i++;
@@ -523,6 +539,13 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
                         {
                             col = Color(colorData[0], colorData[1], colorData[2], colorData[3]);
                             param.Set<Color>(col);
+                        }
+                    } else if (param.GetType() == Param::ParamType::PARAM_TYPE_UINT_64)
+                    {
+                        uint64_t val = param.Get<uint64_t>(0);
+                        if (ImGui::InputScalar("##value", ImGuiDataType_U64, &val))
+                        {
+                            param.Set<uint64_t>(val);
                         }
                     } else
                     {

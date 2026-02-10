@@ -15,6 +15,7 @@
 #include <libassets/type/paramDefs/OptionParamDefinition.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/type/paramDefs/StringParamDefinition.h>
+#include <libassets/type/paramDefs/Uint64ParamDefinition.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <string>
@@ -65,6 +66,11 @@ std::unique_ptr<ParamDefinition> ParamDefinition::Create(const nlohmann::json &j
         {
             output = std::make_unique<ColorParamDefinition>(Color(json.value("default", 0xFFFFFFFF)),
                                                             json.value("showAlpha", true));
+        } else if (type == Param::ParamType::PARAM_TYPE_UINT_64)
+        {
+            output = std::make_unique<Uint64ParamDefinition>(json.value("minimum", 0ull),
+                                                             json.value("maximum", 0ull),
+                                                             json.value("default", 0ull));
         } else
         {
             e = Error::ErrorCode::INCORRECT_FORMAT;

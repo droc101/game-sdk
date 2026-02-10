@@ -21,6 +21,7 @@ class Asset
             ASSET_TYPE_FONT = 5,
             ASSET_TYPE_GAME_CONFIG = 6,
             ASSET_TYPE_LEVEL_MATERIAL = 7,
+            ASSET_TYPE_KV_LIST = 8,
         };
 
         static constexpr uint8_t ASSET_CONTAINER_VERSION = 2;
