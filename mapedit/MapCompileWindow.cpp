@@ -97,12 +97,14 @@ void MapCompileWindow::Render()
 
     if (ImGui::CollapsingHeader("Compiler Output", ImGuiTreeNodeFlags_DefaultOpen))
     {
+        ImGui::PushFont(SDKWindow::Get().GetMonospaceFont(), 18);
         ImGui::InputTextMultiline("##output",
                                   &log,
                                   ImVec2(-1, 300),
                                   ImGuiInputTextFlags_ReadOnly |
                                           ImGuiInputTextFlags_WordWrap |
                                           ImGuiInputTextFlags_NoHorizontalScroll);
+        ImGui::PopFont();
     }
 
     ImGui::End();

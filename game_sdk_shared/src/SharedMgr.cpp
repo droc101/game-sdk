@@ -22,7 +22,6 @@
 #include <ranges>
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_misc.h>
-#include <SDL3/SDL_video.h>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -161,26 +160,6 @@ std::vector<std::string> SharedMgr::ScanFolder(const std::string &directoryPath,
         });
     }
     return files;
-}
-
-void SharedMgr::ApplyTheme()
-{
-    if (Options::Get().theme == Options::Theme::SYSTEM)
-    {
-        if (SDL_GetSystemTheme() == SDL_SYSTEM_THEME_DARK)
-        {
-            ImGui::StyleColorsDark();
-        } else
-        {
-            ImGui::StyleColorsLight();
-        }
-    } else if (Options::Get().theme == Options::Theme::LIGHT)
-    {
-        ImGui::StyleColorsLight();
-    } else
-    {
-        ImGui::StyleColorsDark();
-    }
 }
 
 void SharedMgr::LoadOptionDefinitions()

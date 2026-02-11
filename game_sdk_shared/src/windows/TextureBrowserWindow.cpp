@@ -48,7 +48,7 @@ void TextureBrowserWindow::Render()
             ImGui::PushItemWidth(-1);
             ImGui::InputTextWithHint("##search", "Filter", &filter);
             ImGui::Dummy({0, 4});
-            if (ImGui::BeginChild("##picker", ImVec2(-1, -32), ImGuiChildFlags_Borders, 0))
+            if (ImGui::BeginChild("##picker", ImVec2(-1, -36), ImGuiChildFlags_Borders, 0))
             {
                 const float spacing = ImGui::GetStyle().ItemSpacing.x;
                 const float regionMaxX = ImGui::GetWindowPos().x + ImGui::GetContentRegionMax().x;

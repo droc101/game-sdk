@@ -84,7 +84,7 @@ void OptionsWindow::Render()
         if (ImGui::Combo("##theme", &theme, options.data(), 3))
         {
             Options::Get().theme = static_cast<Options::Theme>(theme);
-            SharedMgr::Get().ApplyTheme();
+            SDKWindow::Get().ApplyTheme();
         }
 
         ImGui::Dummy(ImVec2(0, 16));

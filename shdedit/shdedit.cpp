@@ -134,7 +134,9 @@ static void Render()
                       ImGuiChildFlags_Borders,
                       ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
     {
+        ImGui::PushFont(SDKWindow::Get().GetMonospaceFont(), 18);
         ImGui::InputTextMultiline("##glsl", &shader.GetGLSL(), ImVec2(-1, -1), ImGuiInputTextFlags_AllowTabInput);
+        ImGui::PopFont();
     }
     ImGui::EndChild();
     ImGui::SameLine();

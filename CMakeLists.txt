@@ -82,6 +82,10 @@ find_or_fetch_package(https://github.com/g-truc/glm.git 1.*.* glm)
 
 find_package(OpenGL REQUIRED)
 
+set(BUILD_SHARED_LIBS ON)
+fetch_package(https://gitlab.freedesktop.org/freetype/freetype.git VER-2-*-* freetype)
+set(BUILD_SHARED_LIBS OFF)
+
 add_library(imgui STATIC)
 target_sources(imgui PRIVATE
         lib/imgui/imconfig.h
@@ -102,13 +106,16 @@ target_sources(imgui PRIVATE
         lib/imgui/backends/imgui_impl_opengl3.h
         lib/imgui/backends/imgui_impl_opengl3.cpp
         lib/imgui/backends/imgui_impl_opengl3_loader.h
+        lib/imgui/misc/freetype/imgui_freetype.cpp
+        lib/imgui/misc/freetype/imgui_freetype.h
 )
 target_include_directories(imgui PUBLIC
         lib/imgui
         lib/imgui/backends
 )
 set_target_properties(imgui PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
-target_link_libraries(imgui PRIVATE SDL3::SDL3)
+target_link_libraries(imgui PRIVATE SDL3::SDL3 freetype)
+target_compile_definitions(imgui PRIVATE IMGUI_ENABLE_FREETYPE)
 
 add_custom_target(
         copy_assets

@@ -9,7 +9,6 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 
-
 SetupWindow &SetupWindow::Get()
 {
     static SetupWindow setupWindowSingleton{};

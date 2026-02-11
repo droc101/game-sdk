@@ -38,11 +38,6 @@ class SharedMgr
         void DestroySharedMgr();
 
         /**
-         * Apply the ImGui theme from options
-         */
-        void ApplyTheme();
-
-        /**
          * Recursively scan a directory for files of a certain type
          * @param directoryPath The path to the directory
          * @param extension The extension to scan for

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <glm/vec2.hpp>
+#include <imgui.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_video.h>
@@ -46,8 +47,8 @@ class SDKWindow
          * @return True on success, false on failure
          */
         [[nodiscard]] bool Init(const std::string &appName,
-                                       glm::ivec2 windowSize = {800, 600},
-                                       SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE);
+                                glm::ivec2 windowSize = {800, 600},
+                                SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE);
 
         /**
          * Run the main loop
@@ -98,8 +99,7 @@ class SDKWindow
          * @param filters File type filters
          * @note The callback will only be called on success (user chose a file), and will be called on the main thread.
          */
-        void OpenFileDialog(SDKWindowFileDialogCallback Callback,
-                                   const std::vector<SDL_DialogFileFilter> &filters);
+        void OpenFileDialog(SDKWindowFileDialogCallback Callback, const std::vector<SDL_DialogFileFilter> &filters);
 
         /**
          * Show an open multiple files dialog
@@ -108,7 +108,7 @@ class SDKWindow
          * @note The callback will only be called on success (user chose one or more files), and will be called on the main thread.
          */
         void OpenMultiFileDialog(SDKWindowMultiFileDialogCallback Callback,
-                                        const std::vector<SDL_DialogFileFilter> &filters);
+                                 const std::vector<SDL_DialogFileFilter> &filters);
 
         /**
          * Show a save file dialog
@@ -116,8 +116,7 @@ class SDKWindow
          * @param filters File type filters
          * @note The callback will only be called on success (user chose a file), and will be called on the main thread.
          */
-        void SaveFileDialog(SDKWindowFileDialogCallback Callback,
-                                   const std::vector<SDL_DialogFileFilter> &filters);
+        void SaveFileDialog(SDKWindowFileDialogCallback Callback, const std::vector<SDL_DialogFileFilter> &filters);
 
         /**
          * Show an open folder dialog
@@ -126,11 +125,19 @@ class SDKWindow
          */
         void OpenFolderDialog(SDKWindowFileDialogCallback Callback);
 
+        void ApplyTheme() const;
+
+        ImFont *GetNormalFont() const;
+
+        ImFont *GetMonospaceFont() const;
+
     private:
         bool initDone = false;
         SDL_Window *window = nullptr;
         SDL_GLContext glContext = nullptr;
         bool quitRequest = false;
+        ImFont *normalFont = nullptr;
+        ImFont *monospaceFont = nullptr;
 
         struct FileDialogMainThreadCallbackData
         {
@@ -140,8 +147,8 @@ class SDKWindow
 
         struct MultiFileDialogMainThreadCallbackData
         {
-            SDKWindowMultiFileDialogCallback Callback;
-            std::vector<std::string> paths;
+                SDKWindowMultiFileDialogCallback Callback;
+                std::vector<std::string> paths;
         };
 
         SDKWindow() = default;

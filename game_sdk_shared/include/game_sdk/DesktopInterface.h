@@ -25,6 +25,12 @@ class DesktopInterface
                                    const std::vector<std::string> &arguments,
                                    int *exitCode);
 
+        /**
+         * Create and start an SDL_Process
+         * @param executable The executable to run
+         * @param arguments Arguments to pass to the process
+         * @return SDL_Process pointer or nullptr on failure
+         */
         SDL_Process *StartSDLProcess(const std::string &executable, const std::vector<std::string> &arguments);
 
         /**

@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstdio>
 #include <game_sdk/gl/GLHelper.h>
+#include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
 #include <imgui.h>
@@ -116,7 +117,10 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-    SharedMgr::Get().ApplyTheme();
+    normalFont = io.Fonts->AddFontFromFileTTF("assets/NotoSans.ttf");
+    monospaceFont = io.Fonts->AddFontFromFileTTF("assets/JetBrainsMono.ttf");
+
+    ApplyTheme();
 
     ImGui_ImplSDL3_InitForOpenGL(window, glContext);
     ImGui_ImplOpenGL3_Init(glslVersion);
@@ -321,4 +325,36 @@ void SDKWindow::SaveFileDialog(const SDKWindowFileDialogCallback Callback,
 void SDKWindow::OpenFolderDialog(const SDKWindowFileDialogCallback Callback)
 {
     SDL_ShowOpenFolderDialog(FileDialogCallback, reinterpret_cast<void *>(Callback), GetWindow(), nullptr, false);
+}
+
+void SDKWindow::ApplyTheme() const
+{
+    if (Options::Get().theme == Options::Theme::SYSTEM)
+    {
+        if (SDL_GetSystemTheme() == SDL_SYSTEM_THEME_DARK)
+        {
+            ImGui::StyleColorsDark();
+        } else
+        {
+            ImGui::StyleColorsLight();
+        }
+    } else if (Options::Get().theme == Options::Theme::LIGHT)
+    {
+        ImGui::StyleColorsLight();
+    } else
+    {
+        ImGui::StyleColorsDark();
+    }
+    ImGuiStyle &style = ImGui::GetStyle();
+    style.FontSizeBase = 16.0;
+}
+
+ImFont *SDKWindow::GetNormalFont() const
+{
+    return normalFont;
+}
+
+ImFont *SDKWindow::GetMonospaceFont() const
+{
+    return monospaceFont;
 }

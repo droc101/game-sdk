@@ -4,6 +4,10 @@
 
 #pragma once
 
+#include <cstddef>
+#include <string>
+#include <map>
+
 class AboutWindow
 {
     public:
@@ -19,4 +23,7 @@ class AboutWindow
         AboutWindow() = default;
 
         bool visible = false;
+
+        std::string selectedComponent{};
+        std::map<std::string, std::string> thirdPartyComponents{};
 };
