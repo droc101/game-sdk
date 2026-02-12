@@ -2,6 +2,7 @@
 // Created by droc101 on 7/23/25.
 //
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
@@ -19,6 +20,7 @@
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <TextEditor.h>
+#include <Types.h>
 #include <vector>
 #include "BatchCompileWindow.h"
 #include "BatchDecompileWindow.h"
@@ -33,6 +35,9 @@ struct EditorTab
 
 static std::vector<EditorTab> tabs{};
 static size_t selectedTab = 0;
+
+static bool showWhitespaces = false;
+static bool syntaxHighlighting = true;
 
 static void ThemeChanged()
 {
@@ -50,6 +55,8 @@ static void ThemeChanged()
 
     for (EditorTab &tab: tabs)
     {
+        tab.editor.SetColorizerEnable(syntaxHighlighting);
+        tab.editor.SetShowWhitespaces(showWhitespaces);
         if (dark)
         {
             tab.editor.SetPalette(GetDarkPalette());
@@ -71,7 +78,6 @@ static void AddTab(const ShaderAsset &shader, const std::string &path)
     });
     EditorTab &tab = tabs.back();
     tab.editor.SetLanguageDefinition(LanguageDefinition::GLSL());
-    tab.editor.SetShowWhitespaces(false);
     tab.editor.SetTabSize(4);
     tab.editor.SetReadOnly(false);
     tab.editor.SetText(tab.shader.GetGLSL());
@@ -136,18 +142,27 @@ static void exportGlsl(const std::string &path)
 static void RenderTab(EditorTab &tab)
 {
     const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
+    const ImVec2 cursorPos = ImGui::GetCursorPos();
 
     constexpr float statsWidth = 150.0f;
     const float imageWidth = availableSize.x - statsWidth - 8.0f;
 
     ImGui::PushFont(SDKWindow::Get().GetMonospaceFont(), 18);
-    tab.editor.Render("##glsl", {imageWidth, availableSize.y});
+    tab.editor.Render("##glsl", {imageWidth, availableSize.y - 18}, true);
     if (tab.editor.IsTextChanged())
     {
         tab.modified = true;
     }
     ImGui::PopFont();
-    ImGui::SameLine();
+    const Coordinates cursor = tab.editor.GetCursorPosition();
+    ImGui::Text("Line %d Column %d", cursor.mLine + 1, cursor.mColumn + 1);
+    if (tab.editor.IsOverwrite())
+    {
+        ImGui::SameLine();
+        ImGui::Text("Overwrite");
+    }
+    ImGui::SetCursorPosY(cursorPos.y);
+    ImGui::SetCursorPosX(cursorPos.x + imageWidth + ImGui::GetStyle().WindowPadding.x);
 
     ImGui::BeginChild("StatsPane", ImVec2(statsWidth, availableSize.y), ImGuiChildFlags_Borders);
     {
@@ -194,12 +209,13 @@ static void Render()
                                              ImGuiWindowFlags_NoSavedSettings |
                                              ImGuiWindowFlags_NoBringToFrontOnFocus;
     ImGui::Begin("shdedit", nullptr, windowFlags);
-    bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N);
+    bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N) || ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_T);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
     bool savePressed = !tabs.empty() && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S);
     bool saveAllPressed = !tabs.empty() && ImGui::Shortcut(ImGuiMod_Alt | ImGuiMod_Shift | ImGuiKey_S);
     bool exportPressed = !tabs.empty() && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S);
+    bool closeTabPressed = !tabs.empty() && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_W);
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -213,6 +229,7 @@ static void Render()
             saveAllPressed |= ImGui::MenuItem("Save All", "Alt+Shift+S", false, !tabs.empty());
             exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S", false, !tabs.empty());
             ImGui::Separator();
+            closeTabPressed |= ImGui::MenuItem("Close Tab", "Ctrl+W", false, !tabs.empty());
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
                 SDKWindow::Get().PostQuit();
@@ -263,6 +280,18 @@ static void Render()
             {
                 assert(editor);
                 editor->SelectAll();
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("View"))
+        {
+            if (ImGui::MenuItem("Show Whitespaces", "", &showWhitespaces))
+            {
+                ThemeChanged();
+            }
+            if (ImGui::MenuItem("Syntax Highlighting", "", &syntaxHighlighting))
+            {
+                ThemeChanged();
             }
             ImGui::EndMenu();
         }
@@ -332,6 +361,16 @@ static void Render()
     } else if (newPressed)
     {
         AddTab(ShaderAsset(), "");
+    } else if (closeTabPressed)
+    {
+        tabs.erase(tabs.begin() + selectedTab);
+        if (!tabs.empty())
+        {
+            selectedTab = std::ranges::clamp(selectedTab, static_cast<size_t>(0), tabs.size() - 1);
+        } else
+        {
+            selectedTab = 0;
+        }
     }
 
     if (ImGui::BeginTabBar("editorTabs",
@@ -339,7 +378,7 @@ static void Render()
                                    ImGuiTabBarFlags_Reorderable |
                                    ImGuiTabBarFlags_FittingPolicyMixed))
     {
-        if (ImGui::TabItemButton("+", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip))
+        if (ImGui::TabItemButton(" + ", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip))
         {
             AddTab(ShaderAsset(), "");
         }
