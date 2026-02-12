@@ -39,5 +39,10 @@ target_link_libraries(game_sdk_shared PUBLIC
         miniaudio
         imgui
 )
-set_target_properties(game_sdk_shared PROPERTIES OUTPUT_NAME "game_sdk" PREFIX "" POSITION_INDEPENDENT_CODE ON)
+set_target_properties(game_sdk_shared PROPERTIES
+        OUTPUT_NAME "game_sdk"
+        PREFIX ""
+        POSITION_INDEPENDENT_CODE ON
+        LINK_FLAGS "-Wl,-rpath='$ORIGIN'"
+)
 target_include_directories(game_sdk_shared PUBLIC ${CMAKE_SOURCE_DIR}/game_sdk_shared/include)

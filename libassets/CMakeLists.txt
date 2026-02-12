@@ -120,7 +120,10 @@ add_library(assets SHARED
         include/libassets/type/paramDefs/Uint64ParamDefinition.h
 )
 
-set_target_properties(assets PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+set_target_properties(assets PROPERTIES
+        POSITION_INDEPENDENT_CODE TRUE
+        LINK_FLAGS "-Wl,-rpath='$ORIGIN'"
+)
 
 target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json glm::glm)
 
