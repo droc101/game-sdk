@@ -83,6 +83,7 @@ find_or_fetch_package(https://github.com/g-truc/glm.git 1.*.* glm)
 find_package(OpenGL REQUIRED)
 
 set(BUILD_SHARED_LIBS ON)
+set(FT_DISABLE_BROTLI ON)
 fetch_package(https://gitlab.freedesktop.org/freetype/freetype.git VER-2-*-* freetype)
 set(BUILD_SHARED_LIBS OFF)
 
