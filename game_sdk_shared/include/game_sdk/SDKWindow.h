@@ -16,6 +16,12 @@
  * Function signature for main loop render callback
  */
 using SDKWindowRenderFunction = void (*)();
+
+/**
+ * Function signature for theme changes
+ */
+using SDKWindowThemeChangeCallback = void(*)();
+
 /**
  * Function signature for main loop event handling callback
  * @param event The event to handle
@@ -127,9 +133,11 @@ class SDKWindow
 
         void ApplyTheme() const;
 
-        ImFont *GetNormalFont() const;
+        [[nodiscard]] ImFont *GetNormalFont() const;
 
-        ImFont *GetMonospaceFont() const;
+        [[nodiscard]] ImFont *GetMonospaceFont() const;
+
+        void SetThemeChangeCallback(SDKWindowThemeChangeCallback callback);
 
     private:
         bool initDone = false;
@@ -138,6 +146,7 @@ class SDKWindow
         bool quitRequest = false;
         ImFont *normalFont = nullptr;
         ImFont *monospaceFont = nullptr;
+        SDKWindowThemeChangeCallback ThemeChangeCallback = nullptr;
 
         struct FileDialogMainThreadCallbackData
         {

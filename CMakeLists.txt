@@ -109,10 +109,18 @@ target_sources(imgui PRIVATE
         lib/imgui/backends/imgui_impl_opengl3_loader.h
         lib/imgui/misc/freetype/imgui_freetype.cpp
         lib/imgui/misc/freetype/imgui_freetype.h
+        lib/imguicolortextedit/TextEditor.h
+        lib/imguicolortextedit/TextEditor.cpp
+        lib/imguicolortextedit/Types.h
+        lib/imguicolortextedit/LanguageDefinition.cpp
+        lib/imguicolortextedit/LanguageDefinition.h
+        lib/imguicolortextedit/Palette.cpp
+        lib/imguicolortextedit/Palette.h
 )
 target_include_directories(imgui PUBLIC
         lib/imgui
         lib/imgui/backends
+        lib/imguicolortextedit
 )
 set_target_properties(imgui PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 target_link_libraries(imgui PRIVATE SDL3::SDL3 freetype)

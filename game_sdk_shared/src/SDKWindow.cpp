@@ -347,6 +347,10 @@ void SDKWindow::ApplyTheme() const
     }
     ImGuiStyle &style = ImGui::GetStyle();
     style.FontSizeBase = 16.0;
+    if (ThemeChangeCallback != nullptr)
+    {
+        ThemeChangeCallback();
+    }
 }
 
 ImFont *SDKWindow::GetNormalFont() const
@@ -357,4 +361,9 @@ ImFont *SDKWindow::GetNormalFont() const
 ImFont *SDKWindow::GetMonospaceFont() const
 {
     return monospaceFont;
+}
+
+void SDKWindow::SetThemeChangeCallback(SDKWindowThemeChangeCallback callback)
+{
+    ThemeChangeCallback = callback;
 }
