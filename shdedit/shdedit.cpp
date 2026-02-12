@@ -2,7 +2,7 @@
 // Created by droc101 on 7/23/25.
 //
 
-#include <array>
+#include <cassert>
 #include <cstdint>
 #include <cstdio>
 #include <format>
@@ -12,9 +12,11 @@
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
 #include <imgui.h>
+#include <LanguageDefinition.h>
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
 #include <Palette.h>
+#include <SDL3/SDL_video.h>
 #include <string>
 #include <TextEditor.h>
 #include <vector>
@@ -109,6 +111,7 @@ static void importGlsls(const std::vector<std::string> &paths)
 static void saveGshd(const std::string &path)
 {
     EditorTab &tab = tabs.at(selectedTab);
+    tab.shader.GetGLSL() = tab.editor.GetText();
     const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
@@ -121,7 +124,8 @@ static void saveGshd(const std::string &path)
 
 static void exportGlsl(const std::string &path)
 {
-    const EditorTab &tab = tabs.at(selectedTab);
+    EditorTab &tab = tabs.at(selectedTab);
+    tab.shader.GetGLSL() = tab.editor.GetText();
     const Error::ErrorCode errorCode = tab.shader.SaveAsGlsl(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
@@ -206,7 +210,7 @@ static void Render()
             openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
             importPressed |= ImGui::MenuItem("Import", "Ctrl+Shift+O");
             savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, !tabs.empty());
-            savePressed |= ImGui::MenuItem("Save All", "Alt+Shift+S", false, !tabs.empty());
+            saveAllPressed |= ImGui::MenuItem("Save All", "Alt+Shift+S", false, !tabs.empty());
             exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S", false, !tabs.empty());
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
@@ -230,28 +234,34 @@ static void Render()
             }
             if (ImGui::MenuItem("Undo", "Ctrl+Z", false, canUndo))
             {
+                assert(editor);
                 editor->Undo();
             }
             if (ImGui::MenuItem("Redo", "Ctrl+Shift+Z", false, canRedo))
             {
+                assert(editor);
                 editor->Redo();
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Cut", "Ctrl+X", false, !tabs.empty() && hasSelection))
             {
+                assert(editor);
                 editor->Cut();
             }
             if (ImGui::MenuItem("Copy", "Ctrl+C", false, !tabs.empty() && hasSelection))
             {
+                assert(editor);
                 editor->Copy();
             }
             if (ImGui::MenuItem("Paste", "Ctrl+V", false, !tabs.empty()))
             {
+                assert(editor);
                 editor->Paste();
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Select All", "Ctrl+A", false, !tabs.empty()))
             {
+                assert(editor);
                 editor->SelectAll();
             }
             ImGui::EndMenu();
@@ -287,6 +297,7 @@ static void Render()
             SDKWindow::Get().SaveFileDialog(saveGshd, DialogFilters::gshdFilters);
         } else
         {
+            tab.shader.GetGLSL() = tab.editor.GetText();
             const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(tab.path.c_str());
             if (errorCode != Error::ErrorCode::OK)
             {
@@ -302,6 +313,7 @@ static void Render()
         {
             if (!tab.path.empty())
             {
+                tab.shader.GetGLSL() = tab.editor.GetText();
                 const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(tab.path.c_str());
                 if (errorCode != Error::ErrorCode::OK)
                 {
