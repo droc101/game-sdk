@@ -87,8 +87,15 @@ set(FT_DISABLE_BROTLI ON)
 fetch_package(https://gitlab.freedesktop.org/freetype/freetype.git VER-2-*-* freetype)
 set(BUILD_SHARED_LIBS OFF)
 
-add_library(imgui STATIC)
-target_sources(imgui PRIVATE
+add_library(imgui_headers INTERFACE)
+target_include_directories(imgui_headers INTERFACE
+        ${CMAKE_SOURCE_DIR}/lib/imgui
+        ${CMAKE_SOURCE_DIR}/lib/imgui/backends
+        ${CMAKE_SOURCE_DIR}/lib/imguicolortextedit
+)
+
+add_library(imgui INTERFACE)
+target_sources(imgui INTERFACE
         lib/imgui/imconfig.h
         lib/imgui/imgui.cpp
         lib/imgui/imgui.h
@@ -117,14 +124,9 @@ target_sources(imgui PRIVATE
         lib/imguicolortextedit/Palette.cpp
         lib/imguicolortextedit/Palette.h
 )
-target_include_directories(imgui PUBLIC
-        lib/imgui
-        lib/imgui/backends
-        lib/imguicolortextedit
-)
 set_target_properties(imgui PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
-target_link_libraries(imgui PRIVATE SDL3::SDL3 freetype)
-target_compile_definitions(imgui PRIVATE IMGUI_ENABLE_FREETYPE)
+target_link_libraries(imgui INTERFACE SDL3::SDL3 freetype imgui_headers)
+target_compile_definitions(imgui INTERFACE IMGUI_ENABLE_FREETYPE)
 
 add_custom_target(
         copy_assets
