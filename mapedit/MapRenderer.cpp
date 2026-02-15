@@ -336,7 +336,7 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix)
 
     RenderUnitVector(a.position, a.rotation, c, matrix, 2, 1);
 
-    if (!definition.renderDefinition.model.empty() || !definition.renderDefinition.modelSourceParam.empty())
+    if ((!definition.renderDefinition.model.empty() || !definition.renderDefinition.modelSourceParam.empty()) && MapEditor::drawModels)
     {
         std::string model = definition.renderDefinition.model;
         if (!definition.renderDefinition.modelSourceParam.empty() &&

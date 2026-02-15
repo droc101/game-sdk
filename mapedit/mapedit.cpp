@@ -323,6 +323,10 @@ static void Render()
             {
                 MapEditor::drawWorldBorder = !MapEditor::drawWorldBorder;
             }
+            if (ImGui::MenuItem("Show 3D Models", "", MapEditor::drawModels))
+            {
+                MapEditor::drawModels = !MapEditor::drawModels;
+            }
             if (ImGui::MenuItem("Show Grid", "", MapEditor::drawGrid))
             {
                 MapEditor::drawGrid = !MapEditor::drawGrid;
