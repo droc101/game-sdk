@@ -5,12 +5,12 @@
 #include <array>
 #include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
-#include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/OptionsWindow.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
+#include <string>
 
 OptionsWindow &OptionsWindow::Get()
 {
@@ -80,7 +80,7 @@ void OptionsWindow::Render()
 
         ImGui::TextUnformatted("Theme");
         int theme = static_cast<int>(Options::Get().theme);
-        const std::array<const char *, 3> options = {"System", "Light", "Dark"};
+        constexpr std::array<const char *, 3> options = {"System", "Light", "Dark"};
         if (ImGui::Combo("##theme", &theme, options.data(), 3))
         {
             Options::Get().theme = static_cast<Options::Theme>(theme);

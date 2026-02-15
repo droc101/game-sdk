@@ -2,12 +2,14 @@
 // Created by droc101 on 11/12/25.
 //
 
+#include <array>
 #include <cstdlib>
 #include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/windows/SetupWindow.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
+#include <string>
 
 SetupWindow &SetupWindow::Get()
 {
@@ -84,6 +86,15 @@ void SetupWindow::Render()
         SDKWindow::Get().OpenFolderDialog(assetsPathCallback);
     }
     ImGui::EndDisabled();
+
+    ImGui::TextUnformatted("Theme");
+    int theme = static_cast<int>(Options::Get().theme);
+    constexpr std::array<const char *, 3> options = {"System", "Light", "Dark"};
+    if (ImGui::Combo("##theme", &theme, options.data(), 3))
+    {
+        Options::Get().theme = static_cast<Options::Theme>(theme);
+        SDKWindow::Get().ApplyTheme();
+    }
 
 
     ImGui::Dummy(ImVec2(0, 16));
