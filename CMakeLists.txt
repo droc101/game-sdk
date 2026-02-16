@@ -126,7 +126,18 @@ target_sources(imgui INTERFACE
 )
 set_target_properties(imgui PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 target_link_libraries(imgui INTERFACE SDL3::SDL3 freetype imgui_headers)
-target_compile_definitions(imgui INTERFACE IMGUI_ENABLE_FREETYPE)
+target_compile_definitions(imgui INTERFACE
+        IMGUI_ENABLE_FREETYPE
+        IMGUI_DISABLE_DEFAULT_FONT
+        IMGUI_DISABLE_STB_TRUETYPE_IMPLEMENTATION
+)
+
+if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    target_compile_definitions(imgui INTERFACE
+            IMGUI_DISABLE_DEMO_WINDOWS
+            IMGUI_DISABLE_DEBUG_TOOLS
+    )
+endif ()
 
 add_custom_target(
         copy_assets
