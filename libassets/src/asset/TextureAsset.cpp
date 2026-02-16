@@ -40,7 +40,6 @@ Error::ErrorCode TextureAsset::CreateFromImage(const char *imagePath, TextureAss
         texture.pixels.at(i) = data32[i];
     }
     stbi_image_free(data);
-    texture.FixByteOrder();
     return Error::ErrorCode::OK;
 }
 
@@ -122,11 +121,6 @@ uint32_t TextureAsset::GetWidth() const
     return width;
 }
 
-unsigned *TextureAsset::GetPixels()
-{
-    return pixels.data();
-}
-
 Error::ErrorCode TextureAsset::SaveAsImage(const char *imagePath, const ImageFormat format) const
 {
     std::vector<uint32_t> texturePixels;
@@ -188,7 +182,7 @@ void TextureAsset::GetPixelsRGBA(std::vector<uint32_t> &outBuffer) const
     outBuffer = pixels;
 }
 
-void TextureAsset::FixByteOrder()
+void TextureAsset::SwapByteOrder()
 {
     assert(pixels.size() == width * height);
     for (uint32_t &pixel: pixels)

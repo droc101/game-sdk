@@ -60,9 +60,6 @@ class TextureAsset final
         /// Get the pixel data in RGBA format
         void GetPixelsRGBA(std::vector<uint32_t> &outBuffer) const;
 
-        /// Get the raw pixel data (not in RGBA)
-        [[nodiscard]] unsigned *GetPixels();
-
         /// Get the width of the texture
         [[nodiscard]] uint32_t GetWidth() const;
 
@@ -82,6 +79,11 @@ class TextureAsset final
          */
         [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
 
+        /**
+         * Swap the byte order of this texture (RGBA <-> ABGR)
+         */
+        void SwapByteOrder();
+
         static constexpr uint8_t TEXTURE_ASSET_VERSION = 1;
 
         bool filter = false;
@@ -98,9 +100,4 @@ class TextureAsset final
          * @param[out] buffer The output buffer to store the payload in
          */
         void SaveToBuffer(std::vector<uint8_t> &buffer) const;
-
-        /**
-         * Fix the byte order on imported pixels
-         */
-        void FixByteOrder();
 };

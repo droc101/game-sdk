@@ -10,7 +10,6 @@
 #include <imgui.h>
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/util/Error.h>
-#include <SDL3/SDL_endian.h>
 #include <string>
 #include <vector>
 
@@ -36,10 +35,6 @@ static void loadTexture()
 
     std::vector<uint32_t> pixels;
     texture.GetPixelsRGBA(pixels);
-    for (uint32_t &pixel: pixels)
-    {
-        pixel = SDL_Swap32BE(pixel);
-    }
 
     glGenTextures(1, &glTexture);
     glBindTexture(GL_TEXTURE_2D, glTexture);
@@ -138,6 +133,16 @@ static void Render()
             zoomInPressed |= ImGui::MenuItem("Zoom In", "Ctrl+=");
             zoomOutPressed |= ImGui::MenuItem("Zoom Out", "Ctrl+-");
             resetZoomPressed |= ImGui::MenuItem("Reset Zoom", "Ctrl+0");
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Tools"))
+        {
+            if (ImGui::MenuItem("Swap Byte Order"))
+            {
+                texture.SwapByteOrder();
+                loadTexture();
+            }
+            ImGui::Separator();
             ImGui::EndMenu();
         }
         SharedMgr::Get().SharedMenuUI("texedit");

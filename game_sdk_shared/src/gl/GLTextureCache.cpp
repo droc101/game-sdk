@@ -10,7 +10,6 @@
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/util/Error.h>
 #include <ranges>
-#include <SDL3/SDL_endian.h>
 #include <string>
 #include <vector>
 
@@ -36,11 +35,6 @@ GLuint GLTextureCache::CreateTexture(const TextureAsset &textureAsset)
 {
     std::vector<uint32_t> pixels;
     textureAsset.GetPixelsRGBA(pixels);
-    for (uint32_t &pixel: pixels)
-    {
-        pixel = SDL_Swap32BE(pixel);
-    }
-
     GLuint glTexture = 0;
     glGenTextures(1, &glTexture);
     glBindTexture(GL_TEXTURE_2D, glTexture);
