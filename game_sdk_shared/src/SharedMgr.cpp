@@ -10,6 +10,7 @@
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/AboutWindow.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
+#include <game_sdk/windows/ModelBrowserWindow.h>
 #include <game_sdk/windows/OptionsWindow.h>
 #include <game_sdk/windows/SetupWindow.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
@@ -26,6 +27,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #ifdef WIN32
 #include <direct.h> // provides chdir
 #else
@@ -113,6 +115,7 @@ void SharedMgr::RenderSharedUI()
     AboutWindow::Get().Render();
     TextureBrowserWindow::Get().Render();
     MaterialBrowserWindow::Get().Render();
+    ModelBrowserWindow::Get().Render();
     SetupWindow::Get().Render();
     if (metricsVisible)
     {

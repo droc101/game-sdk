@@ -7,11 +7,15 @@
 #include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
+#include <game_sdk/windows/MaterialBrowserWindow.h>
+#include <game_sdk/windows/ModelBrowserWindow.h>
+#include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <SDL3/SDL_video.h>
+#include <string>
 #include "ActorBrowserWindow.h"
 #include "MapCompileWindow.h"
 #include "MapEditor.h"
@@ -31,6 +35,10 @@ static Viewport vpSide = Viewport(Viewport::ViewportType::SIDE_YZ);
 static ImGuiID dockspaceId;
 static ImGuiID rootDockspaceID;
 static bool dockspaceSetup = false;
+
+static std::string textureBrowserToolSelection{};
+static std::string materialBrowserToolSelection{};
+static std::string modelBrowserToolSelection{};
 
 static bool ToolbarToolButton(const char *id,
                               const char *tooltip,
@@ -88,8 +96,8 @@ static void openJson(const std::string &path)
         if (!SharedMgr::Get().actorDefinitions.contains(actor.className))
         {
             SDKWindow::Get().ErrorMessage(std::format("Failed to open the map because it contains an unknown actor "
-                                               "class \"{}\"",
-                                               actor.className));
+                                                      "class \"{}\"",
+                                                      actor.className));
             MapEditor::map = MapAsset();
             return;
         }
@@ -363,6 +371,19 @@ static void Render()
             if (ImGui::MenuItem("Actor Class Browser"))
             {
                 ActorBrowserWindow::visible = true;
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Texture Browser"))
+            {
+                TextureBrowserWindow::Get().Show(&textureBrowserToolSelection);
+            }
+            if (ImGui::MenuItem("Material Browser"))
+            {
+                MaterialBrowserWindow::Get().Show(&materialBrowserToolSelection);
+            }
+            if (ImGui::MenuItem("Model Browser"))
+            {
+                ModelBrowserWindow::Get().Show(&modelBrowserToolSelection);
             }
             ImGui::Separator();
             ImGui::EndMenu();

@@ -3,7 +3,7 @@
 //
 
 #include <array>
-#include <cmath>
+#include <cfloat>
 #include <cstddef>
 #include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
@@ -17,25 +17,42 @@
 #include <libassets/type/ModelLod.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <math.h>
 #include <utility>
 #include <vector>
 
-bool ModelViewer::Init()
+bool ModelViewer::GlobalInit()
 {
-    framebuffer = GLHelper::CreateFramebuffer({800, 600});
-
     const Error::ErrorCode modelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/model.frag",
                                                                            "assets/shaders/model.vert",
-                                                                           program);
+                                                                           ModelViewerShared::Get().program);
     const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/shaders/uniform_color.frag",
                                                                           "assets/shaders/uniform_color.vert",
-                                                                          linesProgram);
+                                                                          ModelViewerShared::Get().linesProgram);
     if (modelProgramErrorCode != Error::ErrorCode::OK || cubeProgramErrorCode != Error::ErrorCode::OK)
     {
         return false;
     }
 
     LoadCube();
+
+    return true;
+}
+
+void ModelViewer::GlobalDestroy()
+{
+    GLHelper::DestroyBuffer(ModelViewerShared::Get().cubeBuffer);
+    glDeleteProgram(ModelViewerShared::Get().program);
+    glDeleteProgram(ModelViewerShared::Get().linesProgram);
+}
+
+bool ModelViewer::Init()
+{
+    if (initDone)
+    {
+        return true;
+    }
+    framebuffer = GLHelper::CreateFramebuffer({800, 600});
 
     LoadBBox();
 
@@ -46,6 +63,8 @@ bool ModelViewer::Init()
 
     UpdateView(0, 0, 1);
 
+    initDone = true;
+
     return true;
 }
 
@@ -53,10 +72,7 @@ void ModelViewer::Destroy()
 {
     DestroyModel();
     GLHelper::DestroyFramebuffer(framebuffer);
-    GLHelper::DestroyBuffer(cubeBuffer);
     GLHelper::DestroyIndexedBuffer(bboxBuffer);
-    glDeleteProgram(program);
-    glDeleteProgram(linesProgram);
 }
 
 void ModelViewer::SetModel(ModelAsset &&newModel)
@@ -126,11 +142,7 @@ void ModelViewer::UpdateView(const float pitchDegrees, const float yawDegrees, c
     pitch = glm::radians(pitchDegrees);
     yaw = glm::radians(yawDegrees);
     distance = cameraDistance;
-    if (distance < 0.1)
-    {
-        distance = 0.1;
-    }
-    pitch = glm::clamp<float>(pitch, -90, 90);
+    ClampView();
     UpdateMatrix();
 }
 
@@ -139,36 +151,35 @@ void ModelViewer::UpdateViewRel(const float pitchDegrees, const float yawDegrees
     pitch += glm::radians(pitchDegrees);
     yaw += glm::radians(yawDegrees);
     distance += cameraDistance;
-    if (distance < 0.1)
-    {
-        distance = 0.1;
-    }
-    pitch = glm::clamp<float>(pitch, -90, 90);
+    ClampView();
     UpdateMatrix();
 }
 
 void ModelViewer::RenderWindow(const char *title, const ImGuiWindowFlags additionalFlags)
 {
-    RenderFramebuffer();
     constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
     if (ImGui::Begin(title, nullptr, windowFlags | additionalFlags))
     {
         RenderImGui();
     }
     ImGui::End();
+    RenderFramebuffer();
 }
 
 void ModelViewer::RenderChildWindow(const char *title,
-                                    ImGuiChildFlags additionalChildFlags,
-                                    ImGuiWindowFlags additionalWindowFlags)
+                                    const ImVec2 size,
+                                    const ImGuiChildFlags additionalChildFlags,
+                                    const ImGuiWindowFlags additionalWindowFlags)
 {
-    RenderFramebuffer();
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-    if (ImGui::BeginChild(title, {0, 0}, additionalChildFlags, windowFlags | additionalWindowFlags))
+    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoScrollbar |
+                                             ImGuiWindowFlags_NoScrollWithMouse |
+                                             ImGuiWindowFlags_NoMove;
+    if (ImGui::BeginChild(title, size, additionalChildFlags, windowFlags | additionalWindowFlags))
     {
         RenderImGui();
     }
     ImGui::EndChild();
+    RenderFramebuffer();
 }
 
 void ModelViewer::DestroyModel()
@@ -187,6 +198,7 @@ void ModelViewer::DestroyModel()
 
 void ModelViewer::RenderImGui()
 {
+    ImGuiIO &io = ImGui::GetIO();
     ImVec2 windowSize = ImGui::GetContentRegionMax();
     windowSize.x += 8;
     windowSize.y += 8;
@@ -195,15 +207,20 @@ void ModelViewer::RenderImGui()
     const bool previewFocused = ImGui::IsWindowHovered();
     ImGui::Image(GetFramebufferTexture(), GetFramebufferSize(), {0, 1}, {1, 0});
 
-    if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) && previewFocused)
+    if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) && (previewFocused || dragging))
     {
+        dragging = true;
+        io.WantCaptureMouse = false;
         ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
         const ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
         UpdateViewRel(dragDelta.y / 5.0f, dragDelta.x / -5.0f, 0);
         ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
+    } else
+    {
+        dragging = false;
     }
 
-    const float mouseWheel = ImGui::GetIO().MouseWheel;
+    const float mouseWheel = io.MouseWheel;
     if (mouseWheel != 0 && previewFocused)
     {
         UpdateViewRel(0, 0, mouseWheel / -10.0f);
@@ -212,7 +229,13 @@ void ModelViewer::RenderImGui()
 
 void ModelViewer::RenderFramebuffer()
 {
+    if (model.GetLodCount() == 0)
+    {
+        return;
+    }
+
     GLHelper::BindFramebuffer(framebuffer);
+
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -229,13 +252,14 @@ void ModelViewer::RenderFramebuffer()
 
     if (wireframe)
     {
+        glLineWidth(1);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     } else
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    glUseProgram(program);
+    glUseProgram(ModelViewerShared::Get().program);
     const float *color = backgroundColor.GetDataPointer();
     glClearColor(color[0], color[1], color[2], color[3]);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -244,10 +268,10 @@ void ModelViewer::RenderFramebuffer()
     glBindVertexArray(glod.vao);
 
     glBindBuffer(GL_ARRAY_BUFFER, glod.vbo);
-    GLint posAttrib = glGetAttribLocation(program, "VERTEX");
-    const GLint uvAttrib = glGetAttribLocation(program, "VERTEX_UV");
-    const GLint colorAttrib = glGetAttribLocation(program, "VERTEX_COLOR");
-    const GLint normAttrib = glGetAttribLocation(program, "VERTEX_NORMAL");
+    GLint posAttrib = glGetAttribLocation(ModelViewerShared::Get().program, "VERTEX");
+    const GLint uvAttrib = glGetAttribLocation(ModelViewerShared::Get().program, "VERTEX_UV");
+    const GLint colorAttrib = glGetAttribLocation(ModelViewerShared::Get().program, "VERTEX_COLOR");
+    const GLint normAttrib = glGetAttribLocation(ModelViewerShared::Get().program, "VERTEX_NORMAL");
     glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), nullptr);
     glVertexAttribPointer(uvAttrib,
                           2,
@@ -272,15 +296,21 @@ void ModelViewer::RenderFramebuffer()
     glEnableVertexAttribArray(colorAttrib);
     glEnableVertexAttribArray(normAttrib);
 
-    glUniformMatrix4fv(glGetUniformLocation(program, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(projection));
-    glUniformMatrix4fv(glGetUniformLocation(program, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
-    glUniform1i(glGetUniformLocation(program, "displayMode"), static_cast<GLint>(displayMode));
+    glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().program, "PROJECTION"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(projection));
+    glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().program, "VIEW"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(view));
+    glUniform1i(glGetUniformLocation(ModelViewerShared::Get().program, "displayMode"), static_cast<GLint>(displayMode));
 
     for (size_t i = 0; i < model.GetMaterialsPerSkin(); i++)
     {
         const size_t matIndex = model.GetSkin(skinIndex).at(i);
         Material &mat = model.GetMaterial(matIndex);
-        glUniform4fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetDataPointer());
+        glUniform4fv(glGetUniformLocation(ModelViewerShared::Get().program, "ALBEDO"), 1, mat.color.GetDataPointer());
 
         GLuint texture = 0;
         const Error::ErrorCode code = SharedMgr::Get().textureCache.GetTextureGLuint(mat.texture, texture);
@@ -289,7 +319,7 @@ void ModelViewer::RenderFramebuffer()
             continue;
         }
         glBindTexture(GL_TEXTURE_2D, texture);
-        glUniform1i(glGetUniformLocation(program, "ALBEDO_TEXTURE"), 0);
+        glUniform1i(glGetUniformLocation(ModelViewerShared::Get().program, "ALBEDO_TEXTURE"), 0);
 
         const GLuint ebo = glod.ebos.at(i);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
@@ -301,15 +331,22 @@ void ModelViewer::RenderFramebuffer()
 
     if (showUnitCube)
     {
+        glLineWidth(1);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glUseProgram(linesProgram);
-        GLHelper::BindBuffer(cubeBuffer);
-        posAttrib = glGetAttribLocation(linesProgram, "VERTEX");
+        glUseProgram(ModelViewerShared::Get().linesProgram);
+        GLHelper::BindBuffer(ModelViewerShared::Get().cubeBuffer);
+        posAttrib = glGetAttribLocation(ModelViewerShared::Get().linesProgram, "VERTEX");
         glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
         glEnableVertexAttribArray(posAttrib);
-        glUniformMatrix4fv(glGetUniformLocation(linesProgram, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(glGetUniformLocation(linesProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 0.1f, 0.1f, 0.1f, 1.0f);
+        glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "PROJECTION"),
+                           1,
+                           GL_FALSE,
+                           glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW"),
+                           1,
+                           GL_FALSE,
+                           glm::value_ptr(view));
+        glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"), 0.1f, 0.1f, 0.1f, 1.0f);
         glDrawArrays(GL_LINES, 0, 24);
     }
 
@@ -318,18 +355,25 @@ void ModelViewer::RenderFramebuffer()
         if (model.GetCollisionModelType() == ModelAsset::CollisionModelType::DYNAMIC_MULTIPLE_CONVEX)
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            glUseProgram(linesProgram);
-            glUniformMatrix4fv(glGetUniformLocation(linesProgram, "PROJECTION"),
+            glUseProgram(ModelViewerShared::Get().linesProgram);
+            glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "PROJECTION"),
                                1,
                                GL_FALSE,
                                glm::value_ptr(projection));
-            glUniformMatrix4fv(glGetUniformLocation(linesProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
-            glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 1.0f, 0.5f, 0.5f, 1.0f);
+            glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW"),
+                               1,
+                               GL_FALSE,
+                               glm::value_ptr(view));
+            glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"),
+                        1.0f,
+                        0.5f,
+                        0.5f,
+                        1.0f);
             for (const GLHull &hull: hulls)
             {
                 glBindVertexArray(hull.vao);
                 glBindBuffer(GL_ARRAY_BUFFER, hull.vbo);
-                posAttrib = glGetAttribLocation(linesProgram, "VERTEX");
+                posAttrib = glGetAttribLocation(ModelViewerShared::Get().linesProgram, "VERTEX");
                 glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
                 glEnableVertexAttribArray(posAttrib);
                 glPointSize(3.0);
@@ -341,20 +385,31 @@ void ModelViewer::RenderFramebuffer()
             glBindBuffer(GL_ARRAY_BUFFER, staticCollisionVbo);
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            glUseProgram(linesProgram);
+            glUseProgram(ModelViewerShared::Get().linesProgram);
             glBindVertexArray(staticCollisionVao);
-            posAttrib = glGetAttribLocation(linesProgram, "VERTEX");
+            posAttrib = glGetAttribLocation(ModelViewerShared::Get().linesProgram, "VERTEX");
             glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
             glEnableVertexAttribArray(posAttrib);
-            glUniformMatrix4fv(glGetUniformLocation(linesProgram, "PROJECTION"),
+            glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "PROJECTION"),
                                1,
                                GL_FALSE,
                                glm::value_ptr(projection));
-            glUniformMatrix4fv(glGetUniformLocation(linesProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
-            glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 1.0f, 0.5f, 0.5f, 0.25f);
+            glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW"),
+                               1,
+                               GL_FALSE,
+                               glm::value_ptr(view));
+            glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"),
+                        1.0f,
+                        0.5f,
+                        0.5f,
+                        0.25f);
             glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(model.GetStaticCollisionMesh().GetNumTriangles()) * 3);
 
-            glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 1.0f, 0.5f, 0.5f, 1.0f);
+            glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"),
+                        1.0f,
+                        0.5f,
+                        0.5f,
+                        1.0f);
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(model.GetStaticCollisionMesh().GetNumTriangles()) * 3);
         }
@@ -368,16 +423,22 @@ void ModelViewer::RenderFramebuffer()
         glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * points.size(), points.data(), GL_STATIC_DRAW);
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glUseProgram(linesProgram);
-        posAttrib = glGetAttribLocation(linesProgram, "VERTEX");
+        glUseProgram(ModelViewerShared::Get().linesProgram);
+        posAttrib = glGetAttribLocation(ModelViewerShared::Get().linesProgram, "VERTEX");
         glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
         glEnableVertexAttribArray(posAttrib);
-        glUniformMatrix4fv(glGetUniformLocation(linesProgram, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(glGetUniformLocation(linesProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 0.1f, 0.5f, 0.8f, 0.25f);
+        glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "PROJECTION"),
+                           1,
+                           GL_FALSE,
+                           glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW"),
+                           1,
+                           GL_FALSE,
+                           glm::value_ptr(view));
+        glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"), 0.1f, 0.5f, 0.8f, 0.25f);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
-        glUniform4f(glGetUniformLocation(linesProgram, "lineColor"), 0.1f, 0.5f, 0.8f, 1.0f);
+        glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"), 0.1f, 0.5f, 0.8f, 1.0f);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
     }
@@ -390,6 +451,15 @@ void ModelViewer::ResizeWindow(GLsizei width, GLsizei height)
     windowAspect = static_cast<float>(width) / static_cast<float>(height);
     GLHelper::ResizeFramebuffer(framebuffer, {width, height});
     UpdateMatrix();
+}
+
+void ModelViewer::ClampView()
+{
+    pitch = glm::clamp(pitch, static_cast<float>(-(M_PI_2 - FLT_EPSILON)), static_cast<float>(M_PI_2 - FLT_EPSILON));
+    if (distance < 0.1)
+    {
+        distance = 0.1;
+    }
 }
 
 ImTextureID ModelViewer::GetFramebufferTexture() const
@@ -440,7 +510,7 @@ void ModelViewer::LoadCube()
     };
     // clang-format on
 
-    cubeBuffer = GLHelper::CreateBuffer();
+    ModelViewerShared::Get().cubeBuffer = GLHelper::CreateBuffer();
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * cubeVerts.size(), cubeVerts.data(), GL_STATIC_DRAW);
 }
 
@@ -487,4 +557,10 @@ void ModelViewer::LoadStaticCollision()
                  static_cast<GLsizeiptr>(sizeof(GLfloat) * verts.size()),
                  verts.data(),
                  GL_STATIC_DRAW);
+}
+
+ModelViewer::ModelViewerShared &ModelViewer::ModelViewerShared::Get()
+{
+    static ModelViewerShared instance{};
+    return instance;
 }

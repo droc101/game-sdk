@@ -10,6 +10,9 @@
 #include <cstdint>
 #include <format>
 #include <game_sdk/SharedMgr.h>
+#include <game_sdk/windows/MaterialBrowserWindow.h>
+#include <game_sdk/windows/ModelBrowserWindow.h>
+#include <game_sdk/windows/TextureBrowserWindow.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
@@ -34,8 +37,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include "game_sdk/windows/MaterialBrowserWindow.h"
-#include "game_sdk/windows/TextureBrowserWindow.h"
 #include "MapEditor.h"
 
 void EditActorWindow::Render(Actor &actor)
@@ -288,6 +289,9 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                                 }
                                 ImGui::EndCombo();
                             }
+                            break;
+                        case StringParamDefinition::StringParamHint::MODEL:
+                            ModelBrowserWindow::Get().InputModel("##value", value);
                             break;
                         case StringParamDefinition::StringParamHint::NONE:
                         default:

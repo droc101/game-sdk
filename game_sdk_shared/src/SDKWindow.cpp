@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstdio>
 #include <game_sdk/gl/GLHelper.h>
+#include <game_sdk/ModelViewer.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
@@ -104,6 +105,11 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
         return false;
     }
 
+    if (!ModelViewer::GlobalInit())
+    {
+        return false;
+    }
+
     if (!SDL_GL_SetSwapInterval(1)) // Enable vsync
     {
         printf("Error: SDL_GL_SetSwapInterval(): %s\n", SDL_GetError());
@@ -199,6 +205,7 @@ void SDKWindow::PostQuit()
 void SDKWindow::Destroy()
 {
     assert(initDone);
+    ModelViewer::GlobalDestroy();
     SharedMgr::Get().DestroySharedMgr();
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();

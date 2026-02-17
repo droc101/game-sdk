@@ -30,6 +30,10 @@ class ModelViewer
 
         ModelViewer() = default;
 
+        [[nodiscard]] static bool GlobalInit();
+
+        static void GlobalDestroy();
+
         /**
          * Initialize the model viewer's internal GL objects
          * @return Whether the initialization succeeded
@@ -82,10 +86,12 @@ class ModelViewer
         /**
          * Render an ImGui child window containing this model viewer
          * @param title The window title
+         * @param size
          * @param additionalChildFlags Additional child window flags
          * @param additionalWindowFlags Additional window flags
          */
         void RenderChildWindow(const char *title,
+                               ImVec2 size,
                                ImGuiChildFlags additionalChildFlags,
                                ImGuiWindowFlags additionalWindowFlags);
 
@@ -102,23 +108,34 @@ class ModelViewer
         Color backgroundColor = Color(0, 0, 0, 1);
 
     private:
+        class ModelViewerShared
+        {
+            public:
+                static inline GLuint program = 0;
+                static inline GLuint linesProgram = 0;
+
+                static inline GLHelper::GL_Buffer cubeBuffer{};
+
+                static ModelViewerShared &Get();
+            private:
+                ModelViewerShared() = default;
+        };
+
         struct GLModelLod
         {
-                GLuint vao{};
-                GLuint vbo{};
-                std::vector<GLuint> ebos{};
+            GLuint vao{};
+            GLuint vbo{};
+            std::vector<GLuint> ebos{};
         };
 
         struct GLHull
         {
-                GLuint vao{};
-                GLuint vbo{};
-                size_t elements{};
+            GLuint vao{};
+            GLuint vbo{};
+            size_t elements{};
         };
 
         ModelAsset model{};
-
-        GLHelper::GL_Buffer cubeBuffer{};
 
         GLHelper::GL_IndexedBuffer bboxBuffer{};
 
@@ -128,9 +145,6 @@ class ModelViewer
         std::vector<GLHull> hulls{};
 
         std::vector<GLModelLod> lods{};
-
-        GLuint program = 0;
-        GLuint linesProgram = 0;
 
         float pitch = 0;
         float yaw = 0;
@@ -145,6 +159,9 @@ class ModelViewer
 
         GLHelper::GL_Framebuffer framebuffer;
 
+        bool initDone = false;
+        bool dragging = false;
+
         void DestroyModel();
 
         void RenderImGui();
@@ -153,13 +170,15 @@ class ModelViewer
 
         void ResizeWindow(GLsizei width, GLsizei height);
 
+        void ClampView();
+
         [[nodiscard]] ImTextureID GetFramebufferTexture() const;
 
         [[nodiscard]] ImVec2 GetFramebufferSize() const;
 
         void UpdateMatrix();
 
-        void LoadCube();
+        static void LoadCube();
 
         void LoadBBox();
 

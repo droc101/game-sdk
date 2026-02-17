@@ -109,7 +109,7 @@ bool MapRenderer::Init()
     for (const std::string &modelPath: modelsPaths)
     {
         const ModelBuffer buf = LoadModel(Options::Get().GetAssetsPath() + "/model/" + modelPath);
-        modelBuffers[modelPath.substr(0, modelPath.length() - 5)] = buf;
+        modelBuffers["model/" + modelPath] = buf;
     }
 
     return true;
@@ -267,7 +267,7 @@ void MapRenderer::RenderBillboardSprite(const glm::vec3 position,
     glPointSize(pointSize);
 
     GLuint textureId = -1;
-    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureGLuint("texture/" + texture + ".gtex", textureId);
+    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureGLuint(texture, textureId);
     assert(e == Error::ErrorCode::OK); // TODO handle properly
 
     glActiveTexture(GL_TEXTURE0);
@@ -347,7 +347,7 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix)
         }
         if (!modelBuffers.contains(model))
         {
-            model = "error";
+            model = "model/error.gmdl";
         }
         glm::mat4 worldMatrix = glm::identity<glm::mat4>();
         worldMatrix = glm::translate(worldMatrix, a.position);
