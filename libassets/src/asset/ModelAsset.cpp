@@ -219,7 +219,7 @@ void ModelAsset::SortLODs()
 
 bool ModelAsset::AddLod(const std::string &path)
 {
-    const float dist = lods.end()->distance + 5;
+    const float dist = lods.back().distance + 5;
     const ModelLod lod(path, dist);
     if (lod.indexCounts.size() != GetMaterialsPerSkin())
     {

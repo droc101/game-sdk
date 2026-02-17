@@ -195,7 +195,7 @@ void ModelViewer::RenderImGui()
     const bool previewFocused = ImGui::IsWindowHovered();
     ImGui::Image(GetFramebufferTexture(), GetFramebufferSize(), {0, 1}, {1, 0});
 
-    if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+    if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) && previewFocused)
     {
         ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
         const ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);

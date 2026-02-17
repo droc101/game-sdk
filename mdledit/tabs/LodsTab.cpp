@@ -66,6 +66,7 @@ void LodsTab::Render()
         if (ImGui::IsItemDeactivatedAfterEdit())
         {
             ModelEditor::modelViewer.GetModel().SortLODs();
+            ModelEditor::modelViewer.ReloadModel();
         }
         ImGui::Dummy(ImVec2(0.0f, 2.0f));
         const ImVec2 space = ImGui::GetContentRegionAvail();
