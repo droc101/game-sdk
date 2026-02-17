@@ -229,15 +229,18 @@ void ModelViewer::RenderImGui()
 
 void ModelViewer::RenderFramebuffer()
 {
-    if (model.GetLodCount() == 0)
-    {
-        return;
-    }
-
     GLHelper::BindFramebuffer(framebuffer);
 
-    glClearColor(0, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
+    const float *color = backgroundColor.GetDataPointer();
+    glClearColor(color[0], color[1], color[2], color[3]);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+    if (model.GetLodCount() == 0)
+    {
+        GLHelper::UnbindFramebuffer();
+        return;
+    }
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -260,10 +263,6 @@ void ModelViewer::RenderFramebuffer()
     }
 
     glUseProgram(ModelViewerShared::Get().program);
-    const float *color = backgroundColor.GetDataPointer();
-    glClearColor(color[0], color[1], color[2], color[3]);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     const GLModelLod &glod = lods.at(lodIndex);
     glBindVertexArray(glod.vao);
 
@@ -346,7 +345,7 @@ void ModelViewer::RenderFramebuffer()
                            1,
                            GL_FALSE,
                            glm::value_ptr(view));
-        glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"), 0.1f, 0.1f, 0.1f, 1.0f);
+        glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"), 0.2f, 0.2f, 0.2f, 1.0f);
         glDrawArrays(GL_LINES, 0, 24);
     }
 

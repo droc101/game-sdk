@@ -105,7 +105,7 @@ class ModelViewer
         bool showBoundingBox = false;
         bool showCollisionModel = false;
 
-        Color backgroundColor = Color(0, 0, 0, 1);
+        Color backgroundColor = Color(0x191919ff);
 
     private:
         class ModelViewerShared
