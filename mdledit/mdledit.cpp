@@ -13,8 +13,6 @@
 #include <libassets/type/ConvexHull.h>
 #include <libassets/type/StaticCollisionMesh.h>
 #include <libassets/util/Error.h>
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_mouse.h>
 #include <string>
 #include <utility>
 #include "ModelRenderer.h"
@@ -25,12 +23,10 @@
 #include "tabs/SkinsTab.h"
 
 static bool modelLoaded = false;
-static bool dragging = false;
 
 static bool openPressed = false;
 static bool newPressed = false;
 static bool savePressed = false;
-static bool previewFocused = false;
 
 static ImGuiID dockspaceId;
 static ImGuiID rootDockspaceID;
@@ -129,44 +125,6 @@ void importStaticCollider(const std::string &path)
 }
 
 #pragma endregion
-
-static bool ProcessEvent(SDL_Event *event)
-{
-    const ImGuiIO io = ImGui::GetIO();
-    if (previewFocused)
-    {
-        if (event->type == SDL_EVENT_MOUSE_WHEEL)
-        {
-            const SDL_MouseWheelEvent &mouseWheelEvent = event->wheel;
-            ModelRenderer::UpdateViewRel(0, 0, mouseWheelEvent.y / -10.0f);
-            return true;
-        }
-        if (event->type == SDL_EVENT_MOUSE_BUTTON_UP)
-        {
-            if (event->button.button == SDL_BUTTON_LEFT)
-            {
-                dragging = false;
-                return true;
-            }
-        } else if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN)
-        {
-            if (event->button.button == SDL_BUTTON_LEFT)
-            {
-                dragging = true;
-                return true;
-            }
-        }
-        if (dragging && event->type == SDL_EVENT_MOUSE_MOTION)
-        {
-            ModelRenderer::UpdateViewRel(event->motion.yrel / 5.0f, event->motion.xrel / -5.0f, 0);
-            return true;
-        }
-    } else
-    {
-        dragging = false;
-    }
-    return false;
-}
 
 static void HandleMenuAndShortcuts()
 {
@@ -271,9 +229,9 @@ static void HandleMenuAndShortcuts()
         if (!ModelRenderer::GetModel().ValidateLodDistances())
         {
             SDKWindow::Get().ErrorMessage("LOD distances are invalid! Please fix them in the LOD editor and make sure "
-                                    "that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the "
-                                    "same distance",
-                                    "Invalid Model");
+                                          "that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the "
+                                          "same distance",
+                                          "Invalid Model");
         } else
         {
             SDKWindow::Get().SaveFileDialog(saveGmdl, DialogFilters::gmdlFilters);
@@ -371,8 +329,22 @@ static void Render()
         windowSize.y += 8;
         ModelRenderer::ResizeWindow(static_cast<GLsizei>(windowSize.x), static_cast<GLsizei>(windowSize.y));
 
-        previewFocused = ImGui::IsWindowHovered();
+        const bool previewFocused = ImGui::IsWindowHovered();
         ImGui::Image(ModelRenderer::GetFramebufferTexture(), ModelRenderer::GetFramebufferSize(), {0, 1}, {1, 0});
+
+        if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+        {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            const ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+            ModelRenderer::UpdateViewRel(dragDelta.y / 5.0f, dragDelta.x / -5.0f, 0);
+            ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
+        }
+
+        const float mouseWheel = ImGui::GetIO().MouseWheel;
+        if (mouseWheel != 0 && previewFocused)
+        {
+            ModelRenderer::UpdateViewRel(0, 0, mouseWheel / -10.0f);
+        }
     }
     ImGui::End();
     ImGui::PopStyleVar();
@@ -405,15 +377,15 @@ int main(int argc, char **argv)
     } else
     {
         const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc,
-                                                                          argv,
-                                                                          {".obj", ".fbx", ".gltf", ".dae"});
+                                                                                argv,
+                                                                                {".obj", ".fbx", ".gltf", ".dae"});
         if (!importPath.empty())
         {
             importModel(importPath);
         }
     }
 
-    SDKWindow::Get().MainLoop(Render, ProcessEvent);
+    SDKWindow::Get().MainLoop(Render);
 
     destroyExistingModel();
     ModelRenderer::Destroy();
