@@ -110,3 +110,31 @@ Actor *MapAsset::GetActor(const std::string &name)
 
     return nullptr;
 }
+
+std::vector<std::string> MapAsset::GetUniqueActorNames() const
+{
+    std::vector<std::string> actorNames{};
+    for (const Actor &levelActor: actors)
+    {
+        if (!levelActor.params.contains("name"))
+        {
+            continue;
+        }
+        const Param &p = levelActor.params.at("name");
+        if (p.GetType() != Param::ParamType::PARAM_TYPE_STRING)
+        {
+            continue;
+        }
+        const std::string actorName = p.Get<std::string>("");
+        if (std::ranges::find(actorNames, actorName) != actorNames.end())
+        {
+            continue;
+        }
+        if (actorName.empty())
+        {
+            continue;
+        }
+        actorNames.push_back(p.Get<std::string>(""));
+    }
+    return actorNames;
+}

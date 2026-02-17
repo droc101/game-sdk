@@ -13,11 +13,13 @@ class MaterialBrowserWindow
     public:
         static MaterialBrowserWindow &Get();
 
-        void Show(std::string &material);
+        void Show(std::string *material);
         void Hide();
         void Render();
 
         void InputMaterial(const char *label, std::string &material);
+
+        void InputMaterial(const char *label, std::string *material);
 
     private:
         MaterialBrowserWindow() = default;

@@ -27,9 +27,9 @@ void MaterialBrowserWindow::Hide()
     visible = false;
 }
 
-void MaterialBrowserWindow::Show(std::string &material)
+void MaterialBrowserWindow::Show(std::string *material)
 {
-    str = &material;
+    str = material;
     materialPaths = SharedMgr::Get().ScanFolder(Options::Get().GetAssetsPath() + "/material", ".gmtl", true);
     for (const std::string &path: materialPaths)
     {
@@ -169,8 +169,13 @@ void MaterialBrowserWindow::Render()
 
 void MaterialBrowserWindow::InputMaterial(const char *label, std::string &material)
 {
+    InputMaterial(label, &material);
+}
+
+void MaterialBrowserWindow::InputMaterial(const char *label, std::string *material)
+{
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::InputText(label, &material);
+    ImGui::InputText(label, material);
     ImGui::SameLine();
     if (ImGui::Button(("..." + std::string(label)).c_str(), ImVec2(40, 0)))
     {

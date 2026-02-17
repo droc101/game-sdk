@@ -26,9 +26,9 @@ void TextureBrowserWindow::Hide()
     visible = false;
 }
 
-void TextureBrowserWindow::Show(std::string &texture)
+void TextureBrowserWindow::Show(std::string *texture)
 {
-    str = &texture;
+    str = texture;
     textures = SharedMgr::Get().ScanFolder(Options::Get().GetAssetsPath() + "/texture", ".gtex", true);
     visible = true;
 }
@@ -153,8 +153,13 @@ void TextureBrowserWindow::Render()
 
 void TextureBrowserWindow::InputTexture(const char *label, std::string &texture)
 {
+    InputTexture(label, &texture);
+}
+
+void TextureBrowserWindow::InputTexture(const char *label, std::string *texture)
+{
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::InputText(label, &texture);
+    ImGui::InputText(label, texture);
     ImGui::SameLine();
     if (ImGui::Button(("..." + std::string(label)).c_str(), ImVec2(40, 0)))
     {

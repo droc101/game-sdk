@@ -34,6 +34,8 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include "game_sdk/windows/MaterialBrowserWindow.h"
+#include "game_sdk/windows/TextureBrowserWindow.h"
 #include "MapEditor.h"
 
 void EditActorWindow::Render(Actor &actor)
@@ -252,10 +254,44 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                 {
                     // TODO hints
                     const StringParamDefinition *stringDef = dynamic_cast<StringParamDefinition *>(paramDef.get());
-                    std::string val = param.Get<std::string>(stringDef->defaultValue);
-                    if (ImGui::InputText("##value", &val))
+                    std::string *value = param.GetPointer<std::string>();
+                    std::vector<std::string> actorNames = MapEditor::map.GetUniqueActorNames();
+                    switch (stringDef->hintType)
                     {
-                        param.Set<std::string>(val);
+                        case StringParamDefinition::StringParamHint::TEXTURE:
+                            TextureBrowserWindow::Get().InputTexture("##value", value);
+                            break;
+                        case StringParamDefinition::StringParamHint::MATERIAL:
+                            MaterialBrowserWindow::Get().InputMaterial("##value", value);
+                            break;
+                        case StringParamDefinition::StringParamHint::ACTOR:
+                            if (ImGui::BeginCombo("##targetActor", value->c_str()))
+                            {
+                                if (ImGui::Selectable("(none)", value->empty()))
+                                {
+                                    *value = "";
+                                }
+                                if (!value->empty() && std::ranges::count(actorNames, *value) == 0)
+                                {
+                                    ImGui::Selectable(value->c_str(), true);
+                                }
+                                for (const std::string &name: actorNames)
+                                {
+                                    if (*value == name)
+                                    {
+                                        ImGui::SetItemDefaultFocus();
+                                    }
+                                    if (ImGui::Selectable(name.c_str(), *value == name))
+                                    {
+                                        *value = name;
+                                    }
+                                }
+                                ImGui::EndCombo();
+                            }
+                            break;
+                        case StringParamDefinition::StringParamHint::NONE:
+                        default:
+                            ImGui::InputText("##value", value);
                     }
                 } else if (paramDef->type == Param::ParamType::PARAM_TYPE_COLOR)
                 {

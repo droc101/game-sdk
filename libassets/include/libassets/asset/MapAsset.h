@@ -34,4 +34,6 @@ class MapAsset final
         // TODO: music and fog will be controlled by actors
 
         Actor *GetActor(const std::string &name);
+
+        [[nodiscard]] std::vector<std::string> GetUniqueActorNames() const;
 };

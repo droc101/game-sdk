@@ -12,11 +12,13 @@ class TextureBrowserWindow
     public:
         static TextureBrowserWindow &Get();
 
-        void Show(std::string &texture);
+        void Show(std::string *texture);
         void Hide();
         void Render();
 
         void InputTexture(const char *label, std::string &texture);
+
+        void InputTexture(const char *label, std::string *texture);
 
     private:
         TextureBrowserWindow() = default;
