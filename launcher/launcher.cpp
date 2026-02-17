@@ -28,7 +28,7 @@ static std::string selectionIndex;
 
 static Error::ErrorCode LoadLauncherConfig()
 {
-    std::ifstream file("assets/launcher/launcher.json");
+    std::ifstream file("assets/launcher.json");
     if (!file.is_open())
     {
         return Error::ErrorCode::CANT_OPEN_FILE;
@@ -190,12 +190,12 @@ int main()
     sdkPath = SDL_GetBasePath();
     sdkPath.pop_back();
 
-    const std::vector<std::string> icons = SharedMgr::Get().ScanFolder("assets/launcher/icons", ".png", true);
+    const std::vector<std::string> icons = SharedMgr::Get().ScanFolder("assets/icons", ".png", true);
     for (const std::string &icon: icons)
     {
         const size_t dotIndex = icon.find_last_of('.');
         const std::string basename = icon.substr(0, dotIndex);
-        (void)SharedMgr::Get().textureCache.RegisterPng("assets/launcher/icons/" + icon, basename);
+        (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/" + icon, basename);
     }
 
     const Error::ErrorCode c = LoadLauncherConfig();

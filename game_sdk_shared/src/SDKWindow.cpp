@@ -117,8 +117,8 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-    normalFont = io.Fonts->AddFontFromFileTTF("assets/NotoSans.ttf");
-    monospaceFont = io.Fonts->AddFontFromFileTTF("assets/JetBrainsMono.ttf");
+    normalFont = io.Fonts->AddFontFromFileTTF("assets/fonts/NotoSans.ttf");
+    monospaceFont = io.Fonts->AddFontFromFileTTF("assets/fonts/JetBrainsMono.ttf");
 
     ApplyTheme();
 

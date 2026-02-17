@@ -529,10 +529,10 @@ int main(int argc, char **argv)
     }
     (void)SDL_SetWindowMinimumSize(SDKWindow::Get().GetWindow(), 640, 480);
 
-    (void)SharedMgr::Get().textureCache.RegisterPng("assets/mapedit/select.png", MapEditor::SELECT_ICON_NAME);
-    (void)SharedMgr::Get().textureCache.RegisterPng("assets/mapedit/actors.png", MapEditor::ACTOR_ICON_NAME);
-    (void)SharedMgr::Get().textureCache.RegisterPng("assets/mapedit/primitives.png", MapEditor::PRIMITIVE_ICON_NAME);
-    (void)SharedMgr::Get().textureCache.RegisterPng("assets/mapedit/polygon.png", MapEditor::POLYGON_ICON_NAME);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/select.png", MapEditor::SELECT_ICON_NAME);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/actors.png", MapEditor::ACTOR_ICON_NAME);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/primitives.png", MapEditor::PRIMITIVE_ICON_NAME);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/polygon.png", MapEditor::POLYGON_ICON_NAME);
 
     vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
     vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;

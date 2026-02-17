@@ -3,6 +3,7 @@
 //
 
 #include "MaterialsTab.h"
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -12,8 +13,9 @@
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/type/Material.h>
+#include <libassets/util/Error.h>
 #include <string>
-#include "../ModelRenderer.h"
+#include "../ModelEditor.h"
 
 void MaterialsTab::Render()
 {
@@ -25,32 +27,33 @@ void MaterialsTab::Render()
         mat.texture = Options::Get().defaultTexture;
         mat.color = Color(1.0f, 1.0f, 1.0f, 1.0f);
         mat.shader = Material::MaterialShader::SHADER_SHADED;
-        ModelRenderer::GetModel().AddMaterial(mat);
+        ModelEditor::modelViewer.GetModel().AddMaterial(mat);
     }
 
-    if (selectedIndex >= ModelRenderer::GetModel().GetMaterialCount())
+    if (selectedIndex >= ModelEditor::modelViewer.GetModel().GetMaterialCount())
     {
-        selectedIndex = ModelRenderer::GetModel().GetMaterialCount() - 1;
+        selectedIndex = ModelEditor::modelViewer.GetModel().GetMaterialCount() - 1;
     }
 
     ImGui::PushItemWidth(-1);
     if (ImGui::BeginListBox("##materialPicker", {0, 150}))
     {
-        for (size_t m = 0; m < ModelRenderer::GetModel().GetMaterialCount(); m++)
+        for (size_t m = 0; m < ModelEditor::modelViewer.GetModel().GetMaterialCount(); m++)
         {
-            Material &mat = ModelRenderer::GetModel().GetMaterial(m);
+            Material &mat = ModelEditor::modelViewer.GetModel().GetMaterial(m);
             ImTextureID textureId;
             SharedMgr::Get().textureCache.GetTextureID(mat.texture, textureId);
             const std::string title = std::format("##picker_{}", m);
-            bool selected = ImGui::Selectable(title.c_str(),
-                                              selectedIndex == m,
-                                              ImGuiSelectableFlags_AllowOverlap | ImGuiSelectableFlags_SpanAllColumns,
-                                              {0, 18});
+            const bool selected = ImGui::Selectable(title.c_str(),
+                                                    selectedIndex == m,
+                                                    ImGuiSelectableFlags_AllowOverlap |
+                                                            ImGuiSelectableFlags_SpanAllColumns,
+                                                    {0, 18});
             if (selected)
             {
                 selectedIndex = m;
             }
-            float *color = mat.color.GetDataPointer();
+            const float *color = mat.color.GetDataPointer();
             ImGui::SameLine();
             ImGui::Image(textureId, {18, 18}, {0, 0}, {1, 1}, {color[0], color[1], color[2], color[3]}, {0, 0, 0, 0});
             ImGui::SameLine();
@@ -59,7 +62,7 @@ void MaterialsTab::Render()
         ImGui::EndListBox();
     }
 
-    Material &mat = ModelRenderer::GetModel().GetMaterial(selectedIndex);
+    Material &mat = ModelEditor::modelViewer.GetModel().GetMaterial(selectedIndex);
 
 
     ImGui::PushItemWidth(-1);
@@ -73,7 +76,7 @@ void MaterialsTab::Render()
         SharedMgr::Get().textureCache.GetTextureSize(mat.texture, imageSize);
         const glm::vec2 scales = {(sz.x - 16) / imageSize.x, imagePanelHeight / imageSize.y};
         const float scale = std::ranges::min(scales.x, scales.y);
-        float *color = mat.color.GetDataPointer();
+        const float *color = mat.color.GetDataPointer();
 
         imageSize = {imageSize.x * scale, imageSize.y * scale};
         if (ImGui::BeginChild("##imageBox",
@@ -121,11 +124,11 @@ void MaterialsTab::Render()
         ImGui::EndCombo();
     }
     ImGui::Dummy({0, 8});
-    if (ModelRenderer::GetModel().GetMaterialCount() != 1)
+    if (ModelEditor::modelViewer.GetModel().GetMaterialCount() != 1)
     {
         if (ImGui::Button("Delete Material", ImVec2(-1, 0)))
         {
-            ModelRenderer::GetModel().RemoveMaterial(selectedIndex);
+            ModelEditor::modelViewer.GetModel().RemoveMaterial(selectedIndex);
         }
     }
 

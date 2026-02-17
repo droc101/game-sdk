@@ -1,40 +1,34 @@
 //
-// Created by droc101 on 6/27/25.
+// Created by droc101 on 2/17/26.
 //
 
-#include "ModelRenderer.h"
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
-#include <cstdio>
-#include <fstream>
-#include <game_sdk/gl/GLDebug.h>
 #include <game_sdk/gl/GLHelper.h>
+#include <game_sdk/ModelViewer.h>
 #include <game_sdk/SharedMgr.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <ios>
-#include <iosfwd>
+#include <imgui.h>
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/type/Material.h>
 #include <libassets/type/ModelLod.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
-#include <memory>
 #include <utility>
 #include <vector>
 
-// #define GL_CHECK_ERROR if (glGetError() != GL_NO_ERROR) {printf(reinterpret_cast<const char *>(glewGetErrorString(glGetError()))); fflush(stdout); __debugbreak();}
-
-bool ModelRenderer::Init()
+bool ModelViewer::Init()
 {
-    framebuffer = GLHelper::CreateFramebuffer({windowWidth, windowHeight});
+    framebuffer = GLHelper::CreateFramebuffer({800, 600});
 
-    const Error::ErrorCode modelProgramErrorCode = GLHelper::CreateProgram("assets/mdledit/model.frag",
-                                                                           "assets/mdledit/model.vert",
+    const Error::ErrorCode modelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/model.frag",
+                                                                           "assets/shaders/model.vert",
                                                                            program);
-    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/mdledit/cube.frag",
-                                                                          "assets/mdledit/cube.vert",
+    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/shaders/uniform_color.frag",
+                                                                          "assets/shaders/uniform_color.vert",
                                                                           linesProgram);
     if (modelProgramErrorCode != Error::ErrorCode::OK || cubeProgramErrorCode != Error::ErrorCode::OK)
     {
@@ -55,24 +49,9 @@ bool ModelRenderer::Init()
     return true;
 }
 
-void ModelRenderer::LoadBBox()
+void ModelViewer::Destroy()
 {
-    bboxBuffer = GLHelper::CreateIndexedBuffer();
-    const std::array<GLuint, 36> indices = {
-        0, 1, 3, 0, 3, 2, 4, 7, 5, 4, 6, 7, 0, 5, 1, 0, 4, 5, 2, 3, 7, 2, 7, 6, 0, 2, 6, 0, 6, 4, 1, 7, 3, 1, 5, 7,
-    };
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices.size(), indices.data(), GL_STATIC_DRAW);
-}
-
-
-ModelAsset &ModelRenderer::GetModel()
-{
-    return model;
-}
-
-void ModelRenderer::Destroy()
-{
-    UnloadModel();
+    DestroyModel();
     GLHelper::DestroyFramebuffer(framebuffer);
     GLHelper::DestroyBuffer(cubeBuffer);
     GLHelper::DestroyIndexedBuffer(bboxBuffer);
@@ -80,53 +59,18 @@ void ModelRenderer::Destroy()
     glDeleteProgram(linesProgram);
 }
 
-void ModelRenderer::UpdateView(const float pitchDegrees, const float yawDegrees, const float cameraDistance)
+void ModelViewer::SetModel(ModelAsset &&newModel)
 {
-    pitch = glm::radians(pitchDegrees);
-    yaw = glm::radians(yawDegrees);
-    distance = cameraDistance;
-    if (distance < 0.1)
-    {
-        distance = 0.1;
-    }
-    pitch = glm::clamp<float>(pitch, -90, 90);
-    UpdateMatrix();
-}
-
-void ModelRenderer::UpdateViewRel(const float pitchDegrees, const float yawDegrees, const float cameraDistance)
-{
-    pitch += glm::radians(pitchDegrees);
-    yaw += glm::radians(yawDegrees);
-    distance += cameraDistance;
-    if (distance < 0.1)
-    {
-        distance = 0.1;
-    }
-    pitch = glm::clamp<float>(pitch, -90, 90);
-    UpdateMatrix();
-}
-
-void ModelRenderer::UnloadModel()
-{
-    for (const GLModelLod &lod: lods)
-    {
-        glDeleteVertexArrays(1, &lod.vao);
-        glDeleteBuffers(1, &lod.vbo);
-        for (const GLuint &buffer: lod.ebos)
-        {
-            glDeleteBuffers(1, &buffer);
-        }
-    }
-    lods.clear();
-}
-
-void ModelRenderer::LoadModel(ModelAsset &&newModel)
-{
-    UnloadModel();
     model = std::move(newModel);
     lodIndex = 0;
     skinIndex = 0;
 
+    ReloadModel();
+}
+
+void ModelViewer::ReloadModel()
+{
+    DestroyModel();
     for (size_t i = 0; i < model.GetLodCount(); i++)
     {
         const ModelLod &lod = model.GetLod(i);
@@ -145,7 +89,7 @@ void ModelRenderer::LoadModel(ModelAsset &&newModel)
         {
             for (size_t k = 0; k < model.GetMaterialsPerSkin(); k++)
             {
-                const size_t matIndex = model.GetSkin(j)[k];
+                const size_t matIndex = model.GetSkin(j).at(k);
                 const Material &mat = model.GetMaterial(matIndex);
                 (void)SharedMgr::Get().textureCache.LoadTexture(mat.texture);
             }
@@ -172,9 +116,105 @@ void ModelRenderer::LoadModel(ModelAsset &&newModel)
     UpdateView(0, 0, 1);
 }
 
-void ModelRenderer::Render()
+ModelAsset &ModelViewer::GetModel()
+{
+    return model;
+}
+
+void ModelViewer::UpdateView(const float pitchDegrees, const float yawDegrees, const float cameraDistance)
+{
+    pitch = glm::radians(pitchDegrees);
+    yaw = glm::radians(yawDegrees);
+    distance = cameraDistance;
+    if (distance < 0.1)
+    {
+        distance = 0.1;
+    }
+    pitch = glm::clamp<float>(pitch, -90, 90);
+    UpdateMatrix();
+}
+
+void ModelViewer::UpdateViewRel(const float pitchDegrees, const float yawDegrees, const float cameraDistance)
+{
+    pitch += glm::radians(pitchDegrees);
+    yaw += glm::radians(yawDegrees);
+    distance += cameraDistance;
+    if (distance < 0.1)
+    {
+        distance = 0.1;
+    }
+    pitch = glm::clamp<float>(pitch, -90, 90);
+    UpdateMatrix();
+}
+
+void ModelViewer::RenderWindow(const char *title, const ImGuiWindowFlags additionalFlags)
+{
+    RenderFramebuffer();
+    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+    if (ImGui::Begin(title, nullptr, windowFlags | additionalFlags))
+    {
+        RenderImGui();
+    }
+    ImGui::End();
+}
+
+void ModelViewer::RenderChildWindow(const char *title,
+                                    ImGuiChildFlags additionalChildFlags,
+                                    ImGuiWindowFlags additionalWindowFlags)
+{
+    RenderFramebuffer();
+    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+    if (ImGui::BeginChild(title, {0, 0}, additionalChildFlags, windowFlags | additionalWindowFlags))
+    {
+        RenderImGui();
+    }
+    ImGui::EndChild();
+}
+
+void ModelViewer::DestroyModel()
+{
+    for (const GLModelLod &lod: lods)
+    {
+        glDeleteVertexArrays(1, &lod.vao);
+        glDeleteBuffers(1, &lod.vbo);
+        for (const GLuint &buffer: lod.ebos)
+        {
+            glDeleteBuffers(1, &buffer);
+        }
+    }
+    lods.clear();
+}
+
+void ModelViewer::RenderImGui()
+{
+    ImVec2 windowSize = ImGui::GetContentRegionMax();
+    windowSize.x += 8;
+    windowSize.y += 8;
+    ResizeWindow(static_cast<GLsizei>(windowSize.x), static_cast<GLsizei>(windowSize.y));
+
+    const bool previewFocused = ImGui::IsWindowHovered();
+    ImGui::Image(GetFramebufferTexture(), GetFramebufferSize(), {0, 1}, {1, 0});
+
+    if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+    {
+        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+        const ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+        UpdateViewRel(dragDelta.y / 5.0f, dragDelta.x / -5.0f, 0);
+        ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
+    }
+
+    const float mouseWheel = ImGui::GetIO().MouseWheel;
+    if (mouseWheel != 0 && previewFocused)
+    {
+        UpdateViewRel(0, 0, mouseWheel / -10.0f);
+    }
+}
+
+void ModelViewer::RenderFramebuffer()
 {
     GLHelper::BindFramebuffer(framebuffer);
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -238,7 +278,7 @@ void ModelRenderer::Render()
 
     for (size_t i = 0; i < model.GetMaterialsPerSkin(); i++)
     {
-        const size_t matIndex = model.GetSkin(skinIndex)[i];
+        const size_t matIndex = model.GetSkin(skinIndex).at(i);
         Material &mat = model.GetMaterial(matIndex);
         glUniform4fv(glGetUniformLocation(program, "ALBEDO"), 1, mat.color.GetDataPointer());
 
@@ -345,16 +385,24 @@ void ModelRenderer::Render()
     GLHelper::UnbindFramebuffer();
 }
 
-void ModelRenderer::ResizeWindow(const GLsizei width, const GLsizei height)
+void ModelViewer::ResizeWindow(GLsizei width, GLsizei height)
 {
-    windowWidth = width;
-    windowHeight = height;
     windowAspect = static_cast<float>(width) / static_cast<float>(height);
     GLHelper::ResizeFramebuffer(framebuffer, {width, height});
     UpdateMatrix();
 }
 
-void ModelRenderer::UpdateMatrix()
+ImTextureID ModelViewer::GetFramebufferTexture() const
+{
+    return framebuffer.colorTexture;
+}
+
+ImVec2 ModelViewer::GetFramebufferSize() const
+{
+    return {framebuffer.size.x, framebuffer.size.y};
+}
+
+void ModelViewer::UpdateMatrix()
 {
     const glm::mat4 &persp = glm::perspective<float>(90.0, windowAspect, 0.01f, 1000.0f);
 
@@ -368,7 +416,7 @@ void ModelRenderer::UpdateMatrix()
     view = look;
 }
 
-void ModelRenderer::LoadCube()
+void ModelViewer::LoadCube()
 {
     // clang-format off
     constexpr std::array cubeVerts = {
@@ -396,7 +444,16 @@ void ModelRenderer::LoadCube()
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * cubeVerts.size(), cubeVerts.data(), GL_STATIC_DRAW);
 }
 
-void ModelRenderer::LoadHulls()
+void ModelViewer::LoadBBox()
+{
+    bboxBuffer = GLHelper::CreateIndexedBuffer();
+    const std::array<GLuint, 36> indices = {
+        0, 1, 3, 0, 3, 2, 4, 7, 5, 4, 6, 7, 0, 5, 1, 0, 4, 5, 2, 3, 7, 2, 7, 6, 0, 2, 6, 0, 6, 4, 1, 7, 3, 1, 5, 7,
+    };
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices.size(), indices.data(), GL_STATIC_DRAW);
+}
+
+void ModelViewer::LoadHulls()
 {
     for (const GLHull &hull: hulls)
     {
@@ -421,7 +478,7 @@ void ModelRenderer::LoadHulls()
     }
 }
 
-void ModelRenderer::LoadStaticCollision()
+void ModelViewer::LoadStaticCollision()
 {
     glBindVertexArray(staticCollisionVao);
     glBindBuffer(GL_ARRAY_BUFFER, staticCollisionVbo);
@@ -430,14 +487,4 @@ void ModelRenderer::LoadStaticCollision()
                  static_cast<GLsizeiptr>(sizeof(GLfloat) * verts.size()),
                  verts.data(),
                  GL_STATIC_DRAW);
-}
-
-ImTextureID ModelRenderer::GetFramebufferTexture()
-{
-    return framebuffer.colorTexture;
-}
-
-ImVec2 ModelRenderer::GetFramebufferSize()
-{
-    return {framebuffer.size.x, framebuffer.size.y};
 }

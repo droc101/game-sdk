@@ -27,20 +27,20 @@
 
 bool MapRenderer::Init()
 {
-    const Error::ErrorCode linesProgramErrorCode = GLHelper::CreateProgram("assets/mapedit/basicVertexColor.frag",
-                                                                           "assets/mapedit/basicVertexColor.vert",
+    const Error::ErrorCode linesProgramErrorCode = GLHelper::CreateProgram("assets/shaders/basicVertexColor.frag",
+                                                                           "assets/shaders/basicVertexColor.vert",
                                                                            lineProgram);
 
-    const Error::ErrorCode gridProgramErrorCode = GLHelper::CreateProgram("assets/mapedit/grid.frag",
-                                                                          "assets/mapedit/grid.vert",
+    const Error::ErrorCode gridProgramErrorCode = GLHelper::CreateProgram("assets/shaders/grid.frag",
+                                                                          "assets/shaders/grid.vert",
                                                                           gridProgram);
 
-    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/mapedit/generic.frag",
-                                                                          "assets/mapedit/generic.vert",
+    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/shaders/generic.frag",
+                                                                          "assets/shaders/generic.vert",
                                                                           genericProgram);
 
-    const Error::ErrorCode spriteProgramErrorCode = GLHelper::CreateProgram("assets/mapedit/sprite.frag",
-                                                                            "assets/mapedit/sprite.vert",
+    const Error::ErrorCode spriteProgramErrorCode = GLHelper::CreateProgram("assets/shaders/sprite.frag",
+                                                                            "assets/shaders/sprite.vert",
                                                                             spriteProgram);
 
     if (cubeProgramErrorCode != Error::ErrorCode::OK ||

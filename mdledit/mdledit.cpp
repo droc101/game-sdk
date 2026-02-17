@@ -1,4 +1,3 @@
-#include <array>
 #include <cstdio>
 #include <format>
 #include <game_sdk/DesktopInterface.h>
@@ -6,23 +5,19 @@
 #include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
-#include <GL/glew.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <libassets/asset/ModelAsset.h>
-#include <libassets/type/ConvexHull.h>
-#include <libassets/type/StaticCollisionMesh.h>
 #include <libassets/util/Error.h>
 #include <string>
 #include <utility>
-#include "ModelRenderer.h"
+
+#include "ModelEditor.h"
 #include "tabs/CollisionTab.h"
 #include "tabs/LodsTab.h"
 #include "tabs/MaterialsTab.h"
 #include "tabs/PreviewOptionsTab.h"
 #include "tabs/SkinsTab.h"
-
-static bool modelLoaded = false;
 
 static bool openPressed = false;
 static bool newPressed = false;
@@ -32,34 +27,24 @@ static ImGuiID dockspaceId;
 static ImGuiID rootDockspaceID;
 static bool dockspaceSetup = false;
 
-static void destroyExistingModel()
-{
-    if (!modelLoaded)
-    {
-        return;
-    }
-    ModelRenderer::UnloadModel();
-    modelLoaded = false;
-}
-
 static void openGmdl(const std::string &path)
 {
     ModelAsset model;
-    const Error::ErrorCode errorCode = ModelAsset::CreateFromAsset(path.c_str(), model);
+    const Error::ErrorCode errorCode = ModelAsset::CreateFromAsset(path, model);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the model!\n{}", errorCode));
         return;
     }
-    destroyExistingModel();
-    ModelRenderer::LoadModel(std::move(model));
-    modelLoaded = true;
+    ModelEditor::DestroyExistingModel();
+    ModelEditor::modelViewer.SetModel(std::move(model));
+    ModelEditor::modelLoaded = true;
 }
 
 static void importModel(const std::string &path)
 {
     ModelAsset model;
-    const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(path.c_str(),
+    const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(path,
                                                                            model,
                                                                            Options::Get().defaultTexture);
     if (errorCode != Error::ErrorCode::OK)
@@ -67,70 +52,25 @@ static void importModel(const std::string &path)
         SDKWindow::Get().ErrorMessage(std::format("Failed to import the model!\n{}", errorCode));
         return;
     }
-    destroyExistingModel();
-    ModelRenderer::LoadModel(std::move(model));
-    modelLoaded = true;
+    ModelEditor::DestroyExistingModel();
+    ModelEditor::modelViewer.SetModel(std::move(model));
+    ModelEditor::modelLoaded = true;
 }
 
 static void saveGmdl(const std::string &path)
 {
-    const Error::ErrorCode errorCode = ModelRenderer::GetModel().SaveAsAsset(path);
+    const Error::ErrorCode errorCode = ModelEditor::modelViewer.GetModel().SaveAsAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to save the model!\n{}", errorCode));
     }
 }
 
-#pragma region functions that CANNOT BE STATIC AND ARE USED DO NOT BELEIVE THE LIES
-
-void importLod(const std::string &path)
-{
-    ModelAsset model = ModelRenderer::GetModel();
-    if (!model.AddLod(path))
-    {
-        SDKWindow::Get().ErrorMessage(std::format("Failed to import model LOD!"));
-        return;
-    }
-    destroyExistingModel();
-    ModelRenderer::LoadModel(std::move(model));
-    modelLoaded = true;
-}
-
-void importSingleHull(const std::string &path)
-{
-    ModelAsset model = ModelRenderer::GetModel();
-    const ConvexHull hull = ConvexHull(path);
-    model.AddHull(hull);
-    destroyExistingModel();
-    ModelRenderer::LoadModel(std::move(model));
-    modelLoaded = true;
-}
-
-void importMultipleHulls(const std::string &path)
-{
-    ModelAsset model = ModelRenderer::GetModel();
-    model.AddHulls(path);
-    destroyExistingModel();
-    ModelRenderer::LoadModel(std::move(model));
-    modelLoaded = true;
-}
-
-void importStaticCollider(const std::string &path)
-{
-    ModelAsset model = ModelRenderer::GetModel();
-    model.SetStaticCollisionMesh(StaticCollisionMesh(path));
-    destroyExistingModel();
-    ModelRenderer::LoadModel(std::move(model));
-    modelLoaded = true;
-}
-
-#pragma endregion
-
 static void HandleMenuAndShortcuts()
 {
     newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N, ImGuiInputFlags_RouteGlobal);
     openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O, ImGuiInputFlags_RouteGlobal);
-    savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S, ImGuiInputFlags_RouteGlobal) && modelLoaded;
+    savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S, ImGuiInputFlags_RouteGlobal) && ModelEditor::modelLoaded;
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -139,7 +79,7 @@ static void HandleMenuAndShortcuts()
             newPressed |= ImGui::MenuItem("New", "Ctrl+N");
             ImGui::Separator();
             openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
-            savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, modelLoaded);
+            savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, ModelEditor::modelLoaded);
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
@@ -147,70 +87,74 @@ static void HandleMenuAndShortcuts()
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("View", modelLoaded))
+        if (ImGui::BeginMenu("View", ModelEditor::modelLoaded))
         {
             if (ImGui::MenuItem("Reset View"))
             {
-                ModelRenderer::UpdateView(0, 0, 1);
+                ModelEditor::modelViewer.UpdateView(0, 0, 1);
             }
             ImGui::Separator();
             if (ImGui::BeginMenu("Display Mode"))
             {
-                if (ImGui::MenuItem("Unshaded", "", ModelRenderer::displayMode == ModelRenderer::DisplayMode::COLORED))
+                if (ImGui::MenuItem("Unshaded",
+                                    "",
+                                    ModelEditor::modelViewer.displayMode == ModelViewer::DisplayMode::COLORED))
                 {
-                    ModelRenderer::displayMode = ModelRenderer::DisplayMode::COLORED;
+                    ModelEditor::modelViewer.displayMode = ModelViewer::DisplayMode::COLORED;
                 }
                 if (ImGui::MenuItem("Shaded",
                                     "",
-                                    ModelRenderer::displayMode == ModelRenderer::DisplayMode::COLORED_SHADED))
+                                    ModelEditor::modelViewer.displayMode == ModelViewer::DisplayMode::COLORED_SHADED))
                 {
-                    ModelRenderer::displayMode = ModelRenderer::DisplayMode::COLORED_SHADED;
+                    ModelEditor::modelViewer.displayMode = ModelViewer::DisplayMode::COLORED_SHADED;
                 }
                 if (ImGui::MenuItem("Textured Unshaded",
                                     "",
-                                    ModelRenderer::displayMode == ModelRenderer::DisplayMode::TEXTURED))
+                                    ModelEditor::modelViewer.displayMode == ModelViewer::DisplayMode::TEXTURED))
                 {
-                    ModelRenderer::displayMode = ModelRenderer::DisplayMode::TEXTURED;
+                    ModelEditor::modelViewer.displayMode = ModelViewer::DisplayMode::TEXTURED;
                 }
                 if (ImGui::MenuItem("Textured Shaded",
                                     "",
-                                    ModelRenderer::displayMode == ModelRenderer::DisplayMode::TEXTURED_SHADED))
+                                    ModelEditor::modelViewer.displayMode == ModelViewer::DisplayMode::TEXTURED_SHADED))
                 {
-                    ModelRenderer::displayMode = ModelRenderer::DisplayMode::TEXTURED_SHADED;
+                    ModelEditor::modelViewer.displayMode = ModelViewer::DisplayMode::TEXTURED_SHADED;
                 }
-                if (ImGui::MenuItem("UV Debug", "", ModelRenderer::displayMode == ModelRenderer::DisplayMode::UV))
+                if (ImGui::MenuItem("UV Debug",
+                                    "",
+                                    ModelEditor::modelViewer.displayMode == ModelViewer::DisplayMode::UV))
                 {
-                    ModelRenderer::displayMode = ModelRenderer::DisplayMode::UV;
+                    ModelEditor::modelViewer.displayMode = ModelViewer::DisplayMode::UV;
                 }
                 if (ImGui::MenuItem("Normal Debug",
                                     "",
-                                    ModelRenderer::displayMode == ModelRenderer::DisplayMode::NORMAL))
+                                    ModelEditor::modelViewer.displayMode == ModelViewer::DisplayMode::NORMAL))
                 {
-                    ModelRenderer::displayMode = ModelRenderer::DisplayMode::NORMAL;
+                    ModelEditor::modelViewer.displayMode = ModelViewer::DisplayMode::NORMAL;
                 }
                 ImGui::EndMenu();
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Show Backfaces", "", !ModelRenderer::cullBackfaces))
+            if (ImGui::MenuItem("Show Backfaces", "", !ModelEditor::modelViewer.cullBackfaces))
             {
-                ModelRenderer::cullBackfaces = !ModelRenderer::cullBackfaces;
+                ModelEditor::modelViewer.cullBackfaces = !ModelEditor::modelViewer.cullBackfaces;
             }
-            if (ImGui::MenuItem("Show Unit Cube", "", ModelRenderer::showUnitCube))
+            if (ImGui::MenuItem("Show Unit Cube", "", ModelEditor::modelViewer.showUnitCube))
             {
-                ModelRenderer::showUnitCube = !ModelRenderer::showUnitCube;
+                ModelEditor::modelViewer.showUnitCube = !ModelEditor::modelViewer.showUnitCube;
             }
-            if (ImGui::MenuItem("Wireframe", "", ModelRenderer::wireframe))
+            if (ImGui::MenuItem("Wireframe", "", ModelEditor::modelViewer.wireframe))
             {
-                ModelRenderer::wireframe = !ModelRenderer::wireframe;
+                ModelEditor::modelViewer.wireframe = !ModelEditor::modelViewer.wireframe;
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Show Bounding Box", "", ModelRenderer::showBoundingBox))
+            if (ImGui::MenuItem("Show Bounding Box", "", ModelEditor::modelViewer.showBoundingBox))
             {
-                ModelRenderer::showBoundingBox = !ModelRenderer::showBoundingBox;
+                ModelEditor::modelViewer.showBoundingBox = !ModelEditor::modelViewer.showBoundingBox;
             }
-            if (ImGui::MenuItem("Show Collision Model", "", ModelRenderer::showCollisionModel))
+            if (ImGui::MenuItem("Show Collision Model", "", ModelEditor::modelViewer.showCollisionModel))
             {
-                ModelRenderer::showCollisionModel = !ModelRenderer::showCollisionModel;
+                ModelEditor::modelViewer.showCollisionModel = !ModelEditor::modelViewer.showCollisionModel;
             }
             ImGui::EndMenu();
         }
@@ -226,7 +170,7 @@ static void HandleMenuAndShortcuts()
         SDKWindow::Get().OpenFileDialog(importModel, DialogFilters::modelFilters);
     } else if (savePressed)
     {
-        if (!ModelRenderer::GetModel().ValidateLodDistances())
+        if (!ModelEditor::modelViewer.GetModel().ValidateLodDistances())
         {
             SDKWindow::Get().ErrorMessage("LOD distances are invalid! Please fix them in the LOD editor and make sure "
                                           "that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the "
@@ -275,7 +219,7 @@ static void Render()
     ImGui::SetNextWindowPos(VpAreaTopLeft);
     ImGui::SetNextWindowSize(VpAreaSize);
 
-    if (!modelLoaded)
+    if (!ModelEditor::modelLoaded)
     {
         ImGui::Begin("CentralDock",
                      nullptr,
@@ -322,40 +266,9 @@ static void Render()
                                              ImGuiWindowFlags_NoScrollWithMouse;
     ImGui::PushStyleVarX(ImGuiStyleVar_WindowPadding, 0.0f);
     ImGui::PushStyleVarY(ImGuiStyleVar_WindowPadding, 0.0f);
-    if (ImGui::Begin("Model Preview", nullptr, windowFlags))
-    {
-        ImVec2 windowSize = ImGui::GetContentRegionMax();
-        windowSize.x += 8;
-        windowSize.y += 8;
-        ModelRenderer::ResizeWindow(static_cast<GLsizei>(windowSize.x), static_cast<GLsizei>(windowSize.y));
-
-        const bool previewFocused = ImGui::IsWindowHovered();
-        ImGui::Image(ModelRenderer::GetFramebufferTexture(), ModelRenderer::GetFramebufferSize(), {0, 1}, {1, 0});
-
-        if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-        {
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-            const ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
-            ModelRenderer::UpdateViewRel(dragDelta.y / 5.0f, dragDelta.x / -5.0f, 0);
-            ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
-        }
-
-        const float mouseWheel = ImGui::GetIO().MouseWheel;
-        if (mouseWheel != 0 && previewFocused)
-        {
-            ModelRenderer::UpdateViewRel(0, 0, mouseWheel / -10.0f);
-        }
-    }
-    ImGui::End();
+    ModelEditor::modelViewer.RenderWindow("Model Preview", windowFlags);
     ImGui::PopStyleVar();
     ImGui::PopStyleVar();
-
-    glClearColor(0, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-    if (modelLoaded)
-    {
-        ModelRenderer::Render();
-    }
 }
 
 int main(int argc, char **argv)
@@ -364,7 +277,7 @@ int main(int argc, char **argv)
     {
         return -1;
     }
-    if (!ModelRenderer::Init())
+    if (!ModelEditor::modelViewer.Init())
     {
         printf("Failed to start renderer!\n");
         return -1;
@@ -387,8 +300,7 @@ int main(int argc, char **argv)
 
     SDKWindow::Get().MainLoop(Render);
 
-    destroyExistingModel();
-    ModelRenderer::Destroy();
+    ModelEditor::modelViewer.Destroy();
     SDKWindow::Get().Destroy();
     return 0;
 }

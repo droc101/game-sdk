@@ -57,10 +57,10 @@ void TextureAsset::CreateMissingTexture(TextureAsset &texture)
         {
             if ((x < 32) ^ (y < 32))
             {
-                texture.pixels.at(x + y * 64) = 0x000000ff; // black
+                texture.pixels.at(x + y * 64) = 0xff000000; // black
             } else
             {
-                texture.pixels.at(x + y * 64) = 0xff00ffff; // magenta
+                texture.pixels.at(x + y * 64) = 0xffff00ff; // magenta
             }
         }
     }

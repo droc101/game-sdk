@@ -4,8 +4,6 @@ project(mdledit)
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(mdledit mdledit.cpp
-        ModelRenderer.cpp
-        ModelRenderer.h
         tabs/SkinsTab.cpp
         tabs/SkinsTab.h
         tabs/LodsTab.cpp
@@ -17,6 +15,8 @@ add_executable(mdledit mdledit.cpp
         $<$<BOOL:${WIN32}>:mdledit.rc>
         tabs/PreviewOptionsTab.cpp
         tabs/PreviewOptionsTab.h
+        ModelEditor.cpp
+        ModelEditor.h
 )
 
 set_target_properties(mdledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")

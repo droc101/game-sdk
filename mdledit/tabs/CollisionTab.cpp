@@ -9,17 +9,14 @@
 #include <game_sdk/SDKWindow.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
+#include <libassets/asset/ModelAsset.h>
 #include <libassets/type/ConvexHull.h>
 #include <string>
-#include "../ModelRenderer.h"
-
-void importSingleHull(const std::string &path);
-void importMultipleHulls(const std::string &path);
-void importStaticCollider(const std::string &path);
+#include "../ModelEditor.h"
 
 void CollisionTab::Render()
 {
-    ModelAsset &model = ModelRenderer::GetModel();
+    ModelAsset &model = ModelEditor::modelViewer.GetModel();
     ImGui::Begin("Collision", nullptr, ImGuiWindowFlags_NoCollapse);
     ImGui::Text("Bounding Box");
     ImGui::InputFloat3("Origin", glm::value_ptr(model.GetBoundingBox().origin));
@@ -71,10 +68,10 @@ void CollisionTab::Render()
 
 void CollisionTab::RenderStaticMeshUI()
 {
-    ModelAsset &model = ModelRenderer::GetModel();
+    ModelAsset &model = ModelEditor::modelViewer.GetModel();
     if (ImGui::Button("Import Collision Mesh"))
     {
-        SDKWindow::Get().OpenFileDialog(importStaticCollider, DialogFilters::modelFilters);
+        SDKWindow::Get().OpenFileDialog(ModelEditor::ImportStaticCollider, DialogFilters::modelFilters);
     }
     ImGui::Text("%zu triangles", model.GetStaticCollisionMesh().GetNumTriangles());
 }
@@ -84,30 +81,30 @@ void CollisionTab::RenderCHullUI()
 {
     if (ImGui::Button("Import Hull"))
     {
-        SDKWindow::Get().OpenFileDialog(importSingleHull, DialogFilters::modelFilters);
+        SDKWindow::Get().OpenFileDialog(ModelEditor::ImportSingleHull, DialogFilters::modelFilters);
     }
     ImGui::SameLine();
     if (ImGui::Button("Import Hulls"))
     {
-        SDKWindow::Get().OpenFileDialog(importMultipleHulls, DialogFilters::modelFilters);
+        SDKWindow::Get().OpenFileDialog(ModelEditor::ImportMultipleHulls, DialogFilters::modelFilters);
     }
     constexpr float panelHeight = 250.0f;
     ImGui::BeginChild("ScrollableRegion",
                       ImVec2(0, panelHeight),
                       ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_Borders);
-    for (size_t hullIndex = 0; hullIndex < ModelRenderer::GetModel().GetNumHulls(); hullIndex++)
+    for (size_t hullIndex = 0; hullIndex < ModelEditor::modelViewer.GetModel().GetNumHulls(); hullIndex++)
     {
         const std::string title = std::format("Shape {}", hullIndex);
         ImGui::SeparatorText(title.c_str());
-        ConvexHull &hull = ModelRenderer::GetModel().GetHull(hullIndex);
+        ConvexHull &hull = ModelEditor::modelViewer.GetModel().GetHull(hullIndex);
         ImGui::TextUnformatted(std::format("{} points", hull.GetPoints().size()).c_str());
         ImGui::Dummy(ImVec2(0.0f, 2.0f));
         const ImVec2 space = ImGui::GetContentRegionAvail();
         const float buttonWidth = space.x / 2.0f;
         if (ImGui::Button(std::format("Delete##{}", hullIndex).c_str(), ImVec2(buttonWidth, 0)))
         {
-            ModelRenderer::GetModel().RemoveHull(hullIndex);
-            ModelRenderer::LoadHulls();
+            ModelEditor::modelViewer.GetModel().RemoveHull(hullIndex);
+            ModelEditor::modelViewer.ReloadModel();
         }
     }
     ImGui::EndChild();
