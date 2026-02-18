@@ -1,6 +1,4 @@
-#include <array>
 #include <cstdint>
-#include <cstdio>
 #include <format>
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/DialogFilters.h>
@@ -47,10 +45,18 @@ static void loadTexture()
                  GL_RGBA,
                  GL_UNSIGNED_BYTE,
                  pixels.data());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    const GLint magfilter = texture.filter ? GL_LINEAR : GL_NEAREST;
+    GLint minFilter = magfilter;
+    const GLint repeat = texture.repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE;
+    if (texture.mipmaps)
+    {
+        glGenerateMipmap(GL_TEXTURE_2D);
+        minFilter = texture.filter ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_LINEAR;
+    }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magfilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, repeat);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, repeat);
     textureLoaded = true;
 }
 
@@ -208,9 +214,18 @@ static void Render()
                                            .c_str());
 
             ImGui::Separator();
-            ImGui::Checkbox("Filter", &texture.filter); // TODO live update
-            ImGui::Checkbox("Repeat", &texture.repeat);
-            ImGui::Checkbox("Mipmaps", &texture.mipmaps);
+            if (ImGui::Checkbox("Filter", &texture.filter))
+            {
+                loadTexture();
+            }
+            if (ImGui::Checkbox("Repeat", &texture.repeat))
+            {
+                loadTexture();
+            }
+            if (ImGui::Checkbox("Mipmaps", &texture.mipmaps))
+            {
+                loadTexture();
+            }
         }
         ImGui::EndChild();
 
@@ -236,13 +251,13 @@ int main(int argc, char **argv)
     } else
     {
         const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc,
-                                                                          argv,
-                                                                          {
-                                                                              ".png",
-                                                                              ".jpg",
-                                                                              ".jpeg",
-                                                                              ".tga",
-                                                                          });
+                                                                                argv,
+                                                                                {
+                                                                                    ".png",
+                                                                                    ".jpg",
+                                                                                    ".jpeg",
+                                                                                    ".tga",
+                                                                                });
         if (!importPath.empty())
         {
             importImage(importPath);

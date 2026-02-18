@@ -47,10 +47,18 @@ GLuint GLTextureCache::CreateTexture(const TextureAsset &textureAsset)
                  GL_RGBA,
                  GL_UNSIGNED_BYTE,
                  pixels.data());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    const GLint magfilter = textureAsset.filter ? GL_LINEAR : GL_NEAREST;
+    GLint minFilter = magfilter;
+    const GLint repeat = textureAsset.repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE;
+    if (textureAsset.mipmaps)
+    {
+        glGenerateMipmap(GL_TEXTURE_2D);
+        minFilter = textureAsset.filter ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_LINEAR;
+    }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magfilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, repeat);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, repeat);
 
     return glTexture;
 }
