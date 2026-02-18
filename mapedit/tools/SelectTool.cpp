@@ -284,10 +284,17 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
                 selectionType = ItemType::VERTEX;
             } else if (isHovered &&
                        (ImGui::IsMouseClicked(ImGuiMouseButton_Right) ||
-                        ImGui::Shortcut(ImGuiKey_Delete, ImGuiInputFlags_RouteGlobal)) &&
-                       sector.points.size() > 3)
+                        ImGui::Shortcut(ImGuiKey_Delete, ImGuiInputFlags_RouteGlobal)))
             {
-                sector.points.erase(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex));
+                if (sector.points.size() > 3)
+                {
+                    sector.points.erase(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex));
+                } else
+                {
+                    MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + sectorIndex);
+                    selectionType = ItemType::NONE;
+                    sectorFocusMode = false;
+                }
             }
             return;
         }
@@ -464,6 +471,10 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
             if (s.points.size() > 3)
             {
                 s.points.erase(s.points.begin() + selectionVertexIndex);
+                selectionType = ItemType::NONE;
+            } else
+            {
+                MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + selectionIndex);
                 selectionType = ItemType::NONE;
             }
         }
