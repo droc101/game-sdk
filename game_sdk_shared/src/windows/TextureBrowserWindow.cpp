@@ -2,6 +2,7 @@
 // Created by droc101 on 7/6/25.
 //
 
+#include <cfloat>
 #include <cstddef>
 #include <format>
 #include <game_sdk/Options.h>
@@ -13,7 +14,7 @@
 #include <string>
 
 constexpr int tileSize = 128;
-static std::string filter = "";
+static std::string filter;
 
 TextureBrowserWindow &TextureBrowserWindow::Get()
 {
@@ -62,13 +63,13 @@ void TextureBrowserWindow::Render()
                     }
 
                     ImVec2 texSize;
-                    if (SharedMgr::Get().textureCache.GetTextureSize("texture/" + textures[i], texSize) !=
+                    if (SharedMgr::Get().textureCache.GetTextureSize("texture/" + textures.at(i), texSize) !=
                         Error::ErrorCode::OK)
                     {
                         continue;
                     }
                     ImTextureID tex = 0;
-                    if (SharedMgr::Get().textureCache.GetTextureID("texture/" + textures[i], tex) != Error::ErrorCode::OK)
+                    if (SharedMgr::Get().textureCache.GetTextureID("texture/" + textures.at(i), tex) != Error::ErrorCode::OK)
                     {
                         continue;
                     }
@@ -83,13 +84,13 @@ void TextureBrowserWindow::Render()
 
                     const float cursor = ImGui::GetCursorPosX();
 
-                    if (ImGui::Selectable("##tile", "texture/" + textures[i] == *str, 0, ImVec2(tileSize, tileSize)))
+                    if (ImGui::Selectable("##tile", "texture/" + textures.at(i) == *str, 0, ImVec2(tileSize, tileSize)))
                     {
-                        *str = "texture/" + textures[i];
+                        *str = "texture/" + textures.at(i);
                     }
                     if (ImGui::BeginItemTooltip())
                     {
-                        const std::string tooltip = std::format("{}\n{}x{}", textures[i], texSize.x, texSize.y);
+                        const std::string tooltip = std::format("{}\n{}x{}", textures.at(i), texSize.x, texSize.y);
                         ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
                         ImGui::TextUnformatted(tooltip.c_str());
                         ImGui::PopTextWrapPos();

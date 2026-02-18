@@ -20,6 +20,7 @@
 #include <libassets/type/paramDefs/OptionParamDefinition.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/util/Error.h>
+#include <memory>
 #include <ranges>
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_misc.h>
@@ -231,4 +232,13 @@ void SharedMgr::LoadActorDefinitions()
     }
 
     printf("Loaded %zu actor definitions\n", actorDefinitions.size());
+
+    if (!actorDefinitions.contains("player"))
+    {
+        printf("WARNING: No \"player\" actor class definition was loaded!\n");
+    }
+    if (!actorDefinitions.contains("actor"))
+    {
+        printf("WARNING: No \"actor\" actor class definition was loaded!\n");
+    }
 }

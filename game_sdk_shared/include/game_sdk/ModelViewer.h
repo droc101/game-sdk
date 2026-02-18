@@ -30,8 +30,14 @@ class ModelViewer
 
         ModelViewer() = default;
 
+        /**
+         * Initialize shared model viewer resources
+         */
         [[nodiscard]] static bool GlobalInit();
 
+        /**
+         * Destroy shared model viewer resources
+         */
         static void GlobalDestroy();
 
         /**
@@ -52,6 +58,9 @@ class ModelViewer
          */
         void SetModel(ModelAsset &&newModel);
 
+        /**
+         * Reload the current model
+         */
         void ReloadModel();
 
         /**

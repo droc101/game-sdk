@@ -7,6 +7,7 @@
 #include <game_sdk/DesktopInterface.h>
 #include <SDL3/SDL_misc.h>
 #include <SDL3/SDL_process.h>
+#include <SDL3/SDL_properties.h>
 #include <SDL3/SDL_timer.h>
 #include <string>
 #include <utility>

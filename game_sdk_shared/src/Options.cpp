@@ -90,7 +90,7 @@ void Options::Save()
     file.close();
 }
 
-std::string Options::GetAssetsPath()
+std::string Options::GetAssetsPath() const
 {
     if (overrideAssetsPath)
     {
@@ -99,7 +99,7 @@ std::string Options::GetAssetsPath()
     return gamePath + "/assets";
 }
 
-bool Options::ValidateGamePath()
+bool Options::ValidateGamePath() const
 {
     if (!std::filesystem::is_directory(gamePath))
     {

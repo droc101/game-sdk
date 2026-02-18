@@ -131,12 +131,24 @@ class SDKWindow
          */
         void OpenFolderDialog(SDKWindowFileDialogCallback Callback);
 
+        /**
+         * Apply theme from options
+         */
         void ApplyTheme() const;
 
+        /**
+         * Get the default ImGui font
+         */
         [[nodiscard]] ImFont *GetNormalFont() const;
 
+        /**
+         * Get the monospace ImGui font
+         */
         [[nodiscard]] ImFont *GetMonospaceFont() const;
 
+        /**
+         * Set the callback function that is called when the theme changes
+         */
         void SetThemeChangeCallback(SDKWindowThemeChangeCallback callback);
 
     private:

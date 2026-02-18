@@ -2,7 +2,9 @@
 // Created by droc101 on 11/16/25.
 //
 
+#include <cfloat>
 #include <cstddef>
+#include <cstdio>
 #include <format>
 #include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
@@ -14,7 +16,7 @@
 #include <string>
 
 constexpr int tileSize = 128;
-static std::string filter = "";
+static std::string filter;
 
 MaterialBrowserWindow &MaterialBrowserWindow::Get()
 {
@@ -97,15 +99,15 @@ void MaterialBrowserWindow::Render()
                     const float cursor = ImGui::GetCursorPosX();
 
                     if (ImGui::Selectable("##tile",
-                                          "material/" + materialPaths[i] == *str,
+                                          "material/" + materialPaths.at(i) == *str,
                                           0,
                                           ImVec2(tileSize, tileSize)))
                     {
-                        *str = "material/" + materialPaths[i];
+                        *str = "material/" + materialPaths.at(i);
                     }
                     if (ImGui::BeginItemTooltip())
                     {
-                        const std::string tooltip = materialPaths[i];
+                        const std::string tooltip = materialPaths.at(i);
                         ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
                         ImGui::TextUnformatted(tooltip.c_str());
                         ImGui::PopTextWrapPos();

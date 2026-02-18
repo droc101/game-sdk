@@ -37,12 +37,12 @@ class Options
         /**
          * Do basic validation checks on the game path
          */
-        bool ValidateGamePath();
+        [[nodiscard]] bool ValidateGamePath() const;
 
         /**
          * Get the absolute path to the assets folder
          */
-        std::string GetAssetsPath();
+        [[nodiscard]] std::string GetAssetsPath() const;
 
         std::string gamePath{};
         bool overrideAssetsPath = false;

@@ -3,6 +3,7 @@
 //
 
 #include <cassert>
+#include <cfloat>
 #include <game_sdk/ModelViewer.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
@@ -16,7 +17,7 @@
 #include <vector>
 
 constexpr int tileSize = 256;
-static std::string filter = "";
+static std::string filter;
 
 ModelBrowserWindow &ModelBrowserWindow::Get()
 {
