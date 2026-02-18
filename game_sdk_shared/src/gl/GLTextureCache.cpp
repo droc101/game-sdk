@@ -123,7 +123,11 @@ Error::ErrorCode GLTextureCache::LoadTexture(const std::string &relPath)
     return GetTextureID(relPath, unused);
 }
 
-Error::ErrorCode GLTextureCache::RegisterPng(const std::string &pngPath, const std::string &name)
+Error::ErrorCode GLTextureCache::RegisterPng(const std::string &pngPath,
+                                             const std::string &name,
+                                             const bool filter,
+                                             const bool repeat,
+                                             const bool mipmaps)
 {
     TextureAsset tex;
     const Error::ErrorCode e = TextureAsset::CreateFromImage(pngPath.c_str(), tex);
@@ -131,6 +135,9 @@ Error::ErrorCode GLTextureCache::RegisterPng(const std::string &pngPath, const s
     {
         return e;
     }
+    tex.filter = filter;
+    tex.mipmaps = mipmaps;
+    tex.repeat = repeat;
     const GLuint glTex = CreateTexture(tex);
     textureBuffers.insert({name, glTex});
     return Error::ErrorCode::OK;

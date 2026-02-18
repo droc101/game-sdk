@@ -54,8 +54,15 @@ class GLTextureCache
          * Register a PNG file as a texture with an arbitrary name
          * @param pngPath Path to the PNG file
          * @param name Name/path to register as
+         * @param filter
+         * @param repeat
+         * @param mipmaps
          */
-        [[nodiscard]] Error::ErrorCode RegisterPng(const std::string &pngPath, const std::string &name);
+        [[nodiscard]] Error::ErrorCode RegisterPng(const std::string &pngPath,
+                                                   const std::string &name,
+                                                   bool filter = false,
+                                                   bool repeat = false,
+                                                   bool mipmaps = false);
 
     private:
         std::unordered_map<std::string, ImTextureID> textureBuffers{};

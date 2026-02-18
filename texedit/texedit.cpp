@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cstdint>
 #include <format>
 #include <game_sdk/DesktopInterface.h>
@@ -12,10 +13,19 @@
 #include <vector>
 
 static float zoom = 1.0f;
+static ImVec2 pan = {0, 0};
 
 static TextureAsset texture{};
 static bool textureLoaded = false;
 static GLuint glTexture;
+
+static bool showTransparencyCheckerboard = true;
+
+constexpr const char *CHECKERBOARD_ICON_NAME = "editor/checkerboard";
+static ImTextureID checkerboardTexture;
+
+constexpr float MIN_ZOOM = 0.1f;
+constexpr float MAX_ZOOM = 10.0f;
 
 static void destroyExistingTexture()
 {
@@ -100,6 +110,18 @@ static void exportPng(const std::string &path)
     }
 }
 
+static void ClampZoom()
+{
+    if (zoom > MAX_ZOOM)
+    {
+        zoom = MAX_ZOOM;
+    }
+    if (zoom < MIN_ZOOM)
+    {
+        zoom = MIN_ZOOM;
+    }
+}
+
 static void Render()
 {
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
@@ -115,8 +137,8 @@ static void Render()
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && textureLoaded;
     bool exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && textureLoaded;
 
-    bool zoomInPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Equal) && textureLoaded;
-    bool zoomOutPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Minus) && textureLoaded;
+    bool zoomInPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Equal, ImGuiInputFlags_Repeat) && textureLoaded;
+    bool zoomOutPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Minus, ImGuiInputFlags_Repeat) && textureLoaded;
     bool resetZoomPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_0) && textureLoaded;
 
     if (ImGui::BeginMainMenuBar())
@@ -139,6 +161,13 @@ static void Render()
             zoomInPressed |= ImGui::MenuItem("Zoom In", "Ctrl+=");
             zoomOutPressed |= ImGui::MenuItem("Zoom Out", "Ctrl+-");
             resetZoomPressed |= ImGui::MenuItem("Reset Zoom", "Ctrl+0");
+            ImGui::Separator();
+            if (ImGui::MenuItem("Center Image"))
+            {
+                pan = {0, 0};
+            }
+            ImGui::Separator();
+            ImGui::MenuItem("Transparency Checkerboard", "", &showTransparencyCheckerboard);
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Tools"))
@@ -170,17 +199,11 @@ static void Render()
     } else if (zoomInPressed)
     {
         zoom += 0.1;
-        if (zoom > 5.0)
-        {
-            zoom = 5.0;
-        }
+        ClampZoom();
     } else if (zoomOutPressed)
     {
         zoom -= 0.1;
-        if (zoom < 0.1)
-        {
-            zoom = 0.1;
-        }
+        ClampZoom();
     } else if (resetZoomPressed)
     {
         zoom = 1.0f;
@@ -188,6 +211,20 @@ static void Render()
 
     if (textureLoaded)
     {
+        if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl))
+        {
+            zoom += ImGui::GetIO().MouseWheel * 0.1f;
+            ClampZoom();
+        }
+
+        if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+        {
+            const ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
+            pan = {pan.x + (dragDelta.x), pan.y + (dragDelta.y)};
+            ImGui::ResetMouseDragDelta(ImGuiMouseButton_Right);
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+        }
+
         const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
 
         constexpr float statsWidth = 150.0f;
@@ -196,10 +233,23 @@ static void Render()
         ImGui::BeginChild("ImagePane",
                           ImVec2(imageWidth, availableSize.y),
                           ImGuiChildFlags_Borders,
-                          ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
+                          ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
         {
             const ImVec2 imageSize{static_cast<float>(texture.GetWidth()) * zoom,
                                    static_cast<float>(texture.GetHeight()) * zoom};
+            const ImVec2 panelSize = ImGui::GetContentRegionAvail();
+            const ImVec2 cursor = {
+                ((panelSize.x / 2) - (imageSize.x / 2)) + pan.x,
+                ((panelSize.y / 2) - (imageSize.y / 2)) + pan.y
+            };
+            ImGui::SetCursorPos(cursor);
+            if (showTransparencyCheckerboard)
+            {
+                // const ImVec2 cursor = ImGui::GetCursorPos();
+                const ImVec2 checkerboardUv = {imageSize.x / 16.0f, imageSize.y / 16.0f};
+                ImGui::Image(checkerboardTexture, imageSize, {0,0}, checkerboardUv);
+                ImGui::SetCursorPos(cursor);
+            }
             ImGui::Image(glTexture, imageSize);
         }
         ImGui::EndChild();
@@ -207,7 +257,7 @@ static void Render()
 
         ImGui::BeginChild("StatsPane", ImVec2(statsWidth, availableSize.y));
         {
-            ImGui::TextUnformatted(std::format("Width: {}\nHeight: {}\nMemory: {} B",
+            ImGui::TextUnformatted(std::format("Width: {}px\nHeight: {}px\nMemory: {} bytes",
                                                texture.GetWidth(),
                                                texture.GetHeight(),
                                                texture.GetWidth() * texture.GetHeight() * sizeof(uint32_t))
@@ -243,6 +293,10 @@ int main(int argc, char **argv)
     {
         return -1;
     }
+
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/checkerboard.png", CHECKERBOARD_ICON_NAME, false, true);
+    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(CHECKERBOARD_ICON_NAME, checkerboardTexture);
+    assert(e == Error::ErrorCode::OK);
 
     const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gtex"});
     if (!openPath.empty())
