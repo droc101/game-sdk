@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <format>
 #include <libassets/type/Color.h>
 #include <libassets/type/Param.h>
 #include <libassets/util/DataReader.h>
@@ -404,4 +405,31 @@ Param *Param::KvListElementPointer(const std::string &key)
         return nullptr;
     }
     return &list.at(key);
+}
+
+std::string Param::ToString() const
+{
+    switch (type)
+    {
+        case ParamType::PARAM_TYPE_ARRAY:
+            return std::format("{} elements", Get<ParamVector>({}).size());
+        case ParamType::PARAM_TYPE_BOOL:
+            return Get<bool>(false) ? "true" : "false";
+        case ParamType::PARAM_TYPE_BYTE:
+            return std::format("{}", Get<uint8_t>(0));
+        case ParamType::PARAM_TYPE_INTEGER:
+            return std::format("{}", Get<int32_t>(0));
+        case ParamType::PARAM_TYPE_FLOAT:
+            return std::format("{:.3f}", Get<float>(0));
+        case ParamType::PARAM_TYPE_STRING:
+            return std::format("\"{}\"", Get<std::string>(""));
+        case ParamType::PARAM_TYPE_COLOR:
+            return std::format("{:#010x}", Get<Color>(Color()).GetUint32());
+        case ParamType::PARAM_TYPE_KV_LIST:
+            return std::format("{} k/v pairs", Get<KvList>({}).size());
+        case ParamType::PARAM_TYPE_UINT_64:
+            return std::format("{}", Get<uint64_t>(0));
+        default:
+            return "empty";
+    }
 }

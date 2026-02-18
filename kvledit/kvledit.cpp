@@ -21,6 +21,8 @@
 #include <string>
 #include <utility>
 
+#include "libassets/util/VectorMove.h"
+
 static DataAsset dataAsset{};
 static std::string selectedPath = "/";
 
@@ -71,11 +73,38 @@ static void RenderArray(ParamVector &vector, const std::string &path)
     {
         ImGui::TextDisabled("No Elements");
     }
+    int moveDirection = 0;
+    size_t moveIndex = 0;
     for (size_t i = 0; i < vector.size(); i++)
     {
         Param &p = vector.at(i);
-        RenderParam(p, std::format("[{}]: {}", i, p.GetTypeName()), std::format("{}", i), path);
+        RenderParam(p, std::format("[{}]: {} = {}", i, p.GetTypeName(), p.ToString()), std::format("{}", i), path);
+        ImGui::SameLine();
+        ImGui::BeginDisabled(i == 0);
+        if (ImGui::SmallButton(std::format("Up##{}", i).c_str()))
+        {
+            moveDirection = -1;
+            moveIndex = i;
+        }
+        ImGui::EndDisabled();
+        ImGui::BeginDisabled(i == vector.size()-1);
+        ImGui::SameLine();
+        if (ImGui::SmallButton(std::format("Down##{}", i).c_str()))
+        {
+            moveDirection = 1;
+            moveIndex = i;
+        }
+        ImGui::EndDisabled();
     }
+
+    if (moveDirection == -1)
+    {
+        MoveBack(vector, moveIndex);
+    } else if (moveDirection == 1)
+    {
+        MoveForward(vector, moveIndex);
+    }
+
     ImGui::Separator();
     if (ImGui::Button("Add"))
     {
@@ -117,7 +146,7 @@ static void RenderKvList(KvList &list, const std::string &path)
     }
     for (std::pair<const std::string, Param> &pair: list)
     {
-        RenderParam(pair.second, std::format("{}: {}", pair.first, pair.second.GetTypeName()), pair.first, path);
+        RenderParam(pair.second, std::format("{}: {} = {}", pair.first, pair.second.GetTypeName(), pair.second.ToString()), pair.first, path);
     }
     ImGui::Separator();
     if (ImGui::Button("Add"))

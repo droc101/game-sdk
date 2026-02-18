@@ -185,6 +185,8 @@ class Param
         Param *ArrayElementPointer(const size_t index);
         Param *KvListElementPointer(const std::string &key);
 
+        [[nodiscard]] std::string ToString() const;
+
     private:
         ParamType type = ParamType::PARAM_TYPE_NONE;
         std::variant<uint8_t, int32_t, float, bool, std::string, Color, KvList, ParamVector, uint64_t> value;
