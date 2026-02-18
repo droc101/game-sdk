@@ -303,12 +303,25 @@ void ModelViewer::RenderFramebuffer()
                        1,
                        GL_FALSE,
                        glm::value_ptr(view));
-    glUniform1i(glGetUniformLocation(ModelViewerShared::Get().program, "displayMode"), static_cast<GLint>(displayMode));
 
     for (size_t i = 0; i < model.GetMaterialsPerSkin(); i++)
     {
         const size_t matIndex = model.GetSkin(skinIndex).at(i);
         Material &mat = model.GetMaterial(matIndex);
+
+        DisplayMode mode = displayMode;
+        if (mat.shader != Material::MaterialShader::SHADER_SHADED)
+        {
+            if (mode == DisplayMode::COLORED_SHADED)
+            {
+                mode = DisplayMode::COLORED;
+            } else if (mode == DisplayMode::TEXTURED_SHADED)
+            {
+                mode = DisplayMode::TEXTURED;
+            }
+        }
+
+        glUniform1i(glGetUniformLocation(ModelViewerShared::Get().program, "displayMode"), static_cast<GLint>(mode));
         glUniform4fv(glGetUniformLocation(ModelViewerShared::Get().program, "ALBEDO"), 1, mat.color.GetDataPointer());
 
         GLuint texture = 0;

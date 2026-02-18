@@ -111,10 +111,10 @@ class ModelViewer
         class ModelViewerShared
         {
             public:
-                static inline GLuint program = 0;
-                static inline GLuint linesProgram = 0;
+                GLuint program = 0;
+                GLuint linesProgram = 0;
 
-                static inline GLHelper::GL_Buffer cubeBuffer{};
+                GLHelper::GL_Buffer cubeBuffer{};
 
                 static ModelViewerShared &Get();
             private:
