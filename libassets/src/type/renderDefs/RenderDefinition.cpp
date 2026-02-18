@@ -16,6 +16,7 @@ RenderDefinition RenderDefinition::Create(const nlohmann::json &json, Error::Err
     output.color = Color(json.value("color", 0x00ff00ff));
     output.model = json.value("model", "");
     output.texture = json.value("texture", "");
+    output.directional = json.value("directional", true);
 
     e = Error::ErrorCode::OK;
     return output;

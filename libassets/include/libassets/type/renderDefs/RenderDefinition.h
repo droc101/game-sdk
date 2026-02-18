@@ -18,6 +18,7 @@ class RenderDefinition
         std::string model{};
         std::string texture{};
         Color color{};
+        bool directional = true;
 
         virtual ~RenderDefinition() = default;
 

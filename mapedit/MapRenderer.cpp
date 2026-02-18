@@ -309,7 +309,7 @@ void MapRenderer::RenderUnitVector(const glm::vec3 origin,
     RenderLine(origin, origin + lenVector, color, matrix, thickness);
 }
 
-void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix)
+void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix, Viewport &vp)
 {
     const ActorDefinition &definition = SharedMgr::Get().actorDefinitions.at(a.className);
     Color c = definition.renderDefinition.color;
@@ -334,7 +334,10 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix)
         RenderBillboardSprite(a.position, 20, texture, c, matrix);
     }
 
-    RenderUnitVector(a.position, a.rotation, c, matrix, 2, 1);
+    if (definition.renderDefinition.directional)
+    {
+        RenderUnitVector(a.position, a.rotation, c, matrix, 2, vp.GetZoom() / 20);
+    }
 
     if ((!definition.renderDefinition.model.empty() || !definition.renderDefinition.modelSourceParam.empty()) && MapEditor::drawModels)
     {

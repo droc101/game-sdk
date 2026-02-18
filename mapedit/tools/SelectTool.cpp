@@ -458,7 +458,7 @@ void SelectTool::RenderViewportVertexMode(Viewport &vp,
 
     for (const Actor &a: MapEditor::map.actors)
     {
-        MapRenderer::RenderActor(a, matrix);
+        MapRenderer::RenderActor(a, matrix, vp);
     }
 
     HandleDrag(vp, isHovered, worldSpaceHover);
@@ -575,7 +575,7 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
     return hoverStack;
 }
 
-void SelectTool::RenderViewportSelectMode(const Viewport &vp,
+void SelectTool::RenderViewportSelectMode(Viewport &vp,
                                           glm::mat4 &matrix,
                                           const bool isHovered,
                                           const glm::vec3 &worldSpaceHover)
@@ -659,7 +659,7 @@ void SelectTool::RenderViewportSelectMode(const Viewport &vp,
             }
         }
 
-        MapRenderer::RenderActor(a, matrix);
+        MapRenderer::RenderActor(a, matrix, vp);
     }
 
     for (size_t sectorIndex = 0; sectorIndex < MapEditor::map.sectors.size(); sectorIndex++)

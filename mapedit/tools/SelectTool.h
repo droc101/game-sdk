@@ -9,7 +9,9 @@
 #include <libassets/type/Sector.h>
 #include <tuple>
 #include <vector>
+
 #include "../Viewport.h"
+#include "AddActorTool.h"
 #include "EditorTool.h"
 
 class SelectTool final: public EditorTool
@@ -44,7 +46,7 @@ class SelectTool final: public EditorTool
                                                                               bool isHovered,
                                                                               const glm::vec3 &worldSpaceHover);
 
-        void RenderViewportSelectMode(const Viewport &vp,
+        void RenderViewportSelectMode(Viewport &vp,
                                       glm::mat4 &matrix,
                                       bool isHovered,
                                       const glm::vec3 &worldSpaceHover);

@@ -132,7 +132,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
 
     for (Actor &a: MapEditor::map.actors)
     {
-        MapRenderer::RenderActor(a, matrix);
+        MapRenderer::RenderActor(a, matrix, vp);
     }
 
     if (hasPlacedActor)

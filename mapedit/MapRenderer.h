@@ -14,6 +14,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "tools/AddActorTool.h"
 #include "Viewport.h"
 
 class MapRenderer
@@ -43,7 +44,7 @@ class MapRenderer
                                      float thickness,
                                      float length);
 
-        static void RenderActor(const Actor &a, glm::mat4 &matrix);
+        static void RenderActor(const Actor &a, glm::mat4 &matrix, Viewport &vp);
 
     private:
         struct ModelBuffer
