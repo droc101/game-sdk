@@ -46,6 +46,15 @@ void EditActorWindow::Render(Actor &actor)
         return;
     }
 
+    if (selectedConnection > actor.connections.size() - 1)
+    {
+        selectedConnection = actor.connections.size() - 1;
+    }
+    if (selectedParam > actor.params.size() - 1)
+    {
+        selectedParam = actor.params.size() - 1;
+    }
+
     ImGui::Begin("Actor Properties", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
 
     if (SharedMgr::Get().actorDefinitions.empty() || !SharedMgr::Get().actorDefinitions.contains("actor"))
@@ -155,27 +164,9 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                 const std::string selected = options->Find(param);
                 ImGui::TextUnformatted(selected.c_str());
 
-            } else if (paramDef->type == Param::ParamType::PARAM_TYPE_BYTE)
+            } else
             {
-                ImGui::Text("%d", param.Get<uint8_t>(0));
-            } else if (paramDef->type == Param::ParamType::PARAM_TYPE_INTEGER)
-            {
-                ImGui::Text("%d", param.Get<int32_t>(0));
-            } else if (paramDef->type == Param::ParamType::PARAM_TYPE_FLOAT)
-            {
-                ImGui::Text("%.3f", param.Get<float>(0.0f));
-            } else if (paramDef->type == Param::ParamType::PARAM_TYPE_BOOL)
-            {
-                ImGui::Text("%s", param.Get<bool>(false) ? "true" : "false");
-            } else if (paramDef->type == Param::ParamType::PARAM_TYPE_STRING)
-            {
-                ImGui::TextWrapped("\"%s\"", param.Get<std::string>("").c_str());
-            } else if (paramDef->type == Param::ParamType::PARAM_TYPE_COLOR)
-            {
-                ImGui::TextWrapped("0x%x", param.Get<Color>(Color(-1)).GetUint32());
-            } else if (paramDef->type == Param::ParamType::PARAM_TYPE_UINT_64)
-            {
-                ImGui::TextWrapped("%zu", param.Get<uint64_t>(0));
+                ImGui::TextWrapped("%s", param.ToString().c_str());
             }
 
             i++;
@@ -359,28 +350,7 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
 
             ImGui::TableNextColumn();
             const Param &param = connection.param;
-            if (param.GetType() == Param::ParamType::PARAM_TYPE_BYTE)
-            {
-                ImGui::Text("%d", param.Get<uint8_t>(0));
-            } else if (param.GetType() == Param::ParamType::PARAM_TYPE_INTEGER)
-            {
-                ImGui::Text("%d", param.Get<int32_t>(0));
-            } else if (param.GetType() == Param::ParamType::PARAM_TYPE_FLOAT)
-            {
-                ImGui::Text("%.3f", param.Get<float>(0.0f));
-            } else if (param.GetType() == Param::ParamType::PARAM_TYPE_BOOL)
-            {
-                ImGui::Text("%s", param.Get<bool>(false) ? "true" : "false");
-            } else if (param.GetType() == Param::ParamType::PARAM_TYPE_STRING)
-            {
-                ImGui::TextWrapped("\"%s\"", param.Get<std::string>("").c_str());
-            } else if (param.GetType() == Param::ParamType::PARAM_TYPE_STRING)
-            {
-                ImGui::TextWrapped("0x%x", param.Get<Color>(Color(-1)).GetUint32());
-            } else if (param.GetType() == Param::ParamType::PARAM_TYPE_UINT_64)
-            {
-                ImGui::TextWrapped("%zu", param.Get<uint64_t>(0));
-            }
+            ImGui::TextWrapped("%s", param.ToString().c_str());
 
             i++;
         }
