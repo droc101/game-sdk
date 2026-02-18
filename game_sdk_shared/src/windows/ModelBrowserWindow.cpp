@@ -87,8 +87,11 @@ void ModelBrowserWindow::Render()
                         if (*str != "model/" + model)
                         {
                             ModelAsset mdlAsset{};
-                            assert(ModelAsset::CreateFromAsset(Options::Get().GetAssetsPath() + "/model/" + model,
-                                                               mdlAsset) == Error::ErrorCode::OK);
+                            const Error::ErrorCode e = ModelAsset::CreateFromAsset(Options::Get().GetAssetsPath() +
+                                                                                           "/model/" +
+                                                                                           model,
+                                                                                   mdlAsset);
+                            assert(e == Error::ErrorCode::OK);
                             viewer.SetModel(std::move(mdlAsset));
                         }
                         *str = "model/" + model;
@@ -120,7 +123,10 @@ void ModelBrowserWindow::Render()
                     ImGui::TableNextColumn();
                     ImGui::TextUnformatted("LOD");
                     ImGui::PushItemWidth(-1);
-                    ImGui::SliderInt("##LOD", &viewer.lodIndex, 0, static_cast<int>(viewer.GetModel().GetLodCount() - 1));
+                    ImGui::SliderInt("##LOD",
+                                     &viewer.lodIndex,
+                                     0,
+                                     static_cast<int>(viewer.GetModel().GetLodCount() - 1));
 
                     ImGui::TableNextColumn();
                     ImGui::TextUnformatted("Skin");
@@ -164,7 +170,8 @@ void ModelBrowserWindow::Render()
                         viewer.displayMode = ModelViewer::DisplayMode::COLORED_SHADED;
                     }
                     ImGui::TableNextColumn();
-                    if (ImGui::RadioButton("Textured Unshaded", viewer.displayMode == ModelViewer::DisplayMode::TEXTURED))
+                    if (ImGui::RadioButton("Textured Unshaded",
+                                           viewer.displayMode == ModelViewer::DisplayMode::TEXTURED))
                     {
                         viewer.displayMode = ModelViewer::DisplayMode::TEXTURED;
                     }
