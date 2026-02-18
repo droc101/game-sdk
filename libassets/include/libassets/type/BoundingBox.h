@@ -100,7 +100,7 @@ class BoundingBox
             }
 
             origin = (minPoint + maxPoint) * 0.5f;
-            extents = (maxPoint + minPoint) * 0.5f;
+            extents = (maxPoint - minPoint) * 0.5f;
         }
 
         /**
