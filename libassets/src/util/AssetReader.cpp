@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <format>
 #include <libassets/type/Asset.h>
 #include <libassets/util/AssetReader.h>
 #include <libassets/util/DataReader.h>
@@ -53,11 +52,11 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
     zStream.avail_in = compressedSize;
     zStream.next_out = outAsset.reader.bytes.data();
     zStream.avail_out = outAsset.reader.size;
+    zStream.data_type = Z_BINARY;
 
     if (inflateInit2(&zStream, MAX_WBITS | 16) != Z_OK)
     {
-        printf(std::format("inflateInit2() failed with error: {}", zStream.msg == nullptr ? "(null)" : zStream.msg)
-                       .c_str());
+        printf("inflateInit2() failed with error: %s", zStream.msg == nullptr ? "(null)" : zStream.msg);
         return Error::ErrorCode::COMPRESSION_ERROR;
     }
 
@@ -66,8 +65,7 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
     {
         if (inflateReturnValue != Z_OK)
         {
-            printf(std::format("inflate() failed with error: {}", zStream.msg == nullptr ? "(null)" : zStream.msg)
-                           .c_str());
+            printf("inflate() failed with error: %s", zStream.msg == nullptr ? "(null)" : zStream.msg);
             return Error::ErrorCode::COMPRESSION_ERROR;
         }
         inflateReturnValue = inflate(&zStream, Z_NO_FLUSH);
@@ -75,8 +73,7 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
 
     if (inflateEnd(&zStream) != Z_OK)
     {
-        printf(std::format("inflateEnd() failed with error: {}", zStream.msg == nullptr ? "(null)" : zStream.msg)
-                       .c_str());
+        printf("inflateEnd() failed with error: %s", zStream.msg == nullptr ? "(null)" : zStream.msg);
         return Error::ErrorCode::COMPRESSION_ERROR;
     }
 
@@ -113,6 +110,7 @@ Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
 
     zStream.next_in = inBuffer.data();
     zStream.avail_in = inBuffer.size();
+    zStream.data_type = Z_BINARY;
 
     int ret = Z_OK;
     constexpr size_t chunkSize = 16384;

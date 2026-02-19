@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <libassets/type/Asset.h>
 #include <libassets/util/Error.h>
