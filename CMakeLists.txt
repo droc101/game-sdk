@@ -14,6 +14,8 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -DBUILDSTYLE_DEBUG ${CMAKE_CXX_FLAGS_
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
+set(CMAKE_PLATFORM_NO_VERSIONED_SONAME ON)
+
 if (WIN32)
     message(STATUS "Win32 detected")
     set(CMAKE_AUTO_RCC ON)
@@ -74,6 +76,11 @@ set(SDL_KMSDRM OFF)
 set(SDL_CCACHE ON)
 fetch_package(https://github.com/libsdl-org/SDL.git release-3.*.* SDL3 CONFIG)
 
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+set(MINIAUDIO_NO_FLAC ON)
+set(MINIAUDIO_NO_MP3 ON)
+set(MINIAUDIO_NO_ENCODING ON)
+set(MINIAUDIO_NO_GENERATION ON)
 fetch_package(https://github.com/mackron/miniaudio.git 0.*.* miniaudio)
 
 fetch_glew()
