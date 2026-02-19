@@ -92,10 +92,6 @@ add_library(assets SHARED
         include/libassets/type/Actor.h
         src/type/IOConnection.cpp
         include/libassets/type/IOConnection.h
-        src/asset/GameConfigAsset.cpp
-        include/libassets/asset/GameConfigAsset.h
-        src/asset/GameConfigAsset.cpp
-        include/libassets/asset/GameConfigAsset.h
         src/type/OptionDefinition.cpp
         include/libassets/type/OptionDefinition.h
         src/type/ActorDefinition.cpp

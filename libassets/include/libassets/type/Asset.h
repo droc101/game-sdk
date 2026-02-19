@@ -19,7 +19,6 @@ class Asset
             ASSET_TYPE_SHADER = 3,
             ASSET_TYPE_MODEL = 4,
             ASSET_TYPE_FONT = 5,
-            ASSET_TYPE_GAME_CONFIG = 6,
             ASSET_TYPE_LEVEL_MATERIAL = 7,
             ASSET_TYPE_KV_LIST = 8,
         };
