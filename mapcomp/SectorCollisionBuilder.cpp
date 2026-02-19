@@ -25,9 +25,9 @@ SectorCollisionBuilder::SectorCollisionBuilder(const Sector &sector)
     }
 
     sectorCenter = {};
-    sectorCenter.x = sums.x / sector.points.size();
+    sectorCenter.x = sums.x / static_cast<float>(sector.points.size());
     sectorCenter.y = (sector.floorHeight + sector.ceilingHeight) / 2.0f;
-    sectorCenter.z = sums.y / sector.points.size();
+    sectorCenter.z = sums.y / static_cast<float>(sector.points.size());
 
     NextShape();
 }
@@ -67,7 +67,7 @@ void SectorCollisionBuilder::AddSectorBase(const bool isFloor, const std::vector
     {
         for (size_t i = 0; i + 2 < idx.size(); i += 3)
         {
-            std::swap(idx[i], idx[i + 2]);
+            std::swap(idx.at(i), idx.at(i + 2));
         }
     }
 
@@ -129,7 +129,7 @@ void SectorCollisionBuilder::AddWallBase(const glm::vec2 &startPoint,
     {
         for (size_t i = CurrentShape().indices.size() - 6; i + 2 < CurrentShape().indices.size(); i += 3)
         {
-            std::swap(CurrentShape().indices[i], CurrentShape().indices[i + 2]);
+            std::swap(CurrentShape().indices.at(i), CurrentShape().indices.at(i + 2));
         }
     }
 

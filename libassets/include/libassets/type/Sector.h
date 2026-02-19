@@ -13,6 +13,8 @@
 #include <nlohmann/json.hpp>
 #include <vector>
 
+#include "Actor.h"
+
 class Sector
 {
     public:
@@ -34,7 +36,7 @@ class Sector
 
         [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 
-        [[nodiscard]] glm::vec2 SegmentNormal(int segmentIndex) const;
+        [[nodiscard]] glm::vec2 SegmentNormal(size_t segmentIndex) const;
 
         [[nodiscard]] double CalculateArea() const;
 

@@ -19,12 +19,39 @@ class LevelMeshBuilder
     public:
         LevelMeshBuilder() = default;
 
+        /**
+         * Add a wall
+         * @param sector The sector containing the wall
+         * @param wallIndex The wall index in the sector
+         * @param floorHeight The bottom of the wall
+         * @param ceilingHeight The top of the wall
+         */
         void AddWall(const Sector &sector, size_t wallIndex, float floorHeight, float ceilingHeight);
+
+        /**
+         * Add a floor
+         * @param sector The sector to add the floor of
+         * @param overlapping A list of overlapping sectors to cut holes for
+         */
         void AddFloor(const Sector &sector, const std::vector<const Sector *> &overlapping);
+
+        /**
+         * Add a ceiling
+         * @param sector The sector to add the ceiling of
+         * @param overlapping A list of overlapping sectors to cut holes for
+         */
         void AddCeiling(const Sector &sector, const std::vector<const Sector *> &overlapping);
 
+        /**
+         * Write this mesh to a DataWriter
+         * @param writer The DataWriter to write to
+         * @param materialPath The material to use
+         */
         void Write(DataWriter &writer, const std::string &materialPath) const;
 
+        /**
+         * Check if this builder is empty
+         */
         [[nodiscard]] bool IsEmpty() const;
 
     private:

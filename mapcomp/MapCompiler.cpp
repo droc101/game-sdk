@@ -3,6 +3,8 @@
 //
 
 #include "MapCompiler.h"
+#include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -46,7 +48,7 @@ Error::ErrorCode MapCompiler::Compile() const
     }
 
     const std::string outPath = assetsDirectory + "/map/" + mapBasename + ".gmap";
-    printf("Saving map to \"%s\"\n", outPath.c_str());
+    printf("[INFO] Saving map to \"%s\"\n", outPath.c_str());
 
     return AssetReader::SaveToFile(outPath.c_str(),
                                    buffer,
@@ -60,7 +62,7 @@ LevelMaterialAsset MapCompiler::GetMapMaterial(const std::string &path) const
     const Error::ErrorCode e = LevelMaterialAsset::CreateFromAsset((assetsDirectory + "/" + path).c_str(), mapMaterial);
     if (e != Error::ErrorCode::OK)
     {
-        printf("Compile Warning: Failed to load material \"%s\": %s\n", path.c_str(), Error::ErrorString(e).c_str());
+        printf("[WARNING] Failed to load material \"%s\": %s\n", path.c_str(), Error::ErrorString(e).c_str());
     }
     return mapMaterial;
 }
@@ -70,14 +72,21 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
 {
     assert(buffer.empty());
 
-    printf("Found %zu sectors\n", map.sectors.size());
-    printf("Found %zu actors\n", map.actors.size());
+    printf("[INFO] Found %zu sectors\n", map.sectors.size());
+    printf("[INFO] Found %zu actors\n", map.actors.size());
 
-    for (const Sector &sector: map.sectors)
+    for (size_t i = 0; i < map.sectors.size(); i++)
     {
+        const Sector &sector = map.sectors.at(i);
         if (!sector.IsValid())
         {
-            printf("Compile Error: Invalid Sector\n");
+            if (sector.name.empty())
+            {
+                printf("[ERROR] Sector %zu has an invalid shape!\n", i);
+            } else
+            {
+                printf("[ERROR] Sector %zu \"%s\" has an invalid shape!", i, sector.name.c_str());
+            }
             return Error::ErrorCode::INCORRECT_FORMAT;
         }
     }
@@ -88,6 +97,8 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     writer.WriteString(map.discord_rpc_icon_id);
     writer.WriteString(map.discord_rpc_map_name);
 
+    printf("[INFO] Compiling actors...\n");
+
     writer.Write<size_t>(map.actors.size());
 
     size_t numPlayerActors = 0;
@@ -96,16 +107,19 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
         actor.Write(writer);
         if (actor.className == "player")
         {
-            printf("Found player spawnpoint at %f %f %f\n", actor.position[0], actor.position[1], actor.position[2]);
+            printf("[INFO] Found player spawnpoint at %f %f %f\n",
+                   actor.position.x,
+                   actor.position.y,
+                   actor.position.z);
             numPlayerActors++;
         }
 
         bool insideSector = false;
         for (const Sector &sector: map.sectors)
         {
-            const bool insideHorizontally = sector.ContainsPoint({actor.position[0], actor.position[2]});
-            const bool insideVertically = actor.position[1] >= sector.floorHeight &&
-                                          actor.position[1] <= sector.ceilingHeight;
+            const bool insideHorizontally = sector.ContainsPoint({actor.position.x, actor.position.z});
+            const bool insideVertically = actor.position.y >= sector.floorHeight &&
+                                          actor.position.y <= sector.ceilingHeight;
             if (insideHorizontally && insideVertically)
             {
                 insideSector = true;
@@ -114,24 +128,25 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
         }
         if (!insideSector)
         {
-            printf("Compile Warning: Found an actor of type \"%s\" that is not inside any sector.\n",
-                   actor.className.c_str());
+            printf("[WARNING] Found an actor of type \"%s\" that is not inside any sector.\n", actor.className.c_str());
         }
     }
 
     if (numPlayerActors == 0)
     {
-        printf("Compile Warning: There is no player actor, the player will spawn at the origin.\n");
+        printf("[WARNING] There is no player actor, the player will spawn at the origin.\n");
     } else if (numPlayerActors != 1)
     {
-        printf("Compile Warning: Multiple player actors are present, only one will function.\n");
+        printf("[WARNING] Multiple player actors are present, only one will function.\n");
     }
+
+    printf("[INFO] Compiling Sectors...\n");
 
     std::unordered_map<std::string, LevelMeshBuilder> meshBuilders{};
     std::vector<SectorCollisionBuilder> collisionBuilders{};
     for (size_t sectorIndex = 0; sectorIndex < map.sectors.size(); sectorIndex++)
     {
-        const Sector &sector = map.sectors[sectorIndex];
+        const Sector &sector = map.sectors.at(sectorIndex);
         std::vector<const Sector *> overlappingCeilings{};
         std::vector<const Sector *> overlappingFloors{};
         SectorCollisionBuilder builder = SectorCollisionBuilder(sector);
@@ -142,15 +157,17 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
             std::vector<std::array<float, 2>> gaps{};
             for (size_t otherSectorIndex = 0; otherSectorIndex < map.sectors.size(); otherSectorIndex++)
             {
-                const Sector &otherSector = map.sectors[otherSectorIndex];
+                const Sector &otherSector = map.sectors.at(otherSectorIndex);
 
                 if (sectorIndex != otherSectorIndex)
                 {
                     if (sector.floorHeight == otherSector.ceilingHeight)
                     {
+                        printf("[INFO] Sector %zu's floor is overlapping with sector %zu's ceiling\n", sectorIndex, otherSectorIndex);
                         overlappingCeilings.push_back(&otherSector);
                     } else if (sector.ceilingHeight == otherSector.floorHeight)
                     {
+                        printf("[INFO] Sector %zu's ceiling is overlapping with sector %zu's floor\n", sectorIndex, otherSectorIndex);
                         overlappingFloors.push_back(&otherSector);
                     }
                 }
@@ -175,6 +192,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
                         (wallStart == otherWallEnd && wallEnd == otherWallStart))
                     {
                         // MATCH FOUND!!!
+                        printf("[INFO] Found overlapping walls: %zu[%zu] and %zu[%zu]\n", sectorIndex, i, otherSectorIndex, j);
                         gaps.push_back({otherSector.floorHeight, otherSector.ceilingHeight});
                         break; // break here because only 1 wall per (well-formed) sector can overlap
                     }
@@ -185,7 +203,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
             if (!gaps.empty())
             {
                 std::ranges::sort(gaps, SectorFloorCeilingCompare);
-                float firstFloor = gaps.at(0).at(0);
+                const float firstFloor = gaps.at(0).at(0);
                 if (sector.floorHeight < firstFloor)
                 {
                     solidSegments.push_back({sector.floorHeight, firstFloor});
@@ -199,7 +217,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
                         solidSegments.push_back({adjCeil, nextFloor});
                     }
                 }
-                float lastCeil = gaps.at(gaps.size() - 1).at(1);
+                const float lastCeil = gaps.at(gaps.size() - 1).at(1);
                 if (sector.ceilingHeight > lastCeil)
                 {
                     solidSegments.push_back({lastCeil, sector.ceilingHeight});
@@ -255,6 +273,9 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
 
     std::erase_if(meshBuilders,
                   [](const std::pair<std::string, LevelMeshBuilder> &item) -> bool { return item.second.IsEmpty(); });
+
+    printf("[INFO] Level has %zu visual meshes\n", meshBuilders.size());
+    printf("[INFO] Level has %zu physics meshes\n", collisionBuilders.size());
 
     writer.Write<size_t>(meshBuilders.size());
     for (const std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)

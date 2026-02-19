@@ -105,7 +105,7 @@ glm::vec3 Sector::GetCenter() const
     return center;
 }
 
-glm::vec2 Sector::SegmentNormal(const int segmentIndex) const
+glm::vec2 Sector::SegmentNormal(const size_t segmentIndex) const
 {
     const glm::vec2 p0 = points.at(segmentIndex);
     const glm::vec2 p1 = points.at((segmentIndex + 1) % points.size());

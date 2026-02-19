@@ -15,12 +15,12 @@ ArgumentParser::ArgumentParser(const int argc, const char **argv)
     }
 }
 
-bool ArgumentParser::hasFlag(const std::string &flag) const
+bool ArgumentParser::HasFlag(const std::string &flag) const
 {
     return std::ranges::any_of(arguments, [&](const std::string &arg) { return arg == flag; });
 }
 
-bool ArgumentParser::hasFlagWithValue(const std::string &flag) const
+bool ArgumentParser::HasFlagWithValue(const std::string &flag) const
 {
     const std::string prefix = flag + "=";
     for (const std::string &arg: arguments)
@@ -33,7 +33,7 @@ bool ArgumentParser::hasFlagWithValue(const std::string &flag) const
     return false;
 }
 
-std::string ArgumentParser::getValue(const std::string &flag) const
+std::string ArgumentParser::GetFlagValue(const std::string &flag) const
 {
     const std::string prefix = flag + "=";
     for (const std::string &arg: arguments)

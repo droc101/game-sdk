@@ -14,6 +14,7 @@
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/DataWriter.h>
 #include <string>
+#include <utility>
 #include <vector>
 #include "SectorClipper.h"
 
@@ -34,7 +35,7 @@ void LevelMeshBuilder::AddWall(const Sector &sector,
 {
     const float sLength = CalculateSLength(sector, wallIndex);
 
-    const WallMaterial &mat = sector.wallMaterials[wallIndex];
+    const WallMaterial &mat = sector.wallMaterials.at(wallIndex);
 
     const glm::vec2 &startPoint = sector.points.at(wallIndex);
     const glm::vec2 &endPoint = sector.points.at((wallIndex + 1) % (sector.points.size()));
@@ -127,7 +128,7 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
     {
         for (size_t i = indices.size() - 6; i + 2 < indices.size(); i += 3)
         {
-            std::swap(indices[i], indices[i + 2]);
+            std::swap(indices.at(i), indices.at(i + 2));
         }
     }
 
@@ -177,7 +178,7 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
     {
         for (size_t i = 0; i + 2 < idx.size(); i += 3)
         {
-            std::swap(idx[i], idx[i + 2]);
+            std::swap(idx.at(i), idx.at(i + 2));
         }
     }
 

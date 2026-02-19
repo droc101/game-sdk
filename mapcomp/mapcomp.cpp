@@ -12,21 +12,21 @@ int main(const int argc, const char **argv)
     printf("GAME SDK Map Compiler\n");
     const ArgumentParser args = ArgumentParser(argc, argv);
 
-    if (!args.hasFlagWithValue("--map-source"))
+    if (!args.HasFlagWithValue("--map-source"))
     {
         printf("[ERROR] --map-source not specified!\n");
         return 1;
     }
 
-    if (!args.hasFlagWithValue("--assets-dir"))
+    if (!args.HasFlagWithValue("--assets-dir"))
     {
         printf("[ERROR] --assets-dir not specified!\n");
         return 1;
     }
 
-    MapCompiler compiler = MapCompiler(args.getValue("--assets-dir"));
+    MapCompiler compiler = MapCompiler(args.GetFlagValue("--assets-dir"));
 
-    const Error::ErrorCode mapLoadResult = compiler.LoadMapSource(args.getValue("--map-source"));
+    const Error::ErrorCode mapLoadResult = compiler.LoadMapSource(args.GetFlagValue("--map-source"));
     if (mapLoadResult != Error::ErrorCode::OK)
     {
         printf("[ERROR] Failed to load map source: %s\n", Error::ErrorString(mapLoadResult).c_str());
