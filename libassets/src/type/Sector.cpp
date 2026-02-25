@@ -196,6 +196,11 @@ bool Sector::CheckIntersection(const glm::vec2 &segmentAStart,
 
 bool Sector::IsValid() const
 {
+    if (CalculateArea() <= 0)
+    {
+        return false;
+    }
+
     const size_t n = points.size();
     for (size_t i = 0; i < n; i++)
     {
