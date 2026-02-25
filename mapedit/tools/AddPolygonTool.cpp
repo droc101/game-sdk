@@ -15,6 +15,7 @@
 #include "../MapRenderer.h"
 #include "../Viewport.h"
 #include "EditorTool.h"
+#include "game_sdk/SDKWindow.h"
 #include "SelectTool.h"
 
 void AddPolygonTool::RenderToolWindow()
@@ -117,7 +118,13 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                                 s.points.push_back(glmPoint);
                                 s.wallMaterials.push_back(mat);
                             }
-                            MapEditor::map.sectors.push_back(s);
+                            if (!s.IsValid())
+                            {
+                                SDKWindow::Get().ErrorMessage("Sector has invalid shape and will not be added");
+                            } else
+                            {
+                                MapEditor::map.sectors.push_back(s);
+                            }
                         }
                     }
                 } else

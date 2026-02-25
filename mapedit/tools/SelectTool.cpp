@@ -50,25 +50,29 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
         } else if (selectionType == ItemType::VERTEX &&
                    ((hoverType == ItemType::VERTEX && hoverIndex == selectionVertexIndex) || dragging))
         {
+            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
                 const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
                 sector.points[selectionVertexIndex][0] = snapped.x;
                 sector.points[selectionVertexIndex][1] = snapped.z;
                 dragging = true;
             } else
             {
+                if (!sector.IsValid())
+                {
+                    sector.points[selectionVertexIndex] = vertexDragOriginalPoint;
+                }
                 dragging = false;
             }
         } else if (selectionType == ItemType::LINE &&
                    ((hoverType == ItemType::LINE && hoverIndex == selectionVertexIndex) || dragging))
         {
+            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
                 const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
                 const glm::vec2 startPos = worldHover2D - lineDragModeMouseOffset;
                 const glm::vec2 endPos = startPos - lineDragModeSecondVertexOffset;
@@ -81,6 +85,11 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
                 dragging = true;
             } else
             {
+                if (!sector.IsValid())
+                {
+                    sector.points[selectionVertexIndex] = vertexDragOriginalPoint;
+                    sector.points.at((selectionVertexIndex + 1) % sector.points.size()) = vertexDragOriginalPoint - lineDragModeSecondVertexOffset;
+                }
                 dragging = false;
             }
         } else if (selectionType == ItemType::SECTOR &&
@@ -282,6 +291,7 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
             {
                 selectionVertexIndex = vertexIndex;
                 selectionType = ItemType::VERTEX;
+                vertexDragOriginalPoint = sector.points.at(vertexIndex);
             } else if (isHovered &&
                        (ImGui::IsMouseClicked(ImGuiMouseButton_Right) ||
                         ImGui::Shortcut(ImGuiKey_Delete, ImGuiInputFlags_RouteGlobal)))
@@ -322,6 +332,7 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
                     selectionVertexIndex = vertexIndex + 1;
                     selectionType = ItemType::VERTEX;
                     hoverType = ItemType::NONE;
+                    vertexDragOriginalPoint = sector.points.at(selectionVertexIndex);
                     haveAddedNewVertex = true;
                 } else
                 {
@@ -337,6 +348,7 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
                     const glm::vec2 worldHover2D{worldSpaceHover.x, worldSpaceHover.z};
                     lineDragModeSecondVertexOffset = startPoint - endPoint;
                     lineDragModeMouseOffset = worldHover2D - startPoint;
+                    vertexDragOriginalPoint = sector.points.at(selectionVertexIndex);
                     selectionType = ItemType::LINE;
                 }
             }

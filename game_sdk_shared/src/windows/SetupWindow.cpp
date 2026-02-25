@@ -3,6 +3,7 @@
 //
 
 #include <array>
+#include <cmath>
 #include <cstdlib>
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/Options.h>
@@ -11,7 +12,6 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
-#include <cmath>
 
 SetupWindow &SetupWindow::Get()
 {
@@ -50,13 +50,17 @@ void SetupWindow::Render()
                                              ImGuiWindowFlags_NoSavedSettings |
                                              ImGuiWindowFlags_NoCollapse |
                                              ImGuiWindowFlags_NoResize |
-                                             ImGuiWindowFlags_NoDocking;
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+                                             ImGuiWindowFlags_NoDocking |
+                                             ImGuiWindowFlags_NoTitleBar;
     if (!ImGui::BeginPopupModal("Setup", nullptr, windowFlags))
     {
         return;
     }
-    ImGui::PopStyleVar();
+
+    ImGui::PushFont(SDKWindow::Get().GetNormalFont(), 24);
+    ImGui::Text("GAME SDK Setup");
+    ImGui::PopFont();
+    ImGui::Separator();
 
     ImGui::TextUnformatted("GAME executable path");
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
@@ -67,7 +71,7 @@ void SetupWindow::Render()
         SDKWindow::Get().OpenFileDialog(gamePathCallback, DialogFilters::exeFilters);
     }
 
-    ImGui::Text("Game Config Path");
+    ImGui::Text("Game configuration Path");
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
     ImGui::InputText("##assetspathinput", &Options::Get().gameConfigPath);
     ImGui::SameLine();

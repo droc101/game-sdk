@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <libassets/type/WallMaterial.h>
 #include <vector>
 #include "../Viewport.h"
 #include "EditorTool.h"

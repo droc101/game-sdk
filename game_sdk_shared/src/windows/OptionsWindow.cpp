@@ -60,7 +60,7 @@ void OptionsWindow::Render()
             SDKWindow::Get().OpenFileDialog(gamePathCallback, DialogFilters::exeFilters);
         }
 
-        ImGui::Text("Game Config Path");
+        ImGui::Text("Game configuration Path");
         ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
         ImGui::InputText("##assetspathinput", &Options::Get().gameConfigPath);
         ImGui::SameLine();

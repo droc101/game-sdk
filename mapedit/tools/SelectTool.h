@@ -9,9 +9,7 @@
 #include <libassets/type/Sector.h>
 #include <tuple>
 #include <vector>
-
 #include "../Viewport.h"
-#include "AddActorTool.h"
 #include "EditorTool.h"
 
 class SelectTool final: public EditorTool
@@ -91,6 +89,8 @@ class SelectTool final: public EditorTool
 
         glm::vec2 sectorDragMouseOffset{};
         std::vector<glm::vec2> sectorDragVertexOffsets{};
+
+        glm::vec2 vertexDragOriginalPoint{};
 
         std::vector<std::tuple<ItemType, size_t, float>> menuHoveredItems{};
 
