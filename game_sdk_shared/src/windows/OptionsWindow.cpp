@@ -3,6 +3,7 @@
 //
 
 #include <array>
+#include <game_sdk/DialogFilters.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
@@ -30,55 +31,53 @@ void OptionsWindow::Hide()
 
 void OptionsWindow::gamePathCallback(const std::string &path)
 {
-    Options::Get().gamePath = path;
+    Options::Get().gameExecutablePath = path;
 }
 
 void OptionsWindow::assetsPathCallback(const std::string &path)
 {
-    Options::Get().assetsPath = path;
+    Options::Get().gameConfigPath = path;
 }
 
 void OptionsWindow::Render()
 {
     if (visible)
     {
-        ImGui::SetNextWindowSize(ImVec2(400, -1));
+        ImGui::SetNextWindowSize(ImVec2(450, -1));
         ImGui::Begin("GAME SDK Options",
                      &visible,
                      ImGuiWindowFlags_NoCollapse |
                              ImGuiWindowFlags_NoResize |
                              ImGuiWindowFlags_NoSavedSettings |
                              ImGuiWindowFlags_NoDocking);
-        ImGui::TextUnformatted("Folder with GAME executable");
-        ImGui::SameLine();
-        ImGui::TextDisabled("(no trailing slash)");
+        ImGui::SeparatorText("GAME Installation");
+        ImGui::TextUnformatted("GAME executable path");
         ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-        ImGui::InputText("##gamepathinput", &Options::Get().gamePath);
+        ImGui::InputText("##gamepathinput", &Options::Get().gameExecutablePath);
         ImGui::SameLine();
         if (ImGui::Button("...", ImVec2(40, 0)))
         {
-            SDKWindow::Get().OpenFolderDialog(gamePathCallback);
+            SDKWindow::Get().OpenFileDialog(gamePathCallback, DialogFilters::exeFilters);
         }
 
-        ImGui::Checkbox("Override Assets Directory", &Options::Get().overrideAssetsPath);
-        ImGui::SameLine();
-        ImGui::TextDisabled("(no trailing slash)");
-        ImGui::BeginDisabled(!Options::Get().overrideAssetsPath);
+        ImGui::Text("Game Config Path");
         ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-        ImGui::InputText("##assetspathinput", &Options::Get().assetsPath);
+        ImGui::InputText("##assetspathinput", &Options::Get().gameConfigPath);
         ImGui::SameLine();
         if (ImGui::Button("...##assets", ImVec2(40, 0)))
         {
-            SDKWindow::Get().OpenFolderDialog(assetsPathCallback);
+            SDKWindow::Get().OpenFileDialog(assetsPathCallback, DialogFilters::gkvlFilters);
         }
-        ImGui::EndDisabled();
 
+        ImGui::SeparatorText("Default Assets");
         ImGui::TextUnformatted("Default Texture");
         TextureBrowserWindow::Get().InputTexture("##defaulttexinput", Options::Get().defaultTexture);
         ImGui::TextUnformatted("Default Material");
         MaterialBrowserWindow::Get().InputMaterial("##defaultmatinput", Options::Get().defaultMaterial);
 
+        ImGui::SeparatorText("Appearance");
         ImGui::TextUnformatted("Theme");
+        ImGui::PushItemWidth(-1);
         int theme = static_cast<int>(Options::Get().theme);
         constexpr std::array<const char *, 3> options = {"System", "Light", "Dark"};
         if (ImGui::Combo("##theme", &theme, options.data(), 3))

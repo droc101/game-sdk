@@ -196,7 +196,7 @@ bool Sector::CheckIntersection(const glm::vec2 &segmentAStart,
 
 bool Sector::IsValid() const
 {
-    if (CalculateArea() <= 0)
+    if (CalculateArea() == 0)
     {
         return false;
     }

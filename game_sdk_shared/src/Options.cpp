@@ -8,7 +8,6 @@
 #include <game_sdk/Options.h>
 #include <nlohmann/json.hpp>
 #include <SDL3/SDL_filesystem.h>
-#include <SDL3/SDL_stdinc.h>
 #include <sstream>
 #include <string>
 
@@ -21,9 +20,7 @@ Options &Options::Get()
 
 void Options::Load()
 {
-    char *prefix = SDL_GetPrefPath("Droc101 Development", "GAME SDK");
-    const std::string path = prefix + std::string("options.json");
-    SDL_free(prefix);
+    const std::string path = SDL_GetBasePath() + std::string("sdk_options.json");
     std::ifstream file(path);
     if (!file.is_open())
     {
@@ -47,11 +44,10 @@ void Options::Load()
         LoadDefault();
     } else
     {
-        gamePath = savedata.value("game_path", std::string());
-        overrideAssetsPath = savedata.value("override_assets_path", false);
-        assetsPath = savedata.value("assets_path", std::string());
-        defaultTexture = savedata.value("default_texture", std::string("texture/level/wall_test.gtex"));
-        defaultMaterial = savedata.value("default_material", std::string("material/dev/wall_test.gmtl"));
+        gameExecutablePath = savedata.value("game_executable_path", "");
+        gameConfigPath = savedata.value("game_config_path", "");
+        defaultTexture = savedata.value("default_texture", "texture/level/uvtest.gtex");
+        defaultMaterial = savedata.value("default_material", "material/dev/uv_test.gmtl");
         theme = savedata.value("theme", Theme::SYSTEM);
     }
     file.close();
@@ -59,70 +55,55 @@ void Options::Load()
 
 void Options::LoadDefault()
 {
-    gamePath = std::string();
-    defaultTexture = "texture/level/wall_test.gtex";
-    defaultMaterial = "material/dev/wall_test.gmtl";
-    overrideAssetsPath = false;
-    assetsPath = "";
+    gameExecutablePath = "";
+    defaultTexture = "texture/level/uvtest.gtex";
+    defaultMaterial = "material/dev/uv_test.gmtl";
+    gameConfigPath = "";
     theme = Theme::SYSTEM;
 }
 
 void Options::Save()
 {
     const nlohmann::json savedata = {
-        {"game_path", gamePath},
+        {"game_executable_path", gameExecutablePath},
         {"default_texture", defaultTexture},
         {"default_material", defaultMaterial},
         {"theme", theme},
-        {"override_assets_path", overrideAssetsPath},
-        {"assets_path", assetsPath},
+        {"game_config_path", gameConfigPath},
     };
-    char *prefix = SDL_GetPrefPath("Droc101 Development", "GAME SDK");
-    const std::string path = prefix + std::string("options.json");
-    SDL_free(prefix);
+    const std::string path = SDL_GetBasePath() + std::string("sdk_options.json");
     std::ofstream file(path);
     if (!file.is_open())
     {
         printf("Could not open file %s\n", path.data());
         return;
     }
-    file << savedata.dump(); // a shift operator should not write to a stream this is not ok
+    file << savedata.dump(4); // a shift operator should not write to a stream this is not ok
     file.close();
 }
 
 std::string Options::GetAssetsPath() const
 {
-    if (overrideAssetsPath)
-    {
-        return assetsPath;
-    }
-    return gamePath + "/assets";
+    const std::filesystem::path path = std::filesystem::path(gameConfigPath);
+    return path.parent_path().string();
+}
+
+std::string Options::GetExecutablePath() const
+{
+    const std::filesystem::path path = std::filesystem::path(gameExecutablePath);
+    return path.parent_path().string();
 }
 
 bool Options::ValidateGamePath() const
 {
-    if (!std::filesystem::is_directory(gamePath))
+    if (!std::filesystem::is_regular_file(gameExecutablePath))
     {
         return false;
     }
-    if (!std::filesystem::is_directory(gamePath + "/assets"))
+    if (!std::filesystem::is_regular_file(gameConfigPath))
     {
         return false;
     }
-    if (!std::filesystem::is_directory(gamePath + "/bin"))
-    {
-        return false;
-    }
-#ifdef WIN32
-    if (!std::filesystem::is_regular_file(gamePath + "/game.exe"))
-    {
-        return false;
-    }
-#else
-    if (!std::filesystem::is_regular_file(gamePath + "/game"))
-    {
-        return false;
-    }
-#endif
+
     return true;
 }

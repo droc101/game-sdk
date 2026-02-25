@@ -44,9 +44,10 @@ class Options
          */
         [[nodiscard]] std::string GetAssetsPath() const;
 
-        std::string gamePath{};
-        bool overrideAssetsPath = false;
-        std::string assetsPath{};
+        [[nodiscard]] std::string GetExecutablePath() const;
+
+        std::string gameExecutablePath{};
+        std::string gameConfigPath{};
 
         std::string defaultTexture{};
         std::string defaultMaterial{};

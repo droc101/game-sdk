@@ -151,7 +151,7 @@ std::vector<std::string> SharedMgr::ScanFolder(const std::string &directoryPath,
         }
     } catch (const std::filesystem::filesystem_error &exception)
     {
-        printf("std::filesystem_error: %s", exception.what());
+        printf("std::filesystem_error: %s\n", exception.what());
     }
     if (isRoot)
     {

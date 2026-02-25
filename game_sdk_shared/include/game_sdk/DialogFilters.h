@@ -12,6 +12,14 @@ class DialogFilters
     public:
         DialogFilters() = delete;
 
+        static inline const std::vector<SDL_DialogFileFilter> exeFilters = {
+#ifdef SDL_PLATFORM_LINUX
+            SDL_DialogFileFilter{"Program (*)", "*"}
+#else
+            SDL_DialogFileFilter{"Program (*.exe)", "exe"}
+#endif
+        };
+
         // fonedit
         static inline const std::vector<SDL_DialogFileFilter> gfonFilters = {
             SDL_DialogFileFilter{"GAME font (*.gfon)", "gfon"},

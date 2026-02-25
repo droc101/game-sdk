@@ -52,15 +52,10 @@ void MapCompileWindow::StartCompile()
             compilerProcess = nullptr;
             if (exitCode == 0 && playMap)
             {
-#ifdef WIN32
-                const std::string gameBinary = "/game.exe";
-#else
-                const std::string gameBinary = "/game";
-#endif
                 const std::string mapName = std::filesystem::path(MapEditor::mapFile).stem().string();
                 const std::string mapArg = "--map=" + mapName;
                 const std::string gameArg = "--game=" + Options::Get().GetAssetsPath();
-                if (!DesktopInterface::Get().ExecuteProcessNonBlocking(Options::Get().gamePath + gameBinary,
+                if (!DesktopInterface::Get().ExecuteProcessNonBlocking(Options::Get().gameExecutablePath,
                                                                  {mapArg.c_str(), "--nosteam", gameArg}))
                 {
                     log += "Failed to execute game binary";

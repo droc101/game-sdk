@@ -4,12 +4,14 @@
 
 #include <array>
 #include <cstdlib>
+#include <game_sdk/DialogFilters.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/windows/SetupWindow.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
+#include <cmath>
 
 SetupWindow &SetupWindow::Get()
 {
@@ -25,12 +27,12 @@ void SetupWindow::Show(bool required)
 
 void SetupWindow::gamePathCallback(const std::string &path)
 {
-    Options::Get().gamePath = path;
+    Options::Get().gameExecutablePath = path;
 }
 
 void SetupWindow::assetsPathCallback(const std::string &path)
 {
-    Options::Get().assetsPath = path;
+    Options::Get().gameConfigPath = path;
 }
 
 void SetupWindow::Render()
@@ -42,6 +44,8 @@ void SetupWindow::Render()
     ImGui::OpenPopup("Setup");
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    const float width = fminf(450, viewport->WorkSize.x - 40);
+    ImGui::SetNextWindowSize({width, -1});
     constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoMove |
                                              ImGuiWindowFlags_NoSavedSettings |
                                              ImGuiWindowFlags_NoCollapse |
@@ -54,40 +58,36 @@ void SetupWindow::Render()
     }
     ImGui::PopStyleVar();
 
-    ImGui::TextUnformatted("Folder with GAME executable");
-    ImGui::SameLine();
-    ImGui::TextDisabled("(no trailing slash)");
+    ImGui::TextUnformatted("GAME executable path");
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::InputText("##gamepathinput", &Options::Get().gamePath);
+    ImGui::InputText("##gamepathinput", &Options::Get().gameExecutablePath);
     ImGui::SameLine();
     if (ImGui::Button("...", ImVec2(40, 0)))
     {
-        SDKWindow::Get().OpenFolderDialog(gamePathCallback);
+        SDKWindow::Get().OpenFileDialog(gamePathCallback, DialogFilters::exeFilters);
     }
+
+    ImGui::Text("Game Config Path");
+    ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
+    ImGui::InputText("##assetspathinput", &Options::Get().gameConfigPath);
+    ImGui::SameLine();
+    if (ImGui::Button("...##assets", ImVec2(40, 0)))
+    {
+        SDKWindow::Get().OpenFileDialog(assetsPathCallback, DialogFilters::gkvlFilters);
+    }
+
     bool valid = true;
     if (!Options::Get().ValidateGamePath())
     {
         valid = false;
-        ImGui::TextColored(ImVec4(1, 0, 0, 1), "Invalid game path");
+        ImGui::TextColored(ImVec4(1, 0, 0, 1), "Invalid executable or config path");
     } else
     {
         ImGui::Text(" ");
     }
 
-    ImGui::Checkbox("Override Assets Directory", &Options::Get().overrideAssetsPath);
-    ImGui::SameLine();
-    ImGui::TextDisabled("(no trailing slash)");
-    ImGui::BeginDisabled(!Options::Get().overrideAssetsPath);
-    ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::InputText("##assetspathinput", &Options::Get().assetsPath);
-    ImGui::SameLine();
-    if (ImGui::Button("...##assets", ImVec2(40, 0)))
-    {
-        SDKWindow::Get().OpenFolderDialog(assetsPathCallback);
-    }
-    ImGui::EndDisabled();
-
     ImGui::TextUnformatted("Theme");
+    ImGui::PushItemWidth(-1);
     int theme = static_cast<int>(Options::Get().theme);
     constexpr std::array<const char *, 3> options = {"System", "Light", "Dark"};
     if (ImGui::Combo("##theme", &theme, options.data(), 3))

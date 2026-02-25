@@ -65,7 +65,7 @@ static void ParsePath(std::string &path)
 #ifdef WIN32
     StringReplace(path, "/", "\\");
 #endif
-    StringReplace(path, "$GAMEDIR", Options::Get().gamePath);
+    StringReplace(path, "$GAMEDIR", Options::Get().GetExecutablePath());
     StringReplace(path, "$ASSETSDIR", Options::Get().GetAssetsPath());
     StringReplace(path, "$SDKDIR", sdkPath);
 }
