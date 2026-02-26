@@ -1,0 +1,11 @@
+macro(enable_options)
+    foreach (OPTION_TO_SET IN ITEMS ${ARGN})
+        set(${OPTION_TO_SET} ON)
+    endforeach ()
+endmacro()
+
+macro(disable_options)
+    foreach (OPTION_TO_SET IN ITEMS ${ARGN})
+        set(${OPTION_TO_SET} OFF)
+    endforeach ()
+endmacro()

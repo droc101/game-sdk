@@ -32,11 +32,11 @@ jobs:
 
     - name: Install Packages
       run: |
-        sudo apt-get update
+        sudo apt update
         sudo apt install -y libglm-dev glslang-dev libglew-dev cmake gcc
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build-${{ matrix.build_type }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DSDL_RENDER_DEFAULT=OFF -DSDL_HIDAPI_DEFAULT=OFF -DSDL_DIALOG_DEFAULT=OFF -DSDL_X11_XCURSOR=OFF -DSDL_X11_XINPUT=OFF -DSDL_X11_XFIXES=OFF -DSDL_X11_XSCRNSAVER=OFF -DSDL_X11_XRANDR=OFF -DSDL_X11_XTEST=OFF -DSDL_VIDEO_DEFAULT=OFF -DSDL_UNIX_CONSOLE_BUILD=ON
+      run: cmake -B ${{github.workspace}}/build-${{ matrix.build_type }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build-${{ matrix.build_type }} --config ${{ matrix.build_type }} -j $(nproc)
