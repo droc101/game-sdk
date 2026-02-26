@@ -20,7 +20,7 @@ void MapPropertiesWindow::Render()
                  &visible,
                  ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking);
 
-    ImGui::Text("Sky Texture");
+    ImGui::Checkbox("Render Sky", &MapEditor::map.has_sky);
     TextureBrowserWindow::Get().InputTexture("##skyTexture", MapEditor::map.sky_texture);
 
     ImGui::Text("Discord RPC icon ID");

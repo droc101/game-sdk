@@ -3,27 +3,17 @@
 //
 
 #include <cassert>
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
 #include <fstream>
 #include <ios>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
-#include <libassets/type/Asset.h>
 #include <libassets/type/Sector.h>
-#include <libassets/util/AssetReader.h>
-#include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <ostream>
-#include <ranges>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include "../../../mapcomp/LevelMeshBuilder.h"
-#include "libassets/type/WallMaterial.h"
 
 Error::ErrorCode MapAsset::CreateFromMapSrc(const char *mapSrcPath, MapAsset &map)
 {
@@ -50,6 +40,8 @@ Error::ErrorCode MapAsset::CreateFromMapSrc(const char *mapSrcPath, MapAsset &ma
 
     map.discord_rpc_icon_id = json.value("discord_rpc_icon_id", "icon");
     map.discord_rpc_map_name = json.value("discord_rpc_map_name", "Unnamed Map");
+
+    map.has_sky = json.value("has_sky", true);
     map.sky_texture = json.value("sky_texture", "texture/level/sky_test.gtex");
 
     const nlohmann::ordered_json jSectors = json.at("sectors");
@@ -72,6 +64,7 @@ Error::ErrorCode MapAsset::SaveAsMapSrc(const char *mapSrcPath) const
     src["version"] = MAP_JSON_VERSION;
     src["discord_rpc_icon_id"] = discord_rpc_icon_id;
     src["discord_rpc_map_name"] = discord_rpc_map_name;
+    src["has_sky"] = has_sky;
     src["sky_texture"] = sky_texture;
     src["sectors"] = nlohmann::ordered_json::array();
     src["actors"] = nlohmann::ordered_json::array();

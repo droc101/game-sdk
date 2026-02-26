@@ -93,7 +93,12 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
 
     DataWriter writer = DataWriter();
 
-    writer.WriteString(map.sky_texture);
+    writer.Write<bool>(map.has_sky);
+    if (map.has_sky)
+    {
+        writer.WriteString(map.sky_texture);
+    }
+
     writer.WriteString(map.discord_rpc_icon_id);
     writer.WriteString(map.discord_rpc_map_name);
 
@@ -163,11 +168,15 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
                 {
                     if (sector.floorHeight == otherSector.ceilingHeight)
                     {
-                        printf("[INFO] Sector %zu's floor is overlapping with sector %zu's ceiling\n", sectorIndex, otherSectorIndex);
+                        printf("[INFO] Sector %zu's floor is overlapping with sector %zu's ceiling\n",
+                               sectorIndex,
+                               otherSectorIndex);
                         overlappingCeilings.push_back(&otherSector);
                     } else if (sector.ceilingHeight == otherSector.floorHeight)
                     {
-                        printf("[INFO] Sector %zu's ceiling is overlapping with sector %zu's floor\n", sectorIndex, otherSectorIndex);
+                        printf("[INFO] Sector %zu's ceiling is overlapping with sector %zu's floor\n",
+                               sectorIndex,
+                               otherSectorIndex);
                         overlappingFloors.push_back(&otherSector);
                     }
                 }
@@ -192,7 +201,11 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
                         (wallStart == otherWallEnd && wallEnd == otherWallStart))
                     {
                         // MATCH FOUND!!!
-                        printf("[INFO] Found overlapping walls: %zu[%zu] and %zu[%zu]\n", sectorIndex, i, otherSectorIndex, j);
+                        printf("[INFO] Found overlapping walls: %zu[%zu] and %zu[%zu]\n",
+                               sectorIndex,
+                               i,
+                               otherSectorIndex,
+                               j);
                         gaps.push_back({otherSector.floorHeight, otherSector.ceilingHeight});
                         break; // break here because only 1 wall per (well-formed) sector can overlap
                     }
