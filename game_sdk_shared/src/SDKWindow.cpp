@@ -41,6 +41,11 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
 
     printf("Starting %s...\n", appName.c_str());
 
+    (void)SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, appName.c_str());
+    (void)SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, "Droc101 Development");
+    (void)SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, "application");
+    (void)SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, "https://github.com/droc101/game-sdk");
+
 #ifdef SDL_PLATFORM_LINUX
     (void)SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "wayland,x11");
     (void)SDL_SetHint(SDL_HINT_VIDEO_FORCE_EGL, "1");
