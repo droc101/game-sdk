@@ -11,6 +11,7 @@
 #include <format>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
+#include <libassets/type/Actor.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
 #include <misc/cpp/imgui_stdlib.h>
@@ -88,7 +89,8 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
                 if (!sector.IsValid())
                 {
                     sector.points[selectionVertexIndex] = vertexDragOriginalPoint;
-                    sector.points.at((selectionVertexIndex + 1) % sector.points.size()) = vertexDragOriginalPoint - lineDragModeSecondVertexOffset;
+                    sector.points.at((selectionVertexIndex + 1) %
+                                     sector.points.size()) = vertexDragOriginalPoint - lineDragModeSecondVertexOffset;
                 }
                 dragging = false;
             }
@@ -136,7 +138,6 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
         }
     } else
     {
-        // TODO prevent putting ceiling below floor / floor above ceiling
         if (selectionType == ItemType::ACTOR &&
             ((hoverType == ItemType::ACTOR && hoverIndex == selectionIndex) || dragging))
         {
@@ -161,28 +162,36 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             }
         } else if (selectionType == ItemType::CEILING && (hoverType == ItemType::CEILING || dragging))
         {
+            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-                Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
                 const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
                 sector.ceilingHeight = snapped.y;
                 dragging = true;
             } else
             {
+                if (!sector.IsValid())
+                {
+                    sector.ceilingHeight = vertexDragOriginalPoint.x;
+                }
                 dragging = false;
             }
         } else if (selectionType == ItemType::FLOOR && (hoverType == ItemType::FLOOR || dragging))
         {
+            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-                Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
                 const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
                 sector.floorHeight = snapped.y;
                 dragging = true;
             } else
             {
+                if (!sector.IsValid())
+                {
+                    sector.floorHeight = vertexDragOriginalPoint.y;
+                }
                 dragging = false;
             }
         }
@@ -238,6 +247,7 @@ void SelectTool::ProcessSectorHover(const Viewport &vp,
             if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
                 selectionType = ItemType::CEILING;
+                vertexDragOriginalPoint = {sector.ceilingHeight, sector.floorHeight};
             }
         } else if (floorDistance <= 5)
         {
@@ -251,6 +261,7 @@ void SelectTool::ProcessSectorHover(const Viewport &vp,
             if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
                 selectionType = ItemType::FLOOR;
+                vertexDragOriginalPoint = {sector.ceilingHeight, sector.floorHeight};
             }
         }
     }
@@ -292,9 +303,8 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
                 selectionVertexIndex = vertexIndex;
                 selectionType = ItemType::VERTEX;
                 vertexDragOriginalPoint = sector.points.at(vertexIndex);
-            } else if (isHovered &&
-                       (ImGui::IsMouseClicked(ImGuiMouseButton_Right) ||
-                        ImGui::Shortcut(ImGuiKey_Delete, ImGuiInputFlags_RouteGlobal)))
+            } else if (isHovered && (ImGui::IsMouseClicked(ImGuiMouseButton_Right) ||
+                                     ImGui::Shortcut(ImGuiKey_Delete, ImGuiInputFlags_RouteGlobal)))
             {
                 if (sector.points.size() > 3)
                 {

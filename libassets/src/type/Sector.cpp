@@ -201,6 +201,11 @@ bool Sector::IsValid() const
         return false;
     }
 
+    if (ceilingHeight < floorHeight || ceilingHeight == floorHeight)
+    {
+        return false;
+    }
+
     const size_t n = points.size();
     for (size_t i = 0; i < n; i++)
     {
