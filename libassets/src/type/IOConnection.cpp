@@ -16,6 +16,7 @@ IOConnection::IOConnection(const nlohmann::ordered_json &j)
     sourceOutput = j.value("sourceOutput", "");
     numRefires = j.value("numRefires", 0);
     overridesParam = j.value("overridesParam", false);
+    param = Param(j["param"]);
 }
 
 IOConnection::IOConnection(DataReader &reader)
@@ -24,7 +25,10 @@ IOConnection::IOConnection(DataReader &reader)
     reader.ReadStringWithSize(targetName);
     reader.ReadStringWithSize(targetInput);
     overridesParam = reader.Read<uint8_t>() == 1;
-    param = Param(reader);
+    if (overridesParam)
+    {
+        param = Param(reader);
+    }
     numRefires = reader.Read<size_t>();
 }
 
@@ -35,7 +39,10 @@ void IOConnection::Write(DataWriter &writer) const
     writer.WriteString(targetName);
     writer.WriteString(targetInput);
     writer.Write<uint8_t>(overridesParam ? 1 : 0);
-    param.Write(writer);
+    if (overridesParam)
+    {
+        param.Write(writer);
+    }
     writer.Write<size_t>(numRefires);
 }
 
