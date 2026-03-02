@@ -108,6 +108,8 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    SDKWindow::Get().SetWindowIcon("mtledit");
+
     const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gmtl"});
     if (!openPath.empty())
     {

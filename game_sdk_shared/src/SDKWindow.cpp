@@ -3,6 +3,7 @@
 //
 
 #include <cassert>
+#include <cstdint>
 #include <cstdio>
 #include <game_sdk/gl/GLHelper.h>
 #include <game_sdk/ModelViewer.h>
@@ -12,12 +13,16 @@
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl3.h>
+#include <libassets/asset/TextureAsset.h>
+#include <libassets/type/Actor.h>
+#include <libassets/util/Error.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_messagebox.h>
+#include <SDL3/SDL_surface.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <string>
@@ -139,6 +144,34 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
 
     initDone = true;
     return true;
+}
+
+void SDKWindow::SetWindowIcon(const std::string &iconName) const
+{
+    TextureAsset iconAsset{};
+    const Error::ErrorCode e = TextureAsset::CreateFromImage(("assets/icons/" + iconName + ".png").c_str(), iconAsset);
+    if (e != Error::ErrorCode::OK)
+    {
+        TextureAsset::CreateMissingTexture(iconAsset);
+    }
+    std::vector<uint32_t> pixels{};
+    iconAsset.GetPixelsRGBA(pixels);
+    SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(iconAsset.GetWidth()),
+                                                 static_cast<int>(iconAsset.GetHeight()),
+                                                 SDL_PIXELFORMAT_ABGR8888,
+                                                 pixels.data(),
+                                                 static_cast<int>(sizeof(uint32_t) * iconAsset.GetWidth()));
+    if (surface == nullptr)
+    {
+        printf("Error: SDL_CreateSurfaceFrom failed: %s\n", SDL_GetError());
+    } else
+    {
+        if (!SDL_SetWindowIcon(window, surface))
+        {
+            printf("Error: SDL_SetWindowIcon failed: %s\n", SDL_GetError());
+        }
+    }
+    SDL_DestroySurface(surface);
 }
 
 void SDKWindow::MainLoop(const SDKWindowRenderFunction Render, const SDKWindowProcessEventFunction ProcessEvent)

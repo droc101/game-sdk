@@ -277,6 +277,9 @@ int main(int argc, char **argv)
     {
         return -1;
     }
+
+    SDKWindow::Get().SetWindowIcon("mdledit");
+
     if (!ModelEditor::modelViewer.Init())
     {
         printf("Failed to start renderer!\n");

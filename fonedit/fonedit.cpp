@@ -241,6 +241,8 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    SDKWindow::Get().SetWindowIcon("fonedit");
+
     charDisplayList = FontAsset::GetCharListForDisplay();
 
     const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gfon"});

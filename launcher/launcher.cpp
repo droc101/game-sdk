@@ -187,6 +187,8 @@ int main()
         return -1;
     }
 
+    SDKWindow::Get().SetWindowIcon("sdk_hires");
+
     sdkPath = SDL_GetBasePath();
     sdkPath.pop_back();
 

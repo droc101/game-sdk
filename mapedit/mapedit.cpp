@@ -542,6 +542,8 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    SDKWindow::Get().SetWindowIcon("mapedit");
+
     MapEditor::mat = WallMaterial(Options::Get().defaultMaterial);
     if (!MapRenderer::Init())
     {

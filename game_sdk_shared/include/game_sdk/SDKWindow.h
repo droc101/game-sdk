@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 
+#include "libassets/type/Actor.h"
+
 /**
  * Function signature for main loop render callback
  */
@@ -55,6 +57,8 @@ class SDKWindow
         [[nodiscard]] bool Init(const std::string &appName,
                                 glm::ivec2 windowSize = {800, 600},
                                 SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE);
+
+        void SetWindowIcon(const std::string &iconName) const;
 
         /**
          * Run the main loop

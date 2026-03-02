@@ -439,6 +439,8 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    SDKWindow::Get().SetWindowIcon("shdedit");
+
     SDKWindow::Get().SetThemeChangeCallback(ThemeChanged);
 
     ThemeChanged();

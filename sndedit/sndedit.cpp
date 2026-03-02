@@ -236,6 +236,9 @@ int main(int argc, char **argv)
     {
         return -1;
     }
+
+    SDKWindow::Get().SetWindowIcon("sndedit");
+
     const ma_result res = ma_engine_init(nullptr, &engine);
     if (res != MA_SUCCESS)
     {

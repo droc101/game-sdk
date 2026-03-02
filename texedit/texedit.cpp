@@ -294,6 +294,8 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    SDKWindow::Get().SetWindowIcon("texedit");
+
     (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/checkerboard.png", CHECKERBOARD_ICON_NAME, false, true);
     const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(CHECKERBOARD_ICON_NAME, checkerboardTexture);
     assert(e == Error::ErrorCode::OK);

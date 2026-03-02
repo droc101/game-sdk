@@ -433,6 +433,8 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    SDKWindow::Get().SetWindowIcon("kvledit");
+
     const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gkvl"});
     if (!openPath.empty())
     {
