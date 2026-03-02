@@ -544,6 +544,20 @@ int main(int argc, char **argv)
 
     SDKWindow::Get().SetWindowIcon("mapedit");
 
+    SharedMgr::Get().LoadActorDefinitions();
+    if (!SharedMgr::Get().actorDefinitions.contains("player"))
+    {
+        SDKWindow::Get().ErrorMessage("Could not find definition for required actor class \"player\". Please check the game paths from the SDK launcher.", "Error");
+        SDKWindow::Get().Destroy();
+        return 0;
+    }
+    if (!SharedMgr::Get().actorDefinitions.contains("actor"))
+    {
+        SDKWindow::Get().ErrorMessage("Could not find definition for required actor class \"actor\". Please check the game paths from the SDK launcher.", "Error");
+        SDKWindow::Get().Destroy();
+        return 0;
+    }
+
     MapEditor::mat = WallMaterial(Options::Get().defaultMaterial);
     if (!MapRenderer::Init())
     {

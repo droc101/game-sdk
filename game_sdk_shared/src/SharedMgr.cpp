@@ -46,8 +46,6 @@ void SharedMgr::InitSharedMgr()
 {
     chdir(SDL_GetBasePath());
     Options::Get().Load();
-    LoadOptionDefinitions();
-    LoadActorDefinitions();
     DesktopInterface::Get().InitDesktopInterface();
     if (!Options::Get().ValidateGamePath())
     {
@@ -189,6 +187,8 @@ void SharedMgr::LoadOptionDefinitions()
 
 void SharedMgr::LoadActorDefinitions()
 {
+    LoadOptionDefinitions();
+
     const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::Get().GetAssetsPath() + "/defs/actors",
                                                                 ".json",
                                                                 true);

@@ -48,6 +48,8 @@ class SharedMgr
                                                    const std::string &extension,
                                                    bool isRoot);
 
+        void LoadActorDefinitions();
+
         GLTextureCache textureCache{};
 
         std::map<std::string, OptionDefinition> optionDefinitions{};
@@ -61,6 +63,4 @@ class SharedMgr
         SharedMgr() = default;
 
         void LoadOptionDefinitions();
-
-        void LoadActorDefinitions();
 };
