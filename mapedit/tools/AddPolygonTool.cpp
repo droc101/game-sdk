@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <game_sdk/SDKWindow.h>
 #include <imgui.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
@@ -15,7 +16,6 @@
 #include "../MapRenderer.h"
 #include "../Viewport.h"
 #include "EditorTool.h"
-#include "game_sdk/SDKWindow.h"
 #include "SelectTool.h"
 
 void AddPolygonTool::RenderToolWindow()

@@ -7,6 +7,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <game_sdk/SDKWindow.h>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Sector.h>
@@ -17,7 +18,6 @@
 #include "../MapEditor.h"
 #include "../MapRenderer.h"
 #include "../Viewport.h"
-#include "AddActorTool.h"
 #include "EditorTool.h"
 #include "SelectTool.h"
 
@@ -76,7 +76,13 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
                         s.points.push_back(glmPoint);
                         s.wallMaterials.push_back(mat);
                     }
-                    MapEditor::map.sectors.push_back(s);
+                    if (!s.IsValid())
+                    {
+                        SDKWindow::Get().ErrorMessage("Sector has invalid shape and will not be added");
+                    } else
+                    {
+                        MapEditor::map.sectors.push_back(s);
+                    }
                     hasDrawnShape = false;
                     isDragging = false;
                 }
