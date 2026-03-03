@@ -59,6 +59,12 @@ Param::Param(DataReader &reader)
         case ParamType::PARAM_TYPE_UINT_64:
             Set<uint64_t>(reader.Read<uint64_t>());
             break;
+        case ParamType::PARAM_TYPE_VEC2:
+            Set<glm::vec2>(reader.ReadVec2());
+            break;
+        case ParamType::PARAM_TYPE_VEC3:
+            Set<glm::vec3>(reader.ReadVec3());
+            break;
         case ParamType::PARAM_TYPE_NONE:
         default:
             break;
@@ -102,6 +108,19 @@ Param::Param(nlohmann::ordered_json j)
         case ParamType::PARAM_TYPE_UINT_64:
             Set<uint64_t>(j["value"]);
             break;
+        case ParamType::PARAM_TYPE_VEC2:
+            Set<glm::vec2>({
+                j["value"]["x"],
+                j["value"]["y"],
+            });
+            break;
+        case ParamType::PARAM_TYPE_VEC3:
+            Set<glm::vec3>({
+                j["value"]["x"],
+                j["value"]["y"],
+                j["value"]["z"],
+            });
+            break;
         case ParamType::PARAM_TYPE_NONE:
         default:
             break;
@@ -135,6 +154,10 @@ bool Param::operator==(const Param &param) const
             return Get<KvList>(KvList()) == param.Get<KvList>(KvList());
         case ParamType::PARAM_TYPE_UINT_64:
             return Get<uint64_t>(0) == param.Get<uint64_t>(0);
+        case ParamType::PARAM_TYPE_VEC2:
+            return Get<glm::vec2>({0, 0}) == param.Get<glm::vec2>({0, 0});
+        case ParamType::PARAM_TYPE_VEC3:
+            return Get<glm::vec3>({0, 0, 0}) == param.Get<glm::vec3>({0, 0, 0});
         default:
             return true;
     }
@@ -177,6 +200,12 @@ void Param::Write(DataWriter &writer) const
             break;
         case ParamType::PARAM_TYPE_UINT_64:
             writer.Write<uint64_t>(Get<uint64_t>(0));
+            break;
+        case ParamType::PARAM_TYPE_VEC2:
+            writer.WriteVec2(Get<glm::vec2>({}));
+            break;
+        case ParamType::PARAM_TYPE_VEC3:
+            writer.WriteVec3(Get<glm::vec3>({}));
             break;
         case ParamType::PARAM_TYPE_NONE:
         default:
@@ -245,6 +274,14 @@ Param::ParamType Param::ParseType(const std::string &type)
     {
         return ParamType::PARAM_TYPE_UINT_64;
     }
+    if (type == "vec2" || type == "Vector2")
+    {
+        return ParamType::PARAM_TYPE_VEC2;
+    }
+    if (type == "vec3" || type == "Vector3")
+    {
+        return ParamType::PARAM_TYPE_VEC3;
+    }
     return ParamType::PARAM_TYPE_NONE;
 }
 
@@ -284,6 +321,12 @@ void Param::ClearToType(const ParamType dataType)
             break;
         case ParamType::PARAM_TYPE_UINT_64:
             Set<uint64_t>(0);
+            break;
+        case ParamType::PARAM_TYPE_VEC2:
+            Set<glm::vec2>({0, 0});
+            break;
+        case ParamType::PARAM_TYPE_VEC3:
+            Set<glm::vec3>({0, 0, 0});
             break;
         case ParamType::PARAM_TYPE_NONE:
         default:
@@ -345,6 +388,19 @@ nlohmann::ordered_json Param::GetJson() const
         case ParamType::PARAM_TYPE_UINT_64:
             j["type"] = "uint64";
             j["value"] = Get<uint64_t>(0);
+            break;
+        case ParamType::PARAM_TYPE_VEC2:
+            j["type"] = "vec2";
+            j["value"] = nlohmann::ordered_json();
+            j["value"]["x"] = Get<glm::vec2>({}).x;
+            j["value"]["y"] = Get<glm::vec2>({}).y;
+            break;
+        case ParamType::PARAM_TYPE_VEC3:
+            j["type"] = "vec3";
+            j["value"] = nlohmann::ordered_json();
+            j["value"]["x"] = Get<glm::vec3>({}).x;
+            j["value"]["y"] = Get<glm::vec3>({}).y;
+            j["value"]["z"] = Get<glm::vec3>({}).z;
             break;
         case ParamType::PARAM_TYPE_NONE:
         default:
@@ -429,6 +485,13 @@ std::string Param::ToString() const
             return std::format("{} k/v pairs", Get<KvList>({}).size());
         case ParamType::PARAM_TYPE_UINT_64:
             return std::format("{}", Get<uint64_t>(0));
+        case ParamType::PARAM_TYPE_VEC2:
+            return std::format("vec2({:.3f}, {:.3f})", Get<glm::vec2>({}).x, Get<glm::vec2>({}).y);
+        case ParamType::PARAM_TYPE_VEC3:
+            return std::format("vec3({:.3f}, {:.3f}, {:.3f})",
+                               Get<glm::vec3>({}).x,
+                               Get<glm::vec3>({}).y,
+                               Get<glm::vec3>({}).z);
         default:
             return "empty";
     }

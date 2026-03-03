@@ -27,7 +27,9 @@ template<typename T> concept ParamTypeTemplate = std::same_as<T, uint8_t> ||
                                                  std::same_as<T, Color> ||
                                                  std::same_as<T, KvList> ||
                                                  std::same_as<T, ParamVector> ||
-                                                 std::same_as<T, uint64_t>;
+                                                 std::same_as<T, uint64_t> ||
+                                                 std::same_as<T, glm::vec2> ||
+                                                 std::same_as<T, glm::vec3>;
 
 class Param
 {
@@ -43,7 +45,9 @@ class Param
             PARAM_TYPE_COLOR,
             PARAM_TYPE_KV_LIST,
             PARAM_TYPE_ARRAY,
-            PARAM_TYPE_UINT_64
+            PARAM_TYPE_UINT_64,
+            PARAM_TYPE_VEC2,
+            PARAM_TYPE_VEC3
         };
 
         static inline const std::unordered_map<ParamType, std::string> paramTypeNames = {
@@ -56,7 +60,9 @@ class Param
             {ParamType::PARAM_TYPE_COLOR, "Color"},
             {ParamType::PARAM_TYPE_ARRAY, "Array"},
             {ParamType::PARAM_TYPE_KV_LIST, "KvList"},
-            {ParamType::PARAM_TYPE_UINT_64, "uint64"}
+            {ParamType::PARAM_TYPE_UINT_64, "uint64"},
+            {ParamType::PARAM_TYPE_VEC2, "vec2"},
+            {ParamType::PARAM_TYPE_VEC3, "vec3"},
         };
 
         Param();
@@ -92,7 +98,9 @@ class Param
                 (std::same_as<T, Color> && type != ParamType::PARAM_TYPE_COLOR) ||
                 (std::same_as<T, KvList> && type != ParamType::PARAM_TYPE_KV_LIST) ||
                 (std::same_as<T, ParamVector> && type != ParamType::PARAM_TYPE_ARRAY) ||
-                (std::same_as<T, uint64_t> && type != ParamType::PARAM_TYPE_UINT_64))
+                (std::same_as<T, uint64_t> && type != ParamType::PARAM_TYPE_UINT_64) ||
+                (std::same_as<T, glm::vec2> && type != ParamType::PARAM_TYPE_VEC2) ||
+                (std::same_as<T, glm::vec3> && type != ParamType::PARAM_TYPE_VEC3))
             {
                 return defaultValue;
             }
@@ -109,7 +117,9 @@ class Param
                 (std::same_as<T, Color> && type != ParamType::PARAM_TYPE_COLOR) ||
                 (std::same_as<T, KvList> && type != ParamType::PARAM_TYPE_KV_LIST) ||
                 (std::same_as<T, ParamVector> && type != ParamType::PARAM_TYPE_ARRAY) ||
-                (std::same_as<T, uint64_t> && type != ParamType::PARAM_TYPE_UINT_64))
+                (std::same_as<T, uint64_t> && type != ParamType::PARAM_TYPE_UINT_64) ||
+                (std::same_as<T, glm::vec2> && type != ParamType::PARAM_TYPE_VEC2) ||
+                (std::same_as<T, glm::vec3> && type != ParamType::PARAM_TYPE_VEC3))
             {
                 return defaultValue;
             }
@@ -126,7 +136,9 @@ class Param
                 (std::same_as<T, Color> && type != ParamType::PARAM_TYPE_COLOR) ||
                 (std::same_as<T, KvList> && type != ParamType::PARAM_TYPE_KV_LIST) ||
                 (std::same_as<T, ParamVector> && type != ParamType::PARAM_TYPE_ARRAY) ||
-                (std::same_as<T, uint64_t> && type != ParamType::PARAM_TYPE_UINT_64))
+                (std::same_as<T, uint64_t> && type != ParamType::PARAM_TYPE_UINT_64) ||
+                (std::same_as<T, glm::vec2> && type != ParamType::PARAM_TYPE_VEC2) ||
+                (std::same_as<T, glm::vec3> && type != ParamType::PARAM_TYPE_VEC3))
             {
                 return nullptr;
             }
@@ -171,6 +183,14 @@ class Param
             {
                 value = newValue;
                 type = ParamType::PARAM_TYPE_UINT_64;
+            } else if (std::same_as<T, glm::vec2>)
+            {
+                value = newValue;
+                type = ParamType::PARAM_TYPE_VEC2;
+            } else if (std::same_as<T, glm::vec3>)
+            {
+                value = newValue;
+                type = ParamType::PARAM_TYPE_VEC3;
             }
         }
 
@@ -189,5 +209,5 @@ class Param
 
     private:
         ParamType type = ParamType::PARAM_TYPE_NONE;
-        std::variant<uint8_t, int32_t, float, bool, std::string, Color, KvList, ParamVector, uint64_t> value;
+        std::variant<uint8_t, int32_t, float, bool, std::string, Color, KvList, ParamVector, uint64_t, glm::vec2, glm::vec3> value;
 };

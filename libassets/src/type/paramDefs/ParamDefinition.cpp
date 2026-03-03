@@ -16,6 +16,8 @@
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/type/paramDefs/StringParamDefinition.h>
 #include <libassets/type/paramDefs/Uint64ParamDefinition.h>
+#include <libassets/type/paramDefs/Vec2ParamDefinition.h>
+#include <libassets/type/paramDefs/Vec3ParamDefinition.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <string>
@@ -71,6 +73,21 @@ std::unique_ptr<ParamDefinition> ParamDefinition::Create(const nlohmann::json &j
             output = std::make_unique<Uint64ParamDefinition>(json.value("minimum", 0ull),
                                                              json.value("maximum", 0ull),
                                                              json.value("default", 0ull));
+        } else if (type == Param::ParamType::PARAM_TYPE_VEC2)
+        {
+            glm::vec2 defaultValue = {
+                json.value("default_x", 0.0f),
+                json.value("default_y", 0.0f),
+            };
+            output = std::make_unique<Vec2ParamDefinition>(defaultValue);
+        } else if (type == Param::ParamType::PARAM_TYPE_VEC3)
+        {
+            glm::vec3 defaultValue = {
+                json.value("default_x", 0.0f),
+                json.value("default_y", 0.0f),
+                json.value("default_z", 0.0f),
+            };
+            output = std::make_unique<Vec3ParamDefinition>(defaultValue);
         } else
         {
             e = Error::ErrorCode::INCORRECT_FORMAT;

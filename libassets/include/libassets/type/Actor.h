@@ -28,4 +28,6 @@ class Actor
         nlohmann::ordered_json GenerateJson() const;
 
         void Write(DataWriter &writer) const;
+
+        void RemoveUnknownParams(const ActorDefinition &definition);
 };

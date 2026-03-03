@@ -17,6 +17,8 @@
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/type/paramDefs/StringParamDefinition.h>
 #include <libassets/type/paramDefs/Uint64ParamDefinition.h>
+#include <libassets/type/paramDefs/Vec2ParamDefinition.h>
+#include <libassets/type/paramDefs/Vec3ParamDefinition.h>
 #include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Error.h>
 #include <ranges>
@@ -148,6 +150,12 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
                 case Param::ParamType::PARAM_TYPE_UINT_64:
                     ImGui::Text("Uint64");
                     break;
+                case Param::ParamType::PARAM_TYPE_VEC2:
+                    ImGui::Text("Vector2");
+                    break;
+                case Param::ParamType::PARAM_TYPE_VEC3:
+                    ImGui::Text("Vector3");
+                    break;
                 default:
                     ImGui::Text("Unknown");
             }
@@ -250,6 +258,17 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
                         ImGui::Text("Maximum: %zu", p->maximumValue);
                         ImGui::SetCursorPosX(cursorPos.x);
                         ImGui::Text("Default: %zu", p->defaultValue);
+                    } else if (param->type == Param::ParamType::PARAM_TYPE_VEC2)
+                    {
+                        const Vec2ParamDefinition *p = dynamic_cast<Vec2ParamDefinition *>(param.get());
+                        ImGui::Text("Default: (%.3f, %.3f)", p->defaultValue.x, p->defaultValue.y);
+                    } else if (param->type == Param::ParamType::PARAM_TYPE_VEC3)
+                    {
+                        const Vec3ParamDefinition *p = dynamic_cast<Vec3ParamDefinition *>(param.get());
+                        ImGui::Text("Default: (%.3f, %.3f, %.3f)",
+                                    p->defaultValue.x,
+                                    p->defaultValue.y,
+                                    p->defaultValue.z);
                     }
                 }
             }
@@ -305,6 +324,12 @@ void ActorBrowserWindow::RenderInputsTab(const ActorDefinition &def)
                     break;
                 case Param::ParamType::PARAM_TYPE_UINT_64:
                     ImGui::Text("Uint64");
+                    break;
+                case Param::ParamType::PARAM_TYPE_VEC2:
+                    ImGui::Text("Vector2");
+                    break;
+                case Param::ParamType::PARAM_TYPE_VEC3:
+                    ImGui::Text("Vector3");
                     break;
                 default:
                     ImGui::Text("Unknown");
@@ -363,6 +388,12 @@ void ActorBrowserWindow::RenderOutputsTab(const ActorDefinition &def)
                     break;
                 case Param::ParamType::PARAM_TYPE_UINT_64:
                     ImGui::Text("Uint64");
+                    break;
+                case Param::ParamType::PARAM_TYPE_VEC2:
+                    ImGui::Text("Vector2");
+                    break;
+                case Param::ParamType::PARAM_TYPE_VEC3:
+                    ImGui::Text("Vector3");
                     break;
                 default:
                     ImGui::Text("Unknown");

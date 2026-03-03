@@ -20,12 +20,18 @@
 #include <libassets/type/paramDefs/OptionParamDefinition.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/type/paramDefs/StringParamDefinition.h>
+#include <libassets/type/paramDefs/Uint64ParamDefinition.h>
+#include <libassets/type/paramDefs/Vec2ParamDefinition.h>
+#include <libassets/type/paramDefs/Vec3ParamDefinition.h>
+#include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <numbers>
+#include <ranges>
 #include <string>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 Actor::Actor(nlohmann::ordered_json j)
 {
@@ -120,6 +126,27 @@ void Actor::ApplyDefinition(const ActorDefinition &definition, const bool overwr
             Param p{};
             p.Set<Color>(colorParam->defaultValue);
             params[key] = p;
+        } else if (param->type == Param::ParamType::PARAM_TYPE_UINT_64)
+        {
+            const Uint64ParamDefinition *uintParam = dynamic_cast<Uint64ParamDefinition *>(param.get());
+            assert(uintParam);
+            Param p{};
+            p.Set<uint64_t>(uintParam->defaultValue);
+            params[key] = p;
+        } else if (param->type == Param::ParamType::PARAM_TYPE_VEC2)
+        {
+            const Vec2ParamDefinition *v2Param = dynamic_cast<Vec2ParamDefinition *>(param.get());
+            assert(v2Param);
+            Param p{};
+            p.Set<glm::vec2>(v2Param->defaultValue);
+            params[key] = p;
+        } else if (param->type == Param::ParamType::PARAM_TYPE_VEC3)
+        {
+            const Vec3ParamDefinition *v3Param = dynamic_cast<Vec3ParamDefinition *>(param.get());
+            assert(v3Param);
+            Param p{};
+            p.Set<glm::vec3>(v3Param->defaultValue);
+            params[key] = p;
         } else
         {
             assert(false); // unimplemented param type
@@ -157,4 +184,22 @@ void Actor::Write(DataWriter &writer) const
         connection.Write(writer);
     }
     Param::WriteKvList(writer, params);
+}
+
+void Actor::RemoveUnknownParams(const ActorDefinition &definition)
+{
+    std::unordered_set<std::string> defParams{};
+    definition.GetParamNames(defParams);
+    std::vector<std::string> toErase{};
+    for (const std::string &key: std::views::keys(params))
+    {
+        if (!defParams.contains(key))
+        {
+            toErase.push_back(key);
+        }
+    }
+    for (const std::string &key: toErase)
+    {
+        params.erase(key);
+    }
 }

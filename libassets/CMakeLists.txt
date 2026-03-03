@@ -114,6 +114,8 @@ add_library(assets SHARED
         src/asset/DataAsset.cpp
         include/libassets/asset/DataAsset.h
         include/libassets/type/paramDefs/Uint64ParamDefinition.h
+        include/libassets/type/paramDefs/Vec2ParamDefinition.h
+        include/libassets/type/paramDefs/Vec3ParamDefinition.h
 )
 
 set_target_properties(assets PROPERTIES

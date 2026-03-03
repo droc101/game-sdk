@@ -12,6 +12,7 @@
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <libassets/type/ActorDefinition.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <SDL3/SDL_video.h>
@@ -386,6 +387,15 @@ static void Render()
                 ModelBrowserWindow::Get().Show(&modelBrowserToolSelection);
             }
             ImGui::Separator();
+            if (ImGui::MenuItem("Remove unknown/obsolete actor params"))
+            {
+                for (Actor &actor: MapEditor::map.actors)
+                {
+                    ActorDefinition &def = SharedMgr::Get().actorDefinitions.at(actor.className);
+                    actor.RemoveUnknownParams(def);
+                }
+            }
+            ImGui::Separator();
             ImGui::EndMenu();
         }
         SharedMgr::Get().SharedMenuUI("mapedit");
@@ -547,13 +557,17 @@ int main(int argc, char **argv)
     SharedMgr::Get().LoadActorDefinitions();
     if (!SharedMgr::Get().actorDefinitions.contains("player"))
     {
-        SDKWindow::Get().ErrorMessage("Could not find definition for required actor class \"player\". Please check the game paths from the SDK launcher.", "Error");
+        SDKWindow::Get().ErrorMessage("Could not find definition for required actor class \"player\". Please check the "
+                                      "game paths from the SDK launcher.",
+                                      "Error");
         SDKWindow::Get().Destroy();
         return 0;
     }
     if (!SharedMgr::Get().actorDefinitions.contains("actor"))
     {
-        SDKWindow::Get().ErrorMessage("Could not find definition for required actor class \"actor\". Please check the game paths from the SDK launcher.", "Error");
+        SDKWindow::Get().ErrorMessage("Could not find definition for required actor class \"actor\". Please check the "
+                                      "game paths from the SDK launcher.",
+                                      "Error");
         SDKWindow::Get().Destroy();
         return 0;
     }

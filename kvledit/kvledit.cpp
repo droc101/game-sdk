@@ -12,6 +12,7 @@
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
+#include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/asset/DataAsset.h>
 #include <libassets/type/Color.h>
@@ -326,6 +327,15 @@ static void RenderSidebar()
         } else if (type == Param::ParamType::PARAM_TYPE_UINT_64)
         {
             ImGui::InputScalar("##value", ImGuiDataType_U64, p->GetPointer<uint64_t>());
+        } else if (type == Param::ParamType::PARAM_TYPE_VEC2)
+        {
+            glm::vec2 &ptr = p->GetRef<glm::vec2>({});
+            ImGui::InputFloat2("##value", glm::value_ptr(ptr));
+        }
+        else if (type == Param::ParamType::PARAM_TYPE_VEC3)
+        {
+            glm::vec3 &ptr = p->GetRef<glm::vec3>({});
+            ImGui::InputFloat3("##value", glm::value_ptr(ptr));
         }
 
         ImGui::Separator();

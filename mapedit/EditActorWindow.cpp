@@ -30,8 +30,11 @@
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/type/paramDefs/StringParamDefinition.h>
 #include <libassets/type/paramDefs/Uint64ParamDefinition.h>
+#include <libassets/type/paramDefs/Vec2ParamDefinition.h>
+#include <libassets/type/paramDefs/Vec3ParamDefinition.h>
 #include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Error.h>
+#include <memory>
 #include <misc/cpp/imgui_stdlib.h>
 #include <ranges>
 #include <unordered_set>
@@ -143,6 +146,19 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
             const Error::ErrorCode e = definition.GetParam(key, paramDef);
             if (e != Error::ErrorCode::OK)
             {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                if (ImGui::Selectable(std::format("Unknown key: \"{}\"", key).c_str(),
+                                      selectedParam == i,
+                                      ImGuiSelectableFlags_SpanAllColumns))
+                {
+                    selectedParam = i;
+                }
+
+                ImGui::TableNextColumn();
+                const Param &param = actor.params.at(key);
+                ImGui::TextUnformatted(param.ToString().c_str());
+                i++;
                 continue;
             }
             ImGui::TableNextRow();
@@ -178,10 +194,10 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
         {
             std::shared_ptr<ParamDefinition> paramDef = nullptr;
             const Error::ErrorCode e = definition.GetParam(paramNamesV.at(selectedParam), paramDef);
+            Param &param = actor.params.at(paramNamesV.at(selectedParam));
+            ImGui::SetCursorPosX(cursorPos.x);
             if (e == Error::ErrorCode::OK)
             {
-                Param &param = actor.params.at(paramNamesV.at(selectedParam));
-                ImGui::SetCursorPosX(cursorPos.x);
                 ImGui::TextWrapped("%s",
                                    paramDef->description.empty() ? "No Description" : paramDef->description.c_str());
                 ImGui::SetCursorPosX(cursorPos.x);
@@ -308,6 +324,91 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                     {
                         val = std::clamp(val, uintDef->minimumValue, uintDef->maximumValue);
                         param.Set<uint64_t>(val);
+                    }
+                } else if (paramDef->type == Param::ParamType::PARAM_TYPE_VEC2)
+                {
+                    const Vec2ParamDefinition *v2def = dynamic_cast<Vec2ParamDefinition *>(paramDef.get());
+                    glm::vec2 val = param.Get<glm::vec2>(v2def->defaultValue);
+                    if (ImGui::InputFloat2("##value", glm::value_ptr(val)))
+                    {
+                        param.Set<glm::vec2>(val);
+                    }
+                } else if (paramDef->type == Param::ParamType::PARAM_TYPE_VEC3)
+                {
+                    const Vec3ParamDefinition *v3def = dynamic_cast<Vec3ParamDefinition *>(paramDef.get());
+                    glm::vec3 val = param.Get<glm::vec3>(v3def->defaultValue);
+                    if (ImGui::InputFloat3("##value", glm::value_ptr(val)))
+                    {
+                        param.Set<glm::vec3>(val);
+                    }
+                }
+            } else
+            {
+                ImGui::PushItemWidth(-1);
+                if (param.GetType() == Param::ParamType::PARAM_TYPE_BYTE)
+                {
+                    uint8_t val = param.Get<uint8_t>(0);
+                    if (ImGui::InputScalar("##value", ImGuiDataType_U8, &val))
+                    {
+                        param.Set<uint8_t>(val);
+                    }
+                } else if (param.GetType() == Param::ParamType::PARAM_TYPE_INTEGER)
+                {
+                    int32_t val = param.Get<int32_t>(0);
+                    if (ImGui::InputScalar("##value", ImGuiDataType_S32, &val))
+                    {
+                        param.Set<int32_t>(val);
+                    }
+                } else if (param.GetType() == Param::ParamType::PARAM_TYPE_FLOAT)
+                {
+                    float val = param.Get<float>(0);
+                    if (ImGui::InputFloat("##value", &val, 0.01))
+                    {
+                        param.Set<float>(val);
+                    }
+                } else if (param.GetType() == Param::ParamType::PARAM_TYPE_BOOL)
+                {
+                    bool val = param.Get<bool>(false);
+                    if (ImGui::Checkbox("##value", &val))
+                    {
+                        param.Set<bool>(val);
+                    }
+                } else if (param.GetType() == Param::ParamType::PARAM_TYPE_STRING)
+                {
+                    std::string val = param.Get<std::string>("");
+                    if (ImGui::InputText("##value", &val))
+                    {
+                        param.Set<std::string>(val);
+                    }
+                } else if (param.GetType() == Param::ParamType::PARAM_TYPE_COLOR)
+                {
+                    Color col = param.Get<Color>(Color(-1));
+                    std::array<float, 4> colorData = col.CopyData();
+                    if (ImGui::ColorEdit4("##color", colorData.data()))
+                    {
+                        col = Color(colorData[0], colorData[1], colorData[2], colorData[3]);
+                        param.Set<Color>(col);
+                    }
+                } else if (param.GetType() == Param::ParamType::PARAM_TYPE_UINT_64)
+                {
+                    uint64_t val = param.Get<uint64_t>(0);
+                    if (ImGui::InputScalar("##value", ImGuiDataType_U64, &val))
+                    {
+                        param.Set<uint64_t>(val);
+                    }
+                } else if (param.GetType() == Param::ParamType::PARAM_TYPE_VEC2)
+                {
+                    glm::vec2 val = param.Get<glm::vec2>({});
+                    if (ImGui::InputFloat2("##value", glm::value_ptr(val)))
+                    {
+                        param.Set<glm::vec2>(val);
+                    }
+                } else if (param.GetType() == Param::ParamType::PARAM_TYPE_VEC3)
+                {
+                    glm::vec3 val = param.Get<glm::vec3>({});
+                    if (ImGui::InputFloat3("##value", glm::value_ptr(val)))
+                    {
+                        param.Set<glm::vec3>(val);
                     }
                 }
             }
@@ -556,6 +657,20 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
                         if (ImGui::InputScalar("##value", ImGuiDataType_U64, &val))
                         {
                             param.Set<uint64_t>(val);
+                        }
+                    } else if (param.GetType() == Param::ParamType::PARAM_TYPE_VEC2)
+                    {
+                        glm::vec2 val = param.Get<glm::vec2>({});
+                        if (ImGui::InputFloat2("##value", glm::value_ptr(val)))
+                        {
+                            param.Set<glm::vec2>(val);
+                        }
+                    } else if (param.GetType() == Param::ParamType::PARAM_TYPE_VEC3)
+                    {
+                        glm::vec3 val = param.Get<glm::vec3>({});
+                        if (ImGui::InputFloat3("##value", glm::value_ptr(val)))
+                        {
+                            param.Set<glm::vec3>(val);
                         }
                     } else
                     {
