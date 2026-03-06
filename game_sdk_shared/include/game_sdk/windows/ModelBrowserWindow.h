@@ -30,6 +30,7 @@ class ModelBrowserWindow
         std::string *str = nullptr;
 
         std::vector<std::string> models{};
+        std::vector<std::string> modelAbsPaths{};
         ModelViewer viewer{};
 };
 

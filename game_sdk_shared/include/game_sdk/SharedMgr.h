@@ -45,16 +45,25 @@ class SharedMgr
          * @return A vector of file paths
          */
         std::vector<std::string> ScanFolder(const std::string &directoryPath,
-                                                   const std::string &extension,
-                                                   bool isRoot);
+                                            const std::string &extension,
+                                            bool isRoot);
+
+        std::vector<std::pair<std::string, std::string>> ScanAssetFolder(const std::string &assetFolder,
+                                                                         const std::string &extension);
+
+        std::string GetAssetPath(const std::string &relPath) const;
 
         void LoadActorDefinitions();
+
+        void UpdateAssetPaths();
 
         GLTextureCache textureCache{};
 
         std::map<std::string, OptionDefinition> optionDefinitions{};
 
         std::map<std::string, ActorDefinition> actorDefinitions{};
+
+        std::vector<std::string> assetPaths{};
 
     private:
         bool metricsVisible = false;

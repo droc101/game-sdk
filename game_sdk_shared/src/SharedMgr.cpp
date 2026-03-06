@@ -3,8 +3,10 @@
 //
 
 #include <algorithm>
+#include <cassert>
 #include <cstdio>
 #include <filesystem>
+#include <format>
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
@@ -15,8 +17,10 @@
 #include <game_sdk/windows/SetupWindow.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
+#include <libassets/asset/DataAsset.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/OptionDefinition.h>
+#include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/OptionParamDefinition.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/util/Error.h>
@@ -46,6 +50,7 @@ void SharedMgr::InitSharedMgr()
 {
     chdir(SDL_GetBasePath());
     Options::Get().Load();
+    UpdateAssetPaths();
     DesktopInterface::Get().InitDesktopInterface();
     if (!Options::Get().ValidateGamePath())
     {
@@ -164,15 +169,40 @@ std::vector<std::string> SharedMgr::ScanFolder(const std::string &directoryPath,
     return files;
 }
 
+std::vector<std::pair<std::string, std::string>> SharedMgr::ScanAssetFolder(const std::string &assetFolder,
+                                                                            const std::string &extension)
+{
+    std::vector<std::string> paths{};
+    std::vector<std::string> found{};
+    for (const std::string &searchPath: assetPaths)
+    {
+        const std::string absPath = std::format("{}/{}", searchPath, assetFolder);
+        const std::vector<std::string> searchPathContents = ScanFolder(absPath, extension, true);
+        for (const std::string &content: searchPathContents)
+        {
+            if (std::ranges::find(found, content) == found.end())
+            {
+                found.push_back(content);
+                paths.push_back(std::format("{}/{}", absPath, content));
+            }
+        }
+    }
+    assert(paths.size() == found.size());
+    std::vector<std::pair<std::string, std::string>> results{};
+    for (size_t i = 0; i < paths.size(); i++)
+    {
+        results.emplace_back(found.at(i), paths.at(i));
+    }
+    return results;
+}
+
 void SharedMgr::LoadOptionDefinitions()
 {
-    const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::Get().GetAssetsPath() + "/defs/options",
-                                                                ".json",
-                                                                true);
-    for (const std::string &path: defs)
+    const std::vector<std::pair<std::string, std::string>> defs = SharedMgr::ScanAssetFolder("defs/options", ".json");
+    for (const auto &val: defs | std::views::values)
     {
         OptionDefinition def{};
-        std::string fullPath = Options::Get().GetAssetsPath() + "/defs/options/" + path;
+        std::string fullPath = val;
         const Error::ErrorCode e = OptionDefinition::Create(fullPath, def);
         if (e == Error::ErrorCode::OK)
         {
@@ -185,17 +215,27 @@ void SharedMgr::LoadOptionDefinitions()
     printf("Loaded %zu option definitions\n", optionDefinitions.size());
 }
 
+std::string SharedMgr::GetAssetPath(const std::string &relPath) const
+{
+    for (const std::string &searchPath: assetPaths)
+    {
+        if (std::filesystem::exists(std::filesystem::path(searchPath + "/" + relPath)))
+        {
+            return searchPath + "/" + relPath;
+        }
+    }
+    return "";
+}
+
 void SharedMgr::LoadActorDefinitions()
 {
     LoadOptionDefinitions();
 
-    const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::Get().GetAssetsPath() + "/defs/actors",
-                                                                ".json",
-                                                                true);
-    for (const std::string &path: defs)
+    const std::vector<std::pair<std::string, std::string>> defs = SharedMgr::ScanAssetFolder("defs/actors", ".json");
+    for (const auto &val: defs | std::views::values)
     {
         ActorDefinition def{};
-        const std::string fullPath = Options::Get().GetAssetsPath() + "/defs/actors/" + path;
+        const std::string fullPath = val;
         const Error::ErrorCode e = ActorDefinition::Create(fullPath, def);
         if (e == Error::ErrorCode::OK)
         {
@@ -240,5 +280,34 @@ void SharedMgr::LoadActorDefinitions()
     if (!actorDefinitions.contains("actor"))
     {
         printf("WARNING: No \"actor\" actor class definition was loaded!\n");
+    }
+}
+
+void SharedMgr::UpdateAssetPaths()
+{
+    assetPaths.clear();
+    DataAsset gameConfig{};
+    const Error::ErrorCode e = DataAsset::CreateFromAsset(Options::Get().gameConfigPath.c_str(), gameConfig);
+    assert(e == Error::ErrorCode::OK);
+    ParamVector &searchPathData = gameConfig.data["search_paths"].GetRef<ParamVector>({});
+    for (Param &p: searchPathData)
+    {
+        if (p.GetType() == Param::ParamType::PARAM_TYPE_STRING)
+        {
+            const std::string searchPath = Options::Get().GetExecutablePath() + "/" + p.Get<std::string>("engine");
+            assetPaths.push_back(searchPath);
+        } else if (p.GetType() == Param::ParamType::PARAM_TYPE_KV_LIST)
+        {
+            KvList &searchPathKvl = p.GetRef<KvList>({});
+            const bool isAbsolute = searchPathKvl["path_is_absolute"].Get<bool>(false);
+            const std::string path = searchPathKvl["search_path"].Get<std::string>("engine");
+            if (isAbsolute)
+            {
+                assetPaths.push_back(path);
+            } else
+            {
+                assetPaths.push_back(Options::Get().GetExecutablePath() + "/" + path);
+            }
+        }
     }
 }

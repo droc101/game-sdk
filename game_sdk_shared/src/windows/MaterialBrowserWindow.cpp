@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <cstdio>
 #include <format>
-#include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <imgui.h>
@@ -14,6 +13,8 @@
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
+#include <utility>
+#include <vector>
 
 constexpr int tileSize = 128;
 static std::string filter;
@@ -32,17 +33,20 @@ void MaterialBrowserWindow::Hide()
 void MaterialBrowserWindow::Show(std::string *material)
 {
     str = material;
-    materialPaths = SharedMgr::Get().ScanFolder(Options::Get().GetAssetsPath() + "/material", ".gmtl", true);
-    for (const std::string &path: materialPaths)
+    materialPaths.clear();
+    materials.clear();
+    const std::vector<std::pair<std::string, std::string>> absMaterialPaths = SharedMgr::Get().ScanAssetFolder("/material", ".gmtl");
+    for (const std::pair<std::string, std::string> &path: absMaterialPaths)
     {
         LevelMaterialAsset mat;
         const Error::ErrorCode
-                e = LevelMaterialAsset::CreateFromAsset((Options::Get().GetAssetsPath() + "/material/" + path).c_str(), mat);
+                e = LevelMaterialAsset::CreateFromAsset(path.second.c_str(), mat);
         if (e != Error::ErrorCode::OK)
         {
-            printf("Failed to load level material asset \"%s\"\n", path.c_str());
+            printf("Failed to load level material asset \"%s\"\n", path.second.c_str());
         }
         materials.push_back(mat);
+        materialPaths.push_back(path.first);
     }
     visible = true;
 }

@@ -13,6 +13,8 @@
 #include <string>
 #include <vector>
 
+#include "game_sdk/SharedMgr.h"
+
 GLTextureCache::~GLTextureCache()
 {
     for (const ImTextureID &textureId: textureBuffers | std::views::values)
@@ -70,7 +72,7 @@ Error::ErrorCode GLTextureCache::GetTextureID(const std::string &relPath, ImText
         outTexture = textureBuffers.at(std::string(relPath));
         return Error::ErrorCode::OK;
     }
-    const std::string texturePath = Options::Get().GetAssetsPath() + "/" + relPath;
+    const std::string texturePath = SharedMgr::Get().GetAssetPath(relPath);
     if (!std::filesystem::exists(texturePath))
     {
         outTexture = missingTexture;

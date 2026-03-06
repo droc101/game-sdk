@@ -103,13 +103,12 @@ bool MapRenderer::Init()
     workBuffer = GLHelper::CreateIndexedBuffer();
     workBufferNonIndexed = GLHelper::CreateBuffer();
 
-    const std::vector<std::string> modelsPaths = SharedMgr::Get().ScanFolder(Options::Get().GetAssetsPath() + "/model",
-                                                                       ".gmdl",
-                                                                       true);
-    for (const std::string &modelPath: modelsPaths)
+    const std::vector<std::pair<std::string, std::string>> modelsPaths = SharedMgr::Get().ScanAssetFolder("/model",
+                                                                                                          ".gmdl");
+    for (const std::pair<std::string, std::string> &modelPath: modelsPaths)
     {
-        const ModelBuffer buf = LoadModel(Options::Get().GetAssetsPath() + "/model/" + modelPath);
-        modelBuffers["model/" + modelPath] = buf;
+        const ModelBuffer buf = LoadModel(modelPath.second);
+        modelBuffers["model/" + modelPath.first] = buf;
     }
 
     return true;
@@ -339,7 +338,8 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix, Viewport &vp)
         RenderUnitVector(a.position, a.rotation, c, matrix, 2, vp.GetZoom() / 20);
     }
 
-    if ((!definition.renderDefinition.model.empty() || !definition.renderDefinition.modelSourceParam.empty()) && MapEditor::drawModels)
+    if ((!definition.renderDefinition.model.empty() || !definition.renderDefinition.modelSourceParam.empty()) &&
+        MapEditor::drawModels)
     {
         std::string model = definition.renderDefinition.model;
         if (!definition.renderDefinition.modelSourceParam.empty() &&

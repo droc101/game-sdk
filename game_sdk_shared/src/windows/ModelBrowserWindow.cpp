@@ -5,7 +5,6 @@
 #include <cassert>
 #include <cfloat>
 #include <game_sdk/ModelViewer.h>
-#include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
 #include <imgui.h>
@@ -34,9 +33,17 @@ void ModelBrowserWindow::Show(std::string *model)
 {
     str = model;
     (void)viewer.Init();
-    models = SharedMgr::Get().ScanFolder(Options::Get().GetAssetsPath() + "/model", ".gmdl", true);
+    models.clear();
+    modelAbsPaths.clear();
+    const std::vector<std::pair<std::string, std::string>> absModels = SharedMgr::Get().ScanAssetFolder("/model",
+                                                                                                        ".gmdl");
+    for (const auto &mPath: absModels)
+    {
+        models.push_back(mPath.first);
+        modelAbsPaths.push_back(mPath.second);
+    }
     ModelAsset mdlAsset{};
-    (void)ModelAsset::CreateFromAsset(Options::Get().GetAssetsPath() + "/" + *model, mdlAsset);
+    (void)ModelAsset::CreateFromAsset(SharedMgr::Get().GetAssetPath(*model), mdlAsset);
     viewer.SetModel(std::move(mdlAsset));
     visible = true;
 }
@@ -75,8 +82,10 @@ void ModelBrowserWindow::Render()
             bool foundResults = false;
             if (ImGui::BeginListBox("##models", {200, -36}))
             {
-                for (const std::string &model: models)
+                for (size_t i = 0; i < models.size(); i++)
                 {
+                    const std::string &model = models.at(i);
+                    const std::string &modelAbs = modelAbsPaths.at(i);
                     if (model.find(filter) == std::string::npos)
                     {
                         continue;
@@ -87,10 +96,7 @@ void ModelBrowserWindow::Render()
                         if (*str != "model/" + model)
                         {
                             ModelAsset mdlAsset{};
-                            const Error::ErrorCode e = ModelAsset::CreateFromAsset(Options::Get().GetAssetsPath() +
-                                                                                           "/model/" +
-                                                                                           model,
-                                                                                   mdlAsset);
+                            const Error::ErrorCode e = ModelAsset::CreateFromAsset(modelAbs, mdlAsset);
                             assert(e == Error::ErrorCode::OK);
                             viewer.SetModel(std::move(mdlAsset));
                         }
