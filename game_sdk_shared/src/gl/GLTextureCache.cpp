@@ -72,7 +72,7 @@ Error::ErrorCode GLTextureCache::GetTextureID(const std::string &relPath, ImText
         outTexture = textureBuffers.at(std::string(relPath));
         return Error::ErrorCode::OK;
     }
-    const std::string texturePath = SharedMgr::Get().GetAssetPath(relPath);
+    const std::string texturePath = SharedMgr::Get().spm.GetAssetPath(relPath);
     if (!std::filesystem::exists(texturePath))
     {
         outTexture = missingTexture;

@@ -116,6 +116,8 @@ add_library(assets SHARED
         include/libassets/type/paramDefs/Uint64ParamDefinition.h
         include/libassets/type/paramDefs/Vec2ParamDefinition.h
         include/libassets/type/paramDefs/Vec3ParamDefinition.h
+        src/util/SearchPathManager.cpp
+        include/libassets/util/SearchPathManager.h
 )
 
 set_target_properties(assets PROPERTIES

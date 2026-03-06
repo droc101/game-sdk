@@ -9,6 +9,7 @@
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/SearchPathManager.h>
 #include <string>
 #include <vector>
 
@@ -18,7 +19,9 @@ class MapCompiler
         /**
          * Create a map compiler with a given assets directory
          */
-        explicit MapCompiler(const std::string &assetsDirectory);
+        explicit MapCompiler(const std::string &assetsDirectory,
+                             const std::string &executableDirectory,
+                             DataAsset &gameConfig);
 
         /**
          * Load a map source file
@@ -36,6 +39,7 @@ class MapCompiler
         std::string assetsDirectory;
         std::string mapBasename;
         MapAsset map;
+        SearchPathManager spm;
 
         Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer) const;
 

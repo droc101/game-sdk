@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+#include "libassets/util/SearchPathManager.h"
+
 class SharedMgr
 {
     public:
@@ -37,22 +39,6 @@ class SharedMgr
          */
         void DestroySharedMgr();
 
-        /**
-         * Recursively scan a directory for files of a certain type
-         * @param directoryPath The path to the directory
-         * @param extension The extension to scan for
-         * @param isRoot Set this to true
-         * @return A vector of file paths
-         */
-        std::vector<std::string> ScanFolder(const std::string &directoryPath,
-                                            const std::string &extension,
-                                            bool isRoot);
-
-        std::vector<std::pair<std::string, std::string>> ScanAssetFolder(const std::string &assetFolder,
-                                                                         const std::string &extension);
-
-        std::string GetAssetPath(const std::string &relPath) const;
-
         void LoadActorDefinitions();
 
         void UpdateAssetPaths();
@@ -63,7 +49,7 @@ class SharedMgr
 
         std::map<std::string, ActorDefinition> actorDefinitions{};
 
-        std::vector<std::string> assetPaths{};
+        SearchPathManager spm{};
 
     private:
         bool metricsVisible = false;

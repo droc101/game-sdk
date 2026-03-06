@@ -33,9 +33,10 @@ void MapCompileWindow::StartCompile()
 #endif
 
             const std::string srcArgument = "--map-source=" + MapEditor::mapFile;
-            const std::string dirArgument = "--assets-dir=" + Options::Get().GetAssetsPath();
+            const std::string assetsDirArgument = "--assets-dir=" + Options::Get().GetAssetsPath();
+            const std::string execDirArgument = "--executable-dir=" + Options::Get().GetExecutablePath();
 
-            compilerProcess = DesktopInterface::Get().StartSDLProcess(compilerPath, {srcArgument, dirArgument});
+            compilerProcess = DesktopInterface::Get().StartSDLProcess(compilerPath, {srcArgument, assetsDirArgument, execDirArgument});
 
             if (compilerProcess == nullptr)
             {

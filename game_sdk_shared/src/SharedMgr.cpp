@@ -2,7 +2,6 @@
 // Created by droc101 on 7/1/25.
 //
 
-#include <algorithm>
 #include <cassert>
 #include <cstdio>
 #include <filesystem>
@@ -20,7 +19,6 @@
 #include <libassets/asset/DataAsset.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/OptionDefinition.h>
-#include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/OptionParamDefinition.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/util/Error.h>
@@ -131,118 +129,39 @@ void SharedMgr::RenderSharedUI()
     }
 }
 
-std::vector<std::string> SharedMgr::ScanFolder(const std::string &directoryPath,
-                                               const std::string &extension,
-                                               const bool isRoot)
-{
-    std::vector<std::string> files;
-    try
-    {
-        for (const std::filesystem::directory_entry &entry: std::filesystem::directory_iterator(directoryPath))
-        {
-            if (entry.is_regular_file())
-            {
-                if (entry.path().extension() == extension)
-                {
-                    files.push_back(entry.path().string());
-                }
-            } else if (entry.is_directory())
-            {
-                const std::vector<std::string> subfolderFiles = ScanFolder(entry.path().string(), extension, false);
-                files.insert(files.end(), subfolderFiles.begin(), subfolderFiles.end());
-            }
-        }
-    } catch (const std::filesystem::filesystem_error &exception)
-    {
-        printf("std::filesystem_error: %s\n", exception.what());
-    }
-    if (isRoot)
-    {
-        for (std::string &file: files)
-        {
-            file = file.substr(directoryPath.length() + 1);
-        }
-        std::ranges::sort(files, [](const std::string &a, const std::string &b) {
-            return std::filesystem::path(a).filename().string() < std::filesystem::path(b).filename().string();
-        });
-    }
-    return files;
-}
-
-std::vector<std::pair<std::string, std::string>> SharedMgr::ScanAssetFolder(const std::string &assetFolder,
-                                                                            const std::string &extension)
-{
-    std::vector<std::string> paths{};
-    std::vector<std::string> found{};
-    for (const std::string &searchPath: assetPaths)
-    {
-        const std::string absPath = std::format("{}/{}", searchPath, assetFolder);
-        const std::vector<std::string> searchPathContents = ScanFolder(absPath, extension, true);
-        for (const std::string &content: searchPathContents)
-        {
-            if (std::ranges::find(found, content) == found.end())
-            {
-                found.push_back(content);
-                paths.push_back(std::format("{}/{}", absPath, content));
-            }
-        }
-    }
-    assert(paths.size() == found.size());
-    std::vector<std::pair<std::string, std::string>> results{};
-    for (size_t i = 0; i < paths.size(); i++)
-    {
-        results.emplace_back(found.at(i), paths.at(i));
-    }
-    return results;
-}
-
 void SharedMgr::LoadOptionDefinitions()
 {
-    const std::vector<std::pair<std::string, std::string>> defs = SharedMgr::ScanAssetFolder("defs/options", ".json");
-    for (const auto &val: defs | std::views::values)
+    const std::vector<std::string> defs = spm.ScanAssetFolderA("defs/options", ".json");
+    for (const std::string &val: defs)
     {
         OptionDefinition def{};
-        std::string fullPath = val;
-        const Error::ErrorCode e = OptionDefinition::Create(fullPath, def);
+        const Error::ErrorCode e = OptionDefinition::Create(val, def);
         if (e == Error::ErrorCode::OK)
         {
             optionDefinitions[def.GetName()] = def;
         } else
         {
-            printf("Failed to load option def %s: %s\n", fullPath.c_str(), Error::ErrorString(e).c_str());
+            printf("Failed to load option def %s: %s\n", val.c_str(), Error::ErrorString(e).c_str());
         }
     }
     printf("Loaded %zu option definitions\n", optionDefinitions.size());
-}
-
-std::string SharedMgr::GetAssetPath(const std::string &relPath) const
-{
-    for (const std::string &searchPath: assetPaths)
-    {
-        if (std::filesystem::exists(std::filesystem::path(searchPath + "/" + relPath)))
-        {
-            return searchPath + "/" + relPath;
-        }
-    }
-    return "";
 }
 
 void SharedMgr::LoadActorDefinitions()
 {
     LoadOptionDefinitions();
 
-    const std::vector<std::pair<std::string, std::string>> defs = SharedMgr::ScanAssetFolder("defs/actors", ".json");
-    for (const auto &val: defs | std::views::values)
+    const std::vector<std::string> defs = spm.ScanAssetFolderA("defs/actors", ".json");
+    for (const std::string &val: defs)
     {
         ActorDefinition def{};
-        const std::string fullPath = val;
-        const Error::ErrorCode e = ActorDefinition::Create(fullPath, def);
+        const Error::ErrorCode e = ActorDefinition::Create(val, def);
         if (e == Error::ErrorCode::OK)
         {
             actorDefinitions[def.className] = def;
         } else
         {
-            printf("Failed to load actor def %s: %s\n", fullPath.c_str(), Error::ErrorString(e).c_str());
+            printf("Failed to load actor def %s: %s\n", val.c_str(), Error::ErrorString(e).c_str());
         }
     }
 
@@ -285,29 +204,11 @@ void SharedMgr::LoadActorDefinitions()
 
 void SharedMgr::UpdateAssetPaths()
 {
-    assetPaths.clear();
     DataAsset gameConfig{};
     const Error::ErrorCode e = DataAsset::CreateFromAsset(Options::Get().gameConfigPath.c_str(), gameConfig);
-    assert(e == Error::ErrorCode::OK);
-    ParamVector &searchPathData = gameConfig.data["search_paths"].GetRef<ParamVector>({});
-    for (Param &p: searchPathData)
+    if (e != Error::ErrorCode::OK)
     {
-        if (p.GetType() == Param::ParamType::PARAM_TYPE_STRING)
-        {
-            const std::string searchPath = Options::Get().GetExecutablePath() + "/" + p.Get<std::string>("engine");
-            assetPaths.push_back(searchPath);
-        } else if (p.GetType() == Param::ParamType::PARAM_TYPE_KV_LIST)
-        {
-            KvList &searchPathKvl = p.GetRef<KvList>({});
-            const bool isAbsolute = searchPathKvl["path_is_absolute"].Get<bool>(false);
-            const std::string path = searchPathKvl["search_path"].Get<std::string>("engine");
-            if (isAbsolute)
-            {
-                assetPaths.push_back(path);
-            } else
-            {
-                assetPaths.push_back(Options::Get().GetExecutablePath() + "/" + path);
-            }
-        }
+        return;
     }
+    spm = SearchPathManager(gameConfig, Options::Get().GetExecutablePath());
 }

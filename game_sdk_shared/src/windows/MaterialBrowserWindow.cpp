@@ -35,18 +35,18 @@ void MaterialBrowserWindow::Show(std::string *material)
     str = material;
     materialPaths.clear();
     materials.clear();
-    const std::vector<std::pair<std::string, std::string>> absMaterialPaths = SharedMgr::Get().ScanAssetFolder("/material", ".gmtl");
-    for (const std::pair<std::string, std::string> &path: absMaterialPaths)
+    const std::vector<SearchPathManager::AssetResult> absMaterialPaths = SharedMgr::Get().spm.ScanAssetFolder("/material", ".gmtl");
+    for (const SearchPathManager::AssetResult &path: absMaterialPaths)
     {
         LevelMaterialAsset mat;
         const Error::ErrorCode
-                e = LevelMaterialAsset::CreateFromAsset(path.second.c_str(), mat);
+                e = LevelMaterialAsset::CreateFromAsset(path.absolutePath.c_str(), mat);
         if (e != Error::ErrorCode::OK)
         {
-            printf("Failed to load level material asset \"%s\"\n", path.second.c_str());
+            printf("Failed to load level material asset \"%s\"\n", path.absolutePath.c_str());
         }
         materials.push_back(mat);
-        materialPaths.push_back(path.first);
+        materialPaths.push_back(path.relativePath);
     }
     visible = true;
 }

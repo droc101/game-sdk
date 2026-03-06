@@ -192,7 +192,7 @@ int main()
     sdkPath = SDL_GetBasePath();
     sdkPath.pop_back();
 
-    const std::vector<std::string> icons = SharedMgr::Get().ScanFolder("assets/icons", ".png", true);
+    const std::vector<std::string> icons = SearchPathManager::ScanFolder("assets/icons", ".png", true);
     for (const std::string &icon: icons)
     {
         const size_t dotIndex = icon.find_last_of('.');

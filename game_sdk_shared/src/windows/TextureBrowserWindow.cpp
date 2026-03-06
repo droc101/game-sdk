@@ -32,12 +32,7 @@ void TextureBrowserWindow::Show(std::string *texture)
 {
     str = texture;
     textures.clear();
-    const std::vector<std::pair<std::string, std::string>> textureAbsPaths = SharedMgr::Get().ScanAssetFolder("/texture",
-                                                                                                        ".gtex");
-    for (const std::string &key: textureAbsPaths | std::views::keys)
-    {
-        textures.push_back(key);
-    }
+    textures = SharedMgr::Get().spm.ScanAssetFolderR("/texture", ".gtex");
     visible = true;
 }
 
