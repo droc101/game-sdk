@@ -14,7 +14,7 @@
 #include <utility>
 #include <vector>
 
-Error::ErrorCode OptionDefinition::Create(std::string &path, OptionDefinition &def)
+Error::ErrorCode OptionDefinition::Create(const std::string &path, OptionDefinition &def)
 {
     std::ifstream file(path);
     if (!file.is_open())

@@ -2,9 +2,10 @@
 // Created by droc101 on 7/1/25.
 //
 
-#include <algorithm>
+#include <cassert>
 #include <cstdio>
 #include <filesystem>
+#include <format>
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
@@ -15,6 +16,7 @@
 #include <game_sdk/windows/SetupWindow.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
+#include <libassets/asset/DataAsset.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/OptionDefinition.h>
 #include <libassets/type/paramDefs/OptionParamDefinition.h>
@@ -46,6 +48,7 @@ void SharedMgr::InitSharedMgr()
 {
     chdir(SDL_GetBasePath());
     Options::Get().Load();
+    UpdateAssetPaths();
     DesktopInterface::Get().InitDesktopInterface();
     if (!Options::Get().ValidateGamePath())
     {
@@ -126,60 +129,19 @@ void SharedMgr::RenderSharedUI()
     }
 }
 
-std::vector<std::string> SharedMgr::ScanFolder(const std::string &directoryPath,
-                                               const std::string &extension,
-                                               const bool isRoot)
-{
-    std::vector<std::string> files;
-    try
-    {
-        for (const std::filesystem::directory_entry &entry: std::filesystem::directory_iterator(directoryPath))
-        {
-            if (entry.is_regular_file())
-            {
-                if (entry.path().extension() == extension)
-                {
-                    files.push_back(entry.path().string());
-                }
-            } else if (entry.is_directory())
-            {
-                const std::vector<std::string> subfolderFiles = ScanFolder(entry.path().string(), extension, false);
-                files.insert(files.end(), subfolderFiles.begin(), subfolderFiles.end());
-            }
-        }
-    } catch (const std::filesystem::filesystem_error &exception)
-    {
-        printf("std::filesystem_error: %s\n", exception.what());
-    }
-    if (isRoot)
-    {
-        for (std::string &file: files)
-        {
-            file = file.substr(directoryPath.length() + 1);
-        }
-        std::ranges::sort(files, [](const std::string &a, const std::string &b) {
-            return std::filesystem::path(a).filename().string() < std::filesystem::path(b).filename().string();
-        });
-    }
-    return files;
-}
-
 void SharedMgr::LoadOptionDefinitions()
 {
-    const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::Get().GetAssetsPath() + "/defs/options",
-                                                                ".json",
-                                                                true);
-    for (const std::string &path: defs)
+    const std::vector<std::string> defs = pathManager.ScanAssetFolderA("defs/options", ".json");
+    for (const std::string &val: defs)
     {
         OptionDefinition def{};
-        std::string fullPath = Options::Get().GetAssetsPath() + "/defs/options/" + path;
-        const Error::ErrorCode e = OptionDefinition::Create(fullPath, def);
+        const Error::ErrorCode e = OptionDefinition::Create(val, def);
         if (e == Error::ErrorCode::OK)
         {
             optionDefinitions[def.GetName()] = def;
         } else
         {
-            printf("Failed to load option def %s: %s\n", fullPath.c_str(), Error::ErrorString(e).c_str());
+            printf("Failed to load option def %s: %s\n", val.c_str(), Error::ErrorString(e).c_str());
         }
     }
     printf("Loaded %zu option definitions\n", optionDefinitions.size());
@@ -189,20 +151,17 @@ void SharedMgr::LoadActorDefinitions()
 {
     LoadOptionDefinitions();
 
-    const std::vector<std::string> defs = SharedMgr::ScanFolder(Options::Get().GetAssetsPath() + "/defs/actors",
-                                                                ".json",
-                                                                true);
-    for (const std::string &path: defs)
+    const std::vector<std::string> defs = pathManager.ScanAssetFolderA("defs/actors", ".json");
+    for (const std::string &val: defs)
     {
         ActorDefinition def{};
-        const std::string fullPath = Options::Get().GetAssetsPath() + "/defs/actors/" + path;
-        const Error::ErrorCode e = ActorDefinition::Create(fullPath, def);
+        const Error::ErrorCode e = ActorDefinition::Create(val, def);
         if (e == Error::ErrorCode::OK)
         {
             actorDefinitions[def.className] = def;
         } else
         {
-            printf("Failed to load actor def %s: %s\n", fullPath.c_str(), Error::ErrorString(e).c_str());
+            printf("Failed to load actor def %s: %s\n", val.c_str(), Error::ErrorString(e).c_str());
         }
     }
 
@@ -241,4 +200,15 @@ void SharedMgr::LoadActorDefinitions()
     {
         printf("WARNING: No \"actor\" actor class definition was loaded!\n");
     }
+}
+
+void SharedMgr::UpdateAssetPaths()
+{
+    DataAsset gameConfig{};
+    const Error::ErrorCode e = DataAsset::CreateFromAsset(Options::Get().gameConfigPath.c_str(), gameConfig);
+    if (e != Error::ErrorCode::OK)
+    {
+        return;
+    }
+    pathManager = SearchPathManager(gameConfig, Options::Get().GetExecutablePath());
 }

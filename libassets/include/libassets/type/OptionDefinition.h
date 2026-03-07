@@ -16,7 +16,7 @@ class OptionDefinition
     public:
         OptionDefinition() = default;
 
-        static Error::ErrorCode Create(std::string &path, OptionDefinition &def);
+        static Error::ErrorCode Create(const std::string &path, OptionDefinition &def);
 
         Param::ParamType GetKeyType() const;
 

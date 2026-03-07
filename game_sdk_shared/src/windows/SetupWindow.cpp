@@ -8,6 +8,7 @@
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/SetupWindow.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
@@ -110,6 +111,7 @@ void SetupWindow::Render()
     if (ImGui::Button("OK", ImVec2(60, 0)))
     {
         Options::Get().Save();
+        SharedMgr::Get().UpdateAssetPaths();
         visible = false;
     }
     ImGui::EndDisabled();
@@ -119,6 +121,7 @@ void SetupWindow::Render()
         if (ImGui::Button("Quit", ImVec2(60, 0)))
         {
             Options::Get().Load();
+            SharedMgr::Get().UpdateAssetPaths();
             exit(1);
         }
     } else
@@ -126,6 +129,7 @@ void SetupWindow::Render()
         if (ImGui::Button("Cancel", ImVec2(60, 0)))
         {
             Options::Get().Load();
+            SharedMgr::Get().UpdateAssetPaths();
             visible = false;
         }
     }

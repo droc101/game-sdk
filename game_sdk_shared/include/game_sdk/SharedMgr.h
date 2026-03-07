@@ -7,6 +7,7 @@
 #include <game_sdk/gl/GLTextureCache.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/OptionDefinition.h>
+#include <libassets/util/SearchPathManager.h>
 #include <map>
 #include <string>
 #include <vector>
@@ -37,24 +38,17 @@ class SharedMgr
          */
         void DestroySharedMgr();
 
-        /**
-         * Recursively scan a directory for files of a certain type
-         * @param directoryPath The path to the directory
-         * @param extension The extension to scan for
-         * @param isRoot Set this to true
-         * @return A vector of file paths
-         */
-        std::vector<std::string> ScanFolder(const std::string &directoryPath,
-                                                   const std::string &extension,
-                                                   bool isRoot);
-
         void LoadActorDefinitions();
+
+        void UpdateAssetPaths();
 
         GLTextureCache textureCache{};
 
         std::map<std::string, OptionDefinition> optionDefinitions{};
 
         std::map<std::string, ActorDefinition> actorDefinitions{};
+
+        SearchPathManager pathManager{};
 
     private:
         bool metricsVisible = false;

@@ -26,7 +26,7 @@ void AboutWindow::Show()
 {
     if (thirdPartyComponents.empty())
     {
-        const std::vector<std::string> paths = SharedMgr::Get().ScanFolder("assets/licenses", "", true);
+        const std::vector<std::string> paths = SearchPathManager::ScanFolder("assets/licenses", "", true);
         for (const std::string &path: paths)
         {
             const std::ifstream file = std::ifstream("assets/licenses/" + path);

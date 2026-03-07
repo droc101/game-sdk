@@ -27,9 +27,12 @@
 #include "LevelMeshBuilder.h"
 #include "SectorCollisionBuilder.h"
 
-MapCompiler::MapCompiler(const std::string &assetsDirectory)
+MapCompiler::MapCompiler(const std::string &assetsDirectory,
+                         const std::string &executableDirectory,
+                         DataAsset &gameConfig)
 {
     this->assetsDirectory = assetsDirectory;
+    this->pathManager = SearchPathManager(gameConfig, executableDirectory);
 }
 
 Error::ErrorCode MapCompiler::LoadMapSource(const std::string &mapSourceFile)
@@ -59,7 +62,8 @@ Error::ErrorCode MapCompiler::Compile() const
 LevelMaterialAsset MapCompiler::GetMapMaterial(const std::string &path) const
 {
     LevelMaterialAsset mapMaterial;
-    const Error::ErrorCode e = LevelMaterialAsset::CreateFromAsset((assetsDirectory + "/" + path).c_str(), mapMaterial);
+    const std::string absPath = pathManager.GetAssetPath(path);
+    const Error::ErrorCode e = LevelMaterialAsset::CreateFromAsset(absPath.c_str(), mapMaterial);
     if (e != Error::ErrorCode::OK)
     {
         printf("[WARNING] Failed to load material \"%s\": %s\n", path.c_str(), Error::ErrorString(e).c_str());

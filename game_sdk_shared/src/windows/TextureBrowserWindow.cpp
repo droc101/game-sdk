@@ -5,13 +5,14 @@
 #include <cfloat>
 #include <cstddef>
 #include <format>
-#include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
+#include <utility>
+#include <vector>
 
 constexpr int tileSize = 128;
 static std::string filter;
@@ -30,7 +31,8 @@ void TextureBrowserWindow::Hide()
 void TextureBrowserWindow::Show(std::string *texture)
 {
     str = texture;
-    textures = SharedMgr::Get().ScanFolder(Options::Get().GetAssetsPath() + "/texture", ".gtex", true);
+    textures.clear();
+    textures = SharedMgr::Get().pathManager.ScanAssetFolderR("/texture", ".gtex");
     visible = true;
 }
 
@@ -69,7 +71,8 @@ void TextureBrowserWindow::Render()
                         continue;
                     }
                     ImTextureID tex = 0;
-                    if (SharedMgr::Get().textureCache.GetTextureID("texture/" + textures.at(i), tex) != Error::ErrorCode::OK)
+                    if (SharedMgr::Get().textureCache.GetTextureID("texture/" + textures.at(i), tex) !=
+                        Error::ErrorCode::OK)
                     {
                         continue;
                     }

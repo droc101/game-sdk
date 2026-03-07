@@ -127,7 +127,6 @@ void BatchDecompileWindow::Render()
                         if (ImGui::Button(std::format("Del##{}", i).c_str(), ImVec2(40, 0)))
                         {
                             files.erase(files.begin() + static_cast<ptrdiff_t>(i));
-                            files.erase(files.begin() + static_cast<ptrdiff_t>(i));
                         }
                     }
                     ImGui::EndTable();

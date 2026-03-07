@@ -3,6 +3,7 @@
 //
 
 #include <cstdio>
+#include <libassets/asset/DataAsset.h>
 #include <libassets/util/Error.h>
 #include "ArgumentParser.h"
 #include "MapCompiler.h"
@@ -24,7 +25,24 @@ int main(const int argc, const char **argv)
         return 1;
     }
 
-    MapCompiler compiler = MapCompiler(args.GetFlagValue("--assets-dir"));
+    if (!args.HasFlagWithValue("--executable-dir"))
+    {
+        printf("[ERROR] --executable-dir not specified!\n");
+        return 1;
+    }
+
+    const std::string gameConfigPath = args.GetFlagValue("--assets-dir") + "/game.gkvl";
+    DataAsset gameConfig{};
+    const Error::ErrorCode e = DataAsset::CreateFromAsset(gameConfigPath.c_str(), gameConfig);
+    if (e != Error::ErrorCode::OK)
+    {
+        printf("[ERROR] Failed to open %s: %s", gameConfigPath.c_str(), Error::ErrorString(e).c_str());
+        return 1;
+    }
+
+    MapCompiler compiler = MapCompiler(args.GetFlagValue("--assets-dir"),
+                                       args.GetFlagValue("--executable-dir"),
+                                       gameConfig);
 
     const Error::ErrorCode mapLoadResult = compiler.LoadMapSource(args.GetFlagValue("--map-source"));
     if (mapLoadResult != Error::ErrorCode::OK)

@@ -6,6 +6,7 @@
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/OptionsWindow.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
@@ -95,12 +96,14 @@ void OptionsWindow::Render()
         if (ImGui::Button("OK", ImVec2(60, 0)))
         {
             Options::Get().Save();
+            SharedMgr::Get().UpdateAssetPaths();
             visible = false;
         }
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(60, 0)))
         {
             Options::Get().Load();
+            SharedMgr::Get().UpdateAssetPaths();
             visible = false;
         }
 
