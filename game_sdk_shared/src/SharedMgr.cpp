@@ -131,7 +131,7 @@ void SharedMgr::RenderSharedUI()
 
 void SharedMgr::LoadOptionDefinitions()
 {
-    const std::vector<std::string> defs = spm.ScanAssetFolderA("defs/options", ".json");
+    const std::vector<std::string> defs = pathManager.ScanAssetFolderA("defs/options", ".json");
     for (const std::string &val: defs)
     {
         OptionDefinition def{};
@@ -151,7 +151,7 @@ void SharedMgr::LoadActorDefinitions()
 {
     LoadOptionDefinitions();
 
-    const std::vector<std::string> defs = spm.ScanAssetFolderA("defs/actors", ".json");
+    const std::vector<std::string> defs = pathManager.ScanAssetFolderA("defs/actors", ".json");
     for (const std::string &val: defs)
     {
         ActorDefinition def{};
@@ -210,5 +210,5 @@ void SharedMgr::UpdateAssetPaths()
     {
         return;
     }
-    spm = SearchPathManager(gameConfig, Options::Get().GetExecutablePath());
+    pathManager = SearchPathManager(gameConfig, Options::Get().GetExecutablePath());
 }

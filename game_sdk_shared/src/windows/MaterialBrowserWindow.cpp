@@ -35,7 +35,7 @@ void MaterialBrowserWindow::Show(std::string *material)
     str = material;
     materialPaths.clear();
     materials.clear();
-    const std::vector<SearchPathManager::AssetResult> absMaterialPaths = SharedMgr::Get().spm.ScanAssetFolder("/material", ".gmtl");
+    const std::vector<SearchPathManager::AssetResult> absMaterialPaths = SharedMgr::Get().pathManager.ScanAssetFolder("/material", ".gmtl");
     for (const SearchPathManager::AssetResult &path: absMaterialPaths)
     {
         LevelMaterialAsset mat;

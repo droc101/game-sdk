@@ -121,7 +121,7 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
     LevelMaterialAsset mat;
-    LevelMaterialAsset::CreateFromAsset(SharedMgr::Get().spm.GetAssetPath(wallMat.material).c_str(),
+    LevelMaterialAsset::CreateFromAsset(SharedMgr::Get().pathManager.GetAssetPath(wallMat.material).c_str(),
                                         mat); // TODO improve
     const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();

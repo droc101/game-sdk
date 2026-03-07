@@ -39,7 +39,7 @@ class MapCompiler
         std::string assetsDirectory;
         std::string mapBasename;
         MapAsset map;
-        SearchPathManager spm;
+        SearchPathManager pathManager;
 
         Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer) const;
 

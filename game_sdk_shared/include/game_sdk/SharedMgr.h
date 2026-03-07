@@ -7,11 +7,10 @@
 #include <game_sdk/gl/GLTextureCache.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/OptionDefinition.h>
+#include <libassets/util/SearchPathManager.h>
 #include <map>
 #include <string>
 #include <vector>
-
-#include "libassets/util/SearchPathManager.h"
 
 class SharedMgr
 {
@@ -49,7 +48,7 @@ class SharedMgr
 
         std::map<std::string, ActorDefinition> actorDefinitions{};
 
-        SearchPathManager spm{};
+        SearchPathManager pathManager{};
 
     private:
         bool metricsVisible = false;

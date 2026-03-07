@@ -4,10 +4,9 @@
 
 #pragma once
 
+#include <libassets/asset/DataAsset.h>
 #include <string>
 #include <vector>
-
-#include "libassets/asset/DataAsset.h"
 
 class SearchPathManager
 {

@@ -6,14 +6,13 @@
 #include <filesystem>
 #include <game_sdk/gl/GLTextureCache.h>
 #include <game_sdk/Options.h>
+#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/util/Error.h>
 #include <ranges>
 #include <string>
 #include <vector>
-
-#include "game_sdk/SharedMgr.h"
 
 GLTextureCache::~GLTextureCache()
 {
@@ -72,7 +71,7 @@ Error::ErrorCode GLTextureCache::GetTextureID(const std::string &relPath, ImText
         outTexture = textureBuffers.at(std::string(relPath));
         return Error::ErrorCode::OK;
     }
-    const std::string texturePath = SharedMgr::Get().spm.GetAssetPath(relPath);
+    const std::string texturePath = SharedMgr::Get().pathManager.GetAssetPath(relPath);
     if (!std::filesystem::exists(texturePath))
     {
         outTexture = missingTexture;

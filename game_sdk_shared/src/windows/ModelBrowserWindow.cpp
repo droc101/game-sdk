@@ -35,7 +35,7 @@ void ModelBrowserWindow::Show(std::string *model)
     (void)viewer.Init();
     models.clear();
     modelAbsPaths.clear();
-    const std::vector<SearchPathManager::AssetResult> absModels = SharedMgr::Get().spm.ScanAssetFolder("/model",
+    const std::vector<SearchPathManager::AssetResult> absModels = SharedMgr::Get().pathManager.ScanAssetFolder("/model",
                                                                                                         ".gmdl");
     for (const SearchPathManager::AssetResult &mPath: absModels)
     {
@@ -43,7 +43,7 @@ void ModelBrowserWindow::Show(std::string *model)
         modelAbsPaths.push_back(mPath.absolutePath);
     }
     ModelAsset mdlAsset{};
-    (void)ModelAsset::CreateFromAsset(SharedMgr::Get().spm.GetAssetPath(*model), mdlAsset);
+    (void)ModelAsset::CreateFromAsset(SharedMgr::Get().pathManager.GetAssetPath(*model), mdlAsset);
     viewer.SetModel(std::move(mdlAsset));
     visible = true;
 }

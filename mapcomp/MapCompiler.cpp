@@ -32,7 +32,7 @@ MapCompiler::MapCompiler(const std::string &assetsDirectory,
                          DataAsset &gameConfig)
 {
     this->assetsDirectory = assetsDirectory;
-    this->spm = SearchPathManager(gameConfig, executableDirectory);
+    this->pathManager = SearchPathManager(gameConfig, executableDirectory);
 }
 
 Error::ErrorCode MapCompiler::LoadMapSource(const std::string &mapSourceFile)
@@ -62,7 +62,7 @@ Error::ErrorCode MapCompiler::Compile() const
 LevelMaterialAsset MapCompiler::GetMapMaterial(const std::string &path) const
 {
     LevelMaterialAsset mapMaterial;
-    const std::string absPath = spm.GetAssetPath(path);
+    const std::string absPath = pathManager.GetAssetPath(path);
     const Error::ErrorCode e = LevelMaterialAsset::CreateFromAsset(absPath.c_str(), mapMaterial);
     if (e != Error::ErrorCode::OK)
     {
