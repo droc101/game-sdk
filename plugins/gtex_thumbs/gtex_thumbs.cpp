@@ -31,13 +31,9 @@ KIO::ThumbnailResult gtex_thumbs::create(const KIO::ThumbnailRequest &request)
     }
     std::vector<uint32_t> pixels;
     t.GetPixelsRGBA(pixels);
-    for (uint32_t &pixel: pixels)
-    {
-        pixel = __builtin_bswap32(pixel);
-    }
     const QImage texture = QImage(reinterpret_cast<const uint8_t *>(pixels.data()),
-                                  t.GetWidth(),
-                                  t.GetHeight(),
+                                  static_cast<int>(t.GetWidth()),
+                                  static_cast<int>(t.GetHeight()),
                                   QImage::Format_RGBA8888)
                                    .convertToFormat(QImage::Format_ARGB32_Premultiplied);
     if (texture.isNull())

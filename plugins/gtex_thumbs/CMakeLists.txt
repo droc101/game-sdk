@@ -28,9 +28,10 @@ target_sources(gtex_thumbs PRIVATE
 
 add_dependencies(gtex_thumbs assets)
 
-set_target_properties(gtex_thumbs PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(gtex_thumbs PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'"  )
 
 target_link_libraries(gtex_thumbs PRIVATE Qt6::Core Qt6::Gui KF6::KIOCore KF6::KIOGui assets)
 
 install(FILES dev.droc101.gtex_thumbs.metainfo.xml DESTINATION ${KDE_INSTALL_METAINFODIR})
 install(FILES game-mime-types.xml DESTINATION ${KDE_INSTALL_MIMEDIR})
+install(FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libassets.so DESTINATION ${KDE_INSTALL_PLUGINDIR}/kf6/thumbcreator)

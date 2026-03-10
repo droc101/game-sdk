@@ -83,11 +83,6 @@ class DialogFilters
             SDL_DialogFileFilter{"TGA Images", "tga"},
         };
 
-        // cfgedit
-        static inline const std::vector<SDL_DialogFileFilter> gameFilters = {
-            SDL_DialogFileFilter{"GAME configuration (*.game)", "game"},
-        };
-
         // kvledit
         static inline const std::vector<SDL_DialogFileFilter> gkvlFilters = {
             SDL_DialogFileFilter{"KvList Asset (*.gkvl)", "gkvl"},

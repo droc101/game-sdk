@@ -6,6 +6,18 @@
         <glob pattern="*.gtex"/>
         <glob pattern="*.GTEX"/>
     </mime-type>
+    <mime-type type="application/x-gmtl">
+        <comment>GAME Material File</comment>
+        <glob-deleteall/>
+        <glob pattern="*.gmtl"/>
+        <glob pattern="*.GMTL"/>
+    </mime-type>
+    <mime-type type="application/x-gkvl">
+        <comment>GAME Key-Value List</comment>
+        <glob-deleteall/>
+        <glob pattern="*.gkvl"/>
+        <glob pattern="*.GKVL"/>
+    </mime-type>
     <mime-type type="application/x-gshd">
         <comment>GAME Shader File</comment>
         <glob-deleteall/>
