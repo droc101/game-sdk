@@ -55,4 +55,7 @@ class Options
         Theme theme = Theme::SYSTEM;
     private:
         Options() = default;
+
+        static inline const char* DEFAULT_TEXTURE = "texture/level/uvtest.gtex";
+        static inline const char* DEFAULT_MATERIAL = "material/dev/uv_test.gmtl";
 };

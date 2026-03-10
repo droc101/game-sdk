@@ -25,6 +25,7 @@ void Options::Load()
     if (!file.is_open())
     {
         printf("Could not open file %s\n", path.data());
+        LoadDefault();
         return;
     }
     std::ostringstream ss;
@@ -46,8 +47,8 @@ void Options::Load()
     {
         gameExecutablePath = savedata.value("game_executable_path", "");
         gameConfigPath = savedata.value("game_config_path", "");
-        defaultTexture = savedata.value("default_texture", "texture/level/uvtest.gtex");
-        defaultMaterial = savedata.value("default_material", "material/dev/uv_test.gmtl");
+        defaultTexture = savedata.value("default_texture", DEFAULT_TEXTURE);
+        defaultMaterial = savedata.value("default_material", DEFAULT_MATERIAL);
         theme = savedata.value("theme", Theme::SYSTEM);
     }
     file.close();
@@ -56,8 +57,8 @@ void Options::Load()
 void Options::LoadDefault()
 {
     gameExecutablePath = "";
-    defaultTexture = "texture/level/uvtest.gtex";
-    defaultMaterial = "material/dev/uv_test.gmtl";
+    defaultTexture = DEFAULT_TEXTURE;
+    defaultMaterial = DEFAULT_MATERIAL;
     gameConfigPath = "";
     theme = Theme::SYSTEM;
 }
