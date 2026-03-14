@@ -38,7 +38,6 @@
 #include <misc/cpp/imgui_stdlib.h>
 #include <ranges>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 #include "MapEditor.h"
 
@@ -60,7 +59,7 @@ void EditActorWindow::Render(Actor &actor)
 
     ImGui::Begin("Actor Properties", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
 
-    if (SharedMgr::Get().actorDefinitions.empty() || !SharedMgr::Get().actorDefinitions.contains("actor"))
+    if (MapEditor::adm.GetActorClassCount() == 0 || !MapEditor::adm.HasActorClass("actor"))
     {
         ImGui::TextDisabled("No actor definitions are loaded. Is the game path set correctly?");
         ImGui::End();
@@ -70,27 +69,28 @@ void EditActorWindow::Render(Actor &actor)
     ImGui::Text("Class");
     if (ImGui::BeginCombo("##a", actor.className.c_str()))
     {
-        for (const std::pair<const std::string, ActorDefinition> &def: SharedMgr::Get().actorDefinitions)
+        for (const std::string &key: MapEditor::adm.GetActorClasses())
         {
-            if (def.second.isVirtual)
+            const ActorDefinition &def = MapEditor::adm.GetActorDefinition(key);
+            if (def.isVirtual)
             {
                 continue;
             }
-            if (actor.className == def.first)
+            if (actor.className == key)
             {
                 ImGui::SetItemDefaultFocus();
             }
-            if (ImGui::Selectable(def.first.c_str(), def.first == actor.className))
+            if (ImGui::Selectable(key.c_str(), key == actor.className))
             {
-                actor.className = def.first;
-                actor.ApplyDefinition(def.second, true);
+                actor.className = key;
+                actor.ApplyDefinition(def, true);
                 selectedParam = 0;
             }
         }
         ImGui::EndCombo();
     }
 
-    const ActorDefinition &def = SharedMgr::Get().actorDefinitions.at(actor.className);
+    const ActorDefinition &def = MapEditor::adm.GetActorDefinition(actor.className);
 
     ImGui::Text("%s", def.description.empty() ? "no description" : def.description.c_str());
 
@@ -100,12 +100,12 @@ void EditActorWindow::Render(Actor &actor)
     {
         if (ImGui::BeginTabItem("Params"))
         {
-            RenderParamsTab(actor, SharedMgr::Get().actorDefinitions.at(actor.className));
+            RenderParamsTab(actor, def);
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("I/O Connections"))
         {
-            RenderOutputsTab(actor, SharedMgr::Get().actorDefinitions.at(actor.className));
+            RenderOutputsTab(actor, def);
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Position"))
@@ -546,7 +546,7 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
             {
                 const Actor *targetActor = MapEditor::map.GetActor(connection.targetName);
                 assert(targetActor);
-                const ActorDefinition &targetDef = SharedMgr::Get().actorDefinitions.at(targetActor->className);
+                const ActorDefinition &targetDef = MapEditor::adm.GetActorDefinition(targetActor->className);
                 std::unordered_set<std::string> targetInputNames{};
                 targetDef.GetInputNames(targetInputNames);
                 ImGui::Text("Target Input");

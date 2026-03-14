@@ -3,6 +3,8 @@
 //
 
 #include "MapPropertiesWindow.h"
+#include <cmath>
+#include <cstddef>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>

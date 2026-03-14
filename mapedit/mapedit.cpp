@@ -12,6 +12,7 @@
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/util/Error.h>
 #include <memory>
@@ -94,7 +95,7 @@ static void openJson(const std::string &path)
     MapEditor::mapFile = path;
     for (Actor &actor: MapEditor::map.actors)
     {
-        if (!SharedMgr::Get().actorDefinitions.contains(actor.className))
+        if (!MapEditor::adm.HasActorClass(actor.className))
         {
             SDKWindow::Get().ErrorMessage(std::format("Failed to open the map because it contains an unknown actor "
                                                       "class \"{}\"",
@@ -103,7 +104,7 @@ static void openJson(const std::string &path)
             return;
         }
 
-        actor.ApplyDefinition(SharedMgr::Get().actorDefinitions.at(actor.className), false);
+        actor.ApplyDefinition(MapEditor::adm.GetActorDefinition(actor.className), false);
     }
 }
 
@@ -391,7 +392,7 @@ static void Render()
             {
                 for (Actor &actor: MapEditor::map.actors)
                 {
-                    ActorDefinition &def = SharedMgr::Get().actorDefinitions.at(actor.className);
+                    const ActorDefinition &def = MapEditor::adm.GetActorDefinition(actor.className);
                     actor.RemoveUnknownParams(def);
                 }
             }
@@ -554,8 +555,9 @@ int main(int argc, char **argv)
 
     SDKWindow::Get().SetWindowIcon("mapedit");
 
-    SharedMgr::Get().LoadActorDefinitions();
-    if (!SharedMgr::Get().actorDefinitions.contains("player"))
+    MapEditor::adm = ActorDefinitionManager(SharedMgr::Get().pathManager);
+
+    if (!MapEditor::adm.HasActorClass("player"))
     {
         SDKWindow::Get().ErrorMessage("Could not find definition for required actor class \"player\". Please check the "
                                       "game paths from the SDK launcher.",
@@ -563,7 +565,7 @@ int main(int argc, char **argv)
         SDKWindow::Get().Destroy();
         return 0;
     }
-    if (!SharedMgr::Get().actorDefinitions.contains("actor"))
+    if (!MapEditor::adm.HasActorClass("actor"))
     {
         SDKWindow::Get().ErrorMessage("Could not find definition for required actor class \"actor\". Please check the "
                                       "game paths from the SDK launcher.",

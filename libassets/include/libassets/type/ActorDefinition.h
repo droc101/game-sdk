@@ -31,6 +31,8 @@ class ActorDefinition
 
         [[nodiscard]] static Error::ErrorCode Create(const std::string &path, ActorDefinition &definition);
 
+        [[nodiscard]] bool Extends(const std::string &baseClass) const;
+
         void GetInputNames(std::unordered_set<std::string> &out) const;
         void GetOutputNames(std::unordered_set<std::string> &out) const;
         void GetParamNames(std::unordered_set<std::string> &out) const;

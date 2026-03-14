@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <array>
+#include <cstdint>
 #include <glm/vec2.hpp>
 #include <nlohmann/json.hpp>
 #include <string>

@@ -5,22 +5,36 @@
 #pragma once
 
 #include <libassets/type/Color.h>
-#include <libassets/util/Error.h>
 #include <nlohmann/json.hpp>
 #include <string>
+
+class Actor;
 
 class RenderDefinition
 {
     public:
-        std::string modelSourceParam{};
-        std::string colorSourceParam{};
-        std::string textureSourceParam{};
-        std::string model{};
-        std::string texture{};
-        Color color{};
-        bool directional = true;
+        RenderDefinition() = default;
 
-        virtual ~RenderDefinition() = default;
+        explicit RenderDefinition(const nlohmann::json &json);
 
-        [[nodiscard]] static RenderDefinition Create(const nlohmann::json &json, Error::ErrorCode &e);
+        [[nodiscard]] std::string GetModel(const Actor &actor) const;
+
+        [[nodiscard]] Color GetColor(const Actor &actor) const;
+
+        [[nodiscard]] std::string GetTexture(const Actor &actor) const;
+
+        [[nodiscard]] bool GetDirectional(const Actor &actor) const;
+
+    private:
+        template<typename T> struct RenderDefinitionValue
+        {
+                bool usesParam = false;
+                std::string paramName;
+                T value{};
+        };
+
+        RenderDefinitionValue<std::string> model;
+        RenderDefinitionValue<Color> color;
+        RenderDefinitionValue<std::string> texture;
+        RenderDefinitionValue<bool> directional;
 };

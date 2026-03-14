@@ -11,9 +11,11 @@
 #include <cstdio>
 #include <glm/detail/func_geometric.inl>
 #include <glm/vec2.hpp>
+#include <libassets/asset/DataAsset.h>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
+#include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Asset.h>
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
@@ -33,6 +35,7 @@ MapCompiler::MapCompiler(const std::string &assetsDirectory,
 {
     this->assetsDirectory = assetsDirectory;
     this->pathManager = SearchPathManager(gameConfig, executableDirectory);
+    this->defManager = ActorDefinitionManager(this->pathManager);
 }
 
 Error::ErrorCode MapCompiler::LoadMapSource(const std::string &mapSourceFile)
@@ -111,10 +114,24 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     writer.Write<size_t>(map.actors.size());
 
     size_t numPlayerActors = 0;
+    std::vector<Actor> actorsToWrite{};
     for (const Actor &actor: map.actors)
     {
-        actor.Write(writer);
-        if (actor.className == "player")
+        if (!defManager.HasActorClass(actor.className))
+        {
+            printf("[WARNING] Skipping unknown actor class \"%s\"...", actor.className.c_str());
+            continue;
+        }
+
+        const ActorDefinition &def = defManager.GetActorDefinition(actor.className);
+        if (def.isVirtual)
+        {
+            printf("[WARNING] Skipping virtual actor class \"%s\"...", actor.className.c_str());
+            continue;
+        }
+
+        actorsToWrite.push_back(actor);
+        if (def.Extends("player"))
         {
             printf("[INFO] Found player spawnpoint at %f %f %f\n",
                    actor.position.x,
@@ -147,6 +164,12 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     } else if (numPlayerActors != 1)
     {
         printf("[WARNING] Multiple player actors are present, only one will function.\n");
+    }
+
+    writer.Write<size_t>(actorsToWrite.size());
+    for (const Actor &actor: actorsToWrite)
+    {
+        actor.Write(writer);
     }
 
     printf("[INFO] Compiling Sectors...\n");

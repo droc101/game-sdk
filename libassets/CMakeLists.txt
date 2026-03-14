@@ -118,6 +118,8 @@ add_library(assets SHARED
         include/libassets/type/paramDefs/Vec3ParamDefinition.h
         src/util/SearchPathManager.cpp
         include/libassets/util/SearchPathManager.h
+        src/util/ActorDefinitionManager.cpp
+        include/libassets/util/ActorDefinitionManager.h
 )
 
 set_target_properties(assets PROPERTIES

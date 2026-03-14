@@ -38,15 +38,9 @@ class SharedMgr
          */
         void DestroySharedMgr();
 
-        void LoadActorDefinitions();
-
         void UpdateAssetPaths();
 
         GLTextureCache textureCache{};
-
-        std::map<std::string, OptionDefinition> optionDefinitions{};
-
-        std::map<std::string, ActorDefinition> actorDefinitions{};
 
         SearchPathManager pathManager{};
 
@@ -55,6 +49,4 @@ class SharedMgr
         bool demoVisible = false;
 
         SharedMgr() = default;
-
-        void LoadOptionDefinitions();
 };

@@ -72,7 +72,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
                 a.rotation = {0, 0, 0};
                 a.position = {newActorPosition.x, newActorPosition.y, newActorPosition.z};
 
-                ActorDefinition def = SharedMgr::Get().actorDefinitions.at(newActorType);
+                ActorDefinition def = MapEditor::adm.GetActorDefinition(newActorType);
                 a.ApplyDefinition(def, true);
 
                 MapEditor::map.actors.push_back(a);
@@ -151,9 +151,9 @@ void AddActorTool::RenderToolWindow()
     ImGui::Text("Class");
     if (ImGui::BeginCombo("##a", newActorType.c_str()))
     {
-        for (const std::string &key: SharedMgr::Get().actorDefinitions | std::views::keys)
+        for (const std::string &key: MapEditor::adm.GetActorClasses())
         {
-            if (SharedMgr::Get().actorDefinitions.at(key).isVirtual)
+            if (MapEditor::adm.GetActorDefinition(key).isVirtual)
             {
                 continue;
             }

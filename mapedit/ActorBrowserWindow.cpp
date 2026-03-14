@@ -25,6 +25,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include "MapEditor.h"
 
 void ActorBrowserWindow::Render()
 {
@@ -35,7 +36,7 @@ void ActorBrowserWindow::Render()
 
     ImGui::Begin("Actor Class Browser", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
 
-    if (SharedMgr::Get().actorDefinitions.size() == 0 || !SharedMgr::Get().actorDefinitions.contains("actor"))
+    if (MapEditor::adm.GetActorClassCount() == 0 || !MapEditor::adm.HasActorClass("actor"))
     {
         ImGui::TextDisabled("No actor definitions are loaded. Is the game path set correctly?");
         ImGui::End();
@@ -45,7 +46,7 @@ void ActorBrowserWindow::Render()
     ImGui::Text("Class");
     if (ImGui::BeginCombo("##a", selectedClass.c_str()))
     {
-        for (const std::string &key: SharedMgr::Get().actorDefinitions | std::views::keys)
+        for (const std::string &key: MapEditor::adm.GetActorClasses())
         {
             if (selectedClass == key)
             {
@@ -60,7 +61,7 @@ void ActorBrowserWindow::Render()
         ImGui::EndCombo();
     }
 
-    const ActorDefinition &def = SharedMgr::Get().actorDefinitions.at(selectedClass);
+    const ActorDefinition &def = MapEditor::adm.GetActorDefinition(selectedClass);
 
     ImGui::Text("%s %s: %s",
                 def.isVirtual ? "Virtual class" : "Class",

@@ -44,15 +44,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
     if (definition_json.contains("display"))
     {
         const nlohmann::json &renderDef = definition_json.at("display");
-        Error::ErrorCode e = Error::ErrorCode::OK;
-        definition.renderDefinition = RenderDefinition::Create(renderDef, e);
-        if (e != Error::ErrorCode::OK)
-        {
-            return e;
-        }
-    } else
-    {
-        definition.renderDefinition.color = Color(0x00ff00ff);
+        definition.renderDefinition = RenderDefinition(renderDef);
     }
 
     if (definition_json.contains("inputs"))
@@ -99,6 +91,19 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
 
     file.close();
     return Error::ErrorCode::OK;
+}
+
+bool ActorDefinition::Extends(const std::string &baseClass) const
+{
+    if (className == baseClass)
+    {
+        return true;
+    }
+    if (parentClass != nullptr)
+    {
+        return parentClass->Extends(baseClass);
+    }
+    return false;
 }
 
 void ActorDefinition::GetInputNames(std::unordered_set<std::string> &out) const

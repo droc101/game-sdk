@@ -7,7 +7,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
-#include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
 #include <glm/ext.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -19,6 +18,7 @@
 #include <libassets/type/ModelLod.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/SearchPathManager.h>
 #include <ranges>
 #include <string>
 #include <vector>
@@ -103,8 +103,8 @@ bool MapRenderer::Init()
     workBuffer = GLHelper::CreateIndexedBuffer();
     workBufferNonIndexed = GLHelper::CreateBuffer();
 
-    const std::vector<SearchPathManager::AssetResult> modelsPaths = SharedMgr::Get().pathManager.ScanAssetFolder("/model",
-                                                                                                          ".gmdl");
+    const std::vector<SearchPathManager::AssetResult>
+            modelsPaths = SharedMgr::Get().pathManager.ScanAssetFolder("/model", ".gmdl");
     for (const SearchPathManager::AssetResult &modelPath: modelsPaths)
     {
         const ModelBuffer buf = LoadModel(modelPath.absolutePath);
@@ -310,20 +310,9 @@ void MapRenderer::RenderUnitVector(const glm::vec3 origin,
 
 void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix, Viewport &vp)
 {
-    const ActorDefinition &definition = SharedMgr::Get().actorDefinitions.at(a.className);
-    Color c = definition.renderDefinition.color;
-    if (!definition.renderDefinition.colorSourceParam.empty() &&
-        a.params.contains(definition.renderDefinition.colorSourceParam))
-    {
-        c = a.params.at(definition.renderDefinition.colorSourceParam).Get<Color>(definition.renderDefinition.color);
-    }
-    std::string texture = definition.renderDefinition.texture;
-    if (!definition.renderDefinition.textureSourceParam.empty() &&
-        a.params.contains(definition.renderDefinition.textureSourceParam))
-    {
-        texture = a.params.at(definition.renderDefinition.textureSourceParam)
-                          .Get<std::string>(definition.renderDefinition.texture);
-    }
+    const ActorDefinition &definition = MapEditor::adm.GetActorDefinition(a.className);
+    Color c = definition.renderDefinition.GetColor(a);
+    const std::string texture = definition.renderDefinition.GetTexture(a);
 
     if (texture.empty())
     {
@@ -333,21 +322,14 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix, Viewport &vp)
         RenderBillboardSprite(a.position, 20, texture, c, matrix);
     }
 
-    if (definition.renderDefinition.directional)
+    if (definition.renderDefinition.GetDirectional(a))
     {
         RenderUnitVector(a.position, a.rotation, c, matrix, 2, vp.GetZoom() / 20);
     }
 
-    if ((!definition.renderDefinition.model.empty() || !definition.renderDefinition.modelSourceParam.empty()) &&
-        MapEditor::drawModels)
+    std::string model = definition.renderDefinition.GetModel(a);
+    if ((!model.empty()) && MapEditor::drawModels)
     {
-        std::string model = definition.renderDefinition.model;
-        if (!definition.renderDefinition.modelSourceParam.empty() &&
-            a.params.contains(definition.renderDefinition.modelSourceParam))
-        {
-            model = a.params.at(definition.renderDefinition.modelSourceParam)
-                            .Get<std::string>(definition.renderDefinition.model);
-        }
         if (!modelBuffers.contains(model))
         {
             model = "model/error.gmdl";

@@ -8,9 +8,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <libassets/asset/MapAsset.h>
+#include <libassets/type/Actor.h>
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
+#include <libassets/util/ActorDefinitionManager.h>
 #include <memory>
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
@@ -63,6 +66,8 @@ class MapEditor
         static inline WallMaterial mat{};
 
         static inline std::optional<std::variant<Sector, Actor>> clipboard{};
+
+        static inline ActorDefinitionManager adm{};
 
         [[nodiscard]] static float SnapToGrid(float f);
 

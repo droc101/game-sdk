@@ -6,8 +6,10 @@
 
 #include <array>
 #include <cstdint>
+#include <libassets/asset/DataAsset.h>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/asset/MapAsset.h>
+#include <libassets/util/ActorDefinitionManager.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/SearchPathManager.h>
 #include <string>
@@ -40,6 +42,7 @@ class MapCompiler
         std::string mapBasename;
         MapAsset map;
         SearchPathManager pathManager;
+        ActorDefinitionManager defManager;
 
         Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer) const;
 
