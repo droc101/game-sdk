@@ -174,10 +174,6 @@ static void RenderTab(EditorTab &tab)
         if (ImGui::RadioButton("OpenGL", tab.shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_OPENGL))
         {
             tab.shader.platform = ShaderAsset::ShaderPlatform::PLATFORM_OPENGL;
-            if (tab.shader.type == ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE)
-            {
-                tab.shader.type = ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT;
-            }
         }
 
         ImGui::TextUnformatted("Type");
@@ -189,12 +185,10 @@ static void RenderTab(EditorTab &tab)
         {
             tab.shader.type = ShaderAsset::ShaderType::SHADER_TYPE_VERTEX;
         }
-        ImGui::BeginDisabled(tab.shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_OPENGL);
         if (ImGui::RadioButton("Compute", tab.shader.type == ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE))
         {
             tab.shader.type = ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE;
         }
-        ImGui::EndDisabled();
     }
     ImGui::EndChild();
 }
