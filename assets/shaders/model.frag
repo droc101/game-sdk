@@ -1,4 +1,4 @@
-#version 330
+#version 460
 
 #define DISPLAY_MODE_COLORED 0
 #define DISPLAY_MODE_COLORED_SHADED 1

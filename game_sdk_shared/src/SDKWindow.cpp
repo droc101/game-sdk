@@ -14,7 +14,6 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl3.h>
 #include <libassets/asset/TextureAsset.h>
-#include <libassets/type/Actor.h>
 #include <libassets/util/Error.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
@@ -59,7 +58,7 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
 
     SharedMgr::Get().InitSharedMgr();
 
-    const char *glslVersion = "#version 330";
+    const char *glslVersion = "#version 460";
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0))
     {
         printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
@@ -68,11 +67,11 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
     {
         printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
     }
-    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3))
+    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4))
     {
         printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
     }
-    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3))
+    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6))
     {
         printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
     }

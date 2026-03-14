@@ -1,4 +1,4 @@
-#version 330
+#version 460
 
 out mediump vec4 COLOR;
 

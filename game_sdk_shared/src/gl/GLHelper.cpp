@@ -23,10 +23,9 @@ bool GLHelper::Init()
         return false;
     }
 
-    // Ensure we have GL 3.3 or higher
-    if (!GLEW_VERSION_3_3)
+    if (!GLEW_VERSION_4_6)
     {
-        printf("GLEW init failure -- we don't have opengl 3.3\n");
+        printf("GLEW init failure -- we don't have opengl 4.6\n");
         return false;
     }
 
