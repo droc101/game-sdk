@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <libassets/asset/DataAsset.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/SearchPathManager.h>
+#include <vector>
 #include "ArgumentParser.h"
 #include "MapCompiler.h"
 
@@ -13,7 +15,7 @@ int main(const int argc, const char **argv)
     printf("GAME SDK Map Compiler\n");
     const ArgumentParser args = ArgumentParser(argc, argv);
 
-    if (!args.HasFlagWithValue("--map-source"))
+    if (!(args.HasFlagWithValue("--map-source") || args.HasFlagWithValue("--map-sources-dir")))
     {
         printf("[ERROR] --map-source not specified!\n");
         return 1;
@@ -44,18 +46,53 @@ int main(const int argc, const char **argv)
                                        args.GetFlagValue("--executable-dir"),
                                        gameConfig);
 
-    const Error::ErrorCode mapLoadResult = compiler.LoadMapSource(args.GetFlagValue("--map-source"));
-    if (mapLoadResult != Error::ErrorCode::OK)
+    if (args.HasFlagWithValue("--map-source"))
     {
-        printf("[ERROR] Failed to load map source: %s\n", Error::ErrorString(mapLoadResult).c_str());
-        return 1;
-    }
+        const Error::ErrorCode mapLoadResult = compiler.LoadMapSource(args.GetFlagValue("--map-source"));
+        if (mapLoadResult != Error::ErrorCode::OK)
+        {
+            printf("[ERROR] Failed to load map source: %s\n", Error::ErrorString(mapLoadResult).c_str());
+            return 1;
+        }
 
-    const Error::ErrorCode mapCompileResult = compiler.Compile();
-    if (mapCompileResult != Error::ErrorCode::OK)
+        const Error::ErrorCode mapCompileResult = compiler.Compile();
+        if (mapCompileResult != Error::ErrorCode::OK)
+        {
+            printf("[ERROR] Failed to compile map: %s\n", Error::ErrorString(mapCompileResult).c_str());
+            return 1;
+        }
+    } else
     {
-        printf("[ERROR] Failed to compile map: %s\n", Error::ErrorString(mapCompileResult).c_str());
-        return 1;
+        const bool returnOnError = args.HasFlag("--break-on-error");
+        const std::vector<std::string> maps = SearchPathManager::ScanFolder(args.GetFlagValue("--map-sources-dir"),
+                                                                            ".json",
+                                                                            true);
+        for (const std::string &map: maps)
+        {
+            const Error::ErrorCode mapLoadResult = compiler.LoadMapSource(args.GetFlagValue("--map-sources-dir") +
+                                                                          "/" +
+                                                                          map);
+            if (mapLoadResult != Error::ErrorCode::OK)
+            {
+                printf("[ERROR] Failed to load map source: %s\n", Error::ErrorString(mapLoadResult).c_str());
+                if (returnOnError)
+                {
+                    return 1;
+                }
+                continue;
+            }
+
+            const Error::ErrorCode mapCompileResult = compiler.Compile();
+            if (mapCompileResult != Error::ErrorCode::OK)
+            {
+                printf("[ERROR] Failed to compile map: %s\n", Error::ErrorString(mapCompileResult).c_str());
+                if (returnOnError)
+                {
+                    return 1;
+                }
+                continue;
+            }
+        }
     }
 
     return 0;

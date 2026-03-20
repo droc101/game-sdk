@@ -35,6 +35,8 @@ class MapAsset final
         bool has_sky = true;
         std::string sky_texture = "texture/level/sky_test.gtex";
 
+        uint8_t lightCubeLuxelsPerUnit = 4;
+
         Actor *GetActor(const std::string &name);
 
         [[nodiscard]] std::vector<std::string> GetUniqueActorNames() const;

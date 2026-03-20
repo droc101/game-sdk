@@ -88,7 +88,7 @@ static void RenderArray(ParamVector &vector, const std::string &path)
             moveIndex = i;
         }
         ImGui::EndDisabled();
-        ImGui::BeginDisabled(i == vector.size()-1);
+        ImGui::BeginDisabled(i == vector.size() - 1);
         ImGui::SameLine();
         if (ImGui::SmallButton(std::format("Down##{}", i).c_str()))
         {
@@ -147,7 +147,10 @@ static void RenderKvList(KvList &list, const std::string &path)
     }
     for (std::pair<const std::string, Param> &pair: list)
     {
-        RenderParam(pair.second, std::format("{}: {} = {}", pair.first, pair.second.GetTypeName(), pair.second.ToString()), pair.first, path);
+        RenderParam(pair.second,
+                    std::format("{}: {} = {}", pair.first, pair.second.GetTypeName(), pair.second.ToString()),
+                    pair.first,
+                    path);
     }
     ImGui::Separator();
     if (ImGui::Button("Add"))
@@ -211,7 +214,8 @@ static void RenderParam(Param &param, const std::string &displayName, const std:
         }
         if (arrayOpen)
         {
-            RenderArray(param.GetRef<ParamVector>({}), path + name + "/");
+            ParamVector defaultValue{};
+            RenderArray(param.GetRef<ParamVector>(defaultValue), path + name + "/");
             ImGui::TreePop();
         }
     } else if (param.GetType() == Param::ParamType::PARAM_TYPE_KV_LIST)
@@ -223,7 +227,8 @@ static void RenderParam(Param &param, const std::string &displayName, const std:
         }
         if (kvlOpen)
         {
-            RenderKvList(param.GetRef<KvList>({}), path + name + "/");
+            KvList defaultValue{};
+            RenderKvList(param.GetRef<KvList>(defaultValue), path + name + "/");
             ImGui::TreePop();
         }
     } else
@@ -329,12 +334,13 @@ static void RenderSidebar()
             ImGui::InputScalar("##value", ImGuiDataType_U64, p->GetPointer<uint64_t>());
         } else if (type == Param::ParamType::PARAM_TYPE_VEC2)
         {
-            glm::vec2 &ptr = p->GetRef<glm::vec2>({});
+            glm::vec2 defaultValue{};
+            glm::vec2 &ptr = p->GetRef<glm::vec2>(defaultValue);
             ImGui::InputFloat2("##value", glm::value_ptr(ptr));
-        }
-        else if (type == Param::ParamType::PARAM_TYPE_VEC3)
+        } else if (type == Param::ParamType::PARAM_TYPE_VEC3)
         {
-            glm::vec3 &ptr = p->GetRef<glm::vec3>({});
+            glm::vec3 defaultValue{};
+            glm::vec3 &ptr = p->GetRef<glm::vec3>(defaultValue);
             ImGui::InputFloat3("##value", glm::value_ptr(ptr));
         }
 

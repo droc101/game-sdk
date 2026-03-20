@@ -25,6 +25,8 @@ class RenderDefinition
 
         [[nodiscard]] bool GetDirectional(const Actor &actor) const;
 
+        [[nodiscard]] bool GetAffectLightmap(const Actor &actor) const;
+
     private:
         template<typename T> struct RenderDefinitionValue
         {
@@ -36,5 +38,6 @@ class RenderDefinition
         RenderDefinitionValue<std::string> model;
         RenderDefinitionValue<Color> color;
         RenderDefinitionValue<std::string> texture;
+        RenderDefinitionValue<bool> affectLightmap;
         RenderDefinitionValue<bool> directional;
 };

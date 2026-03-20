@@ -107,7 +107,7 @@ class Param
             return std::get<T>(value);
         }
 
-        template<ParamTypeTemplate T> [[nodiscard]] T &GetRef(T defaultValue)
+        template<ParamTypeTemplate T> [[nodiscard]] T &GetRef(T &defaultValue)
         {
             if ((std::same_as<T, uint8_t> && type != ParamType::PARAM_TYPE_BYTE) ||
                 (std::same_as<T, int32_t> && type != ParamType::PARAM_TYPE_INTEGER) ||

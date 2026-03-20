@@ -31,5 +31,10 @@ void MapPropertiesWindow::Render()
     ImGui::Text("Discord RPC display name");
     ImGui::InputText("##rpcName", &MapEditor::map.discord_rpc_map_name);
 
+    ImGui::Text("Lightcube luxels per unit");
+    ImGui::InputScalar("##lightcubeLuxels", ImGuiDataType_U8, &MapEditor::map.lightCubeLuxelsPerUnit);
+    const float lightcubeSizeBytes = powf(MapEditor::map.lightCubeLuxelsPerUnit * 16, 3) * 2 * 4;
+    ImGui::Text("16 unit lightcube storage size: %.2f MB", lightcubeSizeBytes / (1024.0f * 1024.0f));
+
     ImGui::End();
 }

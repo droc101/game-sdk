@@ -112,7 +112,6 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                             s.floorMaterial = mat;
                             s.floorHeight = floor;
                             s.ceilingHeight = ceiling;
-                            s.lightColor = Color(1, 1, 1, 1);
                             for (const glm::vec2 &glmPoint: points)
                             {
                                 s.points.push_back(glmPoint);

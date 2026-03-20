@@ -62,6 +62,25 @@ RenderDefinition::RenderDefinition(const nlohmann::json &json)
         color.value = Color(0.0, 1.0, 0.0, 1.0);
     }
 
+    if (json.contains("affect_lightmap"))
+    {
+        if (json.at("affect_lightmap").type() == nlohmann::detail::value_t::boolean)
+        {
+            affectLightmap.value = json.value("affect_lightmap", true);
+        } else if (json.at("affect_lightmap").type() == nlohmann::detail::value_t::string)
+        {
+            const std::string affectLightmapValue = json.value("affect_lightmap", "");
+            if (affectLightmapValue.starts_with("$"))
+            {
+                affectLightmap.usesParam = true;
+                affectLightmap.paramName = affectLightmapValue.substr(1, affectLightmapValue.length() - 1);
+            }
+        }
+    } else
+    {
+        affectLightmap.value = false;
+    }
+
     if (json.contains("directional"))
     {
         if (json.at("directional").type() == nlohmann::detail::value_t::boolean)
@@ -127,6 +146,21 @@ Color RenderDefinition::GetColor(const Actor &actor) const
         return color.value;
     }
     return Color(-1);
+}
+
+bool RenderDefinition::GetAffectLightmap(const Actor &actor) const
+{
+    if (affectLightmap.usesParam)
+    {
+        if (actor.params.contains(affectLightmap.paramName))
+        {
+            return actor.params.at(affectLightmap.paramName).Get<bool>(false);
+        }
+    } else
+    {
+        return affectLightmap.value;
+    }
+    return false;
 }
 
 bool RenderDefinition::GetDirectional(const Actor &actor) const

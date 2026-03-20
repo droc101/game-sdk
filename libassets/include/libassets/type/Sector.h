@@ -8,12 +8,10 @@
 #include <cstdint>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
-#include <libassets/type/Color.h>
+#include <glm/vec4.hpp>
 #include <libassets/type/WallMaterial.h>
 #include <nlohmann/json.hpp>
 #include <vector>
-
-#include "Actor.h"
 
 class Sector
 {
@@ -28,7 +26,6 @@ class Sector
         float ceilingHeight = 1.0;
         WallMaterial floorMaterial{};
         WallMaterial ceilingMaterial{};
-        Color lightColor = Color(-1);
 
         [[nodiscard]] bool IsValid() const;
 
@@ -41,6 +38,8 @@ class Sector
         [[nodiscard]] double CalculateArea() const;
 
         [[nodiscard]] glm::vec3 GetCenter() const;
+
+        [[nodiscard]] glm::vec4 GetAABB() const;
 
     private:
         enum class SegmentOrientation : uint8_t

@@ -120,6 +120,8 @@ add_library(assets SHARED
         include/libassets/util/SearchPathManager.h
         src/util/ActorDefinitionManager.cpp
         include/libassets/util/ActorDefinitionManager.h
+        include/libassets/type/MapVertex.h
+        src/type/MapVertex.cpp
 )
 
 set_target_properties(assets PROPERTIES
@@ -129,5 +131,4 @@ set_target_properties(assets PROPERTIES
 
 target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json glm::glm)
 
-target_include_directories(assets PUBLIC ${Vulkan_INCLUDE_DIRS} "include")
-target_include_directories(assets PRIVATE "${CMAKE_SOURCE_DIR}/lib/stb")
+target_include_directories(assets PUBLIC ${Vulkan_INCLUDE_DIRS} "include" "${CMAKE_SOURCE_DIR}/lib/stb")

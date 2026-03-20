@@ -155,4 +155,6 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
     ImGui::InputFloat2("##uvOffset", glm::value_ptr(wallMat.uvOffset));
     ImGui::Text("UV Scale");
     ImGui::InputFloat2("##uvScale", glm::value_ptr(wallMat.uvScale));
+    ImGui::Text("Luxels per unit");
+    ImGui::InputScalar("##luxelsPerUnit", ImGuiDataType_U8, &wallMat.luxelsPerUnit);
 }

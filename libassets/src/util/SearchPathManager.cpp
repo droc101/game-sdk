@@ -8,7 +8,8 @@
 
 SearchPathManager::SearchPathManager(DataAsset &gameConfig, const std::string &executableFolder)
 {
-    ParamVector &searchPathData = gameConfig.data["search_paths"].GetRef<ParamVector>({});
+    ParamVector defaultParamVectorValue{};
+    ParamVector &searchPathData = gameConfig.data["search_paths"].GetRef<ParamVector>(defaultParamVectorValue);
     for (Param &p: searchPathData)
     {
         if (p.GetType() == Param::ParamType::PARAM_TYPE_STRING)
@@ -17,7 +18,8 @@ SearchPathManager::SearchPathManager(DataAsset &gameConfig, const std::string &e
             assetPaths.push_back(searchPath);
         } else if (p.GetType() == Param::ParamType::PARAM_TYPE_KV_LIST)
         {
-            KvList &searchPathKvl = p.GetRef<KvList>({});
+            KvList defaultKvListValue{};
+            KvList &searchPathKvl = p.GetRef<KvList>(defaultKvListValue);
             const bool isAbsolute = searchPathKvl["path_is_absolute"].Get<bool>(false);
             const std::string path = searchPathKvl["search_path"].Get<std::string>("engine");
             if (isAbsolute)

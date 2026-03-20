@@ -827,7 +827,6 @@ void SelectTool::RenderToolWindow()
         return;
     }
     ImGui::PushItemWidth(-1);
-    std::array<float, 4> col{};
     size_t sectIndex = 0;
     switch (selectionType)
     {
@@ -868,13 +867,6 @@ void SelectTool::RenderToolWindow()
             ImGui::SameLine();
             ImGui::TextDisabled("(editor only)");
             ImGui::InputText("##sectorName", &MapEditor::map.sectors.at(sectIndex).name);
-
-            ImGui::Text("Tint Color");
-            col = MapEditor::map.sectors.at(sectIndex).lightColor.CopyData();
-            if (ImGui::ColorEdit4("##sectorColor", col.data()))
-            {
-                MapEditor::map.sectors.at(sectIndex).lightColor = Color(col[0], col[1], col[2], col[3]);
-            }
             break;
         case ItemType::ACTOR:
             ImGui::Text("Position");

@@ -7,6 +7,12 @@ fetch_earcut_hpp()
 
 fetch_clipper2()
 
+FetchContent_Declare(
+        Luna
+        SOURCE_DIR ${CMAKE_SOURCE_DIR}/../Luna
+)
+FetchContent_MakeAvailable(Luna)
+
 add_executable(mapcomp mapcomp.cpp
         $<$<BOOL:${WIN32}>:mapcomp.rc>
         ArgumentParser.cpp
@@ -19,7 +25,12 @@ add_executable(mapcomp mapcomp.cpp
         SectorCollisionBuilder.h
         SectorClipper.cpp
         SectorClipper.h
+        Light.h
+        LightBaker.cpp
+        LightBaker.hpp
 )
+
+target_compile_options(mapcomp PRIVATE -pthread)
 
 set_target_properties(mapcomp PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
@@ -28,9 +39,10 @@ target_link_libraries(mapcomp PRIVATE
         Clipper2
         assets
         glm::glm
+        Luna
 )
 
-add_dependencies(mapcomp assets)
+add_dependencies(mapcomp assets copy_assets)
 
 if (WIN32)
     add_dependencies(mapcomp copydlls)

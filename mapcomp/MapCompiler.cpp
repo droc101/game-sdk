@@ -27,6 +27,8 @@
 #include <utility>
 #include <vector>
 #include "LevelMeshBuilder.h"
+#include "Light.h"
+#include "LightBaker.hpp"
 #include "SectorCollisionBuilder.h"
 
 MapCompiler::MapCompiler(const std::string &assetsDirectory,
@@ -111,7 +113,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
 
     printf("[INFO] Compiling actors...\n");
 
-    writer.Write<size_t>(map.actors.size());
+    std::vector<Light> lights{};
 
     size_t numPlayerActors = 0;
     std::vector<Actor> actorsToWrite{};
@@ -126,7 +128,13 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
         const ActorDefinition &def = defManager.GetActorDefinition(actor.className);
         if (def.isVirtual)
         {
-            printf("[WARNING] Skipping virtual actor class \"%s\"...", actor.className.c_str());
+            printf("[WARNING] Skipping virtual actor class \"%s\"...\n", actor.className.c_str());
+            continue;
+        }
+
+        if (def.Extends("light"))
+        {
+            lights.emplace_back(actor);
             continue;
         }
 
@@ -316,6 +324,13 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
 
     printf("[INFO] Level has %zu visual meshes\n", meshBuilders.size());
     printf("[INFO] Level has %zu physics meshes\n", collisionBuilders.size());
+    printf("[INFO] Level has %zu lights\n", lights.size());
+
+    glm::ivec2 lightmapSize{};
+    if (!LevelMeshBuilder::CalculateLightmapUvs(lightmapSize, meshBuilders))
+    {
+        return Error::ErrorCode::LIGHTMAP_TOO_LARGE;
+    }
 
     writer.Write<size_t>(meshBuilders.size());
     for (const std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)
@@ -327,6 +342,39 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     for (SectorCollisionBuilder &builder: collisionBuilders)
     {
         builder.Write(writer);
+    }
+
+    constexpr bool USE_CPU = false;
+    std::vector<uint8_t> pixels = {0x00, 0x3c, 0x00, 0x3c, 0x00, 0x3c, 0x00, 0x3c}; // float16 1.0
+    if (!lights.empty())
+    {
+        if constexpr (USE_CPU)
+        {
+            if (!LightBaker::bakeCPU(meshBuilders, lights, pixels, lightmapSize))
+            {
+                return Error::ErrorCode::UNKNOWN;
+            }
+        } else
+        {
+            LightBaker baker = LightBaker();
+            if (!baker.IsInitialized())
+            {
+                return Error::ErrorCode::UNKNOWN;
+            }
+            if (!baker.bake(meshBuilders, lights, pixels, lightmapSize))
+            {
+                return Error::ErrorCode::UNKNOWN;
+            }
+        }
+        writer.Write<size_t>(static_cast<size_t>(lightmapSize.x));
+        writer.Write<size_t>(static_cast<size_t>(lightmapSize.y));
+        writer.WriteBuffer(pixels);
+
+    } else
+    {
+        writer.Write<size_t>(1);
+        writer.Write<size_t>(1);
+        writer.WriteBuffer(pixels);
     }
 
     writer.CopyToVector(buffer);

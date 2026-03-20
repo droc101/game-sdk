@@ -19,7 +19,6 @@ Sector::Sector(nlohmann::ordered_json json)
     ceilingHeight = json.value("ceilingHeight", 1.0f);
     floorMaterial = WallMaterial(json["floorMaterial"]);
     ceilingMaterial = WallMaterial(json["ceilingMaterial"]);
-    lightColor = Color(json["lightColor"]);
     const nlohmann::ordered_json mats = json.at("wallMaterials");
     for (const nlohmann::basic_json<nlohmann::ordered_map> &material: mats)
     {
@@ -62,7 +61,6 @@ nlohmann::ordered_json Sector::GenerateJson() const
     json["ceilingHeight"] = ceilingHeight;
     json["floorMaterial"] = floorMaterial.GenerateJson();
     json["ceilingMaterial"] = ceilingMaterial.GenerateJson();
-    json["lightColor"] = lightColor.GenerateJson();
     json["wallMaterials"] = nlohmann::ordered_json::array();
     for (const WallMaterial &material: wallMaterials)
     {
@@ -77,6 +75,29 @@ nlohmann::ordered_json Sector::GenerateJson() const
         json["points"].push_back(jPoint);
     }
     return json;
+}
+
+glm::vec2 Sector::SegmentNormal(const size_t segmentIndex) const
+{
+    const glm::vec2 p0 = points.at(segmentIndex);
+    const glm::vec2 p1 = points.at((segmentIndex + 1) % points.size());
+
+    const glm::vec2 edgeDir = p1 - p0;
+
+    const glm::vec2 left = {-edgeDir.y, edgeDir.x};
+    const glm::vec2 right = {edgeDir.y, -edgeDir.x};
+
+    const bool ccw = CalculateArea() > 0;
+
+    glm::vec2 nrm = ccw ? right : left;
+
+    const float len = std::sqrt(nrm.x * nrm.x + nrm.y * nrm.y);
+    if (len > 1e-12f)
+    {
+        nrm.x /= len;
+        nrm.y /= len;
+    }
+    return nrm;
 }
 
 double Sector::CalculateArea() const
@@ -105,27 +126,42 @@ glm::vec3 Sector::GetCenter() const
     return center;
 }
 
-glm::vec2 Sector::SegmentNormal(const size_t segmentIndex) const
+glm::vec4 Sector::GetAABB() const
 {
-    const glm::vec2 p0 = points.at(segmentIndex);
-    const glm::vec2 p1 = points.at((segmentIndex + 1) % points.size());
+    glm::vec2 minPoint = {
+        std::numeric_limits<float>::max(),
+        std::numeric_limits<float>::max(),
+    };
+    glm::vec2 maxPoint = {
+        std::numeric_limits<float>::lowest(),
+        std::numeric_limits<float>::lowest(),
+    };
 
-    const glm::vec2 edgeDir = p1 - p0;
-
-    const glm::vec2 left = {-edgeDir.y, edgeDir.x};
-    const glm::vec2 right = {edgeDir.y, -edgeDir.x};
-
-    const bool ccw = CalculateArea() > 0;
-
-    glm::vec2 nrm = ccw ? right : left;
-
-    const float len = std::sqrt(nrm.x * nrm.x + nrm.y * nrm.y);
-    if (len > 1e-12f)
+    for (const glm::vec2 &point: points)
     {
-        nrm.x /= len;
-        nrm.y /= len;
+        if (point.x < minPoint.x)
+        {
+            minPoint.x = point.x;
+        }
+        if (point.x > maxPoint.x)
+        {
+            maxPoint.x = point.x;
+        }
+
+        if (point.y < minPoint.y)
+        {
+            minPoint.y = point.y;
+        }
+        if (point.y > maxPoint.y)
+        {
+            maxPoint.y = point.y;
+        }
     }
-    return nrm;
+
+    const glm::vec2 origin = (minPoint + maxPoint) * 0.5f;
+    const glm::vec2 extents = (maxPoint - minPoint) * 0.5f;
+
+    return {origin.x, origin.y, extents.x, extents.y};
 }
 
 Sector::SegmentOrientation Sector::GetOrientation(const glm::vec2 &pointA,

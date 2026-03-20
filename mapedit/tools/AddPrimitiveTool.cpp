@@ -69,7 +69,6 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
                     s.floorMaterial = mat;
                     s.floorHeight = floor;
                     s.ceilingHeight = ceiling;
-                    s.lightColor = Color(1, 1, 1, 1);
                     const std::vector<glm::vec2> points = GetPoints();
                     for (const glm::vec2 &glmPoint: points)
                     {
