@@ -1,5 +1,5 @@
 //
-// Created by NBT22 on 3/11/26.
+// Created by NBT22 on 3/20/26.
 //
 
 #pragma once
@@ -9,16 +9,14 @@
 #include <unordered_map>
 #include <vector>
 #include "LevelMeshBuilder.h"
+#include "libassets/type/Actor.h"
 #include "Light.h"
 
-class LightBaker
+class LightBakerCpu
 {
     public:
-        static bool bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
+        static void bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                          const std::vector<Light> &lights,
                          std::vector<uint8_t> &pixelData,
                          const glm::ivec2 &lightmapSize);
-
-    private:
-        static constexpr bool USE_CPU = false;
 };

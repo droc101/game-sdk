@@ -76,8 +76,8 @@ class LevelMeshBuilder
 
         struct FaceData
         {
-            std::vector<uint32_t> indices;
-            std::vector<glm::vec2> positionsInRect;
+                std::vector<uint32_t> indices;
+                std::vector<glm::vec2> positionsInRect;
         };
 
         static float CalculateSLength(const Sector &sector, size_t wallIndex);

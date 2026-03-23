@@ -344,27 +344,12 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
         builder.Write(writer);
     }
 
-    constexpr bool USE_CPU = false;
     std::vector<uint8_t> pixels = {0x00, 0x3c, 0x00, 0x3c, 0x00, 0x3c, 0x00, 0x3c}; // float16 1.0
     if (!lights.empty())
     {
-        if constexpr (USE_CPU)
+        if (!LightBaker::bake(meshBuilders, lights, pixels, lightmapSize))
         {
-            if (!LightBaker::bakeCPU(meshBuilders, lights, pixels, lightmapSize))
-            {
-                return Error::ErrorCode::UNKNOWN;
-            }
-        } else
-        {
-            LightBaker baker = LightBaker();
-            if (!baker.IsInitialized())
-            {
-                return Error::ErrorCode::UNKNOWN;
-            }
-            if (!baker.bake(meshBuilders, lights, pixels, lightmapSize))
-            {
-                return Error::ErrorCode::UNKNOWN;
-            }
+            return Error::ErrorCode::UNKNOWN;
         }
         writer.Write<size_t>(static_cast<size_t>(lightmapSize.x));
         writer.Write<size_t>(static_cast<size_t>(lightmapSize.y));

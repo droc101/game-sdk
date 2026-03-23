@@ -1,5 +1,7 @@
 #version 460
 
+#extension GL_EXT_shader_explicit_arithmetic_types_int8: require
+
 const float EPSILON = 1e-6;
 const float PI = 3.141592653589793;
 const float INFINITY = 1.0 / 0.0;
@@ -59,12 +61,16 @@ layout (std140, set = 0, binding = 2) readonly buffer LightsData {
     Light lights[];
 } lightsData;
 
-layout (set = 0, binding = 3, rgba16f) uniform imageBuffer outputLightmap;
+layout (set = 0, binding = 3) buffer PixelIndiciesData {
+    uint count;
+    uint8_t indices[];
+} pixelIndiciesData;
+
+layout (set = 0, binding = 4, rgba16f) uniform imageBuffer outputLightmap;
 
 layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 layout (local_size_x_id = 3) in;
 layout (local_size_y_id = 4) in;
-layout (local_size_z_id = 5) in;
 
 // Thanks to https://web.archive.org/web/20250919062256if_/https://www.graphics.cornell.edu/pubs/1997/MT97.pdf
 //  which this code is based on
@@ -129,11 +135,11 @@ int computeLuxelIndex(MapTriangle triangle, vec3 hit) {
 float getLightStrength(float distance, Light light) {
     float inverseRange = 1.0 / light.range;
     float nd = distance * inverseRange;
-	nd *= nd;
-	nd *= nd;
-	nd = max(1.0 - nd, 0.0);
-	nd *= nd; 
-	return nd * pow(max(distance, 0.0001), -light.attenuation);
+    nd *= nd;
+    nd *= nd;
+    nd = max(1.0 - nd, 0.0);
+    nd *= nd;
+    return nd * pow(max(distance, 0.0001), -light.attenuation) * light.brightnessScale;
 }
 
 void main() {
@@ -175,6 +181,12 @@ void main() {
     }
 
     int index = computeLuxelIndex(closestIntersection.triangle, closestIntersection.intersection);
-
-    imageStore(outputLightmap, index, imageLoad(outputLightmap, index) + closestIntersection.lightStrength * vec4(light.color, 1));
+    if (pixelIndiciesData.indices[index] != 1) {
+        pixelIndiciesData.count++;
+    }
+    pixelIndiciesData.indices[index] = uint8_t(1);
+    vec4 currentColor = imageLoad(outputLightmap, index);
+    imageStore(outputLightmap, index, vec4((currentColor.xyz + closestIntersection.lightStrength * light.color) / 2, 1));
+    // imageStore(outputLightmap, index, vec4(currentColor.xyz + closestIntersection.lightStrength * light.color, uintBitsToFloat(floatBitsToUint(currentColor.w) + 1)));
+    // imageStore(outputLightmap, index, vec4(light.color, 1));
 }

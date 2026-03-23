@@ -28,6 +28,10 @@ add_executable(mapcomp mapcomp.cpp
         Light.h
         LightBaker.cpp
         LightBaker.hpp
+        LightBakerGpu.cpp
+        LightBakerGpu.hpp
+        LightBakerCpu.cpp
+        LightBakerCpu.hpp
 )
 
 target_compile_options(mapcomp PRIVATE -pthread)
