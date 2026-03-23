@@ -137,5 +137,7 @@ void SharedMgr::UpdateAssetPaths()
     {
         return;
     }
-    pathManager = SearchPathManager(gameConfig, Options::Get().GetExecutablePath());
+    pathManager = SearchPathManager(gameConfig,
+                                    Options::Get().GetExecutablePath(),
+                                    Options::Get().GetGameConfigParentPath());
 }

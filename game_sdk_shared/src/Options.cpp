@@ -89,6 +89,12 @@ std::string Options::GetAssetsPath() const
     return path.parent_path().string();
 }
 
+std::string Options::GetGameConfigParentPath() const
+{
+    const std::filesystem::path path = std::filesystem::path(gameConfigPath);
+    return path.parent_path().parent_path().string();
+}
+
 std::string Options::GetExecutablePath() const
 {
     const std::filesystem::path path = std::filesystem::path(gameExecutablePath);

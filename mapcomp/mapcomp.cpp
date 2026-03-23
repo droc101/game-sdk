@@ -44,9 +44,12 @@ int main(const int argc, const char **argv)
         return 1;
     }
 
+    const std::string assetsPath = args.GetFlagValue("--assets-dir");
+
     MapCompiler::MapCompilerSettings settings = {
-        .assetsDirectory = args.GetFlagValue("--assets-dir"),
+        .assetsDirectory = assetsPath,
         .executableDirectory = args.GetFlagValue("--executable-dir"),
+        .gameConfigParentDirectory = std::filesystem::path(assetsPath).parent_path().string(),
         .gameConfig = gameConfig,
         .bakeLightsOnCpu = args.HasFlag("--bake-on-cpu"),
         .skipLighting = args.HasFlag("--skip-lighting"),

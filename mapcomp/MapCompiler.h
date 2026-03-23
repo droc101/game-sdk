@@ -22,6 +22,7 @@ class MapCompiler
         {
             std::string assetsDirectory;
             std::string executableDirectory;
+            std::string gameConfigParentDirectory;
             DataAsset gameConfig;
             bool bakeLightsOnCpu;
             bool skipLighting;

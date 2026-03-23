@@ -33,7 +33,7 @@
 MapCompiler::MapCompiler(MapCompilerSettings &settings)
 {
     this->settings = settings;
-    this->pathManager = SearchPathManager(settings.gameConfig, settings.executableDirectory);
+    this->pathManager = SearchPathManager(settings.gameConfig, settings.executableDirectory, settings.gameConfigParentDirectory);
     this->defManager = ActorDefinitionManager(this->pathManager);
 }
 

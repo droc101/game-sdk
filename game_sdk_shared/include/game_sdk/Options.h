@@ -44,6 +44,8 @@ class Options
          */
         [[nodiscard]] std::string GetAssetsPath() const;
 
+        [[nodiscard]] std::string GetGameConfigParentPath() const;
+
         [[nodiscard]] std::string GetExecutablePath() const;
 
         std::string gameExecutablePath{};
