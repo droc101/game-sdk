@@ -22,6 +22,8 @@ class MapCompileWindow
         static inline SDL_Process *compilerProcess = nullptr;
         static inline SDL_IOStream *compilerOutputStream = nullptr;
         static inline bool playMap = true;
+        static inline bool bakeOnCpu = false;
+        static inline bool skipLighting = false;
         static inline std::string gameDir{};
         static inline std::string log{};
 

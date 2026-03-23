@@ -17,9 +17,11 @@
 #include <imgui.h>
 #include <libassets/util/Error.h>
 #include <SDL3/SDL_clipboard.h>
+#include <SDL3/SDL_error.h>
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_iostream.h>
 #include <SDL3/SDL_process.h>
+#include <vector>
 #include "MapEditor.h"
 
 void MapCompileWindow::StartCompile()
@@ -43,13 +45,21 @@ void MapCompileWindow::StartCompile()
             compilerPath += ".exe";
 #endif
 
-            const std::string srcArgument = "--map-source=" + MapEditor::mapFile;
-            const std::string assetsDirArgument = "--assets-dir=" + Options::Get().GetAssetsPath();
-            const std::string execDirArgument = "--executable-dir=" + Options::Get().GetExecutablePath();
+            std::vector<std::string> arguments = {
+                "--map-source=" + MapEditor::mapFile,
+                "--assets-dir=" + Options::Get().GetAssetsPath(),
+                "--executable-dir=" + Options::Get().GetExecutablePath(),
+            };
+            if (bakeOnCpu)
+            {
+                arguments.emplace_back("--bake-on-cpu");
+            }
+            if (skipLighting)
+            {
+                arguments.emplace_back("--skip-lighting");
+            }
 
-
-            compilerProcess = DesktopInterface::Get()
-                                      .StartSDLProcess(compilerPath, {srcArgument, assetsDirArgument, execDirArgument});
+            compilerProcess = DesktopInterface::Get().StartSDLProcess(compilerPath, arguments);
 
             if (compilerProcess == nullptr)
             {
@@ -95,6 +105,10 @@ void MapCompileWindow::Render()
     if (compilerProcess == nullptr || compilerOutputStream == nullptr)
     {
         ImGui::Checkbox("Play after compile", &playMap);
+        ImGui::SameLine();
+        ImGui::Checkbox("CPU light baking", &bakeOnCpu);
+        ImGui::SameLine();
+        ImGui::Checkbox("Skip Lighting", &skipLighting);
 
         if (ImGui::Button("Compile"))
         {

@@ -11,7 +11,6 @@
 #include <cstdio>
 #include <glm/detail/func_geometric.inl>
 #include <glm/vec2.hpp>
-#include <libassets/asset/DataAsset.h>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
@@ -31,12 +30,10 @@
 #include "LightBaker.hpp"
 #include "SectorCollisionBuilder.h"
 
-MapCompiler::MapCompiler(const std::string &assetsDirectory,
-                         const std::string &executableDirectory,
-                         DataAsset &gameConfig)
+MapCompiler::MapCompiler(MapCompilerSettings &settings)
 {
-    this->assetsDirectory = assetsDirectory;
-    this->pathManager = SearchPathManager(gameConfig, executableDirectory);
+    this->settings = settings;
+    this->pathManager = SearchPathManager(settings.gameConfig, settings.executableDirectory);
     this->defManager = ActorDefinitionManager(this->pathManager);
 }
 
@@ -55,7 +52,7 @@ Error::ErrorCode MapCompiler::Compile() const
         return e;
     }
 
-    const std::string outPath = assetsDirectory + "/map/" + mapBasename + ".gmap";
+    const std::string outPath = settings.assetsDirectory + "/map/" + mapBasename + ".gmap";
     printf("[INFO] Saving map to \"%s\"\n", outPath.c_str());
     return AssetReader::SaveToFile(outPath.c_str(),
                                    buffer,
@@ -344,10 +341,10 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     }
 
     std::vector<uint8_t> pixels = {0x00, 0x3c, 0x00, 0x3c, 0x00, 0x3c, 0x00, 0x3c}; // float16 1.0
-    if (!lights.empty())
+    if (!lights.empty() && !settings.skipLighting)
     {
         printf("[INFO] Baking lightmap...\n");
-        if (!LightBaker::bake(meshBuilders, lights, pixels, lightmapSize))
+        if (!LightBaker::bake(meshBuilders, lights, pixels, lightmapSize, settings.bakeLightsOnCpu))
         {
             return Error::ErrorCode::UNKNOWN;
         }

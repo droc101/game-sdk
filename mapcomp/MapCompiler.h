@@ -18,12 +18,19 @@
 class MapCompiler
 {
     public:
+        struct MapCompilerSettings
+        {
+            std::string assetsDirectory;
+            std::string executableDirectory;
+            DataAsset gameConfig;
+            bool bakeLightsOnCpu;
+            bool skipLighting;
+        };
+
         /**
          * Create a map compiler with a given assets directory
          */
-        explicit MapCompiler(const std::string &assetsDirectory,
-                             const std::string &executableDirectory,
-                             DataAsset &gameConfig);
+        explicit MapCompiler(MapCompilerSettings &settings);
 
         /**
          * Load a map source file
@@ -38,7 +45,7 @@ class MapCompiler
         [[nodiscard]] Error::ErrorCode Compile() const;
 
     private:
-        std::string assetsDirectory;
+        MapCompilerSettings settings;
         std::string mapBasename;
         MapAsset map;
         SearchPathManager pathManager;

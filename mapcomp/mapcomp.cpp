@@ -44,9 +44,15 @@ int main(const int argc, const char **argv)
         return 1;
     }
 
-    MapCompiler compiler = MapCompiler(args.GetFlagValue("--assets-dir"),
-                                       args.GetFlagValue("--executable-dir"),
-                                       gameConfig);
+    MapCompiler::MapCompilerSettings settings = {
+        .assetsDirectory = args.GetFlagValue("--assets-dir"),
+        .executableDirectory = args.GetFlagValue("--executable-dir"),
+        .gameConfig = gameConfig,
+        .bakeLightsOnCpu = args.HasFlag("--bake-on-cpu"),
+        .skipLighting = args.HasFlag("--skip-lighting"),
+    };
+
+    MapCompiler compiler = MapCompiler(settings);
 
     if (args.HasFlagWithValue("--map-source"))
     {
