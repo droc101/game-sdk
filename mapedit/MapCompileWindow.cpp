@@ -3,12 +3,23 @@
 //
 
 #include "MapCompileWindow.h"
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <format>
+#include <fstream>
 #include <game_sdk/DesktopInterface.h>
+#include <game_sdk/DialogFilters.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
 #include <imgui.h>
-#include <misc/cpp/imgui_stdlib.h>
+#include <libassets/util/Error.h>
+#include <SDL3/SDL_clipboard.h>
 #include <SDL3/SDL_filesystem.h>
+#include <SDL3/SDL_iostream.h>
+#include <SDL3/SDL_process.h>
 #include "MapEditor.h"
 
 void MapCompileWindow::StartCompile()
@@ -36,34 +47,33 @@ void MapCompileWindow::StartCompile()
             const std::string assetsDirArgument = "--assets-dir=" + Options::Get().GetAssetsPath();
             const std::string execDirArgument = "--executable-dir=" + Options::Get().GetExecutablePath();
 
-            compilerProcess = DesktopInterface::Get().StartSDLProcess(compilerPath, {srcArgument, assetsDirArgument, execDirArgument});
+
+            compilerProcess = DesktopInterface::Get()
+                                      .StartSDLProcess(compilerPath, {srcArgument, assetsDirArgument, execDirArgument});
 
             if (compilerProcess == nullptr)
             {
                 log += std::format("Failed to launch compiler: {}\n", SDL_GetError());
                 return;
             }
-            size_t outputSize = 0;
-            int exitCode = -1;
-            char *output = static_cast<char *>(SDL_ReadProcess(compilerProcess, &outputSize, &exitCode));
-            log += std::string(output);
-            SDL_free(output);
-            log += std::format("\nProcess exited with code {}", exitCode);
-            SDL_DestroyProcess(compilerProcess);
-            compilerProcess = nullptr;
-            if (exitCode == 0 && playMap)
-            {
-                const std::string mapName = std::filesystem::path(MapEditor::mapFile).stem().string();
-                const std::string mapArg = "--map=" + mapName;
-                const std::string gameArg = "--game=" + Options::Get().GetAssetsPath();
-                if (!DesktopInterface::Get().ExecuteProcessNonBlocking(Options::Get().gameExecutablePath,
-                                                                 {mapArg.c_str(), "--nosteam", gameArg}))
-                {
-                    log += "Failed to execute game binary";
-                }
-            }
+
+            log = "Compiling map file \"" + MapEditor::mapFile + "\"...\n";
+
+            compilerOutputStream = SDL_GetProcessOutput(compilerProcess);
         }
     }
+}
+
+void MapCompileWindow::SaveLog(const std::string &path)
+{
+    std::ofstream out(path);
+    if (!out.is_open())
+    {
+        SDKWindow::Get().ErrorMessage("Failed to open log file \"" + path + "\".");
+        return;
+    }
+    out << log;
+    out.close();
 }
 
 void MapCompileWindow::Show()
@@ -82,26 +92,101 @@ void MapCompileWindow::Render()
                  &visible,
                  ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking);
 
-    ImGui::BeginDisabled(compilerProcess != nullptr);
-    ImGui::Checkbox("Play after compile", &playMap);
-
-    if (ImGui::Button("Compile"))
+    if (compilerProcess == nullptr || compilerOutputStream == nullptr)
     {
-        StartCompile();
+        ImGui::Checkbox("Play after compile", &playMap);
+
+        if (ImGui::Button("Compile"))
+        {
+            StartCompile();
+        }
+    } else
+    {
+        ImGui::ProgressBar(static_cast<float>(ImGui::GetTime()) * -0.5f, ImVec2(-1, 0), "Compiling...");
     }
-    ImGui::EndDisabled();
-
-    if (ImGui::CollapsingHeader("Compiler Output", ImGuiTreeNodeFlags_DefaultOpen))
+    if (!log.empty())
     {
+        ImGui::Separator();
         ImGui::PushFont(SDKWindow::Get().GetMonospaceFont(), 18);
-        ImGui::InputTextMultiline("##output",
-                                  &log,
-                                  ImVec2(-1, 300),
-                                  ImGuiInputTextFlags_ReadOnly |
-                                          ImGuiInputTextFlags_WordWrap |
-                                          ImGuiInputTextFlags_NoHorizontalScroll);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 1));
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.1, 0.1, 0.1, 1));
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0, 0, 0, 0));
+        if (ImGui::BeginChild("scrolling",
+                              ImVec2(-1, 300),
+                              ImGuiChildFlags_Borders,
+                              ImGuiWindowFlags_HorizontalScrollbar))
+        {
+            ImGui::TextUnformatted(log.c_str());
+            if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+            {
+                ImGui::SetScrollHereY(1.0f);
+            }
+        }
+        ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
+        ImGui::EndChild();
         ImGui::PopFont();
+        ImGui::Separator();
+        if (ImGui::Button("Copy Output"))
+        {
+            SDL_SetClipboardText(log.c_str());
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Save Output"))
+        {
+            SDKWindow::Get().SaveFileDialog(SaveLog, DialogFilters::logFilters);
+        }
     }
 
     ImGui::End();
+
+    if (compilerProcess != nullptr)
+    {
+        int exitCode = 0;
+        if (SDL_WaitProcess(compilerProcess, false, &exitCode))
+        {
+            size_t logSize = 0;
+            char *output = static_cast<char *>(SDL_ReadProcess(compilerProcess, &logSize, nullptr));
+            log += std::string(output);
+
+            log += std::format("\nProcess exited with code {}", exitCode);
+            SDL_CloseIO(compilerOutputStream);
+            compilerOutputStream = nullptr;
+            SDL_DestroyProcess(compilerProcess);
+            compilerProcess = nullptr;
+
+            if (exitCode == 0 && playMap)
+            {
+                const std::string mapName = std::filesystem::path(MapEditor::mapFile).stem().string();
+                const std::string mapArg = "--map=" + mapName;
+                const std::string gameArg = "--game=" + Options::Get().GetAssetsPath();
+                if (!DesktopInterface::Get().ExecuteProcessNonBlocking(Options::Get().gameExecutablePath,
+                                                                       {mapArg.c_str(), "--nosteam", gameArg}))
+                {
+                    log += "Failed to execute game binary";
+                }
+            }
+        }
+    }
+
+    if (compilerOutputStream != nullptr)
+    {
+        std::array<char, 1024> buffer{};
+        const size_t bytesRead = SDL_ReadIO(compilerOutputStream, buffer.data(), 1000);
+        buffer.at(bytesRead) = 0;
+        log += std::string(buffer.data());
+        if (bytesRead == 0)
+        {
+            const SDL_IOStatus status = SDL_GetIOStatus(compilerOutputStream);
+            if (status == SDL_IO_STATUS_EOF)
+            {
+                SDL_CloseIO(compilerOutputStream);
+                compilerOutputStream = nullptr;
+            } else if (status != SDL_IO_STATUS_NOT_READY) // not ready just means no new output
+            {
+                printf("Failed to read SDL IOStream: %d \"%s\"\n", status, SDL_GetError());
+            }
+        }
+    }
 }

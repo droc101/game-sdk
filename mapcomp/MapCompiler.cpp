@@ -57,7 +57,6 @@ Error::ErrorCode MapCompiler::Compile() const
 
     const std::string outPath = assetsDirectory + "/map/" + mapBasename + ".gmap";
     printf("[INFO] Saving map to \"%s\"\n", outPath.c_str());
-
     return AssetReader::SaveToFile(outPath.c_str(),
                                    buffer,
                                    Asset::AssetType::ASSET_TYPE_LEVEL,
@@ -347,6 +346,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     std::vector<uint8_t> pixels = {0x00, 0x3c, 0x00, 0x3c, 0x00, 0x3c, 0x00, 0x3c}; // float16 1.0
     if (!lights.empty())
     {
+        printf("[INFO] Baking lightmap...\n");
         if (!LightBaker::bake(meshBuilders, lights, pixels, lightmapSize))
         {
             return Error::ErrorCode::UNKNOWN;
@@ -357,6 +357,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
 
     } else
     {
+        printf("[INFO] Using fullbright lightmap\n");
         writer.Write<size_t>(1);
         writer.Write<size_t>(1);
         writer.WriteBuffer(pixels);

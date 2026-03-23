@@ -12,6 +12,8 @@
 
 int main(const int argc, const char **argv)
 {
+    setvbuf(stdout, nullptr, _IONBF, 0);
+
     printf("GAME SDK Map Compiler\n");
     const ArgumentParser args = ArgumentParser(argc, argv);
 

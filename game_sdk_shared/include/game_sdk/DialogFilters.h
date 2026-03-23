@@ -20,6 +20,10 @@ class DialogFilters
 #endif
         };
 
+        static inline const std::vector<SDL_DialogFileFilter> logFilters = {
+            SDL_DialogFileFilter{"Log File (*.log)", "log"},
+        };
+
         // fonedit
         static inline const std::vector<SDL_DialogFileFilter> gfonFilters = {
             SDL_DialogFileFilter{"GAME font (*.gfon)", "gfon"},
