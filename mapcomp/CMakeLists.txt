@@ -15,8 +15,6 @@ FetchContent_MakeAvailable(Luna)
 
 add_executable(mapcomp mapcomp.cpp
         $<$<BOOL:${WIN32}>:mapcomp.rc>
-        ArgumentParser.cpp
-        ArgumentParser.h
         LevelMeshBuilder.cpp
         LevelMeshBuilder.h
         MapCompiler.cpp

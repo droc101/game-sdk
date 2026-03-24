@@ -122,6 +122,8 @@ add_library(assets SHARED
         include/libassets/util/ActorDefinitionManager.h
         include/libassets/type/MapVertex.h
         src/type/MapVertex.cpp
+        src/util/ArgumentParser.cpp
+        include/libassets/util/ArgumentParser.h
 )
 
 set_target_properties(assets PROPERTIES
