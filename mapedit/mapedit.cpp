@@ -544,6 +544,7 @@ static void Render()
     ActorBrowserWindow::Render();
     MapPropertiesWindow::Render();
     MapCompileWindow::Render();
+    MapCompileWindow::RenderCompileOutput();
 }
 
 int main(int argc, char **argv)

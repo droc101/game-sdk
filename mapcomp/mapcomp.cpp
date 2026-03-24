@@ -4,10 +4,10 @@
 
 #include <cstdio>
 #include <libassets/asset/DataAsset.h>
+#include <libassets/util/ArgumentParser.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/SearchPathManager.h>
 #include <vector>
-#include "ArgumentParser.h"
 #include "MapCompiler.h"
 
 int main(const int argc, const char **argv)

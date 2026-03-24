@@ -54,9 +54,17 @@ void MapCompileWindow::StartCompile()
             {
                 arguments.emplace_back("--bake-on-cpu");
             }
-            if (skipLighting)
+            switch (lightCompileMode)
             {
-                arguments.emplace_back("--skip-lighting");
+                case LightingCompileMode::FULL_COMPILE:
+                    arguments.emplace_back("--full");
+                    break;
+                case LightingCompileMode::FAST_COMPILE:
+                    arguments.emplace_back("--fast");
+                    break;
+                case LightingCompileMode::DONT_COMPILE:
+                    arguments.emplace_back("--skip-lighting");
+                    break;
             }
 
             compilerProcess = DesktopInterface::Get().StartSDLProcess(compilerPath, arguments);
@@ -70,6 +78,7 @@ void MapCompileWindow::StartCompile()
             log = "Compiling map file \"" + MapEditor::mapFile + "\"...\n";
 
             compilerOutputStream = SDL_GetProcessOutput(compilerProcess);
+            outputVisible = true;
         }
     }
 }
@@ -97,36 +106,56 @@ void MapCompileWindow::Render()
     {
         return;
     }
-    ImGui::SetNextWindowSize(ImVec2(500, -1));
+    ImGui::SetNextWindowSize(ImVec2(250, -1));
     ImGui::Begin("Compile Map",
                  &visible,
                  ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking);
 
-    if (compilerProcess == nullptr || compilerOutputStream == nullptr)
+    ImGui::Checkbox("Play after compile", &playMap);
+    ImGui::Separator();
+    if (ImGui::RadioButton("Full Light Baking", lightCompileMode == LightingCompileMode::FULL_COMPILE))
     {
-        ImGui::Checkbox("Play after compile", &playMap);
-        ImGui::SameLine();
-        ImGui::Checkbox("CPU light baking", &bakeOnCpu);
-        ImGui::SameLine();
-        ImGui::Checkbox("Skip Lighting", &skipLighting);
-
-        if (ImGui::Button("Compile"))
-        {
-            StartCompile();
-        }
-    } else
-    {
-        ImGui::ProgressBar(static_cast<float>(ImGui::GetTime()) * -0.5f, ImVec2(-1, 0), "Compiling...");
+        lightCompileMode = LightingCompileMode::FULL_COMPILE;
     }
-    if (!log.empty())
+    if (ImGui::RadioButton("Fast Light Baking", lightCompileMode == LightingCompileMode::FAST_COMPILE))
     {
-        ImGui::Separator();
+        lightCompileMode = LightingCompileMode::FAST_COMPILE;
+    }
+    if (ImGui::RadioButton("Skip Light Baking", lightCompileMode == LightingCompileMode::DONT_COMPILE))
+    {
+        lightCompileMode = LightingCompileMode::DONT_COMPILE;
+    }
+    ImGui::Dummy(ImVec2(-1, 8));
+    ImGui::Checkbox("CPU light baking (slow!)", &bakeOnCpu);
+    ImGui::Dummy(ImVec2(-1, 8));
+    if (ImGui::Button("Compile"))
+    {
+        StartCompile();
+    }
+
+    if (compilerProcess != nullptr && compilerOutputStream != nullptr)
+    {
+
+    }
+    ImGui::End();
+}
+
+void MapCompileWindow::RenderCompileOutput()
+{
+    if (!outputVisible)
+    {
+        return;
+    }
+    ImGui::OpenPopup("Compiler Output");
+    ImGui::SetNextWindowSize(ImVec2(550, -1));
+    if (ImGui::BeginPopupModal("Compiler Output", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking))
+    {
         ImGui::PushFont(SDKWindow::Get().GetMonospaceFont(), 18);
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 1));
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.1, 0.1, 0.1, 1));
         ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0, 0, 0, 0));
         if (ImGui::BeginChild("scrolling",
-                              ImVec2(-1, 300),
+                              ImVec2(-1, 400),
                               ImGuiChildFlags_Borders,
                               ImGuiWindowFlags_HorizontalScrollbar))
         {
@@ -142,19 +171,35 @@ void MapCompileWindow::Render()
         ImGui::EndChild();
         ImGui::PopFont();
         ImGui::Separator();
-        if (ImGui::Button("Copy Output"))
+        if (compilerProcess != nullptr || compilerOutputStream != nullptr)
         {
-            SDL_SetClipboardText(log.c_str());
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Save Output"))
+            ImGui::ProgressBar(static_cast<float>(ImGui::GetTime()) * -0.5f, ImVec2(-1, 0), "Compiling...");
+        } else
         {
-            SDKWindow::Get().SaveFileDialog(SaveLog, DialogFilters::logFilters);
+            if (ImGui::Button("Copy Output"))
+            {
+                (void)SDL_SetClipboardText(log.c_str());
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Save Output"))
+            {
+                SDKWindow::Get().SaveFileDialog(SaveLog, DialogFilters::logFilters);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("OK"))
+            {
+                ImGui::CloseCurrentPopup();
+                outputVisible = false;
+            }
         }
+        ImGui::EndPopup();
     }
 
-    ImGui::End();
+    ProcessCompilerOutput();
+}
 
+void MapCompileWindow::ProcessCompilerOutput()
+{
     if (compilerProcess != nullptr)
     {
         int exitCode = 0;
@@ -183,7 +228,6 @@ void MapCompileWindow::Render()
             }
         }
     }
-
     if (compilerOutputStream != nullptr)
     {
         std::array<char, 1024> buffer{};
