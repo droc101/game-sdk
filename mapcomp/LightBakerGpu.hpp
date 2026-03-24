@@ -63,6 +63,7 @@ class LightBakerGpu
         LunaBuffer vertexBuffer{};
         LunaBuffer indexBuffer{};
         std::array<LunaBuffer, 2> pixelIndicesBuffers{};
+        LunaBuffer hitIndicesBuffer{};
         LunaBuffer lightmap2d{};
         LunaBufferView lightmap2dBufferView{};
 };
