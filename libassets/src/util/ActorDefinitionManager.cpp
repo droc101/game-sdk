@@ -4,13 +4,13 @@
 
 #include <cassert>
 #include <cstddef>
-#include <cstdio>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/OptionDefinition.h>
 #include <libassets/type/paramDefs/OptionParamDefinition.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/util/ActorDefinitionManager.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <memory>
 #include <ranges>
@@ -37,10 +37,10 @@ void ActorDefinitionManager::LoadOptionDefinitions(const SearchPathManager &path
             optionDefinitions[def.GetName()] = def;
         } else
         {
-            printf("Failed to load option def %s: %s\n", val.c_str(), Error::ErrorString(e).c_str());
+            Logger::Error("Failed to load option def {}: {}", val.c_str(), Error::ErrorString(e).c_str());
         }
     }
-    printf("Loaded %zu option definitions\n", optionDefinitions.size());
+    Logger::Verbose("Loaded {} option definitions", optionDefinitions.size());
 }
 
 void ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathManager)
@@ -56,7 +56,7 @@ void ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathM
             actorClassNames.push_back(def.className);
         } else
         {
-            printf("Failed to load actor def %s: %s\n", val.c_str(), Error::ErrorString(e).c_str());
+            Logger::Error("Failed to load actor def {}: {}", val.c_str(), Error::ErrorString(e).c_str());
         }
     }
 
@@ -85,15 +85,15 @@ void ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathM
         }
     }
 
-    printf("Loaded %zu actor definitions\n", actorDefinitions.size());
+    Logger::Verbose("Loaded {} actor definitions", actorDefinitions.size());
 
     if (!actorDefinitions.contains("player"))
     {
-        printf("WARNING: No \"player\" actor class definition was loaded!\n");
+        Logger::Warning("No \"player\" actor class definition was loaded!");
     }
     if (!actorDefinitions.contains("actor"))
     {
-        printf("WARNING: No \"actor\" actor class definition was loaded!\n");
+        Logger::Warning("No \"actor\" actor class definition was loaded!");
     }
 }
 

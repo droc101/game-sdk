@@ -6,7 +6,6 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <cstring>
 #include <format>
 #include <fstream>
@@ -16,6 +15,7 @@
 #include <game_sdk/SDKWindow.h>
 #include <imgui.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <SDL3/SDL_clipboard.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_filesystem.h>
@@ -49,6 +49,7 @@ void MapCompileWindow::StartCompile()
                 "--map-source=" + MapEditor::mapFile,
                 "--assets-dir=" + Options::Get().GetAssetsPath(),
                 "--executable-dir=" + Options::Get().GetExecutablePath(),
+                "--no-ansi",
             };
             if (bakeOnCpu)
             {
@@ -63,6 +64,10 @@ void MapCompileWindow::StartCompile()
             if (skipLighting)
             {
                 arguments.emplace_back("--skip-lighting");
+            }
+            if (verbose)
+            {
+                arguments.emplace_back("--verbose");
             }
 
             compilerProcess = DesktopInterface::Get().StartSDLProcess(compilerPath, arguments);
@@ -121,6 +126,8 @@ void MapCompileWindow::Render()
     ImGui::SeparatorText("Lighting Options");
     ImGui::Checkbox("Skip lighting", &skipLighting);
     ImGui::Checkbox("CPU light baking (slow!)", &bakeOnCpu);
+    ImGui::SeparatorText("Debug Options");
+    ImGui::Checkbox("Verbose Logging", &verbose);
     ImGui::SeparatorText("Game Options");
     ImGui::Checkbox("Play after compile", &playMap);
     ImGui::Dummy(ImVec2(-1, 8));
@@ -135,9 +142,7 @@ void MapCompileWindow::Render()
     }
 
     if (compilerProcess != nullptr && compilerOutputStream != nullptr)
-    {
-
-    }
+    {}
     ImGui::End();
 }
 
@@ -149,7 +154,9 @@ void MapCompileWindow::RenderCompileOutput()
     }
     ImGui::OpenPopup("Compiler Output");
     ImGui::SetNextWindowSize(ImVec2(550, -1));
-    if (ImGui::BeginPopupModal("Compiler Output", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking))
+    if (ImGui::BeginPopupModal("Compiler Output",
+                               nullptr,
+                               ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking))
     {
         ImGui::PushFont(SDKWindow::Get().GetMonospaceFont(), 18);
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 1));
@@ -244,7 +251,7 @@ void MapCompileWindow::ProcessCompilerOutput()
                 compilerOutputStream = nullptr;
             } else if (status != SDL_IO_STATUS_NOT_READY) // not ready just means no new output
             {
-                printf("Failed to read SDL IOStream: %d \"%s\"\n", status, SDL_GetError());
+                Logger::Error("Failed to read SDL IOStream: {} \"{}\"", static_cast<int>(status), SDL_GetError());
             }
         }
     }

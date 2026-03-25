@@ -6,10 +6,10 @@
 
 #include <array>
 #include <concepts>
-#include <cstdio>
 #include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/Logger.h>
 #include <limits>
 #include <vector>
 
@@ -46,7 +46,7 @@ class BoundingBox
         {
             if (verts.empty())
             {
-                printf("WARN: Tried to create AABB with 0 points!");
+                Logger::Warning("Tried to create AABB with 0 points!");
                 return;
             }
             glm::vec3 minPoint = {

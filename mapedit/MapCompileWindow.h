@@ -29,6 +29,7 @@ class MapCompileWindow
         static inline bool outputVisible = false;
         static inline bool fastCompile = false;
         static inline bool skipLighting = false;
+        static inline bool verbose = false;
 
         static void StartCompile();
         static void SaveLog(const std::string &path);

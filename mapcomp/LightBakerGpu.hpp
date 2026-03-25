@@ -6,15 +6,13 @@
 
 #include <array>
 #include <cstdint>
-#include <cstdio>
-#include <libassets/type/MapVertex.h>
+#include <libassets/util/Logger.h>
 #include <luna/lunaTypes.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 #include "LevelMeshBuilder.h"
-#include "libassets/type/Actor.h"
 #include "Light.h"
 
 class LightBakerGpu
@@ -39,7 +37,7 @@ class LightBakerGpu
         {
             if (result != VK_SUCCESS)
             {
-                printf("Error %d in Vulkan function!\n", result);
+                Logger::Error("Error {} in Vulkan function!", static_cast<uint32_t>(result));
                 return false;
             }
             return true;

@@ -2,9 +2,9 @@
 // Created by droc101 on 2/2/26.
 //
 
+#include <SDL3/SDL_pixels.h>
 #include <cassert>
 #include <cstdint>
-#include <cstdio>
 #include <game_sdk/gl/GLHelper.h>
 #include <game_sdk/ModelViewer.h>
 #include <game_sdk/Options.h>
@@ -15,6 +15,7 @@
 #include <imgui_impl_sdl3.h>
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
@@ -37,8 +38,7 @@ SDKWindow &SDKWindow::Get()
 bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, const SDL_WindowFlags windowFlags)
 {
     assert(!initDone);
-
-    printf("Starting %s...\n", appName.c_str());
+    Logger::Info("Starting {}...", appName);
 
     (void)SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, appName.c_str());
     (void)SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, "Droc101 Development");
@@ -52,7 +52,7 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
 
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
-        printf("Error: SDL_Init(): %s\n", SDL_GetError());
+        Logger::Error("SDL_Init() failed: {}", SDL_GetError());
         return false;
     }
 
@@ -61,51 +61,51 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
     const char *glslVersion = "#version 460";
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0))
     {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
+        Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
     }
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE))
     {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
+        Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
     }
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4))
     {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
+        Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
     }
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6))
     {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
+        Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
     }
     if (!SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1))
     {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
+        Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
     }
     if (!SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0))
     {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
+        Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
     }
     if (!SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0))
     {
-        printf("Error: SDL_GL_SetAttribute(): %s\n", SDL_GetError());
+        Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
     }
 
     const SDL_WindowFlags sdlWindowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | windowFlags;
     window = SDL_CreateWindow(appName.c_str(), windowSize.x, windowSize.y, sdlWindowFlags);
     if (window == nullptr)
     {
-        printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
+        Logger::Error("SDL_CreateWindow() failed: {}", SDL_GetError());
         return false;
     }
 
     glContext = SDL_GL_CreateContext(window);
     if (glContext == nullptr)
     {
-        printf("Error: SDL_GL_CreateContext(): %s\n", SDL_GetError());
+        Logger::Error("SDL_GL_CreateContext() failed: {}", SDL_GetError());
         return false;
     }
 
     if (!SDL_GL_MakeCurrent(window, glContext))
     {
-        printf("Error: SDL_GL_MakeCurrent(): %s\n", SDL_GetError());
+        Logger::Error("SDL_GL_MakeCurrent() failed: {}", SDL_GetError());
         return false;
     }
 
@@ -121,7 +121,7 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
 
     if (!SDL_GL_SetSwapInterval(1)) // Enable vsync
     {
-        printf("Error: SDL_GL_SetSwapInterval(): %s\n", SDL_GetError());
+        Logger::Error("SDL_GL_SetSwapInterval() failed: {}", SDL_GetError());
     }
 
     SharedMgr::Get().textureCache.InitMissingTexture();
@@ -142,7 +142,7 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
 
     if (!SDL_ShowWindow(window))
     {
-        printf("Error: SDL_ShowWindow(): %s\n", SDL_GetError());
+        Logger::Error("SDL_ShowWindow() failed: {}", SDL_GetError());
         return false;
     }
 
@@ -167,12 +167,12 @@ void SDKWindow::SetWindowIcon(const std::string &iconName) const
                                                  static_cast<int>(sizeof(uint32_t) * iconAsset.GetWidth()));
     if (surface == nullptr)
     {
-        printf("Error: SDL_CreateSurfaceFrom failed: %s\n", SDL_GetError());
+        Logger::Error("SDL_CreateSurfaceFrom failed: {}", SDL_GetError());
     } else
     {
         if (!SDL_SetWindowIcon(window, surface))
         {
-            printf("Error: SDL_SetWindowIcon failed: %s\n", SDL_GetError());
+            Logger::Error("SDL_SetWindowIcon failed: {}", SDL_GetError());
         }
     }
     SDL_DestroySurface(surface);
@@ -217,7 +217,7 @@ void SDKWindow::MainLoop(const SDKWindowRenderFunction Render, const SDKWindowPr
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         if (!SDL_GL_SwapWindow(window))
         {
-            printf("Error: SDL_GL_SwapWindow(): %s\n", SDL_GetError());
+            Logger::Error("SDL_GL_SwapWindow() failed: {}", SDL_GetError());
         }
 
         if (quitRequest)
@@ -249,7 +249,7 @@ void SDKWindow::Destroy()
     ImGui::DestroyContext();
     if (!SDL_GL_DestroyContext(glContext))
     {
-        printf("Error: SDL_GL_DestroyContext(): %s\n", SDL_GetError());
+        Logger::Error("SDL_GL_DestroyContext() failed: {}", SDL_GetError());
     }
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -305,7 +305,7 @@ void SDKWindow::MultiFileDialogCallback(void *userdata, const char *const *fileL
         MultiFileDialogMainThreadCallbackData data = {.Callback = Callback, .paths = files};
         if (!SDL_RunOnMainThread(MultiFileDialogMainThreadCallback, &data, true))
         {
-            printf("Failed to call MultiFileDialogMainThreadCallback on main thread: %s\n", SDL_GetError());
+            Logger::Error("Failed to call MultiFileDialogMainThreadCallback on main thread: {}", SDL_GetError());
         }
     }
 }
@@ -326,7 +326,7 @@ void SDKWindow::FileDialogCallback(void *userdata, const char *const *fileList, 
         FileDialogMainThreadCallbackData data = {.Callback = Callback, .path = fileList[0]};
         if (!SDL_RunOnMainThread(FileDialogMainThreadCallback, &data, true))
         {
-            printf("Failed to call FileDialogMainThreadCallback on main thread: %s\n", SDL_GetError());
+            Logger::Error("Failed to call FileDialogMainThreadCallback on main thread: {}", SDL_GetError());
         }
     }
 }

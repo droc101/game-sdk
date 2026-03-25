@@ -6,6 +6,7 @@
 #include <libassets/asset/DataAsset.h>
 #include <libassets/util/ArgumentParser.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <vector>
 #include "MapCompiler.h"
@@ -13,25 +14,27 @@
 int main(const int argc, const char **argv)
 {
     setvbuf(stdout, nullptr, _IONBF, 0);
-
-    printf("GAME SDK Map Compiler\n");
     const ArgumentParser args = ArgumentParser(argc, argv);
+    Logger::ansi = !args.HasFlag("--no-ansi");
+    Logger::verbose = args.HasFlag("--verbose");
+
+    Logger::Info("GAME SDK Map Compiler");
 
     if (!(args.HasFlagWithValue("--map-source") || args.HasFlagWithValue("--map-sources-dir")))
     {
-        printf("[ERROR] --map-source not specified!\n");
+        Logger::Error("--map-source not specified!");
         return 1;
     }
 
     if (!args.HasFlagWithValue("--assets-dir"))
     {
-        printf("[ERROR] --assets-dir not specified!\n");
+        Logger::Error("--assets-dir not specified!");
         return 1;
     }
 
     if (!args.HasFlagWithValue("--executable-dir"))
     {
-        printf("[ERROR] --executable-dir not specified!\n");
+        Logger::Error("--executable-dir not specified!");
         return 1;
     }
 
@@ -40,7 +43,7 @@ int main(const int argc, const char **argv)
     const Error::ErrorCode e = DataAsset::CreateFromAsset(gameConfigPath.c_str(), gameConfig);
     if (e != Error::ErrorCode::OK)
     {
-        printf("[ERROR] Failed to open %s: %s", gameConfigPath.c_str(), Error::ErrorString(e).c_str());
+        Logger::Error("Failed to open {}: {}", gameConfigPath.c_str(), Error::ErrorString(e).c_str());
         return 1;
     }
 
@@ -63,14 +66,14 @@ int main(const int argc, const char **argv)
         const Error::ErrorCode mapLoadResult = compiler.LoadMapSource(args.GetFlagValue("--map-source"));
         if (mapLoadResult != Error::ErrorCode::OK)
         {
-            printf("[ERROR] Failed to load map source: %s\n", Error::ErrorString(mapLoadResult).c_str());
+            Logger::Error("Failed to load map source: {}", Error::ErrorString(mapLoadResult).c_str());
             return 1;
         }
 
         const Error::ErrorCode mapCompileResult = compiler.Compile();
         if (mapCompileResult != Error::ErrorCode::OK)
         {
-            printf("[ERROR] Failed to compile map: %s\n", Error::ErrorString(mapCompileResult).c_str());
+            Logger::Error("Failed to compile map: {}", Error::ErrorString(mapCompileResult).c_str());
             return 1;
         }
     } else
@@ -86,7 +89,7 @@ int main(const int argc, const char **argv)
                                                                           map);
             if (mapLoadResult != Error::ErrorCode::OK)
             {
-                printf("[ERROR] Failed to load map source: %s\n", Error::ErrorString(mapLoadResult).c_str());
+                Logger::Error("Failed to load map source: {}", Error::ErrorString(mapLoadResult).c_str());
                 if (returnOnError)
                 {
                     return 1;
@@ -97,7 +100,7 @@ int main(const int argc, const char **argv)
             const Error::ErrorCode mapCompileResult = compiler.Compile();
             if (mapCompileResult != Error::ErrorCode::OK)
             {
-                printf("[ERROR] Failed to compile map: %s\n", Error::ErrorString(mapCompileResult).c_str());
+                Logger::Error("Failed to compile map: {}", Error::ErrorString(mapCompileResult).c_str());
                 if (returnOnError)
                 {
                     return 1;

@@ -6,13 +6,12 @@
 
 #include <glm/vec2.hpp>
 #include <imgui.h>
+#include <libassets/type/Actor.h>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <vector>
-
-#include "libassets/type/Actor.h"
 
 /**
  * Function signature for main loop render callback
@@ -22,7 +21,7 @@ using SDKWindowRenderFunction = void (*)();
 /**
  * Function signature for theme changes
  */
-using SDKWindowThemeChangeCallback = void(*)();
+using SDKWindowThemeChangeCallback = void (*)();
 
 /**
  * Function signature for main loop event handling callback

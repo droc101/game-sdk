@@ -1,6 +1,5 @@
 #include <array>
 #include <cmath>
-#include <cstdio>
 #include <format>
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/DialogFilters.h>
@@ -9,6 +8,7 @@
 #include <imgui.h>
 #include <libassets/asset/SoundAsset.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <miniaudio.h>
 #include <string>
 
@@ -242,7 +242,7 @@ int main(int argc, char **argv)
     const ma_result res = ma_engine_init(nullptr, &engine);
     if (res != MA_SUCCESS)
     {
-        printf("Error: ma_engine_init(): %d\n", res);
+        Logger::Error("ma_engine_init() failed: {}", static_cast<int>(res));
         return -1;
     }
 

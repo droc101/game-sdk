@@ -7,13 +7,13 @@
 #include <cassert>
 #include <cmath>
 #include <cstdint>
-#include <cstdio>
 #include <glm/detail/func_geometric.inl>
 #include <glm/vec2.hpp>
 #include <libassets/type/MapVertex.h>
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/Logger.h>
 #include <ranges>
 #include <string>
 #include <unordered_map>
@@ -135,7 +135,7 @@ bool LevelMeshBuilder::CalculateLightmapUvs(glm::ivec2 &lightmapSize,
         }
     }
 
-    printf("[INFO] Lightmap size: %d by %d\n", width, height);
+    Logger::Info("Lightmap size: {} by {}", width, height);
 
     lightmapSize = {width, height};
 
@@ -196,7 +196,7 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
 {
     if (floorHeight > ceilingHeight)
     {
-        printf("Compile Error: Wall with ceiling below floor, will be skipped\n");
+        Logger::Warning("Wall with ceiling below floor, will be skipped");
         return;
     }
 

@@ -4,13 +4,13 @@
 
 #include <cfloat>
 #include <cstddef>
-#include <cstdio>
 #include <format>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
 #include <utility>
@@ -35,15 +35,15 @@ void MaterialBrowserWindow::Show(std::string *material)
     str = material;
     materialPaths.clear();
     materials.clear();
-    const std::vector<SearchPathManager::AssetResult> absMaterialPaths = SharedMgr::Get().pathManager.ScanAssetFolder("/material", ".gmtl");
+    const std::vector<SearchPathManager::AssetResult>
+            absMaterialPaths = SharedMgr::Get().pathManager.ScanAssetFolder("/material", ".gmtl");
     for (const SearchPathManager::AssetResult &path: absMaterialPaths)
     {
         LevelMaterialAsset mat;
-        const Error::ErrorCode
-                e = LevelMaterialAsset::CreateFromAsset(path.absolutePath.c_str(), mat);
+        const Error::ErrorCode e = LevelMaterialAsset::CreateFromAsset(path.absolutePath.c_str(), mat);
         if (e != Error::ErrorCode::OK)
         {
-            printf("Failed to load level material asset \"%s\"\n", path.absolutePath.c_str());
+            Logger::Error("Failed to load level material asset \"{}\"", path.absolutePath.c_str());
         }
         materials.push_back(mat);
         materialPaths.push_back(path.relativePath);

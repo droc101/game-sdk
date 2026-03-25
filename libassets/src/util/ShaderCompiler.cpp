@@ -3,12 +3,12 @@
 //
 
 #include <cstdint>
-#include <cstdio>
 #include <glslang/Include/ResourceLimits.h>
 #include <glslang/MachineIndependent/Versions.h>
 #include <glslang/Public/ShaderLang.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <libassets/util/ShaderCompiler.h>
 #include <string>
 #include <vector>
@@ -54,7 +54,7 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv) con
 
     if (!shader.parse(&resources, 100, ECoreProfile, false, false, messages))
     {
-        printf("GLSL Parsing Failed:\n %s", shader.getInfoLog());
+        Logger::Error("GLSL Parsing Failed:\n {}", shader.getInfoLog());
         return Error::ErrorCode::SHADER_PARSE_ERROR;
     }
 
@@ -63,7 +63,7 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv) con
 
     if (!program.link(messages))
     {
-        printf("GLSL Linking Failed:\n %s", program.getInfoLog());
+        Logger::Error("GLSL Linking Failed:\n {}", program.getInfoLog());
         return Error::ErrorCode::SHADER_LINK_ERROR;
     }
 

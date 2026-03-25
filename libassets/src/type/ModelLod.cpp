@@ -9,13 +9,13 @@
 #include <assimp/scene.h>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <format>
 #include <fstream>
 #include <libassets/type/ModelLod.h>
 #include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/Logger.h>
 #include <numeric>
 #include <stdexcept>
 #include <string>
@@ -63,7 +63,7 @@ ModelLod::ModelLod(const std::string &filePath, const float distance)
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
-        printf("Assimp error: %s\n", importer.GetErrorString());
+        Logger::Error("Assimp error: {}", importer.GetErrorString());
         throw std::runtime_error("assimp error, check stdout");
     }
 

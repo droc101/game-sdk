@@ -2,9 +2,9 @@
 // Created by droc101 on 7/15/2025.
 //
 
-#include <cstdio>
 #include <game_sdk/gl/GLDebug.h>
 #include <GL/glew.h>
+#include <libassets/util/Logger.h>
 #include <string>
 
 // #define BREAK_ON_ERROR
@@ -113,13 +113,12 @@ void GLDebug::GL_DebugMessageCallback(const GLenum source,
             break;
     }
 
-    printf("%d: %s of %s severity, raised from %s: %s\n",
-           id,
-           typeString.c_str(),
-           severityString.c_str(),
-           sourceString.c_str(),
-           msg);
-    fflush(stdout);
+    Logger::Verbose("{}: {} of {} severity, raised from {}: {}",
+                    id,
+                    typeString.c_str(),
+                    severityString.c_str(),
+                    sourceString.c_str(),
+                    msg);
 
 #ifdef BREAK_ON_ERROR
     // If you hit this "breakpoint", an OpenGL error has been printed to the console,
