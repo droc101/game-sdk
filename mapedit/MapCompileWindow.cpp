@@ -54,17 +54,15 @@ void MapCompileWindow::StartCompile()
             {
                 arguments.emplace_back("--bake-on-cpu");
             }
-            switch (lightCompileMode)
+
+            if (fastCompile)
             {
-                case LightingCompileMode::FULL_COMPILE:
-                    arguments.emplace_back("--full");
-                    break;
-                case LightingCompileMode::FAST_COMPILE:
-                    arguments.emplace_back("--fast");
-                    break;
-                case LightingCompileMode::DONT_COMPILE:
-                    arguments.emplace_back("--skip-lighting");
-                    break;
+                arguments.emplace_back("--fast");
+            }
+
+            if (skipLighting)
+            {
+                arguments.emplace_back("--skip-lighting");
             }
 
             compilerProcess = DesktopInterface::Get().StartSDLProcess(compilerPath, arguments);
@@ -111,26 +109,29 @@ void MapCompileWindow::Render()
                  &visible,
                  ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking);
 
-    ImGui::Checkbox("Play after compile", &playMap);
-    ImGui::Separator();
-    if (ImGui::RadioButton("Full Light Baking", lightCompileMode == LightingCompileMode::FULL_COMPILE))
+    ImGui::SeparatorText("Compile Mode");
+    if (ImGui::RadioButton("Full Compile", !fastCompile))
     {
-        lightCompileMode = LightingCompileMode::FULL_COMPILE;
+        fastCompile = false;
     }
-    if (ImGui::RadioButton("Fast Light Baking", lightCompileMode == LightingCompileMode::FAST_COMPILE))
+    if (ImGui::RadioButton("Fast Compile", fastCompile))
     {
-        lightCompileMode = LightingCompileMode::FAST_COMPILE;
+        fastCompile = true;
     }
-    if (ImGui::RadioButton("Skip Light Baking", lightCompileMode == LightingCompileMode::DONT_COMPILE))
-    {
-        lightCompileMode = LightingCompileMode::DONT_COMPILE;
-    }
-    ImGui::Dummy(ImVec2(-1, 8));
+    ImGui::SeparatorText("Lighting Options");
+    ImGui::Checkbox("Skip lighting", &skipLighting);
     ImGui::Checkbox("CPU light baking (slow!)", &bakeOnCpu);
+    ImGui::SeparatorText("Game Options");
+    ImGui::Checkbox("Play after compile", &playMap);
     ImGui::Dummy(ImVec2(-1, 8));
     if (ImGui::Button("Compile"))
     {
         StartCompile();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel"))
+    {
+        visible = false;
     }
 
     if (compilerProcess != nullptr && compilerOutputStream != nullptr)

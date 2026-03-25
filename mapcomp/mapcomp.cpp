@@ -53,6 +53,7 @@ int main(const int argc, const char **argv)
         .gameConfig = gameConfig,
         .bakeLightsOnCpu = args.HasFlag("--bake-on-cpu"),
         .skipLighting = args.HasFlag("--skip-lighting"),
+        .fastCompile = args.HasFlag("--fast"),
     };
 
     MapCompiler compiler = MapCompiler(settings);

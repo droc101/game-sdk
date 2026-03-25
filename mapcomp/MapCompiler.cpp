@@ -33,7 +33,9 @@
 MapCompiler::MapCompiler(MapCompilerSettings &settings)
 {
     this->settings = settings;
-    this->pathManager = SearchPathManager(settings.gameConfig, settings.executableDirectory, settings.gameConfigParentDirectory);
+    this->pathManager = SearchPathManager(settings.gameConfig,
+                                          settings.executableDirectory,
+                                          settings.gameConfigParentDirectory);
     this->defManager = ActorDefinitionManager(this->pathManager);
 }
 
@@ -57,7 +59,9 @@ Error::ErrorCode MapCompiler::Compile() const
     return AssetReader::SaveToFile(outPath.c_str(),
                                    buffer,
                                    Asset::AssetType::ASSET_TYPE_LEVEL,
-                                   MapAsset::MAP_ASSET_VERSION);
+                                   MapAsset::MAP_ASSET_VERSION,
+                                   settings.fastCompile ? AssetReader::FASTEST_COMPRESSION
+                                                        : AssetReader::BEST_COMPRESSION);
 }
 
 LevelMaterialAsset MapCompiler::GetMapMaterial(const std::string &path) const

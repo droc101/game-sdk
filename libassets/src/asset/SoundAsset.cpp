@@ -48,7 +48,11 @@ Error::ErrorCode SoundAsset::SaveAsAsset(const char *assetPath) const
 {
     std::vector<uint8_t> buffer;
     SaveToBuffer(buffer);
-    return AssetReader::SaveToFile(assetPath, buffer, Asset::AssetType::ASSET_TYPE_WAV, SOUND_ASSET_VERSION);
+    return AssetReader::SaveToFile(assetPath,
+                                   buffer,
+                                   Asset::AssetType::ASSET_TYPE_WAV,
+                                   SOUND_ASSET_VERSION,
+                                   AssetReader::BEST_COMPRESSION);
 }
 
 

@@ -87,7 +87,8 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
 Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
                                        std::vector<uint8_t> &outBuffer,
                                        const Asset::AssetType type,
-                                       const uint8_t typeVersion)
+                                       const uint8_t typeVersion,
+                                       const uint8_t compressionLevel)
 {
     if (inBuffer.empty())
     {
@@ -106,7 +107,7 @@ Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
     writer.Write<size_t>(inBuffer.size());
 
     z_stream zStream{};
-    deflateInit2(&zStream, Z_BEST_COMPRESSION, Z_DEFLATED, 15 | 16, 8, Z_DEFAULT_STRATEGY);
+    deflateInit2(&zStream, compressionLevel, Z_DEFLATED, 15 | 16, 8, Z_DEFAULT_STRATEGY);
 
     zStream.next_in = inBuffer.data();
     zStream.avail_in = inBuffer.size();
@@ -144,7 +145,8 @@ Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
 Error::ErrorCode AssetReader::SaveToFile(const char *filePath,
                                          std::vector<uint8_t> &data,
                                          const Asset::AssetType type,
-                                         const uint8_t typeVersion)
+                                         const uint8_t typeVersion,
+                                         const uint8_t compressionLevel)
 {
     FILE *file = fopen(filePath, "wb");
     if (file == nullptr)
@@ -153,7 +155,7 @@ Error::ErrorCode AssetReader::SaveToFile(const char *filePath,
         return Error::ErrorCode::CANT_OPEN_FILE;
     }
     std::vector<uint8_t> compressedData;
-    const Error::ErrorCode e = Compress(data, compressedData, type, typeVersion);
+    const Error::ErrorCode e = Compress(data, compressedData, type, typeVersion, compressionLevel);
     fwrite(compressedData.data(), 1, compressedData.size(), file);
     fclose(file);
     return e;

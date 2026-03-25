@@ -57,5 +57,6 @@ Error::ErrorCode LevelMaterialAsset::SaveAsAsset(const char *assetPath) const
     return AssetReader::SaveToFile(assetPath,
                                    buffer,
                                    Asset::AssetType::ASSET_TYPE_LEVEL_MATERIAL,
-                                   LEVEL_MATERIAL_ASSET_VERSION);
+                                   LEVEL_MATERIAL_ASSET_VERSION,
+                                   AssetReader::BEST_COMPRESSION);
 }

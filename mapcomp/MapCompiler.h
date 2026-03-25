@@ -26,6 +26,7 @@ class MapCompiler
             DataAsset gameConfig;
             bool bakeLightsOnCpu;
             bool skipLighting;
+            bool fastCompile;
         };
 
         /**

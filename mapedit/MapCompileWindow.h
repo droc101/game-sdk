@@ -19,13 +19,6 @@ class MapCompileWindow
         static void RenderCompileOutput();
 
     private:
-        enum class LightingCompileMode: uint8_t
-        {
-            FULL_COMPILE,
-            FAST_COMPILE,
-            DONT_COMPILE
-        };
-
         static inline bool visible = false;
         static inline SDL_Process *compilerProcess = nullptr;
         static inline SDL_IOStream *compilerOutputStream = nullptr;
@@ -34,7 +27,8 @@ class MapCompileWindow
         static inline std::string gameDir{};
         static inline std::string log{};
         static inline bool outputVisible = false;
-        static inline LightingCompileMode lightCompileMode = LightingCompileMode::FULL_COMPILE;
+        static inline bool fastCompile = false;
+        static inline bool skipLighting = false;
 
         static void StartCompile();
         static void SaveLog(const std::string &path);

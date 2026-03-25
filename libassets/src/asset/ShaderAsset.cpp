@@ -114,7 +114,11 @@ Error::ErrorCode ShaderAsset::SaveAsAsset(const char *assetPath) const
     {
         return e;
     }
-    return AssetReader::SaveToFile(assetPath, buffer, Asset::AssetType::ASSET_TYPE_SHADER, SHADER_ASSET_VERSION);
+    return AssetReader::SaveToFile(assetPath,
+                                   buffer,
+                                   Asset::AssetType::ASSET_TYPE_SHADER,
+                                   SHADER_ASSET_VERSION,
+                                   AssetReader::BEST_COMPRESSION);
 }
 
 std::string &ShaderAsset::GetGLSL()

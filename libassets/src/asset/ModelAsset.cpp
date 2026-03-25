@@ -139,7 +139,11 @@ Error::ErrorCode ModelAsset::SaveAsAsset(const std::string &assetPath) const
 {
     std::vector<uint8_t> data;
     SaveToBuffer(data);
-    return AssetReader::SaveToFile(assetPath.c_str(), data, Asset::AssetType::ASSET_TYPE_MODEL, MODEL_ASSET_VERSION);
+    return AssetReader::SaveToFile(assetPath.c_str(),
+                                   data,
+                                   Asset::AssetType::ASSET_TYPE_MODEL,
+                                   MODEL_ASSET_VERSION,
+                                   AssetReader::BEST_COMPRESSION);
 }
 
 ModelLod &ModelAsset::GetLod(const uint32_t index)
