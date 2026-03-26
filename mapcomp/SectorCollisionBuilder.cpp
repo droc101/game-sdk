@@ -6,11 +6,11 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <glm/detail/func_geometric.inl>
 #include <glm/vec2.hpp>
 #include <libassets/type/Sector.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/Logger.h>
 #include <utility>
 #include <vector>
 #include "SectorClipper.h"
@@ -96,7 +96,7 @@ void SectorCollisionBuilder::AddWallBase(const glm::vec2 &startPoint,
 {
     if (floorHeight > ceilingHeight)
     {
-        printf("Compile Error: Wall with ceiling below floor, will be skipped");
+        Logger::Error("Wall with ceiling below floor, will be skipped");
         return;
     }
 

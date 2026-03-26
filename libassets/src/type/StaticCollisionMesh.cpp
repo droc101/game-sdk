@@ -12,10 +12,10 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <libassets/type/StaticCollisionMesh.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/Logger.h>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -33,7 +33,7 @@ StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath)
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
-        printf("Assimp error: %s\n", importer.GetErrorString());
+        Logger::Error("Assimp error: {}", importer.GetErrorString());
         throw std::runtime_error("assimp error, check stdout");
     }
 

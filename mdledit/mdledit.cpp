@@ -1,4 +1,3 @@
-#include <cstdio>
 #include <format>
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/DialogFilters.h>
@@ -9,9 +8,9 @@
 #include <imgui_internal.h>
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <string>
 #include <utility>
-
 #include "ModelEditor.h"
 #include "tabs/CollisionTab.h"
 #include "tabs/LodsTab.h"
@@ -44,9 +43,7 @@ static void openGmdl(const std::string &path)
 static void importModel(const std::string &path)
 {
     ModelAsset model;
-    const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(path,
-                                                                           model,
-                                                                           Options::Get().defaultTexture);
+    const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(path, model, Options::Get().defaultTexture);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to import the model!\n{}", errorCode));
@@ -282,7 +279,7 @@ int main(int argc, char **argv)
 
     if (!ModelEditor::modelViewer.Init())
     {
-        printf("Failed to start renderer!\n");
+        Logger::Error("Failed to start renderer!");
         return -1;
     }
 

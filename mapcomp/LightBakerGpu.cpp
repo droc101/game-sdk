@@ -8,7 +8,6 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <cstring>
 #include <fstream>
 #include <glm/geometric.hpp>
@@ -16,6 +15,7 @@
 #include <iostream>
 #include <libassets/type/MapVertex.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <libassets/util/ShaderCompiler.h>
 #include <luna/luna.h>
 #include <luna/lunaBuffer.h>
@@ -172,7 +172,7 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
             bufferSize--;
             if (bufferSize > properties.limits.maxStorageBufferRange)
             {
-                printf("Unable to allocate shader storage buffer of size %zu\n", bufferSize);
+                Logger::Error("Unable to allocate shader storage buffer of size {}", bufferSize);
                 return false;
             }
         }
@@ -187,7 +187,8 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
         .size = sizeof(uint32_t) * lightmapSize.x * lightmapSize.y / 4 + 4,
         .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
     };
-    if (!checkResult(lunaCreateBuffer(&hitIndicesBufferCreationInfo, &hitIndicesBuffer))) {
+    if (!checkResult(lunaCreateBuffer(&hitIndicesBufferCreationInfo, &hitIndicesBuffer)))
+    {
         return false;
     }
 
@@ -252,7 +253,7 @@ bool LightBakerGpu::createPipeline(const std::string &shader,
     std::vector<uint32_t> spirv;
     if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
     {
-        printf("Error compiling shader!\n");
+        Logger::Error("Error compiling shader!");
         return false;
     }
 
@@ -452,7 +453,8 @@ bool LightBakerGpu::bakeDirectLighting(const std::vector<Light> &lights,
         .descriptorSetCount = 1,
         .descriptorSets = &descriptorSet,
     };
-    for (uint32_t i = 0; i < DISPATCH_COUNT; i++) {
+    for (uint32_t i = 0; i < DISPATCH_COUNT; i++)
+    {
         const LunaDispatchBaseInfo dispatchInfo = {
             .pipeline = pipeline,
             .descriptorSetBindInfo = descriptorSetBindInfo,
@@ -594,7 +596,7 @@ bool LightBakerGpu::bakeBounceLighting(const glm::ivec2 &lightmapSize,
     for (uint32_t i = 0; i < bounceCount; i++)
     {
         const uint32_t pixelIndexCount = *static_cast<uint32_t *>(lunaGetBufferDataPointer(pixelIndicesBuffers.at(0)));
-        printf("%u\n", pixelIndexCount);
+        Logger::Verbose("{}", pixelIndexCount);
         assert(pixelIndexCount / 4 <= 65535);
         const LunaDescriptorSetBindInfo descriptorSetBindInfo = {
             .descriptorSetCount = 1,
@@ -628,4 +630,3 @@ bool LightBakerGpu::bakeBounceLighting(const glm::ivec2 &lightmapSize,
     }
     return true;
 }
-

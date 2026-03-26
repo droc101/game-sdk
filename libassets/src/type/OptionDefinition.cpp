@@ -3,11 +3,11 @@
 //
 
 #include <cstdint>
-#include <cstdio>
 #include <fstream>
 #include <libassets/type/OptionDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <string>
@@ -34,7 +34,7 @@ Error::ErrorCode OptionDefinition::Create(const std::string &path, OptionDefinit
     def.valueType = Param::ParseType(definition_json.value("type", std::string()));
     if (def.valueType == Param::ParamType::PARAM_TYPE_NONE)
     {
-        printf("Invalid option value type!\n");
+        Logger::Error("Invalid option value type!");
         file.close();
         return Error::ErrorCode::INCORRECT_FORMAT;
     }

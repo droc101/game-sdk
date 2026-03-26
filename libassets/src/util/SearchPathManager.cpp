@@ -3,10 +3,13 @@
 //
 
 #include <libassets/type/Param.h>
+#include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <string>
 
-SearchPathManager::SearchPathManager(DataAsset &gameConfig, const std::string &executableFolder, const std::string &configParentFolder)
+SearchPathManager::SearchPathManager(DataAsset &gameConfig,
+                                     const std::string &executableFolder,
+                                     const std::string &configParentFolder)
 {
     ParamVector defaultParamVectorValue{};
     ParamVector &searchPathData = gameConfig.data["search_paths"].GetRef<ParamVector>(defaultParamVectorValue);
@@ -20,7 +23,8 @@ SearchPathManager::SearchPathManager(DataAsset &gameConfig, const std::string &e
         {
             KvList defaultKvListValue{};
             KvList &searchPathKvl = p.GetRef<KvList>(defaultKvListValue);
-            const std::string pathType = searchPathKvl["path_type"].Get<std::string>("relative_to_executable_directory");
+            const std::string pathType = searchPathKvl["path_type"].Get<std::string>("relative_to_executable_"
+                                                                                     "directory");
             const std::string path = searchPathKvl["search_path"].Get<std::string>("engine");
             if (pathType == "relative_to_executable_directory")
             {
@@ -72,7 +76,7 @@ std::vector<std::string> SearchPathManager::ScanFolder(const std::string &direct
         }
     } catch (const std::filesystem::filesystem_error &exception)
     {
-        printf("std::filesystem_error: %s\n", exception.what());
+        Logger::Error("std::filesystem_error: %s", exception.what());
     }
     if (isRoot)
     {

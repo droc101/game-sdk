@@ -2,7 +2,6 @@
 // Created by droc101 on 8/30/25.
 //
 
-#include <array>
 #include <assimp/config.h>
 #include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
@@ -11,7 +10,6 @@
 #include <assimp/vector3.h>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <libassets/type/BoundingBox.h>
 #include <libassets/type/ConvexHull.h>
 #include <libassets/util/DataReader.h>
@@ -43,7 +41,7 @@ ConvexHull::ConvexHull(const std::string &objPath)
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
-        printf("Assimp error: %s\n", importer.GetErrorString());
+        Logger::Error("Assimp error: {}", importer.GetErrorString());
         throw std::runtime_error("assimp error, check stdout");
     }
 
@@ -118,7 +116,7 @@ void ConvexHull::ImportMultiple(const std::string &path, std::vector<ConvexHull>
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
-        printf("Assimp error: %s\n", importer.GetErrorString());
+        Logger::Error("Assimp error: {}", importer.GetErrorString());
         throw std::runtime_error("assimp error, check stdout");
     }
 

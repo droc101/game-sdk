@@ -15,6 +15,7 @@
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <memory>
 #include <SDL3/SDL_video.h>
 #include <string>
@@ -578,7 +579,7 @@ int main(int argc, char **argv)
     MapEditor::mat = WallMaterial(Options::Get().defaultMaterial);
     if (!MapRenderer::Init())
     {
-        printf("Failed to start renderer!\n");
+        Logger::Error("Failed to start renderer!");
         return -1;
     }
     (void)SDL_SetWindowMinimumSize(SDKWindow::Get().GetWindow(), 640, 480);

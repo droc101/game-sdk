@@ -9,16 +9,16 @@
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/SetupWindow.h>
 #include <imgui.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <nlohmann/json.hpp>
 #include <SDL3/SDL_filesystem.h>
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "game_sdk/SharedMgr.h"
 
 static std::string sdkPath;
 static nlohmann::ordered_json launcher_json;
@@ -93,7 +93,7 @@ static void LaunchSelectedTool()
             ParsePath(arg);
             args.push_back(arg);
         }
-        printf("Launching process \"%s\"...\n", folder.c_str());
+        Logger::Info("Launching process \"{}\"...", folder.c_str());
         if (!DesktopInterface::Get().ExecuteProcessNonBlocking(folder, args))
         {
             SDKWindow::Get().ErrorMessage(std::format("Failed to launch process: {}", SDL_GetError()));
@@ -140,10 +140,10 @@ static void Render()
                 (void)SharedMgr::Get().textureCache.GetTextureID(value.value("icon", "file"), textureId);
                 const std::string title = std::format("##item_{}_{}", category, key);
                 const bool selected = ImGui::Selectable(title.c_str(),
-                                                  selectionCategory == category && selectionIndex == key,
-                                                  ImGuiSelectableFlags_AllowOverlap |
-                                                          ImGuiSelectableFlags_SpanAllColumns,
-                                                  {0, 18});
+                                                        selectionCategory == category && selectionIndex == key,
+                                                        ImGuiSelectableFlags_AllowOverlap |
+                                                                ImGuiSelectableFlags_SpanAllColumns,
+                                                        {0, 18});
                 if (selected)
                 {
                     selectionCategory = category;
@@ -203,7 +203,7 @@ int main()
     const Error::ErrorCode c = LoadLauncherConfig();
     if (c != Error::ErrorCode::OK)
     {
-        printf("Failed to load launcher.json: %s\n", Error::ErrorString(c).c_str());
+        Logger::Error("Failed to load launcher.json: %s", Error::ErrorString(c).c_str());
         return -1;
     }
 

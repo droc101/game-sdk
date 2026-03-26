@@ -124,6 +124,7 @@ add_library(assets SHARED
         src/type/MapVertex.cpp
         src/util/ArgumentParser.cpp
         include/libassets/util/ArgumentParser.h
+        include/libassets/util/Logger.h
 )
 
 set_target_properties(assets PROPERTIES

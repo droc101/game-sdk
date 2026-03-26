@@ -19,6 +19,7 @@
 #include <libassets/type/paramDefs/Vec2ParamDefinition.h>
 #include <libassets/type/paramDefs/Vec3ParamDefinition.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <memory>
 #include <string>
 
@@ -30,7 +31,7 @@ std::unique_ptr<ParamDefinition> ParamDefinition::Create(const nlohmann::json &j
     const Param::ParamType type = Param::ParseType(json.value("type", "int"));
     if (type == Param::ParamType::PARAM_TYPE_NONE)
     {
-        printf("Failed to parse type of param:\n%s", json.dump(4).c_str());
+        Logger::Error("Failed to parse type of param:\n{}", json.dump(4).c_str());
         e = Error::ErrorCode::INCORRECT_FORMAT;
         return nullptr;
     }

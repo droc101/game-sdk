@@ -2,10 +2,10 @@
 // Created by droc101 on 6/29/25.
 //
 
-#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <game_sdk/Options.h>
+#include <libassets/util/Logger.h>
 #include <nlohmann/json.hpp>
 #include <SDL3/SDL_filesystem.h>
 #include <sstream>
@@ -24,7 +24,7 @@ void Options::Load()
     std::ifstream file(path);
     if (!file.is_open())
     {
-        printf("Could not open file %s\n", path.data());
+        Logger::Error("Could not open file {}", path.data());
         LoadDefault();
         return;
     }
@@ -33,7 +33,7 @@ void Options::Load()
     const std::string j = ss.str();
     if (j.empty())
     {
-        printf("options.json was empty, loading defaults.\n");
+        Logger::Warning("options.json was empty, loading defaults.");
         LoadDefault();
         file.close();
         return;
@@ -41,7 +41,7 @@ void Options::Load()
     const nlohmann::json savedata = nlohmann::json::parse(j);
     if (savedata.is_discarded())
     {
-        printf("Failed to parse options JSON, loading defaults.\n");
+        Logger::Error("Failed to parse options JSON, loading defaults.");
         LoadDefault();
     } else
     {
@@ -76,7 +76,7 @@ void Options::Save()
     std::ofstream file(path);
     if (!file.is_open())
     {
-        printf("Could not open file %s\n", path.data());
+        Logger::Error("Could not open file {}", path);
         return;
     }
     file << savedata.dump(4); // a shift operator should not write to a stream this is not ok
