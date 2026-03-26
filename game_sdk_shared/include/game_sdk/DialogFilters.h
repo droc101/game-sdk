@@ -80,11 +80,11 @@ class DialogFilters
             SDL_DialogFileFilter{"GAME texture (*.gtex)", "gtex"},
         };
         static inline const std::vector<SDL_DialogFileFilter> pngFilters = {SDL_DialogFileFilter{"PNG Images", "png"}};
+        static inline const std::vector<SDL_DialogFileFilter> exrFilters = {SDL_DialogFileFilter{"EXR Images", "exr"}};
         static inline const std::vector<SDL_DialogFileFilter> imageFilters = {
-            SDL_DialogFileFilter{"Images", "png;jpg;jpeg;tga"},
+            SDL_DialogFileFilter{"Images", "png;exr"},
             SDL_DialogFileFilter{"PNG Images", "png"},
-            SDL_DialogFileFilter{"JPG Images", "jpg;jepg"},
-            SDL_DialogFileFilter{"TGA Images", "tga"},
+            SDL_DialogFileFilter{"EXR Images", "exr"},
         };
 
         // kvledit

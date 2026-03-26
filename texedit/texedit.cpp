@@ -41,32 +41,7 @@ static void loadTexture()
 {
     destroyExistingTexture();
 
-    std::vector<uint32_t> pixels;
-    texture.GetPixelsRGBA(pixels);
-
-    glGenTextures(1, &glTexture);
-    glBindTexture(GL_TEXTURE_2D, glTexture);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGBA,
-                 static_cast<GLsizei>(texture.GetWidth()),
-                 static_cast<GLsizei>(texture.GetHeight()),
-                 0,
-                 GL_RGBA,
-                 GL_UNSIGNED_BYTE,
-                 pixels.data());
-    const GLint magfilter = texture.filter ? GL_LINEAR : GL_NEAREST;
-    GLint minFilter = magfilter;
-    const GLint repeat = texture.repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE;
-    if (texture.mipmaps)
-    {
-        glGenerateMipmap(GL_TEXTURE_2D);
-        minFilter = texture.filter ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_LINEAR;
-    }
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magfilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, repeat);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, repeat);
+    glTexture = GLTextureCache::CreateTexture(texture);
     textureLoaded = true;
 }
 
@@ -83,7 +58,14 @@ static void openGtex(const std::string &path)
 
 static void importImage(const std::string &path)
 {
-    const Error::ErrorCode errorCode = TextureAsset::CreateFromImage(path.c_str(), texture);
+    Error::ErrorCode errorCode = Error::ErrorCode::INCORRECT_FORMAT;
+    if (path.ends_with(".png"))
+    {
+        errorCode = TextureAsset::CreateFromPNG(path.c_str(), texture);
+    } else
+    {
+        errorCode = TextureAsset::CreateFromEXR(path.c_str(), texture);
+    }
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to import the texture!\n{}", errorCode));
@@ -103,7 +85,16 @@ static void saveGtex(const std::string &path)
 
 static void exportPng(const std::string &path)
 {
-    const Error::ErrorCode errorCode = texture.SaveAsImage(path.c_str(), TextureAsset::ImageFormat::IMAGE_FORMAT_PNG);
+    const Error::ErrorCode errorCode = texture.SaveAsPNG(path.c_str());
+    if (errorCode != Error::ErrorCode::OK)
+    {
+        SDKWindow::Get().ErrorMessage(std::format("Failed to export the texture!\n{}", errorCode));
+    }
+}
+
+static void exportExr(const std::string &path)
+{
+    const Error::ErrorCode errorCode = texture.SaveAsEXR(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to export the texture!\n{}", errorCode));
@@ -170,16 +161,6 @@ static void Render()
             ImGui::MenuItem("Transparency Checkerboard", "", &showTransparencyCheckerboard);
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Tools"))
-        {
-            if (ImGui::MenuItem("Swap Byte Order"))
-            {
-                texture.SwapByteOrder();
-                loadTexture();
-            }
-            ImGui::Separator();
-            ImGui::EndMenu();
-        }
         SharedMgr::Get().SharedMenuUI("texedit");
         ImGui::EndMainMenuBar();
     }
@@ -195,7 +176,13 @@ static void Render()
         SDKWindow::Get().SaveFileDialog(saveGtex, DialogFilters::gtexFilters);
     } else if (exportPressed)
     {
-        SDKWindow::Get().SaveFileDialog(exportPng, DialogFilters::pngFilters);
+        if (texture.GetFormat() == TextureAsset::PixelFormat::RGBA8)
+        {
+            SDKWindow::Get().SaveFileDialog(exportPng, DialogFilters::pngFilters);
+        } else
+        {
+            SDKWindow::Get().SaveFileDialog(exportPng, DialogFilters::exrFilters);
+        }
     } else if (zoomInPressed)
     {
         zoom += 0.1;
@@ -238,16 +225,14 @@ static void Render()
             const ImVec2 imageSize{static_cast<float>(texture.GetWidth()) * zoom,
                                    static_cast<float>(texture.GetHeight()) * zoom};
             const ImVec2 panelSize = ImGui::GetContentRegionAvail();
-            const ImVec2 cursor = {
-                ((panelSize.x / 2) - (imageSize.x / 2)) + pan.x,
-                ((panelSize.y / 2) - (imageSize.y / 2)) + pan.y
-            };
+            const ImVec2 cursor = {((panelSize.x / 2) - (imageSize.x / 2)) + pan.x,
+                                   ((panelSize.y / 2) - (imageSize.y / 2)) + pan.y};
             ImGui::SetCursorPos(cursor);
             if (showTransparencyCheckerboard)
             {
                 // const ImVec2 cursor = ImGui::GetCursorPos();
                 const ImVec2 checkerboardUv = {imageSize.x / 16.0f, imageSize.y / 16.0f};
-                ImGui::Image(checkerboardTexture, imageSize, {0,0}, checkerboardUv);
+                ImGui::Image(checkerboardTexture, imageSize, {0, 0}, checkerboardUv);
                 ImGui::SetCursorPos(cursor);
             }
             ImGui::Image(glTexture, imageSize);
@@ -257,10 +242,13 @@ static void Render()
 
         ImGui::BeginChild("StatsPane", ImVec2(statsWidth, availableSize.y));
         {
-            ImGui::TextUnformatted(std::format("Width: {}px\nHeight: {}px\nMemory: {} bytes",
+            ImGui::TextUnformatted(std::format("Width: {}px\nHeight: {}px\nMemory: {} bytes\nFormat: {}",
                                                texture.GetWidth(),
                                                texture.GetHeight(),
-                                               texture.GetWidth() * texture.GetHeight() * sizeof(uint32_t))
+                                               texture.GetPixelDataSize(),
+                                               texture.GetFormat() == TextureAsset::PixelFormat::RGBA8
+                                                       ? "RGBA8 (SDR)"
+                                                       : "RGBA16F (HDR)")
                                            .c_str());
 
             ImGui::Separator();
@@ -296,7 +284,10 @@ int main(int argc, char **argv)
 
     SDKWindow::Get().SetWindowIcon("texedit");
 
-    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/checkerboard.png", CHECKERBOARD_ICON_NAME, false, true);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/checkerboard.png",
+                                                    CHECKERBOARD_ICON_NAME,
+                                                    false,
+                                                    true);
     const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(CHECKERBOARD_ICON_NAME, checkerboardTexture);
     assert(e == Error::ErrorCode::OK);
 
@@ -310,9 +301,7 @@ int main(int argc, char **argv)
                                                                                 argv,
                                                                                 {
                                                                                     ".png",
-                                                                                    ".jpg",
-                                                                                    ".jpeg",
-                                                                                    ".tga",
+                                                                                    ".exr",
                                                                                 });
         if (!importPath.empty())
         {

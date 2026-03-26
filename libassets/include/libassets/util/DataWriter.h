@@ -35,7 +35,7 @@ class DataWriter
          * @param buffer The array
          * @param length The number of elements in the array
          */
-        template<Primitive T> void WriteBuffer(T *buffer, const size_t length)
+        template<Primitive T> void WriteBuffer(const T *buffer, const size_t length)
         {
             const uint8_t *buf = reinterpret_cast<const uint8_t *>(buffer);
             data.insert(data.end(), buf, buf + length * sizeof(T));

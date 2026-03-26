@@ -153,17 +153,17 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
 void SDKWindow::SetWindowIcon(const std::string &iconName) const
 {
     TextureAsset iconAsset{};
-    const Error::ErrorCode e = TextureAsset::CreateFromImage(("assets/icons/" + iconName + ".png").c_str(), iconAsset);
+    const Error::ErrorCode e = TextureAsset::CreateFromPNG(("assets/icons/" + iconName + ".png").c_str(), iconAsset);
     if (e != Error::ErrorCode::OK)
     {
         TextureAsset::CreateMissingTexture(iconAsset);
     }
-    std::vector<uint32_t> pixels{};
-    iconAsset.GetPixelsRGBA(pixels);
+    uint8_t *pixels = iconAsset.GetPixelsRGBA();
+    assert(iconAsset.GetFormat() == TextureAsset::PixelFormat::RGBA8);
     SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(iconAsset.GetWidth()),
                                                  static_cast<int>(iconAsset.GetHeight()),
                                                  SDL_PIXELFORMAT_ABGR8888,
-                                                 pixels.data(),
+                                                 pixels,
                                                  static_cast<int>(sizeof(uint32_t) * iconAsset.GetWidth()));
     if (surface == nullptr)
     {
