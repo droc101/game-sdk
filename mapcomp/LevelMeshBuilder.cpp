@@ -14,6 +14,7 @@
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/SearchPathManager.h>
 #include <ranges>
 #include <string>
 #include <unordered_map>
@@ -23,6 +24,8 @@
 
 #define STB_RECT_PACK_IMPLEMENTATION
 #include <stb_rect_pack.h>
+
+#include "libassets/asset/LevelMaterialAsset.h"
 
 void LevelMeshBuilder::AddCeiling(const Sector &sector, const std::vector<const Sector *> &overlapping)
 {
@@ -86,7 +89,8 @@ static float mapRange(const float value,
 }
 
 bool LevelMeshBuilder::CalculateLightmapUvs(glm::ivec2 &lightmapSize,
-                                            std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders)
+                                            std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
+                                            const SearchPathManager &pathMgr)
 {
     for (const LevelMeshBuilder &builder: meshBuilders | std::views::values)
     {
@@ -101,9 +105,15 @@ bool LevelMeshBuilder::CalculateLightmapUvs(glm::ivec2 &lightmapSize,
     stbrp_context context{};
 
     std::vector<stbrp_rect> rects{};
-    for (const LevelMeshBuilder &builder: meshBuilders | std::views::values)
+    for (const std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)
     {
-        rects.insert(rects.end(), builder.faceRects.begin(), builder.faceRects.end());
+        const std::string materialPath = pathMgr.GetAssetPath(builder.first);
+        LevelMaterialAsset material{};
+        LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
+        if (material.shader == Material::MaterialShader::SHADER_SHADED)
+        {
+            rects.insert(rects.end(), builder.second.faceRects.begin(), builder.second.faceRects.end());
+        }
     }
 
     std::vector<stbrp_node> nodes{};
@@ -140,18 +150,26 @@ bool LevelMeshBuilder::CalculateLightmapUvs(glm::ivec2 &lightmapSize,
     lightmapSize = {width, height};
 
     size_t rectIndexBegin = 0;
-    for (LevelMeshBuilder &builder: meshBuilders | std::views::values)
+    for (std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)
     {
-        for (size_t i = 0; i < builder.faceIndices.size(); i++)
+        const std::string materialPath = pathMgr.GetAssetPath(builder.first);
+        LevelMaterialAsset material{};
+        LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
+        if (material.shader != Material::MaterialShader::SHADER_SHADED)
+        {
+            continue;
+        }
+
+        for (size_t i = 0; i < builder.second.faceIndices.size(); i++)
         {
             const stbrp_rect &rect = rects.at(i + rectIndexBegin);
-            const FaceData &faceData = builder.faceIndices.at(i);
+            const FaceData &faceData = builder.second.faceIndices.at(i);
             assert(rect.h != 0);
             assert(rect.w != 0);
             for (size_t j = 0; j < faceData.indices.size(); j++)
             {
                 const uint32_t index = faceData.indices.at(j);
-                MapVertex &vertex = builder.vertices.at(index);
+                MapVertex &vertex = builder.second.vertices.at(index);
                 const glm::vec2 &positionInRect = faceData.positionsInRect.at(j);
                 vertex.lightmapUv.x = mapRange(positionInRect.x,
                                                0.0f,
@@ -167,7 +185,7 @@ bool LevelMeshBuilder::CalculateLightmapUvs(glm::ivec2 &lightmapSize,
                                       static_cast<float>(height);
             }
         }
-        rectIndexBegin += builder.faceRects.size();
+        rectIndexBegin += builder.second.faceRects.size();
     }
 
     return true;
@@ -235,6 +253,8 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
         v.normal.x = -wallNormalVector.x;
         v.normal.y = 0;
         v.normal.z = -wallNormalVector.y;
+
+        v.lightmapUv = glm::vec2(0, 0);
 
         vertices.push_back(v);
     }
@@ -319,6 +339,7 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
         v.position = {point.x, isFloor ? sector.floorHeight : sector.ceilingHeight, point.y};
         v.uv = (point + mat.uvOffset) * mat.uvScale; // TODO is this the correct way to offset+scale?
         v.normal = {0, isFloor ? 1 : -1, 0};
+        v.lightmapUv = glm::vec2(0, 0);
         vertices.push_back(v);
     }
 

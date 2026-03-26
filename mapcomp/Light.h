@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <libassets/type/Actor.h>
 #include <type_traits>
 
 class Light // NOLINT(*-pro-type-member-init)

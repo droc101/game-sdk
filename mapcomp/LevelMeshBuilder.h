@@ -10,12 +10,11 @@
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/SearchPathManager.h>
 #include <stb_rect_pack.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include "libassets/type/Actor.h"
 
 class LevelMeshBuilder
 {
@@ -58,7 +57,8 @@ class LevelMeshBuilder
         [[nodiscard]] bool IsEmpty() const;
 
         static bool CalculateLightmapUvs(glm::ivec2 &lightmapSize,
-                                         std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders);
+                                         std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
+                                         const SearchPathManager &pathMgr);
 
         [[nodiscard]] const std::vector<MapVertex> &GetVertices() const
         {

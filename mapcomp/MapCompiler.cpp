@@ -327,7 +327,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     printf("[INFO] Level has %zu lights\n", lights.size());
 
     glm::ivec2 lightmapSize{};
-    if (!LevelMeshBuilder::CalculateLightmapUvs(lightmapSize, meshBuilders))
+    if (!LevelMeshBuilder::CalculateLightmapUvs(lightmapSize, meshBuilders, pathManager))
     {
         return Error::ErrorCode::LIGHTMAP_TOO_LARGE;
     }
