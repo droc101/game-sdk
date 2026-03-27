@@ -1,0 +1,19 @@
+#version 460
+
+layout (constant_id = 0) const uint width = 1;
+
+/// The lightmap from which 32 bit floating point data is read from
+layout (set = 0, binding = 0) buffer LightmapLuxels {
+    float luxels[];
+} inputLightmap;
+/// The lightmap to which 16 bit floaing point data is written to
+layout (set = 0, binding = 1, rgba16f) uniform imageBuffer outputLightmap;
+
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x_id = 1) in;
+layout (local_size_y_id = 2) in;
+
+void main() {
+    int index = int(gl_GlobalInvocationID.y * width + gl_GlobalInvocationID.x);
+    imageStore(outputLightmap, index, vec4(inputLightmap.luxels[3 * index], inputLightmap.luxels[3 * index + 1], inputLightmap.luxels[3 * index + 2], 1));
+}

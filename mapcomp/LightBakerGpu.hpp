@@ -13,6 +13,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 #include "LevelMeshBuilder.h"
+#include "libassets/type/Actor.h"
 #include "Light.h"
 
 class LightBakerGpu
@@ -57,11 +58,12 @@ class LightBakerGpu
 
         bool bakeBounceLighting(const glm::ivec2 &lightmapSize, size_t indexCount, uint32_t bounceCount);
 
+        bool convertLightmapToFloat16(const glm::ivec2 &lightmapSize, LunaBuffer &outputLightmap2d) const;
+
         bool initialized{};
         LunaBuffer vertexBuffer{};
         LunaBuffer indexBuffer{};
         std::array<LunaBuffer, 2> pixelIndicesBuffers{};
         LunaBuffer hitIndicesBuffer{};
         LunaBuffer lightmap2d{};
-        LunaBufferView lightmap2dBufferView{};
 };
