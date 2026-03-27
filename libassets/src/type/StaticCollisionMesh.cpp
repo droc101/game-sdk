@@ -15,12 +15,12 @@
 #include <libassets/type/StaticCollisionMesh.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
-StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath)
+StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath, Error::ErrorCode &status)
 {
     Assimp::Importer importer{};
     (void)importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
@@ -34,7 +34,8 @@ StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath)
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
         Logger::Error("Assimp error: {}", importer.GetErrorString());
-        throw std::runtime_error("assimp error, check stdout");
+        status = Error::ErrorCode::UNKNOWN;
+        return;
     }
 
     for (uint32_t meshIndex = 0; meshIndex < scene->mNumMeshes; meshIndex++)
@@ -53,6 +54,8 @@ StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath)
             }
         }
     }
+
+    status = Error::ErrorCode::OK;
 }
 
 StaticCollisionMesh::StaticCollisionMesh(DataReader &reader)

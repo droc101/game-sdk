@@ -36,7 +36,12 @@ MapCompiler::MapCompiler(MapCompilerSettings &settings)
     this->pathManager = SearchPathManager(settings.gameConfig,
                                           settings.executableDirectory,
                                           settings.gameConfigParentDirectory);
-    this->defManager = ActorDefinitionManager(this->pathManager);
+    Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
+    this->defManager = ActorDefinitionManager(this->pathManager, e);
+    if (e != Error::ErrorCode::OK)
+    {
+        Logger::Error("Failed to load actor definitions");
+    }
 }
 
 Error::ErrorCode MapCompiler::LoadMapSource(const std::string &mapSourceFile)

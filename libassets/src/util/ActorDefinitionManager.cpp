@@ -14,15 +14,14 @@
 #include <libassets/util/SearchPathManager.h>
 #include <memory>
 #include <ranges>
-#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
-ActorDefinitionManager::ActorDefinitionManager(const SearchPathManager &searchPathManager)
+ActorDefinitionManager::ActorDefinitionManager(const SearchPathManager &searchPathManager, Error::ErrorCode &status)
 {
     LoadOptionDefinitions(searchPathManager);
-    LoadActorDefinitions(searchPathManager);
+    status = LoadActorDefinitions(searchPathManager);
 }
 
 void ActorDefinitionManager::LoadOptionDefinitions(const SearchPathManager &pathManager)
@@ -43,7 +42,7 @@ void ActorDefinitionManager::LoadOptionDefinitions(const SearchPathManager &path
     Logger::Verbose("Loaded {} option definitions", optionDefinitions.size());
 }
 
-void ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathManager)
+Error::ErrorCode ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathManager)
 {
     const std::vector<std::string> defs = pathManager.ScanAssetFolderA("defs/actors", ".json");
     for (const std::string &val: defs)
@@ -66,7 +65,8 @@ void ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathM
         {
             if (def.second.parentClassName == def.first)
             {
-                throw std::runtime_error("An actor cannot be its own parent");
+                Logger::Error("An actor class cannot inherit from itself!");
+                return Error::ErrorCode::INCORRECT_FORMAT;
             }
             def.second.parentClass = &actorDefinitions.at(def.second.parentClassName);
         }
@@ -79,7 +79,8 @@ void ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathM
                 opt->definition = &optionDefinitions.at(opt->optionListName);
                 if (opt->definition == nullptr)
                 {
-                    throw std::runtime_error("Failed to find option definition!");
+                    Logger::Error("Failed to find option definition \"{}\"", opt->optionListName);
+                    return Error::ErrorCode::FILE_NOT_FOUND;
                 }
             }
         }
@@ -95,6 +96,8 @@ void ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathM
     {
         Logger::Warning("No \"actor\" actor class definition was loaded!");
     }
+
+    return Error::ErrorCode::OK;
 }
 
 bool ActorDefinitionManager::HasActorClass(const std::string &className) const

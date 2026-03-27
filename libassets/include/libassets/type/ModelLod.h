@@ -8,6 +8,7 @@
 #include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/Error.h>
 #include <string>
 #include <vector>
 
@@ -16,9 +17,9 @@ class ModelLod
     public:
         ModelLod() = default;
 
-        explicit ModelLod(DataReader &reader, uint32_t materialsPerSkin);
+        ModelLod(DataReader &reader, uint32_t materialsPerSkin);
 
-        explicit ModelLod(const std::string &filePath, float distance);
+        ModelLod(const std::string &filePath, float distance, Error::ErrorCode &status);
 
         void Export(const char *path) const;
 
