@@ -45,8 +45,6 @@ layout (set = 0, binding = 1) readonly buffer IndexData {
 
 /// A pair of buffers used for keping track of which luxels have been hit by a ray on the previous pass and this pass
 layout (set = 0, binding = 2) buffer LuxelIndicesData {
-    /// The total number of luxels that have been hit thus far, not counting duplicates
-    uint count;
     /// A list of luxel indices of length `count`
     int indices[width * height];
 } luxelIndicesData[2];
@@ -54,8 +52,10 @@ layout (set = 0, binding = 2) buffer LuxelIndicesData {
 /// A buffer containing the hit count of every luxel
 /// Having this both allows for keeping track of the number of hits, as well as easy lookup to see if a luxel has already been counted
 layout (set = 0, binding = 3) buffer HitIndicesData {
-    uint indices[width * height];
-} hitIndicesData[2];
+    /// The total number of luxels that have been hit thus far, not counting duplicates
+    uint count;
+    uint indices[width * height / 4];
+} hitIndicesData;
 
 layout (set = 0, binding = 4) buffer LightmapLuxels {
     uint luxels[width * height * 3];
@@ -64,7 +64,6 @@ layout (set = 0, binding = 4) buffer LightmapLuxels {
 layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 layout (local_size_x_id = 3) in;
 layout (local_size_y_id = 4) in;
-layout (local_size_z_id = 5) in;
 
 // Thanks to https://web.archive.org/web/20250919062256if_/https://www.graphics.cornell.edu/pubs/1997/MT97.pdf
 //  which this code is based on
@@ -156,28 +155,18 @@ vec3 findPositionOfLuxel(int luxelIndex) {
     return vec3(INFINITY);
 }
 
-void atomicDivLuxelChannel(int luxel, int channel, float denom) {
-    float val1 = uintBitsToFloat(lightmap.luxels[luxel + channel]);
-    float val2 = uintBitsToFloat(lightmap.luxels[luxel + channel]);
-    do {
-        val1 = val2;
-        val2 = uintBitsToFloat(atomicCompSwap(lightmap.luxels[luxel + channel], floatBitsToUint(val1), floatBitsToUint(val1 / denom)));
-    } while (val1 != val2);
-}
-
-void atomicDivideColorFromLightmap(int index) {
-    const float count = float(hitIndicesData[0].indices[index]);
-    atomicDivLuxelChannel(3 * index, 0, count);
-    atomicDivLuxelChannel(3 * index, 1, count);
-    atomicDivLuxelChannel(3 * index, 2, count);
+vec3 getLightmapLuxelColor(int index) {
+    return vec3(uintBitsToFloat(lightmap.luxels[3 * index]),
+                uintBitsToFloat(lightmap.luxels[3 * index + 1]),
+                uintBitsToFloat(lightmap.luxels[3 * index + 2]));
 }
 
 void main() {
-    int sourceLuxelIndex = atomicExchange(luxelIndicesData[0].indices[gl_GlobalInvocationID.y * gl_NumWorkGroups.z + gl_GlobalInvocationID.z], 0);
-    atomicDivideColorFromLightmap(sourceLuxelIndex);
-    // vec4 sourceLuxelColor = imageLoad(outputLightmap, sourceLuxelIndex);
-    // imageStore(outputLightmap, sourceLuxelIndex, vec4(sourceLuxelColor.rgb, 1));
-    // imageStore(outputLightmap, sourceLuxelIndex, vec4(sourceLuxelColor.rgb / (hitIndicesData.indices[sourceLuxelIndex] & 0x7FFFFFFF), 1));
+    // int sourceLuxelIndex = atomicExchange(luxelIndicesData[0].indices[gl_GlobalInvocationID.y * gl_NumWorkGroups.z + gl_GlobalInvocationID.z], 0);
+    // atomicDivideColorFromLightmap(sourceLuxelIndex);
+    // vec3 sourceLuxelColor = getLightmapLuxelColor(sourceLuxelIndex);
+    // imageStore(outputLightmap, sourceLuxelIndex, vec4(sourceLuxelColor, 1));
+    // imageStore(outputLightmap, sourceLuxelIndex, vec4(sourceLuxelColor / (hitIndicesData.indices[sourceLuxelIndex] & 0x7FFFFFFF), 1));
 
     // vec2 percents = vec2(gl_GlobalInvocationID.xy) / (gl_WorkGroupSize.xy * gl_NumWorkGroups.xy);// * vec2(dispatchCount, 1));
     // float theta = percents.x * 2 * PI - PI;

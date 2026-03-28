@@ -6,18 +6,17 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <glm/geometric.hpp>
 #include <glslang/Public/ShaderLang.h>
-#include <iostream>
 #include <libassets/type/MapVertex.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
 #include <libassets/util/ShaderCompiler.h>
+#include <limits>
 #include <luna/luna.h>
 #include <luna/lunaBuffer.h>
 #include <luna/lunaDevice.h>
@@ -26,7 +25,9 @@
 #include <ranges>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_core.h>
@@ -35,9 +36,17 @@
 
 // These are up here for me to be able to easily edit them, but they can be moved elsewhere later
 static constexpr glm::uvec2 WORK_GROUP_SIZE{32};
-static constexpr glm::uvec2 NUM_WORK_GROUPS{256};
-static constexpr uint32_t DISPATCH_COUNT = 16;
+static constexpr glm::uvec2 NUM_WORK_GROUPS{128};
+static constexpr uint32_t DISPATCH_COUNT = 255;
 
+// Ensure that the total ray count does not overflow
+static_assert(static_cast<uint64_t>(WORK_GROUP_SIZE.y * NUM_WORK_GROUPS.y + 1) *
+                      WORK_GROUP_SIZE.x *
+                      NUM_WORK_GROUPS.x *
+                      DISPATCH_COUNT <
+              std::numeric_limits<uint32_t>::max());
+
+/// This function is evil
 template<typename... T>
 static consteval std::array<VkSpecializationMapEntry, sizeof...(T)> generateSpecializationMapEntries()
 {
@@ -56,9 +65,142 @@ static consteval std::array<VkSpecializationMapEntry, sizeof...(T)> generateSpec
     return entries;
 }
 
+/// This function is about 10x more evil than generateSpecializationMapEntries
+template<typename... T> requires(((std::__is_pair<T> &&
+                                   std::is_same_v<typename T::first_type, VkDescriptorType> &&
+                                   std::is_same_v<typename T::second_type::value_type, const char *>) &&
+                                  ...))
+static consteval auto generateDescriptorSetLayoutBindings(const T &...bindings)
+{
+    size_t index = 0;
+    std::array<LunaDescriptorSetLayoutBinding,
+               ((sizeof(T::second_type::_M_elems) / sizeof(typename T::second_type::value_type)) + ...)>
+            entries{};
+
+    auto addEntry = [&index, &entries]<typename Type>(const Type &binding) {
+        for (const char *name: binding.second)
+        {
+            entries.at(index++) = LunaDescriptorSetLayoutBinding{
+                .bindingName = name,
+                .descriptorType = binding.first,
+                .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+            };
+        }
+    };
+    (addEntry(bindings), ...);
+
+    return entries;
+}
+
+/// Oh my god why can this even exist let alone work
+template<const auto *BINDINGS> static consteval LunaDescriptorPoolCreationInfo generateDescriptorPoolCreationInfo()
+{
+    static constexpr auto UNIQUE_BINDINGS = std::ranges::
+            unique((const_cast<std::array<LunaDescriptorSetLayoutBinding, BINDINGS->size()> *>(BINDINGS))->begin(),
+                   const_cast<std::array<LunaDescriptorSetLayoutBinding, BINDINGS->size()> *>(BINDINGS)->end(),
+                   [](const LunaDescriptorSetLayoutBinding &a, const LunaDescriptorSetLayoutBinding &b) -> bool {
+                       return a.descriptorType != b.descriptorType;
+                   });
+    static constexpr std::array<VkDescriptorPoolSize, UNIQUE_BINDINGS.size() + 1> ret = ([]() {
+        std::array<VkDescriptorPoolSize, UNIQUE_BINDINGS.size() + 1> ret{};
+        for (const LunaDescriptorSetLayoutBinding &binding: *BINDINGS)
+        {
+            for (VkDescriptorPoolSize &poolSize: ret)
+            {
+                if (poolSize.descriptorCount == 0)
+                {
+                    poolSize.type = binding.descriptorType;
+                }
+                if (poolSize.type == binding.descriptorType)
+                {
+                    ++poolSize.descriptorCount;
+                    break;
+                }
+            }
+        }
+        return ret;
+    })();
+    return LunaDescriptorPoolCreationInfo{
+        .maxSets = 1,
+        .poolSizeCount = ret.size(),
+        .poolSizes = ret.data(),
+    };
+}
+
+template<typename... T> requires(((std::__is_pair<T> &&
+                                   std::is_same_v<typename T::first_type, const char *> &&
+                                   (std::is_same_v<typename T::second_type, const LunaDescriptorImageInfo *> ||
+                                    std::is_same_v<typename T::second_type, LunaBuffer> ||
+                                    std::is_same_v<typename T::second_type, const LunaDescriptorBufferInfo *> ||
+                                    std::is_same_v<typename T::second_type, LunaBufferView *>)) &&
+                                  ...))
+static inline std::array<LunaWriteDescriptorSet, sizeof...(T)> generateWrites(const LunaDescriptorSet descriptorSet,
+                                                                              std::list<LunaDescriptorBufferInfo>
+                                                                                      &bufferInfos,
+                                                                              const T &...writes)
+{
+    size_t index = 0;
+    std::array<LunaWriteDescriptorSet, sizeof...(T)> entries{};
+
+    auto AddEntry = [&descriptorSet, &index, &entries, &bufferInfos]<typename Type>(const Type &write) {
+        if constexpr (std::is_same_v<typename Type::second_type, const LunaDescriptorImageInfo *>)
+        {
+            entries.at(index) = LunaWriteDescriptorSet{
+                .descriptorSet = descriptorSet,
+                .bindingName = write.first,
+                .imageInfo = write.second,
+            };
+        } else if constexpr (std::is_same_v<typename Type::second_type, LunaBuffer>)
+        {
+            bufferInfos.emplace_back(write.second, 0, 0);
+            entries.at(index) = LunaWriteDescriptorSet{
+                .descriptorSet = descriptorSet,
+                .bindingName = write.first,
+                .bufferInfo = &bufferInfos.back(),
+            };
+        } else if constexpr (std::is_same_v<typename Type::second_type, const LunaDescriptorBufferInfo *>)
+        {
+            entries.at(index) = LunaWriteDescriptorSet{
+                .descriptorSet = descriptorSet,
+                .bindingName = write.first,
+                .bufferInfo = write.second,
+            };
+        } else if constexpr (std::is_same_v<typename Type::second_type, LunaBufferView *>)
+        {
+            entries.at(index) = LunaWriteDescriptorSet{
+                .descriptorSet = descriptorSet,
+                .bindingName = write.first,
+                .texelBufferView = *write.second,
+            };
+        } else
+        {
+            static_assert(false, "How did you manage to get an invalid type past the requires clause?!?!?");
+        }
+        index++;
+    };
+    (AddEntry(writes), ...);
+
+    return entries;
+}
+
+template<typename... T> requires(((std::__is_pair<T> &&
+                                   std::is_same_v<typename T::first_type, const char *> &&
+                                   (std::is_same_v<typename T::second_type, const LunaDescriptorImageInfo *> ||
+                                    std::is_same_v<typename T::second_type, LunaBuffer> ||
+                                    std::is_same_v<typename T::second_type, const LunaDescriptorBufferInfo *> ||
+                                    std::is_same_v<typename T::second_type, LunaBufferView *>)) &&
+                                  ...) &&
+                                 (!std::is_same_v<typename T::second_type, LunaBuffer> && ...))
+static inline std::array<LunaWriteDescriptorSet, sizeof...(T)> generateWrites(const LunaDescriptorSet descriptorSet,
+                                                                              const T &...writes)
+{
+    std::list<LunaDescriptorBufferInfo> list;
+    return generateWrites<T...>(descriptorSet, list, writes...);
+}
+
 LightBakerGpu::LightBakerGpu()
 {
-    constexpr LunaInstanceCreationInfo instanceCreationInfo = {
+    static constexpr LunaInstanceCreationInfo instanceCreationInfo = {
         .apiVersion = VK_API_VERSION_1_2,
 #ifndef NDEBUG
         .enableValidation = true,
@@ -69,23 +211,23 @@ LightBakerGpu::LightBakerGpu()
         return;
     }
 
-    constexpr LunaPhysicalDevicePreferenceDefinition physicalDevicePreferenceDefinition = {
+    static constexpr LunaPhysicalDevicePreferenceDefinition physicalDevicePreferenceDefinition = {
         .preferredDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
     };
-    constexpr VkPhysicalDeviceFeatures required10Features = {
+    static constexpr VkPhysicalDeviceFeatures required10Features = {
         .shaderFloat64 = VK_TRUE,
     };
-    VkPhysicalDeviceVulkan12Features required12Features = {
+    static VkPhysicalDeviceVulkan12Features required12Features = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
         .uniformAndStorageBuffer8BitAccess = VK_TRUE,
         .shaderInt8 = VK_TRUE,
     };
-    const VkPhysicalDeviceFeatures2 requiredFeatures = {
+    static constexpr VkPhysicalDeviceFeatures2 requiredFeatures = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
         .pNext = &required12Features,
         .features = required10Features,
     };
-    const LunaDeviceCreationInfo2 deviceCreationInfo = {
+    static constexpr LunaDeviceCreationInfo2 deviceCreationInfo = {
         .requiredFeatures = requiredFeatures,
         .physicalDevicePreferenceDefinition = &physicalDevicePreferenceDefinition,
     };
@@ -169,9 +311,9 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
 
     VkPhysicalDeviceProperties properties{};
     lunaGetPhysicalDeviceProperties(&properties);
-    for (LunaBuffer &pixelIndicesBuffer: pixelIndicesBuffers)
+    for (LunaBuffer &luxelIndicesBuffer: luxelIndicesBuffers)
     {
-        size_t bufferSize = sizeof(uint32_t) + sizeof(int) * lightmapSize.x * lightmapSize.y;
+        size_t bufferSize = sizeof(int) * lightmapSize.x * lightmapSize.y;
         if (bufferSize > properties.limits.maxStorageBufferRange)
         {
             bufferSize--;
@@ -181,15 +323,15 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
                 return false;
             }
         }
-        const LunaBufferCreationInfo pixelIndicesBufferCreationInfo = {
+        const LunaBufferCreationInfo luxelIndicesBufferCreationInfo = {
             .size = bufferSize,
             .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
         };
-        lunaCreateBuffer(&pixelIndicesBufferCreationInfo, &pixelIndicesBuffer);
+        lunaCreateBuffer(&luxelIndicesBufferCreationInfo, &luxelIndicesBuffer);
     }
 
     const LunaBufferCreationInfo hitIndicesBufferCreationInfo = {
-        .size = lightmapSize.x * lightmapSize.y * sizeof(uint32_t),
+        .size = sizeof(uint32_t) + lightmapSize.x * lightmapSize.y * sizeof(uint32_t),
         .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
     };
     if (!checkResult(lunaCreateBuffer(&hitIndicesBufferCreationInfo, &hitIndicesBuffer)))
@@ -218,12 +360,12 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
     {
         return false;
     }
-
-    lunaDeviceWaitIdle();
-    if (!bakeBounceLighting(lightmapSize, indices.size(), 1))
-    {
-        return false;
-    }
+    //
+    // lunaDeviceWaitIdle();
+    // if (!bakeBounceLighting(lightmapSize, indices.size(), 1))
+    // {
+    //     return false;
+    // }
 
     lunaDeviceWaitIdle();
     LunaBuffer outputLightmap2d{};
@@ -334,58 +476,19 @@ bool LightBakerGpu::bakeDirectLighting(const std::vector<Light> &lights,
         .dataSize = sizeof(specializationData),
         .pData = specializationData.data(),
     };
-    constexpr std::array<LunaDescriptorSetLayoutBinding, 6> descriptorSetLayoutBindings{
-        LunaDescriptorSetLayoutBinding{
-            .bindingName = "vertices",
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        },
-        LunaDescriptorSetLayoutBinding{
-            .bindingName = "indices",
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        },
-        LunaDescriptorSetLayoutBinding{
-            .bindingName = "lights",
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        },
-        LunaDescriptorSetLayoutBinding{
-            .bindingName = "pixel indices",
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        },
-        LunaDescriptorSetLayoutBinding{
-            .bindingName = "hit indices",
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        },
-        LunaDescriptorSetLayoutBinding{
-            .bindingName = "lightmap2d",
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        },
-    };
-    const LunaDescriptorSetLayoutCreationInfo descriptorSetLayoutCreationInfo = {
+    static constexpr std::array descriptorSetLayoutBindings = generateDescriptorSetLayoutBindings(std::pair{
+        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        std::array{"vertices", "indices", "lights", "luxel indices", "hit indices", "light hit indices", "lightmap2d"},
+    });
+    static constexpr LunaDescriptorSetLayoutCreationInfo descriptorSetLayoutCreationInfo = {
         .bindingCount = descriptorSetLayoutBindings.size(),
         .bindings = descriptorSetLayoutBindings.data(),
-    };
-    constexpr std::array<VkDescriptorPoolSize, 1> descriptorPoolSizes = {
-        VkDescriptorPoolSize{
-            .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .descriptorCount = 6,
-        },
-    };
-    const LunaDescriptorPoolCreationInfo descriptorPoolCreationInfo = {
-        .maxSets = 1,
-        .poolSizeCount = descriptorPoolSizes.size(),
-        .poolSizes = descriptorPoolSizes.data(),
     };
     if (!createPipeline("assets/shaders/lightmap_direct_lighting_pass.comp",
                         specializationInfo,
                         {},
                         descriptorSetLayoutCreationInfo,
-                        descriptorPoolCreationInfo,
+                        generateDescriptorPoolCreationInfo<&descriptorSetLayoutBindings>(),
                         descriptorSet,
                         pipeline))
     {
@@ -409,38 +512,23 @@ bool LightBakerGpu::bakeDirectLighting(const std::vector<Light> &lights,
         return false;
     }
 
-    const std::array<LunaWriteDescriptorSet, 6> writes = {
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "vertices",
-            .bufferInfo = vertexBuffer,
-        },
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "indices",
-            .bufferInfo = indexBuffer,
-        },
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "lights",
-            .bufferInfo = lightsBuffer,
-        },
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "pixel indices",
-            .bufferInfo = pixelIndicesBuffers.at(0),
-        },
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "hit indices",
-            .bufferInfo = hitIndicesBuffer,
-        },
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "lightmap2d",
-            .bufferInfo = lightmap2d,
-        },
+    LunaBuffer lightHitIndicesBuffer{};
+    const LunaBufferCreationInfo lightHitIndicesBufferCreationInfo = {
+        .size = static_cast<VkDeviceSize>(lightmapSize.x * lightmapSize.y) * lights.size() / sizeof(uint32_t),
+        .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
     };
+    lunaCreateBuffer(&lightHitIndicesBufferCreationInfo, &lightHitIndicesBuffer);
+
+    std::list<LunaDescriptorBufferInfo> bufferInfos;
+    const std::array writes = generateWrites(descriptorSet,
+                                             bufferInfos,
+                                             std::pair{"vertices", vertexBuffer},
+                                             std::pair{"indices", indexBuffer},
+                                             std::pair{"lights", lightsBuffer},
+                                             std::pair{"luxel indices", luxelIndicesBuffers.at(0)},
+                                             std::pair{"hit indices", hitIndicesBuffer},
+                                             std::pair{"light hit indices", lightHitIndicesBuffer},
+                                             std::pair{"lightmap2d", lightmap2d});
     lunaWriteDescriptorSets(writes.size(), writes.data());
 
     const LunaDescriptorSetBindInfo descriptorSetBindInfo = {
@@ -471,164 +559,120 @@ bool LightBakerGpu::bakeBounceLighting(const glm::ivec2 &lightmapSize,
                                        const size_t indexCount,
                                        const uint32_t bounceCount)
 {
+    static constexpr uint32_t MAX_WORK_GROUPS_Z = 256;
+
     LunaDescriptorSet descriptorSet{};
     LunaComputePipeline pipeline{};
-    const std::array<uint32_t, 6> specializationData = {
+    const std::array<uint32_t, 5> specializationData = {
         static_cast<uint32_t>(lightmapSize.x),
         static_cast<uint32_t>(lightmapSize.y),
         static_cast<uint32_t>(indexCount),
-        1,
-        1,
-        1,
+        WORK_GROUP_SIZE.x,
+        WORK_GROUP_SIZE.y,
     };
-    constexpr std::array<VkSpecializationMapEntry, 6>
-            mapEntries = generateSpecializationMapEntries<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>();
+    constexpr std::array<VkSpecializationMapEntry, 5>
+            mapEntries = generateSpecializationMapEntries<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>();
     const VkSpecializationInfo specializationInfo = {
         .mapEntryCount = mapEntries.size(),
         .pMapEntries = mapEntries.data(),
         .dataSize = sizeof(specializationData),
         .pData = specializationData.data(),
     };
-    constexpr std::array<LunaDescriptorSetLayoutBinding, 5> descriptorSetLayoutBindings{
-        LunaDescriptorSetLayoutBinding{
-            .bindingName = "vertices",
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        },
-        LunaDescriptorSetLayoutBinding{
-            .bindingName = "indices",
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        },
-        LunaDescriptorSetLayoutBinding{
-            .bindingName = "pixel indices",
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .descriptorCount = 2,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        },
-        LunaDescriptorSetLayoutBinding{
-            .bindingName = "hit indices",
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        },
-        LunaDescriptorSetLayoutBinding{
-            .bindingName = "lightmap2d",
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        },
-    };
-    const LunaDescriptorSetLayoutCreationInfo descriptorSetLayoutCreationInfo = {
+    static constexpr std::array descriptorSetLayoutBindings = generateDescriptorSetLayoutBindings(std::pair{
+        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        std::array{"vertices", "indices", "luxel indices", "hit indices", "lightmap2d"},
+    });
+    static constexpr LunaDescriptorSetLayoutCreationInfo descriptorSetLayoutCreationInfo = {
         .bindingCount = descriptorSetLayoutBindings.size(),
         .bindings = descriptorSetLayoutBindings.data(),
-    };
-    constexpr std::array<VkDescriptorPoolSize, 1> descriptorPoolSizes = {
-        VkDescriptorPoolSize{
-            .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .descriptorCount = 6,
-        },
-    };
-    const LunaDescriptorPoolCreationInfo descriptorPoolCreationInfo = {
-        .maxSets = 1,
-        .poolSizeCount = descriptorPoolSizes.size(),
-        .poolSizes = descriptorPoolSizes.data(),
     };
     if (!createPipeline("assets/shaders/lightmap_bounce_lighting_pass.comp",
                         specializationInfo,
                         {},
                         descriptorSetLayoutCreationInfo,
-                        descriptorPoolCreationInfo,
+                        generateDescriptorPoolCreationInfo<&descriptorSetLayoutBindings>(),
                         descriptorSet,
                         pipeline))
     {
         return false;
     }
 
-    const std::array<LunaWriteDescriptorSet, 6> writes = {
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "vertices",
-            .bufferInfo = vertexBuffer,
-        },
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "indices",
-            .bufferInfo = indexBuffer,
-        },
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "pixel indices",
-            .descriptorArrayElement = 0,
-            .bufferInfo = pixelIndicesBuffers.at(0),
-        },
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "pixel indices",
-            .descriptorArrayElement = 1,
-            .bufferInfo = pixelIndicesBuffers.at(1),
-        },
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "hit indices",
-            .bufferInfo = hitIndicesBuffer,
-        },
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "lightmap2d",
-            .bufferInfo = lightmap2d,
-        },
-    };
+    std::list<LunaDescriptorBufferInfo> bufferInfos;
+    const std::array writes = generateWrites(descriptorSet,
+                                             bufferInfos,
+                                             std::pair{"vertices", vertexBuffer},
+                                             std::pair{"indices", indexBuffer},
+                                             std::pair{"hit indices", hitIndicesBuffer},
+                                             std::pair{"lightmap2d", lightmap2d});
     lunaWriteDescriptorSets(writes.size(), writes.data());
 
+    std::array<LunaDescriptorBufferInfo, 2> luxelIndicesBufferInfos = {
+        LunaDescriptorBufferInfo{},
+        LunaDescriptorBufferInfo{},
+    };
+    const std::array<LunaWriteDescriptorSet, 2> luxelIndiciesWrites = {
+        LunaWriteDescriptorSet{
+            .descriptorSet = descriptorSet,
+            .bindingName = "luxel indices",
+            .descriptorArrayElement = 0,
+            .bufferInfo = &luxelIndicesBufferInfos.at(0),
+        },
+        LunaWriteDescriptorSet{
+            .descriptorSet = descriptorSet,
+            .bindingName = "luxel indices",
+            .descriptorArrayElement = 1,
+            .bufferInfo = &luxelIndicesBufferInfos.at(1),
+        },
+    };
     for (uint32_t i = 0; i < bounceCount; i++)
     {
-        const uint32_t pixelIndexCount = *static_cast<uint32_t *>(lunaGetBufferDataPointer(pixelIndicesBuffers.at(0)));
-        Logger::Verbose("{}", pixelIndexCount);
-        const LunaDescriptorSetBindInfo descriptorSetBindInfo = {
-            .descriptorSetCount = 1,
-            .descriptorSets = &descriptorSet,
-        };
-        const float sqrtPixelIndexCount = std::sqrt(pixelIndexCount);
-        const uint32_t y = std::floor(sqrtPixelIndexCount);
-        const uint32_t z = std::ceil(sqrtPixelIndexCount);
-        const LunaDispatchInfo dispatchInfo = {
-            .pipeline = pipeline,
-            .descriptorSetBindInfo = descriptorSetBindInfo,
-            .groupCountX = 1,
-            .groupCountY = y,
-            .groupCountZ = z,
-            .submitCommandBuffer = true,
-        };
-        if (!checkResult(lunaDispatch(&dispatchInfo)))
-        {
-            return false;
-        }
-        // const LunaDispatchBaseInfo dispatchBaseInfo = {
-        //     .pipeline = pipeline,
-        //     .descriptorSetBindInfo = descriptorSetBindInfo,
-        //     .baseGroupY = y,
-        //     .baseGroupZ = z,
-        //     .groupCountX = 1,
-        //     .groupCountY = 1,
-        //     .groupCountZ = pixelIndexCount % z,
-        //     .submitCommandBuffer = true,
-        // };
-        // if (!checkResult(lunaDispatchBase(&dispatchBaseInfo)))
-        // {
-        //     return false;
-        // }
+        luxelIndicesBufferInfos.at(0).buffer = luxelIndicesBuffers.at(i % 2);
+        luxelIndicesBufferInfos.at(1).buffer = luxelIndicesBuffers.at(i % 2);
 
-        // TODO: Once Luna 0.3.0 is finished, use lunaCopyBufferToBuffer
-        const uint32_t *bufferData = static_cast<uint32_t *>(lunaGetBufferDataPointer(pixelIndicesBuffers.at(1)));
-        assert(bufferData);
-        const LunaBufferWriteInfo writeInfo = {
-            .bytes = sizeof(uint32_t),
-            .data = bufferData,
-            .stageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        };
-        if (!checkResult(lunaWriteDataToBuffer(pixelIndicesBuffers.at(0), &writeInfo)))
+        const uint32_t luxelIndexCount = *static_cast<uint32_t *>(lunaGetBufferDataPointer(hitIndicesBuffer));
+        for (uint32_t j = 0; j < luxelIndexCount / MAX_WORK_GROUPS_Z; j++)
         {
-            return false;
+            lunaWriteDescriptorSets(luxelIndiciesWrites.size(), luxelIndiciesWrites.data());
+            const LunaDescriptorSetBindInfo descriptorSetBindInfo = {
+                .descriptorSetCount = 1,
+                .descriptorSets = &descriptorSet,
+            };
+            const LunaDispatchInfo dispatchInfo = {
+                .pipeline = pipeline,
+                .descriptorSetBindInfo = descriptorSetBindInfo,
+                .groupCountX = NUM_WORK_GROUPS.x,
+                .groupCountY = NUM_WORK_GROUPS.y,
+                .groupCountZ = MAX_WORK_GROUPS_Z,
+                .submitCommandBuffer = true,
+            };
+            if (!checkResult(lunaDispatch(&dispatchInfo)))
+            {
+                return false;
+            }
+            luxelIndicesBufferInfos.at(0).offset += sizeof(int) * MAX_WORK_GROUPS_Z;
+            luxelIndicesBufferInfos.at(1).offset += sizeof(int) * MAX_WORK_GROUPS_Z;
         }
+        if (luxelIndexCount % MAX_WORK_GROUPS_Z != 0)
+        {
+            lunaWriteDescriptorSets(luxelIndiciesWrites.size(), luxelIndiciesWrites.data());
+            const LunaDescriptorSetBindInfo descriptorSetBindInfo = {
+                .descriptorSetCount = 1,
+                .descriptorSets = &descriptorSet,
+            };
+            const LunaDispatchInfo dispatchInfo = {
+                .pipeline = pipeline,
+                .descriptorSetBindInfo = descriptorSetBindInfo,
+                .groupCountX = NUM_WORK_GROUPS.x,
+                .groupCountY = NUM_WORK_GROUPS.y,
+                .groupCountZ = MAX_WORK_GROUPS_Z,
+                .submitCommandBuffer = true,
+            };
+            if (!checkResult(lunaDispatch(&dispatchInfo)))
+            {
+                return false;
+            }
+        }
+        lunaDeviceWaitIdle();
     }
     return true;
 }
@@ -639,8 +683,8 @@ bool LightBakerGpu::convertLightmapToFloat16(const glm::ivec2 &lightmapSize, Lun
     LunaComputePipeline pipeline{};
     const std::array<uint32_t, 3> specializationData = {
         static_cast<uint32_t>(lightmapSize.x),
-        32,
-        32,
+        WORK_GROUP_SIZE.x,
+        WORK_GROUP_SIZE.y,
     };
     constexpr std::array<VkSpecializationMapEntry, 3>
             mapEntries = generateSpecializationMapEntries<uint32_t, uint32_t, uint32_t>();
@@ -650,42 +694,25 @@ bool LightBakerGpu::convertLightmapToFloat16(const glm::ivec2 &lightmapSize, Lun
         .dataSize = sizeof(specializationData),
         .pData = specializationData.data(),
     };
-    constexpr std::array<LunaDescriptorSetLayoutBinding, 2> descriptorSetLayoutBindings{
-        LunaDescriptorSetLayoutBinding{
-            .bindingName = "input lightmap",
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        },
-        LunaDescriptorSetLayoutBinding{
-            .bindingName = "output lightmap",
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        },
-    };
+
+    static constexpr std::array descriptorSetLayoutBindings = generateDescriptorSetLayoutBindings(
+            std::pair{
+                VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                std::array{"input lightmap"},
+            },
+            std::pair{
+                VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
+                std::array{"output lightmap"},
+            });
     const LunaDescriptorSetLayoutCreationInfo descriptorSetLayoutCreationInfo = {
         .bindingCount = descriptorSetLayoutBindings.size(),
         .bindings = descriptorSetLayoutBindings.data(),
-    };
-    constexpr std::array<VkDescriptorPoolSize, 2> descriptorPoolSizes = {
-        VkDescriptorPoolSize{
-            .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .descriptorCount = 1,
-        },
-        VkDescriptorPoolSize{
-            .type = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
-            .descriptorCount = 1,
-        },
-    };
-    const LunaDescriptorPoolCreationInfo descriptorPoolCreationInfo = {
-        .maxSets = 1,
-        .poolSizeCount = descriptorPoolSizes.size(),
-        .poolSizes = descriptorPoolSizes.data(),
     };
     if (!createPipeline("assets/shaders/lightmap_convert_to_float16.comp",
                         specializationInfo,
                         {},
                         descriptorSetLayoutCreationInfo,
-                        descriptorPoolCreationInfo,
+                        generateDescriptorPoolCreationInfo<&descriptorSetLayoutBindings>(),
                         descriptorSet,
                         pipeline))
     {
@@ -716,31 +743,23 @@ bool LightBakerGpu::convertLightmapToFloat16(const glm::ivec2 &lightmapSize, Lun
         return false;
     }
 
-    const std::array<LunaWriteDescriptorSet, 2> writes = {
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "input lightmap",
-            .bufferInfo = lightmap2d,
-        },
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "output lightmap",
-            .texelBufferView = outputLightmap2dBufferView,
-        },
-    };
+    std::list<LunaDescriptorBufferInfo> bufferInfos;
+    const std::array writes = generateWrites(descriptorSet,
+                                             bufferInfos,
+                                             std::pair{"input lightmap", lightmap2d},
+                                             std::pair{"output lightmap", &outputLightmap2dBufferView});
     lunaWriteDescriptorSets(writes.size(), writes.data());
 
     const LunaDescriptorSetBindInfo descriptorSetBindInfo = {
         .descriptorSetCount = 1,
         .descriptorSets = &descriptorSet,
     };
-    assert(lightmapSize.x % 32 == 0 && lightmapSize.y % 32 == 0);
-    const glm::uvec2 numGroups = lightmapSize / 32;
+    assert(lightmapSize.x % WORK_GROUP_SIZE.x == 0 && lightmapSize.y % WORK_GROUP_SIZE.y == 0);
     const LunaDispatchInfo dispatchInfo = {
         .pipeline = pipeline,
         .descriptorSetBindInfo = descriptorSetBindInfo,
-        .groupCountX = numGroups.x,
-        .groupCountY = numGroups.y,
+        .groupCountX = lightmapSize.x / WORK_GROUP_SIZE.x,
+        .groupCountY = lightmapSize.y / WORK_GROUP_SIZE.y,
         .submitCommandBuffer = true,
     };
     return checkResult(lunaDispatch(&dispatchInfo));

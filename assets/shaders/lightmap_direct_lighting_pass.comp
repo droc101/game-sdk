@@ -89,11 +89,15 @@ layout (set = 0, binding = 3) buffer LuxelIndicesData {
 /// A buffer containing the hit count of every luxel
 /// Having this both allows for keeping track of the number of hits, as well as easy lookup to see if a luxel has already been counted
 layout (set = 0, binding = 4) buffer HitIndicesData {
-    uint indices[width * height];
+    uint indices[width * height / 4];
 } hitIndicesData;
 
+layout (set = 0, binding = 5) buffer LightHitIndicesData {
+    uint indices[]; // width * height * gl_NumWorkGroups.z / 32
+} lightHitIndicesData;
+
 /// The lightmap from which data is both read and written to
-layout (set = 0, binding = 5) buffer LightmapLuxels {
+layout (set = 0, binding = 6) buffer LightmapLuxels {
     uint luxels[width * height * 3];
 } lightmap;
 
@@ -179,8 +183,10 @@ float getLightStrength(float distance, Light light) {
  * @param index The index of the luxel
  * @return True if the luxel had not previously been hit
  */
-bool hitIndex(int index) {
-    return atomicAdd(hitIndicesData.indices[index], 1) == 0;
+bool atomicHitIndex(int index) {
+    // This function mandates (but does not enforce) a limit of 255 lights hitting the same luxel
+    const uint shift = (8 * (index % 4));
+    return (atomicAdd(hitIndicesData.indices[index / 4], 1 << shift) & (0xFF << shift)) == 0;
 }
 
 vec3 getRay(uint index) {
@@ -202,9 +208,15 @@ void atomicAddColorToLuxelChannel(int luxel, int channel, float val) {
     } while (val1 != val2);
 }
 void atomicAddColorToLightmap(vec3 color, int index) {
-    atomicAddColorToLuxelChannel(3 * index, 0, float(color.r));
-    atomicAddColorToLuxelChannel(3 * index, 1, float(color.g));
-    atomicAddColorToLuxelChannel(3 * index, 2, float(color.b));
+    atomicAddColorToLuxelChannel(3 * index, 0, color.r);
+    atomicAddColorToLuxelChannel(3 * index, 1, color.g);
+    atomicAddColorToLuxelChannel(3 * index, 2, color.b);
+}
+
+bool atomicLightHitLuxelIndex(uint luxelIndex) {
+    const uint index = luxelIndex * gl_NumWorkGroups.z + gl_WorkGroupID.z;
+    const uint bit = 1 << (index % 32);
+    return (atomicOr(lightHitIndicesData.indices[index / 32], bit) & bit) == 0;
 }
 
 void main() {
@@ -235,9 +247,11 @@ void main() {
     }
 
     int index = computeLuxelIndex(closestIntersection.triangle, closestIntersection.intersection);
-    if (hitIndex(index)) {
-        uint oldCount = atomicAdd(luxelIndicesData.count, 1);
-        atomicExchange(luxelIndicesData.indices[oldCount], index); // The return value of this function is not needed
+    if (atomicLightHitLuxelIndex(index)) {
+        if (atomicHitIndex(index)) {
+            uint oldCount = atomicAdd(luxelIndicesData.count, 1);
+            atomicExchange(luxelIndicesData.indices[oldCount], index); // The return value of this function is not needed
+        }
+        atomicAddColorToLightmap(closestIntersection.lightStrength * light.color, index);
     }
-    atomicAddColorToLightmap(closestIntersection.lightStrength * light.color, index);
 }

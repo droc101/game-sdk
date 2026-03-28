@@ -38,7 +38,7 @@ class LightBakerGpu
         {
             if (result != VK_SUCCESS)
             {
-                Logger::Error("Error {} in Vulkan function!", static_cast<uint32_t>(result));
+                Logger::Error("Error {} in Vulkan function!", static_cast<int>(result));
                 return false;
             }
             return true;
@@ -63,7 +63,7 @@ class LightBakerGpu
         bool initialized{};
         LunaBuffer vertexBuffer{};
         LunaBuffer indexBuffer{};
-        std::array<LunaBuffer, 2> pixelIndicesBuffers{};
+        std::array<LunaBuffer, 2> luxelIndicesBuffers{};
         LunaBuffer hitIndicesBuffer{};
         LunaBuffer lightmap2d{};
 };
