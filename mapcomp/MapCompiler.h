@@ -44,7 +44,7 @@ class MapCompiler
          * Compile the loaded map
          * @return Error code
          */
-        [[nodiscard]] Error::ErrorCode Compile() const;
+        [[nodiscard]] Error::ErrorCode Compile();
 
     private:
         MapCompilerSettings settings;
@@ -53,7 +53,9 @@ class MapCompiler
         SearchPathManager pathManager;
         ActorDefinitionManager defManager;
 
-        Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer) const;
+        static constexpr uint8_t FAST_COMPILE_MAX_LUXELS_PER_UNIT = 8;
+
+        Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer);
 
         [[nodiscard]] LevelMaterialAsset GetMapMaterial(const std::string &path) const;
 

@@ -50,7 +50,7 @@ Error::ErrorCode MapCompiler::LoadMapSource(const std::string &mapSourceFile)
     return MapAsset::CreateFromMapSrc(mapSourceFile.c_str(), map);
 }
 
-Error::ErrorCode MapCompiler::Compile() const
+Error::ErrorCode MapCompiler::Compile()
 {
     std::vector<uint8_t> buffer;
     const Error::ErrorCode e = SaveToBuffer(buffer);
@@ -82,7 +82,7 @@ LevelMaterialAsset MapCompiler::GetMapMaterial(const std::string &path) const
 }
 
 
-Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
+Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
 {
     assert(buffer.empty());
 
@@ -183,6 +183,19 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     }
 
     Logger::Info("Compiling Sectors...");
+
+    if (settings.fastCompile)
+    {
+        for (Sector &sector: map.sectors)
+        {
+            sector.ceilingMaterial.luxelsPerUnit = std::min<uint8_t>(sector.ceilingMaterial.luxelsPerUnit, FAST_COMPILE_MAX_LUXELS_PER_UNIT);
+            sector.floorMaterial.luxelsPerUnit = std::min<uint8_t>(sector.floorMaterial.luxelsPerUnit, FAST_COMPILE_MAX_LUXELS_PER_UNIT);
+            for (WallMaterial &mat: sector.wallMaterials)
+            {
+                mat.luxelsPerUnit = std::min<uint8_t>(mat.luxelsPerUnit, FAST_COMPILE_MAX_LUXELS_PER_UNIT);
+            }
+        }
+    }
 
     std::unordered_map<std::string, LevelMeshBuilder> meshBuilders{};
     std::vector<SectorCollisionBuilder> collisionBuilders{};
