@@ -11,6 +11,7 @@
 #include <glm/vec4.hpp>
 #include <libassets/type/WallMaterial.h>
 #include <nlohmann/json.hpp>
+#include <string>
 #include <vector>
 
 class Sector

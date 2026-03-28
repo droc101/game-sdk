@@ -85,7 +85,7 @@ Error::ErrorCode MapAsset::SaveAsMapSrc(const char *mapSrcPath) const
     {
         return Error::ErrorCode::CANT_OPEN_FILE;
     }
-    file << src;
+    file << src.dump(4);
     file.close();
     return Error::ErrorCode::OK;
 }
