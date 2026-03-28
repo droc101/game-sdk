@@ -8,6 +8,7 @@
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/type/ConvexHull.h>
 #include <libassets/type/StaticCollisionMesh.h>
+#include <libassets/util/Error.h>
 #include <string>
 #include <utility>
 
@@ -36,7 +37,13 @@ void ModelEditor::ImportLod(const std::string &path)
 void ModelEditor::ImportSingleHull(const std::string &path)
 {
     ModelAsset model = modelViewer.GetModel();
-    const ConvexHull hull = ConvexHull(path);
+    Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
+    const ConvexHull hull = ConvexHull(path, e);
+    if (e != Error::ErrorCode::OK)
+    {
+        SDKWindow::Get().ErrorMessage("Failed to import collision hull");
+        return;
+    }
     model.AddHull(hull);
     DestroyExistingModel();
     modelViewer.SetModel(std::move(model));
@@ -46,7 +53,11 @@ void ModelEditor::ImportSingleHull(const std::string &path)
 void ModelEditor::ImportMultipleHulls(const std::string &path)
 {
     ModelAsset model = modelViewer.GetModel();
-    model.AddHulls(path);
+    if (model.AddHulls(path) != Error::ErrorCode::OK)
+    {
+        SDKWindow::Get().ErrorMessage("Failed to import collision hulls");
+        return;
+    }
     DestroyExistingModel();
     modelViewer.SetModel(std::move(model));
     modelLoaded = true;
@@ -55,7 +66,13 @@ void ModelEditor::ImportMultipleHulls(const std::string &path)
 void ModelEditor::ImportStaticCollider(const std::string &path)
 {
     ModelAsset model = modelViewer.GetModel();
-    model.SetStaticCollisionMesh(StaticCollisionMesh(path));
+    Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
+    model.SetStaticCollisionMesh(StaticCollisionMesh(path, e));
+    if (e != Error::ErrorCode::OK)
+    {
+        SDKWindow::Get().ErrorMessage("Failed to import static collision model");
+        return;
+    }
     DestroyExistingModel();
     modelViewer.SetModel(std::move(model));
     modelLoaded = true;

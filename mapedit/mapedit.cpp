@@ -557,7 +557,13 @@ int main(int argc, char **argv)
 
     SDKWindow::Get().SetWindowIcon("mapedit");
 
-    MapEditor::adm = ActorDefinitionManager(SharedMgr::Get().pathManager);
+    Error::ErrorCode adms = Error::ErrorCode::UNKNOWN;
+    MapEditor::adm = ActorDefinitionManager(SharedMgr::Get().pathManager, adms);
+    if (adms != Error::ErrorCode::OK)
+    {
+        SDKWindow::Get().ErrorMessage("Failed to load actor definitions");
+        return 1;
+    }
 
     if (!MapEditor::adm.HasActorClass("player"))
     {
@@ -565,7 +571,7 @@ int main(int argc, char **argv)
                                       "game paths from the SDK launcher.",
                                       "Error");
         SDKWindow::Get().Destroy();
-        return 0;
+        return 1;
     }
     if (!MapEditor::adm.HasActorClass("actor"))
     {
@@ -573,7 +579,7 @@ int main(int argc, char **argv)
                                       "game paths from the SDK launcher.",
                                       "Error");
         SDKWindow::Get().Destroy();
-        return 0;
+        return 1;
     }
 
     MapEditor::mat = WallMaterial(Options::Get().defaultMaterial);

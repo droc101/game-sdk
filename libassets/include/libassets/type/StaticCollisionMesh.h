@@ -9,13 +9,14 @@
 #include <glm/vec3.hpp>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/Error.h>
 #include <string>
 #include <vector>
 
 class StaticCollisionMesh
 {
     public:
-        explicit StaticCollisionMesh(const std::string &objPath);
+        StaticCollisionMesh(const std::string &objPath, Error::ErrorCode &status);
         explicit StaticCollisionMesh(DataReader &reader);
         StaticCollisionMesh() = default;
 

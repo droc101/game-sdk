@@ -84,7 +84,7 @@ class ModelAsset final
 
         void AddHull(const ConvexHull &hull);
 
-        void AddHulls(const std::string &path);
+        [[nodiscard]] Error::ErrorCode AddHulls(const std::string &path);
 
         void RemoveHull(size_t index);
 

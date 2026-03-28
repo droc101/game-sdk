@@ -17,7 +17,7 @@ class ActorDefinitionManager
 {
     public:
         ActorDefinitionManager() = default;
-        explicit ActorDefinitionManager(const SearchPathManager &searchPathManager);
+        ActorDefinitionManager(const SearchPathManager &searchPathManager, Error::ErrorCode &status);
 
         [[nodiscard]] bool HasActorClass(const std::string &className) const;
 
@@ -32,7 +32,7 @@ class ActorDefinitionManager
         std::map<std::string, ActorDefinition> actorDefinitions{};
         std::vector<std::string> actorClassNames{};
 
-        void LoadActorDefinitions(const SearchPathManager &pathManager);
+        Error::ErrorCode LoadActorDefinitions(const SearchPathManager &pathManager);
         void LoadOptionDefinitions(const SearchPathManager &pathManager);
 };
 

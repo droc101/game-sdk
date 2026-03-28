@@ -203,7 +203,12 @@ Error::ErrorCode ModelAsset::CreateFromStandardModel(const std::string &modelPat
                                                      const std::string &defaultTexture)
 {
     model = ModelAsset();
-    model.lods.emplace_back(modelPath, 0);
+    Error::ErrorCode lodCode = Error::ErrorCode::UNKNOWN;
+    model.lods.emplace_back(modelPath, 0, lodCode);
+    if (lodCode != Error::ErrorCode::OK)
+    {
+        return lodCode;
+    }
     const ModelLod &lod = model.lods.back();
     const uint32_t materialCount = lod.indexCounts.size();
     model.skins.emplace_back(materialCount);
@@ -224,7 +229,12 @@ void ModelAsset::SortLODs()
 bool ModelAsset::AddLod(const std::string &path)
 {
     const float dist = lods.back().distance + 5;
-    const ModelLod lod(path, dist);
+    Error::ErrorCode status = Error::ErrorCode::UNKNOWN;
+    const ModelLod lod(path, dist, status);
+    if (status != Error::ErrorCode::OK)
+    {
+        return false;
+    }
     if (lod.indexCounts.size() != GetMaterialsPerSkin())
     {
         return false;
@@ -314,9 +324,9 @@ void ModelAsset::AddHull(const ConvexHull &hull)
     convexHulls.push_back(hull);
 }
 
-void ModelAsset::AddHulls(const std::string &path)
+Error::ErrorCode ModelAsset::AddHulls(const std::string &path)
 {
-    ConvexHull::ImportMultiple(path, convexHulls);
+    return ConvexHull::ImportMultiple(path, convexHulls);
 }
 
 void ModelAsset::RemoveHull(const size_t index)

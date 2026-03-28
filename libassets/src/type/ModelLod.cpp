@@ -47,7 +47,7 @@ ModelLod::ModelLod(DataReader &reader, const uint32_t materialsPerSkin)
     }
 }
 
-ModelLod::ModelLod(const std::string &filePath, const float distance)
+ModelLod::ModelLod(const std::string &filePath, const float distance, Error::ErrorCode &status)
 {
     this->distance = distance;
 
@@ -64,7 +64,8 @@ ModelLod::ModelLod(const std::string &filePath, const float distance)
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
         Logger::Error("Assimp error: {}", importer.GetErrorString());
-        throw std::runtime_error("assimp error, check stdout");
+        status = Error::ErrorCode::UNKNOWN;
+        return;
     }
 
     for (uint32_t i = 0; i < scene->mNumMeshes; i++)
@@ -115,6 +116,8 @@ ModelLod::ModelLod(const std::string &filePath, const float distance)
         materialIndices.erase(materialIndices.begin() + index);
         indexCounts.erase(indexCounts.begin() + index);
     }
+
+    status = Error::ErrorCode::OK;
 }
 
 void ModelLod::Export(const char *path) const

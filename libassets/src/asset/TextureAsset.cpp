@@ -15,12 +15,14 @@
 #include <ImfOutputFile.h>
 #include <ImfPixelType.h>
 #include <ImfRgba.h>
+#include <ImfRgbaFile.h>
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/type/Asset.h>
 #include <libassets/util/AssetReader.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <OpenEXRConfig.h>
 #include <vector>
 
@@ -28,8 +30,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <stb_image_write.h>
-
-#include "../../../cmake-build-release/_deps/openexr-src/src/lib/OpenEXR/ImfRgbaFile.h"
 
 using namespace OPENEXR_IMF_NAMESPACE;
 using namespace IMATH_NAMESPACE;
@@ -46,6 +46,11 @@ Error::ErrorCode TextureAsset::CreateFromPNG(const char *imagePath, TextureAsset
     int height = 0;
     int channels = 0;
     uint8_t *data = stbi_load(imagePath, &width, &height, &channels, STBI_rgb_alpha);
+    if (data == nullptr)
+    {
+        Logger::Error("stbi_load failed: {}", stbi_failure_reason());
+        return Error::ErrorCode::UNKNOWN;
+    }
     texture.width = width;
     texture.height = height;
     texture.pixelFormat = PixelFormat::RGBA8;
