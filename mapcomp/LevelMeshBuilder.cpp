@@ -360,6 +360,7 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
     if (!points.empty())
     {
         const glm::vec4 sectorAABB = sector.GetAABB();
+        const bool rotate = sectorAABB.z < sectorAABB.w;
         const glm::vec2 sectorTopLeft = {sectorAABB.x - sectorAABB.z, sectorAABB.y - sectorAABB.w};
         const glm::vec2 sectorBottomRight = {sectorAABB.x + sectorAABB.z, sectorAABB.y + sectorAABB.w};
         std::vector<glm::vec2> positionsInRect{};
@@ -367,13 +368,21 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
         {
             const MapVertex &vert = vertices.at(index);
             const glm::vec2 position = {vert.position.x, vert.position.z};
-            const float localX = mapRange(position.x, sectorTopLeft.x, sectorBottomRight.x, 0.0f, 1.0f);
-            const float localY = mapRange(position.y, sectorTopLeft.y, sectorBottomRight.y, 0.0f, 1.0f);
+            float localX = mapRange(position.x, sectorTopLeft.x, sectorBottomRight.x, 0.0f, 1.0f);
+            float localY = mapRange(position.y, sectorTopLeft.y, sectorBottomRight.y, 0.0f, 1.0f);
+            if (rotate)
+            {
+                std::swap(localX, localY);
+            }
             positionsInRect.emplace_back(localX, localY);
         }
 
-        const float width = sectorAABB.z * 2;
-        const float height = sectorAABB.w * 2;
+        float width = sectorAABB.z * 2;
+        float height = sectorAABB.w * 2;
+        if (rotate)
+        {
+            std::swap(width, height);
+        }
         const float luxelsPerUnit = isFloor ? sector.floorMaterial.luxelsPerUnit : sector.ceilingMaterial.luxelsPerUnit;
         faceIndices.emplace_back(idx, positionsInRect);
         const float luxelsX = fmaxf(width * static_cast<float>(luxelsPerUnit), 1.0f);
