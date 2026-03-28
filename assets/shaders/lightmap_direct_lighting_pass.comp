@@ -191,7 +191,7 @@ bool atomicHitIndex(int index) {
 
 vec3 getRay(uint index) {
     const double maxSample = double(gl_WorkGroupSize.x * gl_NumWorkGroups.x * gl_WorkGroupSize.y * gl_NumWorkGroups.y * dispatchCount);
-    double y = 2 * index / maxSample - 1;
+    double y = 1 - (index / maxSample) * 2;
 
     double radius = sqrt(1 - y * y);
     float theta = float(mod(PHI * index, 2 * PI) - PI);

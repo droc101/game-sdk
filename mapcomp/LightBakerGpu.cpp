@@ -37,7 +37,7 @@
 // These are up here for me to be able to easily edit them, but they can be moved elsewhere later
 static constexpr glm::uvec2 WORK_GROUP_SIZE{32};
 static constexpr glm::uvec2 NUM_WORK_GROUPS{128};
-static constexpr uint32_t DISPATCH_COUNT = 255;
+static constexpr uint32_t DISPATCH_COUNT = 128;
 
 // Ensure that the total ray count does not overflow
 static_assert(static_cast<uint64_t>(WORK_GROUP_SIZE.y * NUM_WORK_GROUPS.y + 1) *
