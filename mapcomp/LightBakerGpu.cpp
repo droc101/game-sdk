@@ -37,7 +37,7 @@
 // These are up here for me to be able to easily edit them, but they can be moved elsewhere later
 static constexpr glm::uvec2 WORK_GROUP_SIZE{32};
 static constexpr glm::uvec2 NUM_WORK_GROUPS{128};
-static constexpr uint32_t DISPATCH_COUNT = 128;
+static constexpr uint32_t DISPATCH_COUNT = 16;
 
 // Ensure that the total ray count does not overflow
 static_assert(static_cast<uint64_t>(WORK_GROUP_SIZE.y * NUM_WORK_GROUPS.y + 1) *
@@ -113,14 +113,27 @@ template<const auto *BINDINGS> static consteval LunaDescriptorPoolCreationInfo g
                 }
                 if (poolSize.type == binding.descriptorType)
                 {
-                    ++poolSize.descriptorCount;
+                    poolSize.descriptorCount += (binding.descriptorCount == 0 ? 1 : binding.descriptorCount);
                     break;
                 }
             }
         }
         return ret;
     })();
+    static constexpr VkDescriptorPoolCreateFlags CREATION_FLAGS = ([]() -> VkDescriptorPoolCreateFlags {
+        VkDescriptorPoolCreateFlags ret{};
+        for (const LunaDescriptorSetLayoutBinding &binding: *BINDINGS)
+        {
+            if ((binding.bindingFlags & VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT) ==
+                VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT)
+            {
+                ret |= VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
+            }
+        }
+        return ret;
+    })();
     return LunaDescriptorPoolCreationInfo{
+        .flags = CREATION_FLAGS,
         .maxSets = 1,
         .poolSizeCount = ret.size(),
         .poolSizes = ret.data(),
@@ -221,6 +234,7 @@ LightBakerGpu::LightBakerGpu()
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
         .uniformAndStorageBuffer8BitAccess = VK_TRUE,
         .shaderInt8 = VK_TRUE,
+        .descriptorBindingStorageBufferUpdateAfterBind = VK_TRUE,
     };
     static constexpr VkPhysicalDeviceFeatures2 requiredFeatures = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
@@ -243,6 +257,14 @@ LightBakerGpu::~LightBakerGpu()
 {
     lunaDestroyInstance();
 }
+
+static constexpr VmaAllocationCreateInfo VRAM_ALLOCATION_CREATE_INFO = {
+    .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+};
+static constexpr VmaAllocationCreateInfo MAPPED_ALLOCATION_CREATE_INFO = {
+    .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+    .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+};
 
 bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                          const std::vector<Light> &lights,
@@ -272,10 +294,10 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
         return false;
     }
 
-    // TODO: With the stable release of Luna 0.3.0 these can be moved to be two regions within one buffer
     const LunaBufferCreationInfo vertexBufferCreationInfo = {
         .size = vertexBufferByteCount,
         .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
     if (!checkResult(lunaCreateBuffer(&vertexBufferCreationInfo, &vertexBuffer)))
     {
@@ -284,6 +306,7 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
     const LunaBufferCreationInfo indexBufferCreationInfo = {
         .size = indexBufferByteCount,
         .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
     if (!checkResult(lunaCreateBuffer(&indexBufferCreationInfo, &indexBuffer)))
     {
@@ -326,41 +349,48 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
         const LunaBufferCreationInfo luxelIndicesBufferCreationInfo = {
             .size = bufferSize,
             .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+            .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
         };
         lunaCreateBuffer(&luxelIndicesBufferCreationInfo, &luxelIndicesBuffer);
+        if (!checkResult(lunaFillBuffer(luxelIndicesBuffer, 0)))
+        {
+            return false;
+        }
     }
 
     const LunaBufferCreationInfo hitIndicesBufferCreationInfo = {
         .size = sizeof(uint32_t) + lightmapSize.x * lightmapSize.y * sizeof(uint32_t),
         .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        .allocationCreateInfo = &MAPPED_ALLOCATION_CREATE_INFO,
     };
     if (!checkResult(lunaCreateBuffer(&hitIndicesBufferCreationInfo, &hitIndicesBuffer)))
     {
         return false;
     }
+    if (!checkResult(lunaFillBuffer(hitIndicesBuffer, 0)))
+    {
+        return false;
+    }
 
-    constexpr VmaAllocationCreateInfo allocationCreateInfo = {
-        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-        .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-    };
     const LunaBufferCreationInfo levelGeometryLightmapCreationInfo = {
         .size = lightmapSize.x * lightmapSize.y * sizeof(float) * 3,
         .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-        .allocationCreateInfo = &allocationCreateInfo,
+        .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
     if (!checkResult(lunaCreateBuffer(&levelGeometryLightmapCreationInfo, &lightmap2d)))
     {
         return false;
     }
-
-    uint8_t *bufferData = static_cast<uint8_t *>(lunaGetBufferDataPointer(lightmap2d));
-    memset(bufferData, 0, lightmapSize.x * lightmapSize.y * sizeof(float) * 3);
+    if (!checkResult(lunaFillBuffer(lightmap2d, 0)))
+    {
+        return false;
+    }
 
     if (!bakeDirectLighting(lights, lightmapSize, indices.size()))
     {
         return false;
     }
-    //
+
     // lunaDeviceWaitIdle();
     // if (!bakeBounceLighting(lightmapSize, indices.size(), 1))
     // {
@@ -376,7 +406,7 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
 
     Logger::Info("Saving Lightmap...");
     lunaDeviceWaitIdle();
-    bufferData = static_cast<uint8_t *>(lunaGetBufferDataPointer(outputLightmap2d));
+    uint8_t *bufferData = static_cast<uint8_t *>(lunaGetBufferDataPointer(outputLightmap2d));
     pixelData.resize(lunaGetBufferSize(outputLightmap2d));
     std::copy_n(bufferData, pixelData.size(), pixelData.data());
     return true;
@@ -486,7 +516,7 @@ bool LightBakerGpu::bakeDirectLighting(const std::vector<Light> &lights,
         .bindingCount = descriptorSetLayoutBindings.size(),
         .bindings = descriptorSetLayoutBindings.data(),
     };
-    if (!createPipeline("assets/shaders/lightmap_direct_lighting_pass.comp",
+    if (!createPipeline("assets/shaders/lightmap/direct_lighting_pass.comp",
                         specializationInfo,
                         {},
                         descriptorSetLayoutCreationInfo,
@@ -501,6 +531,7 @@ bool LightBakerGpu::bakeDirectLighting(const std::vector<Light> &lights,
     const LunaBufferCreationInfo lightsBufferCreationInfo = {
         .size = sizeof(Light) * lights.size(),
         .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
     lunaCreateBuffer(&lightsBufferCreationInfo, &lightsBuffer);
 
@@ -518,8 +549,13 @@ bool LightBakerGpu::bakeDirectLighting(const std::vector<Light> &lights,
     const LunaBufferCreationInfo lightHitIndicesBufferCreationInfo = {
         .size = static_cast<VkDeviceSize>(lightmapSize.x * lightmapSize.y) * lights.size() / sizeof(uint32_t),
         .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
     lunaCreateBuffer(&lightHitIndicesBufferCreationInfo, &lightHitIndicesBuffer);
+    if (!checkResult(lunaFillBuffer(lightHitIndicesBuffer, 0)))
+    {
+        return false;
+    }
 
     std::list<LunaDescriptorBufferInfo> bufferInfos;
     const std::array writes = generateWrites(descriptorSet,
@@ -563,32 +599,66 @@ bool LightBakerGpu::bakeBounceLighting(const glm::ivec2 &lightmapSize,
 {
     static constexpr uint32_t MAX_WORK_GROUPS_Z = 256;
 
+    const uint32_t luxelIndexCount = *static_cast<uint32_t *>(lunaGetBufferDataPointer(hitIndicesBuffer));
+
     LunaDescriptorSet descriptorSet{};
     LunaComputePipeline pipeline{};
-    const std::array<uint32_t, 5> specializationData = {
+    const std::array<uint32_t, 6> specializationData = {
         static_cast<uint32_t>(lightmapSize.x),
         static_cast<uint32_t>(lightmapSize.y),
         static_cast<uint32_t>(indexCount),
+        DISPATCH_COUNT,
         WORK_GROUP_SIZE.x,
         WORK_GROUP_SIZE.y,
     };
-    constexpr std::array<VkSpecializationMapEntry, 5>
-            mapEntries = generateSpecializationMapEntries<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>();
+    constexpr std::array<VkSpecializationMapEntry, 6>
+            mapEntries = generateSpecializationMapEntries<uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t>();
     const VkSpecializationInfo specializationInfo = {
         .mapEntryCount = mapEntries.size(),
         .pMapEntries = mapEntries.data(),
         .dataSize = sizeof(specializationData),
         .pData = specializationData.data(),
     };
-    static constexpr std::array descriptorSetLayoutBindings = generateDescriptorSetLayoutBindings(std::pair{
-        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-        std::array{"vertices", "indices", "luxel indices", "hit indices", "lightmap2d"},
-    });
+    static constexpr std::array descriptorSetLayoutBindings{
+        LunaDescriptorSetLayoutBinding{
+            .bindingName = "vertices",
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+        },
+        LunaDescriptorSetLayoutBinding{
+            .bindingName = "indices",
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+        },
+        LunaDescriptorSetLayoutBinding{
+            .bindingName = "luxel indices",
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .descriptorCount = 2,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+            .bindingFlags = VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT,
+        },
+        LunaDescriptorSetLayoutBinding{
+            .bindingName = "hit indices",
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+        },
+        LunaDescriptorSetLayoutBinding{
+            .bindingName = "light hit indices",
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+        },
+        LunaDescriptorSetLayoutBinding{
+            .bindingName = "lightmap2d",
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+        },
+    };
     static constexpr LunaDescriptorSetLayoutCreationInfo descriptorSetLayoutCreationInfo = {
+        .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT,
         .bindingCount = descriptorSetLayoutBindings.size(),
         .bindings = descriptorSetLayoutBindings.data(),
     };
-    if (!createPipeline("assets/shaders/lightmap_bounce_lighting_pass.comp",
+    if (!createPipeline("assets/shaders/lightmap/bounce_lighting_pass.comp",
                         specializationInfo,
                         {},
                         descriptorSetLayoutCreationInfo,
@@ -599,12 +669,25 @@ bool LightBakerGpu::bakeBounceLighting(const glm::ivec2 &lightmapSize,
         return false;
     }
 
+    LunaBuffer lightHitIndicesBuffer{};
+    const LunaBufferCreationInfo lightHitIndicesBufferCreationInfo = {
+        .size = static_cast<VkDeviceSize>(lightmapSize.x * lightmapSize.y) * MAX_WORK_GROUPS_Z / sizeof(uint32_t),
+        .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
+    };
+    lunaCreateBuffer(&lightHitIndicesBufferCreationInfo, &lightHitIndicesBuffer);
+    if (!checkResult(lunaFillBuffer(lightHitIndicesBuffer, 0)))
+    {
+        return false;
+    }
+
     std::list<LunaDescriptorBufferInfo> bufferInfos;
     const std::array writes = generateWrites(descriptorSet,
                                              bufferInfos,
                                              std::pair{"vertices", vertexBuffer},
                                              std::pair{"indices", indexBuffer},
                                              std::pair{"hit indices", hitIndicesBuffer},
+                                             std::pair{"light hit indices", lightHitIndicesBuffer},
                                              std::pair{"lightmap2d", lightmap2d});
     lunaWriteDescriptorSets(writes.size(), writes.data());
 
@@ -626,54 +709,69 @@ bool LightBakerGpu::bakeBounceLighting(const glm::ivec2 &lightmapSize,
             .bufferInfo = &luxelIndicesBufferInfos.at(1),
         },
     };
+    const LunaDescriptorSetBindInfo descriptorSetBindInfo = {
+        .descriptorSetCount = 1,
+        .descriptorSets = &descriptorSet,
+    };
     for (uint32_t i = 0; i < bounceCount; i++)
     {
         luxelIndicesBufferInfos.at(0).buffer = luxelIndicesBuffers.at(i % 2);
         luxelIndicesBufferInfos.at(1).buffer = luxelIndicesBuffers.at(i % 2);
 
-        const uint32_t luxelIndexCount = *static_cast<uint32_t *>(lunaGetBufferDataPointer(hitIndicesBuffer));
+        // const uint32_t luxelIndexCount = *static_cast<uint32_t *>(lunaGetBufferDataPointer(hitIndicesBuffer));
         for (uint32_t j = 0; j < luxelIndexCount / MAX_WORK_GROUPS_Z; j++)
         {
+            lunaDeviceWaitIdle();
             lunaWriteDescriptorSets(luxelIndiciesWrites.size(), luxelIndiciesWrites.data());
-            const LunaDescriptorSetBindInfo descriptorSetBindInfo = {
-                .descriptorSetCount = 1,
-                .descriptorSets = &descriptorSet,
-            };
-            const LunaDispatchInfo dispatchInfo = {
-                .pipeline = pipeline,
-                .descriptorSetBindInfo = descriptorSetBindInfo,
-                .groupCountX = NUM_WORK_GROUPS.x,
-                .groupCountY = NUM_WORK_GROUPS.y,
-                .groupCountZ = MAX_WORK_GROUPS_Z,
-                .submitCommandBuffer = true,
-            };
-            if (!checkResult(lunaDispatch(&dispatchInfo)))
+            // if (!checkResult(lunaFillBuffer(lightHitIndicesBuffer, 0)))
+            // {
+            //     return false;
+            // }
+            for (uint32_t k = 0; k < DISPATCH_COUNT; k++)
             {
-                return false;
+                const LunaDispatchBaseInfo dispatchInfo = {
+                    .pipeline = pipeline,
+                    .descriptorSetBindInfo = descriptorSetBindInfo,
+                    .baseGroupX = NUM_WORK_GROUPS.x * k,
+                    .baseGroupZ = MAX_WORK_GROUPS_Z * j,
+                    .groupCountX = NUM_WORK_GROUPS.x,
+                    .groupCountY = NUM_WORK_GROUPS.y,
+                    .groupCountZ = MAX_WORK_GROUPS_Z,
+                    .submitCommandBuffer = true,
+                };
+                if (!checkResult(lunaDispatchBase(&dispatchInfo)))
+                {
+                    return false;
+                }
             }
-            luxelIndicesBufferInfos.at(0).offset += sizeof(int) * MAX_WORK_GROUPS_Z;
-            luxelIndicesBufferInfos.at(1).offset += sizeof(int) * MAX_WORK_GROUPS_Z;
+            // luxelIndicesBufferInfos.at(0).offset += sizeof(int) * MAX_WORK_GROUPS_Z;
+            // luxelIndicesBufferInfos.at(1).offset += sizeof(int) * MAX_WORK_GROUPS_Z;
         }
-        if (luxelIndexCount % MAX_WORK_GROUPS_Z != 0)
-        {
-            lunaWriteDescriptorSets(luxelIndiciesWrites.size(), luxelIndiciesWrites.data());
-            const LunaDescriptorSetBindInfo descriptorSetBindInfo = {
-                .descriptorSetCount = 1,
-                .descriptorSets = &descriptorSet,
-            };
-            const LunaDispatchInfo dispatchInfo = {
-                .pipeline = pipeline,
-                .descriptorSetBindInfo = descriptorSetBindInfo,
-                .groupCountX = NUM_WORK_GROUPS.x,
-                .groupCountY = NUM_WORK_GROUPS.y,
-                .groupCountZ = MAX_WORK_GROUPS_Z,
-                .submitCommandBuffer = true,
-            };
-            if (!checkResult(lunaDispatch(&dispatchInfo)))
-            {
-                return false;
-            }
-        }
+        // if (luxelIndexCount % MAX_WORK_GROUPS_Z != 0)
+        // {
+        //     lunaDeviceWaitIdle();
+        //     lunaWriteDescriptorSets(luxelIndiciesWrites.size(), luxelIndiciesWrites.data());
+        //     if (!checkResult(lunaFillBuffer(lightHitIndicesBuffer, 0)))
+        //     {
+        //         return false;
+        //     }
+        //     for (uint32_t k = 0; k < DISPATCH_COUNT; k++)
+        //     {
+        //         const LunaDispatchBaseInfo dispatchInfo = {
+        //             .pipeline = pipeline,
+        //             .descriptorSetBindInfo = descriptorSetBindInfo,
+        //             .baseGroupX = NUM_WORK_GROUPS.x * k,
+        //             .groupCountX = NUM_WORK_GROUPS.x,
+        //             .groupCountY = NUM_WORK_GROUPS.y,
+        //             .groupCountZ = luxelIndexCount % MAX_WORK_GROUPS_Z,
+        //             .submitCommandBuffer = true,
+        //         };
+        //         if (!checkResult(lunaDispatchBase(&dispatchInfo)))
+        //         {
+        //             return false;
+        //         }
+        //     }
+        // }
         lunaDeviceWaitIdle();
     }
     return true;
@@ -711,7 +809,7 @@ bool LightBakerGpu::convertLightmapToFloat16(const glm::ivec2 &lightmapSize, Lun
         .bindingCount = descriptorSetLayoutBindings.size(),
         .bindings = descriptorSetLayoutBindings.data(),
     };
-    if (!createPipeline("assets/shaders/lightmap_convert_to_float16.comp",
+    if (!createPipeline("assets/shaders/lightmap/convert_to_float16.comp",
                         specializationInfo,
                         {},
                         descriptorSetLayoutCreationInfo,
@@ -722,14 +820,10 @@ bool LightBakerGpu::convertLightmapToFloat16(const glm::ivec2 &lightmapSize, Lun
         return false;
     }
 
-    constexpr VmaAllocationCreateInfo allocationCreateInfo = {
-        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-        .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-    };
     const LunaBufferCreationInfo levelGeometryLightmapCreationInfo = {
         .size = lightmapSize.x * lightmapSize.y * sizeof(_Float16) * 4,
         .usage = VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT,
-        .allocationCreateInfo = &allocationCreateInfo,
+        .allocationCreateInfo = &MAPPED_ALLOCATION_CREATE_INFO,
     };
     if (!checkResult(lunaCreateBuffer(&levelGeometryLightmapCreationInfo, &outputLightmap2d)))
     {

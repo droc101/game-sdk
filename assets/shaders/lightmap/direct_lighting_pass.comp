@@ -80,15 +80,14 @@ layout (std140, set = 0, binding = 2) readonly buffer LightsData {
 
 /// A buffer used for keping track of which luxels have been hit by a ray on this pass
 layout (set = 0, binding = 3) buffer LuxelIndicesData {
-    /// The total number of luxels that have been hit thus far, not counting duplicates
-    uint count;
-    /// A list of luxel indices of length `count`
     int indices[width * height];
 } luxelIndicesData;
 
 /// A buffer containing the hit count of every luxel
 /// Having this both allows for keeping track of the number of hits, as well as easy lookup to see if a luxel has already been counted
 layout (set = 0, binding = 4) buffer HitIndicesData {
+    /// The total number of luxels that have been hit thus far, not counting duplicates
+    uint count;
     uint indices[width * height / 4];
 } hitIndicesData;
 
@@ -249,7 +248,7 @@ void main() {
     int index = computeLuxelIndex(closestIntersection.triangle, closestIntersection.intersection);
     if (atomicLightHitLuxelIndex(index)) {
         if (atomicHitIndex(index)) {
-            uint oldCount = atomicAdd(luxelIndicesData.count, 1);
+            uint oldCount = atomicAdd(hitIndicesData.count, 1);
             atomicExchange(luxelIndicesData.indices[oldCount], index); // The return value of this function is not needed
         }
         atomicAddColorToLightmap(closestIntersection.lightStrength * light.color, index);
