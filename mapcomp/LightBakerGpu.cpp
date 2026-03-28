@@ -374,6 +374,7 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
         return false;
     }
 
+    Logger::Info("Saving Lightmap...");
     lunaDeviceWaitIdle();
     bufferData = static_cast<uint8_t *>(lunaGetBufferDataPointer(outputLightmap2d));
     pixelData.resize(lunaGetBufferSize(outputLightmap2d));
@@ -458,6 +459,7 @@ bool LightBakerGpu::bakeDirectLighting(const std::vector<Light> &lights,
                                        const glm::ivec2 &lightmapSize,
                                        const size_t indexCount) const
 {
+    Logger::Info("Baking direct lighting...");
     LunaDescriptorSet descriptorSet{};
     LunaComputePipeline pipeline{};
     const std::array<uint32_t, 6> specializationData = {
@@ -679,6 +681,7 @@ bool LightBakerGpu::bakeBounceLighting(const glm::ivec2 &lightmapSize,
 
 bool LightBakerGpu::convertLightmapToFloat16(const glm::ivec2 &lightmapSize, LunaBuffer &outputLightmap2d) const
 {
+    Logger::Info("Finalizing Lightmap...");
     LunaDescriptorSet descriptorSet{};
     LunaComputePipeline pipeline{};
     const std::array<uint32_t, 3> specializationData = {
