@@ -301,8 +301,8 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
                          const glm::uvec2 &lightmapSize,
                          std::vector<uint8_t> &pixelData)
 {
-    static constexpr uint64_t WIDTH = std::min(RAY_COUNT, uint64_t{1} << 10);
-    static constexpr uint64_t HEIGHT = std::min(std::max(RAY_COUNT / WIDTH, uint64_t{1}), uint64_t{1} << 10);
+    static constexpr uint64_t WIDTH = std::min(RAY_COUNT, uint64_t{1} << 15);
+    static constexpr uint64_t HEIGHT = std::min(std::max(RAY_COUNT / WIDTH, uint64_t{1}), uint64_t{1} << 15);
     static constexpr uint64_t ITERATIONS = std::max(RAY_COUNT / WIDTH / HEIGHT, uint64_t{1});
 
     if (meshBuilders.empty())
