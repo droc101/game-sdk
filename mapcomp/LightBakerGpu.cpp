@@ -224,7 +224,7 @@ LightBakerGpu::LightBakerGpu()
     }
 
     static constexpr LunaPhysicalDevicePreferenceDefinition physicalDevicePreferenceDefinition = {
-        .preferredDeviceType = VK_PHYSICAL_DEVICE_TYPE_CPU,
+        .preferredDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
     };
     static constexpr VkPhysicalDeviceFeatures required10Features = {
         .shaderFloat64 = VK_TRUE,
