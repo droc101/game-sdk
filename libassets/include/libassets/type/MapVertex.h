@@ -4,15 +4,12 @@
 
 #pragma once
 
+#include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
-#include <libassets/util/DataWriter.h>
 #include <type_traits>
 
-class MapVertex
+struct MapVertex
 {
-    public:
-        void Write(DataWriter &writer) const;
-
         alignas(16) glm::vec3 position;
 
         alignas(8) glm::vec2 uv;

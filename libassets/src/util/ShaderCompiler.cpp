@@ -3,6 +3,7 @@
 //
 
 #include <cstdint>
+#include <fstream>
 #include <glslang/Include/ResourceLimits.h>
 #include <glslang/MachineIndependent/Versions.h>
 #include <glslang/Public/ShaderLang.h>
@@ -12,21 +13,31 @@
 #include <libassets/util/ShaderCompiler.h>
 #include <string>
 #include <vector>
-#include <vulkan/vulkan_enums.hpp>
 
-ShaderCompiler::ShaderCompiler(const std::string &glslSource, const vk::ShaderStageFlagBits shaderStage)
+ShaderCompiler::ShaderCompiler(const std::string &glslSource, const EShLanguage shaderType)
 {
     this->glslSource = glslSource;
-    this->shaderStage = shaderStage;
+    this->shaderType = shaderType;
 }
 
 ShaderCompiler::ShaderCompiler(const std::string &glslSource,
-                               const vk::ShaderStageFlagBits shaderStage,
+                               const EShLanguage shaderType,
                                const glslang::EShTargetClientVersion targetVulkanVersion)
 {
     this->glslSource = glslSource;
-    this->shaderStage = shaderStage;
+    this->shaderType = shaderType;
     this->targetVulkanVersion = targetVulkanVersion;
+}
+
+ShaderCompiler::ShaderCompiler(const std::filesystem::path &path, EShLanguage shaderType)
+{
+    std::ifstream glslFile(path);
+    std::stringstream glsl;
+    glsl << glslFile.rdbuf();
+    glslFile.close();
+
+    this->glslSource = glsl.str();
+    this->shaderType = shaderType;
 }
 
 Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv) const
@@ -40,7 +51,6 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv) con
         return Error::ErrorCode::UNKNOWN;
     }
 
-    const EShLanguage shaderType = FindShaderLanguage(shaderStage);
     glslang::TShader shader(shaderType);
     const char *glsl = glslSource.c_str();
     shader.setStrings(&glsl, 1);
@@ -81,26 +91,6 @@ void ShaderCompiler::SetTargetVersions(const glslang::EShTargetClientVersion tar
 {
     this->targetVulkanVersion = targetVulkanVersion;
     this->targetSpirvVersion = targetSpirvVersion;
-}
-
-
-EShLanguage ShaderCompiler::FindShaderLanguage(const vk::ShaderStageFlagBits stage)
-{
-    switch (stage)
-    {
-        case vk::ShaderStageFlagBits::eVertex:
-            return EShLangVertex;
-        case vk::ShaderStageFlagBits::eFragment:
-            return EShLangFragment;
-        case vk::ShaderStageFlagBits::eCompute:
-            return EShLangCompute;
-        case vk::ShaderStageFlagBits::eTessellationControl:
-            return EShLangTessControl;
-        case vk::ShaderStageFlagBits::eTessellationEvaluation:
-            return EShLangTessEvaluation;
-        default:
-            return EShLangCount;
-    }
 }
 
 TBuiltInResource ShaderCompiler::GetResources()

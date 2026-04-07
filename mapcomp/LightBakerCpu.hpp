@@ -18,5 +18,5 @@ class LightBakerCpu
         static void bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                          const std::vector<Light> &lights,
                          std::vector<uint8_t> &pixelData,
-                         const glm::ivec2 &lightmapSize);
+                         const glm::uvec2 &lightmapSize);
 };

@@ -13,8 +13,8 @@
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/DataWriter.h>
-#include <libassets/util/SearchPathManager.h>
 #include <libassets/util/Logger.h>
+#include <libassets/util/SearchPathManager.h>
 #include <ranges>
 #include <string>
 #include <unordered_map>
@@ -59,9 +59,11 @@ void LevelMeshBuilder::Write(DataWriter &writer, const std::string &materialPath
 {
     writer.WriteString(materialPath);
     writer.Write<uint32_t>(vertices.size());
-    for (const MapVertex &vert: vertices)
+    for (const MapVertex &vertex: vertices)
     {
-        vert.Write(writer);
+        writer.WriteVec3(vertex.position);
+        writer.WriteVec2(vertex.uv);
+        writer.WriteVec2(vertex.lightmapUv);
     }
     writer.Write<uint32_t>(indices.size());
     writer.WriteBuffer<uint32_t>(indices);
@@ -88,7 +90,7 @@ static float mapRange(const float value,
     return result;
 }
 
-bool LevelMeshBuilder::CalculateLightmapUvs(glm::ivec2 &lightmapSize,
+bool LevelMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
                                             std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                                             const SearchPathManager &pathMgr)
 {

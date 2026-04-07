@@ -19,7 +19,7 @@
 bool LightBaker::bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                       const std::vector<Light> &lights,
                       std::vector<uint8_t> &pixelData,
-                      const glm::ivec2 &lightmapSize,
+                      const glm::uvec2 &lightmapSize,
                       const bool useCpu)
 {
     // This is checks that MapVertex and Light are both POD, which is required to directly write from the pointer to the buffer.

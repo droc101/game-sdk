@@ -341,7 +341,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     Logger::Info("Level has {} physics meshes", collisionBuilders.size());
     Logger::Info("Level has {} lights", lights.size());
 
-    glm::ivec2 lightmapSize{};
+    glm::uvec2 lightmapSize{};
     if (!LevelMeshBuilder::CalculateLightmapUvs(lightmapSize, meshBuilders, pathManager))
     {
         return Error::ErrorCode::LIGHTMAP_TOO_LARGE;
@@ -367,8 +367,8 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         {
             return Error::ErrorCode::UNKNOWN;
         }
-        writer.Write<size_t>(static_cast<size_t>(lightmapSize.x));
-        writer.Write<size_t>(static_cast<size_t>(lightmapSize.y));
+        writer.Write<size_t>(lightmapSize.x);
+        writer.Write<size_t>(lightmapSize.y);
         writer.WriteBuffer(pixels);
 
     } else

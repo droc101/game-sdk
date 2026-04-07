@@ -15,7 +15,6 @@
 #include <libassets/util/ShaderCompiler.h>
 #include <sstream>
 #include <vector>
-#include <vulkan/vulkan_enums.hpp>
 
 Error::ErrorCode ShaderAsset::CreateFromAsset(const char *assetPath, ShaderAsset &shader)
 {
@@ -84,10 +83,8 @@ Error::ErrorCode ShaderAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     if (platform == ShaderPlatform::PLATFORM_VULKAN)
     {
         std::vector<uint32_t> spirv;
-        const vk::ShaderStageFlagBits stage = type == ShaderType::SHADER_TYPE_VERTEX
-                                                      ? vk::ShaderStageFlagBits::eVertex
-                                                      : vk::ShaderStageFlagBits::eFragment;
-        ShaderCompiler compiler = ShaderCompiler(glsl, stage);
+        const EShLanguage shaderType = type == ShaderType::SHADER_TYPE_VERTEX ? EShLangVertex : EShLangFragment;
+        ShaderCompiler compiler = ShaderCompiler(glsl, shaderType);
         compiler.SetTargetVersions(glslang::EShTargetClientVersion::EShTargetVulkan_1_2,
                                    glslang::EShTargetLanguageVersion::EShTargetSpv_1_0);
         const Error::ErrorCode error = compiler.Compile(spirv);

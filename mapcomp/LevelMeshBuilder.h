@@ -56,7 +56,7 @@ class LevelMeshBuilder
          */
         [[nodiscard]] bool IsEmpty() const;
 
-        static bool CalculateLightmapUvs(glm::ivec2 &lightmapSize,
+        static bool CalculateLightmapUvs(glm::uvec2 &lightmapSize,
                                          std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                                          const SearchPathManager &pathMgr);
 

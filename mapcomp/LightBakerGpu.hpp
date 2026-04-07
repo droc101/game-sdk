@@ -5,7 +5,9 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
+#include <glslang/Public/ShaderLang.h>
 #include <libassets/util/Logger.h>
 #include <luna/lunaTypes.h>
 #include <string>
@@ -25,7 +27,7 @@ class LightBakerGpu
 
         bool bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                   const std::vector<Light> &lights,
-                  const glm::ivec2 &lightmapSize,
+                  const glm::uvec2 &lightmapSize,
                   std::vector<uint8_t> &pixelData);
 
         [[nodiscard]] bool isInitialized() const
@@ -34,6 +36,13 @@ class LightBakerGpu
         }
 
     private:
+        struct AccelerationStructure
+        {
+                LunaBuffer buffer;
+                VkAccelerationStructureKHR accelerationStructure;
+                LunaBuffer scratchBuffer;
+        };
+
         [[nodiscard]] static constexpr bool checkResult(const VkResult result)
         {
             if (result != VK_SUCCESS)
@@ -44,26 +53,69 @@ class LightBakerGpu
             return true;
         }
 
-        static bool createPipeline(const std::string &shader,
-                                   const VkSpecializationInfo &specializationInfo,
-                                   const std::vector<LunaPushConstantsRange> &pushConstantRanges,
-                                   const LunaDescriptorSetLayoutCreationInfo &descriptorSetLayoutCreationInfo,
-                                   const LunaDescriptorPoolCreationInfo &descriptorPoolCreationInfo,
-                                   LunaDescriptorSet &descriptorSet,
-                                   LunaComputePipeline &pipeline);
+        static VkShaderModule generateShaderModule(const std::filesystem::path &path,
+                                                   EShLanguage shaderType,
+                                                   std::vector<uint32_t> &spirv);
 
-        bool bakeDirectLighting(const std::vector<Light> &lights,
-                                const glm::ivec2 &lightmapSize,
-                                size_t indexCount) const;
+        /// Create the bottom-level acceleration structures
+        bool createBLAS(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders);
 
-        bool bakeBounceLighting(const glm::ivec2 &lightmapSize, size_t indexCount, uint32_t bounceCount);
+        /// Create the top-level acceleration structures
+        bool createTLAS();
 
-        bool convertLightmapToFloat16(const glm::ivec2 &lightmapSize, LunaBuffer &outputLightmap2d) const;
+        bool createAndWriteDescriptorSet();
+
+        bool createPipeline(const glm::uvec2 &lightmapSize, uint32_t lightCount);
+
+        bool createShaderBindingTables();
+
+        bool convertLightmapToFloat16(const glm::uvec2 &lightmapSize, LunaBuffer &outputLightmap) const;
+
+        static inline VkPhysicalDeviceRayTracingPipelinePropertiesKHR physicalDeviceRayTracingPipelineProperties{
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR,
+        };
+        static inline VkPhysicalDeviceAccelerationStructurePropertiesKHR physicalDeviceAccelerationStructureProperties{
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR,
+            .pNext = &physicalDeviceRayTracingPipelineProperties,
+        };
+        static inline VkPhysicalDeviceProperties2 physicalDeviceProperties{
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+            .pNext = &physicalDeviceAccelerationStructureProperties,
+        };
 
         bool initialized{};
+        LunaCommandBuffer commandBuffer{};
+        /// The ray tracing pipeline layout
+        /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
+        VkPipelineLayout pipelineLayout{};
+        /// The ray tracing pipeline
+        /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
+        VkPipeline pipeline{};
+        /// The descriptor set layout
+        /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
+        VkDescriptorSetLayout descriptorSetLayout{};
+        /// The descriptor pool
+        /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
+        VkDescriptorPool descriptorPool{};
+        /// The descriptor set
+        /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
+        VkDescriptorSet descriptorSet{};
+        LunaBuffer raygenShaderBindingTable{};
+        LunaBuffer closestHitShaderBindingTable{};
+        LunaBuffer missShaderBindingTable{};
+        /// The bottom-level acceleration structure used for hardware acceleration of path tracing
+        AccelerationStructure blas{};
+        /// The buffer that holds the blas instances for the tlas to reference
+        LunaBuffer accelerationStructureInstancesBuffer{};
+        /// The top-level acceleration structure used for hardware acceleration of path tracing
+        AccelerationStructure tlas{};
+        LunaBuffer lightsBuffer{};
+        LunaBuffer lightmap{};
         LunaBuffer vertexBuffer{};
         LunaBuffer indexBuffer{};
-        std::array<LunaBuffer, 2> luxelIndicesBuffers{};
-        LunaBuffer hitIndicesBuffer{};
-        LunaBuffer lightmap2d{};
+        LunaBuffer lightHitIndicesBuffer{};
+        /// The iteration we're on for this light
+        uint32_t iteration{};
+        /// The index of the light we are drawing rays for. Used as a push constant
+        uint32_t lightIndex{};
 };
