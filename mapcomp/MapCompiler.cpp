@@ -379,6 +379,26 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         writer.WriteBuffer(pixels);
     }
 
+    uint16_t numPointLights = 0;
+    std::vector<Light> pointLights{};
+    for (const Light &light: lights)
+    {
+        if (light.type == Light::Type::Point)
+        {
+            numPointLights++;
+            pointLights.push_back(light);
+        }
+    }
+    writer.Write<uint16_t>(numPointLights);
+    for (const Light &pointLight: pointLights)
+    {
+        writer.WriteVec3(pointLight.position);
+        writer.WriteVec3(pointLight.color);
+        writer.Write<float>(pointLight.brightnessScale);
+        writer.Write<float>(pointLight.range);
+        writer.Write<float>(pointLight.attenuation);
+    }
+
     writer.CopyToVector(buffer);
     return Error::ErrorCode::OK;
 }
