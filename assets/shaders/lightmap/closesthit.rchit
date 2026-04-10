@@ -105,6 +105,9 @@ bool atomicLightHitLuxelIndex(uint luxelIndex) {
 }
 
 void main() {
+    if (gl_HitKindEXT == gl_HitKindBackFacingTriangleEXT) {
+        return;
+    }
     const uint luxelIndex = computeLuxelIndex();
     // if (payload.distanceTraveled == 0) {
         if (!atomicLightHitLuxelIndex(luxelIndex)) {

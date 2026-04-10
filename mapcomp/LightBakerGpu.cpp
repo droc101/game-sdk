@@ -38,7 +38,7 @@
 #include "LevelMeshBuilder.h"
 #include "Light.h"
 
-static constexpr uint64_t RAY_COUNT = (uint64_t{1} << 30);
+static constexpr uint64_t RAY_COUNT = (uint64_t{1} << 32);
 static constexpr uint32_t BOUNCES = 1;
 
 static_assert(RAY_COUNT - 1 == static_cast<uint64_t>(static_cast<double>(RAY_COUNT) - 1),
