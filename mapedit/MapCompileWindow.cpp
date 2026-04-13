@@ -226,10 +226,13 @@ void MapCompileWindow::ProcessCompilerOutput()
             if (exitCode == 0 && playMap)
             {
                 const std::string mapName = std::filesystem::path(MapEditor::mapFile).stem().string();
-                const std::string mapArg = "--map=" + mapName;
-                const std::string gameArg = "--game=" + Options::Get().GetAssetsPath();
-                if (!DesktopInterface::Get().ExecuteProcessNonBlocking(Options::Get().gameExecutablePath,
-                                                                       {mapArg.c_str(), "--nosteam", gameArg}))
+                const std::vector<std::string> arguments = {
+                    "--map=" + mapName,
+                    "--game=" + Options::Get().GetAssetsPath(),
+                    "--nosteam",
+                    "--show-console",
+                };
+                if (!DesktopInterface::Get().ExecuteProcessNonBlocking(Options::Get().gameExecutablePath, arguments))
                 {
                     log += "Failed to execute game binary";
                 }
