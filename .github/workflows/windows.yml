@@ -1,10 +1,8 @@
 name: Windows Build
 
 on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+  workflow_call:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,7 +18,7 @@ jobs:
             zip_name: game-sdk.windows.release
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         submodules: 'true'
 
@@ -31,7 +29,7 @@ jobs:
         key: windows-${{ matrix.build_type }}-deps-${{ hashFiles('**/.git/HEAD') }}
 
     - name: Setup MSYS2
-      uses: msys2/setup-msys2@v2.30.0
+      uses: msys2/setup-msys2@v2.31.0
       with:
           msystem: UCRT64
           install: >-
@@ -60,7 +58,7 @@ jobs:
       run: cmake --build "$MINGW_WORKSPACE/build-${{ matrix.build_type }}" --config ${{ matrix.build_type }} -j $(nproc)
 
     - name: Upload results
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ matrix.zip_name }}
         path: |

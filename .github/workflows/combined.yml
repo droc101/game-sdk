@@ -1,0 +1,13 @@
+name: Combined
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  linux:
+    uses: './.github/workflows/linux.yml'
+  windows:
+    uses: './.github/workflows/windows.yml'
