@@ -80,7 +80,9 @@ vec2 computeLuxelUv() {
 }
 int computeLuxelIndex() {
     vec2 uv = clamp(computeLuxelUv(), vec2(0), vec2(1));
-    return int(int(uv.x * WIDTH) + int(uv.y * HEIGHT) * WIDTH);
+    int x = int(round(uv.x * WIDTH));
+    int y = int(round(uv.y * HEIGHT));
+    return int(x + y * WIDTH);
 }
 
 vec3 getLightColor() {
