@@ -46,6 +46,8 @@ set(OPENEXR_INSTALL OFF)
 set(OPENEXR_BUILD_TOOLS OFF)
 set(OPENEXR_BUILD_EXAMPLES OFF)
 set(OPENEXR_TEST_LIBRARIES OFF)
+set(OPENEXR_FORCE_INTERNAL_IMATH ON)
+set(OPENEXR_FORCE_INTERNAL_OPENJPH ON)
 fetch_package(https://github.com/AcademySoftwareFoundation/openexr.git v3.*.* openexr)
 
 add_library(assets SHARED
