@@ -480,7 +480,7 @@ VkShaderModule LightBakerGpu::generateShaderModule(const std::filesystem::path &
                                      glslang::EShTargetLanguageVersion::EShTargetSpv_1_4);
     if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
     {
-        Logger::Error("Error compiling shader {}!", path.c_str());
+        Logger::Error("Error compiling shader {}!", path.string());
         return VK_NULL_HANDLE;
     }
 
