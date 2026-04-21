@@ -368,12 +368,7 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
     {
         return false;
     }
-    if (!checkResult(lunaFillBuffer(device,
-                                    commandBuffer,
-                                    lightHitIndicesBuffer,
-                                    0,
-                                    queue,
-                                    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT)))
+    if (!checkResult(lunaFillBuffer(device, commandBuffer, lightHitIndicesBuffer, 0, nullptr)))
     {
         return false;
     }
@@ -389,7 +384,7 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
     {
         return false;
     }
-    if (!checkResult(lunaFillBuffer(device, commandBuffer, lightmap, 0, queue, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT)))
+    if (!checkResult(lunaFillBuffer(device, commandBuffer, lightmap, 0, nullptr)))
     {
         return false;
     }
@@ -466,12 +461,11 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
                           WIDTH,
                           HEIGHT,
                           1);
-        const VkPipelineStageFlags stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-        const VkSubmitInfo submitInfo = {
-            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-            .pWaitDstStageMask = &stageMask,
+        const LunaCommandBufferSubmitInfo submitInfo = {
+            .queue = queue,
+            .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
         };
-        if (!checkResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, queue, &submitInfo, stageMask)))
+        if (!checkResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo)))
         {
             return false;
         }
@@ -711,12 +705,11 @@ bool LightBakerGpu::createBLAS(const std::unordered_map<std::string, LevelMeshBu
     const VkAccelerationStructureBuildRangeInfoKHR *pBuildRangeInfo = &buildRangeInfo;
     vkCmdBuildAccelerationStructuresKHR(lunaGetVkCommandBuffer(commandBuffer), 1, &buildGeometryInfo, &pBuildRangeInfo);
 
-    const VkPipelineStageFlags stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-    const VkSubmitInfo submitInfo = {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .pWaitDstStageMask = &stageMask,
+    const LunaCommandBufferSubmitInfo submitInfo = {
+        .queue = queue,
+        .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
     };
-    if (!checkResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, queue, &submitInfo, stageMask)))
+    if (!checkResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo)))
     {
         return false;
     }
@@ -870,12 +863,11 @@ bool LightBakerGpu::createTLAS()
     const VkAccelerationStructureBuildRangeInfoKHR *pBuildRangeInfo = &buildRangeInfo;
     vkCmdBuildAccelerationStructuresKHR(lunaGetVkCommandBuffer(commandBuffer), 1, &buildGeometryInfo, &pBuildRangeInfo);
 
-    const VkPipelineStageFlags stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-    const VkSubmitInfo submitInfo = {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .pWaitDstStageMask = &stageMask,
+    const LunaCommandBufferSubmitInfo submitInfo = {
+        .queue = queue,
+        .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
     };
-    if (!checkResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, queue, &submitInfo, stageMask)))
+    if (!checkResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo)))
     {
         return false;
     }
@@ -1388,13 +1380,16 @@ bool LightBakerGpu::convertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
         .descriptorSets = &descriptorSet,
     };
     assert(lightmapSize.x % WORK_GROUP_SIZE.x == 0 && lightmapSize.y % WORK_GROUP_SIZE.y == 0);
+    const LunaCommandBufferSubmitInfo submitInfo = {
+        .queue = queue,
+        .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+    };
     const LunaDispatchInfo dispatchInfo = {
         .pipeline = pipeline,
         .descriptorSetBindInfo = &descriptorSetBindInfo,
         .groupCountX = lightmapSize.x / WORK_GROUP_SIZE.x,
         .groupCountY = lightmapSize.y / WORK_GROUP_SIZE.y,
-        .queue = queue,
-        .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        .submitInfo = &submitInfo,
     };
     return checkResult(lunaDispatch(device, commandBuffer, &dispatchInfo));
 }
