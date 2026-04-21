@@ -53,9 +53,9 @@ class LightBakerGpu
             return true;
         }
 
-        static VkShaderModule generateShaderModule(const std::filesystem::path &path,
-                                                   EShLanguage shaderType,
-                                                   std::vector<uint32_t> &spirv);
+        VkShaderModule generateShaderModule(const std::filesystem::path &path,
+                                            EShLanguage shaderType,
+                                            std::vector<uint32_t> &spirv);
 
         /// Create the bottom-level acceleration structures
         bool createBLAS(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders);
@@ -84,6 +84,10 @@ class LightBakerGpu
         };
 
         bool initialized{};
+        LunaDevice device{};
+        uint32_t queueFamilyIndex{};
+        VkQueue queue{};
+        LunaCommandPool commandPool{};
         LunaCommandBuffer commandBuffer{};
         /// The ray tracing pipeline layout
         /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
