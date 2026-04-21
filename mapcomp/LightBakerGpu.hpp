@@ -55,7 +55,7 @@ class LightBakerGpu
 
         VkShaderModule generateShaderModule(const std::filesystem::path &path,
                                             EShLanguage shaderType,
-                                            std::vector<uint32_t> &spirv);
+                                            std::vector<uint32_t> &spirv) const;
 
         /// Create the bottom-level acceleration structures
         bool createBLAS(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders);

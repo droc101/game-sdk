@@ -304,6 +304,7 @@ LightBakerGpu::~LightBakerGpu()
 }
 
 static constexpr VmaAllocationCreateInfo VRAM_ALLOCATION_CREATE_INFO = {
+    // TODO: Drop the flags when Luna is able to do buffer writes correctly
     .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
     .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
 };
@@ -417,7 +418,7 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
         Logger::Info("Baking lighting {}%...",
                      static_cast<float>(100 * i) / static_cast<float>(lights.size() * ITERATIONS));
 
-        if (!checkResult(lunaBeginSingleUseCommandBuffer(commandBuffer)))
+        if (!checkResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
         {
             return false;
         }
@@ -498,7 +499,7 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
 
 VkShaderModule LightBakerGpu::generateShaderModule(const std::filesystem::path &path,
                                                    const EShLanguage shaderType,
-                                                   std::vector<uint32_t> &spirv)
+                                                   std::vector<uint32_t> &spirv) const
 {
     assert(spirv.empty());
 
@@ -602,7 +603,7 @@ bool LightBakerGpu::createBLAS(const std::unordered_map<std::string, LevelMeshBu
         return false;
     }
 
-    if (!checkResult(lunaBeginSingleUseCommandBuffer(commandBuffer)))
+    if (!checkResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
     {
         return false;
     }
@@ -730,7 +731,7 @@ bool LightBakerGpu::createTLAS()
         {0, 0, 1, 0},
     }};
 
-    if (!checkResult(lunaBeginSingleUseCommandBuffer(commandBuffer)))
+    if (!checkResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
     {
         return false;
     }
@@ -763,7 +764,7 @@ bool LightBakerGpu::createTLAS()
     const LunaBufferWriteInfo instancesBufferWriteInfo = {
         .bytes = sizeof(instance),
         .data = &instance,
-        .stageFlags = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        .stageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
     };
     if (!checkResult(lunaWriteDataToBuffer(device,
                                            commandBuffer,
@@ -1231,7 +1232,7 @@ bool LightBakerGpu::createShaderBindingTables()
     const LunaBufferWriteInfo raygenShaderBindingTableWriteInfo = {
         .bytes = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
         .data = shaderHandles.data(),
-        .stageFlags = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        .stageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
     };
     if (!checkResult(lunaWriteDataToBuffer(device,
                                            commandBuffer,
@@ -1244,7 +1245,7 @@ bool LightBakerGpu::createShaderBindingTables()
     const LunaBufferWriteInfo closestHitShaderBindingTableWriteInfo = {
         .bytes = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
         .data = shaderHandles.data() + physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
-        .stageFlags = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+        .stageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
     };
     return checkResult(lunaWriteDataToBuffer(device,
                                              commandBuffer,
