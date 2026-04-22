@@ -181,7 +181,7 @@ static void Render()
             SDKWindow::Get().SaveFileDialog(exportPng, DialogFilters::pngFilters);
         } else
         {
-            SDKWindow::Get().SaveFileDialog(exportPng, DialogFilters::exrFilters);
+            SDKWindow::Get().SaveFileDialog(exportExr, DialogFilters::exrFilters);
         }
     } else if (zoomInPressed)
     {
@@ -198,11 +198,8 @@ static void Render()
 
     if (textureLoaded)
     {
-        if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl))
-        {
-            zoom += ImGui::GetIO().MouseWheel * 0.1f;
-            ClampZoom();
-        }
+        zoom += ImGui::GetIO().MouseWheel * 0.1f;
+        ClampZoom();
 
         if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
         {
@@ -214,13 +211,13 @@ static void Render()
 
         const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
 
-        constexpr float statsWidth = 150.0f;
-        const float imageWidth = availableSize.x - statsWidth - 8.0f;
+        constexpr float STATS_WIDTH = 150.0f;
+        const float imageWidth = availableSize.x - STATS_WIDTH - 8.0f;
 
         ImGui::BeginChild("ImagePane",
                           ImVec2(imageWidth, availableSize.y),
                           ImGuiChildFlags_Borders,
-                          ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
+                          ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoScrollWithMouse);
         {
             const ImVec2 imageSize{static_cast<float>(texture.GetWidth()) * zoom,
                                    static_cast<float>(texture.GetHeight()) * zoom};
@@ -230,7 +227,6 @@ static void Render()
             ImGui::SetCursorPos(cursor);
             if (showTransparencyCheckerboard)
             {
-                // const ImVec2 cursor = ImGui::GetCursorPos();
                 const ImVec2 checkerboardUv = {imageSize.x / 16.0f, imageSize.y / 16.0f};
                 ImGui::Image(checkerboardTexture, imageSize, {0, 0}, checkerboardUv);
                 ImGui::SetCursorPos(cursor);
@@ -240,7 +236,7 @@ static void Render()
         ImGui::EndChild();
         ImGui::SameLine();
 
-        ImGui::BeginChild("StatsPane", ImVec2(statsWidth, availableSize.y));
+        ImGui::BeginChild("StatsPane", ImVec2(STATS_WIDTH, availableSize.y));
         {
             ImGui::TextUnformatted(std::format("Width: {}px\nHeight: {}px\nMemory: {} bytes\nFormat: {}",
                                                texture.GetWidth(),
