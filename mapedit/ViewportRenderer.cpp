@@ -59,24 +59,35 @@ void ViewportRenderer::RenderSector(const Viewport &vp,
     const Sector &sector = MapEditor::map.sectors.at(sectorIndex);
     const bool isFocusedSector = settings.sectorFocusMode && settings.focusedSectorIndex == sectorIndex;
 
+    float yOffset = 0.0f;
     Color c = Color(0.6, 0.6, 0.6, 1);
     if ((settings.selectionType == EditorTool::ItemType::SECTOR && settings.selectionIndex == sectorIndex) ||
         isFocusedSector)
     {
         c = Color(1, 1, 1, 1);
+        yOffset = 4;
     } else if (settings.hoverType == EditorTool::ItemType::SECTOR && settings.hoverIndex == sectorIndex)
     {
         c = Color(.8, .8, .8, 1);
+        yOffset = 2;
+    }
+    if (isFocusedSector)
+    {
+        yOffset = 6;
+    }
+    if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
+    {
+        yOffset = 0.0f;
     }
 
     for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
     {
         const glm::vec2 &start2 = sector.points.at(vertexIndex);
         const glm::vec2 &end2 = sector.points.at((vertexIndex + 1) % sector.points.size());
-        const glm::vec3 startCeiling = glm::vec3(start2.x, sector.ceilingHeight, start2.y);
-        const glm::vec3 endCeiling = glm::vec3(end2.x, sector.ceilingHeight, end2.y);
-        const glm::vec3 startFloor = glm::vec3(start2.x, sector.floorHeight, start2.y);
-        const glm::vec3 endFloor = glm::vec3(end2.x, sector.floorHeight, end2.y);
+        const glm::vec3 startCeiling = glm::vec3(start2.x, sector.ceilingHeight + yOffset, start2.y);
+        const glm::vec3 endCeiling = glm::vec3(end2.x, sector.ceilingHeight + yOffset, end2.y);
+        const glm::vec3 startFloor = glm::vec3(start2.x, sector.floorHeight + yOffset, start2.y);
+        const glm::vec3 endFloor = glm::vec3(end2.x, sector.floorHeight + yOffset, end2.y);
 
         if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
         {
