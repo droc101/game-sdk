@@ -4,30 +4,21 @@
 
 #include "AddActorTool.h"
 #include <cstddef>
-#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
-#include <libassets/type/Sector.h>
 #include <memory>
-#include <ranges>
-#include <unordered_set>
 #include "../MapEditor.h"
-#include "../MapRenderer.h"
 #include "../Viewport.h"
+#include "../ViewportRenderer.h"
 #include "EditorTool.h"
 #include "SelectTool.h"
 
 void AddActorTool::RenderViewport(Viewport &vp)
 {
-    MapRenderer::RenderViewport(vp);
-
-    glm::mat4 matrix = vp.GetMatrix();
-
     bool isHovered = false;
     glm::vec3 worldSpaceHover{};
-    glm::vec2 screenSpaceHover{};
 
     if (ImGui::IsWindowFocused())
     {
@@ -35,8 +26,6 @@ void AddActorTool::RenderViewport(Viewport &vp)
         if (isHovered)
         {
             worldSpaceHover = vp.GetWorldSpaceMousePos();
-            const ImVec2 localMouse = Viewport::GetLocalMousePos();
-            screenSpaceHover = glm::vec2(localMouse.x, localMouse.y);
         }
     }
 
@@ -44,14 +33,10 @@ void AddActorTool::RenderViewport(Viewport &vp)
     {
         if (!hasPlacedActor)
         {
-            const glm::vec2 pt = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
                 newActorPosition = MapEditor::SnapToGrid(worldSpaceHover);
                 hasPlacedActor = true;
-            } else
-            {
-                MapRenderer::RenderBillboardPoint(glm::vec3(pt.x, 0.1, pt.y), 10, Color(0.7, 1, 0.7, 1), matrix);
             }
 
             if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
@@ -72,7 +57,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
                 a.rotation = {0, 0, 0};
                 a.position = {newActorPosition.x, newActorPosition.y, newActorPosition.z};
 
-                ActorDefinition def = MapEditor::adm.GetActorDefinition(newActorType);
+                const ActorDefinition &def = MapEditor::adm.GetActorDefinition(newActorType);
                 a.ApplyDefinition(def, true);
 
                 MapEditor::map.actors.push_back(a);
@@ -102,48 +87,30 @@ void AddActorTool::RenderViewport(Viewport &vp)
         }
     }
 
-    for (auto &sector: MapEditor::map.sectors)
-    {
-        for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
-        {
-            const glm::vec2 &start2 = sector.points[vertexIndex];
-            const glm::vec2 &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
-            const glm::vec3 startCeiling = glm::vec3(start2.x, sector.ceilingHeight, start2.y);
-            const glm::vec3 endCeiling = glm::vec3(end2.x, sector.ceilingHeight, end2.y);
-            const glm::vec3 startFloor = glm::vec3(start2.x, sector.floorHeight, start2.y);
-            const glm::vec3 endFloor = glm::vec3(end2.x, sector.floorHeight, end2.y);
-
-            if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
-            {
-                MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
-                                                  10,
-                                                  Color(1, 0.7, 0.7, 1),
-                                                  matrix);
-            }
-            if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
-            {
-                MapRenderer::RenderLine(startFloor, endFloor, Color(0.7, .7, .7, 1), matrix, 4);
-                MapRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
-            }
-
-            MapRenderer::RenderLine(startCeiling, endCeiling, Color(0.7, .7, .7, 1), matrix, 4);
-        }
-    }
-
-    for (Actor &a: MapEditor::map.actors)
-    {
-        MapRenderer::RenderActor(a, matrix, vp);
-    }
-
-    if (hasPlacedActor)
-    {
-        const ActorDefinition &newActorDef = MapEditor::adm.GetActorDefinition(newActorType);
-        Actor tempActor{};
-        tempActor.ApplyDefinition(newActorDef, true);
-        tempActor.position = newActorPosition;
-        tempActor.className = newActorType;
-        MapRenderer::RenderActor(tempActor, matrix, vp);
-    }
+    ViewportRenderer::ViewportRenderNewActor vpa = {
+        .className = newActorType,
+        .position = newActorPosition,
+        .rotation = {0, 0, 0},
+    };
+    const glm::vec2 pt = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
+    ViewportRenderer::ViewportRenderPoint vpt = {
+        .pos = glm::vec3(pt.x, 0.1, pt.y),
+        .color = Color(0.7, 1, 0.7, 1),
+        .size = 10,
+    };
+    const ViewportRenderer::ViewportRenderSettings vps = {
+        .sectorFocusMode = false,
+        .focusedSectorIndex = 0,
+        .hoverType = ItemType::NONE,
+        .hoverIndex = 0,
+        .selectionType = ItemType::NONE,
+        .selectionIndex = 0,
+        .selectionVertexIndex = 0,
+        .point = ((!hasPlacedActor) && vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ) ? &vpt : nullptr,
+        .newPrimitive = nullptr,
+        .newActor = hasPlacedActor ? &vpa : nullptr,
+    };
+    ViewportRenderer::RenderViewport(vp, vps);
 }
 
 void AddActorTool::RenderToolWindow()

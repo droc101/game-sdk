@@ -4,8 +4,6 @@
 
 #include "AddPolygonTool.h"
 #include <algorithm>
-#include <array>
-#include <cstddef>
 #include <game_sdk/SDKWindow.h>
 #include <imgui.h>
 #include <libassets/type/Color.h>
@@ -13,8 +11,8 @@
 #include <libassets/type/WallMaterial.h>
 #include <memory>
 #include "../MapEditor.h"
-#include "../MapRenderer.h"
 #include "../Viewport.h"
+#include "../ViewportRenderer.h"
 #include "EditorTool.h"
 #include "SelectTool.h"
 
@@ -35,10 +33,6 @@ void AddPolygonTool::RenderToolWindow()
 
 void AddPolygonTool::RenderViewport(Viewport &vp)
 {
-    MapRenderer::RenderViewport(vp);
-
-    glm::mat4 matrix = vp.GetMatrix();
-
     bool isHovered = false;
     glm::vec3 worldSpaceHover{};
     glm::vec2 screenSpaceHover{};
@@ -65,9 +59,6 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                 ceiling = 1;
                 floor = -1;
                 isDrawing = true;
-            } else
-            {
-                MapRenderer::RenderBillboardPoint(glm::vec3(pt.x, 0.1, pt.y), 10, Color(1, 0.7, 0.7, 1), matrix);
             }
 
             if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
@@ -142,65 +133,29 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
         }
     }
 
-    for (auto &sector: MapEditor::map.sectors)
-    {
-        for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
-        {
-            const glm::vec2 &start2 = sector.points[vertexIndex];
-            const glm::vec2 &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
-            const glm::vec3 startCeiling = glm::vec3(start2.x, sector.ceilingHeight, start2.y);
-            const glm::vec3 endCeiling = glm::vec3(end2.x, sector.ceilingHeight, end2.y);
-            const glm::vec3 startFloor = glm::vec3(start2.x, sector.floorHeight, start2.y);
-            const glm::vec3 endFloor = glm::vec3(end2.x, sector.floorHeight, end2.y);
-
-            if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
-            {
-                MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
-                                                  10,
-                                                  Color(1, 0.7, 0.7, 1),
-                                                  matrix);
-            }
-            if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
-            {
-                MapRenderer::RenderLine(startFloor, endFloor, Color(0.7, .7, .7, 1), matrix, 4);
-                MapRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
-            }
-
-            MapRenderer::RenderLine(startCeiling, endCeiling, Color(0.7, .7, .7, 1), matrix, 4);
-        }
-    }
-
-    for (Actor &a: MapEditor::map.actors)
-    {
-        MapRenderer::RenderActor(a, matrix, vp);
-    }
-
-    if (isDrawing)
-    {
-        for (size_t vertexIndex = 0; vertexIndex < points.size(); vertexIndex++)
-        {
-            const glm::vec2 &start2 = points[vertexIndex];
-            glm::vec2 end2 = points[(vertexIndex + 1) % points.size()];
-            if (vertexIndex == points.size() - 1)
-            {
-                end2 = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
-            }
-            const glm::vec3 startCeiling = glm::vec3(start2.x, ceiling, start2.y);
-            const glm::vec3 endCeiling = glm::vec3(end2.x, ceiling, end2.y);
-            const glm::vec3 startFloor = glm::vec3(start2.x, floor, start2.y);
-            const glm::vec3 endFloor = glm::vec3(end2.x, floor, end2.y);
-
-            if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
-            {
-                MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), 10, Color(1, 0, 0, 1), matrix);
-            }
-            if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
-            {
-                MapRenderer::RenderLine(startFloor, endFloor, Color(1, 1, 1, 1), matrix, 4);
-                MapRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
-            }
-
-            MapRenderer::RenderLine(startCeiling, endCeiling, Color(1, 1, 1, 1), matrix, 4);
-        }
-    }
+    ViewportRenderer::ViewportRenderNewPolygon sect = {
+        .points = points,
+        .floor = floor,
+        .ceiling = ceiling,
+    };
+    const glm::vec2 pt = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
+    ViewportRenderer::ViewportRenderPoint vpt = {
+        .pos = glm::vec3(pt.x, 0.1, pt.y),
+        .color = Color(1, 0.7, 0.7, 1),
+        .size = 10,
+    };
+    const ViewportRenderer::ViewportRenderSettings vps = {
+        .sectorFocusMode = false,
+        .focusedSectorIndex = 0,
+        .hoverType = ItemType::NONE,
+        .hoverIndex = 0,
+        .selectionType = ItemType::NONE,
+        .selectionIndex = 0,
+        .selectionVertexIndex = 0,
+        .point = vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ ? &vpt : nullptr,
+        .newPrimitive = nullptr,
+        .newActor = nullptr,
+        .newPolygon = isDrawing ? &sect : nullptr,
+    };
+    ViewportRenderer::RenderViewport(vp, vps);
 }

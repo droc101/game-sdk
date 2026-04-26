@@ -28,6 +28,8 @@ add_executable(mapedit mapedit.cpp
         MapPropertiesWindow.h
         MapCompileWindow.cpp
         MapCompileWindow.h
+        ViewportRenderer.cpp
+        ViewportRenderer.h
 )
 
 set_target_properties(mapedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
