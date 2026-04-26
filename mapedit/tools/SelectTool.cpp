@@ -381,7 +381,7 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
     {
         const Actor &a = MapEditor::map.actors.at(actorIndex);
         const glm::vec2 posScreenSpace = vp.WorldToScreenPos(a.position);
-        const ImVec2 hoverScreenSpaceIV = Viewport::GetLocalMousePos();
+        const ImVec2 hoverScreenSpaceIV = vp.GetLocalMousePos();
         const glm::vec2 hoverScreenSpace = glm::vec2(hoverScreenSpaceIV.x, hoverScreenSpaceIV.y);
 
         if (distance(posScreenSpace, hoverScreenSpace) <= MapEditor::HOVER_DISTANCE_PIXELS && isHovered)
@@ -714,7 +714,7 @@ void SelectTool::RenderViewport(Viewport &vp)
         if (isHovered)
         {
             worldSpaceHover = vp.GetWorldSpaceMousePos();
-            const ImVec2 localMouse = Viewport::GetLocalMousePos();
+            const ImVec2 localMouse = vp.GetLocalMousePos();
             screenSpaceHover = glm::vec2(localMouse.x, localMouse.y);
         }
     }

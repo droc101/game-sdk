@@ -20,7 +20,7 @@ class Viewport
         };
 
         Viewport() = delete;
-        Viewport(ViewportType type);
+        explicit Viewport(ViewportType type);
 
         ~Viewport();
 
@@ -40,16 +40,18 @@ class Viewport
 
         float &GetZoom();
 
-        void ClampZoom();
-
         [[nodiscard]] glm::vec3 GetWorldSpaceMousePos() const;
 
-        static ImVec2 GetLocalMousePos();
+        [[nodiscard]] ImVec2 GetLocalMousePos() const;
+
+        void ChangeZoom(float by);
 
     private:
         ImVec2 windowPos;
         ImVec2 windowSize;
         ViewportType type;
+
+        ImVec2 lastLocalMousePos;
 
         GLHelper::GL_Framebuffer framebuffer;
 

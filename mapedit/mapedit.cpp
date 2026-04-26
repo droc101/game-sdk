@@ -122,7 +122,7 @@ static void SetupDockspace()
     ImGui::DockBuilderAddNode(dockspaceId, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_NoCloseButton);
     ImGui::DockBuilderSetNodeSize(dockspaceId, ImGui::GetMainViewport()->Size);
 
-    ImGuiID lowerLeftDock = ImGui::DockBuilderSplitNode(dockspaceId, ImGuiDir_Down, 0.5f, nullptr, &dockspaceId);
+    ImGuiID lowerLeftDock = ImGui::DockBuilderSplitNode(dockspaceId, ImGuiDir_Down, 0.35f, nullptr, &dockspaceId);
     const ImGuiID lowerRightDock = ImGui::DockBuilderSplitNode(lowerLeftDock,
                                                                ImGuiDir_Right,
                                                                0.5f,
@@ -165,20 +165,14 @@ static void Render()
 
     if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Minus, ImGuiInputFlags_RouteGlobal | ImGuiInputFlags_Repeat))
     {
-        vpTopDown.GetZoom() += 5;
-        vpFront.GetZoom() += 5;
-        vpSide.GetZoom() += 5;
-        vpTopDown.ClampZoom();
-        vpFront.ClampZoom();
-        vpSide.ClampZoom();
+        vpTopDown.ChangeZoom(5);
+        vpFront.ChangeZoom(5);
+        vpSide.ChangeZoom(5);
     } else if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Equal, ImGuiInputFlags_RouteGlobal | ImGuiInputFlags_Repeat))
     {
-        vpTopDown.GetZoom() -= 5;
-        vpFront.GetZoom() -= 5;
-        vpSide.GetZoom() -= 5;
-        vpTopDown.ClampZoom();
-        vpFront.ClampZoom();
-        vpSide.ClampZoom();
+        vpTopDown.ChangeZoom(-5);
+        vpFront.ChangeZoom(-5);
+        vpSide.ChangeZoom(-5);
     } else if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_0, ImGuiInputFlags_RouteGlobal))
     {
         vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
@@ -285,21 +279,15 @@ static void Render()
             ImGui::Separator();
             if (ImGui::MenuItem("Zoom In", "Ctrl+="))
             {
-                vpTopDown.GetZoom() -= 5;
-                vpFront.GetZoom() -= 5;
-                vpSide.GetZoom() -= 5;
-                vpTopDown.ClampZoom();
-                vpFront.ClampZoom();
-                vpSide.ClampZoom();
+                vpTopDown.ChangeZoom(-5);
+                vpFront.ChangeZoom(-5);
+                vpSide.ChangeZoom(-5);
             }
             if (ImGui::MenuItem("Zoom Out", "Ctrl+-"))
             {
-                vpTopDown.GetZoom() += 5;
-                vpFront.GetZoom() += 5;
-                vpSide.GetZoom() += 5;
-                vpTopDown.ClampZoom();
-                vpFront.ClampZoom();
-                vpSide.ClampZoom();
+                vpTopDown.ChangeZoom(5);
+                vpFront.ChangeZoom(5);
+                vpSide.ChangeZoom(5);
             }
             if (ImGui::MenuItem("Reset Zoom", "Ctrl+0"))
             {

@@ -52,6 +52,10 @@ void Viewport::RenderImGui()
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();
 
+    const ImVec2 wPos = ImGui::GetWindowPos();
+    const ImVec2 mPos = ImGui::GetMousePos();
+    lastLocalMousePos = {mPos.x - wPos.x, mPos.y - wPos.y};
+
     windowPos = ImGui::GetWindowPos();
     windowSize = ImGui::GetContentRegionMax();
     windowSize.x += 8;
@@ -128,8 +132,7 @@ void Viewport::RenderImGui()
             }
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
         }
-        zoom += ImGui::GetIO().MouseWheel * -5.0f; // TODO zoom around cursor
-        ClampZoom();
+        ChangeZoom(ImGui::GetIO().MouseWheel * -5.0f);
     }
 
     ImGui::End();
@@ -180,7 +183,6 @@ glm::vec2 Viewport::WorldToScreenPos(const glm::vec3 worldPos) const
     const float screenY = (-ndc.y * 0.5f + 0.5f) * WindowSize.y;
     return {screenX, screenY};
 }
-
 
 glm::mat4 Viewport::GetMatrix() const
 {
@@ -241,26 +243,18 @@ float &Viewport::GetZoom()
     return zoom;
 }
 
-void Viewport::ClampZoom()
+ImVec2 Viewport::GetLocalMousePos() const
 {
-    if (zoom < 5)
-    {
-        zoom = 5;
-    }
-    if (zoom > MapEditor::MAP_SIZE + 500)
-    {
-        zoom = MapEditor::MAP_SIZE + 500;
-    }
-}
-
-ImVec2 Viewport::GetLocalMousePos()
-{
-    const ImVec2 wPos = ImGui::GetWindowPos();
-    const ImVec2 mPos = ImGui::GetMousePos();
-    return {mPos.x - wPos.x, mPos.y - wPos.y};
+    return lastLocalMousePos;
 }
 
 glm::vec3 Viewport::GetWorldSpaceMousePos() const
 {
-    return ScreenToWorldPos(GetLocalMousePos());
+    return ScreenToWorldPos(lastLocalMousePos);
+}
+
+void Viewport::ChangeZoom(const float by)
+{
+    zoom = glm::clamp(zoom + by, 5.0f, MapEditor::MAP_SIZE + 500.0f);
+    // TODO: zoom around mouse cursor instead of origin
 }
