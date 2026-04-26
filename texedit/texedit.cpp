@@ -1,8 +1,8 @@
 #include <cassert>
-#include <cstdint>
 #include <format>
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/DialogFilters.h>
+#include <game_sdk/gl/GLTextureCache.h>
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
 #include <GL/glew.h>
@@ -27,7 +27,7 @@ static ImTextureID checkerboardTexture;
 constexpr float MIN_ZOOM = 0.1f;
 constexpr float MAX_ZOOM = 10.0f;
 
-static void destroyExistingTexture()
+static void DestroyExistingTexture()
 {
     if (!textureLoaded)
     {
@@ -37,15 +37,15 @@ static void destroyExistingTexture()
     textureLoaded = false;
 }
 
-static void loadTexture()
+static void LoadTexture()
 {
-    destroyExistingTexture();
+    DestroyExistingTexture();
 
     glTexture = GLTextureCache::CreateTexture(texture);
     textureLoaded = true;
 }
 
-static void openGtex(const std::string &path)
+static void OpenGtex(const std::string &path)
 {
     const Error::ErrorCode errorCode = TextureAsset::CreateFromAsset(path.c_str(), texture);
     if (errorCode != Error::ErrorCode::OK)
@@ -53,10 +53,10 @@ static void openGtex(const std::string &path)
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the texture!\n{}", errorCode));
         return;
     }
-    loadTexture();
+    LoadTexture();
 }
 
-static void importImage(const std::string &path)
+static void ImportImage(const std::string &path)
 {
     Error::ErrorCode errorCode = Error::ErrorCode::INCORRECT_FORMAT;
     if (path.ends_with(".png"))
@@ -71,10 +71,10 @@ static void importImage(const std::string &path)
         SDKWindow::Get().ErrorMessage(std::format("Failed to import the texture!\n{}", errorCode));
         return;
     }
-    loadTexture();
+    LoadTexture();
 }
 
-static void saveGtex(const std::string &path)
+static void SaveGtex(const std::string &path)
 {
     const Error::ErrorCode errorCode = texture.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
@@ -83,7 +83,7 @@ static void saveGtex(const std::string &path)
     }
 }
 
-static void exportPng(const std::string &path)
+static void ExportPng(const std::string &path)
 {
     const Error::ErrorCode errorCode = texture.SaveAsPNG(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
@@ -92,7 +92,7 @@ static void exportPng(const std::string &path)
     }
 }
 
-static void exportExr(const std::string &path)
+static void ExportExr(const std::string &path)
 {
     const Error::ErrorCode errorCode = texture.SaveAsEXR(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
@@ -118,11 +118,11 @@ static void Render()
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
-                                             ImGuiWindowFlags_NoMove |
-                                             ImGuiWindowFlags_NoSavedSettings |
-                                             ImGuiWindowFlags_NoBringToFrontOnFocus;
-    ImGui::Begin("texedit", nullptr, windowFlags);
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoDecoration |
+                                              ImGuiWindowFlags_NoMove |
+                                              ImGuiWindowFlags_NoSavedSettings |
+                                              ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::Begin("texedit", nullptr, WINDOW_FLAGS);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && textureLoaded;
@@ -167,21 +167,21 @@ static void Render()
 
     if (openPressed)
     {
-        SDKWindow::Get().OpenFileDialog(openGtex, DialogFilters::gtexFilters);
+        SDKWindow::Get().OpenFileDialog(OpenGtex, DialogFilters::GTEX_FILTERS);
     } else if (importPressed)
     {
-        SDKWindow::Get().OpenFileDialog(importImage, DialogFilters::imageFilters);
+        SDKWindow::Get().OpenFileDialog(ImportImage, DialogFilters::IMAGE_FILTERS);
     } else if (savePressed)
     {
-        SDKWindow::Get().SaveFileDialog(saveGtex, DialogFilters::gtexFilters);
+        SDKWindow::Get().SaveFileDialog(SaveGtex, DialogFilters::GTEX_FILTERS);
     } else if (exportPressed)
     {
         if (texture.GetFormat() == TextureAsset::PixelFormat::RGBA8)
         {
-            SDKWindow::Get().SaveFileDialog(exportPng, DialogFilters::pngFilters);
+            SDKWindow::Get().SaveFileDialog(ExportPng, DialogFilters::PNG_FILTERS);
         } else
         {
-            SDKWindow::Get().SaveFileDialog(exportExr, DialogFilters::exrFilters);
+            SDKWindow::Get().SaveFileDialog(ExportExr, DialogFilters::EXR_FILTERS);
         }
     } else if (zoomInPressed)
     {
@@ -217,7 +217,9 @@ static void Render()
         ImGui::BeginChild("ImagePane",
                           ImVec2(imageWidth, availableSize.y),
                           ImGuiChildFlags_Borders,
-                          ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoScrollWithMouse);
+                          ImGuiWindowFlags_NoScrollbar |
+                                  ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                  ImGuiWindowFlags_NoScrollWithMouse);
         {
             const ImVec2 imageSize{static_cast<float>(texture.GetWidth()) * zoom,
                                    static_cast<float>(texture.GetHeight()) * zoom};
@@ -250,15 +252,15 @@ static void Render()
             ImGui::Separator();
             if (ImGui::Checkbox("Filter", &texture.filter))
             {
-                loadTexture();
+                LoadTexture();
             }
             if (ImGui::Checkbox("Repeat", &texture.repeat))
             {
-                loadTexture();
+                LoadTexture();
             }
             if (ImGui::Checkbox("Mipmaps", &texture.mipmaps))
             {
-                loadTexture();
+                LoadTexture();
             }
         }
         ImGui::EndChild();
@@ -271,7 +273,7 @@ static void Render()
     ImGui::End();
 }
 
-int main(int argc, char **argv)
+int main(const int argc, char **argv)
 {
     if (!SDKWindow::Get().Init("GAME SDK Texture Editor"))
     {
@@ -290,7 +292,7 @@ int main(int argc, char **argv)
     const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gtex"});
     if (!openPath.empty())
     {
-        openGtex(openPath);
+        OpenGtex(openPath);
     } else
     {
         const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc,
@@ -301,13 +303,13 @@ int main(int argc, char **argv)
                                                                                 });
         if (!importPath.empty())
         {
-            importImage(importPath);
+            ImportImage(importPath);
         }
     }
 
     SDKWindow::Get().MainLoop(Render);
 
-    destroyExistingTexture();
+    DestroyExistingTexture();
 
     SDKWindow::Get().Destroy();
 

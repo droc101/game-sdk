@@ -9,7 +9,6 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
-#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <glm/geometric.hpp>
@@ -92,7 +91,7 @@ static consteval auto GenerateDescriptorSetLayoutBindings(const T &...bindings)
 }
 
 /// Oh my god why can this even exist let alone work
-template<const auto *BINDINGS> static consteval LunaDescriptorPoolCreationInfo generateDescriptorPoolCreationInfo()
+template<const auto *BINDINGS> static consteval LunaDescriptorPoolCreationInfo GenerateDescriptorPoolCreationInfo()
 {
     static constexpr auto UNIQUE_BINDINGS = std::ranges::
             unique((const_cast<std::array<LunaDescriptorSetLayoutBinding, BINDINGS->size()> *>(BINDINGS))->begin(),
@@ -100,7 +99,7 @@ template<const auto *BINDINGS> static consteval LunaDescriptorPoolCreationInfo g
                    [](const LunaDescriptorSetLayoutBinding &a, const LunaDescriptorSetLayoutBinding &b) -> bool {
                        return a.descriptorType != b.descriptorType;
                    });
-    static constexpr std::array<VkDescriptorPoolSize, UNIQUE_BINDINGS.size() + 1> retArray = ([] {
+    static constexpr std::array<VkDescriptorPoolSize, UNIQUE_BINDINGS.size() + 1> RET_ARRAY = ([] {
         std::array<VkDescriptorPoolSize, UNIQUE_BINDINGS.size() + 1> ret{};
         for (const LunaDescriptorSetLayoutBinding &binding: *BINDINGS)
         {
@@ -134,8 +133,8 @@ template<const auto *BINDINGS> static consteval LunaDescriptorPoolCreationInfo g
     return LunaDescriptorPoolCreationInfo{
         .flags = CREATION_FLAGS,
         .maxSets = 1,
-        .poolSizeCount = retArray.size(),
-        .poolSizes = retArray.data(),
+        .poolSizeCount = RET_ARRAY.size(),
+        .poolSizes = RET_ARRAY.data(),
     };
 }
 
@@ -146,10 +145,9 @@ template<typename... T> requires(((std::__is_pair<T> &&
                                     std::is_same_v<typename T::second_type, const LunaDescriptorBufferInfo *> ||
                                     std::is_same_v<typename T::second_type, LunaBufferView *>)) &&
                                   ...))
-static inline std::array<LunaWriteDescriptorSet, sizeof...(T)> generateWrites(const LunaDescriptorSet descriptorSet,
-                                                                              std::list<LunaDescriptorBufferInfo>
-                                                                                      &bufferInfos,
-                                                                              const T &...writes)
+static std::array<LunaWriteDescriptorSet, sizeof...(T)> GenerateWrites(const LunaDescriptorSet descriptorSet,
+                                                                       std::list<LunaDescriptorBufferInfo> &bufferInfos,
+                                                                       const T &...writes)
 {
     size_t index = 0;
     std::array<LunaWriteDescriptorSet, sizeof...(T)> entries{};
@@ -203,8 +201,8 @@ template<typename... T> requires(((std::__is_pair<T> &&
                                     std::is_same_v<typename T::second_type, LunaBufferView *>)) &&
                                   ...) &&
                                  (!std::is_same_v<typename T::second_type, LunaBuffer> && ...))
-static inline std::array<LunaWriteDescriptorSet, sizeof...(T)> generateWrites(const LunaDescriptorSet descriptorSet,
-                                                                              const T &...writes)
+static std::array<LunaWriteDescriptorSet, sizeof...(T)> GenerateWrites(const LunaDescriptorSet descriptorSet,
+                                                                       const T &...writes)
 {
     std::list<LunaDescriptorBufferInfo> list;
     return generateWrites<T...>(descriptorSet, list, writes...);
@@ -212,21 +210,21 @@ static inline std::array<LunaWriteDescriptorSet, sizeof...(T)> generateWrites(co
 
 LightBakerGpu::LightBakerGpu()
 {
-    static constexpr LunaInstanceCreationInfo instanceCreationInfo = {
+    static constexpr LunaInstanceCreationInfo INSTANCE_CREATION_INFO = {
         .apiVersion = VK_API_VERSION_1_2,
 #ifndef NDEBUG
         .enableValidation = true,
 #endif
     };
-    if (!checkResult(lunaCreateInstance(&instanceCreationInfo)))
+    if (!CheckResult(lunaCreateInstance(&INSTANCE_CREATION_INFO)))
     {
         return;
     }
 
-    static constexpr LunaPhysicalDevicePreferenceDefinition physicalDevicePreferenceDefinition = {
+    static constexpr LunaPhysicalDevicePreferenceDefinition PHYSICAL_DEVICE_PREFERENCE_DEFINITION = {
         .preferredDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
     };
-    static constexpr VkPhysicalDeviceFeatures required10Features = {
+    static constexpr VkPhysicalDeviceFeatures REQUIRED_1_0_FEATURES = {
         .shaderFloat64 = VK_TRUE,
     };
     static VkPhysicalDeviceRayTracingPipelineFeaturesKHR requiredRayTracingPipelineFeatures = {
@@ -246,43 +244,43 @@ LightBakerGpu::LightBakerGpu()
         .descriptorBindingStorageBufferUpdateAfterBind = VK_TRUE,
         .bufferDeviceAddress = VK_TRUE,
     };
-    static constexpr VkPhysicalDeviceFeatures2 requiredFeatures = {
+    static constexpr VkPhysicalDeviceFeatures2 REQUIRED_FEATURES = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
         .pNext = &required12Features,
-        .features = required10Features,
+        .features = REQUIRED_1_0_FEATURES,
     };
-    static constexpr std::array requiredExtensions = {
+    static constexpr std::array REQUIRED_EXTENSIONS = {
         VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
         VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
         VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
     };
     static constexpr LunaDeviceCreationInfo2 DEVICE_CREATION_INFO = {
-        .extensionCount = requiredExtensions.size(),
-        .extensionNames = requiredExtensions.data(),
-        .requiredFeatures = requiredFeatures,
-        .physicalDevicePreferenceDefinition = &physicalDevicePreferenceDefinition,
+        .extensionCount = REQUIRED_EXTENSIONS.size(),
+        .extensionNames = REQUIRED_EXTENSIONS.data(),
+        .requiredFeatures = REQUIRED_FEATURES,
+        .physicalDevicePreferenceDefinition = &PHYSICAL_DEVICE_PREFERENCE_DEFINITION,
         .allocatorCreateFlags = VMA_ALLOCATOR_CREATE_EXTERNALLY_SYNCHRONIZED_BIT |
                                 VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT,
     };
-    if (!checkResult(lunaCreateDevice2(&DEVICE_CREATION_INFO, &device)))
+    if (!CheckResult(lunaCreateDevice2(&DEVICE_CREATION_INFO, &device)))
     {
         return;
     }
 
-    const LunaQueueFamilyProperties requiredProperties = {
+    constexpr LunaQueueFamilyProperties REQUIRED_PROPERTIES = {
         .queueFamilyProperties = VkQueueFamilyProperties{.queueFlags = VK_QUEUE_COMPUTE_BIT},
     };
-    queueFamilyIndex = lunaGetQueueFamilyIndex(device, &requiredProperties);
+    queueFamilyIndex = lunaGetQueueFamilyIndex(device, &REQUIRED_PROPERTIES);
     vkGetDeviceQueue(lunaGetVkDevice(device), queueFamilyIndex, 0, &queue);
 
     const LunaCommandPoolCreationInfo commandPoolCreationInfo = {
         .queueFamilyIndex = queueFamilyIndex,
     };
-    if (!checkResult(lunaCreateCommandPool(device, &commandPoolCreationInfo, &commandPool)))
+    if (!CheckResult(lunaCreateCommandPool(device, &commandPoolCreationInfo, &commandPool)))
     {
         return;
     }
-    if (!checkResult(lunaAllocateCommandBuffer(device, commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer)))
+    if (!CheckResult(lunaAllocateCommandBuffer(device, commandPool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, &commandBuffer)))
     {
         return;
     }
@@ -313,7 +311,7 @@ static constexpr VmaAllocationCreateInfo MAPPED_ALLOCATION_CREATE_INFO = {
     .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
 };
 
-bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
+bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                          const std::vector<Light> &lights,
                          const glm::uvec2 &lightmapSize,
                          std::vector<uint8_t> &pixelData)
@@ -341,7 +339,7 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
         .queueFamilyIndices = &queueFamilyIndex,
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
-    if (!checkResult(lunaCreateBuffer(device, &lightsBufferCreationInfo, &lightsBuffer)))
+    if (!CheckResult(lunaCreateBuffer(device, &lightsBufferCreationInfo, &lightsBuffer)))
     {
         return false;
     }
@@ -351,7 +349,7 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
         .data = lights.data(),
         .stageFlags = VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
     };
-    if (!checkResult(lunaWriteDataToBuffer(device, commandBuffer, lightsBuffer, &lightsBufferWriteInfo)))
+    if (!CheckResult(lunaWriteDataToBuffer(device, commandBuffer, lightsBuffer, &lightsBufferWriteInfo)))
     {
         return false;
     }
@@ -364,11 +362,11 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
         .queueFamilyIndices = &queueFamilyIndex,
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
-    if (!checkResult(lunaCreateBuffer(device, &lightHitIndicesBufferCreationInfo, &lightHitIndicesBuffer)))
+    if (!CheckResult(lunaCreateBuffer(device, &lightHitIndicesBufferCreationInfo, &lightHitIndicesBuffer)))
     {
         return false;
     }
-    if (!checkResult(lunaFillBuffer(device, commandBuffer, lightHitIndicesBuffer, 0, nullptr)))
+    if (!CheckResult(lunaFillBuffer(device, commandBuffer, lightHitIndicesBuffer, 0, nullptr)))
     {
         return false;
     }
@@ -380,28 +378,28 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
         .queueFamilyIndices = &queueFamilyIndex,
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
-    if (!checkResult(lunaCreateBuffer(device, &lightmapCreationInfo, &lightmap)))
+    if (!CheckResult(lunaCreateBuffer(device, &lightmapCreationInfo, &lightmap)))
     {
         return false;
     }
-    if (!checkResult(lunaFillBuffer(device, commandBuffer, lightmap, 0, nullptr)))
+    if (!CheckResult(lunaFillBuffer(device, commandBuffer, lightmap, 0, nullptr)))
     {
         return false;
     }
 
-    if (!createBLAS(meshBuilders))
+    if (!CreateBLAS(meshBuilders))
     {
         return false;
     }
-    if (!createTLAS())
+    if (!CreateTLAS())
     {
         return false;
     }
-    if (!createAndWriteDescriptorSet())
+    if (!CreateAndWriteDescriptorSet())
     {
         return false;
     }
-    if (!createPipeline(lightmapSize, lights.size()))
+    if (!CreatePipeline(lightmapSize, lights.size()))
     {
         return false;
     }
@@ -413,7 +411,7 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
         Logger::Info("Baking lighting {}%...",
                      static_cast<float>(100 * i) / static_cast<float>(lights.size() * ITERATIONS));
 
-        if (!checkResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
+        if (!CheckResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
         {
             return false;
         }
@@ -465,7 +463,7 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
             .queue = queue,
             .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
         };
-        if (!checkResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo)))
+        if (!CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo)))
         {
             return false;
         }
@@ -478,7 +476,7 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
 
     lunaDeviceWaitIdle(device);
     LunaBuffer outputLightmap{};
-    if (!convertLightmapToFloat16(lightmapSize, outputLightmap))
+    if (!ConvertLightmapToFloat16(lightmapSize, outputLightmap))
     {
         return false;
     }
@@ -491,7 +489,7 @@ bool LightBakerGpu::bake(const std::unordered_map<std::string, LevelMeshBuilder>
     return true;
 }
 
-VkShaderModule LightBakerGpu::generateShaderModule(const std::filesystem::path &path,
+VkShaderModule LightBakerGpu::GenerateShaderModule(const std::filesystem::path &path,
                                                    const EShLanguage shaderType,
                                                    std::vector<uint32_t> &spirv) const
 {
@@ -512,7 +510,7 @@ VkShaderModule LightBakerGpu::generateShaderModule(const std::filesystem::path &
         .codeSize = spirv.size() * sizeof(uint32_t),
         .pCode = spirv.data(),
     };
-    if (!checkResult(vkCreateShaderModule(lunaGetVkDevice(device), &shaderModuleCreateInfo, nullptr, &shaderModule)))
+    if (!CheckResult(vkCreateShaderModule(lunaGetVkDevice(device), &shaderModuleCreateInfo, nullptr, &shaderModule)))
     {
         return VK_NULL_HANDLE;
     }
@@ -520,7 +518,7 @@ VkShaderModule LightBakerGpu::generateShaderModule(const std::filesystem::path &
     return shaderModule;
 }
 
-bool LightBakerGpu::createBLAS(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders)
+bool LightBakerGpu::CreateBLAS(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders)
 {
     // The position MUST be at the start of the struct for the acceleration structure to work properly
     static_assert(offsetof(MapVertex, position) == 0, "MapVertex::position must be at offset zero!");
@@ -555,7 +553,7 @@ bool LightBakerGpu::createBLAS(const std::unordered_map<std::string, LevelMeshBu
         .queueFamilyIndices = &queueFamilyIndex,
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
-    if (!checkResult(lunaCreateBuffer(device, &vertexBufferCreationInfo, &vertexBuffer)))
+    if (!CheckResult(lunaCreateBuffer(device, &vertexBufferCreationInfo, &vertexBuffer)))
     {
         return false;
     }
@@ -568,7 +566,7 @@ bool LightBakerGpu::createBLAS(const std::unordered_map<std::string, LevelMeshBu
         .queueFamilyIndices = &queueFamilyIndex,
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
-    if (!checkResult(lunaCreateBuffer(device, &indexBufferCreationInfo, &indexBuffer)))
+    if (!CheckResult(lunaCreateBuffer(device, &indexBufferCreationInfo, &indexBuffer)))
     {
         return false;
     }
@@ -578,7 +576,7 @@ bool LightBakerGpu::createBLAS(const std::unordered_map<std::string, LevelMeshBu
         .data = vertices.data(),
         .stageFlags = VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
     };
-    if (!checkResult(lunaWriteDataToBuffer(device, commandBuffer, vertexBuffer, &vertexBufferWriteInfo)))
+    if (!CheckResult(lunaWriteDataToBuffer(device, commandBuffer, vertexBuffer, &vertexBufferWriteInfo)))
     {
         return false;
     }
@@ -587,17 +585,17 @@ bool LightBakerGpu::createBLAS(const std::unordered_map<std::string, LevelMeshBu
         .data = indices.data(),
         .stageFlags = VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
     };
-    if (!checkResult(lunaWriteDataToBuffer(device, commandBuffer, indexBuffer, &indexBufferWriteInfo)))
+    if (!CheckResult(lunaWriteDataToBuffer(device, commandBuffer, indexBuffer, &indexBufferWriteInfo)))
     {
         return false;
     }
 
-    if (!checkResult(lunaDeviceWaitIdle(device)))
+    if (!CheckResult(lunaDeviceWaitIdle(device)))
     {
         return false;
     }
 
-    if (!checkResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
+    if (!CheckResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
     {
         return false;
     }
@@ -653,7 +651,7 @@ bool LightBakerGpu::createBLAS(const std::unordered_map<std::string, LevelMeshBu
         .alignment = 256, // 256 is directly required by the spec
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
-    if (!checkResult(lunaCreateBuffer(device, &bufferCreationInfo, &blas.buffer)))
+    if (!CheckResult(lunaCreateBuffer(device, &bufferCreationInfo, &blas.buffer)))
     {
         return false;
     }
@@ -665,7 +663,7 @@ bool LightBakerGpu::createBLAS(const std::unordered_map<std::string, LevelMeshBu
         .size = lunaGetBufferSize(blas.buffer),
         .type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
     };
-    if (!checkResult(vkCreateAccelerationStructureKHR(lunaGetVkDevice(device),
+    if (!CheckResult(vkCreateAccelerationStructureKHR(lunaGetVkDevice(device),
                                                       &createInfo,
                                                       nullptr,
                                                       &blas.accelerationStructure)))
@@ -681,7 +679,7 @@ bool LightBakerGpu::createBLAS(const std::unordered_map<std::string, LevelMeshBu
         .alignment = physicalDeviceAccelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment,
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
-    if (!checkResult(lunaCreateBuffer(device, &scratchBufferCreationInfo, &blas.scratchBuffer)))
+    if (!CheckResult(lunaCreateBuffer(device, &scratchBufferCreationInfo, &blas.scratchBuffer)))
     {
         return false;
     }
@@ -709,14 +707,10 @@ bool LightBakerGpu::createBLAS(const std::unordered_map<std::string, LevelMeshBu
         .queue = queue,
         .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
     };
-    if (!checkResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo)))
-    {
-        return false;
-    }
-    return true;
+    return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }
 
-bool LightBakerGpu::createTLAS()
+bool LightBakerGpu::CreateTLAS()
 {
     static constexpr VkTransformMatrixKHR TRANSFORM_MATRIX_IDENTITY = {{
         {1, 0, 0, 0},
@@ -724,7 +718,7 @@ bool LightBakerGpu::createTLAS()
         {0, 0, 1, 0},
     }};
 
-    if (!checkResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
+    if (!CheckResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
     {
         return false;
     }
@@ -738,7 +732,7 @@ bool LightBakerGpu::createTLAS()
         .alignment = 16, // 16 is directly required by the spec
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
-    if (!checkResult(lunaCreateBuffer(device, &instancesBufferCreationInfo, &accelerationStructureInstancesBuffer)))
+    if (!CheckResult(lunaCreateBuffer(device, &instancesBufferCreationInfo, &accelerationStructureInstancesBuffer)))
     {
         return false;
     }
@@ -759,7 +753,7 @@ bool LightBakerGpu::createTLAS()
         .data = &instance,
         .stageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
     };
-    if (!checkResult(lunaWriteDataToBuffer(device,
+    if (!CheckResult(lunaWriteDataToBuffer(device,
                                            commandBuffer,
                                            accelerationStructureInstancesBuffer,
                                            &instancesBufferWriteInfo)))
@@ -811,7 +805,7 @@ bool LightBakerGpu::createTLAS()
         .alignment = 256, // 256 is directly required by the spec
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
-    if (!checkResult(lunaCreateBuffer(device, &bufferCreationInfo, &tlas.buffer)))
+    if (!CheckResult(lunaCreateBuffer(device, &bufferCreationInfo, &tlas.buffer)))
     {
         return false;
     }
@@ -823,7 +817,7 @@ bool LightBakerGpu::createTLAS()
         .size = lunaGetBufferSize(tlas.buffer),
         .type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR,
     };
-    if (!checkResult(vkCreateAccelerationStructureKHR(lunaGetVkDevice(device),
+    if (!CheckResult(vkCreateAccelerationStructureKHR(lunaGetVkDevice(device),
                                                       &createInfo,
                                                       nullptr,
                                                       &tlas.accelerationStructure)))
@@ -839,7 +833,7 @@ bool LightBakerGpu::createTLAS()
         .alignment = physicalDeviceAccelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment,
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
-    if (!checkResult(lunaCreateBuffer(device, &scratchBufferCreationInfo, &tlas.scratchBuffer)))
+    if (!CheckResult(lunaCreateBuffer(device, &scratchBufferCreationInfo, &tlas.scratchBuffer)))
     {
         return false;
     }
@@ -857,27 +851,23 @@ bool LightBakerGpu::createTLAS()
         .pGeometries = &geometry,
         .scratchData = scratchDataAddress,
     };
-    const VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo = {
+    constexpr VkAccelerationStructureBuildRangeInfoKHR BUILD_RANGE_INFO = {
         .primitiveCount = MAX_PRIMITIVE_COUNT,
     };
-    const VkAccelerationStructureBuildRangeInfoKHR *pBuildRangeInfo = &buildRangeInfo;
+    const VkAccelerationStructureBuildRangeInfoKHR *pBuildRangeInfo = &BUILD_RANGE_INFO;
     vkCmdBuildAccelerationStructuresKHR(lunaGetVkCommandBuffer(commandBuffer), 1, &buildGeometryInfo, &pBuildRangeInfo);
 
     const LunaCommandBufferSubmitInfo submitInfo = {
         .queue = queue,
         .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
     };
-    if (!checkResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo)))
-    {
-        return false;
-    }
-    return true;
+    return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }
 
-bool LightBakerGpu::createPipeline(const glm::uvec2 &lightmapSize, const uint32_t lightCount)
+bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize, const uint32_t lightCount)
 {
     std::vector<uint32_t> raygenShaderSpirv;
-    const VkShaderModule raygenShaderModule = generateShaderModule("assets/shaders/lightmap/raygen.rgen",
+    const VkShaderModule raygenShaderModule = GenerateShaderModule("assets/shaders/lightmap/raygen.rgen",
                                                                    EShLangRayGen,
                                                                    raygenShaderSpirv);
     if (raygenShaderModule == VK_NULL_HANDLE)
@@ -885,7 +875,7 @@ bool LightBakerGpu::createPipeline(const glm::uvec2 &lightmapSize, const uint32_
         return false;
     }
     std::vector<uint32_t> closestHitShaderSpirv;
-    const VkShaderModule closestHitShaderModule = generateShaderModule("assets/shaders/lightmap/closesthit.rchit",
+    const VkShaderModule closestHitShaderModule = GenerateShaderModule("assets/shaders/lightmap/closesthit.rchit",
                                                                        EShLangClosestHit,
                                                                        closestHitShaderSpirv);
     if (closestHitShaderModule == VK_NULL_HANDLE)
@@ -904,7 +894,7 @@ bool LightBakerGpu::createPipeline(const glm::uvec2 &lightmapSize, const uint32_
         .bounces = BOUNCES,
     };
     static constexpr std::array RAYGEN_MAP_ENTRIES = GenerateSpecializationMapEntries<double, uint32_t, uint32_t>();
-    const VkSpecializationInfo raygenSpecializationInfo = {
+    constexpr VkSpecializationInfo RAYGEN_SPECIALIZATION_INFO = {
         .mapEntryCount = RAYGEN_MAP_ENTRIES.size(),
         .pMapEntries = RAYGEN_MAP_ENTRIES.data(),
         .dataSize = sizeof(RAYGEN_SPECIALIZATION_DATA),
@@ -929,7 +919,7 @@ bool LightBakerGpu::createPipeline(const glm::uvec2 &lightmapSize, const uint32_
             .stage = VK_SHADER_STAGE_RAYGEN_BIT_KHR,
             .module = raygenShaderModule,
             .pName = "main",
-            .pSpecializationInfo = &raygenSpecializationInfo,
+            .pSpecializationInfo = &RAYGEN_SPECIALIZATION_INFO,
         },
         VkPipelineShaderStageCreateInfo{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -940,7 +930,7 @@ bool LightBakerGpu::createPipeline(const glm::uvec2 &lightmapSize, const uint32_
         },
     };
 
-    const std::array shaderGroups = {
+    constexpr std::array SHADER_GROUPS = {
         VkRayTracingShaderGroupCreateInfoKHR{
             .sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
             .type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR,
@@ -959,7 +949,7 @@ bool LightBakerGpu::createPipeline(const glm::uvec2 &lightmapSize, const uint32_
         },
     };
 
-    const std::array pushConstantRanges = {
+    constexpr std::array PUSH_CONSTANT_RANGES = {
         VkPushConstantRange{
             .stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR,
             .size = sizeof(lightIndex) + sizeof(iteration),
@@ -969,10 +959,10 @@ bool LightBakerGpu::createPipeline(const glm::uvec2 &lightmapSize, const uint32_
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = 1,
         .pSetLayouts = &descriptorSetLayout,
-        .pushConstantRangeCount = pushConstantRanges.size(),
-        .pPushConstantRanges = pushConstantRanges.data(),
+        .pushConstantRangeCount = PUSH_CONSTANT_RANGES.size(),
+        .pPushConstantRanges = PUSH_CONSTANT_RANGES.data(),
     };
-    if (!checkResult(vkCreatePipelineLayout(lunaGetVkDevice(device), &layoutCreateInfo, nullptr, &pipelineLayout)))
+    if (!CheckResult(vkCreatePipelineLayout(lunaGetVkDevice(device), &layoutCreateInfo, nullptr, &pipelineLayout)))
     {
         return false;
     }
@@ -981,12 +971,12 @@ bool LightBakerGpu::createPipeline(const glm::uvec2 &lightmapSize, const uint32_
         .sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR,
         .stageCount = shaderStages.size(),
         .pStages = shaderStages.data(),
-        .groupCount = shaderGroups.size(),
-        .pGroups = shaderGroups.data(),
+        .groupCount = SHADER_GROUPS.size(),
+        .pGroups = SHADER_GROUPS.data(),
         .maxPipelineRayRecursionDepth = 1,
         .layout = pipelineLayout,
     };
-    if (!checkResult(vkCreateRayTracingPipelinesKHR(lunaGetVkDevice(device),
+    if (!CheckResult(vkCreateRayTracingPipelinesKHR(lunaGetVkDevice(device),
                                                     VK_NULL_HANDLE,
                                                     VK_NULL_HANDLE,
                                                     1,
@@ -1000,12 +990,12 @@ bool LightBakerGpu::createPipeline(const glm::uvec2 &lightmapSize, const uint32_
     vkDestroyShaderModule(lunaGetVkDevice(device), raygenShaderModule, nullptr);
     vkDestroyShaderModule(lunaGetVkDevice(device), closestHitShaderModule, nullptr);
 
-    return createShaderBindingTables();
+    return CreateShaderBindingTables();
 }
 
-bool LightBakerGpu::createAndWriteDescriptorSet()
+bool LightBakerGpu::CreateAndWriteDescriptorSet()
 {
-    const std::array descriptorSetLayoutBindings = {
+    constexpr std::array DESCRIPTOR_SET_LAYOUT_BINDINGS = {
         VkDescriptorSetLayoutBinding{
             .binding = 0,
             .descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
@@ -1046,10 +1036,10 @@ bool LightBakerGpu::createAndWriteDescriptorSet()
 
     const VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = descriptorSetLayoutBindings.size(),
-        .pBindings = descriptorSetLayoutBindings.data(),
+        .bindingCount = DESCRIPTOR_SET_LAYOUT_BINDINGS.size(),
+        .pBindings = DESCRIPTOR_SET_LAYOUT_BINDINGS.data(),
     };
-    if (!checkResult(vkCreateDescriptorSetLayout(lunaGetVkDevice(device),
+    if (!CheckResult(vkCreateDescriptorSetLayout(lunaGetVkDevice(device),
                                                  &descriptorSetLayoutCreateInfo,
                                                  nullptr,
                                                  &descriptorSetLayout)))
@@ -1057,7 +1047,7 @@ bool LightBakerGpu::createAndWriteDescriptorSet()
         return false;
     }
 
-    const std::array descriptorPoolSizes = {
+    constexpr std::array DESCRIPTOR_POOL_SIZES = {
         VkDescriptorPoolSize{
             .type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
             .descriptorCount = 1,
@@ -1070,10 +1060,10 @@ bool LightBakerGpu::createAndWriteDescriptorSet()
     const VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .maxSets = 1,
-        .poolSizeCount = descriptorPoolSizes.size(),
-        .pPoolSizes = descriptorPoolSizes.data(),
+        .poolSizeCount = DESCRIPTOR_POOL_SIZES.size(),
+        .pPoolSizes = DESCRIPTOR_POOL_SIZES.data(),
     };
-    if (!checkResult(vkCreateDescriptorPool(lunaGetVkDevice(device),
+    if (!CheckResult(vkCreateDescriptorPool(lunaGetVkDevice(device),
                                             &descriptorPoolCreateInfo,
                                             nullptr,
                                             &descriptorPool)))
@@ -1087,7 +1077,7 @@ bool LightBakerGpu::createAndWriteDescriptorSet()
         .descriptorSetCount = 1,
         .pSetLayouts = &descriptorSetLayout,
     };
-    if (!checkResult(vkAllocateDescriptorSets(lunaGetVkDevice(device), &descriptorSetAllocateInfo, &descriptorSet)))
+    if (!CheckResult(vkAllocateDescriptorSets(lunaGetVkDevice(device), &descriptorSetAllocateInfo, &descriptorSet)))
     {
         return false;
     }
@@ -1177,7 +1167,7 @@ bool LightBakerGpu::createAndWriteDescriptorSet()
     return true;
 }
 
-bool LightBakerGpu::createShaderBindingTables()
+bool LightBakerGpu::CreateShaderBindingTables()
 {
     static constexpr VkBufferUsageFlags USAGE_FLAGS = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR |
                                                       VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
@@ -1190,7 +1180,7 @@ bool LightBakerGpu::createShaderBindingTables()
         .alignment = physicalDeviceRayTracingPipelineProperties.shaderGroupBaseAlignment,
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
-    if (!checkResult(lunaCreateBuffer(device, &raygenShaderBindingTableCreationInfo, &raygenShaderBindingTable)))
+    if (!CheckResult(lunaCreateBuffer(device, &raygenShaderBindingTableCreationInfo, &raygenShaderBindingTable)))
     {
         return false;
     }
@@ -1203,7 +1193,7 @@ bool LightBakerGpu::createShaderBindingTables()
         .alignment = physicalDeviceRayTracingPipelineProperties.shaderGroupBaseAlignment,
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
-    if (!checkResult(lunaCreateBuffer(device,
+    if (!CheckResult(lunaCreateBuffer(device,
                                       &closestHitShaderBindingTableCreationInfo,
                                       &closestHitShaderBindingTable)))
     {
@@ -1211,7 +1201,7 @@ bool LightBakerGpu::createShaderBindingTables()
     }
 
     std::vector<char> shaderHandles(2 * physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize);
-    if (!checkResult(vkGetRayTracingShaderGroupHandlesKHR(lunaGetVkDevice(device),
+    if (!CheckResult(vkGetRayTracingShaderGroupHandlesKHR(lunaGetVkDevice(device),
                                                           pipeline,
                                                           0,
                                                           2,
@@ -1226,7 +1216,7 @@ bool LightBakerGpu::createShaderBindingTables()
         .data = shaderHandles.data(),
         .stageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
     };
-    if (!checkResult(lunaWriteDataToBuffer(device,
+    if (!CheckResult(lunaWriteDataToBuffer(device,
                                            commandBuffer,
                                            raygenShaderBindingTable,
                                            &raygenShaderBindingTableWriteInfo)))
@@ -1239,13 +1229,13 @@ bool LightBakerGpu::createShaderBindingTables()
         .data = shaderHandles.data() + physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
         .stageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
     };
-    return checkResult(lunaWriteDataToBuffer(device,
+    return CheckResult(lunaWriteDataToBuffer(device,
                                              commandBuffer,
                                              closestHitShaderBindingTable,
                                              &closestHitShaderBindingTableWriteInfo));
 }
 
-bool LightBakerGpu::convertLightmapToFloat16(const glm::uvec2 &lightmapSize, LunaBuffer &outputLightmap) const
+bool LightBakerGpu::ConvertLightmapToFloat16(const glm::uvec2 &lightmapSize, LunaBuffer &outputLightmap) const
 {
     static constexpr glm::uvec2 WORK_GROUP_SIZE{32};
 
@@ -1271,7 +1261,7 @@ bool LightBakerGpu::convertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
         .creationInfoType = LUNA_SHADER_MODULE_CREATION_INFO_TYPE_SPIRV,
         .creationInfoUnion = {.spirv = {.size = spirv.size() * sizeof(uint32_t), .spirv = spirv.data()}},
     };
-    if (!checkResult(lunaCreateShaderModule(device, &shaderModuleCreationInfo, &shaderModule)))
+    if (!CheckResult(lunaCreateShaderModule(device, &shaderModuleCreationInfo, &shaderModule)))
     {
         return false;
     }
@@ -1286,11 +1276,11 @@ bool LightBakerGpu::convertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
                 VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
                 std::array{"output lightmap"},
             });
-    const LunaDescriptorSetLayoutCreationInfo descriptorSetLayoutCreationInfo = {
+    constexpr LunaDescriptorSetLayoutCreationInfo DESCRIPTOR_SET_LAYOUT_CREATION_INFO = {
         .bindingCount = DESCRIPTOR_SET_LAYOUT_BINDINGS.size(),
         .bindings = DESCRIPTOR_SET_LAYOUT_BINDINGS.data(),
     };
-    if (!checkResult(lunaCreateDescriptorSetLayout(device, &descriptorSetLayoutCreationInfo, &descriptorSetLayout)))
+    if (!CheckResult(lunaCreateDescriptorSetLayout(device, &DESCRIPTOR_SET_LAYOUT_CREATION_INFO, &descriptorSetLayout)))
     {
         return false;
     }
@@ -1322,15 +1312,15 @@ bool LightBakerGpu::convertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
         .layoutCreationInfo = layoutCreationInfo,
     };
     LunaComputePipeline pipeline{};
-    if (!checkResult(lunaCreateComputePipeline(device, &pipelineCreationInfo, &pipeline)))
+    if (!CheckResult(lunaCreateComputePipeline(device, &pipelineCreationInfo, &pipeline)))
     {
         return false;
     }
 
     LunaDescriptorPool descriptorPool{};
     static constexpr LunaDescriptorPoolCreationInfo
-            DESCRIPTOR_POOL_CREATION_INFO = generateDescriptorPoolCreationInfo<&DESCRIPTOR_SET_LAYOUT_BINDINGS>();
-    if (!checkResult(lunaCreateDescriptorPool(device, &DESCRIPTOR_POOL_CREATION_INFO, &descriptorPool)))
+            DESCRIPTOR_POOL_CREATION_INFO = GenerateDescriptorPoolCreationInfo<&DESCRIPTOR_SET_LAYOUT_BINDINGS>();
+    if (!CheckResult(lunaCreateDescriptorPool(device, &DESCRIPTOR_POOL_CREATION_INFO, &descriptorPool)))
     {
         return false;
     }
@@ -1341,7 +1331,7 @@ bool LightBakerGpu::convertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
         .setLayouts = &descriptorSetLayout,
     };
     LunaDescriptorSet descriptorSet{};
-    if (!checkResult(lunaAllocateDescriptorSets(device, &allocationInfo, &descriptorSet)))
+    if (!CheckResult(lunaAllocateDescriptorSets(device, &allocationInfo, &descriptorSet)))
     {
         return false;
     }
@@ -1353,7 +1343,7 @@ bool LightBakerGpu::convertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
         .queueFamilyIndices = &queueFamilyIndex,
         .allocationCreateInfo = &MAPPED_ALLOCATION_CREATE_INFO,
     };
-    if (!checkResult(lunaCreateBuffer(device, &levelGeometryLightmapCreationInfo, &outputLightmap)))
+    if (!CheckResult(lunaCreateBuffer(device, &levelGeometryLightmapCreationInfo, &outputLightmap)))
     {
         return false;
     }
@@ -1363,13 +1353,13 @@ bool LightBakerGpu::convertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
         .buffer = outputLightmap,
         .format = VK_FORMAT_R16G16B16A16_SFLOAT,
     };
-    if (!checkResult(lunaCreateBufferView(device, &outputLightmapBufferViewCreationInfo, &outputLightmapBufferView)))
+    if (!CheckResult(lunaCreateBufferView(device, &outputLightmapBufferViewCreationInfo, &outputLightmapBufferView)))
     {
         return false;
     }
 
     std::list<LunaDescriptorBufferInfo> bufferInfos;
-    const std::array writes = generateWrites(descriptorSet,
+    const std::array writes = GenerateWrites(descriptorSet,
                                              bufferInfos,
                                              std::pair{"input lightmap", lightmap},
                                              std::pair{"output lightmap", &outputLightmapBufferView});
@@ -1391,5 +1381,5 @@ bool LightBakerGpu::convertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
         .groupCountY = lightmapSize.y / WORK_GROUP_SIZE.y,
         .submitInfo = &submitInfo,
     };
-    return checkResult(lunaDispatch(device, commandBuffer, &dispatchInfo));
+    return CheckResult(lunaDispatch(device, commandBuffer, &dispatchInfo));
 }

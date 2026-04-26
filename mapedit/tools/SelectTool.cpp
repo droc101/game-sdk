@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cfloat>
 #include <cstddef>
+#include <cstdint>
 #include <format>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
@@ -312,7 +313,7 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
                     sector.points.erase(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex));
                 } else
                 {
-                    MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + sectorIndex);
+                    MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + static_cast<int64_t>(sectorIndex));
                     selectionType = ItemType::NONE;
                     sectorFocusMode = false;
                 }
@@ -863,12 +864,12 @@ void SelectTool::Paste()
     }
 }
 
-bool SelectTool::HasSelection()
+bool SelectTool::HasSelection() const
 {
     return selectionType != ItemType::NONE;
 }
 
-glm::vec3 SelectTool::SelectionCenter()
+glm::vec3 SelectTool::SelectionCenter() const
 {
     if (selectionType == ItemType::ACTOR)
     {

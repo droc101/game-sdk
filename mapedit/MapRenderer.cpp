@@ -10,7 +10,6 @@
 #include <game_sdk/SharedMgr.h>
 #include <glm/ext.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <imgui.h>
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>

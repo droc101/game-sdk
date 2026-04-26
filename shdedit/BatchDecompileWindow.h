@@ -22,7 +22,7 @@ class BatchDecompileWindow
         static inline std::vector<std::string> files;
         static inline std::string outputFolder;
 
-        static void selectCallback(const std::vector<std::string> &paths);
-        static void outPathCallback(const std::string &path);
+        static void SelectCallback(const std::vector<std::string> &paths);
+        static void OutPathCallback(const std::string &path);
         static Error::ErrorCode Execute();
 };

@@ -5,14 +5,12 @@
 #include <cstdint>
 #include <filesystem>
 #include <game_sdk/gl/GLTextureCache.h>
-#include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/util/Error.h>
 #include <ranges>
 #include <string>
-#include <vector>
 
 GLTextureCache::~GLTextureCache()
 {

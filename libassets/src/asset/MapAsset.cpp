@@ -2,11 +2,12 @@
 // Created by droc101 on 7/16/25.
 //
 
-#include <cassert>
+#include <algorithm>
 #include <fstream>
 #include <ios>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
+#include <libassets/type/Param.h>
 #include <libassets/type/Sector.h>
 #include <libassets/util/Error.h>
 #include <ostream>
@@ -38,22 +39,22 @@ Error::ErrorCode MapAsset::CreateFromMapSrc(const char *mapSrcPath, MapAsset &ma
 
     map = MapAsset();
 
-    map.discord_rpc_icon_id = json.value("discord_rpc_icon_id", "icon");
-    map.discord_rpc_map_name = json.value("discord_rpc_map_name", "Unnamed Map");
+    map.discordRpcIconId = json.value("discord_rpc_icon_id", "icon");
+    map.discordRpcMapName = json.value("discord_rpc_map_name", "Unnamed Map");
 
-    map.has_sky = json.value("has_sky", true);
-    map.sky_texture = json.value("sky_texture", "texture/level/sky_test.gtex");
+    map.hasSky = json.value("has_sky", true);
+    map.skyTexture = json.value("sky_texture", "texture/level/sky_test.gtex");
 
     map.lightCubeLuxelsPerUnit = json.value("light_cube_luxels_per_unit", 4);
 
-    const nlohmann::ordered_json jSectors = json.at("sectors");
-    for (const nlohmann::ordered_json &sect: jSectors)
+    const nlohmann::ordered_json &jsonSectors = json.at("sectors");
+    for (const nlohmann::ordered_json &sect: jsonSectors)
     {
         map.sectors.emplace_back(sect);
     }
 
-    const nlohmann::ordered_json jActors = json.at("actors");
-    for (const nlohmann::ordered_json &actor: jActors)
+    const nlohmann::ordered_json &jsonActors = json.at("actors");
+    for (const nlohmann::ordered_json &actor: jsonActors)
     {
         map.actors.emplace_back(actor);
     }
@@ -64,10 +65,10 @@ Error::ErrorCode MapAsset::SaveAsMapSrc(const char *mapSrcPath) const
 {
     nlohmann::ordered_json src = nlohmann::ordered_json();
     src["version"] = MAP_JSON_VERSION;
-    src["discord_rpc_icon_id"] = discord_rpc_icon_id;
-    src["discord_rpc_map_name"] = discord_rpc_map_name;
-    src["has_sky"] = has_sky;
-    src["sky_texture"] = sky_texture;
+    src["discord_rpc_icon_id"] = discordRpcIconId;
+    src["discord_rpc_map_name"] = discordRpcMapName;
+    src["has_sky"] = hasSky;
+    src["sky_texture"] = skyTexture;
     src["light_cube_luxels_per_unit"] = lightCubeLuxelsPerUnit;
     src["sectors"] = nlohmann::ordered_json::array();
     src["actors"] = nlohmann::ordered_json::array();

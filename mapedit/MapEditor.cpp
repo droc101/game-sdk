@@ -6,12 +6,11 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
-#include <game_sdk/windows/TextureBrowserWindow.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
+#include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/Error.h>
 #include <limits>
@@ -127,15 +126,15 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e == Error::ErrorCode::OK)
     {
-        constexpr int imagePanelHeight = 128;
+        constexpr int IMAGE_PANEL_HEIGHT = 128;
         ImVec2 imageSize{};
         SharedMgr::Get().textureCache.GetTextureSize(mat.texture, imageSize);
-        const glm::vec2 scales = {(sz.x - 16) / imageSize.x, imagePanelHeight / imageSize.y};
+        const glm::vec2 scales = {(sz.x - 16) / imageSize.x, IMAGE_PANEL_HEIGHT / imageSize.y};
         const float scale = std::ranges::min(scales.x, scales.y);
 
         imageSize = {imageSize.x * scale, imageSize.y * scale};
         if (ImGui::BeginChild("##imageBox",
-                              {sz.x, imagePanelHeight + 16},
+                              {sz.x, IMAGE_PANEL_HEIGHT + 16},
                               ImGuiChildFlags_Borders,
                               ImGuiWindowFlags_NoResize))
         {

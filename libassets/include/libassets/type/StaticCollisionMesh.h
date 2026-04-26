@@ -3,9 +3,7 @@
 //
 
 #pragma once
-#include <array>
-#include <cstddef>
-#include <cstdint>
+
 #include <glm/vec3.hpp>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>

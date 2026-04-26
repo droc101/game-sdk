@@ -5,8 +5,6 @@
 #include "MapCompileWindow.h"
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <cstring>
 #include <format>
 #include <fstream>
 #include <game_sdk/DesktopInterface.h>
@@ -191,7 +189,7 @@ void MapCompileWindow::RenderCompileOutput()
             ImGui::SameLine();
             if (ImGui::Button("Save Output"))
             {
-                SDKWindow::Get().SaveFileDialog(SaveLog, DialogFilters::logFilters);
+                SDKWindow::Get().SaveFileDialog(SaveLog, DialogFilters::LOG_FILTERS);
             }
             ImGui::SameLine();
             if (ImGui::Button("OK"))
@@ -214,11 +212,11 @@ void MapCompileWindow::ProcessCompilerOutput()
         if (SDL_WaitProcess(compilerProcess, false, &exitCode))
         {
             size_t logSize = 0;
-            char *output = static_cast<char *>(SDL_ReadProcess(compilerProcess, &logSize, nullptr));
+            const char *output = static_cast<char *>(SDL_ReadProcess(compilerProcess, &logSize, nullptr));
             log += std::string(output);
 
             log += std::format("\nProcess exited with code {}", exitCode);
-            SDL_CloseIO(compilerOutputStream);
+            (void)SDL_CloseIO(compilerOutputStream);
             compilerOutputStream = nullptr;
             SDL_DestroyProcess(compilerProcess);
             compilerProcess = nullptr;
@@ -250,7 +248,7 @@ void MapCompileWindow::ProcessCompilerOutput()
             const SDL_IOStatus status = SDL_GetIOStatus(compilerOutputStream);
             if (status == SDL_IO_STATUS_EOF)
             {
-                SDL_CloseIO(compilerOutputStream);
+                (void)SDL_CloseIO(compilerOutputStream);
                 compilerOutputStream = nullptr;
             } else if (status != SDL_IO_STATUS_NOT_READY) // not ready just means no new output
             {

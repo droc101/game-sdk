@@ -74,7 +74,7 @@ static bool ToolbarToolButton(const char *id,
     return r;
 }
 
-static void saveJson(const std::string &path)
+static void SaveJson(const std::string &path)
 {
     const Error::ErrorCode errorCode = MapEditor::map.SaveAsMapSrc(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
@@ -85,7 +85,7 @@ static void saveJson(const std::string &path)
     MapEditor::mapFile = path;
 }
 
-static void openJson(const std::string &path)
+static void OpenJson(const std::string &path)
 {
     const Error::ErrorCode errorCode = MapAsset::CreateFromMapSrc(path.c_str(), MapEditor::map);
     if (errorCode != Error::ErrorCode::OK)
@@ -195,7 +195,7 @@ static void Render()
     {
         canCutCopy &= dynamic_cast<SelectTool *>(MapEditor::tool.get())->IsCopyableSelected();
     }
-    bool canPaste = MapEditor::clipboard.has_value() && MapEditor::toolType == MapEditor::EditorToolType::SELECT;
+    const bool canPaste = MapEditor::clipboard.has_value() && MapEditor::toolType == MapEditor::EditorToolType::SELECT;
     bool canCenterSelection = MapEditor::toolType == MapEditor::EditorToolType::SELECT;
     if (canCenterSelection)
     {
@@ -401,13 +401,13 @@ static void Render()
     }
     if (openPressed)
     {
-        SDKWindow::Get().OpenFileDialog(openJson, DialogFilters::mapJsonFilters);
+        SDKWindow::Get().OpenFileDialog(OpenJson, DialogFilters::MAP_JSON_FILTERS);
         MapEditor::toolType = MapEditor::EditorToolType::SELECT;
         MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
     }
     if (savePressed)
     {
-        SDKWindow::Get().SaveFileDialog(saveJson, DialogFilters::mapJsonFilters);
+        SDKWindow::Get().SaveFileDialog(SaveJson, DialogFilters::MAP_JSON_FILTERS);
     }
     if (compilePressed)
     {
@@ -430,12 +430,12 @@ static void Render()
     const ImVec2 workPos{viewport->WorkPos.x, viewport->WorkPos.y};
     ImGui::SetNextWindowPos(workPos);
     ImGui::SetNextWindowSize(workSize);
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
-                                             ImGuiWindowFlags_NoMove |
-                                             ImGuiWindowFlags_NoSavedSettings |
-                                             ImGuiWindowFlags_NoBringToFrontOnFocus |
-                                             ImGuiWindowFlags_NoDocking;
-    ImGui::Begin("toolbar", nullptr, windowFlags);
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoDecoration |
+                                              ImGuiWindowFlags_NoMove |
+                                              ImGuiWindowFlags_NoSavedSettings |
+                                              ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                              ImGuiWindowFlags_NoDocking;
+    ImGui::Begin("toolbar", nullptr, WINDOW_FLAGS);
 
     if (ToolbarToolButton("##selectTool",
                           "Select",
@@ -506,14 +506,14 @@ static void Render()
     }
 
     const float sidebarSize = MapEditor::showSidebar ? MapEditor::SIDEBAR_WIDTH : 0;
-    const ImVec2 VpAreaTopLeft = ImVec2(viewport->WorkPos.x + sidebarSize,
+    const ImVec2 vpAreaTopLeft = ImVec2(viewport->WorkPos.x + sidebarSize,
                                         viewport->WorkPos.y + MapEditor::TOOLBAR_HEIGHT);
-    const ImVec2 VpAreaSize = ImVec2((viewport->WorkSize.x - sidebarSize),
+    const ImVec2 vpAreaSize = ImVec2((viewport->WorkSize.x - sidebarSize),
                                      (viewport->WorkSize.y - MapEditor::TOOLBAR_HEIGHT));
     ImGui::PushStyleVarX(ImGuiStyleVar_WindowPadding, 0.0f);
     ImGui::PushStyleVarY(ImGuiStyleVar_WindowPadding, 0.0f);
-    ImGui::SetNextWindowPos(VpAreaTopLeft);
-    ImGui::SetNextWindowSize(VpAreaSize);
+    ImGui::SetNextWindowPos(vpAreaTopLeft);
+    ImGui::SetNextWindowSize(vpAreaSize);
     ImGui::Begin("CentralDock",
                  nullptr,
                  ImGuiWindowFlags_NoSavedSettings |
@@ -536,7 +536,7 @@ static void Render()
     MapCompileWindow::RenderCompileOutput();
 }
 
-int main(int argc, char **argv)
+int main(const int argc, char **argv)
 {
     if (!SDKWindow::Get().Init("GAME SDK Map Editor", {1366, 768}, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED))
     {
@@ -590,7 +590,7 @@ int main(int argc, char **argv)
     const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".json"});
     if (!openPath.empty())
     {
-        openJson(openPath);
+        OpenJson(openPath);
     }
 
     SDKWindow::Get().MainLoop(Render);

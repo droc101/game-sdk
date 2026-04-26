@@ -3,17 +3,14 @@
 //
 
 #include "LodsTab.h"
-#include <array>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <format>
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/SDKWindow.h>
 #include <imgui.h>
 #include <libassets/type/ModelLod.h>
 #include <numeric>
-#include <SDL3/SDL_events.h>
 #include <string>
 #include <utility>
 #include "../ModelEditor.h"
@@ -24,7 +21,7 @@ void LodsTab::Render()
     ImGui::PushItemWidth(-1);
     if (ImGui::Button("Add", ImVec2(70, 0)))
     {
-        SDKWindow::Get().OpenFileDialog(ModelEditor::ImportLod, DialogFilters::modelFilters);
+        SDKWindow::Get().OpenFileDialog(ModelEditor::ImportLod, DialogFilters::STANDARD_MODEL_FILTERS);
     }
     ImGui::SameLine();
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 70);
@@ -74,7 +71,7 @@ void LodsTab::Render()
         if (ImGui::Button(std::format("Export##{}", lodIndex).c_str(), ImVec2(buttonWidth, 0)))
         {
             lodToExport = &lod;
-            SDKWindow::Get().SaveFileDialog(saveLodCallback, DialogFilters::objFilters);
+            SDKWindow::Get().SaveFileDialog(SaveLodCallback, DialogFilters::OBJ_FILTERS);
         }
         ImGui::SameLine();
         if (ImGui::Button(std::format("Flip UVs##{}", lodIndex).c_str(), ImVec2(buttonWidth, 0)))
@@ -98,7 +95,7 @@ void LodsTab::Render()
     ImGui::End();
 }
 
-void LodsTab::saveLodCallback(const std::string &path)
+void LodsTab::SaveLodCallback(const std::string &path)
 {
     lodToExport->Export(path.c_str());
 }

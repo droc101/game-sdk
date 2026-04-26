@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <array>
 #include <cstdint>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Sector.h>
@@ -29,11 +28,11 @@ class MapAsset final
         std::vector<Sector> sectors{};
         std::vector<Actor> actors{};
 
-        std::string discord_rpc_icon_id = "logo";
-        std::string discord_rpc_map_name = "Unnamed Map";
+        std::string discordRpcIconId = "logo";
+        std::string discordRpcMapName = "Unnamed Map";
 
-        bool has_sky = true;
-        std::string sky_texture = "texture/level/sky_test.gtex";
+        bool hasSky = true;
+        std::string skyTexture = "texture/level/sky_test.gtex";
 
         uint8_t lightCubeLuxelsPerUnit = 4;
 

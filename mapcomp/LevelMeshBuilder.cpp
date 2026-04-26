@@ -6,10 +6,13 @@
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <glm/detail/func_geometric.inl>
 #include <glm/vec2.hpp>
+#include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/type/MapVertex.h>
+#include <libassets/type/Material.h>
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/DataWriter.h>
@@ -24,8 +27,6 @@
 
 #define STB_RECT_PACK_IMPLEMENTATION
 #include <stb_rect_pack.h>
-
-#include "libassets/asset/LevelMaterialAsset.h"
 
 void LevelMeshBuilder::AddCeiling(const Sector &sector, const std::vector<const Sector *> &overlapping)
 {
@@ -75,7 +76,7 @@ bool LevelMeshBuilder::IsEmpty() const
 }
 
 // TODO find better place for this
-static float mapRange(const float value,
+static float MapRange(const float value,
                       const float fromLow,
                       const float fromHigh,
                       const float toLow,
@@ -102,7 +103,7 @@ bool LevelMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
     int width = 1 << 4;
     int height = 1 << 4;
     bool wasHeightChangedLast = true;
-    constexpr int maxSize = 1 << 14;
+    constexpr int MAX_LIGHTMAP_SIZE = 1 << 14;
 
     stbrp_context context{};
 
@@ -128,7 +129,7 @@ bool LevelMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
         if (stbrp_pack_rects(&context, rects.data(), static_cast<int>(rects.size())) == 0)
         {
             // printf("Lightmap size of %d by %d didn't fit :(\n", width, height);
-            if (width == maxSize && height == maxSize)
+            if (width == MAX_LIGHTMAP_SIZE && height == MAX_LIGHTMAP_SIZE)
             {
                 return false;
             }
@@ -173,13 +174,13 @@ bool LevelMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
                 const uint32_t index = faceData.indices.at(j);
                 MapVertex &vertex = builder.second.vertices.at(index);
                 const glm::vec2 &positionInRect = faceData.positionsInRect.at(j);
-                vertex.lightmapUv.x = mapRange(positionInRect.x,
+                vertex.lightmapUv.x = MapRange(positionInRect.x,
                                                0.0f,
                                                1.0f,
                                                static_cast<float>(rect.x) + LIGHTMAP_PADDING,
                                                static_cast<float>(rect.x + rect.w) - LIGHTMAP_PADDING) /
                                       static_cast<float>(width);
-                vertex.lightmapUv.y = mapRange(positionInRect.y,
+                vertex.lightmapUv.y = MapRange(positionInRect.y,
                                                0.0f,
                                                1.0f,
                                                static_cast<float>(rect.y) + LIGHTMAP_PADDING,
@@ -370,8 +371,8 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
         {
             const MapVertex &vert = vertices.at(index);
             const glm::vec2 position = {vert.position.x, vert.position.z};
-            float localX = mapRange(position.x, sectorTopLeft.x, sectorBottomRight.x, 0.0f, 1.0f);
-            float localY = mapRange(position.y, sectorTopLeft.y, sectorBottomRight.y, 0.0f, 1.0f);
+            float localX = MapRange(position.x, sectorTopLeft.x, sectorBottomRight.x, 0.0f, 1.0f);
+            float localY = MapRange(position.y, sectorTopLeft.y, sectorBottomRight.y, 0.0f, 1.0f);
             if (rotate)
             {
                 std::swap(localX, localY);

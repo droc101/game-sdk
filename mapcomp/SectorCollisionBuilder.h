@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
 #include <libassets/type/Sector.h>
 #include <libassets/util/DataWriter.h>
@@ -58,7 +57,7 @@ class SectorCollisionBuilder
                 uint32_t currentIndex = 0;
         };
         const Sector *sector;
-        glm::vec3 sectorCenter;
+        glm::vec3 sectorCenter{};
         std::vector<SubShape> shapes{};
 
         void AddWallBase(const glm::vec2 &startPoint,

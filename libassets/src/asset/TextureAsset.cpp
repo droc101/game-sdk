@@ -2,7 +2,6 @@
 // Created by droc101 on 6/23/25.
 //
 
-#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>

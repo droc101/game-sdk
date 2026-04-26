@@ -20,13 +20,13 @@ class MapCompiler
     public:
         struct MapCompilerSettings
         {
-            std::string assetsDirectory;
-            std::string executableDirectory;
-            std::string gameConfigParentDirectory;
-            DataAsset gameConfig;
-            bool bakeLightsOnCpu;
-            bool skipLighting;
-            bool fastCompile;
+                std::string assetsDirectory;
+                std::string executableDirectory;
+                std::string gameConfigParentDirectory;
+                DataAsset gameConfig;
+                bool bakeLightsOnCpu = false;
+                bool skipLighting = false;
+                bool fastCompile = false;
         };
 
         /**

@@ -245,7 +245,7 @@ bool ModelAsset::AddLod(const std::string &path)
 
 void ModelAsset::RemoveLod(const uint32_t index)
 {
-    lods.erase(lods.begin() + static_cast<int64_t>(index));
+    lods.erase(lods.begin() + index);
 }
 
 bool ModelAsset::ValidateLodDistances()

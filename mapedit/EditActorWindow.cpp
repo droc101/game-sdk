@@ -9,7 +9,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
-#include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
@@ -317,7 +316,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                                           colorData.data(),
                                           colorDef->showAlpha ? 0 : ImGuiColorEditFlags_NoAlpha))
                     {
-                        col = Color(colorData[0], colorData[1], colorData[2], colorData[3]);
+                        col = Color(colorData.at(0), colorData.at(1), colorData.at(2), colorData.at(3));
                         param.Set<Color>(col);
                     }
                 } else if (paramDef->type == Param::ParamType::PARAM_TYPE_UINT_64)
@@ -390,7 +389,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                     std::array<float, 4> colorData = col.CopyData();
                     if (ImGui::ColorEdit4("##color", colorData.data()))
                     {
-                        col = Color(colorData[0], colorData[1], colorData[2], colorData[3]);
+                        col = Color(colorData.at(0), colorData.at(1), colorData.at(2), colorData.at(3));
                         param.Set<Color>(col);
                     }
                 } else if (param.GetType() == Param::ParamType::PARAM_TYPE_UINT_64)
@@ -652,7 +651,7 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
                         std::array<float, 4> colorData = col.CopyData();
                         if (ImGui::ColorEdit4("##color", colorData.data()))
                         {
-                            col = Color(colorData[0], colorData[1], colorData[2], colorData[3]);
+                            col = Color(colorData.at(0), colorData.at(1), colorData.at(2), colorData.at(3));
                             param.Set<Color>(col);
                         }
                     } else if (param.GetType() == Param::ParamType::PARAM_TYPE_UINT_64)

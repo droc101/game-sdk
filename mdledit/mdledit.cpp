@@ -26,7 +26,7 @@ static ImGuiID dockspaceId;
 static ImGuiID rootDockspaceID;
 static bool dockspaceSetup = false;
 
-static void openGmdl(const std::string &path)
+static void OpenGmdl(const std::string &path)
 {
     ModelAsset model;
     const Error::ErrorCode errorCode = ModelAsset::CreateFromAsset(path, model);
@@ -40,7 +40,7 @@ static void openGmdl(const std::string &path)
     ModelEditor::modelLoaded = true;
 }
 
-static void importModel(const std::string &path)
+static void ImportModel(const std::string &path)
 {
     ModelAsset model;
     const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(path, model, Options::Get().defaultTexture);
@@ -54,7 +54,7 @@ static void importModel(const std::string &path)
     ModelEditor::modelLoaded = true;
 }
 
-static void saveGmdl(const std::string &path)
+static void SaveGmdl(const std::string &path)
 {
     const Error::ErrorCode errorCode = ModelEditor::modelViewer.GetModel().SaveAsAsset(path);
     if (errorCode != Error::ErrorCode::OK)
@@ -161,10 +161,10 @@ static void HandleMenuAndShortcuts()
 
     if (openPressed)
     {
-        SDKWindow::Get().OpenFileDialog(openGmdl, DialogFilters::gmdlFilters);
+        SDKWindow::Get().OpenFileDialog(OpenGmdl, DialogFilters::GMDL_FILTERS);
     } else if (newPressed)
     {
-        SDKWindow::Get().OpenFileDialog(importModel, DialogFilters::modelFilters);
+        SDKWindow::Get().OpenFileDialog(ImportModel, DialogFilters::STANDARD_MODEL_FILTERS);
     } else if (savePressed)
     {
         if (!ModelEditor::modelViewer.GetModel().ValidateLodDistances())
@@ -175,7 +175,7 @@ static void HandleMenuAndShortcuts()
                                           "Invalid Model");
         } else
         {
-            SDKWindow::Get().SaveFileDialog(saveGmdl, DialogFilters::gmdlFilters);
+            SDKWindow::Get().SaveFileDialog(SaveGmdl, DialogFilters::GMDL_FILTERS);
         }
     }
 }
@@ -211,10 +211,10 @@ static void Render()
 
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
 
-    const ImVec2 VpAreaTopLeft = ImVec2(viewport->WorkPos.x, viewport->WorkPos.y);
-    const ImVec2 VpAreaSize = ImVec2((viewport->WorkSize.x), (viewport->WorkSize.y));
-    ImGui::SetNextWindowPos(VpAreaTopLeft);
-    ImGui::SetNextWindowSize(VpAreaSize);
+    const ImVec2 vpAreaTopLeft = ImVec2(viewport->WorkPos.x, viewport->WorkPos.y);
+    const ImVec2 vpAreaSize = ImVec2((viewport->WorkSize.x), (viewport->WorkSize.y));
+    ImGui::SetNextWindowPos(vpAreaTopLeft);
+    ImGui::SetNextWindowSize(vpAreaSize);
 
     if (!ModelEditor::modelLoaded)
     {
@@ -255,20 +255,20 @@ static void Render()
     LodsTab::Render();
     CollisionTab::Render();
 
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
-                                             ImGuiWindowFlags_NoMove |
-                                             ImGuiWindowFlags_NoBringToFrontOnFocus |
-                                             ImGuiWindowFlags_NoDecoration |
-                                             ImGuiWindowFlags_NoScrollbar |
-                                             ImGuiWindowFlags_NoScrollWithMouse;
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoCollapse |
+                                              ImGuiWindowFlags_NoMove |
+                                              ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                              ImGuiWindowFlags_NoDecoration |
+                                              ImGuiWindowFlags_NoScrollbar |
+                                              ImGuiWindowFlags_NoScrollWithMouse;
     ImGui::PushStyleVarX(ImGuiStyleVar_WindowPadding, 0.0f);
     ImGui::PushStyleVarY(ImGuiStyleVar_WindowPadding, 0.0f);
-    ModelEditor::modelViewer.RenderWindow("Model Preview", windowFlags);
+    ModelEditor::modelViewer.RenderWindow("Model Preview", WINDOW_FLAGS);
     ImGui::PopStyleVar();
     ImGui::PopStyleVar();
 }
 
-int main(int argc, char **argv)
+int main(const int argc, char **argv)
 {
     if (!SDKWindow::Get().Init("GAME SDK Model Editor", {1366, 768}))
     {
@@ -286,7 +286,7 @@ int main(int argc, char **argv)
     const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gmdl"});
     if (!openPath.empty())
     {
-        openGmdl(openPath);
+        OpenGmdl(openPath);
     } else
     {
         const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc,
@@ -294,7 +294,7 @@ int main(int argc, char **argv)
                                                                                 {".obj", ".fbx", ".gltf", ".dae"});
         if (!importPath.empty())
         {
-            importModel(importPath);
+            ImportModel(importPath);
         }
     }
 

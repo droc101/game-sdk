@@ -4,9 +4,6 @@
 
 #pragma once
 
-#include <array>
-#include <cstddef>
-#include <cstdint>
 #include <glslang/Public/ShaderLang.h>
 #include <libassets/util/Logger.h>
 #include <luna/lunaTypes.h>
@@ -15,7 +12,6 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 #include "LevelMeshBuilder.h"
-#include "libassets/type/Actor.h"
 #include "Light.h"
 
 class LightBakerGpu
@@ -25,12 +21,12 @@ class LightBakerGpu
 
         ~LightBakerGpu();
 
-        bool bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
+        bool Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                   const std::vector<Light> &lights,
                   const glm::uvec2 &lightmapSize,
                   std::vector<uint8_t> &pixelData);
 
-        [[nodiscard]] bool isInitialized() const
+        [[nodiscard]] bool IsInitialized() const
         {
             return initialized;
         }
@@ -43,7 +39,7 @@ class LightBakerGpu
                 LunaBuffer scratchBuffer;
         };
 
-        [[nodiscard]] static constexpr bool checkResult(const VkResult result)
+        [[nodiscard]] static constexpr bool CheckResult(const VkResult result)
         {
             if (result != VK_SUCCESS)
             {
@@ -53,23 +49,23 @@ class LightBakerGpu
             return true;
         }
 
-        VkShaderModule generateShaderModule(const std::filesystem::path &path,
+        VkShaderModule GenerateShaderModule(const std::filesystem::path &path,
                                             EShLanguage shaderType,
                                             std::vector<uint32_t> &spirv) const;
 
         /// Create the bottom-level acceleration structures
-        bool createBLAS(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders);
+        bool CreateBLAS(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders);
 
         /// Create the top-level acceleration structures
-        bool createTLAS();
+        bool CreateTLAS();
 
-        bool createAndWriteDescriptorSet();
+        bool CreateAndWriteDescriptorSet();
 
-        bool createPipeline(const glm::uvec2 &lightmapSize, uint32_t lightCount);
+        bool CreatePipeline(const glm::uvec2 &lightmapSize, uint32_t lightCount);
 
-        bool createShaderBindingTables();
+        bool CreateShaderBindingTables();
 
-        bool convertLightmapToFloat16(const glm::uvec2 &lightmapSize, LunaBuffer &outputLightmap) const;
+        bool ConvertLightmapToFloat16(const glm::uvec2 &lightmapSize, LunaBuffer &outputLightmap) const;
 
         static inline VkPhysicalDeviceRayTracingPipelinePropertiesKHR physicalDeviceRayTracingPipelineProperties{
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR,

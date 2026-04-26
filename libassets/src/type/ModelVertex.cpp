@@ -9,6 +9,7 @@
 #include <libassets/type/Color.h>
 #include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
 
 ModelVertex::ModelVertex(DataReader &reader)
 {

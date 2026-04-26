@@ -18,7 +18,9 @@ class SearchPathManager
         };
 
         SearchPathManager() = default;
-        SearchPathManager(DataAsset &gameConfig, const std::string &executableFolder, const std::string &configFolder);
+        SearchPathManager(DataAsset &gameConfig,
+                          const std::string &executableFolder,
+                          const std::string &configParentFolder);
 
         [[nodiscard]] static std::vector<std::string> ScanFolder(const std::string &directoryPath,
                                                                  const std::string &extension,

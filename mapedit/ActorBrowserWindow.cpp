@@ -3,8 +3,8 @@
 //
 
 #include "ActorBrowserWindow.h"
+#include <algorithm>
 #include <cstddef>
-#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Param.h>
@@ -21,9 +21,8 @@
 #include <libassets/type/paramDefs/Vec3ParamDefinition.h>
 #include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Error.h>
-#include <ranges>
+#include <memory>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 #include "MapEditor.h"
 
@@ -182,9 +181,9 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
                     ImGui::SetCursorPosX(cursorPos.x);
                     if (ImGui::BeginListBox("##optionsList", ImVec2(300 - 16, 0)))
                     {
-                        for (auto &i: opt->definition->GetOptions())
+                        for (auto &option: opt->definition->GetOptions())
                         {
-                            ImGui::Text("%s", i.c_str());
+                            ImGui::Text("%s", option.c_str());
                         }
                         ImGui::EndListBox();
                     }
@@ -243,6 +242,9 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
                                 break;
                             case StringParamDefinition::StringParamHint::TEXTURE:
                                 ImGui::Text("Hint: Texture");
+                                break;
+                            case StringParamDefinition::StringParamHint::MATERIAL:
+                                ImGui::Text("Hint: Material");
                                 break;
                         }
                     } else if (param->type == Param::ParamType::PARAM_TYPE_COLOR)

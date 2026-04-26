@@ -14,6 +14,7 @@
 #include <libassets/type/ConvexHull.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
 #include <string>
 #include <vector>
@@ -66,7 +67,7 @@ ConvexHull::ConvexHull(const aiMesh *mesh)
     for (size_t v = 0; v < mesh->mNumVertices; v++)
     {
         const aiVector3d vert = mesh->mVertices[v];
-        points.push_back({static_cast<float>(vert.x), static_cast<float>(vert.y), static_cast<float>(vert.z)});
+        points.emplace_back(static_cast<float>(vert.x), static_cast<float>(vert.y), static_cast<float>(vert.z));
     }
     CalculateOffset();
 }

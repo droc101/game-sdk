@@ -5,7 +5,6 @@
 #pragma once
 
 #include <array>
-#include <cstddef>
 #include <cstdint>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
@@ -36,7 +35,7 @@ class MapEditor
         static inline EditorToolType toolType = EditorToolType::SELECT;
 
         static inline MapAsset map{};
-        static inline std::string mapFile = "";
+        static inline std::string mapFile{};
 
         static inline int gridSpacingIndex = 0;
         static inline bool drawGrid = true;

@@ -4,7 +4,6 @@
 
 #include <cfloat>
 #include <cstdint>
-#include <cstdio>
 #include <libassets/type/Color.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/BoolParamDefinition.h>

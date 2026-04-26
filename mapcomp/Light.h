@@ -13,10 +13,10 @@ class Light // NOLINT(*-pro-type-member-init)
     public:
         enum class Type : uint32_t // NOLINT(*-enum-size)
         {
-            Point,
-            Spot,
-            Area,
-            Directional,
+            POINT,
+            SPOT,
+            AREA,
+            DIRECTIONAL,
         };
 
         // ReSharper disable CppPossiblyUninitializedMember
@@ -27,7 +27,7 @@ class Light // NOLINT(*-pro-type-member-init)
                        const float brightnessScale = 1.0f,
                        const float range = 2.0f,
                        const float attenuation = 2.0f):
-            type(Type::Point),
+            type(Type::POINT),
             position(position),
             color(color),
             brightnessScale(brightnessScale),
@@ -42,7 +42,7 @@ class Light // NOLINT(*-pro-type-member-init)
                        const float attenuation = 2.0f,
                        const float coneAngle = 45.0f,
                        const float angularAttenuation = 2.0f):
-            type(Type::Spot),
+            type(Type::SPOT),
             position(position),
             rotation(rotation),
             color(color),
@@ -55,7 +55,7 @@ class Light // NOLINT(*-pro-type-member-init)
         explicit Light(const glm::vec3 rotation,
                        const glm::vec3 color = glm::vec3(1, 1, 1),
                        const float brightnessScale = 1.0f):
-            type(Type::Directional),
+            type(Type::DIRECTIONAL),
             rotation(rotation),
             color(color),
             brightnessScale(brightnessScale)
@@ -64,7 +64,7 @@ class Light // NOLINT(*-pro-type-member-init)
         {
             if (actor.className == "light_point")
             {
-                type = Type::Point;
+                type = Type::POINT;
                 position = actor.position;
                 const float *colorPtr = actor.params.at("color").Get<Color>(Color(-1u)).GetDataPointer();
                 color = glm::vec3{colorPtr[0], colorPtr[1], colorPtr[2]};
@@ -73,7 +73,7 @@ class Light // NOLINT(*-pro-type-member-init)
                 attenuation = actor.params.at("attenuation").Get<float>(2.0f);
             } else if (actor.className == "light_spot")
             {
-                type = Type::Spot;
+                type = Type::SPOT;
                 position = actor.position;
                 rotation = actor.rotation;
                 const float *colorPtr = actor.params.at("color").Get<Color>(Color(-1u)).GetDataPointer();
@@ -85,7 +85,7 @@ class Light // NOLINT(*-pro-type-member-init)
                 angularAttenuation = actor.params.at("angle_attenuation").Get<float>(2.0f);
             } else if (actor.className == "light_directional")
             {
-                type = Type::Directional;
+                type = Type::DIRECTIONAL;
                 rotation = actor.rotation;
                 const float *colorPtr = actor.params.at("color").Get<Color>(Color(-1u)).GetDataPointer();
                 color = glm::vec3{colorPtr[0], colorPtr[1], colorPtr[2]};

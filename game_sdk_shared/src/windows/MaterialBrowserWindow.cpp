@@ -11,12 +11,12 @@
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
+#include <libassets/util/SearchPathManager.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
-#include <utility>
 #include <vector>
 
-constexpr int tileSize = 128;
+constexpr int TILE_SIZE = 128;
 static std::string filter;
 
 MaterialBrowserWindow &MaterialBrowserWindow::Get()
@@ -58,10 +58,10 @@ void MaterialBrowserWindow::Render()
         ImGui::OpenPopup("Choose Material");
         ImGui::SetNextWindowSize(ImVec2(600, 500), ImGuiCond_Appearing);
         ImGui::SetNextWindowSizeConstraints(ImVec2(192, 192), ImVec2(FLT_MAX, FLT_MAX));
-        constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
-                                                 ImGuiWindowFlags_NoSavedSettings |
-                                                 ImGuiWindowFlags_NoDocking;
-        if (ImGui::BeginPopupModal("Choose Material", &visible, windowFlags))
+        constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoCollapse |
+                                                  ImGuiWindowFlags_NoSavedSettings |
+                                                  ImGuiWindowFlags_NoDocking;
+        if (ImGui::BeginPopupModal("Choose Material", &visible, WINDOW_FLAGS))
         {
             ImGui::PushItemWidth(-1);
             ImGui::InputTextWithHint("##search", "Filter", &filter);
@@ -95,7 +95,7 @@ void MaterialBrowserWindow::Render()
                     ImGui::PushID(static_cast<int>(i));
 
                     const ImVec2 pos = ImGui::GetCursorScreenPos();
-                    if (pos.x + tileSize > regionMaxX && i > 0)
+                    if (pos.x + TILE_SIZE > regionMaxX && i > 0)
                     {
                         ImGui::NewLine();
                     }
@@ -105,7 +105,7 @@ void MaterialBrowserWindow::Render()
                     if (ImGui::Selectable("##tile",
                                           "material/" + materialPaths.at(i) == *str,
                                           0,
-                                          ImVec2(tileSize, tileSize)))
+                                          ImVec2(TILE_SIZE, TILE_SIZE)))
                     {
                         *str = "material/" + materialPaths.at(i);
                     }
@@ -126,23 +126,22 @@ void MaterialBrowserWindow::Render()
                     float drawHeight = 0.0f;
                     if (aspect > 1.0f)
                     {
-                        drawWidth = tileSize;
-                        drawHeight = tileSize / aspect;
+                        drawWidth = TILE_SIZE;
+                        drawHeight = TILE_SIZE / aspect;
                     } else
                     {
-                        drawWidth = tileSize * aspect;
-                        drawHeight = tileSize;
+                        drawWidth = TILE_SIZE * aspect;
+                        drawHeight = TILE_SIZE;
                     }
 
-                    ImVec2 cursorPos = ImGui::GetCursorPos();
-                    ImGui::SetCursorPos(ImVec2(cursorPos.x + (tileSize - drawWidth) * 0.5f,
-                                               cursorPos.y + (tileSize - drawHeight) * 0.5f));
+                    const ImVec2 cursorPos = ImGui::GetCursorPos();
+                    ImGui::SetCursorPos(ImVec2(cursorPos.x + (TILE_SIZE - drawWidth) * 0.5f,
+                                               cursorPos.y + (TILE_SIZE - drawHeight) * 0.5f));
 
                     ImGui::Image(tex, ImVec2(drawWidth, drawHeight));
-                    cursorPos = ImGui::GetCursorPos();
 
                     ImGui::SameLine(0.0f, spacing);
-                    ImGui::SetCursorPosX(cursor + tileSize + spacing);
+                    ImGui::SetCursorPosX(cursor + TILE_SIZE + spacing);
                     ImGui::Dummy(ImVec2(0, 0));
                     ImGui::SameLine(0, 0);
                     ImGui::PopID();

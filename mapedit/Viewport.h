@@ -53,7 +53,7 @@ class Viewport
 
         ImVec2 lastLocalMousePos;
 
-        GLHelper::GL_Framebuffer framebuffer;
+        GLHelper::GL_Framebuffer framebuffer{};
 
         ImVec2 scrollCenterPos{};
         float zoom = 10.0f;

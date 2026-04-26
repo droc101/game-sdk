@@ -42,13 +42,13 @@ void Viewport::RenderImGui()
     ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetColorU32(ImGuiCol_WindowBg));
     ImGui::PushStyleColor(ImGuiCol_WindowBg, 0);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 4);
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
-                                             ImGuiWindowFlags_NoMove |
-                                             ImGuiWindowFlags_NoBringToFrontOnFocus |
-                                             ImGuiWindowFlags_NoDecoration |
-                                             ImGuiWindowFlags_NoScrollbar |
-                                             ImGuiWindowFlags_NoScrollWithMouse;
-    ImGui::Begin(("" + title).c_str(), nullptr, windowFlags);
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoCollapse |
+                                              ImGuiWindowFlags_NoMove |
+                                              ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                              ImGuiWindowFlags_NoDecoration |
+                                              ImGuiWindowFlags_NoScrollbar |
+                                              ImGuiWindowFlags_NoScrollWithMouse;
+    ImGui::Begin(("" + title).c_str(), nullptr, WINDOW_FLAGS);
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();
 
@@ -82,11 +82,11 @@ void Viewport::RenderImGui()
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetColorU32(ImGuiCol_WindowBg));
 
-    constexpr ImGuiChildFlags childFlags = ImGuiChildFlags_AlwaysAutoResize |
-                                           ImGuiChildFlags_AutoResizeX |
-                                           ImGuiChildFlags_AutoResizeY |
-                                           ImGuiChildFlags_Borders;
-    if (MapEditor::drawViewportInfo && ImGui::BeginChild("_vp_stats", ImVec2(0, 0), childFlags))
+    constexpr ImGuiChildFlags CHILD_FLAGS = ImGuiChildFlags_AlwaysAutoResize |
+                                            ImGuiChildFlags_AutoResizeX |
+                                            ImGuiChildFlags_AutoResizeY |
+                                            ImGuiChildFlags_Borders;
+    if (MapEditor::drawViewportInfo && ImGui::BeginChild("_vp_stats", ImVec2(0, 0), CHILD_FLAGS))
     {
         ImGui::Text("Pos: %.2f, %.2f\nZoom: %.2f units/screen\nGrid: %.2f units",
                     scrollCenterPos.x,

@@ -115,8 +115,8 @@ Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
     zStream.data_type = Z_BINARY;
 
     int ret = Z_OK;
-    constexpr size_t chunkSize = 16384;
-    std::vector<uint8_t> readBuffer(chunkSize);
+    constexpr size_t CHUNK_SIZE = 16384;
+    std::vector<uint8_t> readBuffer(CHUNK_SIZE);
     std::vector<uint8_t> compressedData{};
 
     while (ret == Z_OK)

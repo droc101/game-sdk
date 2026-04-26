@@ -88,8 +88,7 @@ int main(const int argc, const char **argv)
         std::string className{};
         asset.reader.ReadStringWithSize(className);
 
-        const glm::vec3 position = asset.reader.ReadVec3();
-        const glm::vec3 rotation = asset.reader.ReadVec3();
+        asset.reader.Seek(sizeof(float) * 3 * 2); // position then rotation
 
         const size_t numIoConnections = asset.reader.Read<size_t>();
         for (size_t j = 0; j < numIoConnections; j++)
@@ -272,16 +271,16 @@ int main(const int argc, const char **argv)
         header.channels().insert("A", Channel(HALF));
 
         FrameBuffer framebuffer;
-        constexpr size_t pixelSize = sizeof(half) * 4;
+        constexpr size_t PIXEL_SIZE = sizeof(half) * 4;
         char *base = reinterpret_cast<char *>(pixels.data());
 
-        framebuffer.insert("R", Slice(HALF, base + sizeof(half) * 0, pixelSize, pixelSize * lightmapWidth));
+        framebuffer.insert("R", Slice(HALF, base + sizeof(half) * 0, PIXEL_SIZE, PIXEL_SIZE * lightmapWidth));
 
-        framebuffer.insert("G", Slice(HALF, base + sizeof(half) * 1, pixelSize, pixelSize * lightmapWidth));
+        framebuffer.insert("G", Slice(HALF, base + sizeof(half) * 1, PIXEL_SIZE, PIXEL_SIZE * lightmapWidth));
 
-        framebuffer.insert("B", Slice(HALF, base + sizeof(half) * 2, pixelSize, pixelSize * lightmapWidth));
+        framebuffer.insert("B", Slice(HALF, base + sizeof(half) * 2, PIXEL_SIZE, PIXEL_SIZE * lightmapWidth));
 
-        framebuffer.insert("A", Slice(HALF, base + sizeof(half) * 3, pixelSize, pixelSize * lightmapWidth));
+        framebuffer.insert("A", Slice(HALF, base + sizeof(half) * 3, PIXEL_SIZE, PIXEL_SIZE * lightmapWidth));
 
         OutputFile file(lightmapPath.c_str(), header);
         file.setFrameBuffer(framebuffer);

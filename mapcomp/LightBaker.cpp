@@ -3,9 +3,7 @@
 //
 
 #include "LightBaker.hpp"
-#include <cassert>
 #include <cstdint>
-#include <glm/geometric.hpp>
 #include <libassets/type/MapVertex.h>
 #include <string>
 #include <type_traits>
@@ -16,7 +14,7 @@
 #include "LightBakerCpu.hpp"
 #include "LightBakerGpu.hpp"
 
-bool LightBaker::bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
+bool LightBaker::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                       const std::vector<Light> &lights,
                       std::vector<uint8_t> &pixelData,
                       const glm::uvec2 &lightmapSize,
@@ -33,15 +31,15 @@ bool LightBaker::bake(const std::unordered_map<std::string, LevelMeshBuilder> &m
 
     if (useCpu)
     {
-        LightBakerCpu::bake(meshBuilders, lights, pixelData, lightmapSize);
+        LightBakerCpu::Bake(meshBuilders, lights, pixelData, lightmapSize);
     } else
     {
         LightBakerGpu baker = LightBakerGpu();
-        if (!baker.isInitialized())
+        if (!baker.IsInitialized())
         {
             return false;
         }
-        if (!baker.bake(meshBuilders, lights, lightmapSize, pixelData))
+        if (!baker.Bake(meshBuilders, lights, lightmapSize, pixelData))
         {
             return false;
         }

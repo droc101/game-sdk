@@ -5,6 +5,7 @@
 #pragma once
 
 #include <concepts>
+#include <cstddef>
 #include <cstdint>
 #include <libassets/type/Color.h>
 #include <libassets/util/DataReader.h>
@@ -202,12 +203,23 @@ class Param
 
         static KvList KvListFromJson(const nlohmann::ordered_json &json);
 
-        Param *ArrayElementPointer(const size_t index);
+        Param *ArrayElementPointer(size_t index);
         Param *KvListElementPointer(const std::string &key);
 
         [[nodiscard]] std::string ToString() const;
 
     private:
         ParamType type = ParamType::PARAM_TYPE_NONE;
-        std::variant<uint8_t, int32_t, float, bool, std::string, Color, KvList, ParamVector, uint64_t, glm::vec2, glm::vec3> value;
+        std::variant<uint8_t,
+                     int32_t,
+                     float,
+                     bool,
+                     std::string,
+                     Color,
+                     KvList,
+                     ParamVector,
+                     uint64_t,
+                     glm::vec2,
+                     glm::vec3>
+                value;
 };

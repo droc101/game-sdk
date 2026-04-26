@@ -22,13 +22,11 @@
 
 void AddPrimitiveTool::RenderViewport(Viewport &vp)
 {
-    bool isHovered = false;
     glm::vec3 worldSpaceHover{};
 
     if (ImGui::IsWindowFocused())
     {
-        isHovered = ImGui::IsWindowHovered();
-        if (isHovered)
+        if (ImGui::IsWindowHovered())
         {
             worldSpaceHover = vp.GetWorldSpaceMousePos();
         }
@@ -130,16 +128,16 @@ std::vector<glm::vec2> AddPrimitiveTool::GetPoints() const
 
     if (primitive == PrimitiveType::NGON)
     {
-        points = buildNgon(ngonSides,
+        points = BuildNgon(ngonSides,
                            glm::vec2(shapeStart.x, shapeStart.z),
                            glm::vec2(shapeEnd.x, shapeEnd.z),
                            ngonStartAngle);
     } else if (primitive == PrimitiveType::TRIANGLE)
     {
-        points = buildTri(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
+        points = BuildTriangle(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
     } else if (primitive == PrimitiveType::RECTANGLE)
     {
-        points = buildRect(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
+        points = BuildRect(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
     }
     return points;
 }
@@ -175,7 +173,7 @@ void AddPrimitiveTool::RenderToolWindow()
             ngonStartAngle = glm::radians(deg);
         }
         ImGui::Separator();
-        const ImVec2 buttonSize = {(ImGui::GetContentRegionAvail().x / 3) - 6, 0}; // TODO obtain 6 without using magic
+        const ImVec2 buttonSize = {ImGui::GetContentRegionAvail().x / 3 - 6, 0}; // TODO obtain 6 without using magic
 
         if (ImGui::Button("Hexagon", buttonSize))
         {
@@ -200,7 +198,7 @@ void AddPrimitiveTool::RenderToolWindow()
     ImGui::InputFloat("##floorHeight", &floor);
 }
 
-std::vector<glm::vec2> AddPrimitiveTool::buildNgon(const int n,
+std::vector<glm::vec2> AddPrimitiveTool::BuildNgon(const int n,
                                                    const glm::vec2 &p0,
                                                    const glm::vec2 &p1,
                                                    const float startAngleRadians)
@@ -228,7 +226,7 @@ std::vector<glm::vec2> AddPrimitiveTool::buildNgon(const int n,
     pts.reserve(n);
     for (int i = 0; i < n; i++)
     {
-        const float theta = startAngleRadians + 1 * (2.0f * std::numbers::pi_v<float> * i / n);
+        const float theta = startAngleRadians + 1 * (2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / n);
         const float x = cx + rx * std::cos(theta);
         const float y = cy + ry * std::sin(theta);
         pts.emplace_back(x, y);
@@ -236,7 +234,7 @@ std::vector<glm::vec2> AddPrimitiveTool::buildNgon(const int n,
     return pts;
 }
 
-std::vector<glm::vec2> AddPrimitiveTool::buildRect(const glm::vec2 &p0, const glm::vec2 &p1)
+std::vector<glm::vec2> AddPrimitiveTool::BuildRect(const glm::vec2 &p0, const glm::vec2 &p1)
 {
     std::vector<glm::vec2> pts;
 
@@ -252,7 +250,7 @@ std::vector<glm::vec2> AddPrimitiveTool::buildRect(const glm::vec2 &p0, const gl
     return pts;
 }
 
-std::vector<glm::vec2> AddPrimitiveTool::buildTri(const glm::vec2 &p0, const glm::vec2 &p1)
+std::vector<glm::vec2> AddPrimitiveTool::BuildTriangle(const glm::vec2 &p0, const glm::vec2 &p1)
 {
     std::vector<glm::vec2> pts;
 

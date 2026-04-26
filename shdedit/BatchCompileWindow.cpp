@@ -5,7 +5,6 @@
 #include "BatchCompileWindow.h"
 #include <algorithm>
 #include <cstddef>
-#include <cstdio>
 #include <filesystem>
 #include <format>
 #include <game_sdk/DialogFilters.h>
@@ -26,7 +25,7 @@ void BatchCompileWindow::Show()
     outputFolder = "";
 }
 
-void BatchCompileWindow::selectCallback(const std::vector<std::string> &paths)
+void BatchCompileWindow::SelectCallback(const std::vector<std::string> &paths)
 {
     for (const std::string &file: paths)
     {
@@ -49,7 +48,7 @@ void BatchCompileWindow::selectCallback(const std::vector<std::string> &paths)
     }
 }
 
-void BatchCompileWindow::outPathCallback(const std::string &path)
+void BatchCompileWindow::OutPathCallback(const std::string &path)
 {
     outputFolder = path;
 }
@@ -99,10 +98,10 @@ void BatchCompileWindow::Render()
     {
         ImGui::OpenPopup("Batch Compile");
         ImGui::SetNextWindowSize(ImVec2(600, -1), ImGuiCond_Appearing);
-        constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
-                                                 ImGuiWindowFlags_NoSavedSettings |
-                                                 ImGuiWindowFlags_NoResize;
-        if (ImGui::BeginPopupModal("Batch Compile", &visible, windowFlags))
+        constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoCollapse |
+                                                  ImGuiWindowFlags_NoSavedSettings |
+                                                  ImGuiWindowFlags_NoResize;
+        if (ImGui::BeginPopupModal("Batch Compile", &visible, WINDOW_FLAGS))
         {
             ImGui::Text("Output Folder");
             ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
@@ -110,7 +109,7 @@ void BatchCompileWindow::Render()
             ImGui::SameLine();
             if (ImGui::Button("...", ImVec2(40, 0)))
             {
-                SDKWindow::Get().OpenFolderDialog(outPathCallback);
+                SDKWindow::Get().OpenFolderDialog(OutPathCallback);
             }
 
             ImGui::Text("Rendering API");
@@ -131,7 +130,7 @@ void BatchCompileWindow::Render()
             ImGui::SameLine();
             if (ImGui::Button("Add", ImVec2(60, 0)))
             {
-                SDKWindow::Get().OpenMultiFileDialog(selectCallback, DialogFilters::glslFilters);
+                SDKWindow::Get().OpenMultiFileDialog(SelectCallback, DialogFilters::GLSL_FILTERS);
             }
             if (ImGui::BeginChild("##picker", ImVec2(-1, 250), ImGuiChildFlags_Borders, 0))
             {

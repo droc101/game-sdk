@@ -3,7 +3,6 @@
 //
 
 #include "AddActorTool.h"
-#include <cstddef>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
@@ -106,7 +105,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
         .selectionType = ItemType::NONE,
         .selectionIndex = 0,
         .selectionVertexIndex = 0,
-        .point = ((!hasPlacedActor) && vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ) ? &vpt : nullptr,
+        .point = !hasPlacedActor && vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ ? &vpt : nullptr,
         .newPrimitive = nullptr,
         .newActor = hasPlacedActor ? &vpa : nullptr,
     };

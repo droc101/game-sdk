@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <cstdint>
 #include <libassets/type/BoundingBox.h>
 #include <libassets/type/ConvexHull.h>
 #include <libassets/type/Material.h>

@@ -2,7 +2,6 @@
 // Created by droc101 on 9/1/25.
 //
 
-#include <array>
 #include <assimp/config.h>
 #include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
@@ -25,11 +24,11 @@ StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath, Error::Erro
     Assimp::Importer importer{};
     (void)importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
                                       aiComponent_NORMALS | aiComponent_COLORS | aiComponent_TEXCOORDS);
-    constexpr uint32_t importerFlags = aiProcess_JoinIdenticalVertices |
-                                       aiProcess_ValidateDataStructure |
-                                       aiProcess_DropNormals |
-                                       aiProcess_RemoveComponent;
-    const aiScene *scene = importer.ReadFile(objPath, importerFlags);
+    constexpr uint32_t IMPORTER_FLAGS = aiProcess_JoinIdenticalVertices |
+                                        aiProcess_ValidateDataStructure |
+                                        aiProcess_DropNormals |
+                                        aiProcess_RemoveComponent;
+    const aiScene *scene = importer.ReadFile(objPath, IMPORTER_FLAGS);
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {

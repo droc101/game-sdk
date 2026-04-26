@@ -19,7 +19,7 @@ static SoundAsset soundAsset{};
 static ma_sound sound{};
 static bool soundLoaded = false;
 
-static void destroyExistingSound()
+static void DestroyExistingSound()
 {
     if (!soundLoaded)
     {
@@ -31,9 +31,9 @@ static void destroyExistingSound()
     soundLoaded = false;
 }
 
-static bool loadSound()
+static bool LoadSound()
 {
-    destroyExistingSound();
+    DestroyExistingSound();
     ma_result result = ma_decoder_init_memory(soundAsset.GetData().data(), soundAsset.GetDataSize(), nullptr, &decoder);
     if (result != MA_SUCCESS)
     {
@@ -48,7 +48,7 @@ static bool loadSound()
     return true;
 }
 
-static void openGsnd(const std::string &path)
+static void OpenGsnd(const std::string &path)
 {
     const Error::ErrorCode errorCode = SoundAsset::CreateFromAsset(path.c_str(), soundAsset);
     if (errorCode != Error::ErrorCode::OK)
@@ -56,13 +56,13 @@ static void openGsnd(const std::string &path)
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the sound!\n{}", errorCode));
         return;
     }
-    if (!loadSound())
+    if (!LoadSound())
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN));
     }
 }
 
-static void importWav(const std::string &path)
+static void ImportWav(const std::string &path)
 {
     const Error::ErrorCode errorCode = SoundAsset::CreateFromWAV(path.c_str(), soundAsset);
     if (errorCode != Error::ErrorCode::OK)
@@ -70,13 +70,13 @@ static void importWav(const std::string &path)
         SDKWindow::Get().ErrorMessage(std::format("Failed to import the sound!\n{}", errorCode));
         return;
     }
-    if (!loadSound())
+    if (!LoadSound())
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN));
     }
 }
 
-static void saveGsnd(const std::string &path)
+static void SaveGsnd(const std::string &path)
 {
     const Error::ErrorCode errorCode = soundAsset.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
@@ -85,7 +85,7 @@ static void saveGsnd(const std::string &path)
     }
 }
 
-static void exportWav(const std::string &path)
+static void ExportWav(const std::string &path)
 {
     const Error::ErrorCode errorCode = soundAsset.SaveAsWAV(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
@@ -99,11 +99,11 @@ static void Render()
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
-                                             ImGuiWindowFlags_NoMove |
-                                             ImGuiWindowFlags_NoSavedSettings |
-                                             ImGuiWindowFlags_NoBringToFrontOnFocus;
-    ImGui::Begin("sndedit", nullptr, windowFlags);
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoDecoration |
+                                              ImGuiWindowFlags_NoMove |
+                                              ImGuiWindowFlags_NoSavedSettings |
+                                              ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::Begin("sndedit", nullptr, WINDOW_FLAGS);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && soundLoaded;
@@ -130,16 +130,16 @@ static void Render()
 
     if (openPressed)
     {
-        SDKWindow::Get().OpenFileDialog(openGsnd, DialogFilters::gsndFilters);
+        SDKWindow::Get().OpenFileDialog(OpenGsnd, DialogFilters::GSND_FILTERS);
     } else if (importPressed)
     {
-        SDKWindow::Get().OpenFileDialog(importWav, DialogFilters::wavFilters);
+        SDKWindow::Get().OpenFileDialog(ImportWav, DialogFilters::WAV_FILTERS);
     } else if (savePressed)
     {
-        SDKWindow::Get().SaveFileDialog(saveGsnd, DialogFilters::gsndFilters);
+        SDKWindow::Get().SaveFileDialog(SaveGsnd, DialogFilters::GSND_FILTERS);
     } else if (exportPressed)
     {
-        SDKWindow::Get().SaveFileDialog(exportWav, DialogFilters::wavFilters);
+        SDKWindow::Get().SaveFileDialog(ExportWav, DialogFilters::WAV_FILTERS);
     }
 
     if (soundLoaded)
@@ -215,8 +215,8 @@ static void Render()
         ma_uint64 pcmLen = 0;
         ma_decoder_get_data_format(&decoder, &fmt, &channels, &sampleRate, nullptr, 0);
         ma_sound_get_length_in_pcm_frames(&sound, &pcmLen);
-        constexpr std::array<const char *, 6> formatNames = {"Unknown", "U8", "S16", "S24", "S32", "F32"};
-        ImGui::TextUnformatted(std::format("Format: {}", formatNames.at(fmt)).c_str());
+        constexpr std::array<const char *, 6> FORMAT_NAMES = {"Unknown", "U8", "S16", "S24", "S32", "F32"};
+        ImGui::TextUnformatted(std::format("Format: {}", FORMAT_NAMES.at(fmt)).c_str());
         ImGui::TextUnformatted(std::format("Channels: {}", channels).c_str());
         ImGui::TextUnformatted(std::format("Sample Rate: {} Hz", sampleRate).c_str());
         ImGui::Text("Length: %g:%05.2f", lengthMinutes, lengthSeconds);
@@ -230,7 +230,7 @@ static void Render()
     ImGui::End();
 }
 
-int main(int argc, char **argv)
+int main(const int argc, char **argv)
 {
     if (!SDKWindow::Get().Init("GAME SDK Sound Editor"))
     {
@@ -249,13 +249,13 @@ int main(int argc, char **argv)
     const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gsnd"});
     if (!openPath.empty())
     {
-        openGsnd(openPath);
+        OpenGsnd(openPath);
     } else
     {
         const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".wav"});
         if (!importPath.empty())
         {
-            importWav(importPath);
+            ImportWav(importPath);
         }
     }
 

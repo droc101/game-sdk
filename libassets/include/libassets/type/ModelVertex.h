@@ -7,7 +7,6 @@
 #include <array>
 #include <assimp/mesh.h>
 #include <cstddef>
-#include <cstdint>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <libassets/type/Color.h>
@@ -39,23 +38,23 @@ template<> struct std::hash<ModelVertex>
 {
         size_t operator()(const ModelVertex &vertex) const noexcept
         {
-            constexpr size_t goldenRatio = 0x9e3779b9;
+            constexpr size_t GOLDEN_RATIO = 0x9e3779b9;
             size_t hashValue = 0;
 
-            hashValue ^= std::hash<float>()(vertex.position.x) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-            hashValue ^= std::hash<float>()(vertex.position.y) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-            hashValue ^= std::hash<float>()(vertex.position.z) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(vertex.position.x) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(vertex.position.y) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(vertex.position.z) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
 
-            hashValue ^= std::hash<float>()(vertex.normal.x) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-            hashValue ^= std::hash<float>()(vertex.normal.y) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-            hashValue ^= std::hash<float>()(vertex.normal.z) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(vertex.normal.x) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(vertex.normal.y) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(vertex.normal.z) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
 
-            hashValue ^= std::hash<float>()(vertex.uv.x) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
-            hashValue ^= std::hash<float>()(vertex.uv.y) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(vertex.uv.x) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(vertex.uv.y) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
 
             for (const float color: vertex.color.CopyData())
             {
-                hashValue ^= std::hash<float>()(color) + goldenRatio + (hashValue << 6) + (hashValue >> 2);
+                hashValue ^= std::hash<float>()(color) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
             }
             return hashValue;
         }

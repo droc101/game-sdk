@@ -4,7 +4,6 @@
 
 #include <cassert>
 #include <cstdint>
-#include <cstdio>
 #include <cstdlib>
 #include <filesystem>
 #include <format>
@@ -18,16 +17,15 @@
 #include <libassets/type/Color.h>
 #include <libassets/type/Param.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/VectorMove.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
 #include <utility>
 
-#include "libassets/util/VectorMove.h"
-
 static DataAsset dataAsset{};
 static std::string selectedPath = "/";
 
-static void openGkvl(const std::string &path)
+static void OpenGkvl(const std::string &path)
 {
     const Error::ErrorCode errorCode = DataAsset::CreateFromAsset(path.c_str(), dataAsset);
     if (errorCode != Error::ErrorCode::OK)
@@ -36,7 +34,7 @@ static void openGkvl(const std::string &path)
     }
 }
 
-static void importJson(const std::string &path)
+static void ImportJson(const std::string &path)
 {
     const Error::ErrorCode errorCode = DataAsset::CreateFromJson(path.c_str(), dataAsset);
     if (errorCode != Error::ErrorCode::OK)
@@ -45,7 +43,7 @@ static void importJson(const std::string &path)
     }
 }
 
-static void saveGkvl(const std::string &path)
+static void SaveGkvl(const std::string &path)
 {
     const Error::ErrorCode errorCode = dataAsset.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
@@ -54,7 +52,7 @@ static void saveGkvl(const std::string &path)
     }
 }
 
-static void exportJson(const std::string &path)
+static void ExportJson(const std::string &path)
 {
     const Error::ErrorCode errorCode = dataAsset.SaveAsJson(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
@@ -372,11 +370,11 @@ static void Render()
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
-                                             ImGuiWindowFlags_NoMove |
-                                             ImGuiWindowFlags_NoSavedSettings |
-                                             ImGuiWindowFlags_NoBringToFrontOnFocus;
-    ImGui::Begin("kvledit", nullptr, windowFlags);
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoDecoration |
+                                              ImGuiWindowFlags_NoMove |
+                                              ImGuiWindowFlags_NoSavedSettings |
+                                              ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::Begin("kvledit", nullptr, WINDOW_FLAGS);
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
@@ -409,22 +407,22 @@ static void Render()
         dataAsset = DataAsset();
     } else if (openPressed)
     {
-        SDKWindow::Get().OpenFileDialog(openGkvl, DialogFilters::gkvlFilters);
+        SDKWindow::Get().OpenFileDialog(OpenGkvl, DialogFilters::GKVL_FILTERS);
     } else if (importPressed)
     {
-        SDKWindow::Get().OpenFileDialog(importJson, DialogFilters::kvlJsonFilters);
+        SDKWindow::Get().OpenFileDialog(ImportJson, DialogFilters::KVL_JSON_FILTERS);
     } else if (savePressed)
     {
-        SDKWindow::Get().SaveFileDialog(saveGkvl, DialogFilters::gkvlFilters);
+        SDKWindow::Get().SaveFileDialog(SaveGkvl, DialogFilters::GKVL_FILTERS);
     } else if (exportPressed)
     {
-        SDKWindow::Get().SaveFileDialog(exportJson, DialogFilters::kvlJsonFilters);
+        SDKWindow::Get().SaveFileDialog(ExportJson, DialogFilters::KVL_JSON_FILTERS);
     }
 
     const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
 
-    constexpr float statsWidth = 250.0f;
-    const float treeWidth = availableSize.x - statsWidth - 8.0f;
+    constexpr float SIDEBAR_WIDTH = 250.0f;
+    const float treeWidth = availableSize.x - SIDEBAR_WIDTH - 8.0f;
     ImGui::BeginChild("TreePane",
                       ImVec2(treeWidth, availableSize.y),
                       ImGuiChildFlags_Borders,
@@ -435,14 +433,14 @@ static void Render()
     ImGui::EndChild();
     ImGui::SameLine();
 
-    ImGui::BeginChild("EditPane", ImVec2(statsWidth, availableSize.y));
+    ImGui::BeginChild("EditPane", ImVec2(SIDEBAR_WIDTH, availableSize.y));
     RenderSidebar();
     ImGui::EndChild();
 
     ImGui::End();
 }
 
-int main(int argc, char **argv)
+int main(const int argc, char **argv)
 {
     if (!SDKWindow::Get().Init("GAME SDK Key-Value List Editor"))
     {
@@ -454,13 +452,13 @@ int main(int argc, char **argv)
     const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gkvl"});
     if (!openPath.empty())
     {
-        openGkvl(openPath);
+        OpenGkvl(openPath);
     } else
     {
         const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".json"});
         if (!importPath.empty())
         {
-            importJson(importPath);
+            ImportJson(importPath);
         }
     }
 

@@ -3,12 +3,11 @@
 //
 
 #include <algorithm>
-#include <array>
 #include <cfloat>
 #include <cmath>
-#include <cstddef>
 #include <cstdlib>
 #include <libassets/type/Sector.h>
+#include <limits>
 #include <nlohmann/json.hpp>
 #include <vector>
 

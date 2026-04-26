@@ -107,14 +107,14 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
 
     DataWriter writer = DataWriter();
 
-    writer.Write<bool>(map.has_sky);
-    if (map.has_sky)
+    writer.Write<bool>(map.hasSky);
+    if (map.hasSky)
     {
-        writer.WriteString(map.sky_texture);
+        writer.WriteString(map.skyTexture);
     }
 
-    writer.WriteString(map.discord_rpc_icon_id);
-    writer.WriteString(map.discord_rpc_map_name);
+    writer.WriteString(map.discordRpcIconId);
+    writer.WriteString(map.discordRpcMapName);
 
     Logger::Info("Compiling actors...");
 
@@ -188,8 +188,10 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     {
         for (Sector &sector: map.sectors)
         {
-            sector.ceilingMaterial.luxelsPerUnit = std::min<uint8_t>(sector.ceilingMaterial.luxelsPerUnit, FAST_COMPILE_MAX_LUXELS_PER_UNIT);
-            sector.floorMaterial.luxelsPerUnit = std::min<uint8_t>(sector.floorMaterial.luxelsPerUnit, FAST_COMPILE_MAX_LUXELS_PER_UNIT);
+            sector.ceilingMaterial.luxelsPerUnit = std::min<uint8_t>(sector.ceilingMaterial.luxelsPerUnit,
+                                                                     FAST_COMPILE_MAX_LUXELS_PER_UNIT);
+            sector.floorMaterial.luxelsPerUnit = std::min<uint8_t>(sector.floorMaterial.luxelsPerUnit,
+                                                                   FAST_COMPILE_MAX_LUXELS_PER_UNIT);
             for (WallMaterial &mat: sector.wallMaterials)
             {
                 mat.luxelsPerUnit = std::min<uint8_t>(mat.luxelsPerUnit, FAST_COMPILE_MAX_LUXELS_PER_UNIT);
@@ -363,7 +365,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     if (!lights.empty() && !settings.skipLighting)
     {
         Logger::Info("Baking lightmap...");
-        if (!LightBaker::bake(meshBuilders, lights, pixels, lightmapSize, settings.bakeLightsOnCpu))
+        if (!LightBaker::Bake(meshBuilders, lights, pixels, lightmapSize, settings.bakeLightsOnCpu))
         {
             return Error::ErrorCode::UNKNOWN;
         }
@@ -383,7 +385,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     std::vector<Light> pointLights{};
     for (const Light &light: lights)
     {
-        if (light.type == Light::Type::Point)
+        if (light.type == Light::Type::POINT)
         {
             numPointLights++;
             pointLights.push_back(light);

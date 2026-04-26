@@ -20,18 +20,18 @@ SetupWindow &SetupWindow::Get()
     return setupWindowSingleton;
 }
 
-void SetupWindow::Show(bool required)
+void SetupWindow::Show(const bool required)
 {
     visible = true;
     SetupWindow::required = required;
 }
 
-void SetupWindow::gamePathCallback(const std::string &path)
+void SetupWindow::GamePathCallback(const std::string &path)
 {
     Options::Get().gameExecutablePath = path;
 }
 
-void SetupWindow::assetsPathCallback(const std::string &path)
+void SetupWindow::AssetsPathCallback(const std::string &path)
 {
     Options::Get().gameConfigPath = path;
 }
@@ -47,13 +47,13 @@ void SetupWindow::Render()
     ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     const float width = fminf(450, viewport->WorkSize.x - 40);
     ImGui::SetNextWindowSize({width, -1});
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoMove |
-                                             ImGuiWindowFlags_NoSavedSettings |
-                                             ImGuiWindowFlags_NoCollapse |
-                                             ImGuiWindowFlags_NoResize |
-                                             ImGuiWindowFlags_NoDocking |
-                                             ImGuiWindowFlags_NoTitleBar;
-    if (!ImGui::BeginPopupModal("Setup", nullptr, windowFlags))
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoMove |
+                                              ImGuiWindowFlags_NoSavedSettings |
+                                              ImGuiWindowFlags_NoCollapse |
+                                              ImGuiWindowFlags_NoResize |
+                                              ImGuiWindowFlags_NoDocking |
+                                              ImGuiWindowFlags_NoTitleBar;
+    if (!ImGui::BeginPopupModal("Setup", nullptr, WINDOW_FLAGS))
     {
         return;
     }
@@ -69,7 +69,7 @@ void SetupWindow::Render()
     ImGui::SameLine();
     if (ImGui::Button("...", ImVec2(40, 0)))
     {
-        SDKWindow::Get().OpenFileDialog(gamePathCallback, DialogFilters::exeFilters);
+        SDKWindow::Get().OpenFileDialog(GamePathCallback, DialogFilters::EXE_FILTERS);
     }
 
     ImGui::Text("Game configuration Path");
@@ -78,7 +78,7 @@ void SetupWindow::Render()
     ImGui::SameLine();
     if (ImGui::Button("...##assets", ImVec2(40, 0)))
     {
-        SDKWindow::Get().OpenFileDialog(assetsPathCallback, DialogFilters::gkvlFilters);
+        SDKWindow::Get().OpenFileDialog(AssetsPathCallback, DialogFilters::GKVL_FILTERS);
     }
 
     bool valid = true;
@@ -94,8 +94,8 @@ void SetupWindow::Render()
     ImGui::TextUnformatted("Theme");
     ImGui::PushItemWidth(-1);
     int theme = static_cast<int>(Options::Get().theme);
-    constexpr std::array<const char *, 3> options = {"System", "Light", "Dark"};
-    if (ImGui::Combo("##theme", &theme, options.data(), 3))
+    constexpr std::array<const char *, 3> THEME_OPTIONS = {"System", "Light", "Dark"};
+    if (ImGui::Combo("##theme", &theme, THEME_OPTIONS.data(), 3))
     {
         Options::Get().theme = static_cast<Options::Theme>(theme);
         SDKWindow::Get().ApplyTheme();

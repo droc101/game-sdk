@@ -2,10 +2,17 @@
 // Created by droc101 on 3/6/26.
 //
 
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <filesystem>
+#include <format>
+#include <libassets/asset/DataAsset.h>
 #include <libassets/type/Param.h>
 #include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <string>
+#include <vector>
 
 SearchPathManager::SearchPathManager(DataAsset &gameConfig,
                                      const std::string &executableFolder,
@@ -113,7 +120,7 @@ std::vector<SearchPathManager::AssetResult> SearchPathManager::ScanAssetFolder(c
     std::vector<AssetResult> results{};
     for (size_t i = 0; i < paths.size(); i++)
     {
-        AssetResult res = {
+        const AssetResult res = {
             .relativePath = found.at(i),
             .absolutePath = paths.at(i),
         };

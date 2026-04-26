@@ -2,7 +2,6 @@
 // Created by droc101 on 2/2/26.
 //
 
-#include <SDL3/SDL_pixels.h>
 #include <cassert>
 #include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
@@ -22,6 +21,7 @@
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_messagebox.h>
+#include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_surface.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
@@ -227,7 +227,7 @@ void SDKWindow::MainLoop(const SDKWindowRenderFunction Render, const SDKWindowPr
     }
 }
 
-SDL_Window *SDKWindow::GetWindow()
+SDL_Window *SDKWindow::GetWindow() const
 {
     assert(initDone);
     return window;
@@ -239,7 +239,7 @@ void SDKWindow::PostQuit()
     quitRequest = true;
 }
 
-void SDKWindow::Destroy()
+void SDKWindow::Destroy() const
 {
     assert(initDone);
     ModelViewer::GlobalDestroy();
@@ -255,17 +255,17 @@ void SDKWindow::Destroy()
     SDL_Quit();
 }
 
-void SDKWindow::ErrorMessage(const std::string &body, const std::string &title)
+void SDKWindow::ErrorMessage(const std::string &body, const std::string &title) const
 {
     (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title.c_str(), body.c_str(), window);
 }
 
-void SDKWindow::WarningMessage(const std::string &body, const std::string &title)
+void SDKWindow::WarningMessage(const std::string &body, const std::string &title) const
 {
     (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, title.c_str(), body.c_str(), window);
 }
 
-void SDKWindow::InfoMessage(const std::string &body, const std::string &title)
+void SDKWindow::InfoMessage(const std::string &body, const std::string &title) const
 {
     (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, title.c_str(), body.c_str(), window);
 }
@@ -282,7 +282,7 @@ void SDKWindow::MultiFileDialogMainThreadCallback(void *userdata)
     data->Callback(data->paths);
 }
 
-void SDKWindow::MultiFileDialogCallback(void *userdata, const char *const *fileList, int filter)
+void SDKWindow::MultiFileDialogCallback(void *callbackPtr, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
@@ -296,7 +296,7 @@ void SDKWindow::MultiFileDialogCallback(void *userdata, const char *const *fileL
         fileList++;
     }
 
-    const SDKWindowMultiFileDialogCallback Callback = reinterpret_cast<SDKWindowMultiFileDialogCallback>(userdata);
+    const SDKWindowMultiFileDialogCallback Callback = reinterpret_cast<SDKWindowMultiFileDialogCallback>(callbackPtr);
     if (SDL_IsMainThread())
     {
         Callback(files);
@@ -310,14 +310,14 @@ void SDKWindow::MultiFileDialogCallback(void *userdata, const char *const *fileL
     }
 }
 
-void SDKWindow::FileDialogCallback(void *userdata, const char *const *fileList, int filter)
+void SDKWindow::FileDialogCallback(void *callbackPtr, const char *const *fileList, int /*filter*/)
 {
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
 
-    const SDKWindowFileDialogCallback Callback = reinterpret_cast<SDKWindowFileDialogCallback>(userdata);
+    const SDKWindowFileDialogCallback Callback = reinterpret_cast<SDKWindowFileDialogCallback>(callbackPtr);
     if (SDL_IsMainThread())
     {
         Callback(fileList[0]);
@@ -332,7 +332,7 @@ void SDKWindow::FileDialogCallback(void *userdata, const char *const *fileList, 
 }
 
 void SDKWindow::OpenFileDialog(const SDKWindowFileDialogCallback Callback,
-                               const std::vector<SDL_DialogFileFilter> &filters)
+                               const std::vector<SDL_DialogFileFilter> &filters) const
 {
     SDL_ShowOpenFileDialog(FileDialogCallback,
                            reinterpret_cast<void *>(Callback),
@@ -343,8 +343,8 @@ void SDKWindow::OpenFileDialog(const SDKWindowFileDialogCallback Callback,
                            false);
 }
 
-void SDKWindow::OpenMultiFileDialog(SDKWindowMultiFileDialogCallback Callback,
-                                    const std::vector<SDL_DialogFileFilter> &filters)
+void SDKWindow::OpenMultiFileDialog(const SDKWindowMultiFileDialogCallback Callback,
+                                    const std::vector<SDL_DialogFileFilter> &filters) const
 {
     SDL_ShowOpenFileDialog(MultiFileDialogCallback,
                            reinterpret_cast<void *>(Callback),
@@ -356,7 +356,7 @@ void SDKWindow::OpenMultiFileDialog(SDKWindowMultiFileDialogCallback Callback,
 }
 
 void SDKWindow::SaveFileDialog(const SDKWindowFileDialogCallback Callback,
-                               const std::vector<SDL_DialogFileFilter> &filters)
+                               const std::vector<SDL_DialogFileFilter> &filters) const
 {
     SDL_ShowSaveFileDialog(FileDialogCallback,
                            reinterpret_cast<void *>(Callback),
@@ -366,7 +366,7 @@ void SDKWindow::SaveFileDialog(const SDKWindowFileDialogCallback Callback,
                            nullptr);
 }
 
-void SDKWindow::OpenFolderDialog(const SDKWindowFileDialogCallback Callback)
+void SDKWindow::OpenFolderDialog(const SDKWindowFileDialogCallback Callback) const
 {
     SDL_ShowOpenFolderDialog(FileDialogCallback, reinterpret_cast<void *>(Callback), GetWindow(), nullptr, false);
 }
@@ -407,7 +407,7 @@ ImFont *SDKWindow::GetMonospaceFont() const
     return monospaceFont;
 }
 
-void SDKWindow::SetThemeChangeCallback(SDKWindowThemeChangeCallback callback)
+void SDKWindow::SetThemeChangeCallback(const SDKWindowThemeChangeCallback Callback)
 {
-    ThemeChangeCallback = callback;
+    ThemeChangeCallback = Callback;
 }

@@ -99,8 +99,6 @@ RenderDefinition::RenderDefinition(const nlohmann::json &json)
     {
         directional.value = true;
     }
-
-
 }
 
 std::string RenderDefinition::GetModel(const Actor &actor) const

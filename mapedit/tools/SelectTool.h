@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <cstddef>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
 #include <tuple>
@@ -64,9 +63,9 @@ class SelectTool final: public EditorTool
 
         void Paste();
 
-        [[nodiscard]] bool HasSelection();
+        [[nodiscard]] bool HasSelection() const;
 
-        [[nodiscard]] glm::vec3 SelectionCenter();
+        [[nodiscard]] glm::vec3 SelectionCenter() const;
 
     private:
         bool sectorFocusMode = false;

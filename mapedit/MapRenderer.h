@@ -14,7 +14,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "tools/AddActorTool.h"
 #include "Viewport.h"
 
 class MapRenderer

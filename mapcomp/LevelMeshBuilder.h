@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
 #include <libassets/type/MapVertex.h>
 #include <libassets/type/Sector.h>

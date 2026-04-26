@@ -3,6 +3,7 @@
 //
 
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <glslang/Include/ResourceLimits.h>
 #include <glslang/MachineIndependent/Versions.h>
@@ -11,6 +12,7 @@
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
 #include <libassets/util/ShaderCompiler.h>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -60,9 +62,9 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv) con
 
     const TBuiltInResource resources = GetResources();
 
-    constexpr EShMessages messages = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
+    constexpr EShMessages MESSAGES = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
 
-    if (!shader.parse(&resources, 100, ECoreProfile, false, false, messages))
+    if (!shader.parse(&resources, 100, ECoreProfile, false, false, MESSAGES))
     {
         Logger::Error("GLSL Parsing Failed:\n {}", shader.getInfoLog());
         return Error::ErrorCode::SHADER_PARSE_ERROR;
@@ -71,7 +73,7 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv) con
     glslang::TProgram program;
     program.addShader(&shader);
 
-    if (!program.link(messages))
+    if (!program.link(MESSAGES))
     {
         Logger::Error("GLSL Linking Failed:\n {}", program.getInfoLog());
         return Error::ErrorCode::SHADER_LINK_ERROR;

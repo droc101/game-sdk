@@ -24,14 +24,14 @@ Error::ErrorCode OptionDefinition::Create(const std::string &path, OptionDefinit
     std::ostringstream ss;
     ss << file.rdbuf();
     const std::string j = ss.str();
-    const nlohmann::json definition_json = nlohmann::json::parse(j);
-    if (definition_json.is_discarded())
+    const nlohmann::json definitionJson = nlohmann::json::parse(j);
+    if (definitionJson.is_discarded())
     {
         file.close();
         return Error::ErrorCode::INCORRECT_FORMAT;
     }
 
-    def.valueType = Param::ParseType(definition_json.value("type", std::string()));
+    def.valueType = Param::ParseType(definitionJson.value("type", std::string()));
     if (def.valueType == Param::ParamType::PARAM_TYPE_NONE)
     {
         Logger::Error("Invalid option value type!");
@@ -46,19 +46,19 @@ Error::ErrorCode OptionDefinition::Create(const std::string &path, OptionDefinit
     switch (def.valueType)
     {
         case Param::ParamType::PARAM_TYPE_BYTE:
-            e = def.LoadOptions<uint8_t>(definition_json);
+            e = def.LoadOptions<uint8_t>(definitionJson);
             break;
         case Param::ParamType::PARAM_TYPE_INTEGER:
-            e = def.LoadOptions<int32_t>(definition_json);
+            e = def.LoadOptions<int32_t>(definitionJson);
             break;
         case Param::ParamType::PARAM_TYPE_FLOAT:
-            e = def.LoadOptions<float>(definition_json);
+            e = def.LoadOptions<float>(definitionJson);
             break;
         case Param::ParamType::PARAM_TYPE_BOOL:
-            e = def.LoadOptions<bool>(definition_json);
+            e = def.LoadOptions<bool>(definitionJson);
             break;
         case Param::ParamType::PARAM_TYPE_STRING:
-            e = def.LoadOptions<std::string>(definition_json);
+            e = def.LoadOptions<std::string>(definitionJson);
             break;
         case Param::ParamType::PARAM_TYPE_COLOR: // TODO color options
             // e = def.LoadOptions<Color>(definition_json);
