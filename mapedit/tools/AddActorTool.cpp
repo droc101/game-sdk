@@ -137,7 +137,12 @@ void AddActorTool::RenderViewport(Viewport &vp)
 
     if (hasPlacedActor)
     {
-        MapRenderer::RenderBillboardPoint(newActorPosition, 10, Color(0, 1, 0, 1), matrix);
+        const ActorDefinition &newActorDef = MapEditor::adm.GetActorDefinition(newActorType);
+        Actor tempActor{};
+        tempActor.ApplyDefinition(newActorDef, true);
+        tempActor.position = newActorPosition;
+        tempActor.className = newActorType;
+        MapRenderer::RenderActor(tempActor, matrix, vp);
     }
 }
 
