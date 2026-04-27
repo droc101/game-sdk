@@ -3,6 +3,7 @@
 //
 
 #include "MapRenderer.h"
+#include <array>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -102,13 +103,15 @@ bool MapRenderer::Init()
     workBuffer = GLHelper::CreateIndexedBuffer();
     workBufferNonIndexed = GLHelper::CreateBuffer();
 
-    const std::vector<SearchPathManager::AssetResult>
-            modelsPaths = SharedMgr::Get().pathManager.ScanAssetFolder("/model", ".gmdl");
-    for (const SearchPathManager::AssetResult &modelPath: modelsPaths)
+    const std::string errorModelPath = SharedMgr::Get().pathManager.GetAssetPath("model/error.gmdl");
+    if (errorModelPath.empty())
     {
-        const ModelBuffer buf = LoadModel(modelPath.absolutePath);
-        modelBuffers["model/" + modelPath.relativePath] = buf;
+        Logger::Error("Failed to load models/error.gmdl");
+        return false;
     }
+
+    const ModelBuffer buf = LoadModel(errorModelPath);
+    modelBuffers["model/error.gmdl"] = buf;
 
     return true;
 }
@@ -337,7 +340,15 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix, Viewport &vp)
     {
         if (!modelBuffers.contains(model))
         {
-            model = "model/error.gmdl";
+            const std::string modelPath = SharedMgr::Get().pathManager.GetAssetPath(model);
+            if (modelPath.empty())
+            {
+                model = "model/error.gmdl";
+            } else
+            {
+                const ModelBuffer buf = LoadModel(modelPath);
+                modelBuffers[model] = buf;
+            }
         }
         RenderModel(modelBuffers.at(model), matrix, worldMatrix, c);
     }
@@ -345,26 +356,26 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix, Viewport &vp)
     if (definition.renderDefinition.HasBoxRenderer(a))
     {
         const glm::vec3 boxExtents = definition.renderDefinition.GetBoxExtents(a);
-        const std::array<glm::vec3, 4> boxPoints = {
-            -boxExtents / 2.0f,
-            glm::vec3(-boxExtents.x / 2.0f, 0, boxExtents.z / 2.0f),
-            boxExtents / 2.0f,
-            glm::vec3(boxExtents.x / 2.0f, 0, -boxExtents.z / 2.0f),
+        const std::array<glm::vec2, 4> boxPoints = {
+            glm::vec2(-boxExtents.x / 2.0f, -boxExtents.z / 2.0f),
+            glm::vec2(-boxExtents.x / 2.0f, boxExtents.z / 2.0f),
+            glm::vec2(boxExtents.x / 2.0f, boxExtents.z / 2.0f),
+            glm::vec2(boxExtents.x / 2.0f, -boxExtents.z / 2.0f),
         };
         for (size_t i = 0; i < boxPoints.size(); i++)
         {
             const size_t nextIndex = (i + 1) % boxPoints.size();
             const glm::vec3 startPointCeil = worldMatrix *
-                                             glm::vec4(boxPoints.at(i).x, boxExtents.y, boxPoints.at(i).z, 1);
+                                             glm::vec4(boxPoints.at(i).x, boxExtents.y, boxPoints.at(i).y, 1);
             const glm::vec3 startPointFloor = worldMatrix *
-                                              glm::vec4(boxPoints.at(i).x, -boxExtents.y, boxPoints.at(i).z, 1);
+                                              glm::vec4(boxPoints.at(i).x, -boxExtents.y, boxPoints.at(i).y, 1);
             const glm::vec3 endPointCeil = worldMatrix * glm::vec4(boxPoints.at(nextIndex).x,
                                                                    boxExtents.y,
-                                                                   boxPoints.at(nextIndex).z,
+                                                                   boxPoints.at(nextIndex).y,
                                                                    1);
             const glm::vec3 endPointFloor = worldMatrix * glm::vec4(boxPoints.at(nextIndex).x,
                                                                     -boxExtents.y,
-                                                                    boxPoints.at(nextIndex).z,
+                                                                    boxPoints.at(nextIndex).y,
                                                                     1);
             RenderLine(startPointCeil, endPointCeil, c, matrix, 2);
             RenderLine(startPointFloor, endPointFloor, c, matrix, 2);
@@ -375,6 +386,7 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix, Viewport &vp)
 
 MapRenderer::ModelBuffer MapRenderer::LoadModel(const std::string &path)
 {
+    Logger::Info("Loading model \"{}\"", path);
     ModelBuffer buf{};
     const Error::ErrorCode e = ModelAsset::CreateFromAsset(path, buf.model);
     assert(e == Error::ErrorCode::OK); // TODO proper handling
