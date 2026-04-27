@@ -18,6 +18,7 @@
 #include <libassets/type/ModelLod.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <ranges>
 #include <string>
