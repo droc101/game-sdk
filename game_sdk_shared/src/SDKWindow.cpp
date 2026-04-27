@@ -119,7 +119,7 @@ bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, co
         return false;
     }
 
-    if (!SDL_GL_SetSwapInterval(1)) // Enable vsync
+    if (!SDL_GL_SetSwapInterval(0)) // Enable vsync
     {
         Logger::Error("SDL_GL_SetSwapInterval() failed: {}", SDL_GetError());
     }
