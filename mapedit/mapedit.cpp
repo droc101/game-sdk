@@ -326,6 +326,11 @@ static void Render()
             {
                 MapEditor::drawModels = !MapEditor::drawModels;
             }
+            if (ImGui::MenuItem("Enable Culling", "", MapEditor::culling))
+            {
+                MapEditor::culling = !MapEditor::culling;
+            }
+            ImGui::Separator();
             if (ImGui::MenuItem("Show Grid", "", MapEditor::drawGrid))
             {
                 MapEditor::drawGrid = !MapEditor::drawGrid;

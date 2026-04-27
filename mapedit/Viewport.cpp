@@ -258,3 +258,16 @@ void Viewport::ChangeZoom(const float by)
     zoom = glm::clamp(zoom + by, 5.0f, MapEditor::MAP_SIZE + 500.0f);
     // TODO: zoom around mouse cursor instead of origin
 }
+
+glm::vec2 Viewport::GetWorldSpaceSize() const
+{
+    // return {2,2};
+    // return {zoom, zoom};
+    const float width = (windowSize.x / windowSize.y) * zoom;
+    return {width, zoom};
+}
+
+glm::vec3 Viewport::GetCameraPos() const
+{
+    return ScreenToWorldPos(ImVec2(windowSize.x / 2, windowSize.y / 2));
+}

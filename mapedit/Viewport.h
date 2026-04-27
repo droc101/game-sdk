@@ -46,6 +46,10 @@ class Viewport
 
         void ChangeZoom(float by);
 
+        glm::vec2 GetWorldSpaceSize() const;
+
+        glm::vec3 GetCameraPos() const;
+
     private:
         ImVec2 windowPos;
         ImVec2 windowSize;

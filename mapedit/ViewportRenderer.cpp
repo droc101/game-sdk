@@ -87,6 +87,12 @@ void ViewportRenderer::RenderSector(const Viewport &vp,
                                     glm::mat4 &matrix)
 {
     const Sector &sector = MapEditor::map.sectors.at(sectorIndex);
+
+    if (MapEditor::culling && SectorIsCulled(sector, vp))
+    {
+        return;
+    }
+
     const bool isFocusedSector = settings.sectorFocusMode && settings.focusedSectorIndex == sectorIndex;
 
     Color c = Color(0.6, 0.6, 0.6, 1);
@@ -237,4 +243,57 @@ void ViewportRenderer::RenderNewPrimitive(Viewport &vp, const ViewportRenderNewP
             MapRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, .6, 1), matrix, 2);
         }
     }
+}
+
+bool ViewportRenderer::SectorIsCulled(const Sector &sector, const Viewport &vp)
+{
+    const glm::vec4 aabb = sector.GetAABB();
+
+    const glm::vec2 cameraViewSize = vp.GetWorldSpaceSize();
+    const glm::vec3 cameraPos = vp.GetCameraPos();
+
+    if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+    {
+        const glm::vec2 aabbTopLeft = {aabb.x - aabb.z, aabb.y - aabb.w};
+        const glm::vec2 aabbBottomRight = {aabb.x + aabb.z, aabb.y + aabb.w};
+        const glm::vec2 cameraTopLeft = {cameraPos.x - (cameraViewSize.x / 2), cameraPos.z - (cameraViewSize.y / 2)};
+        const glm::vec2 cameraBottomRight = {cameraPos.x + (cameraViewSize.x / 2),
+                                             cameraPos.z + (cameraViewSize.y / 2)};
+        if (aabbBottomRight.x < cameraTopLeft.x ||
+            aabbTopLeft.x > cameraBottomRight.x ||
+            aabbBottomRight.y < cameraTopLeft.y ||
+            aabbTopLeft.y > cameraBottomRight.y)
+        {
+            return true;
+        }
+    } else if (vp.GetType() == Viewport::ViewportType::FRONT_XY)
+    {
+        const glm::vec2 aabbTopLeft = {aabb.x - aabb.z, sector.floorHeight};
+        const glm::vec2 aabbBottomRight = {aabb.x + aabb.z, sector.ceilingHeight};
+        const glm::vec2 cameraTopLeft = {cameraPos.x - (cameraViewSize.x / 2), cameraPos.y - (cameraViewSize.y / 2)};
+        const glm::vec2 cameraBottomRight = {cameraPos.x + (cameraViewSize.x / 2),
+                                             cameraPos.y + (cameraViewSize.y / 2)};
+        if (aabbBottomRight.x < cameraTopLeft.x ||
+            aabbTopLeft.x > cameraBottomRight.x ||
+            aabbBottomRight.y < cameraTopLeft.y ||
+            aabbTopLeft.y > cameraBottomRight.y)
+        {
+            return true;
+        }
+    } else if (vp.GetType() == Viewport::ViewportType::SIDE_YZ)
+    {
+        const glm::vec2 aabbTopLeft = {sector.floorHeight, aabb.y - aabb.w};
+        const glm::vec2 aabbBottomRight = {sector.floorHeight, aabb.y + aabb.w};
+        const glm::vec2 cameraTopLeft = {cameraPos.y - (cameraViewSize.y / 2), cameraPos.x - (cameraViewSize.x / 2)};
+        const glm::vec2 cameraBottomRight = {cameraPos.y + (cameraViewSize.y / 2),
+                                             cameraPos.x + (cameraViewSize.x / 2)};
+        if (aabbBottomRight.x < cameraTopLeft.x ||
+            aabbTopLeft.x > cameraBottomRight.x ||
+            aabbBottomRight.y < cameraTopLeft.y ||
+            aabbTopLeft.y > cameraBottomRight.y)
+        {
+            return true;
+        }
+    }
+    return false;
 }

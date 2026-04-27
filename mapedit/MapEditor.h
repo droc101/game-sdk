@@ -5,6 +5,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
@@ -45,6 +46,7 @@ class MapEditor
         static inline bool snapToGrid = true;
         static inline bool showSidebar = true;
         static inline bool drawModels = true;
+        static inline bool culling = true;
 
         static constexpr size_t HOVER_DISTANCE_PIXELS = 10;
         static constexpr size_t TOOLBAR_HEIGHT = 48;

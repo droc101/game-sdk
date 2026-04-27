@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <glm/vec3.hpp>
 #include <libassets/type/Color.h>
+#include <libassets/type/Sector.h>
 #include <string>
 #include <vector>
 #include "tools/EditorTool.h"
@@ -77,4 +78,6 @@ class ViewportRenderer
         static void RenderNewPrimitive(Viewport &vp, const ViewportRenderNewPrimitive *prim, glm::mat4 &matrix);
         static void RenderNewActor(Viewport &vp, const ViewportRenderNewActor *actor, glm::mat4 &matrix);
         static void RenderNewPolygon(const Viewport &vp, const ViewportRenderNewPolygon *poly, glm::mat4 &matrix);
+
+        static bool SectorIsCulled(const Sector &sector, const Viewport &vp);
 };
