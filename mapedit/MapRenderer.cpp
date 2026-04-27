@@ -313,6 +313,12 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix, Viewport &vp)
     Color c = definition.renderDefinition.GetColor(a);
     const std::string texture = definition.renderDefinition.GetTexture(a);
 
+    glm::mat4 worldMatrix = glm::identity<glm::mat4>();
+    worldMatrix = glm::translate(worldMatrix, a.position);
+    worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.y), glm::vec3(0, 1, 0));
+    worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.x), glm::vec3(1, 0, 0));
+    worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.z), glm::vec3(0, 0, 1));
+
     if (texture.empty())
     {
         RenderBillboardPoint(a.position, 10, c, matrix);
@@ -333,13 +339,37 @@ void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix, Viewport &vp)
         {
             model = "model/error.gmdl";
         }
-        glm::mat4 worldMatrix = glm::identity<glm::mat4>();
-        worldMatrix = glm::translate(worldMatrix, a.position);
-        worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.y), glm::vec3(0, 1, 0));
-        worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.x), glm::vec3(1, 0, 0));
-        worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.z), glm::vec3(0, 0, 1));
-
         RenderModel(modelBuffers.at(model), matrix, worldMatrix, c);
+    }
+
+    if (definition.renderDefinition.HasBoxRenderer(a))
+    {
+        const glm::vec3 boxExtents = definition.renderDefinition.GetBoxExtents(a);
+        const std::array<glm::vec3, 4> boxPoints = {
+            -boxExtents / 2.0f,
+            glm::vec3(-boxExtents.x / 2.0f, 0, boxExtents.z / 2.0f),
+            boxExtents / 2.0f,
+            glm::vec3(boxExtents.x / 2.0f, 0, -boxExtents.z / 2.0f),
+        };
+        for (size_t i = 0; i < boxPoints.size(); i++)
+        {
+            const size_t nextIndex = (i + 1) % boxPoints.size();
+            const glm::vec3 startPointCeil = worldMatrix *
+                                             glm::vec4(boxPoints.at(i).x, boxExtents.y, boxPoints.at(i).z, 1);
+            const glm::vec3 startPointFloor = worldMatrix *
+                                              glm::vec4(boxPoints.at(i).x, -boxExtents.y, boxPoints.at(i).z, 1);
+            const glm::vec3 endPointCeil = worldMatrix * glm::vec4(boxPoints.at(nextIndex).x,
+                                                                   boxExtents.y,
+                                                                   boxPoints.at(nextIndex).z,
+                                                                   1);
+            const glm::vec3 endPointFloor = worldMatrix * glm::vec4(boxPoints.at(nextIndex).x,
+                                                                    -boxExtents.y,
+                                                                    boxPoints.at(nextIndex).z,
+                                                                    1);
+            RenderLine(startPointCeil, endPointCeil, c, matrix, 2);
+            RenderLine(startPointFloor, endPointFloor, c, matrix, 2);
+            RenderLine(startPointCeil, startPointFloor, c, matrix, 2);
+        }
     }
 }
 

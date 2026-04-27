@@ -27,6 +27,10 @@ class RenderDefinition
 
         [[nodiscard]] bool GetAffectLightmap(const Actor &actor) const;
 
+        [[nodiscard]] bool HasBoxRenderer(const Actor &actor) const;
+
+        [[nodiscard]] glm::vec3 GetBoxExtents(const Actor &actor) const;
+
     private:
         template<typename T> struct RenderDefinitionValue
         {
@@ -40,4 +44,9 @@ class RenderDefinition
         RenderDefinitionValue<std::string> texture;
         RenderDefinitionValue<bool> affectLightmap;
         RenderDefinitionValue<bool> directional;
+
+        RenderDefinitionValue<bool> hasBoxRenderer;
+        RenderDefinitionValue<float> boxWidth;
+        RenderDefinitionValue<float> boxHeight;
+        RenderDefinitionValue<float> boxDepth;
 };

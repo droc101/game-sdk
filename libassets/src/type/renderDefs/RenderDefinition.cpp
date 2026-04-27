@@ -99,6 +99,82 @@ RenderDefinition::RenderDefinition(const nlohmann::json &json)
     {
         directional.value = true;
     }
+
+    if (json.contains("box"))
+    {
+        if (json.at("box").type() == nlohmann::detail::value_t::boolean)
+        {
+            hasBoxRenderer.value = json.value("box", true);
+        } else if (json.at("box").type() == nlohmann::detail::value_t::string)
+        {
+            const std::string hasBoxRendererValue = json.value("box", "");
+            if (hasBoxRendererValue.starts_with("$"))
+            {
+                hasBoxRenderer.usesParam = true;
+                hasBoxRenderer.paramName = hasBoxRendererValue.substr(1, hasBoxRendererValue.length() - 1);
+            }
+        }
+    } else
+    {
+        hasBoxRenderer.value = false;
+    }
+
+    if (json.contains("box_width"))
+    {
+        if (json.at("box_width").type() == nlohmann::detail::value_t::number_float)
+        {
+            boxWidth.value = json.value("box_width", 1.0f);
+        } else if (json.at("box_width").type() == nlohmann::detail::value_t::string)
+        {
+            const std::string boxWidthValue = json.value("box_width", "");
+            if (boxWidthValue.starts_with("$"))
+            {
+                boxWidth.usesParam = true;
+                boxWidth.paramName = boxWidthValue.substr(1, boxWidthValue.length() - 1);
+            }
+        }
+    } else
+    {
+        boxWidth.value = 1.0f;
+    }
+
+    if (json.contains("box_height"))
+    {
+        if (json.at("box_height").type() == nlohmann::detail::value_t::number_float)
+        {
+            boxHeight.value = json.value("box_height", 1.0f);
+        } else if (json.at("box_height").type() == nlohmann::detail::value_t::string)
+        {
+            const std::string boxWidthValue = json.value("box_height", "");
+            if (boxWidthValue.starts_with("$"))
+            {
+                boxHeight.usesParam = true;
+                boxHeight.paramName = boxWidthValue.substr(1, boxWidthValue.length() - 1);
+            }
+        }
+    } else
+    {
+        boxHeight.value = 1.0f;
+    }
+
+    if (json.contains("box_depth"))
+    {
+        if (json.at("box_depth").type() == nlohmann::detail::value_t::number_float)
+        {
+            boxDepth.value = json.value("box_depth", 1.0f);
+        } else if (json.at("box_depth").type() == nlohmann::detail::value_t::string)
+        {
+            const std::string boxWidthValue = json.value("box_depth", "");
+            if (boxWidthValue.starts_with("$"))
+            {
+                boxDepth.usesParam = true;
+                boxDepth.paramName = boxWidthValue.substr(1, boxWidthValue.length() - 1);
+            }
+        }
+    } else
+    {
+        boxDepth.value = 1.0f;
+    }
 }
 
 std::string RenderDefinition::GetModel(const Actor &actor) const
@@ -174,4 +250,59 @@ bool RenderDefinition::GetDirectional(const Actor &actor) const
         return directional.value;
     }
     return true;
+}
+
+bool RenderDefinition::HasBoxRenderer(const Actor &actor) const
+{
+    if (hasBoxRenderer.usesParam)
+    {
+        if (actor.params.contains(hasBoxRenderer.paramName))
+        {
+            return actor.params.at(hasBoxRenderer.paramName).Get<bool>(true);
+        }
+    } else
+    {
+        return hasBoxRenderer.value;
+    }
+    return true;
+}
+
+glm::vec3 RenderDefinition::GetBoxExtents(const Actor &actor) const
+{
+    glm::vec3 extents = {1.0f, 1.0f, 1.0f};
+
+    if (boxWidth.usesParam)
+    {
+        if (actor.params.contains(boxWidth.paramName))
+        {
+            extents.x =  actor.params.at(boxWidth.paramName).Get<float>(1.0f);
+        }
+    } else
+    {
+        extents.x =  boxWidth.value;
+    }
+
+    if (boxHeight.usesParam)
+    {
+        if (actor.params.contains(boxHeight.paramName))
+        {
+            extents.y =  actor.params.at(boxHeight.paramName).Get<float>(1.0f);
+        }
+    } else
+    {
+        extents.y =  boxHeight.value;
+    }
+
+    if (boxDepth.usesParam)
+    {
+        if (actor.params.contains(boxDepth.paramName))
+        {
+            extents.z =  actor.params.at(boxDepth.paramName).Get<float>(1.0f);
+        }
+    } else
+    {
+        extents.z =  boxDepth.value;
+    }
+
+    return extents;
 }
