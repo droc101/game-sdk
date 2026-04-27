@@ -16,7 +16,7 @@
 
 void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings &settings)
 {
-    MapRenderer::RenderViewport(vp);
+    MapRenderer::RenderViewportGrid(vp);
 
     glm::mat4 matrix = vp.GetMatrix();
 

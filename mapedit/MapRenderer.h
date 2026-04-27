@@ -24,7 +24,7 @@ class MapRenderer
         static bool Init();
         static void Destroy();
 
-        static void RenderViewport(const Viewport &vp);
+        static void RenderViewportGrid(const Viewport &vp);
 
         static void RenderLine(glm::vec3 start, glm::vec3 end, Color color, glm::mat4 &matrix, float thickness);
 

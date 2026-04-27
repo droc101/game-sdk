@@ -531,9 +531,9 @@ static void Render()
     ImGui::PopStyleVar();
     ImGui::PopStyleVar();
 
-    vpTopDown.RenderImGui();
-    vpFront.RenderImGui();
-    vpSide.RenderImGui();
+    vpTopDown.Render();
+    vpFront.Render();
+    vpSide.Render();
 
     ActorBrowserWindow::Render();
     MapPropertiesWindow::Render();

@@ -136,7 +136,7 @@ void MapRenderer::Destroy()
     }
 }
 
-void MapRenderer::RenderViewport(const Viewport &vp)
+void MapRenderer::RenderViewportGrid(const Viewport &vp)
 {
     glClearColor(0, 0, 0, 1);
     // glDisable(GL_SCISSOR_TEST);

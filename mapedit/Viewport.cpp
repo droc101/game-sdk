@@ -26,7 +26,7 @@ void Viewport::GetWindowRect(ImVec2 &pos, ImVec2 &size) const
     size = windowSize;
 }
 
-void Viewport::RenderImGui()
+void Viewport::Render()
 {
     std::string title;
     if (type == ViewportType::TOP_DOWN_XZ)
@@ -261,8 +261,6 @@ void Viewport::ChangeZoom(const float by)
 
 glm::vec2 Viewport::GetWorldSpaceSize() const
 {
-    // return {2,2};
-    // return {zoom, zoom};
     const float width = (windowSize.x / windowSize.y) * zoom;
     return {width, zoom};
 }
