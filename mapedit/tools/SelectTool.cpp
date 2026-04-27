@@ -314,6 +314,10 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
                 } else
                 {
                     MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + static_cast<int64_t>(sectorIndex));
+                    if (hoverType == ItemType::SECTOR && hoverIndex == selectionIndex)
+                    {
+                        hoverType = ItemType::NONE;
+                    }
                     selectionType = ItemType::NONE;
                     sectorFocusMode = false;
                 }
@@ -611,10 +615,18 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
         if (selectionType == ItemType::ACTOR)
         {
             MapEditor::map.actors.erase(MapEditor::map.actors.begin() + selectionIndex);
+            if (hoverType == ItemType::ACTOR && hoverIndex == selectionIndex)
+            {
+                hoverType = ItemType::NONE;
+            }
             selectionType = ItemType::NONE;
         } else if (selectionType == ItemType::SECTOR)
         {
             MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + selectionIndex);
+            if (hoverType == ItemType::SECTOR && hoverIndex == selectionIndex)
+            {
+                hoverType = ItemType::NONE;
+            }
             selectionType = ItemType::NONE;
         }
     }
