@@ -7,7 +7,6 @@
 #include <array>
 #include <cmath>
 #include <game_sdk/SDKWindow.h>
-#include <glm/detail/func_trigonometric.inl>
 #include <imgui.h>
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>

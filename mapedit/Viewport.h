@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
@@ -107,6 +108,10 @@ class Viewport
 
         /// The last local mouse position
         ImVec2 lastLocalMousePos;
+        /// World to screen matrix
+        glm::mat4 worldScreenMatrix = glm::identity<glm::mat4>();
+        /// Inverse of world to screen matrix
+        glm::mat4 inverseWorldScreenMatrix = glm::identity<glm::mat4>();
 
         /// The OpenGL framebuffer
         GLHelper::GL_Framebuffer framebuffer{};
@@ -115,4 +120,6 @@ class Viewport
         ImVec2 scrollCenterPos{};
         /// The number of units visible along the vertical axis of the viewport
         float zoom = 10.0f;
+
+        void RecalculateMatrices();
 };

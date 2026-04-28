@@ -22,7 +22,6 @@
 #include <vector>
 #include "../EditActorWindow.h"
 #include "../MapEditor.h"
-#include "../MapRenderer.h"
 #include "../Viewport.h"
 #include "../ViewportRenderer.h"
 #include "EditorTool.h"
@@ -685,11 +684,6 @@ void SelectTool::ProcessViewportVertexMode(Viewport &vp,
                                lineColor,
                                haveAddedNewVertex);
         }
-    }
-
-    for (const Actor &a: MapEditor::map.actors)
-    {
-        MapRenderer::RenderActor(a, matrix, vp);
     }
 
     HandleDrag(vp, isHovered, worldSpaceHover);

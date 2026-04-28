@@ -5,6 +5,7 @@
 #include <cfloat>
 #include <cstddef>
 #include <format>
+#include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <imgui.h>
@@ -180,7 +181,9 @@ void MaterialBrowserWindow::InputMaterial(const char *label, std::string &materi
 void MaterialBrowserWindow::InputMaterial(const char *label, std::string *material)
 {
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
+    ImGui::PushFont(SDKWindow::Get().GetMonospaceFont());
     ImGui::InputText(label, material);
+    ImGui::PopFont();
     ImGui::SameLine();
     if (ImGui::Button(("..." + std::string(label)).c_str(), ImVec2(40, 0)))
     {

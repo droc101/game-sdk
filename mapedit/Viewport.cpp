@@ -71,6 +71,8 @@ void Viewport::Render()
 
     GLHelper::BindFramebuffer(framebuffer);
 
+    RecalculateMatrices();
+
     MapEditor::tool->RenderViewport(*this);
 
     GLHelper::UnbindFramebuffer();
@@ -150,10 +152,8 @@ glm::vec3 Viewport::ScreenToWorldPos(ImVec2 localScreenPos) const
     GetWindowRect(WindowPos, WindowSize);
     const glm::vec2 ndcPos2d = GLHelper::ScreenToNDC({localScreenPos.x, localScreenPos.y},
                                                      {WindowSize.x, WindowSize.y});
-    const glm::mat4 matrix = GetMatrix();
-    const glm::mat4 invMatrix = glm::inverse(matrix);
     const glm::vec4 clipPos = glm::vec4(ndcPos2d, 0.0f, 1.0f);
-    const glm::vec4 worldPos = invMatrix * clipPos;
+    const glm::vec4 worldPos = inverseWorldScreenMatrix * clipPos;
     glm::vec3 worldPos3 = glm::vec3(worldPos) / worldPos.w;
     switch (type)
     {
@@ -176,8 +176,7 @@ glm::vec2 Viewport::WorldToScreenPos(const glm::vec3 worldPos) const
     ImVec2 WindowSize;
     ImVec2 WindowPos;
     GetWindowRect(WindowPos, WindowSize);
-    const glm::mat4 matrix = GetMatrix();
-    const glm::vec4 fullNdc = matrix * glm::vec4(worldPos, 1.0f);
+    const glm::vec4 fullNdc = worldScreenMatrix * glm::vec4(worldPos, 1.0f);
     const glm::vec2 ndc = glm::vec2(fullNdc.x, fullNdc.y);
     const float screenX = (ndc.x * 0.5f + 0.5f) * WindowSize.x;
     const float screenY = (-ndc.y * 0.5f + 0.5f) * WindowSize.y;
@@ -186,39 +185,7 @@ glm::vec2 Viewport::WorldToScreenPos(const glm::vec3 worldPos) const
 
 glm::mat4 Viewport::GetMatrix() const
 {
-    const float aspect = (framebuffer.size.y != 0.0f) ? (framebuffer.size.x / framebuffer.size.y) : 1.0f;
-    const float halfHeight = zoom / 2.0f;
-    const float halfWidth = aspect * halfHeight;
-
-    const float left = scrollCenterPos.x - halfWidth;
-    const float right = scrollCenterPos.x + halfWidth;
-    const float top = scrollCenterPos.y + halfHeight;
-    const float bottom = scrollCenterPos.y - halfHeight;
-    const glm::mat4 ortho = glm::ortho(left, right, bottom, top, 0.01f, MapEditor::MAP_SIZE + 100);
-
-    glm::vec3 up;
-    glm::vec3 eye;
-    glm::vec3 target;
-    if (type == ViewportType::TOP_DOWN_XZ)
-    {
-        target = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 8, 0);
-        eye = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 18, 0);
-        up = glm::vec3(0, 0, 1);
-    } else if (type == ViewportType::SIDE_YZ)
-    {
-        target = glm::vec3(MapEditor::MAP_HALF_SIZE + 8, 0, 0);
-        eye = glm::vec3(MapEditor::MAP_HALF_SIZE + 18, 0, 0);
-        up = glm::vec3(0, 1, 0);
-    } else
-    {
-        target = glm::vec3(0, 0, MapEditor::MAP_HALF_SIZE + 8);
-        eye = glm::vec3(0, 0, MapEditor::MAP_HALF_SIZE + 18);
-        up = glm::vec3(0, 1, 0);
-    }
-
-    const glm::mat4 view = glm::lookAt(eye, target, up);
-
-    return ortho * view;
+    return worldScreenMatrix;
 }
 
 void Viewport::CenterPosition(glm::vec3 pos)
@@ -268,4 +235,42 @@ glm::vec2 Viewport::GetWorldSpaceSize() const
 glm::vec3 Viewport::GetCameraPos() const
 {
     return ScreenToWorldPos(ImVec2(windowSize.x / 2, windowSize.y / 2));
+}
+
+void Viewport::RecalculateMatrices()
+{
+    const float aspect = (framebuffer.size.y != 0.0f) ? (framebuffer.size.x / framebuffer.size.y) : 1.0f;
+    const float halfHeight = zoom / 2.0f;
+    const float halfWidth = aspect * halfHeight;
+
+    const float left = scrollCenterPos.x - halfWidth;
+    const float right = scrollCenterPos.x + halfWidth;
+    const float top = scrollCenterPos.y + halfHeight;
+    const float bottom = scrollCenterPos.y - halfHeight;
+    const glm::mat4 ortho = glm::ortho(left, right, bottom, top, 0.01f, MapEditor::MAP_SIZE + 100);
+
+    glm::vec3 up;
+    glm::vec3 eye;
+    glm::vec3 target;
+    if (type == ViewportType::TOP_DOWN_XZ)
+    {
+        target = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 8, 0);
+        eye = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 18, 0);
+        up = glm::vec3(0, 0, 1);
+    } else if (type == ViewportType::SIDE_YZ)
+    {
+        target = glm::vec3(MapEditor::MAP_HALF_SIZE + 8, 0, 0);
+        eye = glm::vec3(MapEditor::MAP_HALF_SIZE + 18, 0, 0);
+        up = glm::vec3(0, 1, 0);
+    } else
+    {
+        target = glm::vec3(0, 0, MapEditor::MAP_HALF_SIZE + 8);
+        eye = glm::vec3(0, 0, MapEditor::MAP_HALF_SIZE + 18);
+        up = glm::vec3(0, 1, 0);
+    }
+
+    const glm::mat4 view = glm::lookAt(eye, target, up);
+
+    worldScreenMatrix = ortho * view;
+    inverseWorldScreenMatrix = glm::inverse(worldScreenMatrix);
 }
