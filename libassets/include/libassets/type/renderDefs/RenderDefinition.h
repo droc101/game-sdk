@@ -5,6 +5,7 @@
 #pragma once
 
 #include <libassets/type/Color.h>
+#include <libassets/type/renderDefs/RenderDefinitionValue.h>
 #include <nlohmann/json.hpp>
 #include <string>
 
@@ -32,13 +33,6 @@ class RenderDefinition
         [[nodiscard]] glm::vec3 GetBoxExtents(const Actor &actor) const;
 
     private:
-        template<typename T> struct RenderDefinitionValue
-        {
-                bool usesParam = false;
-                std::string paramName;
-                T value{};
-        };
-
         RenderDefinitionValue<std::string> model;
         RenderDefinitionValue<Color> color;
         RenderDefinitionValue<std::string> texture;
@@ -49,17 +43,4 @@ class RenderDefinition
         RenderDefinitionValue<float> boxWidth;
         RenderDefinitionValue<float> boxHeight;
         RenderDefinitionValue<float> boxDepth;
-
-        static RenderDefinitionValue<std::string> RDV_Str(const nlohmann::json &json,
-                                                          const std::string &key,
-                                                          const std::string &defaultValue);
-        static RenderDefinitionValue<Color> RDV_Color(const nlohmann::json &json,
-                                                      const std::string &key,
-                                                      Color defaultValue);
-        static RenderDefinitionValue<bool> RDV_Bool(const nlohmann::json &json,
-                                                    const std::string &key,
-                                                    bool defaultValue);
-        static RenderDefinitionValue<float> RDV_Float(const nlohmann::json &json,
-                                                      const std::string &key,
-                                                      float defaultValue);
 };

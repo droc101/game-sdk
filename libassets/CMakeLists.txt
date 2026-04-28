@@ -132,6 +132,7 @@ add_library(assets SHARED
         src/util/ArgumentParser.cpp
         include/libassets/util/ArgumentParser.h
         include/libassets/util/Logger.h
+        include/libassets/type/renderDefs/RenderDefinitionValue.h
 )
 
 set_target_properties(assets PROPERTIES

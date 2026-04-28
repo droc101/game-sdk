@@ -8,6 +8,7 @@
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/IOConnection.h>
 #include <libassets/type/Param.h>
+#include <libassets/util/DataWriter.h>
 #include <string>
 #include <vector>
 
