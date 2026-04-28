@@ -9,172 +9,15 @@
 
 RenderDefinition::RenderDefinition(const nlohmann::json &json)
 {
-    if (json.contains("model") && json.at("model").type() == nlohmann::detail::value_t::string)
-    {
-        const std::string modelValue = json.value("model", "");
-        if (modelValue.starts_with("$"))
-        {
-            model.usesParam = true;
-            model.paramName = modelValue.substr(1, modelValue.length() - 1);
-        } else
-        {
-            model.value = modelValue;
-        }
-    } else
-    {
-        model.value = "";
-    }
-
-
-    if (json.contains("texture") && json.at("texture").type() == nlohmann::detail::value_t::string)
-    {
-        const std::string textureValue = json.value("texture", "");
-        if (textureValue.starts_with("$"))
-        {
-            texture.usesParam = true;
-            texture.paramName = textureValue.substr(1, textureValue.length() - 1);
-        } else
-        {
-            texture.value = textureValue;
-        }
-    } else
-    {
-        texture.value = "";
-    }
-
-    if (json.contains("color"))
-    {
-        if (json.at("color").type() == nlohmann::detail::value_t::number_unsigned ||
-            json.at("color").type() == nlohmann::detail::value_t::number_integer)
-        {
-            color.value = Color(json.value("color", -1u));
-        } else if (json.at("color").type() == nlohmann::detail::value_t::string)
-        {
-            const std::string colorValue = json.value("color", "");
-            if (colorValue.starts_with("$"))
-            {
-                color.usesParam = true;
-                color.paramName = colorValue.substr(1, colorValue.length() - 1);
-            }
-        }
-    } else
-    {
-        color.value = Color(0.0, 1.0, 0.0, 1.0);
-    }
-
-    if (json.contains("affect_lightmap"))
-    {
-        if (json.at("affect_lightmap").type() == nlohmann::detail::value_t::boolean)
-        {
-            affectLightmap.value = json.value("affect_lightmap", true);
-        } else if (json.at("affect_lightmap").type() == nlohmann::detail::value_t::string)
-        {
-            const std::string affectLightmapValue = json.value("affect_lightmap", "");
-            if (affectLightmapValue.starts_with("$"))
-            {
-                affectLightmap.usesParam = true;
-                affectLightmap.paramName = affectLightmapValue.substr(1, affectLightmapValue.length() - 1);
-            }
-        }
-    } else
-    {
-        affectLightmap.value = false;
-    }
-
-    if (json.contains("directional"))
-    {
-        if (json.at("directional").type() == nlohmann::detail::value_t::boolean)
-        {
-            directional.value = json.value("directional", true);
-        } else if (json.at("directional").type() == nlohmann::detail::value_t::string)
-        {
-            const std::string directionalValue = json.value("directional", "");
-            if (directionalValue.starts_with("$"))
-            {
-                directional.usesParam = true;
-                directional.paramName = directionalValue.substr(1, directionalValue.length() - 1);
-            }
-        }
-    } else
-    {
-        directional.value = true;
-    }
-
-    if (json.contains("box"))
-    {
-        if (json.at("box").type() == nlohmann::detail::value_t::boolean)
-        {
-            hasBoxRenderer.value = json.value("box", true);
-        } else if (json.at("box").type() == nlohmann::detail::value_t::string)
-        {
-            const std::string hasBoxRendererValue = json.value("box", "");
-            if (hasBoxRendererValue.starts_with("$"))
-            {
-                hasBoxRenderer.usesParam = true;
-                hasBoxRenderer.paramName = hasBoxRendererValue.substr(1, hasBoxRendererValue.length() - 1);
-            }
-        }
-    } else
-    {
-        hasBoxRenderer.value = false;
-    }
-
-    if (json.contains("box_width"))
-    {
-        if (json.at("box_width").type() == nlohmann::detail::value_t::number_float)
-        {
-            boxWidth.value = json.value("box_width", 1.0f);
-        } else if (json.at("box_width").type() == nlohmann::detail::value_t::string)
-        {
-            const std::string boxWidthValue = json.value("box_width", "");
-            if (boxWidthValue.starts_with("$"))
-            {
-                boxWidth.usesParam = true;
-                boxWidth.paramName = boxWidthValue.substr(1, boxWidthValue.length() - 1);
-            }
-        }
-    } else
-    {
-        boxWidth.value = 1.0f;
-    }
-
-    if (json.contains("box_height"))
-    {
-        if (json.at("box_height").type() == nlohmann::detail::value_t::number_float)
-        {
-            boxHeight.value = json.value("box_height", 1.0f);
-        } else if (json.at("box_height").type() == nlohmann::detail::value_t::string)
-        {
-            const std::string boxWidthValue = json.value("box_height", "");
-            if (boxWidthValue.starts_with("$"))
-            {
-                boxHeight.usesParam = true;
-                boxHeight.paramName = boxWidthValue.substr(1, boxWidthValue.length() - 1);
-            }
-        }
-    } else
-    {
-        boxHeight.value = 1.0f;
-    }
-
-    if (json.contains("box_depth"))
-    {
-        if (json.at("box_depth").type() == nlohmann::detail::value_t::number_float)
-        {
-            boxDepth.value = json.value("box_depth", 1.0f);
-        } else if (json.at("box_depth").type() == nlohmann::detail::value_t::string)
-        {
-            const std::string boxWidthValue = json.value("box_depth", "");
-            if (boxWidthValue.starts_with("$"))
-            {
-                boxDepth.usesParam = true;
-                boxDepth.paramName = boxWidthValue.substr(1, boxWidthValue.length() - 1);
-            }
-        }
-    } else
-    {
-        boxDepth.value = 1.0f;
-    }
+    model = RDV_Str(json, "model", "");
+    texture = RDV_Str(json, "texture", "");
+    color = RDV_Color(json, "color", Color(0, 1, 0, 1));
+    affectLightmap = RDV_Bool(json, "affect_lightmap", false);
+    directional = RDV_Bool(json, "directional", true);
+    hasBoxRenderer = RDV_Bool(json, "box", false);
+    boxWidth = RDV_Float(json, "box_width", 1.0f);
+    boxHeight = RDV_Float(json, "box_height", 1.0f);
+    boxDepth = RDV_Float(json, "box_depth", 1.0f);
 }
 
 std::string RenderDefinition::GetModel(const Actor &actor) const
@@ -275,34 +118,147 @@ glm::vec3 RenderDefinition::GetBoxExtents(const Actor &actor) const
     {
         if (actor.params.contains(boxWidth.paramName))
         {
-            extents.x =  actor.params.at(boxWidth.paramName).Get<float>(1.0f);
+            extents.x = actor.params.at(boxWidth.paramName).Get<float>(1.0f);
         }
     } else
     {
-        extents.x =  boxWidth.value;
+        extents.x = boxWidth.value;
     }
 
     if (boxHeight.usesParam)
     {
         if (actor.params.contains(boxHeight.paramName))
         {
-            extents.y =  actor.params.at(boxHeight.paramName).Get<float>(1.0f);
+            extents.y = actor.params.at(boxHeight.paramName).Get<float>(1.0f);
         }
     } else
     {
-        extents.y =  boxHeight.value;
+        extents.y = boxHeight.value;
     }
 
     if (boxDepth.usesParam)
     {
         if (actor.params.contains(boxDepth.paramName))
         {
-            extents.z =  actor.params.at(boxDepth.paramName).Get<float>(1.0f);
+            extents.z = actor.params.at(boxDepth.paramName).Get<float>(1.0f);
         }
     } else
     {
-        extents.z =  boxDepth.value;
+        extents.z = boxDepth.value;
     }
 
     return extents;
+}
+
+RenderDefinition::RenderDefinitionValue<std::string> RenderDefinition::RDV_Str(const nlohmann::json &json,
+                                                                               const std::string &key,
+                                                                               const std::string &defaultValue)
+{
+    RenderDefinitionValue<std::string> rdv{};
+    if (json.contains(key) && json.at(key).type() == nlohmann::detail::value_t::string)
+    {
+        const std::string value = json.value(key, defaultValue);
+        if (value.starts_with("$"))
+        {
+            rdv.usesParam = true;
+            rdv.paramName = value.substr(1, value.length() - 1);
+        } else
+        {
+            rdv.value = value;
+        }
+    } else
+    {
+        rdv.value = defaultValue;
+    }
+    return rdv;
+}
+
+RenderDefinition::RenderDefinitionValue<Color> RenderDefinition::RDV_Color(const nlohmann::json &json,
+                                                                           const std::string &key,
+                                                                           const Color defaultValue)
+{
+    RenderDefinitionValue<Color> rdv{};
+    if (json.contains(key))
+    {
+        if (json.at(key).type() == nlohmann::detail::value_t::number_unsigned ||
+            json.at(key).type() == nlohmann::detail::value_t::number_integer)
+        {
+            rdv.value = Color(json.value(key, -1u));
+        } else if (json.at(key).type() == nlohmann::detail::value_t::string)
+        {
+            const std::string colorValue = json.value(key, "");
+            if (colorValue.starts_with("$"))
+            {
+                rdv.usesParam = true;
+                rdv.paramName = colorValue.substr(1, colorValue.length() - 1);
+            } else
+            {
+                rdv.value = defaultValue;
+            }
+        }
+    } else
+    {
+        rdv.value = defaultValue;
+    }
+    return rdv;
+}
+
+RenderDefinition::RenderDefinitionValue<bool> RenderDefinition::RDV_Bool(const nlohmann::json &json,
+                                                                         const std::string &key,
+                                                                         bool defaultValue)
+{
+    RenderDefinitionValue<bool> rdv{};
+    if (json.contains(key))
+    {
+        if (json.at(key).type() == nlohmann::detail::value_t::boolean)
+        {
+            rdv.value = json.value(key, defaultValue);
+        } else if (json.at(key).type() == nlohmann::detail::value_t::string)
+        {
+            const std::string boolValue = json.value(key, "");
+            if (boolValue.starts_with("$"))
+            {
+                rdv.usesParam = true;
+                rdv.paramName = boolValue.substr(1, boolValue.length() - 1);
+            } else
+            {
+                rdv.value = defaultValue;
+            }
+        }
+    } else
+    {
+        rdv.value = defaultValue;
+    }
+    return rdv;
+}
+
+RenderDefinition::RenderDefinitionValue<float> RenderDefinition::RDV_Float(const nlohmann::json &json,
+                                                                           const std::string &key,
+                                                                           float defaultValue)
+{
+    RenderDefinitionValue<float> rdv{};
+    if (json.contains(key))
+    {
+        if (json.at(key).type() == nlohmann::detail::value_t::number_float ||
+            json.at(key).type() == nlohmann::detail::value_t::number_unsigned ||
+            json.at(key).type() == nlohmann::detail::value_t::number_integer)
+        {
+            rdv.value = json.value(key, defaultValue);
+        } else if (json.at(key).type() == nlohmann::detail::value_t::string)
+        {
+            const std::string floatValue = json.value(key, "");
+            if (floatValue.starts_with("$"))
+            {
+                rdv.usesParam = true;
+                rdv.paramName = floatValue.substr(1, floatValue.length() - 1);
+            } else
+            {
+                rdv.value = defaultValue;
+            }
+        }
+    } else
+    {
+        rdv.value = defaultValue;
+    }
+    return rdv;
 }

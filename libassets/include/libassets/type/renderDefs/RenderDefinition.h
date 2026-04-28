@@ -49,4 +49,17 @@ class RenderDefinition
         RenderDefinitionValue<float> boxWidth;
         RenderDefinitionValue<float> boxHeight;
         RenderDefinitionValue<float> boxDepth;
+
+        static RenderDefinitionValue<std::string> RDV_Str(const nlohmann::json &json,
+                                                          const std::string &key,
+                                                          const std::string &defaultValue);
+        static RenderDefinitionValue<Color> RDV_Color(const nlohmann::json &json,
+                                                      const std::string &key,
+                                                      Color defaultValue);
+        static RenderDefinitionValue<bool> RDV_Bool(const nlohmann::json &json,
+                                                    const std::string &key,
+                                                    bool defaultValue);
+        static RenderDefinitionValue<float> RDV_Float(const nlohmann::json &json,
+                                                      const std::string &key,
+                                                      float defaultValue);
 };
