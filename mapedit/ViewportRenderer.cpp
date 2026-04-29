@@ -446,11 +446,6 @@ bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
         }
     }
 
-    for (const glm::vec3 &pt: bbox.GetPoints())
-    {
-        MapRenderer::RenderBillboardPoint(pt, 5, Color(-1), vp.GetMatrix());
-    }
-
     return false;
 }
 
