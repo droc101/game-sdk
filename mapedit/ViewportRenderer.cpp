@@ -375,7 +375,7 @@ bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
             type == RenderDefinition::RenderDefinitionType::RD_TYPE_ORIENTATION ||
             type == RenderDefinition::RenderDefinitionType::RD_TYPE_SPRITE)
         {
-            std::ranges::copy(BoundingBox(actor.position, {1, 1, 1}).GetPoints(),
+            std::ranges::copy(BoundingBox(actor.position, {0.25, 0.25, 0.25}).GetPoints(),
                               std::back_inserter(boundingBoxPoints));
         } else if (type == RenderDefinition::RenderDefinitionType::RD_TYPE_MODEL)
         {
@@ -383,6 +383,14 @@ bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
             const ModelAsset &model = MapRenderer::GetModel(modelDef->GetModel(actor));
             const std::array<glm::vec3, 8> &modelBboxPoints = model.GetBoundingBox().GetPoints();
             for (const glm::vec3 &point: modelBboxPoints)
+            {
+                boundingBoxPoints.emplace_back(worldMatrix * glm::vec4(point, 1.0));
+            }
+        } else if (type == RenderDefinition::RenderDefinitionType::RD_TYPE_BOX)
+        {
+            const BoxRenderDefinition *boxDef = dynamic_cast<BoxRenderDefinition *>(rdef.get());
+            const BoundingBox bb = BoundingBox(boxDef->GetExtents(actor) / 2.0f);
+            for (const glm::vec3 &point: bb.GetPoints())
             {
                 boundingBoxPoints.emplace_back(worldMatrix * glm::vec4(point, 1.0));
             }
@@ -436,6 +444,11 @@ bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
         {
             return true;
         }
+    }
+
+    for (const glm::vec3 &pt: bbox.GetPoints())
+    {
+        MapRenderer::RenderBillboardPoint(pt, 5, Color(-1), vp.GetMatrix());
     }
 
     return false;
