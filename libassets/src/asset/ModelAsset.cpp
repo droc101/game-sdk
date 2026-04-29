@@ -304,6 +304,11 @@ BoundingBox &ModelAsset::GetBoundingBox()
     return boundingBox;
 }
 
+const BoundingBox &ModelAsset::GetBoundingBox() const
+{
+    return boundingBox;
+}
+
 ModelAsset::CollisionModelType &ModelAsset::GetCollisionModelType()
 {
     return collisionModelType;

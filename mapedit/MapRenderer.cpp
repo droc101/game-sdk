@@ -331,8 +331,29 @@ void MapRenderer::RenderModel(std::string model,
                 modelBuffers[model] = buf;
             }
         }
-        MapRenderer::RenderModel(modelBuffers.at(model), viewMatrix, worldMatrix, c);
+        RenderModel(modelBuffers.at(model), viewMatrix, worldMatrix, c);
     }
+}
+
+const ModelAsset &MapRenderer::GetModel(std::string model)
+{
+    if (!model.empty())
+    {
+        if (!modelBuffers.contains(model))
+        {
+            const std::string absolutePath = SharedMgr::Get().pathManager.GetAssetPath(model);
+            if (absolutePath.empty())
+            {
+                model = "model/error.gmdl";
+            } else
+            {
+                const ModelBuffer buf = LoadModel(absolutePath);
+                modelBuffers[model] = buf;
+            }
+        }
+        return modelBuffers[model].model;
+    }
+    return modelBuffers["model/error.gmdl"].model;
 }
 
 MapRenderer::ModelBuffer MapRenderer::LoadModel(const std::string &path)

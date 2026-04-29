@@ -75,6 +75,8 @@ class ModelAsset final
 
         BoundingBox &GetBoundingBox();
 
+        const BoundingBox &GetBoundingBox() const;
+
         CollisionModelType &GetCollisionModelType();
 
         [[nodiscard]] size_t GetNumHulls() const;

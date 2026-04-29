@@ -47,6 +47,8 @@ class MapRenderer
                                 const glm::mat4 &worldMatrix,
                                 const Color &c);
 
+        static const ModelAsset &GetModel(std::string model);
+
     private:
         struct ModelBuffer
         {

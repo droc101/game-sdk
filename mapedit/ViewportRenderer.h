@@ -120,6 +120,7 @@ class ViewportRenderer
 
         static void RenderActor(const Actor &a, const glm::mat4 &matrix, const Viewport &vp);
 
+        static bool ActorIsCulled(const Actor &actor, const Viewport &vp);
 
         static void RenderBoxRdef(const BoxRenderDefinition *rdef,
                                   const Actor &actor,

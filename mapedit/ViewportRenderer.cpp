@@ -3,12 +3,16 @@
 //
 
 #include "ViewportRenderer.h"
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstddef>
 #include <game_sdk/gl/GLHelper.h>
+#include <iterator>
+#include <libassets/asset/ModelAsset.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
+#include <libassets/type/BoundingBox.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/renderDefs/BoxRenderDefinition.h>
 #include <libassets/type/renderDefs/ModelRenderDefinition.h>
@@ -18,6 +22,7 @@
 #include <libassets/type/renderDefs/SpriteRenderDefinition.h>
 #include <libassets/type/Sector.h>
 #include <memory>
+#include <vector>
 #include "MapEditor.h"
 #include "MapRenderer.h"
 #include "tools/EditorTool.h"
@@ -294,10 +299,10 @@ bool ViewportRenderer::SectorIsCulled(const Sector &sector, const Viewport &vp)
     } else if (vp.GetType() == Viewport::ViewportType::SIDE_YZ)
     {
         const glm::vec2 aabbTopLeft = {sector.floorHeight, aabb.y - aabb.w};
-        const glm::vec2 aabbBottomRight = {sector.floorHeight, aabb.y + aabb.w};
-        const glm::vec2 cameraTopLeft = {cameraPos.y - (cameraViewSize.y / 2), cameraPos.x - (cameraViewSize.x / 2)};
+        const glm::vec2 aabbBottomRight = {sector.ceilingHeight, aabb.y + aabb.w};
+        const glm::vec2 cameraTopLeft = {cameraPos.y - (cameraViewSize.y / 2), cameraPos.z - (cameraViewSize.x / 2)};
         const glm::vec2 cameraBottomRight = {cameraPos.y + (cameraViewSize.y / 2),
-                                             cameraPos.x + (cameraViewSize.x / 2)};
+                                             cameraPos.z + (cameraViewSize.x / 2)};
         if (aabbBottomRight.x < cameraTopLeft.x ||
             aabbTopLeft.x > cameraBottomRight.x ||
             aabbBottomRight.y < cameraTopLeft.y ||
@@ -311,6 +316,11 @@ bool ViewportRenderer::SectorIsCulled(const Sector &sector, const Viewport &vp)
 
 void ViewportRenderer::RenderActor(const Actor &a, const glm::mat4 &matrix, const Viewport &vp)
 {
+    if (MapEditor::culling && ActorIsCulled(a, vp))
+    {
+        return;
+    }
+
     const ActorDefinition &definition = MapEditor::adm.GetActorDefinition(a.className);
 
     glm::mat4 worldMatrix = glm::identity<glm::mat4>();
@@ -344,6 +354,91 @@ void ViewportRenderer::RenderActor(const Actor &a, const glm::mat4 &matrix, cons
                 break;
         }
     }
+}
+
+bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
+{
+    const ActorDefinition &definition = MapEditor::adm.GetActorDefinition(actor.className);
+
+    glm::mat4 worldMatrix = glm::identity<glm::mat4>();
+    worldMatrix = glm::translate(worldMatrix, actor.position);
+    worldMatrix = glm::rotate(worldMatrix, glm::radians(actor.rotation.y), glm::vec3(0, 1, 0));
+    worldMatrix = glm::rotate(worldMatrix, glm::radians(actor.rotation.x), glm::vec3(1, 0, 0));
+    worldMatrix = glm::rotate(worldMatrix, glm::radians(actor.rotation.z), glm::vec3(0, 0, 1));
+
+    std::vector<glm::vec3> boundingBoxPoints{}; // not aabb, just bb
+
+    for (const std::shared_ptr<RenderDefinition> &rdef: definition.renderDefinitions)
+    {
+        const RenderDefinition::RenderDefinitionType type = rdef.get()->GetType();
+        if (type == RenderDefinition::RenderDefinitionType::RD_TYPE_POINT ||
+            type == RenderDefinition::RenderDefinitionType::RD_TYPE_ORIENTATION ||
+            type == RenderDefinition::RenderDefinitionType::RD_TYPE_SPRITE)
+        {
+            std::ranges::copy(BoundingBox(actor.position, {1, 1, 1}).GetPoints(),
+                              std::back_inserter(boundingBoxPoints));
+        } else if (type == RenderDefinition::RenderDefinitionType::RD_TYPE_MODEL)
+        {
+            const ModelRenderDefinition *modelDef = dynamic_cast<ModelRenderDefinition *>(rdef.get());
+            const ModelAsset &model = MapRenderer::GetModel(modelDef->GetModel(actor));
+            const std::array<glm::vec3, 8> &modelBboxPoints = model.GetBoundingBox().GetPoints();
+            for (const glm::vec3 &point: modelBboxPoints)
+            {
+                boundingBoxPoints.emplace_back(worldMatrix * glm::vec4(point, 1.0));
+            }
+        }
+    }
+
+    const BoundingBox bbox = BoundingBox(boundingBoxPoints);
+
+    const glm::vec2 cameraViewSize = vp.GetWorldSpaceSize();
+    const glm::vec3 cameraPos = vp.GetCameraPos();
+
+    if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+    {
+        const glm::vec2 aabbTopLeft = {bbox.origin.x - bbox.extents.x, bbox.origin.z - bbox.extents.z};
+        const glm::vec2 aabbBottomRight = {bbox.origin.x + bbox.extents.x, bbox.origin.z + bbox.extents.z};
+        const glm::vec2 cameraTopLeft = {cameraPos.x - (cameraViewSize.x / 2), cameraPos.z - (cameraViewSize.y / 2)};
+        const glm::vec2 cameraBottomRight = {cameraPos.x + (cameraViewSize.x / 2),
+                                             cameraPos.z + (cameraViewSize.y / 2)};
+        if (aabbBottomRight.x < cameraTopLeft.x ||
+            aabbTopLeft.x > cameraBottomRight.x ||
+            aabbBottomRight.y < cameraTopLeft.y ||
+            aabbTopLeft.y > cameraBottomRight.y)
+        {
+            return true;
+        }
+    } else if (vp.GetType() == Viewport::ViewportType::FRONT_XY)
+    {
+        const glm::vec2 aabbTopLeft = {bbox.origin.x - bbox.extents.x, bbox.origin.y - bbox.extents.y};
+        const glm::vec2 aabbBottomRight = {bbox.origin.x + bbox.extents.x, bbox.origin.y + bbox.extents.y};
+        const glm::vec2 cameraTopLeft = {cameraPos.x - (cameraViewSize.x / 2), cameraPos.y - (cameraViewSize.y / 2)};
+        const glm::vec2 cameraBottomRight = {cameraPos.x + (cameraViewSize.x / 2),
+                                             cameraPos.y + (cameraViewSize.y / 2)};
+        if (aabbBottomRight.x < cameraTopLeft.x ||
+            aabbTopLeft.x > cameraBottomRight.x ||
+            aabbBottomRight.y < cameraTopLeft.y ||
+            aabbTopLeft.y > cameraBottomRight.y)
+        {
+            return true;
+        }
+    } else if (vp.GetType() == Viewport::ViewportType::SIDE_YZ)
+    {
+        const glm::vec2 aabbTopLeft = {bbox.origin.y - bbox.extents.y, bbox.origin.z - bbox.extents.z};
+        const glm::vec2 aabbBottomRight = {bbox.origin.y + bbox.extents.y, bbox.origin.z + bbox.extents.z};
+        const glm::vec2 cameraTopLeft = {cameraPos.y - (cameraViewSize.y / 2), cameraPos.z - (cameraViewSize.x / 2)};
+        const glm::vec2 cameraBottomRight = {cameraPos.y + (cameraViewSize.y / 2),
+                                             cameraPos.z + (cameraViewSize.x / 2)};
+        if (aabbBottomRight.x < cameraTopLeft.x ||
+            aabbTopLeft.x > cameraBottomRight.x ||
+            aabbBottomRight.y < cameraTopLeft.y ||
+            aabbTopLeft.y > cameraBottomRight.y)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void ViewportRenderer::RenderBoxRdef(const BoxRenderDefinition *rdef,
