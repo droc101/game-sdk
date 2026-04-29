@@ -34,9 +34,17 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
 
     glm::mat4 matrix = vp.GetMatrix();
 
-    for (const Actor &actor: MapEditor::map.actors)
+    for (size_t actorIndex = 0; actorIndex < MapEditor::map.actors.size(); actorIndex++)
     {
-        RenderActor(actor, matrix, vp);
+        if (settings.selectionType == EditorTool::ItemType::ACTOR && settings.selectionIndex == actorIndex)
+        {
+            continue;
+        }
+        if (settings.hoverType == EditorTool::ItemType::ACTOR && settings.hoverIndex == actorIndex)
+        {
+            continue;
+        }
+        RenderActor(MapEditor::map.actors.at(actorIndex), matrix, vp);
     }
 
     for (size_t sectorIndex = 0; sectorIndex < MapEditor::map.sectors.size(); sectorIndex++)
@@ -80,12 +88,20 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
     {
         GLHelper::ClearDepth();
         RenderSector(vp, settings, settings.hoverIndex, matrix);
+    } else if (settings.hoverType == EditorTool::ItemType::ACTOR)
+    {
+        GLHelper::ClearDepth();
+        RenderActor(MapEditor::map.actors.at(settings.hoverIndex), matrix, vp);
     }
 
     if (settings.selectionType == EditorTool::ItemType::SECTOR)
     {
         GLHelper::ClearDepth();
         RenderSector(vp, settings, settings.selectionIndex, matrix);
+    } else if (settings.selectionType == EditorTool::ItemType::ACTOR)
+    {
+        GLHelper::ClearDepth();
+        RenderActor(MapEditor::map.actors.at(settings.selectionIndex), matrix, vp);
     }
 
     if (settings.sectorFocusMode)
