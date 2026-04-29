@@ -25,7 +25,7 @@ class ActorDefinition
         std::string parentClassName;
         ActorDefinition *parentClass = nullptr;
 
-        RenderDefinition renderDefinition{};
+        std::vector<std::shared_ptr<RenderDefinition>> renderDefinitions{};
 
         bool isVirtual = false;
 

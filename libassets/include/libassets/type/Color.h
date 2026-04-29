@@ -33,6 +33,7 @@ class Color
         [[nodiscard]] uint32_t GetUint32() const;
 
         float *GetDataPointer();
+        [[nodiscard]] const float *GetDataPointer() const;
 
         [[nodiscard]] std::array<float, 4> CopyData() const;
 

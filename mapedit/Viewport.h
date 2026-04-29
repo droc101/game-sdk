@@ -71,6 +71,8 @@ class Viewport
          */
         float &GetZoom();
 
+        [[nodiscard]] float GetZoom() const;
+
         /**
          * Get the mouse position in 3D space
          * @note the local depth axis will be 0

@@ -132,7 +132,17 @@ add_library(assets SHARED
         src/util/ArgumentParser.cpp
         include/libassets/util/ArgumentParser.h
         include/libassets/util/Logger.h
-        include/libassets/type/renderDefs/RenderDefinitionValue.h
+        include/libassets/type/RenderDefinitionValue.h
+        src/type/renderDefs/PointRenderDefinition.cpp
+        include/libassets/type/renderDefs/PointRenderDefinition.h
+        src/type/renderDefs/SpriteRenderDefinition.cpp
+        include/libassets/type/renderDefs/SpriteRenderDefinition.h
+        src/type/renderDefs/ModelRenderDefinition.cpp
+        include/libassets/type/renderDefs/ModelRenderDefinition.h
+        src/type/renderDefs/OrientationRenderDefinition.cpp
+        include/libassets/type/renderDefs/OrientationRenderDefinition.h
+        src/type/renderDefs/BoxRenderDefinition.cpp
+        include/libassets/type/renderDefs/BoxRenderDefinition.h
 )
 
 set_target_properties(assets PROPERTIES

@@ -210,6 +210,11 @@ float &Viewport::GetZoom()
     return zoom;
 }
 
+float Viewport::GetZoom() const
+{
+    return zoom;
+}
+
 ImVec2 Viewport::GetLocalMousePos() const
 {
     return lastLocalMousePos;

@@ -6,7 +6,13 @@
 
 #include <cstddef>
 #include <glm/vec3.hpp>
+#include <libassets/type/Actor.h>
 #include <libassets/type/Color.h>
+#include <libassets/type/renderDefs/BoxRenderDefinition.h>
+#include <libassets/type/renderDefs/ModelRenderDefinition.h>
+#include <libassets/type/renderDefs/OrientationRenderDefinition.h>
+#include <libassets/type/renderDefs/PointRenderDefinition.h>
+#include <libassets/type/renderDefs/SpriteRenderDefinition.h>
 #include <libassets/type/Sector.h>
 #include <string>
 #include <vector>
@@ -104,11 +110,33 @@ class ViewportRenderer
         static void RenderSector(const Viewport &vp,
                                  const ViewportRenderSettings &settings,
                                  size_t sectorIndex,
-                                 glm::mat4 &matrix);
-        static void RenderPoint(const ViewportRenderPoint *point, glm::mat4 &matrix);
+                                 const glm::mat4 &matrix);
+        static void RenderPoint(const ViewportRenderPoint *point, const glm::mat4 &matrix);
         static void RenderNewPrimitive(Viewport &vp, const ViewportRenderNewPrimitive *prim, glm::mat4 &matrix);
-        static void RenderNewActor(Viewport &vp, const ViewportRenderNewActor *actor, glm::mat4 &matrix);
-        static void RenderNewPolygon(const Viewport &vp, const ViewportRenderNewPolygon *poly, glm::mat4 &matrix);
+        static void RenderNewActor(const Viewport &vp, const ViewportRenderNewActor *actor, const glm::mat4 &matrix);
+        static void RenderNewPolygon(const Viewport &vp, const ViewportRenderNewPolygon *poly, const glm::mat4 &matrix);
 
         static bool SectorIsCulled(const Sector &sector, const Viewport &vp);
+
+        static void RenderActor(const Actor &a, const glm::mat4 &matrix, const Viewport &vp);
+
+
+        static void RenderBoxRdef(const BoxRenderDefinition *rdef,
+                                  const Actor &actor,
+                                  const glm::mat4 &worldMatrix,
+                                  const glm::mat4 &matrix);
+
+        static void RenderModelRdef(const ModelRenderDefinition *rdef,
+                                    const Actor &actor,
+                                    const glm::mat4 &worldMatrix,
+                                    const glm::mat4 &matrix);
+
+        static void RenderOrientationRdef(const OrientationRenderDefinition *rdef,
+                                          const Actor &actor,
+                                          const glm::mat4 &matrix,
+                                          const Viewport &vp);
+
+        static void RenderPointRdef(const PointRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix);
+
+        static void RenderSpriteRdef(const SpriteRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix);
 };

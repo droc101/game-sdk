@@ -45,6 +45,11 @@ float *Color::GetDataPointer()
     return color.data();
 }
 
+const float *Color::GetDataPointer() const
+{
+    return color.data();
+}
+
 void Color::WriteFloats(DataWriter &writer) const
 {
     writer.Write<float>(color.at(0));

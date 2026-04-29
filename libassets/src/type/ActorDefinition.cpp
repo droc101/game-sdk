@@ -6,6 +6,8 @@
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
+#include <libassets/type/renderDefs/OrientationRenderDefinition.h>
+#include <libassets/type/renderDefs/PointRenderDefinition.h>
 #include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Error.h>
@@ -41,10 +43,25 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
     definition.description = definitionJson.value("description", "");
     definition.isVirtual = definitionJson.value("virtual", false);
 
-    if (definitionJson.contains("display"))
+    if (definitionJson.contains("renderers"))
     {
-        const nlohmann::json &renderDef = definitionJson.at("display");
-        definition.renderDefinition = RenderDefinition(renderDef);
+        const nlohmann::json &renderDefs = definitionJson.at("renderers");
+        for (const auto &[key, value]: renderDefs.items())
+        {
+            Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
+            std::unique_ptr<RenderDefinition> rdef = RenderDefinition::Create(value, e);
+            if (e == Error::ErrorCode::OK)
+            {
+                definition.renderDefinitions.push_back(std::move(rdef));
+            }
+        }
+    }
+
+    if (definition.renderDefinitions.empty())
+    {
+        definition.renderDefinitions.push_back(std::make_shared<PointRenderDefinition>(PointRenderDefinition()));
+        definition.renderDefinitions
+                .push_back(std::make_shared<OrientationRenderDefinition>(OrientationRenderDefinition()));
     }
 
     if (definitionJson.contains("inputs"))

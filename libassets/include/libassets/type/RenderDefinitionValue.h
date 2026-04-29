@@ -18,6 +18,11 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
 {
     public:
         RenderDefinitionValue() = default;
+        explicit RenderDefinitionValue(const T &defaultValue)
+        {
+            usesParam = false;
+            value = defaultValue;
+        }
         RenderDefinitionValue(const nlohmann::json &json, const std::string &key, const T &defaultValue)
         {
             if constexpr (std::same_as<T, std::string>)
@@ -25,7 +30,7 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
                 if (json.contains(key) && json.at(key).type() == nlohmann::detail::value_t::string)
                 {
                     const std::string jsonValue = json.value(key, defaultValue);
-                    if (value.starts_with("$"))
+                    if (jsonValue.starts_with("$"))
                     {
                         usesParam = true;
                         paramName = jsonValue.substr(1, jsonValue.length() - 1);

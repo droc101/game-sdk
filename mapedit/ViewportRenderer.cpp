@@ -4,11 +4,20 @@
 
 #include "ViewportRenderer.h"
 #include <array>
+#include <cassert>
 #include <cstddef>
+#include <game_sdk/gl/GLHelper.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
+#include <libassets/type/renderDefs/BoxRenderDefinition.h>
+#include <libassets/type/renderDefs/ModelRenderDefinition.h>
+#include <libassets/type/renderDefs/OrientationRenderDefinition.h>
+#include <libassets/type/renderDefs/PointRenderDefinition.h>
+#include <libassets/type/renderDefs/RenderDefinition.h>
+#include <libassets/type/renderDefs/SpriteRenderDefinition.h>
 #include <libassets/type/Sector.h>
+#include <memory>
 #include "MapEditor.h"
 #include "MapRenderer.h"
 #include "tools/EditorTool.h"
@@ -22,7 +31,7 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
 
     for (const Actor &actor: MapEditor::map.actors)
     {
-        MapRenderer::RenderActor(actor, matrix, vp);
+        RenderActor(actor, matrix, vp);
     }
 
     for (size_t sectorIndex = 0; sectorIndex < MapEditor::map.sectors.size(); sectorIndex++)
@@ -84,7 +93,7 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
 void ViewportRenderer::RenderSector(const Viewport &vp,
                                     const ViewportRenderSettings &settings,
                                     const size_t sectorIndex,
-                                    glm::mat4 &matrix)
+                                    const glm::mat4 &matrix)
 {
     const Sector &sector = MapEditor::map.sectors.at(sectorIndex);
 
@@ -152,50 +161,9 @@ void ViewportRenderer::RenderSector(const Viewport &vp,
     }
 }
 
-void ViewportRenderer::RenderPoint(const ViewportRenderPoint *point, glm::mat4 &matrix)
+void ViewportRenderer::RenderPoint(const ViewportRenderPoint *point, const glm::mat4 &matrix)
 {
     MapRenderer::RenderBillboardPoint(point->pos, point->size, point->color, matrix);
-}
-
-void ViewportRenderer::RenderNewActor(Viewport &vp, const ViewportRenderNewActor *actor, glm::mat4 &matrix)
-{
-    const ActorDefinition &newActorDef = MapEditor::adm.GetActorDefinition(actor->className);
-    Actor tempActor{};
-    tempActor.ApplyDefinition(newActorDef, true);
-    tempActor.position = actor->position;
-    tempActor.rotation = actor->rotation;
-    tempActor.className = actor->className;
-    MapRenderer::RenderActor(tempActor, matrix, vp);
-}
-
-void ViewportRenderer::RenderNewPolygon(const Viewport &vp, const ViewportRenderNewPolygon *poly, glm::mat4 &matrix)
-{
-    for (size_t vertexIndex = 0; vertexIndex < poly->points.size(); vertexIndex++)
-    {
-        const glm::vec2 &start2 = poly->points.at(vertexIndex);
-        glm::vec2 end2 = poly->points.at((vertexIndex + 1) % poly->points.size());
-        if (vertexIndex == poly->points.size() - 1)
-        {
-            const glm::vec3 worldSpaceHover = vp.GetWorldSpaceMousePos();
-            end2 = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
-        }
-        const glm::vec3 startCeiling = glm::vec3(start2.x, poly->ceiling, start2.y);
-        const glm::vec3 endCeiling = glm::vec3(end2.x, poly->ceiling, end2.y);
-        const glm::vec3 startFloor = glm::vec3(start2.x, poly->floor, start2.y);
-        const glm::vec3 endFloor = glm::vec3(end2.x, poly->floor, end2.y);
-
-        if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
-        {
-            MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), 10, Color(1, 0, 0, 1), matrix);
-        }
-        if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
-        {
-            MapRenderer::RenderLine(startFloor, endFloor, Color(1, 1, 1, 1), matrix, 4);
-            MapRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
-        }
-
-        MapRenderer::RenderLine(startCeiling, endCeiling, Color(1, 1, 1, 1), matrix, 4);
-    }
 }
 
 void ViewportRenderer::RenderNewPrimitive(Viewport &vp, const ViewportRenderNewPrimitive *prim, glm::mat4 &matrix)
@@ -242,6 +210,49 @@ void ViewportRenderer::RenderNewPrimitive(Viewport &vp, const ViewportRenderNewP
             MapRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 1, 1), matrix, 4);
             MapRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, .6, 1), matrix, 2);
         }
+    }
+}
+
+void ViewportRenderer::RenderNewActor(const Viewport &vp, const ViewportRenderNewActor *actor, const glm::mat4 &matrix)
+{
+    const ActorDefinition &newActorDef = MapEditor::adm.GetActorDefinition(actor->className);
+    Actor tempActor{};
+    tempActor.ApplyDefinition(newActorDef, true);
+    tempActor.position = actor->position;
+    tempActor.rotation = actor->rotation;
+    tempActor.className = actor->className;
+    RenderActor(tempActor, matrix, vp);
+}
+
+void ViewportRenderer::RenderNewPolygon(const Viewport &vp,
+                                        const ViewportRenderNewPolygon *poly,
+                                        const glm::mat4 &matrix)
+{
+    for (size_t vertexIndex = 0; vertexIndex < poly->points.size(); vertexIndex++)
+    {
+        const glm::vec2 &start2 = poly->points.at(vertexIndex);
+        glm::vec2 end2 = poly->points.at((vertexIndex + 1) % poly->points.size());
+        if (vertexIndex == poly->points.size() - 1)
+        {
+            const glm::vec3 worldSpaceHover = vp.GetWorldSpaceMousePos();
+            end2 = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
+        }
+        const glm::vec3 startCeiling = glm::vec3(start2.x, poly->ceiling, start2.y);
+        const glm::vec3 endCeiling = glm::vec3(end2.x, poly->ceiling, end2.y);
+        const glm::vec3 startFloor = glm::vec3(start2.x, poly->floor, start2.y);
+        const glm::vec3 endFloor = glm::vec3(end2.x, poly->floor, end2.y);
+
+        if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+        {
+            MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), 10, Color(1, 0, 0, 1), matrix);
+        }
+        if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
+        {
+            MapRenderer::RenderLine(startFloor, endFloor, Color(1, 1, 1, 1), matrix, 4);
+            MapRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
+        }
+
+        MapRenderer::RenderLine(startCeiling, endCeiling, Color(1, 1, 1, 1), matrix, 4);
     }
 }
 
@@ -296,4 +307,105 @@ bool ViewportRenderer::SectorIsCulled(const Sector &sector, const Viewport &vp)
         }
     }
     return false;
+}
+
+void ViewportRenderer::RenderActor(const Actor &a, const glm::mat4 &matrix, const Viewport &vp)
+{
+    const ActorDefinition &definition = MapEditor::adm.GetActorDefinition(a.className);
+
+    glm::mat4 worldMatrix = glm::identity<glm::mat4>();
+    worldMatrix = glm::translate(worldMatrix, a.position);
+    worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.y), glm::vec3(0, 1, 0));
+    worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.x), glm::vec3(1, 0, 0));
+    worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.z), glm::vec3(0, 0, 1));
+
+    for (const std::shared_ptr<RenderDefinition> &rdef: definition.renderDefinitions)
+    {
+        switch (rdef.get()->GetType())
+        {
+            case RenderDefinition::RenderDefinitionType::RD_TYPE_BOX:
+                RenderBoxRdef(dynamic_cast<BoxRenderDefinition *>(rdef.get()), a, worldMatrix, matrix);
+                break;
+            case RenderDefinition::RenderDefinitionType::RD_TYPE_MODEL:
+                RenderModelRdef(dynamic_cast<ModelRenderDefinition *>(rdef.get()), a, worldMatrix, matrix);
+                break;
+            case RenderDefinition::RenderDefinitionType::RD_TYPE_ORIENTATION:
+                RenderOrientationRdef(dynamic_cast<OrientationRenderDefinition *>(rdef.get()), a, matrix, vp);
+                break;
+            case RenderDefinition::RenderDefinitionType::RD_TYPE_POINT:
+                RenderPointRdef(dynamic_cast<PointRenderDefinition *>(rdef.get()), a, matrix);
+                break;
+            case RenderDefinition::RenderDefinitionType::RD_TYPE_SPRITE:
+                RenderSpriteRdef(dynamic_cast<SpriteRenderDefinition *>(rdef.get()), a, matrix);
+                break;
+            default:
+            case RenderDefinition::RenderDefinitionType::RD_TYPE_UNKNOWN:
+                assert(false); // should be impossible
+                break;
+        }
+    }
+}
+
+void ViewportRenderer::RenderBoxRdef(const BoxRenderDefinition *rdef,
+                                     const Actor &actor,
+                                     const glm::mat4 &worldMatrix,
+                                     const glm::mat4 &matrix)
+{
+    const Color c = rdef->GetColor(actor);
+    const glm::vec3 boxExtents = rdef->GetExtents(actor);
+    const std::array<glm::vec2, 4> boxPoints = {
+        glm::vec2(-boxExtents.x / 2.0f, -boxExtents.z / 2.0f),
+        glm::vec2(-boxExtents.x / 2.0f, boxExtents.z / 2.0f),
+        glm::vec2(boxExtents.x / 2.0f, boxExtents.z / 2.0f),
+        glm::vec2(boxExtents.x / 2.0f, -boxExtents.z / 2.0f),
+    };
+    for (size_t i = 0; i < boxPoints.size(); i++)
+    {
+        const size_t nextIndex = (i + 1) % boxPoints.size();
+        const glm::vec3 startPointCeil = worldMatrix * glm::vec4(boxPoints.at(i).x, boxExtents.y, boxPoints.at(i).y, 1);
+        const glm::vec3 startPointFloor = worldMatrix *
+                                          glm::vec4(boxPoints.at(i).x, -boxExtents.y, boxPoints.at(i).y, 1);
+        const glm::vec3 endPointCeil = worldMatrix *
+                                       glm::vec4(boxPoints.at(nextIndex).x, boxExtents.y, boxPoints.at(nextIndex).y, 1);
+        const glm::vec3 endPointFloor = worldMatrix * glm::vec4(boxPoints.at(nextIndex).x,
+                                                                -boxExtents.y,
+                                                                boxPoints.at(nextIndex).y,
+                                                                1);
+        MapRenderer::RenderLine(startPointCeil, endPointCeil, c, matrix, 2);
+        MapRenderer::RenderLine(startPointFloor, endPointFloor, c, matrix, 2);
+        MapRenderer::RenderLine(startPointCeil, startPointFloor, c, matrix, 2);
+    }
+}
+
+void ViewportRenderer::RenderModelRdef(const ModelRenderDefinition *rdef,
+                                       const Actor &actor,
+                                       const glm::mat4 &worldMatrix,
+                                       const glm::mat4 &matrix)
+{
+    if (MapEditor::drawModels)
+    {
+        MapRenderer::RenderModel(rdef->GetModel(actor), matrix, worldMatrix, rdef->GetColor(actor));
+    }
+}
+
+void ViewportRenderer::RenderOrientationRdef(const OrientationRenderDefinition *rdef,
+                                             const Actor &actor,
+                                             const glm::mat4 &matrix,
+                                             const Viewport &vp)
+{
+    MapRenderer::RenderUnitVector(actor.position, actor.rotation, rdef->GetColor(actor), matrix, 2, vp.GetZoom() / 20);
+}
+
+void ViewportRenderer::RenderPointRdef(const PointRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix)
+{
+    MapRenderer::RenderBillboardPoint(actor.position, rdef->GetPointSize(actor), rdef->GetColor(actor), matrix);
+}
+
+void ViewportRenderer::RenderSpriteRdef(const SpriteRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix)
+{
+    MapRenderer::RenderBillboardSprite(actor.position,
+                                       rdef->GetPointSize(actor),
+                                       rdef->GetTexture(actor),
+                                       rdef->GetTintColor(actor),
+                                       matrix);
 }

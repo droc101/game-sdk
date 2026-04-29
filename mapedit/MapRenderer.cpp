@@ -12,8 +12,6 @@
 #include <glm/ext.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <libassets/asset/ModelAsset.h>
-#include <libassets/type/Actor.h>
-#include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/ModelLod.h>
 #include <libassets/util/DataWriter.h>
@@ -204,7 +202,7 @@ void MapRenderer::RenderViewportGrid(const Viewport &vp)
 void MapRenderer::RenderLine(const glm::vec3 start,
                              const glm::vec3 end,
                              Color color,
-                             glm::mat4 &matrix,
+                             const glm::mat4 &matrix,
                              const float thickness)
 {
     glUseProgram(genericProgram);
@@ -235,7 +233,10 @@ void MapRenderer::RenderLine(const glm::vec3 start,
     glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(vertices.size()));
 }
 
-void MapRenderer::RenderBillboardPoint(const glm::vec3 position, const float pointSize, Color color, glm::mat4 &matrix)
+void MapRenderer::RenderBillboardPoint(const glm::vec3 position,
+                                       const float pointSize,
+                                       Color color,
+                                       const glm::mat4 &matrix)
 {
     glUseProgram(genericProgram);
 
@@ -262,7 +263,7 @@ void MapRenderer::RenderBillboardSprite(const glm::vec3 position,
                                         const float pointSize,
                                         const std::string &texture,
                                         Color color,
-                                        glm::mat4 &matrix)
+                                        const glm::mat4 &matrix)
 {
     glUseProgram(spriteProgram);
 
@@ -295,7 +296,7 @@ void MapRenderer::RenderBillboardSprite(const glm::vec3 position,
 void MapRenderer::RenderUnitVector(const glm::vec3 origin,
                                    const glm::vec3 eulerAngles,
                                    const Color color,
-                                   glm::mat4 &matrix,
+                                   const glm::mat4 &matrix,
                                    const float thickness,
                                    const float length)
 {
@@ -311,77 +312,26 @@ void MapRenderer::RenderUnitVector(const glm::vec3 origin,
     RenderLine(origin, origin + lenVector, color, matrix, thickness);
 }
 
-void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix, Viewport &vp)
+void MapRenderer::RenderModel(std::string model,
+                              const glm::mat4 &viewMatrix,
+                              const glm::mat4 &worldMatrix,
+                              const Color &c)
 {
-    const ActorDefinition &definition = MapEditor::adm.GetActorDefinition(a.className);
-    Color c = definition.renderDefinition.GetColor(a);
-    const std::string texture = definition.renderDefinition.GetTexture(a);
-
-    glm::mat4 worldMatrix = glm::identity<glm::mat4>();
-    worldMatrix = glm::translate(worldMatrix, a.position);
-    worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.y), glm::vec3(0, 1, 0));
-    worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.x), glm::vec3(1, 0, 0));
-    worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.z), glm::vec3(0, 0, 1));
-
-    if (texture.empty())
-    {
-        RenderBillboardPoint(a.position, 10, c, matrix);
-    } else
-    {
-        RenderBillboardSprite(a.position, 20, texture, c, matrix);
-    }
-
-    if (definition.renderDefinition.GetDirectional(a))
-    {
-        RenderUnitVector(a.position, a.rotation, c, matrix, 2, vp.GetZoom() / 20);
-    }
-
-    std::string model = definition.renderDefinition.GetModel(a);
-    if ((!model.empty()) && MapEditor::drawModels)
+    if (!model.empty())
     {
         if (!modelBuffers.contains(model))
         {
-            const std::string modelPath = SharedMgr::Get().pathManager.GetAssetPath(model);
-            if (modelPath.empty())
+            const std::string absolutePath = SharedMgr::Get().pathManager.GetAssetPath(model);
+            if (absolutePath.empty())
             {
                 model = "model/error.gmdl";
             } else
             {
-                const ModelBuffer buf = LoadModel(modelPath);
+                const ModelBuffer buf = LoadModel(absolutePath);
                 modelBuffers[model] = buf;
             }
         }
-        RenderModel(modelBuffers.at(model), matrix, worldMatrix, c);
-    }
-
-    if (definition.renderDefinition.HasBoxRenderer(a))
-    {
-        const glm::vec3 boxExtents = definition.renderDefinition.GetBoxExtents(a);
-        const std::array<glm::vec2, 4> boxPoints = {
-            glm::vec2(-boxExtents.x / 2.0f, -boxExtents.z / 2.0f),
-            glm::vec2(-boxExtents.x / 2.0f, boxExtents.z / 2.0f),
-            glm::vec2(boxExtents.x / 2.0f, boxExtents.z / 2.0f),
-            glm::vec2(boxExtents.x / 2.0f, -boxExtents.z / 2.0f),
-        };
-        for (size_t i = 0; i < boxPoints.size(); i++)
-        {
-            const size_t nextIndex = (i + 1) % boxPoints.size();
-            const glm::vec3 startPointCeil = worldMatrix *
-                                             glm::vec4(boxPoints.at(i).x, boxExtents.y, boxPoints.at(i).y, 1);
-            const glm::vec3 startPointFloor = worldMatrix *
-                                              glm::vec4(boxPoints.at(i).x, -boxExtents.y, boxPoints.at(i).y, 1);
-            const glm::vec3 endPointCeil = worldMatrix * glm::vec4(boxPoints.at(nextIndex).x,
-                                                                   boxExtents.y,
-                                                                   boxPoints.at(nextIndex).y,
-                                                                   1);
-            const glm::vec3 endPointFloor = worldMatrix * glm::vec4(boxPoints.at(nextIndex).x,
-                                                                    -boxExtents.y,
-                                                                    boxPoints.at(nextIndex).y,
-                                                                    1);
-            RenderLine(startPointCeil, endPointCeil, c, matrix, 2);
-            RenderLine(startPointFloor, endPointFloor, c, matrix, 2);
-            RenderLine(startPointCeil, startPointFloor, c, matrix, 2);
-        }
+        MapRenderer::RenderModel(modelBuffers.at(model), viewMatrix, worldMatrix, c);
     }
 }
 
@@ -419,7 +369,10 @@ MapRenderer::ModelBuffer MapRenderer::LoadModel(const std::string &path)
     return buf;
 }
 
-void MapRenderer::RenderModel(ModelBuffer &buffer, glm::mat4 &viewMatrix, glm::mat4 &worldMatrix, Color &c)
+void MapRenderer::RenderModel(ModelBuffer &buffer,
+                              const glm::mat4 &viewMatrix,
+                              const glm::mat4 &worldMatrix,
+                              const Color &c)
 {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glUseProgram(genericProgram);
