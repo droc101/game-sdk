@@ -9,7 +9,10 @@ fetch_clipper2()
 
 FetchContent_Declare(
         Luna
-        SOURCE_DIR ${CMAKE_SOURCE_DIR}/../Luna
+        GIT_REPOSITORY https://github.com/NBT22/Luna
+        GIT_TAG 0.3.0
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
 )
 FetchContent_MakeAvailable(Luna)
 
