@@ -8,6 +8,7 @@
 #include <libassets/type/renderDefs/PointRenderDefinition.h>
 #include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/renderDefs/SpriteRenderDefinition.h>
+#include <libassets/type/renderDefs/WallRenderDefinition.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
 #include <memory>
@@ -44,6 +45,9 @@ std::unique_ptr<RenderDefinition> RenderDefinition::Create(const nlohmann::json 
         case RenderDefinitionType::RD_TYPE_SPRITE:
             output = std::make_unique<SpriteRenderDefinition>(json);
             break;
+        case RenderDefinitionType::RD_TYPE_WALL:
+            output = std::make_unique<WallRenderDefinition>(json);
+            break;
     }
 
     output->type = type;
@@ -78,6 +82,10 @@ RenderDefinition::RenderDefinitionType RenderDefinition::ParseType(const std::st
     if (type == "sprite" || type == "texture")
     {
         return RenderDefinitionType::RD_TYPE_SPRITE;
+    }
+    if (type == "wall")
+    {
+        return RenderDefinitionType::RD_TYPE_WALL;
     }
     return RenderDefinitionType::RD_TYPE_UNKNOWN;
 }

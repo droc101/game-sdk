@@ -143,6 +143,8 @@ add_library(assets SHARED
         include/libassets/type/renderDefs/OrientationRenderDefinition.h
         src/type/renderDefs/BoxRenderDefinition.cpp
         include/libassets/type/renderDefs/BoxRenderDefinition.h
+        src/type/renderDefs/WallRenderDefinition.cpp
+        include/libassets/type/renderDefs/WallRenderDefinition.h
 )
 
 set_target_properties(assets PROPERTIES

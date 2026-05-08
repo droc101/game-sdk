@@ -22,6 +22,7 @@ class RenderDefinition
             RD_TYPE_ORIENTATION,
             RD_TYPE_POINT,
             RD_TYPE_SPRITE,
+            RD_TYPE_WALL,
         };
 
         virtual ~RenderDefinition() = default;

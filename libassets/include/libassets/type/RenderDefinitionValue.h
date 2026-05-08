@@ -5,6 +5,7 @@
 #pragma once
 
 #include <concepts>
+#include <cstdint>
 #include <libassets/type/Color.h>
 #include <libassets/type/Param.h>
 #include <string>
@@ -25,6 +26,7 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
         }
         RenderDefinitionValue(const nlohmann::json &json, const std::string &key, const T &defaultValue)
         {
+            vectorComponent = VectorComponent::NONE;
             if constexpr (std::same_as<T, std::string>)
             {
                 if (json.contains(key) && json.at(key).type() == nlohmann::detail::value_t::string)
@@ -103,8 +105,28 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
                         const std::string floatValue = json.value(key, "");
                         if (floatValue.starts_with("$"))
                         {
-                            usesParam = true;
-                            paramName = floatValue.substr(1, floatValue.length() - 1);
+                            if (floatValue.at(floatValue.length() - 2) == ':')
+                            {
+                                usesParam = true;
+                                switch (floatValue.at(floatValue.length() - 1))
+                                {
+                                    case 'x':
+                                        vectorComponent = VectorComponent::X;
+                                        break;
+                                    case 'y':
+                                        vectorComponent = VectorComponent::Y;
+                                        break;
+                                    case 'Z':
+                                        vectorComponent = VectorComponent::Z;
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                paramName = floatValue.substr(1, floatValue.length() - 3);
+                            } else
+                            {
+                                paramName = floatValue.substr(1, floatValue.length() - 1);
+                            }
                         } else
                         {
                             value = defaultValue;
@@ -123,6 +145,37 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
             {
                 if (params.contains(paramName))
                 {
+                    if constexpr (std::same_as<T, float>)
+                    {
+                        if (vectorComponent != VectorComponent::NONE)
+                        {
+                            const Param &p = params.at(paramName);
+                            if (vectorComponent == VectorComponent::Z)
+                            {
+                                return p.Get<glm::vec3>(glm::vec3{defaultValue}).z;
+                            }
+                            if (p.GetType() == Param::ParamType::PARAM_TYPE_VEC2)
+                            {
+                                if (vectorComponent == VectorComponent::X)
+                                {
+                                    return p.Get<glm::vec2>(glm::vec2{defaultValue}).x;
+                                } else
+                                {
+                                    return p.Get<glm::vec2>(glm::vec2{defaultValue}).y;
+                                }
+                            }
+                            if (p.GetType() == Param::ParamType::PARAM_TYPE_VEC3)
+                            {
+                                if (vectorComponent == VectorComponent::X)
+                                {
+                                    return p.Get<glm::vec3>(glm::vec3{defaultValue}).x;
+                                } else
+                                {
+                                    return p.Get<glm::vec3>(glm::vec3{defaultValue}).y;
+                                }
+                            }
+                        }
+                    }
                     return params.at(paramName).Get<T>(defaultValue);
                 }
             } else
@@ -133,7 +186,16 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
         }
 
     private:
+        enum class VectorComponent: uint8_t
+        {
+            NONE,
+            X,
+            Y,
+            Z
+        };
+
         bool usesParam = false;
         std::string paramName{};
         T value{};
+        VectorComponent vectorComponent;
 };

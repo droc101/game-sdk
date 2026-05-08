@@ -364,6 +364,9 @@ void ViewportRenderer::RenderActor(const Actor &a, const glm::mat4 &matrix, cons
             case RenderDefinition::RenderDefinitionType::RD_TYPE_SPRITE:
                 RenderSpriteRdef(dynamic_cast<SpriteRenderDefinition *>(rdef.get()), a, matrix);
                 break;
+            case RenderDefinition::RenderDefinitionType::RD_TYPE_WALL:
+                RenderWallRdef(dynamic_cast<WallRenderDefinition *>(rdef.get()), a, worldMatrix, matrix);
+                break;
             default:
             case RenderDefinition::RenderDefinitionType::RD_TYPE_UNKNOWN:
                 assert(false); // should be impossible
@@ -527,4 +530,30 @@ void ViewportRenderer::RenderSpriteRdef(const SpriteRenderDefinition *rdef, cons
                                        rdef->GetTexture(actor),
                                        rdef->GetTintColor(actor),
                                        matrix);
+}
+
+void ViewportRenderer::RenderWallRdef(const WallRenderDefinition *rdef,
+                                      const Actor &actor,
+                                      const glm::mat4 &worldMatrix,
+                                      const glm::mat4 &matrix)
+{
+    const glm::vec2 size = rdef->GetSize(actor);
+    const glm::vec2 localOrigin = rdef->GetLocalCenter(actor);
+    const float bottom = localOrigin.y - (size.y / 2.0f);
+    const float top = localOrigin.y + (size.y / 2.0f);
+    const glm::vec2 startPoint = rdef->GetZAxisOrientation(actor) ? glm::vec2(0, localOrigin.x - size.x / 2.0f)
+                                                                  : glm::vec2(localOrigin.x - size.x / 2.0f, 0);
+    const glm::vec2 endPoint = rdef->GetZAxisOrientation(actor) ? glm::vec2(0, localOrigin.x + size.x / 2.0f)
+                                                                : glm::vec2(localOrigin.x + size.x / 2.0f, 0);
+
+    const glm::vec3 startCeiling = worldMatrix * glm::vec4(startPoint.x, top, startPoint.y, 1.0f);
+    const glm::vec3 endCeiling = worldMatrix * glm::vec4(endPoint.x, top, endPoint.y, 1.0f);
+    const glm::vec3 startFloor = worldMatrix * glm::vec4(startPoint.x, bottom, startPoint.y, 1.0f);
+    const glm::vec3 endFloor = worldMatrix * glm::vec4(endPoint.x, bottom, endPoint.y, 1.0f);
+
+    const Color c = rdef->GetColor(actor);
+    MapRenderer::RenderLine(startCeiling, endCeiling, c, matrix, 2.0f);
+    MapRenderer::RenderLine(startFloor, endFloor, c, matrix, 2.0f);
+    MapRenderer::RenderLine(startCeiling, startFloor, c, matrix, 2.0f);
+    MapRenderer::RenderLine(endCeiling, endFloor, c, matrix, 2.0f);
 }

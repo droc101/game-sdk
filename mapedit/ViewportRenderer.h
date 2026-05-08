@@ -16,6 +16,7 @@
 #include <libassets/type/Sector.h>
 #include <string>
 #include <vector>
+#include "libassets/type/renderDefs/WallRenderDefinition.h"
 #include "tools/EditorTool.h"
 #include "Viewport.h"
 
@@ -140,4 +141,9 @@ class ViewportRenderer
         static void RenderPointRdef(const PointRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix);
 
         static void RenderSpriteRdef(const SpriteRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix);
+
+        static void RenderWallRdef(const WallRenderDefinition *rdef,
+                                   const Actor &actor,
+                                   const glm::mat4 &worldMatrix,
+                                   const glm::mat4 &matrix);
 };
