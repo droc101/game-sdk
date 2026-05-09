@@ -20,7 +20,7 @@ class OptionsWindow
 
         bool visible = false;
 
-        static void gamePathCallback(const std::string &path);
+        static void GamePathCallback(const std::string &path);
 
-        static void assetsPathCallback(const std::string &path);
+        static void AssetsPathCallback(const std::string &path);
 };

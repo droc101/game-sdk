@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <cstdint>
 #include <SDL3/SDL_process.h>
 #include <SDL3/SDL_timer.h>
 #include <string>
@@ -21,9 +20,7 @@ class DesktopInterface
          * @param arguments Arguments to pass to the process
          * @param exitCode Where to store the process's exit code, can be nullptr
          */
-        bool ExecuteProcess(const std::string &executable,
-                                   const std::vector<std::string> &arguments,
-                                   int *exitCode);
+        bool ExecuteProcess(const std::string &executable, const std::vector<std::string> &arguments, int *exitCode);
 
         /**
          * Create and start an SDL_Process

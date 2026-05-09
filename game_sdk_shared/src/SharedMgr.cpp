@@ -2,10 +2,6 @@
 // Created by droc101 on 7/1/25.
 //
 
-#include <cassert>
-#include <cstdio>
-#include <filesystem>
-#include <format>
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
@@ -17,19 +13,10 @@
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/asset/DataAsset.h>
-#include <libassets/type/ActorDefinition.h>
-#include <libassets/type/OptionDefinition.h>
-#include <libassets/type/paramDefs/OptionParamDefinition.h>
-#include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/util/Error.h>
-#include <memory>
-#include <ranges>
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_misc.h>
-#include <stdexcept>
 #include <string>
-#include <utility>
-#include <vector>
 
 #ifdef WIN32
 #include <direct.h> // provides chdir
@@ -137,5 +124,7 @@ void SharedMgr::UpdateAssetPaths()
     {
         return;
     }
-    pathManager = SearchPathManager(gameConfig, Options::Get().GetExecutablePath());
+    pathManager = SearchPathManager(gameConfig,
+                                    Options::Get().GetExecutablePath(),
+                                    Options::Get().GetGameConfigParentPath());
 }

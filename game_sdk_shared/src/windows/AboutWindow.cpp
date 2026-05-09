@@ -5,15 +5,14 @@
 #include <format>
 #include <fstream>
 #include <game_sdk/SDKWindow.h>
-#include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/AboutWindow.h>
 #include <imgui.h>
 #include <libassets/libassets.h>
+#include <libassets/util/SearchPathManager.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <ranges>
 #include <sstream>
 #include <string>
-#include <utility>
 #include <vector>
 
 AboutWindow &AboutWindow::Get()
@@ -51,9 +50,7 @@ void AboutWindow::Render()
         ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_Appearing);
         ImGui::Begin("About the GAME SDK",
                      &visible,
-                     ImGuiWindowFlags_NoCollapse |
-                             ImGuiWindowFlags_NoSavedSettings |
-                             ImGuiWindowFlags_NoDocking);
+                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking);
         ImGui::TextUnformatted("Development & Authoring tools for");
         ImGui::SameLine();
         ImGui::TextLinkOpenURL("GAME", "https://github.com/droc101/c-game-engine");

@@ -9,19 +9,21 @@
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
+#include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/SetupWindow.h>
 #include <imgui.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
+#include <libassets/util/SearchPathManager.h>
 #include <nlohmann/json.hpp>
+#include <SDL3/SDL_error.h>
 #include <SDL3/SDL_filesystem.h>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include "game_sdk/SharedMgr.h"
-
 static std::string sdkPath;
-static nlohmann::ordered_json launcher_json;
+static nlohmann::ordered_json launcherJson;
 
 static std::string selectionCategory;
 static std::string selectionIndex;
@@ -36,16 +38,16 @@ static Error::ErrorCode LoadLauncherConfig()
     std::ostringstream ss;
     ss << file.rdbuf();
     const std::string j = ss.str();
-    launcher_json = nlohmann::ordered_json::parse(j);
-    if (launcher_json.is_discarded())
+    launcherJson = nlohmann::ordered_json::parse(j);
+    if (launcherJson.is_discarded())
     {
         file.close();
         // printf("File %s is not valid JSON\n", path.c_str());
         return Error::ErrorCode::INCORRECT_FORMAT;
     }
 
-    selectionCategory = launcher_json.at("categories").items().begin().key();
-    selectionIndex = launcher_json.at("categories").items().begin().value().items().begin().key();
+    selectionCategory = launcherJson.at("categories").items().begin().key();
+    selectionIndex = launcherJson.at("categories").items().begin().value().items().begin().key();
 
     return Error::ErrorCode::OK;
 }
@@ -72,7 +74,7 @@ static void ParsePath(std::string &path)
 
 static void LaunchSelectedTool()
 {
-    const nlohmann::json item = launcher_json.at("categories").at(selectionCategory).at(selectionIndex);
+    const nlohmann::json item = launcherJson.at("categories").at(selectionCategory).at(selectionIndex);
     if (item.contains("binary"))
     {
         std::string workdir = item.value("workdir", "$SDKDIR");
@@ -93,7 +95,7 @@ static void LaunchSelectedTool()
             ParsePath(arg);
             args.push_back(arg);
         }
-        printf("Launching process \"%s\"...\n", folder.c_str());
+        Logger::Info("Launching process \"{}\"...", folder.c_str());
         if (!DesktopInterface::Get().ExecuteProcessNonBlocking(folder, args))
         {
             SDKWindow::Get().ErrorMessage(std::format("Failed to launch process: {}", SDL_GetError()));
@@ -119,19 +121,19 @@ static void Render()
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
-                                             ImGuiWindowFlags_NoMove |
-                                             ImGuiWindowFlags_NoSavedSettings |
-                                             ImGuiWindowFlags_NoBringToFrontOnFocus;
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoDecoration |
+                                              ImGuiWindowFlags_NoMove |
+                                              ImGuiWindowFlags_NoSavedSettings |
+                                              ImGuiWindowFlags_NoBringToFrontOnFocus;
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::Begin("GAME SDK", nullptr, windowFlags);
+    ImGui::Begin("GAME SDK", nullptr, WINDOW_FLAGS);
     ImGui::PopStyleVar();
 
     ImVec2 wndArea = ImGui::GetContentRegionAvail();
 
     if (ImGui::BeginChild("##list", ImVec2(wndArea.x, wndArea.y - 36), ImGuiChildFlags_Borders))
     {
-        for (const auto &[category, items]: launcher_json.at("categories").items())
+        for (const auto &[category, items]: launcherJson.at("categories").items())
         {
             ImGui::SeparatorText(category.c_str());
             for (const auto &[key, value]: items.items())
@@ -140,10 +142,10 @@ static void Render()
                 (void)SharedMgr::Get().textureCache.GetTextureID(value.value("icon", "file"), textureId);
                 const std::string title = std::format("##item_{}_{}", category, key);
                 const bool selected = ImGui::Selectable(title.c_str(),
-                                                  selectionCategory == category && selectionIndex == key,
-                                                  ImGuiSelectableFlags_AllowOverlap |
-                                                          ImGuiSelectableFlags_SpanAllColumns,
-                                                  {0, 18});
+                                                        selectionCategory == category && selectionIndex == key,
+                                                        ImGuiSelectableFlags_AllowOverlap |
+                                                                ImGuiSelectableFlags_SpanAllColumns,
+                                                        {0, 18});
                 if (selected)
                 {
                     selectionCategory = category;
@@ -203,7 +205,7 @@ int main()
     const Error::ErrorCode c = LoadLauncherConfig();
     if (c != Error::ErrorCode::OK)
     {
-        printf("Failed to load launcher.json: %s\n", Error::ErrorString(c).c_str());
+        Logger::Error("Failed to load launcher.json: %s", Error::ErrorString(c).c_str());
         return -1;
     }
 

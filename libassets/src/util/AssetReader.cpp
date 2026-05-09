@@ -10,6 +10,7 @@
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <vector>
 #include <zconf.h>
 #include <zlib.h>
@@ -56,7 +57,7 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
 
     if (inflateInit2(&zStream, MAX_WBITS | 16) != Z_OK)
     {
-        printf("inflateInit2() failed with error: %s", zStream.msg == nullptr ? "(null)" : zStream.msg);
+        Logger::Error("inflateInit2() failed with error: {}", zStream.msg == nullptr ? "(null)" : zStream.msg);
         return Error::ErrorCode::COMPRESSION_ERROR;
     }
 
@@ -65,7 +66,7 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
     {
         if (inflateReturnValue != Z_OK)
         {
-            printf("inflate() failed with error: %s", zStream.msg == nullptr ? "(null)" : zStream.msg);
+            Logger::Error("inflate() failed with error: {}", zStream.msg == nullptr ? "(null)" : zStream.msg);
             return Error::ErrorCode::COMPRESSION_ERROR;
         }
         inflateReturnValue = inflate(&zStream, Z_NO_FLUSH);
@@ -73,7 +74,7 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
 
     if (inflateEnd(&zStream) != Z_OK)
     {
-        printf("inflateEnd() failed with error: %s", zStream.msg == nullptr ? "(null)" : zStream.msg);
+        Logger::Error("inflateEnd() failed with error: {}", zStream.msg == nullptr ? "(null)" : zStream.msg);
         return Error::ErrorCode::COMPRESSION_ERROR;
     }
 
@@ -87,7 +88,8 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
 Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
                                        std::vector<uint8_t> &outBuffer,
                                        const Asset::AssetType type,
-                                       const uint8_t typeVersion)
+                                       const uint8_t typeVersion,
+                                       const uint8_t compressionLevel)
 {
     if (inBuffer.empty())
     {
@@ -106,15 +108,15 @@ Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
     writer.Write<size_t>(inBuffer.size());
 
     z_stream zStream{};
-    deflateInit2(&zStream, Z_BEST_COMPRESSION, Z_DEFLATED, 15 | 16, 8, Z_DEFAULT_STRATEGY);
+    deflateInit2(&zStream, compressionLevel, Z_DEFLATED, 15 | 16, 8, Z_DEFAULT_STRATEGY);
 
     zStream.next_in = inBuffer.data();
     zStream.avail_in = inBuffer.size();
     zStream.data_type = Z_BINARY;
 
     int ret = Z_OK;
-    constexpr size_t chunkSize = 16384;
-    std::vector<uint8_t> readBuffer(chunkSize);
+    constexpr size_t CHUNK_SIZE = 16384;
+    std::vector<uint8_t> readBuffer(CHUNK_SIZE);
     std::vector<uint8_t> compressedData{};
 
     while (ret == Z_OK)
@@ -130,7 +132,7 @@ Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
 
     if (deflateEnd(&zStream) != Z_OK || ret != Z_STREAM_END)
     {
-        printf("deflate failed");
+        Logger::Error("deflateEnd() failed: {}", zStream.msg);
         return Error::ErrorCode::COMPRESSION_ERROR;
     }
 
@@ -144,16 +146,17 @@ Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
 Error::ErrorCode AssetReader::SaveToFile(const char *filePath,
                                          std::vector<uint8_t> &data,
                                          const Asset::AssetType type,
-                                         const uint8_t typeVersion)
+                                         const uint8_t typeVersion,
+                                         const uint8_t compressionLevel)
 {
     FILE *file = fopen(filePath, "wb");
     if (file == nullptr)
     {
-        printf("Unable to open file for writing");
+        Logger::Error("Unable to open file for writing");
         return Error::ErrorCode::CANT_OPEN_FILE;
     }
     std::vector<uint8_t> compressedData;
-    const Error::ErrorCode e = Compress(data, compressedData, type, typeVersion);
+    const Error::ErrorCode e = Compress(data, compressedData, type, typeVersion, compressionLevel);
     fwrite(compressedData.data(), 1, compressedData.size(), file);
     fclose(file);
     return e;

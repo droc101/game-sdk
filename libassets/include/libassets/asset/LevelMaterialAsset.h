@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <array>
-#include <cstddef>
 #include <cstdint>
 #include <glm/vec2.hpp>
 #include <libassets/type/Material.h>

@@ -2,7 +2,6 @@
 // Created by droc101 on 7/18/25.
 //
 
-#include <cstddef>
 #include <cstdint>
 #include <libassets/type/Material.h>
 #include <libassets/util/DataReader.h>

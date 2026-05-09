@@ -5,6 +5,7 @@
 #pragma once
 
 #include <libassets/asset/ShaderAsset.h>
+#include <libassets/util/Error.h>
 #include <string>
 #include <vector>
 
@@ -24,7 +25,7 @@ class BatchCompileWindow
         static inline bool targetOpenGL = false;
         static inline std::string outputFolder;
 
-        static void selectCallback(const std::vector<std::string> &paths);
-        static void outPathCallback(const std::string &path);
+        static void SelectCallback(const std::vector<std::string> &paths);
+        static void OutPathCallback(const std::string &path);
         static Error::ErrorCode Execute();
 };

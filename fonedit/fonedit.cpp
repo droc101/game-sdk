@@ -7,7 +7,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <format>
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/DialogFilters.h>
@@ -25,17 +24,16 @@ static std::vector<std::string> charDisplayList{};
 
 static FontAsset font{};
 
-static void openGfon(const std::string &path)
+static void OpenGfon(const std::string &path)
 {
     const Error::ErrorCode errorCode = FontAsset::CreateFromAsset(path.c_str(), font);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the font!\n{}", errorCode));
-        return;
     }
 }
 
-static void saveGfon(const std::string &path)
+static void SaveGfon(const std::string &path)
 {
     const Error::ErrorCode errorCode = font.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
@@ -44,14 +42,14 @@ static void saveGfon(const std::string &path)
     }
 }
 
-static bool ComboGetter(void *data, const int index, const char **out_text)
+static bool ComboGetter(void *data, const int index, const char **outText)
 {
     const std::vector<std::string> &items = *static_cast<std::vector<std::string> *>(data);
     if (index < 0 || static_cast<size_t>(index) >= items.size())
     {
         return false;
     }
-    *out_text = items[index].c_str();
+    *outText = items.at(index).c_str();
     return true;
 }
 
@@ -60,11 +58,11 @@ static void Render()
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
-                                             ImGuiWindowFlags_NoMove |
-                                             ImGuiWindowFlags_NoSavedSettings |
-                                             ImGuiWindowFlags_NoBringToFrontOnFocus;
-    ImGui::Begin("fonedit", nullptr, windowFlags);
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoDecoration |
+                                              ImGuiWindowFlags_NoMove |
+                                              ImGuiWindowFlags_NoSavedSettings |
+                                              ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::Begin("fonedit", nullptr, WINDOW_FLAGS);
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S);
@@ -90,10 +88,10 @@ static void Render()
 
     if (openPressed)
     {
-        SDKWindow::Get().OpenFileDialog(openGfon, DialogFilters::gfonFilters);
+        SDKWindow::Get().OpenFileDialog(OpenGfon, DialogFilters::GFON_FILTERS);
     } else if (savePressed)
     {
-        SDKWindow::Get().SaveFileDialog(saveGfon, DialogFilters::gfonFilters);
+        SDKWindow::Get().SaveFileDialog(SaveGfon, DialogFilters::GFON_FILTERS);
     } else if (newPressed)
     {
         font = FontAsset();
@@ -101,8 +99,8 @@ static void Render()
 
     const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
 
-    constexpr float statsWidth = 300.0f;
-    const float imageWidth = availableSize.x - statsWidth - 8.0f;
+    constexpr float SIDEBAR_WIDTH = 300.0f;
+    const float imageWidth = availableSize.x - SIDEBAR_WIDTH - 8.0f;
 
     ImGui::BeginChild("ImagePane",
                       ImVec2(imageWidth, availableSize.y),
@@ -179,7 +177,7 @@ static void Render()
     ImGui::EndChild();
     ImGui::SameLine();
 
-    ImGui::BeginChild("StatsPane", ImVec2(statsWidth, availableSize.y));
+    ImGui::BeginChild("StatsPane", ImVec2(SIDEBAR_WIDTH, availableSize.y));
     {
         int charWidth = font.charWidth;
         int textureHeight = font.textureHeight;
@@ -234,7 +232,7 @@ static void Render()
     ImGui::End();
 }
 
-int main(int argc, char **argv)
+int main(const int argc, char **argv)
 {
     if (!SDKWindow::Get().Init("GAME SDK Font Editor"))
     {
@@ -248,7 +246,7 @@ int main(int argc, char **argv)
     const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gfon"});
     if (!openPath.empty())
     {
-        openGfon(openPath);
+        OpenGfon(openPath);
     }
 
     SDKWindow::Get().MainLoop(Render);

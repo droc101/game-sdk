@@ -5,7 +5,6 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
@@ -25,12 +24,12 @@
 #include <libassets/type/paramDefs/Vec3ParamDefinition.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <memory>
 #include <numbers>
 #include <ranges>
 #include <string>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
 Actor::Actor(nlohmann::ordered_json j)
@@ -75,7 +74,7 @@ void Actor::ApplyDefinition(const ActorDefinition &definition, const bool overwr
         const Error::ErrorCode e = definition.GetParam(key, param);
         if (e != Error::ErrorCode::OK)
         {
-            printf("Failed to get definition for param %s::%s\n", definition.className.c_str(), key.c_str());
+            Logger::Error("Failed to get definition for param {}::{}", definition.className.c_str(), key.c_str());
             continue;
         }
 

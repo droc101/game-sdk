@@ -64,10 +64,10 @@ class GLTextureCache
                                                    bool repeat = false,
                                                    bool mipmaps = false);
 
+        [[nodiscard]] static GLuint CreateTexture(const TextureAsset &textureAsset);
+
     private:
         std::unordered_map<std::string, ImTextureID> textureBuffers{};
 
         ImTextureID missingTexture{};
-
-        [[nodiscard]] static GLuint CreateTexture(const TextureAsset &textureAsset);
 };

@@ -3,6 +3,7 @@
 //
 
 #include "MapRenderer.h"
+#include <array>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -10,14 +11,12 @@
 #include <game_sdk/SharedMgr.h>
 #include <glm/ext.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <imgui.h>
 #include <libassets/asset/ModelAsset.h>
-#include <libassets/type/Actor.h>
-#include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/ModelLod.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <ranges>
 #include <string>
@@ -103,13 +102,15 @@ bool MapRenderer::Init()
     workBuffer = GLHelper::CreateIndexedBuffer();
     workBufferNonIndexed = GLHelper::CreateBuffer();
 
-    const std::vector<SearchPathManager::AssetResult>
-            modelsPaths = SharedMgr::Get().pathManager.ScanAssetFolder("/model", ".gmdl");
-    for (const SearchPathManager::AssetResult &modelPath: modelsPaths)
+    const std::string errorModelPath = SharedMgr::Get().pathManager.GetAssetPath("model/error.gmdl");
+    if (errorModelPath.empty())
     {
-        const ModelBuffer buf = LoadModel(modelPath.absolutePath);
-        modelBuffers["model/" + modelPath.relativePath] = buf;
+        Logger::Error("Failed to load models/error.gmdl");
+        return false;
     }
+
+    const ModelBuffer buf = LoadModel(errorModelPath);
+    modelBuffers["model/error.gmdl"] = buf;
 
     return true;
 }
@@ -133,7 +134,7 @@ void MapRenderer::Destroy()
     }
 }
 
-void MapRenderer::RenderViewport(const Viewport &vp)
+void MapRenderer::RenderViewportGrid(const Viewport &vp)
 {
     glClearColor(0, 0, 0, 1);
     // glDisable(GL_SCISSOR_TEST);
@@ -201,7 +202,7 @@ void MapRenderer::RenderViewport(const Viewport &vp)
 void MapRenderer::RenderLine(const glm::vec3 start,
                              const glm::vec3 end,
                              Color color,
-                             glm::mat4 &matrix,
+                             const glm::mat4 &matrix,
                              const float thickness)
 {
     glUseProgram(genericProgram);
@@ -232,7 +233,10 @@ void MapRenderer::RenderLine(const glm::vec3 start,
     glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(vertices.size()));
 }
 
-void MapRenderer::RenderBillboardPoint(const glm::vec3 position, const float pointSize, Color color, glm::mat4 &matrix)
+void MapRenderer::RenderBillboardPoint(const glm::vec3 position,
+                                       const float pointSize,
+                                       Color color,
+                                       const glm::mat4 &matrix)
 {
     glUseProgram(genericProgram);
 
@@ -259,7 +263,7 @@ void MapRenderer::RenderBillboardSprite(const glm::vec3 position,
                                         const float pointSize,
                                         const std::string &texture,
                                         Color color,
-                                        glm::mat4 &matrix)
+                                        const glm::mat4 &matrix)
 {
     glUseProgram(spriteProgram);
 
@@ -292,7 +296,7 @@ void MapRenderer::RenderBillboardSprite(const glm::vec3 position,
 void MapRenderer::RenderUnitVector(const glm::vec3 origin,
                                    const glm::vec3 eulerAngles,
                                    const Color color,
-                                   glm::mat4 &matrix,
+                                   const glm::mat4 &matrix,
                                    const float thickness,
                                    const float length)
 {
@@ -308,44 +312,53 @@ void MapRenderer::RenderUnitVector(const glm::vec3 origin,
     RenderLine(origin, origin + lenVector, color, matrix, thickness);
 }
 
-void MapRenderer::RenderActor(const Actor &a, glm::mat4 &matrix, Viewport &vp)
+void MapRenderer::RenderModel(std::string model,
+                              const glm::mat4 &viewMatrix,
+                              const glm::mat4 &worldMatrix,
+                              const Color &c)
 {
-    const ActorDefinition &definition = MapEditor::adm.GetActorDefinition(a.className);
-    Color c = definition.renderDefinition.GetColor(a);
-    const std::string texture = definition.renderDefinition.GetTexture(a);
-
-    if (texture.empty())
-    {
-        RenderBillboardPoint(a.position, 10, c, matrix);
-    } else
-    {
-        RenderBillboardSprite(a.position, 20, texture, c, matrix);
-    }
-
-    if (definition.renderDefinition.GetDirectional(a))
-    {
-        RenderUnitVector(a.position, a.rotation, c, matrix, 2, vp.GetZoom() / 20);
-    }
-
-    std::string model = definition.renderDefinition.GetModel(a);
-    if ((!model.empty()) && MapEditor::drawModels)
+    if (!model.empty())
     {
         if (!modelBuffers.contains(model))
         {
-            model = "model/error.gmdl";
+            const std::string absolutePath = SharedMgr::Get().pathManager.GetAssetPath(model);
+            if (absolutePath.empty())
+            {
+                model = "model/error.gmdl";
+            } else
+            {
+                const ModelBuffer buf = LoadModel(absolutePath);
+                modelBuffers[model] = buf;
+            }
         }
-        glm::mat4 worldMatrix = glm::identity<glm::mat4>();
-        worldMatrix = glm::translate(worldMatrix, a.position);
-        worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.y), glm::vec3(0, 1, 0));
-        worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.x), glm::vec3(1, 0, 0));
-        worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.z), glm::vec3(0, 0, 1));
-
-        RenderModel(modelBuffers.at(model), matrix, worldMatrix, c);
+        RenderModel(modelBuffers.at(model), viewMatrix, worldMatrix, c);
     }
+}
+
+const ModelAsset &MapRenderer::GetModel(std::string model)
+{
+    if (!model.empty())
+    {
+        if (!modelBuffers.contains(model))
+        {
+            const std::string absolutePath = SharedMgr::Get().pathManager.GetAssetPath(model);
+            if (absolutePath.empty())
+            {
+                model = "model/error.gmdl";
+            } else
+            {
+                const ModelBuffer buf = LoadModel(absolutePath);
+                modelBuffers[model] = buf;
+            }
+        }
+        return modelBuffers[model].model;
+    }
+    return modelBuffers["model/error.gmdl"].model;
 }
 
 MapRenderer::ModelBuffer MapRenderer::LoadModel(const std::string &path)
 {
+    Logger::Info("Loading model \"{}\"", path);
     ModelBuffer buf{};
     const Error::ErrorCode e = ModelAsset::CreateFromAsset(path, buf.model);
     assert(e == Error::ErrorCode::OK); // TODO proper handling
@@ -377,7 +390,10 @@ MapRenderer::ModelBuffer MapRenderer::LoadModel(const std::string &path)
     return buf;
 }
 
-void MapRenderer::RenderModel(ModelBuffer &buffer, glm::mat4 &viewMatrix, glm::mat4 &worldMatrix, Color &c)
+void MapRenderer::RenderModel(ModelBuffer &buffer,
+                              const glm::mat4 &viewMatrix,
+                              const glm::mat4 &worldMatrix,
+                              const Color &c)
 {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glUseProgram(genericProgram);

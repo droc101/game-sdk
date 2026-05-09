@@ -5,7 +5,6 @@
 #include "BatchDecompileWindow.h"
 #include <algorithm>
 #include <cstddef>
-#include <cstdio>
 #include <filesystem>
 #include <format>
 #include <game_sdk/DialogFilters.h>
@@ -15,6 +14,7 @@
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
+#include <vector>
 
 void BatchDecompileWindow::Show()
 {
@@ -23,7 +23,7 @@ void BatchDecompileWindow::Show()
     outputFolder = "";
 }
 
-void BatchDecompileWindow::selectCallback(const std::vector<std::string> &paths)
+void BatchDecompileWindow::SelectCallback(const std::vector<std::string> &paths)
 {
     for (const std::string &file: paths)
     {
@@ -34,7 +34,7 @@ void BatchDecompileWindow::selectCallback(const std::vector<std::string> &paths)
     }
 }
 
-void BatchDecompileWindow::outPathCallback(const std::string &path)
+void BatchDecompileWindow::OutPathCallback(const std::string &path)
 {
     outputFolder = path;
 }
@@ -84,10 +84,10 @@ void BatchDecompileWindow::Render()
     {
         ImGui::OpenPopup("Batch Decompile");
         ImGui::SetNextWindowSize(ImVec2(600, -1), ImGuiCond_Appearing);
-        constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
-                                                 ImGuiWindowFlags_NoSavedSettings |
-                                                 ImGuiWindowFlags_NoResize;
-        if (ImGui::BeginPopupModal("Batch Decompile", &visible, windowFlags))
+        constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoCollapse |
+                                                  ImGuiWindowFlags_NoSavedSettings |
+                                                  ImGuiWindowFlags_NoResize;
+        if (ImGui::BeginPopupModal("Batch Decompile", &visible, WINDOW_FLAGS))
         {
             ImGui::Text("Output Folder");
             ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
@@ -95,7 +95,7 @@ void BatchDecompileWindow::Render()
             ImGui::SameLine();
             if (ImGui::Button("...", ImVec2(40, 0)))
             {
-                SDKWindow::Get().OpenFolderDialog(outPathCallback);
+                SDKWindow::Get().OpenFolderDialog(OutPathCallback);
             }
 
             ImGui::Text("Compiled Shader Files");
@@ -105,7 +105,7 @@ void BatchDecompileWindow::Render()
             ImGui::SameLine();
             if (ImGui::Button("Add", ImVec2(60, 0)))
             {
-                SDKWindow::Get().OpenMultiFileDialog(selectCallback, DialogFilters::gshdFilters);
+                SDKWindow::Get().OpenMultiFileDialog(SelectCallback, DialogFilters::GSHD_FILTERS);
             }
             if (ImGui::BeginChild("##picker", ImVec2(-1, 250), ImGuiChildFlags_Borders, 0))
             {

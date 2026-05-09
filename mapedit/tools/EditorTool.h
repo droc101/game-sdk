@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include "../Viewport.h"
 
 class EditorTool
@@ -16,7 +17,6 @@ class EditorTool
 
         virtual void RenderToolWindow() = 0;
 
-    protected:
         enum class ItemType : uint8_t
         {
             NONE,

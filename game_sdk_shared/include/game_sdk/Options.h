@@ -44,6 +44,8 @@ class Options
          */
         [[nodiscard]] std::string GetAssetsPath() const;
 
+        [[nodiscard]] std::string GetGameConfigParentPath() const;
+
         [[nodiscard]] std::string GetExecutablePath() const;
 
         std::string gameExecutablePath{};
@@ -53,9 +55,10 @@ class Options
         std::string defaultMaterial{};
 
         Theme theme = Theme::SYSTEM;
+
     private:
         Options() = default;
 
-        static inline const char* DEFAULT_TEXTURE = "texture/level/uvtest.gtex";
-        static inline const char* DEFAULT_MATERIAL = "material/dev/uv_test.gmtl";
+        static inline const char *DEFAULT_TEXTURE = "texture/level/uvtest.gtex";
+        static inline const char *DEFAULT_MATERIAL = "material/dev/uv_test.gmtl";
 };

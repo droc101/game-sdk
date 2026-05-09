@@ -4,25 +4,24 @@
 
 #include <cassert>
 #include <cstddef>
-#include <cstdio>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/OptionDefinition.h>
 #include <libassets/type/paramDefs/OptionParamDefinition.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/util/ActorDefinitionManager.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <memory>
 #include <ranges>
-#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
-ActorDefinitionManager::ActorDefinitionManager(const SearchPathManager &searchPathManager)
+ActorDefinitionManager::ActorDefinitionManager(const SearchPathManager &searchPathManager, Error::ErrorCode &status)
 {
     LoadOptionDefinitions(searchPathManager);
-    LoadActorDefinitions(searchPathManager);
+    status = LoadActorDefinitions(searchPathManager);
 }
 
 void ActorDefinitionManager::LoadOptionDefinitions(const SearchPathManager &pathManager)
@@ -37,13 +36,13 @@ void ActorDefinitionManager::LoadOptionDefinitions(const SearchPathManager &path
             optionDefinitions[def.GetName()] = def;
         } else
         {
-            printf("Failed to load option def %s: %s\n", val.c_str(), Error::ErrorString(e).c_str());
+            Logger::Error("Failed to load option def {}: {}", val.c_str(), Error::ErrorString(e).c_str());
         }
     }
-    printf("Loaded %zu option definitions\n", optionDefinitions.size());
+    Logger::Verbose("Loaded {} option definitions", optionDefinitions.size());
 }
 
-void ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathManager)
+Error::ErrorCode ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathManager)
 {
     const std::vector<std::string> defs = pathManager.ScanAssetFolderA("defs/actors", ".json");
     for (const std::string &val: defs)
@@ -56,7 +55,7 @@ void ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathM
             actorClassNames.push_back(def.className);
         } else
         {
-            printf("Failed to load actor def %s: %s\n", val.c_str(), Error::ErrorString(e).c_str());
+            Logger::Error("Failed to load actor def {}: {}", val.c_str(), Error::ErrorString(e).c_str());
         }
     }
 
@@ -66,7 +65,8 @@ void ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathM
         {
             if (def.second.parentClassName == def.first)
             {
-                throw std::runtime_error("An actor cannot be its own parent");
+                Logger::Error("An actor class cannot inherit from itself!");
+                return Error::ErrorCode::INCORRECT_FORMAT;
             }
             def.second.parentClass = &actorDefinitions.at(def.second.parentClassName);
         }
@@ -79,22 +79,25 @@ void ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathM
                 opt->definition = &optionDefinitions.at(opt->optionListName);
                 if (opt->definition == nullptr)
                 {
-                    throw std::runtime_error("Failed to find option definition!");
+                    Logger::Error("Failed to find option definition \"{}\"", opt->optionListName);
+                    return Error::ErrorCode::FILE_NOT_FOUND;
                 }
             }
         }
     }
 
-    printf("Loaded %zu actor definitions\n", actorDefinitions.size());
+    Logger::Verbose("Loaded {} actor definitions", actorDefinitions.size());
 
     if (!actorDefinitions.contains("player"))
     {
-        printf("WARNING: No \"player\" actor class definition was loaded!\n");
+        Logger::Warning("No \"player\" actor class definition was loaded!");
     }
     if (!actorDefinitions.contains("actor"))
     {
-        printf("WARNING: No \"actor\" actor class definition was loaded!\n");
+        Logger::Warning("No \"actor\" actor class definition was loaded!");
     }
+
+    return Error::ErrorCode::OK;
 }
 
 bool ActorDefinitionManager::HasActorClass(const std::string &className) const

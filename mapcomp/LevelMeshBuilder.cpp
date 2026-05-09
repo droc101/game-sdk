@@ -4,19 +4,29 @@
 
 #include "LevelMeshBuilder.h"
 #include <array>
+#include <cassert>
+#include <cmath>
+#include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <glm/detail/func_geometric.inl>
 #include <glm/vec2.hpp>
-#include <libassets/type/Color.h>
-#include <libassets/type/ModelVertex.h>
+#include <libassets/asset/LevelMaterialAsset.h>
+#include <libassets/type/MapVertex.h>
+#include <libassets/type/Material.h>
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/Logger.h>
+#include <libassets/util/SearchPathManager.h>
+#include <ranges>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include "SectorClipper.h"
+
+#define STB_RECT_PACK_IMPLEMENTATION
+#include <stb_rect_pack.h>
 
 void LevelMeshBuilder::AddCeiling(const Sector &sector, const std::vector<const Sector *> &overlapping)
 {
@@ -43,7 +53,145 @@ void LevelMeshBuilder::AddWall(const Sector &sector,
     const glm::vec2 normal = sector.SegmentNormal(wallIndex);
     const bool ccw = sector.CalculateArea() > 0;
 
-    AddWallBase(startPoint, endPoint, mat, normal, sLength, floorHeight, ceilingHeight, sector.lightColor, ccw);
+    AddWallBase(startPoint, endPoint, mat, normal, sLength, floorHeight, ceilingHeight, ccw);
+}
+
+void LevelMeshBuilder::Write(DataWriter &writer, const std::string &materialPath) const
+{
+    writer.WriteString(materialPath);
+    writer.Write<uint32_t>(vertices.size());
+    for (const MapVertex &vertex: vertices)
+    {
+        writer.WriteVec3(vertex.position);
+        writer.WriteVec2(vertex.uv);
+        writer.WriteVec2(vertex.lightmapUv);
+    }
+    writer.Write<uint32_t>(indices.size());
+    writer.WriteBuffer<uint32_t>(indices);
+}
+
+bool LevelMeshBuilder::IsEmpty() const
+{
+    return vertices.empty() || indices.size() < 3;
+}
+
+// TODO find better place for this
+static float MapRange(const float value,
+                      const float fromLow,
+                      const float fromHigh,
+                      const float toLow,
+                      const float toHigh)
+{
+    if (fromLow == fromHigh)
+    {
+        return toLow;
+    }
+    const float normalizedValue = (value - fromLow) / (fromHigh - fromLow);
+    const float result = toLow + normalizedValue * (toHigh - toLow);
+    return result;
+}
+
+bool LevelMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
+                                            std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
+                                            const SearchPathManager &pathMgr)
+{
+    for (const LevelMeshBuilder &builder: meshBuilders | std::views::values)
+    {
+        assert(builder.faceIndices.size() == builder.faceRects.size());
+    }
+
+    int width = 1 << 4;
+    int height = 1 << 4;
+    bool wasHeightChangedLast = true;
+    constexpr int MAX_LIGHTMAP_SIZE = 1 << 14;
+
+    stbrp_context context{};
+
+    std::vector<stbrp_rect> rects{};
+    for (const std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)
+    {
+        const std::string materialPath = pathMgr.GetAssetPath(builder.first);
+        LevelMaterialAsset material{};
+        LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
+        if (material.shader == Material::MaterialShader::SHADER_SHADED)
+        {
+            rects.insert(rects.end(), builder.second.faceRects.begin(), builder.second.faceRects.end());
+        }
+    }
+
+    std::vector<stbrp_node> nodes{};
+    while (true)
+    {
+        nodes.clear();
+        nodes.resize(width * 2);
+        stbrp_init_target(&context, width, height, nodes.data(), static_cast<int>(nodes.size()));
+
+        if (stbrp_pack_rects(&context, rects.data(), static_cast<int>(rects.size())) == 0)
+        {
+            // printf("Lightmap size of %d by %d didn't fit :(\n", width, height);
+            if (width == MAX_LIGHTMAP_SIZE && height == MAX_LIGHTMAP_SIZE)
+            {
+                return false;
+            }
+            if (wasHeightChangedLast)
+            {
+                width = width << 1;
+                wasHeightChangedLast = false;
+            } else
+            {
+                height = height << 1;
+                wasHeightChangedLast = true;
+            }
+        } else
+        {
+            break;
+        }
+    }
+
+    Logger::Info("Lightmap size: {} by {}", width, height);
+
+    lightmapSize = {width, height};
+
+    size_t rectIndexBegin = 0;
+    for (std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)
+    {
+        const std::string materialPath = pathMgr.GetAssetPath(builder.first);
+        LevelMaterialAsset material{};
+        LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
+        if (material.shader != Material::MaterialShader::SHADER_SHADED)
+        {
+            continue;
+        }
+
+        for (size_t i = 0; i < builder.second.faceIndices.size(); i++)
+        {
+            const stbrp_rect &rect = rects.at(i + rectIndexBegin);
+            const FaceData &faceData = builder.second.faceIndices.at(i);
+            assert(rect.h != 0);
+            assert(rect.w != 0);
+            for (size_t j = 0; j < faceData.indices.size(); j++)
+            {
+                const uint32_t index = faceData.indices.at(j);
+                MapVertex &vertex = builder.second.vertices.at(index);
+                const glm::vec2 &positionInRect = faceData.positionsInRect.at(j);
+                vertex.lightmapUv.x = MapRange(positionInRect.x,
+                                               0.0f,
+                                               1.0f,
+                                               static_cast<float>(rect.x) + LIGHTMAP_PADDING,
+                                               static_cast<float>(rect.x + rect.w) - LIGHTMAP_PADDING) /
+                                      static_cast<float>(width);
+                vertex.lightmapUv.y = MapRange(positionInRect.y,
+                                               0.0f,
+                                               1.0f,
+                                               static_cast<float>(rect.y) + LIGHTMAP_PADDING,
+                                               static_cast<float>(rect.y + rect.h) - LIGHTMAP_PADDING) /
+                                      static_cast<float>(height);
+            }
+        }
+        rectIndexBegin += builder.second.faceRects.size();
+    }
+
+    return true;
 }
 
 float LevelMeshBuilder::CalculateSLength(const Sector &sector, const size_t wallIndex)
@@ -58,7 +206,6 @@ float LevelMeshBuilder::CalculateSLength(const Sector &sector, const size_t wall
     return sLength;
 }
 
-
 void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
                                    const glm::vec2 &endPoint,
                                    const WallMaterial &wallMaterial,
@@ -66,12 +213,11 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
                                    const float previousWallsLength,
                                    const float floorHeight,
                                    const float ceilingHeight,
-                                   const Color &lightColor,
                                    const bool counterClockWise)
 {
     if (floorHeight > ceilingHeight)
     {
-        printf("Compile Error: Wall with ceiling below floor, will be skipped\n");
+        Logger::Warning("Wall with ceiling below floor, will be skipped");
         return;
     }
 
@@ -93,11 +239,9 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
 
     for (const glm::vec3 &point: wallPoints)
     {
-        ModelVertex v{};
-        v.color = lightColor;
-        v.normal.x = -wallNormalVector.x;
-        v.normal.y = 0;
-        v.normal.z = -wallNormalVector.y;
+        MapVertex v{};
+
+        v.position = point;
 
         v.uv.x = previousWallsLength;
         if (point.x == endPoint.x && point.z == endPoint.y)
@@ -106,35 +250,76 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
         }
         v.uv.y = -point.y;
 
-        v.uv.x += wallMaterial.uvOffset.x;
-        v.uv.y += wallMaterial.uvOffset.y;
+        v.uv += wallMaterial.uvOffset;
+        v.uv *= wallMaterial.uvScale; // TODO is this the correct way to offset+scale?
 
-        v.uv.x *= wallMaterial.uvScale.x;
-        v.uv.y *= wallMaterial.uvScale.y; // TODO is this the correct way to offset+scale?
+        v.normal.x = -wallNormalVector.x;
+        v.normal.y = 0;
+        v.normal.z = -wallNormalVector.y;
 
-        v.position = point;
+        v.lightmapUv = glm::vec2(0, 0);
+
         vertices.push_back(v);
     }
 
-    indices.push_back(2 + currentIndex);
-    indices.push_back(1 + currentIndex);
-    indices.push_back(0 + currentIndex);
-
-    indices.push_back(1 + currentIndex);
-    indices.push_back(2 + currentIndex);
-    indices.push_back(3 + currentIndex);
-
-    if (!counterClockWise)
+    std::vector<uint32_t> newIndices;
+    if (counterClockWise)
     {
-        for (size_t i = indices.size() - 6; i + 2 < indices.size(); i += 3)
+        newIndices = {
+            2 + currentIndex,
+            1 + currentIndex,
+            0 + currentIndex,
+            1 + currentIndex,
+            2 + currentIndex,
+            3 + currentIndex,
+        };
+    } else
+    {
+        newIndices = {
+            0 + currentIndex,
+            1 + currentIndex,
+            2 + currentIndex,
+            3 + currentIndex,
+            2 + currentIndex,
+            1 + currentIndex,
+        };
+    }
+    indices.insert(indices.end(), newIndices.begin(), newIndices.end());
+
+    const float width = glm::distance(startPoint, endPoint);
+    const float height = ceilingHeight - floorHeight;
+    std::vector<glm::vec2> positionsInRect{};
+    for (const uint32_t index: newIndices)
+    {
+        switch (index - currentIndex)
         {
-            std::swap(indices.at(i), indices.at(i + 2));
+            case 0:
+                positionsInRect.emplace_back(0, 0); // start ceiling
+                break;
+            case 1:
+                positionsInRect.emplace_back(1, 0); // end ceiling
+                break;
+            case 2:
+                positionsInRect.emplace_back(0, 1); // start floor
+                break;
+            case 3:
+                positionsInRect.emplace_back(1, 1); // end floor
+                break;
+            default:
+                assert(false);
         }
     }
+    assert(newIndices.size() == positionsInRect.size());
+    faceIndices.push_back({
+        .indices = newIndices,
+        .positionsInRect = positionsInRect,
+    });
+    const float luxelsX = fmaxf(width * static_cast<float>(wallMaterial.luxelsPerUnit), 1.0f);
+    const float luxelsY = fmaxf(height * static_cast<float>(wallMaterial.luxelsPerUnit), 1.0f);
+    faceRects.emplace_back(0, luxelsX + LIGHTMAP_PADDING * 2, luxelsY + LIGHTMAP_PADDING * 2);
 
     currentIndex += 4;
 }
-
 
 void LevelMeshBuilder::AddSectorBase(const Sector &sector,
                                      const bool isFloor,
@@ -153,24 +338,11 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
 
     for (const glm::vec2 &point: points)
     {
-        ModelVertex v{};
-        v.color = sector.lightColor;
-        v.normal.x = 0;
-        v.normal.z = 0;
-        if (isFloor)
-        {
-            v.normal.y = 1;
-        } else
-        {
-            v.normal.y = -1;
-        }
-        v.uv = point;
+        MapVertex v{};
         v.position = {point.x, isFloor ? sector.floorHeight : sector.ceilingHeight, point.y};
-        v.uv.x += mat.uvOffset.x;
-        v.uv.y += mat.uvOffset.y;
-
-        v.uv.x *= mat.uvScale.x;
-        v.uv.y *= mat.uvScale.y; // TODO is this the correct way to offset+scale?
+        v.uv = (point + mat.uvOffset) * mat.uvScale; // TODO is this the correct way to offset+scale?
+        v.normal = {0, isFloor ? 1 : -1, 0};
+        v.lightmapUv = glm::vec2(0, 0);
         vertices.push_back(v);
     }
 
@@ -182,26 +354,49 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
         }
     }
 
-    for (const uint32_t i: idx)
+    for (uint32_t &i: idx)
     {
-        indices.push_back(i + currentIndex);
+        i += currentIndex;
     }
+    indices.insert(indices.end(), idx.begin(), idx.end());
+
+    if (!points.empty())
+    {
+        const glm::vec4 sectorAABB = sector.GetAABB();
+        const bool rotate = sectorAABB.z < sectorAABB.w;
+        const glm::vec2 sectorTopLeft = {sectorAABB.x - sectorAABB.z, sectorAABB.y - sectorAABB.w};
+        const glm::vec2 sectorBottomRight = {sectorAABB.x + sectorAABB.z, sectorAABB.y + sectorAABB.w};
+        std::vector<glm::vec2> positionsInRect{};
+        for (const uint32_t index: idx)
+        {
+            const MapVertex &vert = vertices.at(index);
+            const glm::vec2 position = {vert.position.x, vert.position.z};
+            float localX = MapRange(position.x, sectorTopLeft.x, sectorBottomRight.x, 0.0f, 1.0f);
+            float localY = MapRange(position.y, sectorTopLeft.y, sectorBottomRight.y, 0.0f, 1.0f);
+            if (rotate)
+            {
+                std::swap(localX, localY);
+            }
+            positionsInRect.emplace_back(localX, localY);
+        }
+
+        float width = sectorAABB.z * 2;
+        float height = sectorAABB.w * 2;
+        if (rotate)
+        {
+            std::swap(width, height);
+        }
+        const float luxelsPerUnit = isFloor ? sector.floorMaterial.luxelsPerUnit : sector.ceilingMaterial.luxelsPerUnit;
+        faceIndices.emplace_back(idx, positionsInRect);
+        const float luxelsX = fmaxf(width * static_cast<float>(luxelsPerUnit), 1.0f);
+        const float luxelsY = fmaxf(height * static_cast<float>(luxelsPerUnit), 1.0f);
+        const stbrp_rect rect = {
+            .id = 0,
+            .w = static_cast<stbrp_coord>(luxelsX + LIGHTMAP_PADDING * 2),
+            .h = static_cast<stbrp_coord>(luxelsY + LIGHTMAP_PADDING * 2),
+        };
+        faceRects.push_back(rect);
+    }
+
     currentIndex += points.size();
-}
-
-void LevelMeshBuilder::Write(DataWriter &writer, const std::string &materialPath) const
-{
-    writer.WriteString(materialPath);
-    writer.Write<uint32_t>(vertices.size());
-    for (const ModelVertex &vert: vertices)
-    {
-        vert.Write(writer);
-    }
-    writer.Write<uint32_t>(indices.size());
-    writer.WriteBuffer<uint32_t>(indices);
-}
-
-bool LevelMeshBuilder::IsEmpty() const
-{
-    return vertices.empty() || indices.size() < 3;
 }

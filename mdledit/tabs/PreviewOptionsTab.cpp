@@ -49,7 +49,8 @@ void PreviewOptionsTab::Render()
     {
         ModelEditor::modelViewer.displayMode = ModelViewer::DisplayMode::COLORED_SHADED;
     }
-    if (ImGui::RadioButton("Textured Unshaded", ModelEditor::modelViewer.displayMode == ModelViewer::DisplayMode::TEXTURED))
+    if (ImGui::RadioButton("Textured Unshaded",
+                           ModelEditor::modelViewer.displayMode == ModelViewer::DisplayMode::TEXTURED))
     {
         ModelEditor::modelViewer.displayMode = ModelViewer::DisplayMode::TEXTURED;
     }

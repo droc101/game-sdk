@@ -4,17 +4,17 @@
 
 #pragma once
 
-#include <array>
 #include <assimp/mesh.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/Error.h>
 #include <string>
 #include <vector>
 
 class ConvexHull
 {
     public:
-        explicit ConvexHull(const std::string &objPath);
+        ConvexHull(const std::string &objPath, Error::ErrorCode &status);
         explicit ConvexHull(DataReader &reader);
         explicit ConvexHull(const aiMesh *mesh);
 
@@ -24,7 +24,7 @@ class ConvexHull
 
         [[nodiscard]] std::vector<float> GetPointsForRender() const;
 
-        static void ImportMultiple(const std::string &path, std::vector<ConvexHull> &output);
+        [[nodiscard]] static Error::ErrorCode ImportMultiple(const std::string &path, std::vector<ConvexHull> &output);
 
     private:
         glm::vec3 offset{};

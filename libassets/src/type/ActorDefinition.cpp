@@ -6,6 +6,8 @@
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
+#include <libassets/type/renderDefs/OrientationRenderDefinition.h>
+#include <libassets/type/renderDefs/PointRenderDefinition.h>
 #include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Error.h>
@@ -27,8 +29,8 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
     std::ostringstream ss;
     ss << file.rdbuf();
     const std::string j = ss.str();
-    const nlohmann::json definition_json = nlohmann::json::parse(j);
-    if (definition_json.is_discarded())
+    const nlohmann::json definitionJson = nlohmann::json::parse(j);
+    if (definitionJson.is_discarded())
     {
         file.close();
         // printf("File %s is not valid JSON\n", path.c_str());
@@ -37,19 +39,34 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
 
     definition = ActorDefinition();
     definition.className = std::filesystem::path(path).stem().string();
-    definition.parentClassName = definition_json.value("extends", "");
-    definition.description = definition_json.value("description", "");
-    definition.isVirtual = definition_json.value("virtual", false);
+    definition.parentClassName = definitionJson.value("extends", "");
+    definition.description = definitionJson.value("description", "");
+    definition.isVirtual = definitionJson.value("virtual", false);
 
-    if (definition_json.contains("display"))
+    if (definitionJson.contains("renderers"))
     {
-        const nlohmann::json &renderDef = definition_json.at("display");
-        definition.renderDefinition = RenderDefinition(renderDef);
+        const nlohmann::json &renderDefs = definitionJson.at("renderers");
+        for (const auto &[key, value]: renderDefs.items())
+        {
+            Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
+            std::unique_ptr<RenderDefinition> rdef = RenderDefinition::Create(value, e);
+            if (e == Error::ErrorCode::OK)
+            {
+                definition.renderDefinitions.push_back(std::move(rdef));
+            }
+        }
     }
 
-    if (definition_json.contains("inputs"))
+    if (definition.renderDefinitions.empty())
     {
-        nlohmann::json inputs = definition_json.at("inputs");
+        definition.renderDefinitions.push_back(std::make_shared<PointRenderDefinition>(PointRenderDefinition()));
+        definition.renderDefinitions
+                .push_back(std::make_shared<OrientationRenderDefinition>(OrientationRenderDefinition()));
+    }
+
+    if (definitionJson.contains("inputs"))
+    {
+        nlohmann::json inputs = definitionJson.at("inputs");
         for (const auto &[key, value]: inputs.items())
         {
             const SignalDefinition signal = SignalDefinition(value.value("description", ""),
@@ -58,9 +75,9 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         }
     }
 
-    if (definition_json.contains("outputs"))
+    if (definitionJson.contains("outputs"))
     {
-        nlohmann::json outputs = definition_json.at("outputs");
+        nlohmann::json outputs = definitionJson.at("outputs");
         for (const auto &[key, value]: outputs.items())
         {
             const SignalDefinition signal = SignalDefinition(value.value("description", ""),
@@ -69,9 +86,9 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         }
     }
 
-    if (definition_json.contains("params"))
+    if (definitionJson.contains("params"))
     {
-        nlohmann::json params = definition_json.at("params");
+        nlohmann::json params = definitionJson.at("params");
         for (const auto &[key, value]: params.items())
         {
             Error::ErrorCode e = Error::ErrorCode::UNKNOWN;

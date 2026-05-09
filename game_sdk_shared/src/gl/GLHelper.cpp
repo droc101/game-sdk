@@ -11,6 +11,7 @@
 #include <glm/vec2.hpp>
 #include <ios>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <vector>
 
 bool GLHelper::Init()
@@ -19,13 +20,13 @@ bool GLHelper::Init()
     const GLenum err = glewInit();
     if (err != GLEW_OK)
     {
-        printf("GLEW init failure %d\n", err);
+        Logger::Error("GLEW init failure {}", err);
         return false;
     }
 
     if (!GLEW_VERSION_4_6)
     {
-        printf("GLEW init failure -- we don't have opengl 4.6\n");
+        Logger::Error("GLEW init failure -- we don't have opengl 4.6");
         return false;
     }
 
@@ -41,8 +42,8 @@ bool GLHelper::Init()
 
     const char *renderer = reinterpret_cast<const char *>(glGetString(GL_RENDERER));
     const char *version = reinterpret_cast<const char *>(glGetString(GL_VERSION));
-    printf("Renderer: %s\n", renderer);
-    printf("OpenGL version: %s\n", version);
+    Logger::Info("Renderer: {}", renderer);
+    Logger::Info("OpenGL version: {}", version);
 
     return true;
 }
@@ -52,7 +53,7 @@ Error::ErrorCode GLHelper::CreateShader(const char *filename, const GLenum type,
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
     if (!file.is_open())
     {
-        printf("Failed to open shader file %s!\n", filename);
+        Logger::Error("Failed to open shader file {}!", filename);
         return Error::ErrorCode::CANT_OPEN_FILE;
     }
     const std::streamsize size = file.tellg();
@@ -70,7 +71,7 @@ Error::ErrorCode GLHelper::CreateShader(const char *filename, const GLenum type,
     {
         std::array<char, 512> infoLog{};
         glGetShaderInfoLog(shader, 512, nullptr, infoLog.data());
-        printf("Shader compile failed: %s\n", infoLog.data());
+        Logger::Error("Shader compile failed: {}", infoLog.data());
         glDeleteShader(shader);
         return Error::ErrorCode::UNKNOWN;
     }
@@ -88,7 +89,7 @@ Error::ErrorCode GLHelper::CreateProgram(const char *fragmentFilename, const cha
     {
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
-        printf("Could not create shader program\n");
+        Logger::Error("Could not create shader program");
         return Error::ErrorCode::UNKNOWN;
     }
 
@@ -267,4 +268,9 @@ void GLHelper::DestroyFramebuffer(GL_Framebuffer &framebuffer)
 glm::vec2 GLHelper::ScreenToNDC(const glm::vec2 screenPos, const glm::vec2 screenSize)
 {
     return {screenPos.x / screenSize.x * 2.0f - 1.0f, 1.0f - screenPos.y / screenSize.y * 2.0f};
+}
+
+void GLHelper::ClearDepth()
+{
+    glClear(GL_DEPTH_BUFFER_BIT);
 }

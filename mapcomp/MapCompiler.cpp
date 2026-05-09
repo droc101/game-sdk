@@ -8,10 +8,8 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <glm/detail/func_geometric.inl>
 #include <glm/vec2.hpp>
-#include <libassets/asset/DataAsset.h>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
@@ -22,20 +20,28 @@
 #include <libassets/util/AssetReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 #include "LevelMeshBuilder.h"
+#include "Light.h"
+#include "LightBaker.hpp"
 #include "SectorCollisionBuilder.h"
 
-MapCompiler::MapCompiler(const std::string &assetsDirectory,
-                         const std::string &executableDirectory,
-                         DataAsset &gameConfig)
+MapCompiler::MapCompiler(MapCompilerSettings &settings)
 {
-    this->assetsDirectory = assetsDirectory;
-    this->pathManager = SearchPathManager(gameConfig, executableDirectory);
-    this->defManager = ActorDefinitionManager(this->pathManager);
+    this->settings = settings;
+    this->pathManager = SearchPathManager(settings.gameConfig,
+                                          settings.executableDirectory,
+                                          settings.gameConfigParentDirectory);
+    Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
+    this->defManager = ActorDefinitionManager(this->pathManager, e);
+    if (e != Error::ErrorCode::OK)
+    {
+        Logger::Error("Failed to load actor definitions");
+    }
 }
 
 Error::ErrorCode MapCompiler::LoadMapSource(const std::string &mapSourceFile)
@@ -44,7 +50,7 @@ Error::ErrorCode MapCompiler::LoadMapSource(const std::string &mapSourceFile)
     return MapAsset::CreateFromMapSrc(mapSourceFile.c_str(), map);
 }
 
-Error::ErrorCode MapCompiler::Compile() const
+Error::ErrorCode MapCompiler::Compile()
 {
     std::vector<uint8_t> buffer;
     const Error::ErrorCode e = SaveToBuffer(buffer);
@@ -53,13 +59,14 @@ Error::ErrorCode MapCompiler::Compile() const
         return e;
     }
 
-    const std::string outPath = assetsDirectory + "/map/" + mapBasename + ".gmap";
-    printf("[INFO] Saving map to \"%s\"\n", outPath.c_str());
-
+    const std::string outPath = settings.assetsDirectory + "/map/" + mapBasename + ".gmap";
+    Logger::Info("Saving map to \"{}\"", outPath.c_str());
     return AssetReader::SaveToFile(outPath.c_str(),
                                    buffer,
                                    Asset::AssetType::ASSET_TYPE_LEVEL,
-                                   MapAsset::MAP_ASSET_VERSION);
+                                   MapAsset::MAP_ASSET_VERSION,
+                                   settings.fastCompile ? AssetReader::FASTEST_COMPRESSION
+                                                        : AssetReader::BEST_COMPRESSION);
 }
 
 LevelMaterialAsset MapCompiler::GetMapMaterial(const std::string &path) const
@@ -69,18 +76,18 @@ LevelMaterialAsset MapCompiler::GetMapMaterial(const std::string &path) const
     const Error::ErrorCode e = LevelMaterialAsset::CreateFromAsset(absPath.c_str(), mapMaterial);
     if (e != Error::ErrorCode::OK)
     {
-        printf("[WARNING] Failed to load material \"%s\": %s\n", path.c_str(), Error::ErrorString(e).c_str());
+        Logger::Error("Failed to load material \"{}\": {}", path.c_str(), Error::ErrorString(e).c_str());
     }
     return mapMaterial;
 }
 
 
-Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
+Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
 {
     assert(buffer.empty());
 
-    printf("[INFO] Found %zu sectors\n", map.sectors.size());
-    printf("[INFO] Found %zu actors\n", map.actors.size());
+    Logger::Info("Found {} sectors", map.sectors.size());
+    Logger::Info("Found {} actors", map.actors.size());
 
     for (size_t i = 0; i < map.sectors.size(); i++)
     {
@@ -89,10 +96,10 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
         {
             if (sector.name.empty())
             {
-                printf("[ERROR] Sector %zu has an invalid shape!\n", i);
+                Logger::Error("Sector {} has an invalid shape!", i);
             } else
             {
-                printf("[ERROR] Sector %zu \"%s\" has an invalid shape!", i, sector.name.c_str());
+                Logger::Error("Sector {} \"{}\" has an invalid shape!", i, sector.name.c_str());
             }
             return Error::ErrorCode::INCORRECT_FORMAT;
         }
@@ -100,18 +107,18 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
 
     DataWriter writer = DataWriter();
 
-    writer.Write<bool>(map.has_sky);
-    if (map.has_sky)
+    writer.Write<bool>(map.hasSky);
+    if (map.hasSky)
     {
-        writer.WriteString(map.sky_texture);
+        writer.WriteString(map.skyTexture);
     }
 
-    writer.WriteString(map.discord_rpc_icon_id);
-    writer.WriteString(map.discord_rpc_map_name);
+    writer.WriteString(map.discordRpcIconId);
+    writer.WriteString(map.discordRpcMapName);
 
-    printf("[INFO] Compiling actors...\n");
+    Logger::Info("Compiling actors...");
 
-    writer.Write<size_t>(map.actors.size());
+    std::vector<Light> lights{};
 
     size_t numPlayerActors = 0;
     std::vector<Actor> actorsToWrite{};
@@ -119,24 +126,27 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     {
         if (!defManager.HasActorClass(actor.className))
         {
-            printf("[WARNING] Skipping unknown actor class \"%s\"...", actor.className.c_str());
+            Logger::Warning("Skipping unknown actor class \"{}\"...", actor.className.c_str());
             continue;
         }
 
         const ActorDefinition &def = defManager.GetActorDefinition(actor.className);
         if (def.isVirtual)
         {
-            printf("[WARNING] Skipping virtual actor class \"%s\"...", actor.className.c_str());
+            Logger::Warning("Skipping virtual actor class \"{}\"...", actor.className.c_str());
+            continue;
+        }
+
+        if (def.Extends("light"))
+        {
+            lights.emplace_back(actor);
             continue;
         }
 
         actorsToWrite.push_back(actor);
         if (def.Extends("player"))
         {
-            printf("[INFO] Found player spawnpoint at %f %f %f\n",
-                   actor.position.x,
-                   actor.position.y,
-                   actor.position.z);
+            Logger::Info("Found player spawnpoint at {} {} {}", actor.position.x, actor.position.y, actor.position.z);
             numPlayerActors++;
         }
 
@@ -154,16 +164,16 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
         }
         if (!insideSector)
         {
-            printf("[WARNING] Found an actor of type \"%s\" that is not inside any sector.\n", actor.className.c_str());
+            Logger::Warning("Found an actor of type \"{}\" that is not inside any sector.", actor.className.c_str());
         }
     }
 
     if (numPlayerActors == 0)
     {
-        printf("[WARNING] There is no player actor, the player will spawn at the origin.\n");
+        Logger::Warning("There is no player actor, the player will spawn at the origin.");
     } else if (numPlayerActors != 1)
     {
-        printf("[WARNING] Multiple player actors are present, only one will function.\n");
+        Logger::Warning("Multiple player actors are present, only one will function.");
     }
 
     writer.Write<size_t>(actorsToWrite.size());
@@ -172,7 +182,22 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
         actor.Write(writer);
     }
 
-    printf("[INFO] Compiling Sectors...\n");
+    Logger::Info("Compiling Sectors...");
+
+    if (settings.fastCompile)
+    {
+        for (Sector &sector: map.sectors)
+        {
+            sector.ceilingMaterial.luxelsPerUnit = std::min<uint8_t>(sector.ceilingMaterial.luxelsPerUnit,
+                                                                     FAST_COMPILE_MAX_LUXELS_PER_UNIT);
+            sector.floorMaterial.luxelsPerUnit = std::min<uint8_t>(sector.floorMaterial.luxelsPerUnit,
+                                                                   FAST_COMPILE_MAX_LUXELS_PER_UNIT);
+            for (WallMaterial &mat: sector.wallMaterials)
+            {
+                mat.luxelsPerUnit = std::min<uint8_t>(mat.luxelsPerUnit, FAST_COMPILE_MAX_LUXELS_PER_UNIT);
+            }
+        }
+    }
 
     std::unordered_map<std::string, LevelMeshBuilder> meshBuilders{};
     std::vector<SectorCollisionBuilder> collisionBuilders{};
@@ -195,15 +220,15 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
                 {
                     if (sector.floorHeight == otherSector.ceilingHeight)
                     {
-                        printf("[INFO] Sector %zu's floor is overlapping with sector %zu's ceiling\n",
-                               sectorIndex,
-                               otherSectorIndex);
+                        Logger::Verbose("Sector {}'s floor is overlapping with sector {}'s ceiling",
+                                        sectorIndex,
+                                        otherSectorIndex);
                         overlappingCeilings.push_back(&otherSector);
                     } else if (sector.ceilingHeight == otherSector.floorHeight)
                     {
-                        printf("[INFO] Sector %zu's ceiling is overlapping with sector %zu's floor\n",
-                               sectorIndex,
-                               otherSectorIndex);
+                        Logger::Verbose("Sector {}'s ceiling is overlapping with sector {}'s floor",
+                                        sectorIndex,
+                                        otherSectorIndex);
                         overlappingFloors.push_back(&otherSector);
                     }
                 }
@@ -228,11 +253,11 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
                         (wallStart == otherWallEnd && wallEnd == otherWallStart))
                     {
                         // MATCH FOUND!!!
-                        printf("[INFO] Found overlapping walls: %zu[%zu] and %zu[%zu]\n",
-                               sectorIndex,
-                               i,
-                               otherSectorIndex,
-                               j);
+                        Logger::Verbose("Found overlapping walls: {}[{}] and {}[{}]",
+                                        sectorIndex,
+                                        i,
+                                        otherSectorIndex,
+                                        j);
                         gaps.push_back({otherSector.floorHeight, otherSector.ceilingHeight});
                         break; // break here because only 1 wall per (well-formed) sector can overlap
                     }
@@ -314,8 +339,15 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     std::erase_if(meshBuilders,
                   [](const std::pair<std::string, LevelMeshBuilder> &item) -> bool { return item.second.IsEmpty(); });
 
-    printf("[INFO] Level has %zu visual meshes\n", meshBuilders.size());
-    printf("[INFO] Level has %zu physics meshes\n", collisionBuilders.size());
+    Logger::Info("Level has {} visual meshes", meshBuilders.size());
+    Logger::Info("Level has {} physics meshes", collisionBuilders.size());
+    Logger::Info("Level has {} lights", lights.size());
+
+    glm::uvec2 lightmapSize{};
+    if (!LevelMeshBuilder::CalculateLightmapUvs(lightmapSize, meshBuilders, pathManager))
+    {
+        return Error::ErrorCode::LIGHTMAP_TOO_LARGE;
+    }
 
     writer.Write<size_t>(meshBuilders.size());
     for (const std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)
@@ -327,6 +359,46 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer) const
     for (SectorCollisionBuilder &builder: collisionBuilders)
     {
         builder.Write(writer);
+    }
+
+    std::vector<uint8_t> pixels = {0x00, 0x3c, 0x00, 0x3c, 0x00, 0x3c, 0x00, 0x3c}; // float16 1.0
+    if (!lights.empty() && !settings.skipLighting)
+    {
+        Logger::Info("Baking lightmap...");
+        if (!LightBaker::Bake(meshBuilders, lights, pixels, lightmapSize, settings.bakeLightsOnCpu))
+        {
+            return Error::ErrorCode::UNKNOWN;
+        }
+        writer.Write<size_t>(lightmapSize.x);
+        writer.Write<size_t>(lightmapSize.y);
+        writer.WriteBuffer(pixels);
+
+    } else
+    {
+        Logger::Info("Using fullbright lightmap");
+        writer.Write<size_t>(1);
+        writer.Write<size_t>(1);
+        writer.WriteBuffer(pixels);
+    }
+
+    uint16_t numPointLights = 0;
+    std::vector<Light> pointLights{};
+    for (const Light &light: lights)
+    {
+        if (light.type == Light::Type::POINT)
+        {
+            numPointLights++;
+            pointLights.push_back(light);
+        }
+    }
+    writer.Write<uint16_t>(numPointLights);
+    for (const Light &pointLight: pointLights)
+    {
+        writer.WriteVec3(pointLight.position);
+        writer.WriteVec3(pointLight.color);
+        writer.Write<float>(pointLight.brightnessScale);
+        writer.Write<float>(pointLight.range);
+        writer.Write<float>(pointLight.attenuation);
     }
 
     writer.CopyToVector(buffer);

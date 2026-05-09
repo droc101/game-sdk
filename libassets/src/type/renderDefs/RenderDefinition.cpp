@@ -2,144 +2,90 @@
 // Created by droc101 on 1/9/26.
 //
 
-#include <libassets/type/Actor.h>
-#include <libassets/type/Color.h>
+#include <libassets/type/renderDefs/BoxRenderDefinition.h>
+#include <libassets/type/renderDefs/ModelRenderDefinition.h>
+#include <libassets/type/renderDefs/OrientationRenderDefinition.h>
+#include <libassets/type/renderDefs/PointRenderDefinition.h>
 #include <libassets/type/renderDefs/RenderDefinition.h>
+#include <libassets/type/renderDefs/SpriteRenderDefinition.h>
+#include <libassets/type/renderDefs/WallRenderDefinition.h>
+#include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
+#include <memory>
 #include <string>
 
-RenderDefinition::RenderDefinition(const nlohmann::json &json)
+std::unique_ptr<RenderDefinition> RenderDefinition::Create(const nlohmann::json &json, Error::ErrorCode &e)
 {
-    if (json.contains("model") && json.at("model").type() == nlohmann::detail::value_t::string)
+    std::unique_ptr<RenderDefinition> output = nullptr;
+    const RenderDefinitionType type = ParseType(json.value("type", "point"));
+    if (type == RenderDefinitionType::RD_TYPE_UNKNOWN)
     {
-        const std::string modelValue = json.value("model", "");
-        if (modelValue.starts_with("$"))
-        {
-            model.usesParam = true;
-            model.paramName = modelValue.substr(1, modelValue.length() - 1);
-        } else
-        {
-            model.value = modelValue;
-        }
-    } else
-    {
-        model.value = "";
+        Logger::Error("Failed to parse type of render definition:\n{}", json.dump(4).c_str());
+        e = Error::ErrorCode::INCORRECT_FORMAT;
+        return nullptr;
     }
 
-
-    if (json.contains("texture") && json.at("texture").type() == nlohmann::detail::value_t::string)
+    // RD_TYPE_UNKNOWN handled above
+    // ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
+    // ReSharper disable once CppIncompleteSwitchStatement
+    switch (type)
     {
-        const std::string textureValue = json.value("texture", "");
-        if (textureValue.starts_with("$"))
-        {
-            texture.usesParam = true;
-            texture.paramName = textureValue.substr(1, textureValue.length() - 1);
-        } else
-        {
-            texture.value = textureValue;
-        }
-    } else
-    {
-        texture.value = "";
+        case RenderDefinitionType::RD_TYPE_BOX:
+            output = std::make_unique<BoxRenderDefinition>(json);
+            break;
+        case RenderDefinitionType::RD_TYPE_MODEL:
+            output = std::make_unique<ModelRenderDefinition>(json);
+            break;
+        case RenderDefinitionType::RD_TYPE_ORIENTATION:
+            output = std::make_unique<OrientationRenderDefinition>(json);
+            break;
+        case RenderDefinitionType::RD_TYPE_POINT:
+            output = std::make_unique<PointRenderDefinition>(json);
+            break;
+        case RenderDefinitionType::RD_TYPE_SPRITE:
+            output = std::make_unique<SpriteRenderDefinition>(json);
+            break;
+        case RenderDefinitionType::RD_TYPE_WALL:
+            output = std::make_unique<WallRenderDefinition>(json);
+            break;
     }
 
-    if (json.contains("color"))
-    {
-        if (json.at("color").type() == nlohmann::detail::value_t::number_unsigned ||
-            json.at("color").type() == nlohmann::detail::value_t::number_integer)
-        {
-            color.value = Color(json.value("color", -1u));
-        } else if (json.at("color").type() == nlohmann::detail::value_t::string)
-        {
-            const std::string colorValue = json.value("color", "");
-            if (colorValue.starts_with("$"))
-            {
-                color.usesParam = true;
-                color.paramName = colorValue.substr(1, colorValue.length() - 1);
-            }
-        }
-    } else
-    {
-        color.value = Color(0.0, 1.0, 0.0, 1.0);
-    }
+    output->type = type;
 
-    if (json.contains("directional"))
-    {
-        if (json.at("directional").type() == nlohmann::detail::value_t::boolean)
-        {
-            directional.value = json.value("directional", true);
-        } else if (json.at("directional").type() == nlohmann::detail::value_t::string)
-        {
-            const std::string directionalValue = json.value("directional", "");
-            if (directionalValue.starts_with("$"))
-            {
-                directional.usesParam = true;
-                directional.paramName = directionalValue.substr(1, directionalValue.length() - 1);
-            }
-        }
-    } else
-    {
-        directional.value = true;
-    }
-
-
+    e = Error::ErrorCode::OK;
+    return output;
 }
 
-std::string RenderDefinition::GetModel(const Actor &actor) const
+RenderDefinition::RenderDefinitionType RenderDefinition::GetType() const
 {
-    if (model.usesParam)
-    {
-        if (actor.params.contains(model.paramName))
-        {
-            return actor.params.at(model.paramName).Get<std::string>("model/error.gmdl");
-        }
-    } else
-    {
-        return model.value;
-    }
-    return "";
+    return type;
 }
 
-std::string RenderDefinition::GetTexture(const Actor &actor) const
+RenderDefinition::RenderDefinitionType RenderDefinition::ParseType(const std::string &type)
 {
-    if (texture.usesParam)
+    if (type == "box")
     {
-        if (actor.params.contains(texture.paramName))
-        {
-            return actor.params.at(texture.paramName).Get<std::string>("");
-        }
-    } else
-    {
-        return texture.value;
+        return RenderDefinitionType::RD_TYPE_BOX;
     }
-    return "";
-}
-
-Color RenderDefinition::GetColor(const Actor &actor) const
-{
-    if (color.usesParam)
+    if (type == "model")
     {
-        if (actor.params.contains(color.paramName))
-        {
-            return actor.params.at(color.paramName).Get<Color>(Color(-1));
-        }
-    } else
-    {
-        return color.value;
+        return RenderDefinitionType::RD_TYPE_MODEL;
     }
-    return Color(-1);
-}
-
-bool RenderDefinition::GetDirectional(const Actor &actor) const
-{
-    if (directional.usesParam)
+    if (type == "orientation" || type == "direction")
     {
-        if (actor.params.contains(directional.paramName))
-        {
-            return actor.params.at(directional.paramName).Get<bool>(true);
-        }
-    } else
-    {
-        return directional.value;
+        return RenderDefinitionType::RD_TYPE_ORIENTATION;
     }
-    return true;
+    if (type == "point")
+    {
+        return RenderDefinitionType::RD_TYPE_POINT;
+    }
+    if (type == "sprite" || type == "texture")
+    {
+        return RenderDefinitionType::RD_TYPE_SPRITE;
+    }
+    if (type == "wall")
+    {
+        return RenderDefinitionType::RD_TYPE_WALL;
+    }
+    return RenderDefinitionType::RD_TYPE_UNKNOWN;
 }

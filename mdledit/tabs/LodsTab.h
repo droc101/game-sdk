@@ -17,5 +17,5 @@ class LodsTab
     private:
         static inline ModelLod *lodToExport = nullptr;
 
-        static void saveLodCallback(const std::string &path);
+        static void SaveLodCallback(const std::string &path);
 };

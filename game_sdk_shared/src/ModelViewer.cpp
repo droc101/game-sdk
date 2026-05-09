@@ -157,8 +157,8 @@ void ModelViewer::UpdateViewRel(const float pitchDegrees, const float yawDegrees
 
 void ModelViewer::RenderWindow(const char *title, const ImGuiWindowFlags additionalFlags)
 {
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-    if (ImGui::Begin(title, nullptr, windowFlags | additionalFlags))
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+    if (ImGui::Begin(title, nullptr, WINDOW_FLAGS | additionalFlags))
     {
         RenderImGui();
     }
@@ -171,10 +171,10 @@ void ModelViewer::RenderChildWindow(const char *title,
                                     const ImGuiChildFlags additionalChildFlags,
                                     const ImGuiWindowFlags additionalWindowFlags)
 {
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoScrollbar |
-                                             ImGuiWindowFlags_NoScrollWithMouse |
-                                             ImGuiWindowFlags_NoMove;
-    if (ImGui::BeginChild(title, size, additionalChildFlags, windowFlags | additionalWindowFlags))
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoScrollbar |
+                                              ImGuiWindowFlags_NoScrollWithMouse |
+                                              ImGuiWindowFlags_NoMove;
+    if (ImGui::BeginChild(title, size, additionalChildFlags, WINDOW_FLAGS | additionalWindowFlags))
     {
         RenderImGui();
     }
@@ -501,7 +501,7 @@ void ModelViewer::UpdateMatrix()
 void ModelViewer::LoadCube()
 {
     // clang-format off
-    constexpr std::array cubeVerts = {
+    constexpr std::array CUBE_VERTS = {
         // Bottom face
         -0.5f, -0.5f, -0.5f,   0.5f, -0.5f, -0.5f,
          0.5f, -0.5f, -0.5f,   0.5f,  0.5f, -0.5f,
@@ -523,7 +523,7 @@ void ModelViewer::LoadCube()
     // clang-format on
 
     ModelViewerShared::Get().cubeBuffer = GLHelper::CreateBuffer();
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * cubeVerts.size(), cubeVerts.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * CUBE_VERTS.size(), CUBE_VERTS.data(), GL_STATIC_DRAW);
 }
 
 void ModelViewer::LoadBBox()

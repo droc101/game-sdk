@@ -1,8 +1,8 @@
 #include <cassert>
-#include <cstdint>
 #include <format>
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/DialogFilters.h>
+#include <game_sdk/gl/GLTextureCache.h>
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
 #include <GL/glew.h>
@@ -27,7 +27,7 @@ static ImTextureID checkerboardTexture;
 constexpr float MIN_ZOOM = 0.1f;
 constexpr float MAX_ZOOM = 10.0f;
 
-static void destroyExistingTexture()
+static void DestroyExistingTexture()
 {
     if (!textureLoaded)
     {
@@ -37,40 +37,15 @@ static void destroyExistingTexture()
     textureLoaded = false;
 }
 
-static void loadTexture()
+static void LoadTexture()
 {
-    destroyExistingTexture();
+    DestroyExistingTexture();
 
-    std::vector<uint32_t> pixels;
-    texture.GetPixelsRGBA(pixels);
-
-    glGenTextures(1, &glTexture);
-    glBindTexture(GL_TEXTURE_2D, glTexture);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGBA,
-                 static_cast<GLsizei>(texture.GetWidth()),
-                 static_cast<GLsizei>(texture.GetHeight()),
-                 0,
-                 GL_RGBA,
-                 GL_UNSIGNED_BYTE,
-                 pixels.data());
-    const GLint magfilter = texture.filter ? GL_LINEAR : GL_NEAREST;
-    GLint minFilter = magfilter;
-    const GLint repeat = texture.repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE;
-    if (texture.mipmaps)
-    {
-        glGenerateMipmap(GL_TEXTURE_2D);
-        minFilter = texture.filter ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_LINEAR;
-    }
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magfilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, repeat);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, repeat);
+    glTexture = GLTextureCache::CreateTexture(texture);
     textureLoaded = true;
 }
 
-static void openGtex(const std::string &path)
+static void OpenGtex(const std::string &path)
 {
     const Error::ErrorCode errorCode = TextureAsset::CreateFromAsset(path.c_str(), texture);
     if (errorCode != Error::ErrorCode::OK)
@@ -78,21 +53,28 @@ static void openGtex(const std::string &path)
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the texture!\n{}", errorCode));
         return;
     }
-    loadTexture();
+    LoadTexture();
 }
 
-static void importImage(const std::string &path)
+static void ImportImage(const std::string &path)
 {
-    const Error::ErrorCode errorCode = TextureAsset::CreateFromImage(path.c_str(), texture);
+    Error::ErrorCode errorCode = Error::ErrorCode::INCORRECT_FORMAT;
+    if (path.ends_with(".png"))
+    {
+        errorCode = TextureAsset::CreateFromPNG(path.c_str(), texture);
+    } else
+    {
+        errorCode = TextureAsset::CreateFromEXR(path.c_str(), texture);
+    }
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to import the texture!\n{}", errorCode));
         return;
     }
-    loadTexture();
+    LoadTexture();
 }
 
-static void saveGtex(const std::string &path)
+static void SaveGtex(const std::string &path)
 {
     const Error::ErrorCode errorCode = texture.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
@@ -101,9 +83,18 @@ static void saveGtex(const std::string &path)
     }
 }
 
-static void exportPng(const std::string &path)
+static void ExportPng(const std::string &path)
 {
-    const Error::ErrorCode errorCode = texture.SaveAsImage(path.c_str(), TextureAsset::ImageFormat::IMAGE_FORMAT_PNG);
+    const Error::ErrorCode errorCode = texture.SaveAsPNG(path.c_str());
+    if (errorCode != Error::ErrorCode::OK)
+    {
+        SDKWindow::Get().ErrorMessage(std::format("Failed to export the texture!\n{}", errorCode));
+    }
+}
+
+static void ExportExr(const std::string &path)
+{
+    const Error::ErrorCode errorCode = texture.SaveAsEXR(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to export the texture!\n{}", errorCode));
@@ -127,11 +118,11 @@ static void Render()
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
-                                             ImGuiWindowFlags_NoMove |
-                                             ImGuiWindowFlags_NoSavedSettings |
-                                             ImGuiWindowFlags_NoBringToFrontOnFocus;
-    ImGui::Begin("texedit", nullptr, windowFlags);
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoDecoration |
+                                              ImGuiWindowFlags_NoMove |
+                                              ImGuiWindowFlags_NoSavedSettings |
+                                              ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::Begin("texedit", nullptr, WINDOW_FLAGS);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && textureLoaded;
@@ -170,32 +161,28 @@ static void Render()
             ImGui::MenuItem("Transparency Checkerboard", "", &showTransparencyCheckerboard);
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Tools"))
-        {
-            if (ImGui::MenuItem("Swap Byte Order"))
-            {
-                texture.SwapByteOrder();
-                loadTexture();
-            }
-            ImGui::Separator();
-            ImGui::EndMenu();
-        }
         SharedMgr::Get().SharedMenuUI("texedit");
         ImGui::EndMainMenuBar();
     }
 
     if (openPressed)
     {
-        SDKWindow::Get().OpenFileDialog(openGtex, DialogFilters::gtexFilters);
+        SDKWindow::Get().OpenFileDialog(OpenGtex, DialogFilters::GTEX_FILTERS);
     } else if (importPressed)
     {
-        SDKWindow::Get().OpenFileDialog(importImage, DialogFilters::imageFilters);
+        SDKWindow::Get().OpenFileDialog(ImportImage, DialogFilters::IMAGE_FILTERS);
     } else if (savePressed)
     {
-        SDKWindow::Get().SaveFileDialog(saveGtex, DialogFilters::gtexFilters);
+        SDKWindow::Get().SaveFileDialog(SaveGtex, DialogFilters::GTEX_FILTERS);
     } else if (exportPressed)
     {
-        SDKWindow::Get().SaveFileDialog(exportPng, DialogFilters::pngFilters);
+        if (texture.GetFormat() == TextureAsset::PixelFormat::RGBA8)
+        {
+            SDKWindow::Get().SaveFileDialog(ExportPng, DialogFilters::PNG_FILTERS);
+        } else
+        {
+            SDKWindow::Get().SaveFileDialog(ExportExr, DialogFilters::EXR_FILTERS);
+        }
     } else if (zoomInPressed)
     {
         zoom += 0.1;
@@ -211,11 +198,8 @@ static void Render()
 
     if (textureLoaded)
     {
-        if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl))
-        {
-            zoom += ImGui::GetIO().MouseWheel * 0.1f;
-            ClampZoom();
-        }
+        zoom += ImGui::GetIO().MouseWheel * 0.1f;
+        ClampZoom();
 
         if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
         {
@@ -227,27 +211,26 @@ static void Render()
 
         const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
 
-        constexpr float statsWidth = 150.0f;
-        const float imageWidth = availableSize.x - statsWidth - 8.0f;
+        constexpr float STATS_WIDTH = 150.0f;
+        const float imageWidth = availableSize.x - STATS_WIDTH - 8.0f;
 
         ImGui::BeginChild("ImagePane",
                           ImVec2(imageWidth, availableSize.y),
                           ImGuiChildFlags_Borders,
-                          ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
+                          ImGuiWindowFlags_NoScrollbar |
+                                  ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                  ImGuiWindowFlags_NoScrollWithMouse);
         {
             const ImVec2 imageSize{static_cast<float>(texture.GetWidth()) * zoom,
                                    static_cast<float>(texture.GetHeight()) * zoom};
             const ImVec2 panelSize = ImGui::GetContentRegionAvail();
-            const ImVec2 cursor = {
-                ((panelSize.x / 2) - (imageSize.x / 2)) + pan.x,
-                ((panelSize.y / 2) - (imageSize.y / 2)) + pan.y
-            };
+            const ImVec2 cursor = {((panelSize.x / 2) - (imageSize.x / 2)) + pan.x,
+                                   ((panelSize.y / 2) - (imageSize.y / 2)) + pan.y};
             ImGui::SetCursorPos(cursor);
             if (showTransparencyCheckerboard)
             {
-                // const ImVec2 cursor = ImGui::GetCursorPos();
                 const ImVec2 checkerboardUv = {imageSize.x / 16.0f, imageSize.y / 16.0f};
-                ImGui::Image(checkerboardTexture, imageSize, {0,0}, checkerboardUv);
+                ImGui::Image(checkerboardTexture, imageSize, {0, 0}, checkerboardUv);
                 ImGui::SetCursorPos(cursor);
             }
             ImGui::Image(glTexture, imageSize);
@@ -255,26 +238,29 @@ static void Render()
         ImGui::EndChild();
         ImGui::SameLine();
 
-        ImGui::BeginChild("StatsPane", ImVec2(statsWidth, availableSize.y));
+        ImGui::BeginChild("StatsPane", ImVec2(STATS_WIDTH, availableSize.y));
         {
-            ImGui::TextUnformatted(std::format("Width: {}px\nHeight: {}px\nMemory: {} bytes",
+            ImGui::TextUnformatted(std::format("Width: {}px\nHeight: {}px\nMemory: {} bytes\nFormat: {}",
                                                texture.GetWidth(),
                                                texture.GetHeight(),
-                                               texture.GetWidth() * texture.GetHeight() * sizeof(uint32_t))
+                                               texture.GetPixelDataSize(),
+                                               texture.GetFormat() == TextureAsset::PixelFormat::RGBA8
+                                                       ? "RGBA8 (SDR)"
+                                                       : "RGBA16F (HDR)")
                                            .c_str());
 
             ImGui::Separator();
             if (ImGui::Checkbox("Filter", &texture.filter))
             {
-                loadTexture();
+                LoadTexture();
             }
             if (ImGui::Checkbox("Repeat", &texture.repeat))
             {
-                loadTexture();
+                LoadTexture();
             }
             if (ImGui::Checkbox("Mipmaps", &texture.mipmaps))
             {
-                loadTexture();
+                LoadTexture();
             }
         }
         ImGui::EndChild();
@@ -287,7 +273,7 @@ static void Render()
     ImGui::End();
 }
 
-int main(int argc, char **argv)
+int main(const int argc, char **argv)
 {
     if (!SDKWindow::Get().Init("GAME SDK Texture Editor"))
     {
@@ -296,33 +282,34 @@ int main(int argc, char **argv)
 
     SDKWindow::Get().SetWindowIcon("texedit");
 
-    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/checkerboard.png", CHECKERBOARD_ICON_NAME, false, true);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/checkerboard.png",
+                                                    CHECKERBOARD_ICON_NAME,
+                                                    false,
+                                                    true);
     const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(CHECKERBOARD_ICON_NAME, checkerboardTexture);
     assert(e == Error::ErrorCode::OK);
 
     const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gtex"});
     if (!openPath.empty())
     {
-        openGtex(openPath);
+        OpenGtex(openPath);
     } else
     {
         const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc,
                                                                                 argv,
                                                                                 {
                                                                                     ".png",
-                                                                                    ".jpg",
-                                                                                    ".jpeg",
-                                                                                    ".tga",
+                                                                                    ".exr",
                                                                                 });
         if (!importPath.empty())
         {
-            importImage(importPath);
+            ImportImage(importPath);
         }
     }
 
     SDKWindow::Get().MainLoop(Render);
 
-    destroyExistingTexture();
+    DestroyExistingTexture();
 
     SDKWindow::Get().Destroy();
 

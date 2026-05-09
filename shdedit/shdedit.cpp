@@ -84,7 +84,7 @@ static void AddTab(const ShaderAsset &shader, const std::string &path)
     ThemeChanged();
 }
 
-static void openGshds(const std::vector<std::string> &paths)
+static void OpenGshdFiles(const std::vector<std::string> &paths)
 {
     for (const std::string &path: paths)
     {
@@ -99,7 +99,7 @@ static void openGshds(const std::vector<std::string> &paths)
     }
 }
 
-static void importGlsls(const std::vector<std::string> &paths)
+static void ImportGLSLFiles(const std::vector<std::string> &paths)
 {
     for (const std::string &path: paths)
     {
@@ -114,7 +114,7 @@ static void importGlsls(const std::vector<std::string> &paths)
     }
 }
 
-static void saveGshd(const std::string &path)
+static void SaveGshd(const std::string &path)
 {
     EditorTab &tab = tabs.at(selectedTab);
     tab.shader.GetGLSL() = tab.editor.GetText();
@@ -128,7 +128,7 @@ static void saveGshd(const std::string &path)
     }
 }
 
-static void exportGlsl(const std::string &path)
+static void ExportGlsl(const std::string &path)
 {
     EditorTab &tab = tabs.at(selectedTab);
     tab.shader.GetGLSL() = tab.editor.GetText();
@@ -144,8 +144,8 @@ static void RenderTab(EditorTab &tab)
     const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
     const ImVec2 cursorPos = ImGui::GetCursorPos();
 
-    constexpr float statsWidth = 150.0f;
-    const float imageWidth = availableSize.x - statsWidth - 8.0f;
+    constexpr float SIDEBAR_WIDTH = 150.0f;
+    const float imageWidth = availableSize.x - SIDEBAR_WIDTH - 8.0f;
 
     ImGui::PushFont(SDKWindow::Get().GetMonospaceFont(), 18);
     tab.editor.Render("##glsl", {imageWidth, availableSize.y - 18}, true);
@@ -164,7 +164,7 @@ static void RenderTab(EditorTab &tab)
     ImGui::SetCursorPosY(cursorPos.y);
     ImGui::SetCursorPosX(cursorPos.x + imageWidth + ImGui::GetStyle().WindowPadding.x);
 
-    ImGui::BeginChild("StatsPane", ImVec2(statsWidth, availableSize.y), ImGuiChildFlags_Borders);
+    ImGui::BeginChild("StatsPane", ImVec2(SIDEBAR_WIDTH, availableSize.y), ImGuiChildFlags_Borders);
     {
         ImGui::TextUnformatted("Platform");
         if (ImGui::RadioButton("Vulkan", tab.shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_VULKAN))
@@ -198,11 +198,11 @@ static void Render()
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
-                                             ImGuiWindowFlags_NoMove |
-                                             ImGuiWindowFlags_NoSavedSettings |
-                                             ImGuiWindowFlags_NoBringToFrontOnFocus;
-    ImGui::Begin("shdedit", nullptr, windowFlags);
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoDecoration |
+                                              ImGuiWindowFlags_NoMove |
+                                              ImGuiWindowFlags_NoSavedSettings |
+                                              ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::Begin("shdedit", nullptr, WINDOW_FLAGS);
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N) || ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_T);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
@@ -308,16 +308,16 @@ static void Render()
 
     if (openPressed)
     {
-        SDKWindow::Get().OpenMultiFileDialog(openGshds, DialogFilters::gshdFilters);
+        SDKWindow::Get().OpenMultiFileDialog(OpenGshdFiles, DialogFilters::GSHD_FILTERS);
     } else if (importPressed)
     {
-        SDKWindow::Get().OpenMultiFileDialog(importGlsls, DialogFilters::glslFilters);
+        SDKWindow::Get().OpenMultiFileDialog(ImportGLSLFiles, DialogFilters::GLSL_FILTERS);
     } else if (savePressed)
     {
         EditorTab &tab = tabs.at(selectedTab);
         if (tab.path.empty())
         {
-            SDKWindow::Get().SaveFileDialog(saveGshd, DialogFilters::gshdFilters);
+            SDKWindow::Get().SaveFileDialog(SaveGshd, DialogFilters::GSHD_FILTERS);
         } else
         {
             tab.shader.GetGLSL() = tab.editor.GetText();
@@ -351,7 +351,7 @@ static void Render()
         }
     } else if (exportPressed)
     {
-        SDKWindow::Get().SaveFileDialog(exportGlsl, DialogFilters::glslFilters);
+        SDKWindow::Get().SaveFileDialog(ExportGlsl, DialogFilters::GLSL_FILTERS);
     } else if (newPressed)
     {
         AddTab(ShaderAsset(), "");
@@ -386,11 +386,11 @@ static void Render()
             if (!tab.path.empty())
             {
 #ifdef WIN32
-                constexpr char const *pathSep = "\\";
+                constexpr char const *PATH_SEP = "\\";
 #else
-                constexpr char const *pathSep = "/";
+                constexpr char const *PATH_SEP = "/";
 #endif
-                title = tab.path.substr(tab.path.find_last_of(pathSep) + 1);
+                title = tab.path.substr(tab.path.find_last_of(PATH_SEP) + 1);
             }
             title += std::format("##{}", i);
 
@@ -426,7 +426,7 @@ static void Render()
     BatchDecompileWindow::Render();
 }
 
-int main(int argc, char **argv)
+int main(const int argc, char **argv)
 {
     if (!SDKWindow::Get().Init("GAME SDK Shader Editor", {1366, 768}))
     {
@@ -442,7 +442,7 @@ int main(int argc, char **argv)
     const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gshd"});
     if (!openPath.empty())
     {
-        openGshds({openPath});
+        OpenGshdFiles({openPath});
     } else
     {
         const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc,
@@ -455,7 +455,7 @@ int main(int argc, char **argv)
                                                                                 });
         if (!importPath.empty())
         {
-            importGlsls({importPath});
+            ImportGLSLFiles({importPath});
         }
     }
 

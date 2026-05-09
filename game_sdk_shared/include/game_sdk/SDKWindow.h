@@ -12,8 +12,6 @@
 #include <string>
 #include <vector>
 
-#include "libassets/type/Actor.h"
-
 /**
  * Function signature for main loop render callback
  */
@@ -22,7 +20,7 @@ using SDKWindowRenderFunction = void (*)();
 /**
  * Function signature for theme changes
  */
-using SDKWindowThemeChangeCallback = void(*)();
+using SDKWindowThemeChangeCallback = void (*)();
 
 /**
  * Function signature for main loop event handling callback
@@ -70,7 +68,7 @@ class SDKWindow
         /**
          * Get the main window's pointer
          */
-        [[nodiscard]] SDL_Window *GetWindow();
+        [[nodiscard]] SDL_Window *GetWindow() const;
 
         /**
          * Instruct the main loop to exit at the end of the current iteration
@@ -80,28 +78,28 @@ class SDKWindow
         /**
          * Destroy the SDKWindow resources
          */
-        void Destroy();
+        void Destroy() const;
 
         /**
          * Show an error message
          * @param body Message text
          * @param title Message title
          */
-        void ErrorMessage(const std::string &body, const std::string &title = "Error");
+        void ErrorMessage(const std::string &body, const std::string &title = "Error") const;
 
         /**
          * Show a warning message
          * @param body Message text
          * @param title Message title
          */
-        void WarningMessage(const std::string &body, const std::string &title = "Warning");
+        void WarningMessage(const std::string &body, const std::string &title = "Warning") const;
 
         /**
          * Show an info message
          * @param body Message text
          * @param title Message title
          */
-        void InfoMessage(const std::string &body, const std::string &title);
+        void InfoMessage(const std::string &body, const std::string &title) const;
 
         /**
          * Show an open file dialog
@@ -109,7 +107,8 @@ class SDKWindow
          * @param filters File type filters
          * @note The callback will only be called on success (user chose a file), and will be called on the main thread.
          */
-        void OpenFileDialog(SDKWindowFileDialogCallback Callback, const std::vector<SDL_DialogFileFilter> &filters);
+        void OpenFileDialog(SDKWindowFileDialogCallback Callback,
+                            const std::vector<SDL_DialogFileFilter> &filters) const;
 
         /**
          * Show an open multiple files dialog
@@ -118,7 +117,7 @@ class SDKWindow
          * @note The callback will only be called on success (user chose one or more files), and will be called on the main thread.
          */
         void OpenMultiFileDialog(SDKWindowMultiFileDialogCallback Callback,
-                                 const std::vector<SDL_DialogFileFilter> &filters);
+                                 const std::vector<SDL_DialogFileFilter> &filters) const;
 
         /**
          * Show a save file dialog
@@ -126,14 +125,15 @@ class SDKWindow
          * @param filters File type filters
          * @note The callback will only be called on success (user chose a file), and will be called on the main thread.
          */
-        void SaveFileDialog(SDKWindowFileDialogCallback Callback, const std::vector<SDL_DialogFileFilter> &filters);
+        void SaveFileDialog(SDKWindowFileDialogCallback Callback,
+                            const std::vector<SDL_DialogFileFilter> &filters) const;
 
         /**
          * Show an open folder dialog
          * @param Callback The callback to call on success
          * @note The callback will only be called on success (user chose a folder), and will be called on the main thread.
          */
-        void OpenFolderDialog(SDKWindowFileDialogCallback Callback);
+        void OpenFolderDialog(SDKWindowFileDialogCallback Callback) const;
 
         /**
          * Apply theme from options
@@ -153,7 +153,7 @@ class SDKWindow
         /**
          * Set the callback function that is called when the theme changes
          */
-        void SetThemeChangeCallback(SDKWindowThemeChangeCallback callback);
+        void SetThemeChangeCallback(SDKWindowThemeChangeCallback Callback);
 
     private:
         bool initDone = false;

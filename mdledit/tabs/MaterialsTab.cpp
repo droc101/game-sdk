@@ -71,16 +71,16 @@ void MaterialsTab::Render()
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e == Error::ErrorCode::OK)
     {
-        constexpr int imagePanelHeight = 128;
+        constexpr int IMAGE_PANEL_HEIGHT = 128;
         ImVec2 imageSize{};
         SharedMgr::Get().textureCache.GetTextureSize(mat.texture, imageSize);
-        const glm::vec2 scales = {(sz.x - 16) / imageSize.x, imagePanelHeight / imageSize.y};
+        const glm::vec2 scales = {(sz.x - 16) / imageSize.x, IMAGE_PANEL_HEIGHT / imageSize.y};
         const float scale = std::ranges::min(scales.x, scales.y);
         const float *color = mat.color.GetDataPointer();
 
         imageSize = {imageSize.x * scale, imageSize.y * scale};
         if (ImGui::BeginChild("##imageBox",
-                              {sz.x, imagePanelHeight + 16},
+                              {sz.x, IMAGE_PANEL_HEIGHT + 16},
                               ImGuiChildFlags_Borders,
                               ImGuiWindowFlags_NoResize))
         {
@@ -104,19 +104,19 @@ void MaterialsTab::Render()
     ImGui::ColorEdit4("##color", mat.color.GetDataPointer());
 
     ImGui::TextUnformatted("Shader");
-    constexpr std::array<const char *, 3> shaders = {"Sky", "Unshaded", "Shaded"};
+    constexpr std::array<const char *, 3> SHADERS = {"Sky", "Unshaded", "Shaded"};
     size_t sel = static_cast<uint32_t>(mat.shader);
-    if (ImGui::BeginCombo("##shader", shaders.at(sel)))
+    if (ImGui::BeginCombo("##shader", SHADERS.at(sel)))
     {
-        for (size_t i = 0; i < shaders.size(); i++)
+        for (size_t i = 0; i < SHADERS.size(); i++)
         {
-            const bool is_selected = sel == i;
-            if (ImGui::Selectable(shaders.at(i), is_selected))
+            const bool isSelected = sel == i;
+            if (ImGui::Selectable(SHADERS.at(i), isSelected))
             {
                 sel = i;
             }
             mat.shader = static_cast<Material::MaterialShader>(sel);
-            if (is_selected)
+            if (isSelected)
             {
                 ImGui::SetItemDefaultFocus();
             }

@@ -5,14 +5,12 @@
 #include <cstdint>
 #include <filesystem>
 #include <game_sdk/gl/GLTextureCache.h>
-#include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
 #include <imgui.h>
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/util/Error.h>
 #include <ranges>
 #include <string>
-#include <vector>
 
 GLTextureCache::~GLTextureCache()
 {
@@ -34,20 +32,33 @@ void GLTextureCache::InitMissingTexture()
 
 GLuint GLTextureCache::CreateTexture(const TextureAsset &textureAsset)
 {
-    std::vector<uint32_t> pixels;
-    textureAsset.GetPixelsRGBA(pixels);
+    const uint8_t *pixels = textureAsset.GetPixelsRGBA();
     GLuint glTexture = 0;
     glGenTextures(1, &glTexture);
     glBindTexture(GL_TEXTURE_2D, glTexture);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGBA,
-                 static_cast<GLsizei>(textureAsset.GetWidth()),
-                 static_cast<GLsizei>(textureAsset.GetHeight()),
-                 0,
-                 GL_RGBA,
-                 GL_UNSIGNED_BYTE,
-                 pixels.data());
+    if (textureAsset.GetFormat() == TextureAsset::PixelFormat::RGBA8)
+    {
+        glTexImage2D(GL_TEXTURE_2D,
+                     0,
+                     GL_RGBA8,
+                     static_cast<GLsizei>(textureAsset.GetWidth()),
+                     static_cast<GLsizei>(textureAsset.GetHeight()),
+                     0,
+                     GL_RGBA,
+                     GL_UNSIGNED_BYTE,
+                     pixels);
+    } else
+    {
+        glTexImage2D(GL_TEXTURE_2D,
+                     0,
+                     GL_RGBA16F,
+                     static_cast<GLsizei>(textureAsset.GetWidth()),
+                     static_cast<GLsizei>(textureAsset.GetHeight()),
+                     0,
+                     GL_RGBA,
+                     GL_HALF_FLOAT,
+                     pixels);
+    }
     const GLint magfilter = textureAsset.filter ? GL_LINEAR : GL_NEAREST;
     GLint minFilter = magfilter;
     const GLint repeat = textureAsset.repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE;
@@ -131,7 +142,7 @@ Error::ErrorCode GLTextureCache::RegisterPng(const std::string &pngPath,
                                              const bool mipmaps)
 {
     TextureAsset tex;
-    const Error::ErrorCode e = TextureAsset::CreateFromImage(pngPath.c_str(), tex);
+    const Error::ErrorCode e = TextureAsset::CreateFromPNG(pngPath.c_str(), tex);
     if (e != Error::ErrorCode::OK)
     {
         return e;

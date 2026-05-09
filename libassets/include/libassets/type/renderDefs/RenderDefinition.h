@@ -4,37 +4,36 @@
 
 #pragma once
 
-#include <libassets/type/Color.h>
+#include <cstdint>
+#include <libassets/util/Error.h>
+#include <memory>
 #include <nlohmann/json.hpp>
-#include <string>
 
 class Actor;
 
 class RenderDefinition
 {
     public:
-        RenderDefinition() = default;
-
-        explicit RenderDefinition(const nlohmann::json &json);
-
-        [[nodiscard]] std::string GetModel(const Actor &actor) const;
-
-        [[nodiscard]] Color GetColor(const Actor &actor) const;
-
-        [[nodiscard]] std::string GetTexture(const Actor &actor) const;
-
-        [[nodiscard]] bool GetDirectional(const Actor &actor) const;
-
-    private:
-        template<typename T> struct RenderDefinitionValue
+        enum class RenderDefinitionType : uint8_t
         {
-                bool usesParam = false;
-                std::string paramName;
-                T value{};
+            RD_TYPE_UNKNOWN,
+            RD_TYPE_BOX,
+            RD_TYPE_MODEL,
+            RD_TYPE_ORIENTATION,
+            RD_TYPE_POINT,
+            RD_TYPE_SPRITE,
+            RD_TYPE_WALL,
         };
 
-        RenderDefinitionValue<std::string> model;
-        RenderDefinitionValue<Color> color;
-        RenderDefinitionValue<std::string> texture;
-        RenderDefinitionValue<bool> directional;
+        virtual ~RenderDefinition() = default;
+
+        [[nodiscard]] static std::unique_ptr<RenderDefinition> Create(const nlohmann::json &json, Error::ErrorCode &e);
+
+        [[nodiscard]] RenderDefinitionType GetType() const;
+
+    protected:
+        RenderDefinitionType type = RenderDefinitionType::RD_TYPE_UNKNOWN;
+
+    private:
+        static RenderDefinitionType ParseType(const std::string &type);
 };

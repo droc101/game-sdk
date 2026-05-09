@@ -9,7 +9,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
-#include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
@@ -66,54 +65,58 @@ void EditActorWindow::Render(Actor &actor)
         return;
     }
 
-    ImGui::Text("Class");
-    if (ImGui::BeginCombo("##a", actor.className.c_str()))
+    if (ImGui::BeginTable("##classPositionGrid", 2))
     {
-        for (const std::string &key: MapEditor::adm.GetActorClasses())
+        ImGui::TableNextColumn();
+        ImGui::Text("Class");
+        ImGui::PushItemWidth(-1);
+        if (ImGui::BeginCombo("##class", actor.className.c_str()))
         {
-            const ActorDefinition &def = MapEditor::adm.GetActorDefinition(key);
-            if (def.isVirtual)
+            for (const std::string &key: MapEditor::adm.GetActorClasses())
             {
-                continue;
+                const ActorDefinition &thisDef = MapEditor::adm.GetActorDefinition(key);
+                if (thisDef.isVirtual)
+                {
+                    continue;
+                }
+                if (actor.className == key)
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+                if (ImGui::Selectable(key.c_str(), key == actor.className))
+                {
+                    actor.className = key;
+                    actor.ApplyDefinition(thisDef, true);
+                    selectedParam = 0;
+                }
             }
-            if (actor.className == key)
-            {
-                ImGui::SetItemDefaultFocus();
-            }
-            if (ImGui::Selectable(key.c_str(), key == actor.className))
-            {
-                actor.className = key;
-                actor.ApplyDefinition(def, true);
-                selectedParam = 0;
-            }
+            ImGui::EndCombo();
         }
-        ImGui::EndCombo();
+
+        const ActorDefinition &classDef = MapEditor::adm.GetActorDefinition(actor.className);
+
+        ImGui::TextWrapped("%s", classDef.description.empty() ? "no description" : classDef.description.c_str());
+        ImGui::TableNextColumn();
+        ImGui::Text("Position");
+        ImGui::PushItemWidth(-1);
+        ImGui::InputFloat3("##position", glm::value_ptr(actor.position));
+        ImGui::Text("Rotation");
+        ImGui::InputFloat3("##rotation", glm::value_ptr(actor.rotation));
+        ImGui::EndTable();
     }
-
-    const ActorDefinition &def = MapEditor::adm.GetActorDefinition(actor.className);
-
-    ImGui::Text("%s", def.description.empty() ? "no description" : def.description.c_str());
-
-    ImGui::Dummy(ImVec2(0, 8));
+    ImGui::Separator();
 
     if (ImGui::BeginTabBar("##classInfo"))
     {
+        const ActorDefinition &classDef = MapEditor::adm.GetActorDefinition(actor.className);
         if (ImGui::BeginTabItem("Params"))
         {
-            RenderParamsTab(actor, def);
+            RenderParamsTab(actor, classDef);
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("I/O Connections"))
         {
-            RenderOutputsTab(actor, def);
-            ImGui::EndTabItem();
-        }
-        if (ImGui::BeginTabItem("Position"))
-        {
-            ImGui::Text("Position");
-            ImGui::InputFloat3("##position", glm::value_ptr(actor.position));
-            ImGui::Text("Rotation");
-            ImGui::InputFloat3("##rotation", glm::value_ptr(actor.rotation));
+            RenderOutputsTab(actor, classDef);
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
@@ -313,7 +316,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                                           colorData.data(),
                                           colorDef->showAlpha ? 0 : ImGuiColorEditFlags_NoAlpha))
                     {
-                        col = Color(colorData[0], colorData[1], colorData[2], colorData[3]);
+                        col = Color(colorData.at(0), colorData.at(1), colorData.at(2), colorData.at(3));
                         param.Set<Color>(col);
                     }
                 } else if (paramDef->type == Param::ParamType::PARAM_TYPE_UINT_64)
@@ -386,7 +389,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                     std::array<float, 4> colorData = col.CopyData();
                     if (ImGui::ColorEdit4("##color", colorData.data()))
                     {
-                        col = Color(colorData[0], colorData[1], colorData[2], colorData[3]);
+                        col = Color(colorData.at(0), colorData.at(1), colorData.at(2), colorData.at(3));
                         param.Set<Color>(col);
                     }
                 } else if (param.GetType() == Param::ParamType::PARAM_TYPE_UINT_64)
@@ -648,7 +651,7 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
                         std::array<float, 4> colorData = col.CopyData();
                         if (ImGui::ColorEdit4("##color", colorData.data()))
                         {
-                            col = Color(colorData[0], colorData[1], colorData[2], colorData[3]);
+                            col = Color(colorData.at(0), colorData.at(1), colorData.at(2), colorData.at(3));
                             param.Set<Color>(col);
                         }
                     } else if (param.GetType() == Param::ParamType::PARAM_TYPE_UINT_64)

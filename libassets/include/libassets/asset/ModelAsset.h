@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <cstdint>
 #include <libassets/type/BoundingBox.h>
 #include <libassets/type/ConvexHull.h>
 #include <libassets/type/Material.h>
@@ -76,6 +75,8 @@ class ModelAsset final
 
         BoundingBox &GetBoundingBox();
 
+        const BoundingBox &GetBoundingBox() const;
+
         CollisionModelType &GetCollisionModelType();
 
         [[nodiscard]] size_t GetNumHulls() const;
@@ -84,7 +85,7 @@ class ModelAsset final
 
         void AddHull(const ConvexHull &hull);
 
-        void AddHulls(const std::string &path);
+        [[nodiscard]] Error::ErrorCode AddHulls(const std::string &path);
 
         void RemoveHull(size_t index);
 

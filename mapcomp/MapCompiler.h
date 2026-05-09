@@ -18,12 +18,21 @@
 class MapCompiler
 {
     public:
+        struct MapCompilerSettings
+        {
+                std::string assetsDirectory;
+                std::string executableDirectory;
+                std::string gameConfigParentDirectory;
+                DataAsset gameConfig;
+                bool bakeLightsOnCpu = false;
+                bool skipLighting = false;
+                bool fastCompile = false;
+        };
+
         /**
          * Create a map compiler with a given assets directory
          */
-        explicit MapCompiler(const std::string &assetsDirectory,
-                             const std::string &executableDirectory,
-                             DataAsset &gameConfig);
+        explicit MapCompiler(MapCompilerSettings &settings);
 
         /**
          * Load a map source file
@@ -35,16 +44,18 @@ class MapCompiler
          * Compile the loaded map
          * @return Error code
          */
-        [[nodiscard]] Error::ErrorCode Compile() const;
+        [[nodiscard]] Error::ErrorCode Compile();
 
     private:
-        std::string assetsDirectory;
+        MapCompilerSettings settings;
         std::string mapBasename;
         MapAsset map;
         SearchPathManager pathManager;
         ActorDefinitionManager defManager;
 
-        Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer) const;
+        static constexpr uint8_t FAST_COMPILE_MAX_LUXELS_PER_UNIT = 8;
+
+        Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer);
 
         [[nodiscard]] LevelMaterialAsset GetMapMaterial(const std::string &path) const;
 

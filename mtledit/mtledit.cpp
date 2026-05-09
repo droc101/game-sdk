@@ -1,9 +1,7 @@
 //
 // Created by droc101 on 11/16/25.
 //
-#include <array>
-#include <cstdint>
-#include <cstdio>
+
 #include <format>
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/DialogFilters.h>
@@ -19,7 +17,7 @@
 
 static LevelMaterialAsset material{};
 
-static void openGmtl(const std::string &path)
+static void OpenGmtl(const std::string &path)
 {
     const Error::ErrorCode errorCode = LevelMaterialAsset::CreateFromAsset(path.c_str(), material);
     if (errorCode != Error::ErrorCode::OK)
@@ -28,7 +26,7 @@ static void openGmtl(const std::string &path)
     }
 }
 
-static void saveGmtl(const std::string &path)
+static void SaveGmtl(const std::string &path)
 {
     const Error::ErrorCode errorCode = material.SaveAsAsset(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
@@ -42,11 +40,11 @@ static void Render()
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration |
-                                             ImGuiWindowFlags_NoMove |
-                                             ImGuiWindowFlags_NoSavedSettings |
-                                             ImGuiWindowFlags_NoBringToFrontOnFocus;
-    ImGui::Begin("mtledit", nullptr, windowFlags);
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoDecoration |
+                                              ImGuiWindowFlags_NoMove |
+                                              ImGuiWindowFlags_NoSavedSettings |
+                                              ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::Begin("mtledit", nullptr, WINDOW_FLAGS);
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S);
@@ -71,10 +69,10 @@ static void Render()
 
     if (openPressed)
     {
-        SDKWindow::Get().OpenFileDialog(openGmtl, DialogFilters::gmtlFilters);
+        SDKWindow::Get().OpenFileDialog(OpenGmtl, DialogFilters::GMTL_FILTERS);
     } else if (savePressed)
     {
-        SDKWindow::Get().SaveFileDialog(saveGmtl, DialogFilters::gmtlFilters);
+        SDKWindow::Get().SaveFileDialog(SaveGmtl, DialogFilters::GMTL_FILTERS);
     } else if (newPressed)
     {
         material = LevelMaterialAsset();
@@ -101,7 +99,7 @@ static void Render()
     ImGui::End();
 }
 
-int main(int argc, char **argv)
+int main(const int argc, char **argv)
 {
     if (!SDKWindow::Get().Init("GAME SDK Material Editor"))
     {
@@ -113,7 +111,7 @@ int main(int argc, char **argv)
     const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gmtl"});
     if (!openPath.empty())
     {
-        openGmtl(openPath);
+        OpenGmtl(openPath);
     }
 
     SDKWindow::Get().MainLoop(Render);

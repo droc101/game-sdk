@@ -5,6 +5,7 @@
 #ifndef GAME_SDK_MAPCOMPILEWINDOW_H
 #define GAME_SDK_MAPCOMPILEWINDOW_H
 
+#include <SDL3/SDL_iostream.h>
 #include <SDL3/SDL_process.h>
 #include <string>
 
@@ -15,15 +16,24 @@ class MapCompileWindow
 
         static void Show();
         static void Render();
+        static void RenderCompileOutput();
 
     private:
         static inline bool visible = false;
         static inline SDL_Process *compilerProcess = nullptr;
+        static inline SDL_IOStream *compilerOutputStream = nullptr;
         static inline bool playMap = true;
+        static inline bool bakeOnCpu = false;
         static inline std::string gameDir{};
         static inline std::string log{};
+        static inline bool outputVisible = false;
+        static inline bool fastCompile = false;
+        static inline bool skipLighting = false;
+        static inline bool verbose = false;
 
         static void StartCompile();
+        static void SaveLog(const std::string &path);
+        static void ProcessCompilerOutput();
 };
 
 

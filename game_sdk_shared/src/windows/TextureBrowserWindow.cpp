@@ -5,16 +5,16 @@
 #include <cfloat>
 #include <cstddef>
 #include <format>
+#include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
-#include <utility>
 #include <vector>
 
-constexpr int tileSize = 128;
+constexpr int TILE_SIZE = 128;
 static std::string filter;
 
 TextureBrowserWindow &TextureBrowserWindow::Get()
@@ -43,10 +43,10 @@ void TextureBrowserWindow::Render()
         ImGui::OpenPopup("Choose Texture");
         ImGui::SetNextWindowSize(ImVec2(600, 500), ImGuiCond_Appearing);
         ImGui::SetNextWindowSizeConstraints(ImVec2(192, 192), ImVec2(FLT_MAX, FLT_MAX));
-        constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
-                                                 ImGuiWindowFlags_NoSavedSettings |
-                                                 ImGuiWindowFlags_NoDocking;
-        if (ImGui::BeginPopupModal("Choose Texture", &visible, windowFlags))
+        constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoCollapse |
+                                                  ImGuiWindowFlags_NoSavedSettings |
+                                                  ImGuiWindowFlags_NoDocking;
+        if (ImGui::BeginPopupModal("Choose Texture", &visible, WINDOW_FLAGS))
         {
             ImGui::PushItemWidth(-1);
             ImGui::InputTextWithHint("##search", "Filter", &filter);
@@ -80,14 +80,17 @@ void TextureBrowserWindow::Render()
                     ImGui::PushID(static_cast<int>(i));
 
                     const ImVec2 pos = ImGui::GetCursorScreenPos();
-                    if (pos.x + tileSize > regionMaxX && i > 0)
+                    if (pos.x + TILE_SIZE > regionMaxX && i > 0)
                     {
                         ImGui::NewLine();
                     }
 
                     const float cursor = ImGui::GetCursorPosX();
 
-                    if (ImGui::Selectable("##tile", "texture/" + textures.at(i) == *str, 0, ImVec2(tileSize, tileSize)))
+                    if (ImGui::Selectable("##tile",
+                                          "texture/" + textures.at(i) == *str,
+                                          0,
+                                          ImVec2(TILE_SIZE, TILE_SIZE)))
                     {
                         *str = "texture/" + textures.at(i);
                     }
@@ -108,23 +111,22 @@ void TextureBrowserWindow::Render()
                     float drawHeight = 0.0f;
                     if (aspect > 1.0f)
                     {
-                        drawWidth = tileSize;
-                        drawHeight = tileSize / aspect;
+                        drawWidth = TILE_SIZE;
+                        drawHeight = TILE_SIZE / aspect;
                     } else
                     {
-                        drawWidth = tileSize * aspect;
-                        drawHeight = tileSize;
+                        drawWidth = TILE_SIZE * aspect;
+                        drawHeight = TILE_SIZE;
                     }
 
-                    ImVec2 cursorPos = ImGui::GetCursorPos();
-                    ImGui::SetCursorPos(ImVec2(cursorPos.x + (tileSize - drawWidth) * 0.5f,
-                                               cursorPos.y + (tileSize - drawHeight) * 0.5f));
+                    const ImVec2 cursorPos = ImGui::GetCursorPos();
+                    ImGui::SetCursorPos(ImVec2(cursorPos.x + (TILE_SIZE - drawWidth) * 0.5f,
+                                               cursorPos.y + (TILE_SIZE - drawHeight) * 0.5f));
 
                     ImGui::Image(tex, ImVec2(drawWidth, drawHeight));
-                    cursorPos = ImGui::GetCursorPos();
 
                     ImGui::SameLine(0.0f, spacing);
-                    ImGui::SetCursorPosX(cursor + tileSize + spacing);
+                    ImGui::SetCursorPosX(cursor + TILE_SIZE + spacing);
                     ImGui::Dummy(ImVec2(0, 0));
                     ImGui::SameLine(0, 0);
                     ImGui::PopID();
@@ -163,7 +165,9 @@ void TextureBrowserWindow::InputTexture(const char *label, std::string &texture)
 void TextureBrowserWindow::InputTexture(const char *label, std::string *texture)
 {
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
+    ImGui::PushFont(SDKWindow::Get().GetMonospaceFont());
     ImGui::InputText(label, texture);
+    ImGui::PopFont();
     ImGui::SameLine();
     if (ImGui::Button(("..." + std::string(label)).c_str(), ImVec2(40, 0)))
     {

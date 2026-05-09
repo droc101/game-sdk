@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <cstddef>
 #include <libassets/type/Param.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>

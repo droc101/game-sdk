@@ -6,18 +6,18 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <libassets/util/AssetReader.h>
 #include <libassets/util/Error.h>
 #include <vector>
 
 class TextureAsset final
 {
     public:
-        enum class ImageFormat : uint8_t
+        enum class PixelFormat : uint8_t
         {
-            IMAGE_FORMAT_PNG,
-            IMAGE_FORMAT_TGA,
-            IMAGE_FORMAT_BMP
+            /// uint8_t per channel, 4 bytes total
+            RGBA8,
+            /// 16-bit float (aka half float) per channel, 8 bytes total
+            RGBAF16,
         };
 
         /**
@@ -28,37 +28,33 @@ class TextureAsset final
         /**
          * Create a @c TextureAsset from a .gtex asset
          * @param assetPath The path to the gtex file
-         * @param texture
-         * @return @c The TextureAsset
+         * @param texture The texture to load into
+         * @return Error Code
          */
         [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, TextureAsset &texture);
 
         /**
-         * Create a @c TextureAsset from a pixel buffer
-         * @param pixels The pixel data
-         * @param width The width of the texture
-         * @param height The height of the texture
-         * @param texture
-         * @return The @c TextureAsset
+         * Create an SDR @c TextureAsset from a PNG image
+         * @param imagePath The path to the PNG
+         * @param texture The texture to load into
+         * @return Error Code
          */
-        [[nodiscard]] static Error::ErrorCode CreateFromPixels(uint32_t *pixels,
-                                                               uint32_t width,
-                                                               uint32_t height,
-                                                               TextureAsset &texture);
+        [[nodiscard]] static Error::ErrorCode CreateFromPNG(const char *imagePath, TextureAsset &texture);
 
         /**
-         * Create a @c TextureAsset from a conventional image file (such as PNG)
-         * @param imagePath The path to the image file
-         * @param texture
-         * @return The @c TextureAsset
+         * Create an HDR @c TextureAsset from an EXR image
+         * @param imagePath The path to the EXR
+         * @param texture The texture to load into
+         * @return Error Code
          */
-        [[nodiscard]] static Error::ErrorCode CreateFromImage(const char *imagePath, TextureAsset &texture);
+        [[nodiscard]] static Error::ErrorCode CreateFromEXR(const char *imagePath, TextureAsset &texture);
 
         /// Create a TextureAsset with the "missing texture" pattern
         static void CreateMissingTexture(TextureAsset &texture);
 
         /// Get the pixel data in RGBA format
-        void GetPixelsRGBA(std::vector<uint32_t> &outBuffer) const;
+        [[nodiscard]] uint8_t *GetPixelsRGBA();
+        [[nodiscard]] const uint8_t *GetPixelsRGBA() const;
 
         /// Get the width of the texture
         [[nodiscard]] uint32_t GetWidth() const;
@@ -66,12 +62,25 @@ class TextureAsset final
         /// Get the height of the texture
         [[nodiscard]] uint32_t GetHeight() const;
 
+        /// Get the size of the pixel data in bytes
+        [[nodiscard]] size_t GetPixelDataSize() const;
+
         /**
-         * Save this @c TextureAsset as a conventional image (such as PNG)
-         * @param imagePath The path to save to
-         * @param format The format to save as
+         * Get the pixel data format of this texture asset
          */
-        [[nodiscard]] Error::ErrorCode SaveAsImage(const char *imagePath, ImageFormat format) const;
+        [[nodiscard]] PixelFormat GetFormat() const;
+
+        /**
+         * Save this @c TextureAsset as a standard PNG image
+         * @param imagePath The path to save to
+         */
+        [[nodiscard]] Error::ErrorCode SaveAsPNG(const char *imagePath) const;
+
+        /**
+         * Save this @c TextureAsset as a standard EXR image
+         * @param imagePath The path to save to
+         */
+        [[nodiscard]] Error::ErrorCode SaveAsEXR(const char *imagePath);
 
         /**
          * Save this @c TextureAsset as a GTEX file
@@ -79,21 +88,17 @@ class TextureAsset final
          */
         [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
 
-        /**
-         * Swap the byte order of this texture (RGBA <-> ABGR)
-         */
-        void SwapByteOrder();
-
-        static constexpr uint8_t TEXTURE_ASSET_VERSION = 1;
+        static constexpr uint8_t TEXTURE_ASSET_VERSION = 2;
 
         bool filter = false;
         bool repeat = true;
         bool mipmaps = true;
 
     private:
-        std::vector<uint32_t> pixels{};
+        std::vector<uint8_t> pixelData{}; // just the bytes, NOT an array of pixels
         size_t width{};
         size_t height{};
+        PixelFormat pixelFormat{};
 
         /**
          * Create the uncompressed gtex payload

@@ -30,6 +30,7 @@ class Error
             INVALID_DIRECTORY,
             NOT_FOUND,
             INVALID_SHADER_TYPE,
+            LIGHTMAP_TOO_LARGE,
         };
 
         Error() = delete;
@@ -66,6 +67,8 @@ class Error
                     return "Not Found";
                 case ErrorCode::INVALID_SHADER_TYPE:
                     return "Invalid Shader Type";
+                case ErrorCode::LIGHTMAP_TOO_LARGE:
+                    return "Lightmap Too Large";
                 case ErrorCode::UNKNOWN:
                 default:
                     return "Unknown Error";

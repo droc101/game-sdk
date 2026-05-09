@@ -2,7 +2,6 @@
 // Created by droc101 on 9/1/25.
 //
 
-#include <array>
 #include <assimp/config.h>
 #include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
@@ -12,29 +11,30 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <libassets/type/StaticCollisionMesh.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
-#include <stdexcept>
+#include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <string>
 #include <vector>
 
-StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath)
+StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath, Error::ErrorCode &status)
 {
     Assimp::Importer importer{};
     (void)importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
                                       aiComponent_NORMALS | aiComponent_COLORS | aiComponent_TEXCOORDS);
-    constexpr uint32_t importerFlags = aiProcess_JoinIdenticalVertices |
-                                       aiProcess_ValidateDataStructure |
-                                       aiProcess_DropNormals |
-                                       aiProcess_RemoveComponent;
-    const aiScene *scene = importer.ReadFile(objPath, importerFlags);
+    constexpr uint32_t IMPORTER_FLAGS = aiProcess_JoinIdenticalVertices |
+                                        aiProcess_ValidateDataStructure |
+                                        aiProcess_DropNormals |
+                                        aiProcess_RemoveComponent;
+    const aiScene *scene = importer.ReadFile(objPath, IMPORTER_FLAGS);
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
-        printf("Assimp error: %s\n", importer.GetErrorString());
-        throw std::runtime_error("assimp error, check stdout");
+        Logger::Error("Assimp error: {}", importer.GetErrorString());
+        status = Error::ErrorCode::UNKNOWN;
+        return;
     }
 
     for (uint32_t meshIndex = 0; meshIndex < scene->mNumMeshes; meshIndex++)
@@ -53,6 +53,8 @@ StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath)
             }
         }
     }
+
+    status = Error::ErrorCode::OK;
 }
 
 StaticCollisionMesh::StaticCollisionMesh(DataReader &reader)

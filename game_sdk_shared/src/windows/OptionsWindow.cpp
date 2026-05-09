@@ -30,12 +30,12 @@ void OptionsWindow::Hide()
     visible = false;
 }
 
-void OptionsWindow::gamePathCallback(const std::string &path)
+void OptionsWindow::GamePathCallback(const std::string &path)
 {
     Options::Get().gameExecutablePath = path;
 }
 
-void OptionsWindow::assetsPathCallback(const std::string &path)
+void OptionsWindow::AssetsPathCallback(const std::string &path)
 {
     Options::Get().gameConfigPath = path;
 }
@@ -58,7 +58,7 @@ void OptionsWindow::Render()
         ImGui::SameLine();
         if (ImGui::Button("...", ImVec2(40, 0)))
         {
-            SDKWindow::Get().OpenFileDialog(gamePathCallback, DialogFilters::exeFilters);
+            SDKWindow::Get().OpenFileDialog(GamePathCallback, DialogFilters::EXE_FILTERS);
         }
 
         ImGui::Text("Game configuration Path");
@@ -67,7 +67,7 @@ void OptionsWindow::Render()
         ImGui::SameLine();
         if (ImGui::Button("...##assets", ImVec2(40, 0)))
         {
-            SDKWindow::Get().OpenFileDialog(assetsPathCallback, DialogFilters::gkvlFilters);
+            SDKWindow::Get().OpenFileDialog(AssetsPathCallback, DialogFilters::GKVL_FILTERS);
         }
 
         ImGui::SeparatorText("Default Assets");
@@ -80,8 +80,8 @@ void OptionsWindow::Render()
         ImGui::TextUnformatted("Theme");
         ImGui::PushItemWidth(-1);
         int theme = static_cast<int>(Options::Get().theme);
-        constexpr std::array<const char *, 3> options = {"System", "Light", "Dark"};
-        if (ImGui::Combo("##theme", &theme, options.data(), 3))
+        constexpr std::array<const char *, 3> THEME_OPTIONS = {"System", "Light", "Dark"};
+        if (ImGui::Combo("##theme", &theme, THEME_OPTIONS.data(), 3))
         {
             Options::Get().theme = static_cast<Options::Theme>(theme);
             SDKWindow::Get().ApplyTheme();

@@ -10,7 +10,6 @@
 #include <SDL3/SDL_properties.h>
 #include <SDL3/SDL_timer.h>
 #include <string>
-#include <utility>
 #include <vector>
 
 #ifdef WIN32
@@ -114,7 +113,7 @@ bool DesktopInterface::OpenFilesystemPath(const std::string &path)
 #endif
 }
 
-uint32_t DesktopInterface::GarbageCollectorCallback(void *userdata, SDL_TimerID timer, uint32_t interval)
+uint32_t DesktopInterface::GarbageCollectorCallback(void * /*userdata*/, SDL_TimerID /*timer*/, const uint32_t interval)
 {
     std::vector<SDL_Process *>::iterator iter = Get().processes.begin();
     while (iter != Get().processes.end())

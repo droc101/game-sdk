@@ -2,9 +2,8 @@
 // Created by droc101 on 11/17/25.
 //
 
-#include "ArgumentParser.h"
-
 #include <algorithm>
+#include <libassets/util/ArgumentParser.h>
 #include <string>
 
 ArgumentParser::ArgumentParser(const int argc, const char **argv)

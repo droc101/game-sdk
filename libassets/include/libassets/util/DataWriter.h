@@ -8,7 +8,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <glm/vec2.hpp>
-#include <libassets/libassets.h>
 #include <libassets/util/Primitive.h>
 #include <string>
 #include <vector>
@@ -35,7 +34,7 @@ class DataWriter
          * @param buffer The array
          * @param length The number of elements in the array
          */
-        template<Primitive T> void WriteBuffer(T *buffer, const size_t length)
+        template<Primitive T> void WriteBuffer(const T *buffer, const size_t length)
         {
             const uint8_t *buf = reinterpret_cast<const uint8_t *>(buffer);
             data.insert(data.end(), buf, buf + length * sizeof(T));
@@ -47,10 +46,10 @@ class DataWriter
             data.insert(data.end(), bufferData, bufferData + buffer.size() * sizeof(T));
         }
 
-        template<Primitive T, size_t length> void WriteBuffer(const std::array<T, length> &buffer)
+        template<Primitive T, size_t LENGTH> void WriteBuffer(const std::array<T, LENGTH> &buffer)
         {
             const uint8_t *bufferData = reinterpret_cast<const uint8_t *>(buffer.data());
-            data.insert(data.end(), bufferData, bufferData + length * sizeof(T));
+            data.insert(data.end(), bufferData, bufferData + LENGTH * sizeof(T));
         }
 
         void CopyToVector(std::vector<uint8_t> &vector) const;

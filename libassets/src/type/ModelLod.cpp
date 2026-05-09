@@ -9,15 +9,15 @@
 #include <assimp/scene.h>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <format>
 #include <fstream>
 #include <libassets/type/ModelLod.h>
 #include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <numeric>
-#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -47,24 +47,25 @@ ModelLod::ModelLod(DataReader &reader, const uint32_t materialsPerSkin)
     }
 }
 
-ModelLod::ModelLod(const std::string &filePath, const float distance)
+ModelLod::ModelLod(const std::string &filePath, const float distance, Error::ErrorCode &status)
 {
     this->distance = distance;
 
     std::unordered_map<ModelVertex, uint32_t> vertexToIndex;
 
     Assimp::Importer importer{};
-    constexpr uint32_t importFlags = aiProcess_Triangulate |
-                                     aiProcess_JoinIdenticalVertices |
-                                     aiProcess_SortByPType |
-                                     aiProcess_ValidateDataStructure |
-                                     aiProcess_GenNormals;
-    const aiScene *scene = importer.ReadFile(filePath, importFlags);
+    constexpr uint32_t IMPORT_FLAGS = aiProcess_Triangulate |
+                                      aiProcess_JoinIdenticalVertices |
+                                      aiProcess_SortByPType |
+                                      aiProcess_ValidateDataStructure |
+                                      aiProcess_GenNormals;
+    const aiScene *scene = importer.ReadFile(filePath, IMPORT_FLAGS);
 
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
-        printf("Assimp error: %s\n", importer.GetErrorString());
-        throw std::runtime_error("assimp error, check stdout");
+        Logger::Error("Assimp error: {}", importer.GetErrorString());
+        status = Error::ErrorCode::UNKNOWN;
+        return;
     }
 
     for (uint32_t i = 0; i < scene->mNumMeshes; i++)
@@ -77,7 +78,7 @@ ModelLod::ModelLod(const std::string &filePath, const float distance)
             materialIndices.resize(materialIndex + 1);
         }
 
-        std::vector<uint32_t> &indices = materialIndices[materialIndex];
+        std::vector<uint32_t> &indices = materialIndices.at(materialIndex);
 
         for (uint32_t j = 0; j < mesh->mNumFaces; j++)
         {
@@ -102,7 +103,7 @@ ModelLod::ModelLod(const std::string &filePath, const float distance)
     std::vector<int64_t> toErase{};
     for (uint32_t i = 0; i < materialIndices.size(); i++)
     {
-        const std::vector<uint32_t> &indices = materialIndices[i];
+        const std::vector<uint32_t> &indices = materialIndices.at(i);
         if (indices.size() < 3) // check for materials with no triangles
         {
             toErase.push_back(i);
@@ -115,6 +116,8 @@ ModelLod::ModelLod(const std::string &filePath, const float distance)
         materialIndices.erase(materialIndices.begin() + index);
         indexCounts.erase(indexCounts.begin() + index);
     }
+
+    status = Error::ErrorCode::OK;
 }
 
 void ModelLod::Export(const char *path) const
@@ -125,15 +128,15 @@ void ModelLod::Export(const char *path) const
     {
         std::array<float, 4> color = vertex.color.CopyData();
         file << std::format("v {} {} {} {} {} {} {}\n",
-                            vertex.position[0],
-                            vertex.position[1],
-                            vertex.position[2],
-                            color[0],
-                            color[1],
-                            color[2],
-                            color[3]);
-        file << std::format("vt {} {}\n", vertex.uv[0], vertex.uv[1]);
-        file << std::format("vn {} {} {}\n", vertex.normal[0], vertex.normal[1], vertex.normal[2]);
+                            vertex.position.x,
+                            vertex.position.y,
+                            vertex.position.z,
+                            color.at(0),
+                            color.at(1),
+                            color.at(2),
+                            color.at(3));
+        file << std::format("vt {} {}\n", vertex.uv.x, vertex.uv.y);
+        file << std::format("vn {} {} {}\n", vertex.normal.x, vertex.normal.y, vertex.normal.z);
     }
 
     file << "\n\n";

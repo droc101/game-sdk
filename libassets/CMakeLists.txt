@@ -12,7 +12,7 @@ fetch_package(https://github.com/nlohmann/json.git v3.*.* JSON)
 if (WIN32)
     find_package(ZLIB REQUIRED)
     find_package(assimp REQUIRED)
-else()
+else ()
     set(ASSIMP_BUILD_TESTS OFF)
     set(ASSIMP_WARNINGS_AS_ERRORS OFF)
     set(ASSIMP_BUILD_ZLIB ON)
@@ -25,7 +25,7 @@ else()
     set(ASSIMP_BUILD_COLLADA_IMPORTER ON)
     set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
     fetch_package(https://github.com/assimp/assimp.git v6.*.* assimp)
-endif()
+endif ()
 
 set(ENABLE_GLSLANG_BINARIES OFF)
 set(ENABLE_HLSL OFF)
@@ -41,6 +41,14 @@ if (Vulkan_INCLUDE_DIRS STREQUAL "Vulkan_INCLUDE_DIR-NOTFOUND")
 endif ()
 
 find_or_fetch_package(https://github.com/g-truc/glm.git 1.*.* glm)
+
+set(OPENEXR_INSTALL OFF)
+set(OPENEXR_BUILD_TOOLS OFF)
+set(OPENEXR_BUILD_EXAMPLES OFF)
+set(OPENEXR_TEST_LIBRARIES OFF)
+set(OPENEXR_FORCE_INTERNAL_IMATH ON)
+set(OPENEXR_FORCE_INTERNAL_OPENJPH ON)
+fetch_package(https://github.com/AcademySoftwareFoundation/openexr.git v3.*.* openexr)
 
 add_library(assets SHARED
         include/libassets/libassets.h
@@ -120,6 +128,23 @@ add_library(assets SHARED
         include/libassets/util/SearchPathManager.h
         src/util/ActorDefinitionManager.cpp
         include/libassets/util/ActorDefinitionManager.h
+        include/libassets/type/MapVertex.h
+        src/util/ArgumentParser.cpp
+        include/libassets/util/ArgumentParser.h
+        include/libassets/util/Logger.h
+        include/libassets/type/RenderDefinitionValue.h
+        src/type/renderDefs/PointRenderDefinition.cpp
+        include/libassets/type/renderDefs/PointRenderDefinition.h
+        src/type/renderDefs/SpriteRenderDefinition.cpp
+        include/libassets/type/renderDefs/SpriteRenderDefinition.h
+        src/type/renderDefs/ModelRenderDefinition.cpp
+        include/libassets/type/renderDefs/ModelRenderDefinition.h
+        src/type/renderDefs/OrientationRenderDefinition.cpp
+        include/libassets/type/renderDefs/OrientationRenderDefinition.h
+        src/type/renderDefs/BoxRenderDefinition.cpp
+        include/libassets/type/renderDefs/BoxRenderDefinition.h
+        src/type/renderDefs/WallRenderDefinition.cpp
+        include/libassets/type/renderDefs/WallRenderDefinition.h
 )
 
 set_target_properties(assets PROPERTIES
@@ -127,7 +152,6 @@ set_target_properties(assets PROPERTIES
         LINK_FLAGS "-Wl,-rpath='$ORIGIN'"
 )
 
-target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json glm::glm)
+target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json glm::glm OpenEXR::OpenEXR)
 
-target_include_directories(assets PUBLIC ${Vulkan_INCLUDE_DIRS} "include")
-target_include_directories(assets PRIVATE "${CMAKE_SOURCE_DIR}/lib/stb")
+target_include_directories(assets PUBLIC ${Vulkan_INCLUDE_DIRS} "include" "${CMAKE_SOURCE_DIR}/lib/stb")

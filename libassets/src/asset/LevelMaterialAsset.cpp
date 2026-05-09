@@ -29,8 +29,8 @@ Error::ErrorCode LevelMaterialAsset::CreateFromAsset(const char *assetPath, Leve
     }
     material = LevelMaterialAsset();
     asset.reader.ReadStringWithSize(material.texture);
-    material.baseScale[0] = asset.reader.Read<float>();
-    material.baseScale[1] = asset.reader.Read<float>();
+    material.baseScale.x = asset.reader.Read<float>();
+    material.baseScale.y = asset.reader.Read<float>();
     material.shader = static_cast<Material::MaterialShader>(asset.reader.Read<uint8_t>());
     material.soundClass = static_cast<SoundClass>(asset.reader.Read<uint8_t>());
     material.compileInvisible = asset.reader.Read<uint8_t>() == 1;
@@ -57,5 +57,6 @@ Error::ErrorCode LevelMaterialAsset::SaveAsAsset(const char *assetPath) const
     return AssetReader::SaveToFile(assetPath,
                                    buffer,
                                    Asset::AssetType::ASSET_TYPE_LEVEL_MATERIAL,
-                                   LEVEL_MATERIAL_ASSET_VERSION);
+                                   LEVEL_MATERIAL_ASSET_VERSION,
+                                   AssetReader::BEST_COMPRESSION);
 }

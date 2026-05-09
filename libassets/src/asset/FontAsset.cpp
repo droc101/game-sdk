@@ -60,7 +60,11 @@ Error::ErrorCode FontAsset::SaveAsAsset(const char *assetPath) const
 {
     std::vector<uint8_t> buffer;
     SaveToBuffer(buffer);
-    return AssetReader::SaveToFile(assetPath, buffer, Asset::AssetType::ASSET_TYPE_FONT, FONT_ASSET_VERSION);
+    return AssetReader::SaveToFile(assetPath,
+                                   buffer,
+                                   Asset::AssetType::ASSET_TYPE_FONT,
+                                   FONT_ASSET_VERSION,
+                                   AssetReader::BEST_COMPRESSION);
 }
 
 
@@ -91,7 +95,7 @@ std::vector<std::string> FontAsset::GetCharListForDisplay()
     std::vector<std::string> list{};
     for (size_t i = 0; i < FONT_MAX_SYMBOLS; i++)
     {
-        const char c = FONT_VALID_CHARS[i];
+        const char c = FONT_VALID_CHARS.at(i);
         list.push_back(std::format("{} (0x{:02X})", c, c));
     }
     return list;

@@ -2,13 +2,24 @@
 // Created by droc101 on 3/6/26.
 //
 
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <filesystem>
+#include <format>
+#include <libassets/asset/DataAsset.h>
 #include <libassets/type/Param.h>
+#include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <string>
+#include <vector>
 
-SearchPathManager::SearchPathManager(DataAsset &gameConfig, const std::string &executableFolder)
+SearchPathManager::SearchPathManager(DataAsset &gameConfig,
+                                     const std::string &executableFolder,
+                                     const std::string &configParentFolder)
 {
-    ParamVector &searchPathData = gameConfig.data["search_paths"].GetRef<ParamVector>({});
+    ParamVector defaultParamVectorValue{};
+    ParamVector &searchPathData = gameConfig.data["search_paths"].GetRef<ParamVector>(defaultParamVectorValue);
     for (Param &p: searchPathData)
     {
         if (p.GetType() == Param::ParamType::PARAM_TYPE_STRING)
@@ -17,15 +28,20 @@ SearchPathManager::SearchPathManager(DataAsset &gameConfig, const std::string &e
             assetPaths.push_back(searchPath);
         } else if (p.GetType() == Param::ParamType::PARAM_TYPE_KV_LIST)
         {
-            KvList &searchPathKvl = p.GetRef<KvList>({});
-            const bool isAbsolute = searchPathKvl["path_is_absolute"].Get<bool>(false);
+            KvList defaultKvListValue{};
+            KvList &searchPathKvl = p.GetRef<KvList>(defaultKvListValue);
+            const std::string pathType = searchPathKvl["path_type"].Get<std::string>("relative_to_executable_"
+                                                                                     "directory");
             const std::string path = searchPathKvl["search_path"].Get<std::string>("engine");
-            if (isAbsolute)
-            {
-                assetPaths.push_back(path);
-            } else
+            if (pathType == "relative_to_executable_directory")
             {
                 assetPaths.push_back(std::format("{}/{}", executableFolder, path));
+            } else if (pathType == "absolute")
+            {
+                assetPaths.push_back(path);
+            } else if (pathType == "relative_to_game_config_parent_directory")
+            {
+                assetPaths.push_back(std::format("{}/{}", configParentFolder, path));
             }
         }
     }
@@ -67,7 +83,7 @@ std::vector<std::string> SearchPathManager::ScanFolder(const std::string &direct
         }
     } catch (const std::filesystem::filesystem_error &exception)
     {
-        printf("std::filesystem_error: %s\n", exception.what());
+        Logger::Error("std::filesystem_error: %s", exception.what());
     }
     if (isRoot)
     {
@@ -104,7 +120,7 @@ std::vector<SearchPathManager::AssetResult> SearchPathManager::ScanAssetFolder(c
     std::vector<AssetResult> results{};
     for (size_t i = 0; i < paths.size(); i++)
     {
-        AssetResult res = {
+        const AssetResult res = {
             .relativePath = found.at(i),
             .absolutePath = paths.at(i),
         };

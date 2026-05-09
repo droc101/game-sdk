@@ -47,14 +47,14 @@ class AddPrimitiveTool final: public EditorTool
         static inline float ngonStartAngle = 0;
         static inline PrimitiveType primitive = PrimitiveType::RECTANGLE;
 
-        std::vector<glm::vec2> GetPoints() const;
+        [[nodiscard]] std::vector<glm::vec2> GetPoints() const;
 
-        static std::vector<glm::vec2> buildNgon(int n,
+        static std::vector<glm::vec2> BuildNgon(int n,
                                                 const glm::vec2 &p0,
                                                 const glm::vec2 &p1,
                                                 float startAngleRadians = 1.57079632679489661923f); // PI/2
 
-        static std::vector<glm::vec2> buildRect(const glm::vec2 &p0, const glm::vec2 &p1);
+        static std::vector<glm::vec2> BuildRect(const glm::vec2 &p0, const glm::vec2 &p1);
 
-        static std::vector<glm::vec2> buildTri(const glm::vec2 &p0, const glm::vec2 &p1);
+        static std::vector<glm::vec2> BuildTriangle(const glm::vec2 &p0, const glm::vec2 &p1);
 };

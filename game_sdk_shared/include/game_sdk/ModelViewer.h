@@ -5,8 +5,6 @@
 #ifndef GAME_SDK_MODELVIEWER_H
 #define GAME_SDK_MODELVIEWER_H
 
-#include <cstddef>
-#include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -126,22 +124,23 @@ class ModelViewer
                 GLHelper::GL_Buffer cubeBuffer{};
 
                 static ModelViewerShared &Get();
+
             private:
                 ModelViewerShared() = default;
         };
 
         struct GLModelLod
         {
-            GLuint vao{};
-            GLuint vbo{};
-            std::vector<GLuint> ebos{};
+                GLuint vao{};
+                GLuint vbo{};
+                std::vector<GLuint> ebos{};
         };
 
         struct GLHull
         {
-            GLuint vao{};
-            GLuint vbo{};
-            size_t elements{};
+                GLuint vao{};
+                GLuint vbo{};
+                size_t elements{};
         };
 
         ModelAsset model{};

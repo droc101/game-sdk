@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <cstddef>
+
 #include <libassets/type/Actor.h>
 
 class EditActorWindow

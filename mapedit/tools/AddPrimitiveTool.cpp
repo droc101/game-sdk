@@ -6,39 +6,28 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <cstddef>
 #include <game_sdk/SDKWindow.h>
 #include <imgui.h>
-#include <libassets/type/Actor.h>
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
 #include <memory>
 #include <numbers>
 #include <vector>
 #include "../MapEditor.h"
-#include "../MapRenderer.h"
 #include "../Viewport.h"
+#include "../ViewportRenderer.h"
 #include "EditorTool.h"
 #include "SelectTool.h"
 
 void AddPrimitiveTool::RenderViewport(Viewport &vp)
 {
-    MapRenderer::RenderViewport(vp);
-
-    glm::mat4 matrix = vp.GetMatrix();
-
-    bool isHovered = false;
     glm::vec3 worldSpaceHover{};
-    glm::vec2 screenSpaceHover{};
 
     if (ImGui::IsWindowFocused())
     {
-        isHovered = ImGui::IsWindowHovered();
-        if (isHovered)
+        if (ImGui::IsWindowHovered())
         {
             worldSpaceHover = vp.GetWorldSpaceMousePos();
-            const ImVec2 localMouse = Viewport::GetLocalMousePos();
-            screenSpaceHover = glm::vec2(localMouse.x, localMouse.y);
         }
 
         if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
@@ -69,7 +58,6 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
                     s.floorMaterial = mat;
                     s.floorHeight = floor;
                     s.ceilingHeight = ceiling;
-                    s.lightColor = Color(1, 1, 1, 1);
                     const std::vector<glm::vec2> points = GetPoints();
                     for (const glm::vec2 &glmPoint: points)
                     {
@@ -93,84 +81,8 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
         }
     }
 
-    for (Sector &sector: MapEditor::map.sectors)
-    {
-        for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
-        {
-            const glm::vec2 &start2 = sector.points[vertexIndex];
-            const glm::vec2 &end2 = sector.points[(vertexIndex + 1) % sector.points.size()];
-            const glm::vec3 startCeiling = glm::vec3(start2.x, sector.ceilingHeight, start2.y);
-            const glm::vec3 endCeiling = glm::vec3(end2.x, sector.ceilingHeight, end2.y);
-            const glm::vec3 startFloor = glm::vec3(start2.x, sector.floorHeight, start2.y);
-            const glm::vec3 endFloor = glm::vec3(end2.x, sector.floorHeight, end2.y);
-
-            if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
-            {
-                MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0),
-                                                  10,
-                                                  Color(1, 0.7, 0.7, 1),
-                                                  matrix);
-            }
-            if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
-            {
-                MapRenderer::RenderLine(startFloor, endFloor, Color(0.7, .7, .7, 1), matrix, 4);
-                MapRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
-            }
-
-            MapRenderer::RenderLine(startCeiling, endCeiling, Color(0.7, .7, .7, 1), matrix, 4);
-        }
-    }
-
-    for (Actor &a: MapEditor::map.actors)
-    {
-        MapRenderer::RenderActor(a, matrix, vp);
-    }
-
     if (hasDrawnShape)
     {
-        const std::array<glm::vec3, 4> boxPoints = {
-            shapeStart,
-            glm::vec3(shapeStart.x, 0, shapeEnd.z),
-            shapeEnd,
-            glm::vec3(shapeEnd.x, 0, shapeStart.z),
-        };
-        for (size_t i = 0; i < boxPoints.size(); i++)
-        {
-            const size_t nextIndex = (i + 1) % boxPoints.size();
-            const glm::vec3 startPointCeil = glm::vec3(boxPoints.at(i).x, ceiling, boxPoints.at(i).z);
-            const glm::vec3 startPointFloor = glm::vec3(boxPoints.at(i).x, floor, boxPoints.at(i).z);
-            const glm::vec3 endPointCeil = glm::vec3(boxPoints.at(nextIndex).x, ceiling, boxPoints.at(nextIndex).z);
-            const glm::vec3 endPointFloor = glm::vec3(boxPoints.at(nextIndex).x, floor, boxPoints.at(nextIndex).z);
-            MapRenderer::RenderLine(startPointCeil, endPointCeil, Color(.6, 6, 0, 1), matrix, 2);
-            if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
-            {
-                MapRenderer::RenderLine(startPointFloor, endPointFloor, Color(.6, .6, 0, 1), matrix, 2);
-                MapRenderer::RenderLine(startPointCeil, startPointFloor, Color(.3, .3, 0, 1), matrix, 1);
-            }
-        }
-
-        std::vector<glm::vec2> points = GetPoints();
-
-        for (size_t i = 0; i < points.size(); i++)
-        {
-            const size_t nextIndex = (i + 1) % points.size();
-            const glm::vec3 startPointCeil = glm::vec3(points.at(i).x, ceiling, points.at(i).y);
-            const glm::vec3 startPointFloor = glm::vec3(points.at(i).x, floor, points.at(i).y);
-            const glm::vec3 endPointCeil = glm::vec3(points.at(nextIndex).x, ceiling, points.at(nextIndex).y);
-            const glm::vec3 endPointFloor = glm::vec3(points.at(nextIndex).x, floor, points.at(nextIndex).y);
-            if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
-            {
-                MapRenderer::RenderBillboardPoint(startPointCeil + glm::vec3(0, 0.1, 0), 10, Color(1, 0, 0, 1), matrix);
-            }
-            MapRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 1, 1), matrix, 4);
-            if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
-            {
-                MapRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 1, 1), matrix, 4);
-                MapRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, .6, 1), matrix, 2);
-            }
-        }
-
-
         if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
         {
             hasDrawnShape = false;
@@ -180,6 +92,33 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
         MapEditor::toolType = MapEditor::EditorToolType::SELECT;
         MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
     }
+
+    ViewportRenderer::ViewportRenderNewPrimitive sect = {
+        .points = GetPoints(),
+        .floor = floor,
+        .ceiling = ceiling,
+        .aabbStart = shapeStart,
+        .aabbEnd = shapeEnd,
+    };
+    const glm::vec2 pt = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
+    ViewportRenderer::ViewportRenderPoint vpt = {
+        .pos = glm::vec3(pt.x, 0.1, pt.y),
+        .color = Color(1, 0.7, 0.7, 1),
+        .size = 10,
+    };
+    const ViewportRenderer::ViewportRenderSettings vps = {
+        .sectorFocusMode = false,
+        .focusedSectorIndex = 0,
+        .hoverType = ItemType::NONE,
+        .hoverIndex = 0,
+        .selectionType = ItemType::NONE,
+        .selectionIndex = 0,
+        .selectionVertexIndex = 0,
+        .point = vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ ? &vpt : nullptr,
+        .newPrimitive = hasDrawnShape ? &sect : nullptr,
+        .newActor = nullptr,
+    };
+    ViewportRenderer::RenderViewport(vp, vps);
 }
 
 std::vector<glm::vec2> AddPrimitiveTool::GetPoints() const
@@ -188,16 +127,16 @@ std::vector<glm::vec2> AddPrimitiveTool::GetPoints() const
 
     if (primitive == PrimitiveType::NGON)
     {
-        points = buildNgon(ngonSides,
+        points = BuildNgon(ngonSides,
                            glm::vec2(shapeStart.x, shapeStart.z),
                            glm::vec2(shapeEnd.x, shapeEnd.z),
                            ngonStartAngle);
     } else if (primitive == PrimitiveType::TRIANGLE)
     {
-        points = buildTri(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
+        points = BuildTriangle(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
     } else if (primitive == PrimitiveType::RECTANGLE)
     {
-        points = buildRect(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
+        points = BuildRect(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
     }
     return points;
 }
@@ -233,7 +172,7 @@ void AddPrimitiveTool::RenderToolWindow()
             ngonStartAngle = glm::radians(deg);
         }
         ImGui::Separator();
-        const ImVec2 buttonSize = {(ImGui::GetContentRegionAvail().x / 3) - 6, 0}; // TODO obtain 6 without using magic
+        const ImVec2 buttonSize = {ImGui::GetContentRegionAvail().x / 3 - 6, 0}; // TODO obtain 6 without using magic
 
         if (ImGui::Button("Hexagon", buttonSize))
         {
@@ -258,7 +197,7 @@ void AddPrimitiveTool::RenderToolWindow()
     ImGui::InputFloat("##floorHeight", &floor);
 }
 
-std::vector<glm::vec2> AddPrimitiveTool::buildNgon(const int n,
+std::vector<glm::vec2> AddPrimitiveTool::BuildNgon(const int n,
                                                    const glm::vec2 &p0,
                                                    const glm::vec2 &p1,
                                                    const float startAngleRadians)
@@ -286,7 +225,7 @@ std::vector<glm::vec2> AddPrimitiveTool::buildNgon(const int n,
     pts.reserve(n);
     for (int i = 0; i < n; i++)
     {
-        const float theta = startAngleRadians + 1 * (2.0f * std::numbers::pi_v<float> * i / n);
+        const float theta = startAngleRadians + 1 * (2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / n);
         const float x = cx + rx * std::cos(theta);
         const float y = cy + ry * std::sin(theta);
         pts.emplace_back(x, y);
@@ -294,7 +233,7 @@ std::vector<glm::vec2> AddPrimitiveTool::buildNgon(const int n,
     return pts;
 }
 
-std::vector<glm::vec2> AddPrimitiveTool::buildRect(const glm::vec2 &p0, const glm::vec2 &p1)
+std::vector<glm::vec2> AddPrimitiveTool::BuildRect(const glm::vec2 &p0, const glm::vec2 &p1)
 {
     std::vector<glm::vec2> pts;
 
@@ -310,7 +249,7 @@ std::vector<glm::vec2> AddPrimitiveTool::buildRect(const glm::vec2 &p0, const gl
     return pts;
 }
 
-std::vector<glm::vec2> AddPrimitiveTool::buildTri(const glm::vec2 &p0, const glm::vec2 &p1)
+std::vector<glm::vec2> AddPrimitiveTool::BuildTriangle(const glm::vec2 &p0, const glm::vec2 &p1)
 {
     std::vector<glm::vec2> pts;
 

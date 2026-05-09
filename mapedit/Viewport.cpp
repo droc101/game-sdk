@@ -26,7 +26,7 @@ void Viewport::GetWindowRect(ImVec2 &pos, ImVec2 &size) const
     size = windowSize;
 }
 
-void Viewport::RenderImGui()
+void Viewport::Render()
 {
     std::string title;
     if (type == ViewportType::TOP_DOWN_XZ)
@@ -42,15 +42,19 @@ void Viewport::RenderImGui()
     ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetColorU32(ImGuiCol_WindowBg));
     ImGui::PushStyleColor(ImGuiCol_WindowBg, 0);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 4);
-    constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
-                                             ImGuiWindowFlags_NoMove |
-                                             ImGuiWindowFlags_NoBringToFrontOnFocus |
-                                             ImGuiWindowFlags_NoDecoration |
-                                             ImGuiWindowFlags_NoScrollbar |
-                                             ImGuiWindowFlags_NoScrollWithMouse;
-    ImGui::Begin(("" + title).c_str(), nullptr, windowFlags);
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoCollapse |
+                                              ImGuiWindowFlags_NoMove |
+                                              ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                              ImGuiWindowFlags_NoDecoration |
+                                              ImGuiWindowFlags_NoScrollbar |
+                                              ImGuiWindowFlags_NoScrollWithMouse;
+    ImGui::Begin(("" + title).c_str(), nullptr, WINDOW_FLAGS);
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();
+
+    const ImVec2 wPos = ImGui::GetWindowPos();
+    const ImVec2 mPos = ImGui::GetMousePos();
+    lastLocalMousePos = {mPos.x - wPos.x, mPos.y - wPos.y};
 
     windowPos = ImGui::GetWindowPos();
     windowSize = ImGui::GetContentRegionMax();
@@ -67,6 +71,8 @@ void Viewport::RenderImGui()
 
     GLHelper::BindFramebuffer(framebuffer);
 
+    RecalculateMatrices();
+
     MapEditor::tool->RenderViewport(*this);
 
     GLHelper::UnbindFramebuffer();
@@ -78,11 +84,11 @@ void Viewport::RenderImGui()
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetColorU32(ImGuiCol_WindowBg));
 
-    constexpr ImGuiChildFlags childFlags = ImGuiChildFlags_AlwaysAutoResize |
-                                           ImGuiChildFlags_AutoResizeX |
-                                           ImGuiChildFlags_AutoResizeY |
-                                           ImGuiChildFlags_Borders;
-    if (MapEditor::drawViewportInfo && ImGui::BeginChild("_vp_stats", ImVec2(0, 0), childFlags))
+    constexpr ImGuiChildFlags CHILD_FLAGS = ImGuiChildFlags_AlwaysAutoResize |
+                                            ImGuiChildFlags_AutoResizeX |
+                                            ImGuiChildFlags_AutoResizeY |
+                                            ImGuiChildFlags_Borders;
+    if (MapEditor::drawViewportInfo && ImGui::BeginChild("_vp_stats", ImVec2(0, 0), CHILD_FLAGS))
     {
         ImGui::Text("Pos: %.2f, %.2f\nZoom: %.2f units/screen\nGrid: %.2f units",
                     scrollCenterPos.x,
@@ -128,8 +134,7 @@ void Viewport::RenderImGui()
             }
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
         }
-        zoom += ImGui::GetIO().MouseWheel * -5.0f; // TODO zoom around cursor
-        ClampZoom();
+        ChangeZoom(ImGui::GetIO().MouseWheel * -5.0f);
     }
 
     ImGui::End();
@@ -147,10 +152,8 @@ glm::vec3 Viewport::ScreenToWorldPos(ImVec2 localScreenPos) const
     GetWindowRect(WindowPos, WindowSize);
     const glm::vec2 ndcPos2d = GLHelper::ScreenToNDC({localScreenPos.x, localScreenPos.y},
                                                      {WindowSize.x, WindowSize.y});
-    const glm::mat4 matrix = GetMatrix();
-    const glm::mat4 invMatrix = glm::inverse(matrix);
     const glm::vec4 clipPos = glm::vec4(ndcPos2d, 0.0f, 1.0f);
-    const glm::vec4 worldPos = invMatrix * clipPos;
+    const glm::vec4 worldPos = inverseWorldScreenMatrix * clipPos;
     glm::vec3 worldPos3 = glm::vec3(worldPos) / worldPos.w;
     switch (type)
     {
@@ -173,16 +176,73 @@ glm::vec2 Viewport::WorldToScreenPos(const glm::vec3 worldPos) const
     ImVec2 WindowSize;
     ImVec2 WindowPos;
     GetWindowRect(WindowPos, WindowSize);
-    const glm::mat4 matrix = GetMatrix();
-    const glm::vec4 fullNdc = matrix * glm::vec4(worldPos, 1.0f);
+    const glm::vec4 fullNdc = worldScreenMatrix * glm::vec4(worldPos, 1.0f);
     const glm::vec2 ndc = glm::vec2(fullNdc.x, fullNdc.y);
     const float screenX = (ndc.x * 0.5f + 0.5f) * WindowSize.x;
     const float screenY = (-ndc.y * 0.5f + 0.5f) * WindowSize.y;
     return {screenX, screenY};
 }
 
-
 glm::mat4 Viewport::GetMatrix() const
+{
+    return worldScreenMatrix;
+}
+
+void Viewport::CenterPosition(glm::vec3 pos)
+{
+    switch (type)
+    {
+        case ViewportType::TOP_DOWN_XZ:
+            scrollCenterPos = {-pos.x, pos.z};
+            break;
+        case ViewportType::FRONT_XY:
+            scrollCenterPos = {pos.x, pos.y};
+            break;
+        case ViewportType::SIDE_YZ:
+        default:
+            scrollCenterPos = {pos.z, pos.y};
+            break;
+    }
+}
+
+float &Viewport::GetZoom()
+{
+    return zoom;
+}
+
+float Viewport::GetZoom() const
+{
+    return zoom;
+}
+
+ImVec2 Viewport::GetLocalMousePos() const
+{
+    return lastLocalMousePos;
+}
+
+glm::vec3 Viewport::GetWorldSpaceMousePos() const
+{
+    return ScreenToWorldPos(lastLocalMousePos);
+}
+
+void Viewport::ChangeZoom(const float by)
+{
+    zoom = glm::clamp(zoom + by, 5.0f, MapEditor::MAP_SIZE + 500.0f);
+    // TODO: zoom around mouse cursor instead of origin
+}
+
+glm::vec2 Viewport::GetWorldSpaceSize() const
+{
+    const float width = (windowSize.x / windowSize.y) * zoom;
+    return {width, zoom};
+}
+
+glm::vec3 Viewport::GetCameraPos() const
+{
+    return ScreenToWorldPos(ImVec2(windowSize.x / 2, windowSize.y / 2));
+}
+
+void Viewport::RecalculateMatrices()
 {
     const float aspect = (framebuffer.size.y != 0.0f) ? (framebuffer.size.x / framebuffer.size.y) : 1.0f;
     const float halfHeight = zoom / 2.0f;
@@ -216,51 +276,6 @@ glm::mat4 Viewport::GetMatrix() const
 
     const glm::mat4 view = glm::lookAt(eye, target, up);
 
-    return ortho * view;
-}
-
-void Viewport::CenterPosition(glm::vec3 pos)
-{
-    switch (type)
-    {
-        case ViewportType::TOP_DOWN_XZ:
-            scrollCenterPos = {-pos.x, pos.z};
-            break;
-        case ViewportType::FRONT_XY:
-            scrollCenterPos = {pos.x, pos.y};
-            break;
-        case ViewportType::SIDE_YZ:
-        default:
-            scrollCenterPos = {pos.z, pos.y};
-            break;
-    }
-}
-
-float &Viewport::GetZoom()
-{
-    return zoom;
-}
-
-void Viewport::ClampZoom()
-{
-    if (zoom < 5)
-    {
-        zoom = 5;
-    }
-    if (zoom > MapEditor::MAP_SIZE + 500)
-    {
-        zoom = MapEditor::MAP_SIZE + 500;
-    }
-}
-
-ImVec2 Viewport::GetLocalMousePos()
-{
-    const ImVec2 wPos = ImGui::GetWindowPos();
-    const ImVec2 mPos = ImGui::GetMousePos();
-    return {mPos.x - wPos.x, mPos.y - wPos.y};
-}
-
-glm::vec3 Viewport::GetWorldSpaceMousePos() const
-{
-    return ScreenToWorldPos(GetLocalMousePos());
+    worldScreenMatrix = ortho * view;
+    inverseWorldScreenMatrix = glm::inverse(worldScreenMatrix);
 }

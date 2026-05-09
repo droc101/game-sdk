@@ -4,18 +4,21 @@
 
 #include <cassert>
 #include <cfloat>
+#include <cstddef>
 #include <game_sdk/ModelViewer.h>
+#include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/SearchPathManager.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
 #include <utility>
 #include <vector>
 
-constexpr int tileSize = 256;
+constexpr int TILE_SIZE = 256;
 static std::string filter;
 
 ModelBrowserWindow &ModelBrowserWindow::Get()
@@ -36,7 +39,7 @@ void ModelBrowserWindow::Show(std::string *model)
     models.clear();
     modelAbsPaths.clear();
     const std::vector<SearchPathManager::AssetResult> absModels = SharedMgr::Get().pathManager.ScanAssetFolder("/model",
-                                                                                                        ".gmdl");
+                                                                                                               ".gmdl");
     for (const SearchPathManager::AssetResult &mPath: absModels)
     {
         models.push_back(mPath.relativePath);
@@ -56,7 +59,9 @@ void ModelBrowserWindow::InputModel(const char *label, std::string &model)
 void ModelBrowserWindow::InputModel(const char *label, std::string *model)
 {
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
+    ImGui::PushFont(SDKWindow::Get().GetMonospaceFont());
     ImGui::InputText(label, model);
+    ImGui::PopFont();
     ImGui::SameLine();
     if (ImGui::Button(("..." + std::string(label)).c_str(), ImVec2(40, 0)))
     {
@@ -71,17 +76,17 @@ void ModelBrowserWindow::Render()
         ImGui::OpenPopup("Choose Model");
         ImGui::SetNextWindowSize(ImVec2(1000, 700), ImGuiCond_Appearing);
         ImGui::SetNextWindowSizeConstraints(ImVec2(300, 192), ImVec2(FLT_MAX, FLT_MAX));
-        constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse |
-                                                 ImGuiWindowFlags_NoSavedSettings |
-                                                 ImGuiWindowFlags_NoDocking;
-        if (ImGui::BeginPopupModal("Choose Model", &visible, windowFlags))
+        constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoCollapse |
+                                                  ImGuiWindowFlags_NoSavedSettings |
+                                                  ImGuiWindowFlags_NoDocking;
+        if (ImGui::BeginPopupModal("Choose Model", &visible, WINDOW_FLAGS))
         {
             ImGui::PushItemWidth(200);
             const float cursorTopY = ImGui::GetCursorPosY();
             ImGui::InputTextWithHint("##search", "Filter", &filter);
-            bool foundResults = false;
             if (ImGui::BeginListBox("##models", {200, -36}))
             {
+                bool foundResults = false;
                 for (size_t i = 0; i < models.size(); i++)
                 {
                     const std::string &model = models.at(i);
