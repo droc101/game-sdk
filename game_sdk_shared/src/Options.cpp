@@ -85,8 +85,8 @@ void Options::Save()
 
 std::string Options::GetAssetsPath() const
 {
-    const std::filesystem::path path = std::filesystem::path(gameConfigPath);
-    return path.parent_path().string();
+    std::filesystem::path path = std::filesystem::path(gameConfigPath);
+    return path.remove_filename().string();
 }
 
 std::string Options::GetGameConfigParentPath() const
