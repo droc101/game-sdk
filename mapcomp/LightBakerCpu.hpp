@@ -13,9 +13,18 @@
 
 class LightBakerCpu
 {
+        using Triangle = std::array<MapVertex, 3>;
+
     public:
-        static void Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
-                         const std::vector<Light> &lights,
-                         std::vector<uint8_t> &pixelData,
-                         const glm::uvec2 &lightmapSize);
+        LightBakerCpu() = delete;
+        LightBakerCpu(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
+                      const std::vector<Light> &lights,
+                      const glm::uvec2 &lightmapSize);
+
+        void Bake(uint64_t rayCount, uint32_t bounceCount, std::vector<uint16_t> &pixelData);
+
+    private:
+        std::vector<Triangle> triangles;
+        std::vector<Light> lights;
+        glm::uvec2 lightmapSize;
 };

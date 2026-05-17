@@ -12,6 +12,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 #include "LevelMeshBuilder.h"
+#include "libassets/type/Actor.h"
 #include "Light.h"
 
 class LightBakerGpu
@@ -24,7 +25,9 @@ class LightBakerGpu
         bool Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                   const std::vector<Light> &lights,
                   const glm::uvec2 &lightmapSize,
-                  std::vector<uint8_t> &pixelData);
+                  uint64_t rayCount,
+                  uint32_t bounceCount,
+                  std::vector<uint16_t> &pixelData);
 
         [[nodiscard]] bool IsInitialized() const
         {
@@ -61,7 +64,10 @@ class LightBakerGpu
 
         bool CreateAndWriteDescriptorSet();
 
-        bool CreatePipeline(const glm::uvec2 &lightmapSize, uint32_t lightCount);
+        bool CreatePipeline(const glm::uvec2 &lightmapSize,
+                            uint32_t lightCount,
+                            uint64_t rayCount,
+                            uint32_t bounceCount);
 
         bool CreateShaderBindingTables();
 

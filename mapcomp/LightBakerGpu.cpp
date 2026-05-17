@@ -35,14 +35,8 @@
 #include <volk.h>
 #include <vulkan/vulkan_core.h>
 #include "LevelMeshBuilder.h"
+#include "libassets/type/Actor.h"
 #include "Light.h"
-
-static constexpr uint64_t RAY_COUNT = (uint64_t{1} << 32);
-static constexpr uint32_t BOUNCES = 1;
-
-static_assert(RAY_COUNT - 1 == static_cast<uint64_t>(static_cast<double>(RAY_COUNT) - 1),
-              "Ray count must be representable as a double in order to be preserved in the shader!");
-static_assert(RAY_COUNT % (1 << 15) == 0, "Ray count must be a multiple of (1 << 15)!");
 
 /// This function is evil
 template<typename... T>
@@ -270,7 +264,7 @@ LightBakerGpu::LightBakerGpu()
     constexpr LunaQueueFamilyProperties REQUIRED_PROPERTIES = {
         .queueFamilyProperties = VkQueueFamilyProperties{.queueFlags = VK_QUEUE_COMPUTE_BIT},
     };
-    queueFamilyIndex = lunaGetQueueFamilyIndex(device, &REQUIRED_PROPERTIES);
+    queueFamilyIndex = lunaGetDeviceQueueFamilyIndex(device, &REQUIRED_PROPERTIES);
     vkGetDeviceQueue(lunaGetVkDevice(device), queueFamilyIndex, 0, &queue);
 
     const LunaCommandPoolCreationInfo commandPoolCreationInfo = {
@@ -314,11 +308,13 @@ static constexpr VmaAllocationCreateInfo MAPPED_ALLOCATION_CREATE_INFO = {
 bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                          const std::vector<Light> &lights,
                          const glm::uvec2 &lightmapSize,
-                         std::vector<uint8_t> &pixelData)
+                         const uint64_t rayCount,
+                         const uint32_t bounceCount,
+                         std::vector<uint16_t> &pixelData)
 {
-    static constexpr uint64_t WIDTH = std::min(RAY_COUNT, uint64_t{1} << 15);
-    static constexpr uint64_t HEIGHT = std::min(std::max(RAY_COUNT / WIDTH, uint64_t{1}), uint64_t{1} << 15);
-    static constexpr uint64_t ITERATIONS = std::max(RAY_COUNT / WIDTH / HEIGHT, uint64_t{1});
+    const uint64_t width = std::min(rayCount, uint64_t{1} << 15);
+    const uint64_t height = std::min(std::max(rayCount / width, uint64_t{1}), uint64_t{1} << 15);
+    const uint64_t iterations = std::max(rayCount / width / height, uint64_t{1});
 
     if (meshBuilders.empty())
     {
@@ -399,17 +395,17 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
     {
         return false;
     }
-    if (!CreatePipeline(lightmapSize, lights.size()))
+    if (!CreatePipeline(lightmapSize, lights.size(), rayCount, bounceCount))
     {
         return false;
     }
 
     lunaDeviceWaitIdle(device);
 
-    for (uint32_t i = 0; i < lights.size() * ITERATIONS; i++)
+    for (uint32_t i = 0; i < lights.size() * iterations; i++)
     {
         Logger::Info("Baking lighting {}%...",
-                     static_cast<float>(100 * i) / static_cast<float>(lights.size() * ITERATIONS));
+                     static_cast<float>(100 * i) / static_cast<float>(lights.size() * iterations));
 
         if (!CheckResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
         {
@@ -456,18 +452,18 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
                           &STRIDED_DEVICE_ADDRESS_REGION_NONE,
                           &closestHitShaderBindingTableAddressRegion,
                           &STRIDED_DEVICE_ADDRESS_REGION_NONE,
-                          WIDTH,
-                          HEIGHT,
+                          width,
+                          height,
                           1);
         const LunaCommandBufferSubmitInfo submitInfo = {
             .queue = queue,
-            .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            // .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
         };
         if (!CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo)))
         {
             return false;
         }
-        iteration = (iteration + 1) % ITERATIONS;
+        iteration = (iteration + 1) % iterations;
         if (iteration == 0)
         {
             lightIndex++;
@@ -483,8 +479,8 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
 
     Logger::Info("Saving Lightmap...");
     lunaDeviceWaitIdle(device);
-    uint8_t *bufferData = static_cast<uint8_t *>(lunaGetBufferDataPointer(outputLightmap));
-    pixelData.resize(lunaGetBufferSize(outputLightmap));
+    uint16_t *bufferData = static_cast<uint16_t *>(lunaGetBufferDataPointer(outputLightmap));
+    pixelData.resize(lunaGetBufferSize(outputLightmap) / 2);
     std::copy_n(bufferData, pixelData.size(), pixelData.data());
     return true;
 }
@@ -705,7 +701,7 @@ bool LightBakerGpu::CreateBLAS(const std::unordered_map<std::string, LevelMeshBu
 
     const LunaCommandBufferSubmitInfo submitInfo = {
         .queue = queue,
-        .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        // .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
     };
     return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }
@@ -859,12 +855,15 @@ bool LightBakerGpu::CreateTLAS()
 
     const LunaCommandBufferSubmitInfo submitInfo = {
         .queue = queue,
-        .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        // .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
     };
     return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }
 
-bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize, const uint32_t lightCount)
+bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize,
+                                   const uint32_t lightCount,
+                                   const uint64_t rayCount,
+                                   const uint32_t bounceCount)
 {
     std::vector<uint32_t> raygenShaderSpirv;
     const VkShaderModule raygenShaderModule = GenerateShaderModule("assets/shaders/lightmap/raygen.rgen",
@@ -883,22 +882,22 @@ bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize, const uint32_
         return false;
     }
 
-    static constexpr struct
+    const struct
     {
             double rayCount;
             uint32_t iterationCount;
             uint32_t bounces;
-    } RAYGEN_SPECIALIZATION_DATA = {
-        .rayCount = static_cast<double>(RAY_COUNT),
-        .iterationCount = std::max(RAY_COUNT / (uint64_t{1} << 30), uint64_t{1}),
-        .bounces = BOUNCES,
+    } raygenSpecializationData = {
+        .rayCount = static_cast<double>(rayCount),
+        .iterationCount = static_cast<uint32_t>(std::max(rayCount / (uint64_t{1} << 30), uint64_t{1})),
+        .bounces = bounceCount,
     };
     static constexpr std::array RAYGEN_MAP_ENTRIES = GenerateSpecializationMapEntries<double, uint32_t, uint32_t>();
-    constexpr VkSpecializationInfo RAYGEN_SPECIALIZATION_INFO = {
+    const VkSpecializationInfo raygenSpecializationInfo = {
         .mapEntryCount = RAYGEN_MAP_ENTRIES.size(),
         .pMapEntries = RAYGEN_MAP_ENTRIES.data(),
-        .dataSize = sizeof(RAYGEN_SPECIALIZATION_DATA),
-        .pData = &RAYGEN_SPECIALIZATION_DATA,
+        .dataSize = sizeof(raygenSpecializationData),
+        .pData = &raygenSpecializationData,
     };
     const std::array closestHitSpecializationData = {
         lightmapSize.x,
@@ -919,7 +918,7 @@ bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize, const uint32_
             .stage = VK_SHADER_STAGE_RAYGEN_BIT_KHR,
             .module = raygenShaderModule,
             .pName = "main",
-            .pSpecializationInfo = &RAYGEN_SPECIALIZATION_INFO,
+            .pSpecializationInfo = &raygenSpecializationInfo,
         },
         VkPipelineShaderStageCreateInfo{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -1372,7 +1371,7 @@ bool LightBakerGpu::ConvertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
     assert(lightmapSize.x % WORK_GROUP_SIZE.x == 0 && lightmapSize.y % WORK_GROUP_SIZE.y == 0);
     const LunaCommandBufferSubmitInfo submitInfo = {
         .queue = queue,
-        .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        // .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
     };
     const LunaDispatchInfo dispatchInfo = {
         .pipeline = pipeline,

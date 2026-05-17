@@ -10,15 +10,16 @@
 #include <unordered_map>
 #include <vector>
 #include "LevelMeshBuilder.h"
+#include "libassets/type/Actor.h"
 #include "Light.h"
 #include "LightBakerCpu.hpp"
 #include "LightBakerGpu.hpp"
 
 bool LightBaker::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                       const std::vector<Light> &lights,
-                      std::vector<uint8_t> &pixelData,
                       const glm::uvec2 &lightmapSize,
-                      const bool useCpu)
+                      const bool useCpu,
+                      std::vector<uint16_t> &pixelData)
 {
     // This is checks that MapVertex and Light are both POD, which is required to directly write from the pointer to the buffer.
     //  If they are not POD then the data will not be properly packed in memory.
@@ -29,17 +30,24 @@ bool LightBaker::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &m
                   std::is_trivially_default_constructible_v<Light> &&
                   std::is_trivially_copyable_v<Light>);
 
+    static constexpr uint64_t RAY_COUNT = (uint64_t{1} << 32);
+    static constexpr uint32_t BOUNCE_COUNT = 1;
+    static_assert(RAY_COUNT - 1 == static_cast<uint64_t>(static_cast<double>(RAY_COUNT) - 1),
+                  "Ray count must be representable as a double in order to be preserved in the shader!");
+    static_assert(RAY_COUNT % (1 << 15) == 0, "Ray count must be a multiple of (1 << 15)!");
+
     if (useCpu)
     {
-        LightBakerCpu::Bake(meshBuilders, lights, pixelData, lightmapSize);
+        LightBakerCpu baker{meshBuilders, lights, lightmapSize};
+        baker.Bake(RAY_COUNT, BOUNCE_COUNT, pixelData);
     } else
     {
-        LightBakerGpu baker = LightBakerGpu();
+        LightBakerGpu baker{};
         if (!baker.IsInitialized())
         {
             return false;
         }
-        if (!baker.Bake(meshBuilders, lights, lightmapSize, pixelData))
+        if (!baker.Bake(meshBuilders, lights, lightmapSize, RAY_COUNT, BOUNCE_COUNT, pixelData))
         {
             return false;
         }

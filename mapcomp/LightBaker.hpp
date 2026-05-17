@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <vector>
 #include "LevelMeshBuilder.h"
+#include "libassets/type/Actor.h"
 #include "Light.h"
 
 class LightBaker
@@ -16,7 +17,7 @@ class LightBaker
     public:
         static bool Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                          const std::vector<Light> &lights,
-                         std::vector<uint8_t> &pixelData,
                          const glm::uvec2 &lightmapSize,
-                         bool useCpu);
+                         bool useCpu,
+                         std::vector<uint16_t> &pixelData);
 };

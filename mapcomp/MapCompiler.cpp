@@ -361,11 +361,11 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         builder.Write(writer);
     }
 
-    std::vector<uint8_t> pixels = {0x00, 0x3c, 0x00, 0x3c, 0x00, 0x3c, 0x00, 0x3c}; // float16 1.0
+    std::vector<uint16_t> pixels = {0x3c00, 0x3c00, 0x3c00, 0x3c00}; // float16 1.0
     if (!lights.empty() && !settings.skipLighting)
     {
         Logger::Info("Baking lightmap...");
-        if (!LightBaker::Bake(meshBuilders, lights, pixels, lightmapSize, settings.bakeLightsOnCpu))
+        if (!LightBaker::Bake(meshBuilders, lights, lightmapSize, settings.bakeLightsOnCpu, pixels))
         {
             return Error::ErrorCode::UNKNOWN;
         }
