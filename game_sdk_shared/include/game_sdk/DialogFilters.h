@@ -98,6 +98,9 @@ class DialogFilters
         static inline const std::vector<SDL_DialogFileFilter> GKVL_FILTERS = {
             SDL_DialogFileFilter{.name = "KvList Asset (*.gkvl)", .pattern = "gkvl"},
         };
+        static inline const std::vector<SDL_DialogFileFilter> KVL_FILTERS = {
+            SDL_DialogFileFilter{.name = "KvList File (*.kvl)", .pattern = "kvl"},
+        };
         static inline const std::vector<SDL_DialogFileFilter> KVL_JSON_FILTERS = {
             SDL_DialogFileFilter{.name = "KvList source (*.json)", .pattern = "json"},
         };

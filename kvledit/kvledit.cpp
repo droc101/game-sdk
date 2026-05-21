@@ -34,6 +34,15 @@ static void OpenGkvl(const std::string &path)
     }
 }
 
+static void OpenKvl(const std::string &path)
+{
+    const Error::ErrorCode errorCode = DataAsset::CreateFromKvlFile(path.c_str(), dataAsset);
+    if (errorCode != Error::ErrorCode::OK)
+    {
+        SDKWindow::Get().ErrorMessage(std::format("Failed to open the KvList!\n{}", errorCode));
+    }
+}
+
 static void ImportJson(const std::string &path)
 {
     const Error::ErrorCode errorCode = DataAsset::CreateFromJson(path.c_str(), dataAsset);
@@ -46,6 +55,15 @@ static void ImportJson(const std::string &path)
 static void SaveGkvl(const std::string &path)
 {
     const Error::ErrorCode errorCode = dataAsset.SaveAsAsset(path.c_str());
+    if (errorCode != Error::ErrorCode::OK)
+    {
+        SDKWindow::Get().ErrorMessage(std::format("Failed to save the KvList!\n{}", errorCode));
+    }
+}
+
+static void SaveKvl(const std::string &path)
+{
+    const Error::ErrorCode errorCode = dataAsset.SaveAsKvlFile(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to save the KvList!\n{}", errorCode));
@@ -387,10 +405,18 @@ static void Render()
         {
             newPressed |= ImGui::MenuItem("New", "Ctrl+N");
             ImGui::Separator();
-            openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
-            importPressed |= ImGui::MenuItem("Import", "Ctrl+Shift+O");
-            savePressed |= ImGui::MenuItem("Save", "Ctrl+S");
-            exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S");
+            openPressed |= ImGui::MenuItem("Open KvList Asset", "Ctrl+O");
+            if (ImGui::MenuItem("Open KvlFile"))
+            {
+                SDKWindow::Get().OpenFileDialog(OpenKvl, DialogFilters::KVL_FILTERS);
+            }
+            importPressed |= ImGui::MenuItem("Import JSON", "Ctrl+Shift+O");
+            savePressed |= ImGui::MenuItem("Save KvList Asset", "Ctrl+S");
+            if (ImGui::MenuItem("Save KvlFile"))
+            {
+                SDKWindow::Get().SaveFileDialog(SaveKvl, DialogFilters::KVL_FILTERS);
+            }
+            exportPressed |= ImGui::MenuItem("Export JSON", "Ctrl+Shift+S");
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
@@ -459,6 +485,13 @@ int main(const int argc, char **argv)
         if (!importPath.empty())
         {
             ImportJson(importPath);
+        } else
+        {
+            const std::string &kvlFilePath = DesktopInterface::Get().GetFileArgument(argc, argv, {".kvl"});
+            if (!kvlFilePath.empty())
+            {
+                OpenKvl(kvlFilePath);
+            }
         }
     }
 

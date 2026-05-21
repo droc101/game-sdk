@@ -15,11 +15,13 @@
 #include <vector>
 
 class AssetReader;
+class Checksum;
 
 class DataReader
 {
     public:
         friend AssetReader;
+        friend Checksum;
 
         DataReader() = default;
 

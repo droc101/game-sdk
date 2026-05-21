@@ -14,6 +14,7 @@
 #include <glm/geometric.hpp>
 #include <glm/glm.hpp>
 #include <glslang/Public/ShaderLang.h>
+#include <libassets/type/Actor.h>
 #include <libassets/type/MapVertex.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
@@ -35,7 +36,6 @@
 #include <volk.h>
 #include <vulkan/vulkan_core.h>
 #include "LevelMeshBuilder.h"
-#include "libassets/type/Actor.h"
 #include "Light.h"
 
 /// This function is evil

@@ -16,16 +16,33 @@ class DataAsset
 
         [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, DataAsset &dataAsset);
 
+        [[nodiscard]] static Error::ErrorCode CreateFromKvlFile(const char *kvlPath, DataAsset &dataAsset);
+
         [[nodiscard]] static Error::ErrorCode CreateFromJson(const char *jsonPath, DataAsset &dataAsset);
 
         [[nodiscard]] Error::ErrorCode SaveAsJson(const char *jsonPath) const;
+
+        [[nodiscard]] Error::ErrorCode SaveAsKvlFile(const char *kvlFile) const;
 
         [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
 
         static constexpr uint8_t DATA_ASSET_VERSION = 1;
 
+        // "KVLF" in ASCII
+        static constexpr uint32_t KVL_MAGIC = 0x464c564b;
+
+        static constexpr uint16_t KVL_VERSION = 1;
+
         KvList data{};
 
     private:
+        struct KvlFileHeader
+        {
+            uint32_t magic;
+            uint16_t version;
+            uint16_t checksum;
+        };
+        static_assert(sizeof(KvlFileHeader) == 8);
+
         void SaveToBuffer(std::vector<uint8_t> &buffer) const;
 };

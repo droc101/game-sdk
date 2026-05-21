@@ -145,6 +145,8 @@ add_library(assets SHARED
         include/libassets/type/renderDefs/BoxRenderDefinition.h
         src/type/renderDefs/WallRenderDefinition.cpp
         include/libassets/type/renderDefs/WallRenderDefinition.h
+        src/util/Checksum.cpp
+        include/libassets/util/Checksum.h
 )
 
 set_target_properties(assets PROPERTIES

@@ -12,9 +12,13 @@
 #include <string>
 #include <vector>
 
+class Checksum;
+
 class DataWriter
 {
     public:
+        friend Checksum;
+
         DataWriter() = default;
 
         /**
