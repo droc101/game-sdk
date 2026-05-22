@@ -213,7 +213,10 @@ void MapCompileWindow::ProcessCompilerOutput()
         {
             size_t logSize = 0;
             const char *output = static_cast<char *>(SDL_ReadProcess(compilerProcess, &logSize, nullptr));
-            log += std::string(output);
+            if (output != nullptr)
+            {
+                log += std::string(output);
+            }
 
             log += std::format("\nProcess exited with code {}", exitCode);
             (void)SDL_CloseIO(compilerOutputStream);
