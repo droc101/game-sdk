@@ -343,8 +343,10 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     Logger::Info("Level has {} physics meshes", collisionBuilders.size());
     Logger::Info("Level has {} lights", lights.size());
 
+    const bool skipLighting = lights.empty() || settings.skipLighting;
+
     glm::uvec2 lightmapSize{};
-    if (!settings.skipLighting && !LevelMeshBuilder::CalculateLightmapUvs(lightmapSize, meshBuilders, pathManager))
+    if (!skipLighting && !LevelMeshBuilder::CalculateLightmapUvs(lightmapSize, meshBuilders, pathManager))
     {
         return Error::ErrorCode::LIGHTMAP_TOO_LARGE;
     }
@@ -362,7 +364,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     }
 
     std::vector<uint16_t> pixels = {0x3c00, 0x3c00, 0x3c00, 0x3c00}; // float16 1.0
-    if (!lights.empty() && !settings.skipLighting)
+    if (!skipLighting)
     {
         Logger::Info("Baking lightmap...");
         if (!LightBaker::Bake(meshBuilders, lights, lightmapSize, settings.bakeLightsOnCpu, pixels))
