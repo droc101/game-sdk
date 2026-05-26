@@ -5,10 +5,14 @@
 #pragma once
 
 #include <concepts>
+#include <cstddef>
 #include <cstdint>
 #include <libassets/type/Color.h>
 #include <libassets/type/Param.h>
+#include <libassets/util/Logger.h>
 #include <string>
+#include <tinyexpr.h>
+#include <vector>
 
 template<typename T> concept RDVTypeTemplate = std::same_as<T, float> ||
                                                std::same_as<T, bool> ||
@@ -26,156 +30,65 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
         }
         RenderDefinitionValue(const nlohmann::json &json, const std::string &key, const T &defaultValue)
         {
-            vectorComponent = VectorComponent::NONE;
             if constexpr (std::same_as<T, std::string>)
             {
-                if (json.contains(key) && json.at(key).type() == nlohmann::detail::value_t::string)
-                {
-                    const std::string jsonValue = json.value(key, defaultValue);
-                    if (jsonValue.starts_with("$"))
-                    {
-                        usesParam = true;
-                        paramName = jsonValue.substr(1, jsonValue.length() - 1);
-                    } else
-                    {
-                        value = jsonValue;
-                    }
-                } else
-                {
-                    value = defaultValue;
-                }
+                ConstructString(json, key, defaultValue);
             } else if constexpr (std::same_as<T, Color>)
             {
-                if (json.contains(key))
-                {
-                    if (json.at(key).type() == nlohmann::detail::value_t::number_unsigned ||
-                        json.at(key).type() == nlohmann::detail::value_t::number_integer)
-                    {
-                        value = Color(json.value(key, -1u));
-                    } else if (json.at(key).type() == nlohmann::detail::value_t::string)
-                    {
-                        const std::string colorValue = json.value(key, "");
-                        if (colorValue.starts_with("$"))
-                        {
-                            usesParam = true;
-                            paramName = colorValue.substr(1, colorValue.length() - 1);
-                        } else
-                        {
-                            value = defaultValue;
-                        }
-                    }
-                } else
-                {
-                    value = defaultValue;
-                }
+                ConstructColor(json, key, defaultValue);
             } else if constexpr (std::same_as<T, bool>)
             {
-                if (json.contains(key))
-                {
-                    if (json.at(key).type() == nlohmann::detail::value_t::boolean)
-                    {
-                        value = json.value(key, defaultValue);
-                    } else if (json.at(key).type() == nlohmann::detail::value_t::string)
-                    {
-                        const std::string boolValue = json.value(key, "");
-                        if (boolValue.starts_with("$"))
-                        {
-                            usesParam = true;
-                            paramName = boolValue.substr(1, boolValue.length() - 1);
-                        } else
-                        {
-                            value = defaultValue;
-                        }
-                    }
-                } else
-                {
-                    value = defaultValue;
-                }
+                ConstructBool(json, key, defaultValue);
             } else if constexpr (std::same_as<T, float>)
             {
-                if (json.contains(key))
-                {
-                    if (json.at(key).type() == nlohmann::detail::value_t::number_float ||
-                        json.at(key).type() == nlohmann::detail::value_t::number_unsigned ||
-                        json.at(key).type() == nlohmann::detail::value_t::number_integer)
-                    {
-                        value = json.value(key, defaultValue);
-                    } else if (json.at(key).type() == nlohmann::detail::value_t::string)
-                    {
-                        const std::string floatValue = json.value(key, "");
-                        if (floatValue.starts_with("$"))
-                        {
-                            if (floatValue.at(floatValue.length() - 2) == ':')
-                            {
-                                usesParam = true;
-                                switch (floatValue.at(floatValue.length() - 1))
-                                {
-                                    case 'x':
-                                        vectorComponent = VectorComponent::X;
-                                        break;
-                                    case 'y':
-                                        vectorComponent = VectorComponent::Y;
-                                        break;
-                                    case 'Z':
-                                        vectorComponent = VectorComponent::Z;
-                                        break;
-                                    default:
-                                        break;
-                                }
-                                paramName = floatValue.substr(1, floatValue.length() - 3);
-                            } else
-                            {
-                                paramName = floatValue.substr(1, floatValue.length() - 1);
-                            }
-                        } else
-                        {
-                            value = defaultValue;
-                        }
-                    }
-                } else
-                {
-                    value = defaultValue;
-                }
+                ConstructFloat(json, key, defaultValue);
             }
+        }
+
+        ~RenderDefinitionValue()
+        {
+            if (expr != nullptr)
+            {
+                te_free(expr);
+                expr = nullptr;
+            }
+        }
+
+        RenderDefinitionValue &operator=(const RenderDefinitionValue &other)
+        {
+            if (this == &other)
+            {
+                return *this;
+            }
+            usesParam = other.usesParam;
+            paramName = other.paramName;
+            value = other.value;
+            expression = other.expression;
+            varMetadata = other.varMetadata;
+            vars.clear();
+            for (const ExpressionVariable &metadata: varMetadata)
+            {
+                vars.emplace_back(metadata.variableName.c_str(), &metadata.value, 0, nullptr);
+            }
+            expr = nullptr;
+            if (other.expr != nullptr)
+            {
+                CompileExpression();
+            }
+            return *this;
+        }
+        RenderDefinitionValue(const RenderDefinitionValue &other)
+        {
+            *this = other;
         }
 
         T Get(const KvList &params, const T &defaultValue) const
         {
+            static_assert(!std::same_as<T, float>); // use GetFloat instead
             if (usesParam)
             {
                 if (params.contains(paramName))
                 {
-                    if constexpr (std::same_as<T, float>)
-                    {
-                        if (vectorComponent != VectorComponent::NONE)
-                        {
-                            const Param &p = params.at(paramName);
-                            if (vectorComponent == VectorComponent::Z)
-                            {
-                                return p.Get<glm::vec3>(glm::vec3{defaultValue}).z;
-                            }
-                            if (p.GetType() == Param::ParamType::PARAM_TYPE_VEC2)
-                            {
-                                if (vectorComponent == VectorComponent::X)
-                                {
-                                    return p.Get<glm::vec2>(glm::vec2{defaultValue}).x;
-                                } else
-                                {
-                                    return p.Get<glm::vec2>(glm::vec2{defaultValue}).y;
-                                }
-                            }
-                            if (p.GetType() == Param::ParamType::PARAM_TYPE_VEC3)
-                            {
-                                if (vectorComponent == VectorComponent::X)
-                                {
-                                    return p.Get<glm::vec3>(glm::vec3{defaultValue}).x;
-                                } else
-                                {
-                                    return p.Get<glm::vec3>(glm::vec3{defaultValue}).y;
-                                }
-                            }
-                        }
-                    }
                     return params.at(paramName).Get<T>(defaultValue);
                 }
             } else
@@ -185,8 +98,26 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
             return defaultValue;
         }
 
+        float GetFloat(const KvList &params)
+        {
+            static_assert(std::same_as<T, float>);
+            if (expr == nullptr || !usesParam)
+            {
+                return value;
+            }
+
+            for (size_t i = 0; i < varMetadata.size(); i++)
+            {
+                ProcessExpressionVariable(varMetadata.at(i), params);
+                vars.at(i).address = &varMetadata.at(i).value;
+            }
+
+            const double result = te_eval(expr);
+            return static_cast<float>(result);
+        }
+
     private:
-        enum class VectorComponent: uint8_t
+        enum class VectorComponent : uint8_t
         {
             NONE,
             X,
@@ -194,8 +125,50 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
             Z
         };
 
+        struct ExpressionVariable
+        {
+                std::string variableName{};
+                std::string original{};
+                std::string paramName{};
+                VectorComponent vectorComponent{};
+                double value{};
+        };
+
+        /**
+         * Capture Groups: on "$param:x"
+         * $param:x
+         * param
+         * x
+         */
+        static constexpr const char *PARAM_SEARCH_REGEX = R"/(\$([a-z_]+)(?::([xyz]))?)/";
+
         bool usesParam = false;
         std::string paramName{};
         T value{};
-        VectorComponent vectorComponent;
+
+        std::string expression{};
+        te_expr *expr = nullptr;
+        std::vector<ExpressionVariable> varMetadata{};
+        std::vector<te_variable> vars{};
+
+        void ConstructString(const nlohmann::json &json, const std::string &key, const std::string &defaultValue);
+        void ConstructColor(const nlohmann::json &json, const std::string &key, const Color &defaultValue);
+        void ConstructBool(const nlohmann::json &json, const std::string &key, const bool &defaultValue);
+        void ConstructFloat(const nlohmann::json &json, const std::string &key, const float &defaultValue);
+
+        void ProcessExpressionVariable(ExpressionVariable &var, const KvList &params);
+
+        void CompileExpression()
+        {
+            static_assert(std::same_as<T, float>);
+            int err = 0;
+            te_expr *compiledExpr = te_compile(expression.c_str(), vars.data(), static_cast<int>(vars.size()), &err);
+            if (compiledExpr == nullptr)
+            {
+                Logger::Error("Failed to parse expression \"{}\": parse error at {}", expression, err);
+            } else
+            {
+                expr = compiledExpr;
+            }
+        }
 };

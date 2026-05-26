@@ -407,7 +407,7 @@ bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
             }
         } else if (type == RenderDefinition::RenderDefinitionType::RD_TYPE_BOX)
         {
-            const BoxRenderDefinition *boxDef = dynamic_cast<BoxRenderDefinition *>(rdef.get());
+            BoxRenderDefinition *boxDef = dynamic_cast<BoxRenderDefinition *>(rdef.get());
             const BoundingBox bb = BoundingBox(boxDef->GetExtents(actor) / 2.0f);
             for (const glm::vec3 &point: bb.GetPoints())
             {
@@ -468,7 +468,7 @@ bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
     return false;
 }
 
-void ViewportRenderer::RenderBoxRdef(const BoxRenderDefinition *rdef,
+void ViewportRenderer::RenderBoxRdef(BoxRenderDefinition *rdef,
                                      const Actor &actor,
                                      const glm::mat4 &worldMatrix,
                                      const glm::mat4 &matrix)
@@ -518,12 +518,12 @@ void ViewportRenderer::RenderOrientationRdef(const OrientationRenderDefinition *
     MapRenderer::RenderUnitVector(actor.position, actor.rotation, rdef->GetColor(actor), matrix, 2, vp.GetZoom() / 20);
 }
 
-void ViewportRenderer::RenderPointRdef(const PointRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix)
+void ViewportRenderer::RenderPointRdef(PointRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix)
 {
     MapRenderer::RenderBillboardPoint(actor.position, rdef->GetPointSize(actor), rdef->GetColor(actor), matrix);
 }
 
-void ViewportRenderer::RenderSpriteRdef(const SpriteRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix)
+void ViewportRenderer::RenderSpriteRdef(SpriteRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix)
 {
     MapRenderer::RenderBillboardSprite(actor.position,
                                        rdef->GetPointSize(actor),
@@ -532,7 +532,7 @@ void ViewportRenderer::RenderSpriteRdef(const SpriteRenderDefinition *rdef, cons
                                        matrix);
 }
 
-void ViewportRenderer::RenderWallRdef(const WallRenderDefinition *rdef,
+void ViewportRenderer::RenderWallRdef(WallRenderDefinition *rdef,
                                       const Actor &actor,
                                       const glm::mat4 &worldMatrix,
                                       const glm::mat4 &matrix)

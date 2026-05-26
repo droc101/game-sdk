@@ -15,7 +15,7 @@ class PointRenderDefinition: public RenderDefinition
         explicit PointRenderDefinition(const nlohmann::json &json);
 
         [[nodiscard]] Color GetColor(const Actor &actor) const;
-        [[nodiscard]] float GetPointSize(const Actor &actor) const;
+        [[nodiscard]] float GetPointSize(const Actor &actor);
 
     private:
         RenderDefinitionValue<Color> color;

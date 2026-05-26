@@ -50,6 +50,8 @@ set(OPENEXR_FORCE_INTERNAL_IMATH ON)
 set(OPENEXR_FORCE_INTERNAL_OPENJPH ON)
 fetch_package(https://github.com/AcademySoftwareFoundation/openexr.git v3.*.* openexr)
 
+fetch_tinyexpr()
+
 add_library(assets SHARED
         include/libassets/libassets.h
         src/util/AssetReader.cpp
@@ -147,6 +149,7 @@ add_library(assets SHARED
         include/libassets/type/renderDefs/WallRenderDefinition.h
         src/util/Checksum.cpp
         include/libassets/util/Checksum.h
+        src/type/RenderDefinitionValue.cpp
 )
 
 set_target_properties(assets PROPERTIES
@@ -154,6 +157,6 @@ set_target_properties(assets PROPERTIES
         LINK_FLAGS "-Wl,-rpath='$ORIGIN'"
 )
 
-target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json glm::glm OpenEXR::OpenEXR)
+target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang nlohmann_json::nlohmann_json glm::glm OpenEXR::OpenEXR tinyexpr)
 
 target_include_directories(assets PUBLIC ${Vulkan_INCLUDE_DIRS} "include" "${CMAKE_SOURCE_DIR}/lib/stb")

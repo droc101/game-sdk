@@ -25,7 +25,7 @@ Color SpriteRenderDefinition::GetTintColor(const Actor &actor) const
     return tintColor.Get(actor.params, Color(-1));
 }
 
-float SpriteRenderDefinition::GetPointSize(const Actor &actor) const
+float SpriteRenderDefinition::GetPointSize(const Actor &actor)
 {
-    return pointSize.Get(actor.params, 20.0f);
+    return pointSize.GetFloat(actor.params);
 }

@@ -25,7 +25,7 @@ Color PointRenderDefinition::GetColor(const Actor &actor) const
     return color.Get(actor.params, Color(0, 1, 0, 1));
 }
 
-float PointRenderDefinition::GetPointSize(const Actor &actor) const
+float PointRenderDefinition::GetPointSize(const Actor &actor)
 {
-    return pointSize.Get(actor.params, 10.0f);
+    return pointSize.GetFloat(actor.params);
 }

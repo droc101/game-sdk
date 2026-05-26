@@ -28,32 +28,32 @@ bool WallRenderDefinition::GetZAxisOrientation(const Actor &actor) const
     return zAxisOrientation.Get(actor.params, false);
 }
 
-float WallRenderDefinition::GetLocalCenterX(const Actor &actor) const
+float WallRenderDefinition::GetLocalCenterX(const Actor &actor)
 {
-    return localCenterX.Get(actor.params, 0.0f);
+    return localCenterX.GetFloat(actor.params);
 }
 
-float WallRenderDefinition::GetLocalCenterY(const Actor &actor) const
+float WallRenderDefinition::GetLocalCenterY(const Actor &actor)
 {
-    return localCenterY.Get(actor.params, 0.0f);
+    return localCenterY.GetFloat(actor.params);
 }
 
-glm::vec2 WallRenderDefinition::GetLocalCenter(const Actor &actor) const
+glm::vec2 WallRenderDefinition::GetLocalCenter(const Actor &actor)
 {
     return {GetLocalCenterX(actor), GetLocalCenterY(actor)};
 }
 
-float WallRenderDefinition::GetWidth(const Actor &actor) const
+float WallRenderDefinition::GetWidth(const Actor &actor)
 {
-    return width.Get(actor.params, 1.0f);
+    return width.GetFloat(actor.params);
 }
 
-float WallRenderDefinition::GetHeight(const Actor &actor) const
+float WallRenderDefinition::GetHeight(const Actor &actor)
 {
-    return height.Get(actor.params, 1.0f);
+    return height.GetFloat(actor.params);
 }
 
-glm::vec2 WallRenderDefinition::GetSize(const Actor &actor) const
+glm::vec2 WallRenderDefinition::GetSize(const Actor &actor)
 {
     return {GetWidth(actor), GetHeight(actor)};
 }

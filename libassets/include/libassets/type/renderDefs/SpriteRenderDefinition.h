@@ -16,7 +16,7 @@ class SpriteRenderDefinition: public RenderDefinition
 
         [[nodiscard]] std::string GetTexture(const Actor &actor) const;
         [[nodiscard]] Color GetTintColor(const Actor &actor) const;
-        [[nodiscard]] float GetPointSize(const Actor &actor) const;
+        [[nodiscard]] float GetPointSize(const Actor &actor);
 
     private:
         RenderDefinitionValue<std::string> texture;

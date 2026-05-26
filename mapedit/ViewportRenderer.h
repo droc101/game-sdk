@@ -123,7 +123,7 @@ class ViewportRenderer
 
         static bool ActorIsCulled(const Actor &actor, const Viewport &vp);
 
-        static void RenderBoxRdef(const BoxRenderDefinition *rdef,
+        static void RenderBoxRdef(BoxRenderDefinition *rdef,
                                   const Actor &actor,
                                   const glm::mat4 &worldMatrix,
                                   const glm::mat4 &matrix);
@@ -138,11 +138,11 @@ class ViewportRenderer
                                           const glm::mat4 &matrix,
                                           const Viewport &vp);
 
-        static void RenderPointRdef(const PointRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix);
+        static void RenderPointRdef(PointRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix);
 
-        static void RenderSpriteRdef(const SpriteRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix);
+        static void RenderSpriteRdef(SpriteRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix);
 
-        static void RenderWallRdef(const WallRenderDefinition *rdef,
+        static void RenderWallRdef(WallRenderDefinition *rdef,
                                    const Actor &actor,
                                    const glm::mat4 &worldMatrix,
                                    const glm::mat4 &matrix);

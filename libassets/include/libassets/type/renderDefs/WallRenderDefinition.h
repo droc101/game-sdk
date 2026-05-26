@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <libassets/type/Actor.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/RenderDefinitionValue.h>
 #include <libassets/type/renderDefs/RenderDefinition.h>
@@ -16,13 +17,13 @@ class WallRenderDefinition: public RenderDefinition
         [[nodiscard]] Color GetColor(const Actor &actor) const;
         [[nodiscard]] bool GetZAxisOrientation(const Actor &actor) const;
 
-        [[nodiscard]] float GetLocalCenterX(const Actor &actor) const;
-        [[nodiscard]] float GetLocalCenterY(const Actor &actor) const;
-        [[nodiscard]] glm::vec2 GetLocalCenter(const Actor &actor) const;
+        [[nodiscard]] float GetLocalCenterX(const Actor &actor);
+        [[nodiscard]] float GetLocalCenterY(const Actor &actor);
+        [[nodiscard]] glm::vec2 GetLocalCenter(const Actor &actor);
 
-        [[nodiscard]] float GetWidth(const Actor &actor) const;
-        [[nodiscard]] float GetHeight(const Actor &actor) const;
-        [[nodiscard]] glm::vec2 GetSize(const Actor &actor) const;
+        [[nodiscard]] float GetWidth(const Actor &actor);
+        [[nodiscard]] float GetHeight(const Actor &actor);
+        [[nodiscard]] glm::vec2 GetSize(const Actor &actor);
 
     private:
         RenderDefinitionValue<Color> color;

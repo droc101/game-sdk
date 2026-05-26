@@ -20,22 +20,22 @@ Color BoxRenderDefinition::GetColor(const Actor &actor) const
     return color.Get(actor.params, Color(0, 1, 0, 1));
 }
 
-glm::vec3 BoxRenderDefinition::GetExtents(const Actor &actor) const
+glm::vec3 BoxRenderDefinition::GetExtents(const Actor &actor)
 {
     return {GetWidth(actor), GetHeight(actor), GetDepth(actor)};
 }
 
-float BoxRenderDefinition::GetWidth(const Actor &actor) const
+float BoxRenderDefinition::GetWidth(const Actor &actor)
 {
-    return width.Get(actor.params, 1.0f);
+    return width.GetFloat(actor.params);
 }
 
-float BoxRenderDefinition::GetHeight(const Actor &actor) const
+float BoxRenderDefinition::GetHeight(const Actor &actor)
 {
-    return height.Get(actor.params, 1.0f);
+    return height.GetFloat(actor.params);
 }
 
-float BoxRenderDefinition::GetDepth(const Actor &actor) const
+float BoxRenderDefinition::GetDepth(const Actor &actor)
 {
-    return depth.Get(actor.params, 1.0f);
+    return depth.GetFloat(actor.params);
 }

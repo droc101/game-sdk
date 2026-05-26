@@ -89,3 +89,17 @@ function(fetch_glew)
     FetchContent_MakeAvailable(GLEW)
     set_target_properties(glew_s PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 endfunction()
+
+function(fetch_tinyexpr)
+    set(TINYEXPR_DIR ${CMAKE_CURRENT_BINARY_DIR}/_deps/tinyexpr)
+    set(TINYEPXR_COMMIT "4a7456e2eab88b4c76053c1c4157639ccb930e2b")
+    get_latest_package_version(https://github.com/mapbox/earcut.hpp.git v2.*.*)
+    file(DOWNLOAD https://raw.githubusercontent.com/codeplea/tinyexpr/${TINYEPXR_COMMIT}/tinyexpr.c ${TINYEXPR_DIR}/tinyexpr.c)
+    file(DOWNLOAD https://raw.githubusercontent.com/codeplea/tinyexpr/${TINYEPXR_COMMIT}/tinyexpr.h ${TINYEXPR_DIR}/tinyexpr.h)
+    file(DOWNLOAD https://raw.githubusercontent.com/codeplea/tinyexpr/${TINYEPXR_COMMIT}/LICENSE ${TINYEXPR_DIR}/LICENSE)
+
+    add_library(tinyexpr INTERFACE)
+    target_sources(tinyexpr INTERFACE ${TINYEXPR_DIR}/tinyexpr.c ${TINYEXPR_DIR}/tinyexpr.h)
+    target_include_directories(tinyexpr INTERFACE ${TINYEXPR_DIR})
+endfunction()
+
