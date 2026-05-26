@@ -85,8 +85,10 @@ void Options::Save()
 
 std::string Options::GetAssetsPath() const
 {
-    std::filesystem::path path = std::filesystem::path(gameConfigPath);
-    return path.remove_filename().string();
+    // TODO: Fix this breaking the ability to launch GAME from the SDK on Windows,
+    //  without causing a std::filesystem_error when compiling maps on Linux
+    const std::filesystem::path path = std::filesystem::path(gameConfigPath);
+    return path.parent_path().string();
 }
 
 std::string Options::GetGameConfigParentPath() const
