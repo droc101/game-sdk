@@ -83,7 +83,7 @@ std::vector<std::string> SearchPathManager::ScanFolder(const std::string &direct
         }
     } catch (const std::filesystem::filesystem_error &exception)
     {
-        Logger::Error("std::filesystem_error: %s", exception.what());
+        Logger::Error("std::filesystem_error: {}", exception.what());
     }
     if (isRoot)
     {
