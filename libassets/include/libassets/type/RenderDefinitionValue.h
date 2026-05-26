@@ -65,15 +65,18 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
             value = other.value;
             expression = other.expression;
             varMetadata = other.varMetadata;
-            vars.clear();
-            for (const ExpressionVariable &metadata: varMetadata)
+            if constexpr (std::same_as<T, float>)
             {
-                vars.emplace_back(metadata.variableName.c_str(), &metadata.value, 0, nullptr);
-            }
-            expr = nullptr;
-            if (other.expr != nullptr)
-            {
-                CompileExpression();
+                vars.clear();
+                for (const ExpressionVariable &metadata: varMetadata)
+                {
+                    vars.emplace_back(metadata.variableName.c_str(), &metadata.value, 0, nullptr);
+                }
+                expr = nullptr;
+                if (other.expr != nullptr)
+                {
+                    CompileExpression();
+                }
             }
             return *this;
         }
