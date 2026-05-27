@@ -50,8 +50,11 @@ namespace Concepts
     template<typename T> concept VkDescriptorSetLayoutBindingPair = std::__is_pair<T> &&
                                                                     std::same_as<typename T::first_type,
                                                                                  VkDescriptorType> &&
-                                                                    std::same_as<typename T::second_type,
-                                                                                 VkShaderStageFlags>;
+                                                                    (std::same_as<typename T::second_type,
+                                                                                  VkShaderStageFlagBits> ||
+                                                                     std::same_as<typename T::second_type,
+                                                                                  VkShaderStageFlags> ||
+                                                                     std::same_as<typename T::second_type, int>);
 } // namespace Concepts
 
 template<typename... T> class SpecializationMapEntries: public std::array<VkSpecializationMapEntry, sizeof...(T)>
@@ -77,7 +80,7 @@ template<typename... T> class SpecializationMapEntries: public std::array<VkSpec
 template<typename... T> class DescriptorSetLayoutBindings
 {
     public:
-        explicit DescriptorSetLayoutBindings(const T &...) = delete;
+        explicit constexpr DescriptorSetLayoutBindings(const T &...) = delete;
 };
 template<Concepts::LunaDescriptorSetLayoutBindingPair... T> class DescriptorSetLayoutBindings<T...>
     : public std::array<LunaDescriptorSetLayoutBinding,
@@ -111,10 +114,10 @@ template<Concepts::VkDescriptorSetLayoutBindingPair... T> class DescriptorSetLay
 
             auto AddEntry = [&index, this]<typename Type>(const Type &binding) {
                 this->at(index) = VkDescriptorSetLayoutBinding{
-                    .binding = index,
+                    .binding = static_cast<uint32_t>(index),
                     .descriptorType = binding.first,
                     .descriptorCount = 1,
-                    .stageFlags = binding.second,
+                    .stageFlags = static_cast<VkShaderStageFlags>(binding.second),
                 };
                 index++;
             };
@@ -975,42 +978,30 @@ bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize,
 
 bool LightBakerGpu::CreateAndWriteDescriptorSet()
 {
-    constexpr std::array DESCRIPTOR_SET_LAYOUT_BINDINGS = {
-        VkDescriptorSetLayoutBinding{
-            .binding = 0,
-            .descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
-            .descriptorCount = 1,
-            .stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+    static constexpr DescriptorSetLayoutBindings DESCRIPTOR_SET_LAYOUT_BINDINGS{
+        std::pair{
+            VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
+            VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
         },
-        VkDescriptorSetLayoutBinding{
-            .binding = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .descriptorCount = 1,
-            .stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+        std::pair{
+            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            VK_SHADER_STAGE_RAYGEN_BIT_KHR,
         },
-        VkDescriptorSetLayoutBinding{
-            .binding = 2,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .descriptorCount = 1,
-            .stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+        std::pair{
+            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
         },
-        VkDescriptorSetLayoutBinding{
-            .binding = 3,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .descriptorCount = 1,
-            .stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+        std::pair{
+            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
         },
-        VkDescriptorSetLayoutBinding{
-            .binding = 4,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .descriptorCount = 1,
-            .stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+        std::pair{
+            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
         },
-        VkDescriptorSetLayoutBinding{
-            .binding = 5,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .descriptorCount = 1,
-            .stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+        std::pair{
+            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
         },
     };
 
