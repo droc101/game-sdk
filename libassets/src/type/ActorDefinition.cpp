@@ -11,9 +11,11 @@
 #include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <ranges>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -21,6 +23,9 @@
 
 Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinition &definition)
 {
+    const std::regex valid_identifier_regex = std::regex(VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX);
+    std::smatch match;
+
     std::ifstream file(path);
     if (!file.is_open())
     {
@@ -69,9 +74,18 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         nlohmann::json inputs = definitionJson.at("inputs");
         for (const auto &[key, value]: inputs.items())
         {
-            const SignalDefinition signal = SignalDefinition(value.value("description", ""),
-                                                             Param::ParseType(value.value("type", "none")));
-            definition.inputs[key] = signal;
+            if (std::regex_match(key, match, valid_identifier_regex))
+            {
+                const SignalDefinition signal = SignalDefinition(value.value("description", ""),
+                                                                 Param::ParseType(value.value("type", "none")));
+                definition.inputs[key] = signal;
+            } else
+            {
+                Logger::Error("Invalid actor definition input name \"{}\". Input names may only contain letters and "
+                              "underscores.",
+                              key);
+                return Error::ErrorCode::INCORRECT_FORMAT;
+            }
         }
     }
 
@@ -80,9 +94,18 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         nlohmann::json outputs = definitionJson.at("outputs");
         for (const auto &[key, value]: outputs.items())
         {
-            const SignalDefinition signal = SignalDefinition(value.value("description", ""),
-                                                             Param::ParseType(value.value("type", "none")));
-            definition.outputs[key] = signal;
+            if (std::regex_match(key, match, valid_identifier_regex))
+            {
+                const SignalDefinition signal = SignalDefinition(value.value("description", ""),
+                                                                 Param::ParseType(value.value("type", "none")));
+                definition.outputs[key] = signal;
+            } else
+            {
+                Logger::Error("Invalid actor definition output name \"{}\". Output names may only contain letters and "
+                              "underscores.",
+                              key);
+                return Error::ErrorCode::INCORRECT_FORMAT;
+            }
         }
     }
 
@@ -91,18 +114,27 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         nlohmann::json params = definitionJson.at("params");
         for (const auto &[key, value]: params.items())
         {
-            Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
-            std::unique_ptr<ParamDefinition> param = ParamDefinition::Create(value, e, key);
-            if (e != Error::ErrorCode::OK)
+            if (std::regex_match(key, match, valid_identifier_regex))
             {
-                // TODO delete any existing params
-                return e;
-            }
-            if (param == nullptr)
+                Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
+                std::unique_ptr<ParamDefinition> param = ParamDefinition::Create(value, e, key);
+                if (e != Error::ErrorCode::OK)
+                {
+                    // TODO delete any existing params
+                    return e;
+                }
+                if (param == nullptr)
+                {
+                    return Error::ErrorCode::UNKNOWN;
+                }
+                definition.params[key] = std::move(param);
+            } else
             {
-                return Error::ErrorCode::UNKNOWN;
+                Logger::Error("Invalid actor definition param name \"{}\". Param names may only contain letters and "
+                              "underscores.",
+                              key);
+                return Error::ErrorCode::INCORRECT_FORMAT;
             }
-            definition.params[key] = std::move(param);
         }
     }
 

@@ -143,7 +143,7 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
          * param
          * x
          */
-        static constexpr const char *PARAM_SEARCH_REGEX = R"/(\$([a-z_]+)(?::([xyz]))?)/";
+        static constexpr const char *PARAM_SEARCH_REGEX = R"/(\$([A-Za-z_]+)(?::([xyz]))?)/";
 
         bool usesParam = false;
         std::string paramName{};
