@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include <vector>
 #include "LevelMeshBuilder.h"
-#include "libassets/type/Actor.h"
 #include "Light.h"
 
 class LightBaker

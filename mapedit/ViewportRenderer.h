@@ -13,10 +13,10 @@
 #include <libassets/type/renderDefs/OrientationRenderDefinition.h>
 #include <libassets/type/renderDefs/PointRenderDefinition.h>
 #include <libassets/type/renderDefs/SpriteRenderDefinition.h>
+#include <libassets/type/renderDefs/WallRenderDefinition.h>
 #include <libassets/type/Sector.h>
 #include <string>
 #include <vector>
-#include "libassets/type/renderDefs/WallRenderDefinition.h"
 #include "tools/EditorTool.h"
 #include "Viewport.h"
 
