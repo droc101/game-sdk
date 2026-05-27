@@ -38,169 +38,151 @@
 #include "LevelMeshBuilder.h"
 #include "Light.h"
 
-/// This function is evil
-template<typename... T>
-static consteval std::array<VkSpecializationMapEntry, sizeof...(T)> GenerateSpecializationMapEntries()
+namespace
 {
-    size_t index = 0;
-    std::array<VkSpecializationMapEntry, sizeof...(T)> entries{};
-
-    auto addEntry = [&index, &entries]<typename Type>() {
-        entries.at(index) = VkSpecializationMapEntry{
-            .constantID = static_cast<uint32_t>(index),
-            .offset = index == 0 ? 0 : static_cast<uint32_t>(entries.at(index - 1).offset + entries.at(index - 1).size),
-            .size = sizeof(Type),
-        };
-        index++;
-    };
-    (addEntry.template operator()<T>(), ...);
-    return entries;
-}
-
-/// This function is about 10x more evil than generateSpecializationMapEntries
-template<typename... T> requires(((std::__is_pair<T> &&
-                                   std::is_same_v<typename T::first_type, VkDescriptorType> &&
-                                   std::is_same_v<typename T::second_type::value_type, const char *>) &&
-                                  ...))
-static consteval auto GenerateDescriptorSetLayoutBindings(const T &...bindings)
+namespace Concepts
 {
-    size_t index = 0;
-    std::array<LunaDescriptorSetLayoutBinding,
-               ((sizeof(T::second_type::_M_elems) / sizeof(typename T::second_type::value_type)) + ...)>
-            entries{};
+    template<typename T> concept LunaDescriptorSetLayoutBindingPair = std::__is_pair<T> &&
+                                                                      std::same_as<typename T::first_type,
+                                                                                   VkDescriptorType> &&
+                                                                      std::same_as<typename T::second_type::value_type,
+                                                                                   const char *>;
+    template<typename T> concept VkDescriptorSetLayoutBindingPair = std::__is_pair<T> &&
+                                                                    std::same_as<typename T::first_type,
+                                                                                 VkDescriptorType> &&
+                                                                    std::same_as<typename T::second_type,
+                                                                                 VkShaderStageFlags>;
+} // namespace Concepts
 
-    auto addEntry = [&index, &entries]<typename Type>(const Type &binding) {
-        for (const char *name: binding.second)
+template<typename... T> class SpecializationMapEntries: public std::array<VkSpecializationMapEntry, sizeof...(T)>
+{
+    public:
+        constexpr SpecializationMapEntries()
         {
-            entries.at(index++) = LunaDescriptorSetLayoutBinding{
-                .bindingName = name,
-                .descriptorType = binding.first,
-                .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+            size_t index = 0;
+
+            auto addEntry = [&index, this]<typename Type>() {
+                this->at(index) = VkSpecializationMapEntry{
+                    .constantID = static_cast<uint32_t>(index),
+                    .offset = index == 0 ? 0
+                                         : static_cast<uint32_t>(this->at(index - 1).offset + this->at(index - 1).size),
+                    .size = sizeof(Type),
+                };
+                index++;
             };
+            (addEntry.template operator()<T>(), ...);
         }
-    };
-    (addEntry(bindings), ...);
+};
 
-    return entries;
-}
-
-/// Oh my god why can this even exist let alone work
-template<const auto *BINDINGS> static consteval LunaDescriptorPoolCreationInfo GenerateDescriptorPoolCreationInfo()
+template<typename... T> class DescriptorSetLayoutBindings
 {
-    static constexpr auto UNIQUE_BINDINGS = std::ranges::
-            unique((const_cast<std::array<LunaDescriptorSetLayoutBinding, BINDINGS->size()> *>(BINDINGS))->begin(),
-                   const_cast<std::array<LunaDescriptorSetLayoutBinding, BINDINGS->size()> *>(BINDINGS)->end(),
-                   [](const LunaDescriptorSetLayoutBinding &a, const LunaDescriptorSetLayoutBinding &b) -> bool {
-                       return a.descriptorType != b.descriptorType;
-                   });
-    static constexpr std::array<VkDescriptorPoolSize, UNIQUE_BINDINGS.size() + 1> RET_ARRAY = ([] {
-        std::array<VkDescriptorPoolSize, UNIQUE_BINDINGS.size() + 1> ret{};
-        for (const LunaDescriptorSetLayoutBinding &binding: *BINDINGS)
+    public:
+        explicit DescriptorSetLayoutBindings(const T &...) = delete;
+};
+template<Concepts::LunaDescriptorSetLayoutBindingPair... T> class DescriptorSetLayoutBindings<T...>
+    : public std::array<LunaDescriptorSetLayoutBinding,
+                        ((sizeof(T::second_type::_M_elems) / sizeof(typename T::second_type::value_type)) + ...)>
+{
+    public:
+        explicit constexpr DescriptorSetLayoutBindings(const T &...bindings)
         {
-            for (VkDescriptorPoolSize &poolSize: ret)
-            {
-                if (poolSize.descriptorCount == 0)
+            size_t index = 0;
+
+            auto AddEntry = [&index, this]<typename Type>(const Type &binding) {
+                for (const char *name: binding.second)
                 {
-                    poolSize.type = binding.descriptorType;
+                    this->at(index++) = LunaDescriptorSetLayoutBinding{
+                        .bindingName = name,
+                        .descriptorType = binding.first,
+                        .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+                    };
                 }
-                if (poolSize.type == binding.descriptorType)
+            };
+            (AddEntry(bindings), ...);
+        }
+};
+template<Concepts::VkDescriptorSetLayoutBindingPair... T> class DescriptorSetLayoutBindings<T...>
+    : public std::array<VkDescriptorSetLayoutBinding, sizeof...(T)>
+{
+    public:
+        explicit constexpr DescriptorSetLayoutBindings(const T &...bindings)
+        {
+            size_t index = 0;
+
+            auto AddEntry = [&index, this]<typename Type>(const Type &binding) {
+                this->at(index) = VkDescriptorSetLayoutBinding{
+                    .binding = index,
+                    .descriptorType = binding.first,
+                    .descriptorCount = 1,
+                    .stageFlags = binding.second,
+                };
+                index++;
+            };
+            (AddEntry(bindings), ...);
+        }
+};
+
+template<auto *BINDINGS> class DescriptorPoolCreationInfo: public LunaDescriptorPoolCreationInfo
+{
+        static constexpr VkDescriptorPoolCreateFlags CREATION_FLAGS = ([] -> VkDescriptorPoolCreateFlags {
+            VkDescriptorPoolCreateFlags ret{};
+            for (const LunaDescriptorSetLayoutBinding &binding: *BINDINGS)
+            {
+                if ((binding.bindingFlags & VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT) ==
+                    VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT)
                 {
-                    poolSize.descriptorCount += (binding.descriptorCount == 0 ? 1 : binding.descriptorCount);
-                    break;
+                    ret |= VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
                 }
             }
-        }
-        return ret;
-    })();
-    static constexpr VkDescriptorPoolCreateFlags CREATION_FLAGS = ([] -> VkDescriptorPoolCreateFlags {
-        VkDescriptorPoolCreateFlags ret{};
-        for (const LunaDescriptorSetLayoutBinding &binding: *BINDINGS)
-        {
-            if ((binding.bindingFlags & VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT) ==
-                VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT)
+            return ret;
+        })();
+        static constexpr size_t POOL_SIZE_COUNT = ([] -> size_t {
+            size_t count = BINDINGS->size();
+            for (size_t i = 0; i < BINDINGS->size() - 1; i++)
             {
-                ret |= VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
+                const LunaDescriptorSetLayoutBinding &binding = BINDINGS->at(i);
+                for (size_t j = i + 1; j < BINDINGS->size(); j++)
+                {
+                    if (binding.descriptorType == BINDINGS->at(j).descriptorType)
+                    {
+                        --count;
+                        break;
+                    }
+                }
             }
-        }
-        return ret;
-    })();
-    return LunaDescriptorPoolCreationInfo{
-        .flags = CREATION_FLAGS,
-        .maxSets = 1,
-        .poolSizeCount = RET_ARRAY.size(),
-        .poolSizes = RET_ARRAY.data(),
-    };
-}
+            return count;
+        })();
+        static constexpr auto POOL_SIZES = ([] {
+            std::array<VkDescriptorPoolSize, POOL_SIZE_COUNT> ret{};
+            for (const LunaDescriptorSetLayoutBinding &binding: *BINDINGS)
+            {
+                for (VkDescriptorPoolSize &poolSize: ret)
+                {
+                    if (poolSize.descriptorCount == 0)
+                    {
+                        poolSize.type = binding.descriptorType;
+                    }
+                    if (poolSize.type == binding.descriptorType)
+                    {
+                        poolSize.descriptorCount += (binding.descriptorCount == 0 ? 1 : binding.descriptorCount);
+                        break;
+                    }
+                }
+            }
+            return ret;
+        })();
 
-template<typename... T> requires(((std::__is_pair<T> &&
-                                   std::is_same_v<typename T::first_type, const char *> &&
-                                   (std::is_same_v<typename T::second_type, const LunaDescriptorImageInfo *> ||
-                                    std::is_same_v<typename T::second_type, LunaBuffer> ||
-                                    std::is_same_v<typename T::second_type, const LunaDescriptorBufferInfo *> ||
-                                    std::is_same_v<typename T::second_type, LunaBufferView *>)) &&
-                                  ...))
-static std::array<LunaWriteDescriptorSet, sizeof...(T)> GenerateWrites(const LunaDescriptorSet descriptorSet,
-                                                                       std::list<LunaDescriptorBufferInfo> &bufferInfos,
-                                                                       const T &...writes)
-{
-    size_t index = 0;
-    std::array<LunaWriteDescriptorSet, sizeof...(T)> entries{};
-
-    auto AddEntry = [&descriptorSet, &index, &entries, &bufferInfos]<typename Type>(const Type &write) {
-        if constexpr (std::is_same_v<typename Type::second_type, const LunaDescriptorImageInfo *>)
-        {
-            entries.at(index) = LunaWriteDescriptorSet{
-                .descriptorSet = descriptorSet,
-                .bindingName = write.first,
-                .imageInfo = write.second,
-            };
-        } else if constexpr (std::is_same_v<typename Type::second_type, LunaBuffer>)
-        {
-            bufferInfos.emplace_back(write.second, 0, 0);
-            entries.at(index) = LunaWriteDescriptorSet{
-                .descriptorSet = descriptorSet,
-                .bindingName = write.first,
-                .bufferInfo = &bufferInfos.back(),
-            };
-        } else if constexpr (std::is_same_v<typename Type::second_type, const LunaDescriptorBufferInfo *>)
-        {
-            entries.at(index) = LunaWriteDescriptorSet{
-                .descriptorSet = descriptorSet,
-                .bindingName = write.first,
-                .bufferInfo = write.second,
-            };
-        } else if constexpr (std::is_same_v<typename Type::second_type, LunaBufferView *>)
-        {
-            entries.at(index) = LunaWriteDescriptorSet{
-                .descriptorSet = descriptorSet,
-                .bindingName = write.first,
-                .texelBufferView = *write.second,
-            };
-        } else
-        {
-            static_assert(false, "How did you manage to get an invalid type past the requires clause?!?!?");
-        }
-        index++;
-    };
-    (AddEntry(writes), ...);
-
-    return entries;
-}
-
-template<typename... T> requires(((std::__is_pair<T> &&
-                                   std::is_same_v<typename T::first_type, const char *> &&
-                                   (std::is_same_v<typename T::second_type, const LunaDescriptorImageInfo *> ||
-                                    std::is_same_v<typename T::second_type, LunaBuffer> ||
-                                    std::is_same_v<typename T::second_type, const LunaDescriptorBufferInfo *> ||
-                                    std::is_same_v<typename T::second_type, LunaBufferView *>)) &&
-                                  ...) &&
-                                 (!std::is_same_v<typename T::second_type, LunaBuffer> && ...))
-static std::array<LunaWriteDescriptorSet, sizeof...(T)> GenerateWrites(const LunaDescriptorSet descriptorSet,
-                                                                       const T &...writes)
-{
-    std::list<LunaDescriptorBufferInfo> list;
-    return generateWrites<T...>(descriptorSet, list, writes...);
-}
+    public:
+        consteval DescriptorPoolCreationInfo():
+            LunaDescriptorPoolCreationInfo{
+                .flags = CREATION_FLAGS,
+                .maxSets = 1,
+                .poolSizeCount = POOL_SIZE_COUNT,
+                .poolSizes = POOL_SIZES.data(),
+            }
+        {}
+};
+} // namespace
 
 LightBakerGpu::LightBakerGpu()
 {
@@ -892,7 +874,7 @@ bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize,
         .iterationCount = static_cast<uint32_t>(std::max(rayCount / (uint64_t{1} << 30), uint64_t{1})),
         .bounces = bounceCount,
     };
-    static constexpr std::array RAYGEN_MAP_ENTRIES = GenerateSpecializationMapEntries<double, uint32_t, uint32_t>();
+    static constexpr SpecializationMapEntries<double, uint32_t, uint32_t> RAYGEN_MAP_ENTRIES{};
     const VkSpecializationInfo raygenSpecializationInfo = {
         .mapEntryCount = RAYGEN_MAP_ENTRIES.size(),
         .pMapEntries = RAYGEN_MAP_ENTRIES.data(),
@@ -904,8 +886,7 @@ bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize,
         lightmapSize.y,
         lightCount,
     };
-    static constexpr std::array
-            CLOSEST_HIT_MAP_ENTRIES = GenerateSpecializationMapEntries<uint32_t, uint32_t, uint32_t>();
+    static constexpr SpecializationMapEntries<uint32_t, uint32_t, uint32_t> CLOSEST_HIT_MAP_ENTRIES{};
     const VkSpecializationInfo closestHitSpecializationInfo = {
         .mapEntryCount = CLOSEST_HIT_MAP_ENTRIES.size(),
         .pMapEntries = CLOSEST_HIT_MAP_ENTRIES.data(),
@@ -1266,15 +1247,16 @@ bool LightBakerGpu::ConvertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
     }
 
     LunaDescriptorSetLayout descriptorSetLayout{};
-    static constexpr std::array DESCRIPTOR_SET_LAYOUT_BINDINGS = GenerateDescriptorSetLayoutBindings(
-            std::pair{
-                VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                std::array{"input lightmap"},
-            },
-            std::pair{
-                VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
-                std::array{"output lightmap"},
-            });
+    static constexpr DescriptorSetLayoutBindings DESCRIPTOR_SET_LAYOUT_BINDINGS{
+        std::pair{
+            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            std::array{"input lightmap"},
+        },
+        std::pair{
+            VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
+            std::array{"output lightmap"},
+        },
+    };
     constexpr LunaDescriptorSetLayoutCreationInfo DESCRIPTOR_SET_LAYOUT_CREATION_INFO = {
         .bindingCount = DESCRIPTOR_SET_LAYOUT_BINDINGS.size(),
         .bindings = DESCRIPTOR_SET_LAYOUT_BINDINGS.data(),
@@ -1289,7 +1271,7 @@ bool LightBakerGpu::ConvertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
         WORK_GROUP_SIZE.x,
         WORK_GROUP_SIZE.y,
     };
-    static constexpr std::array MAP_ENTRIES = GenerateSpecializationMapEntries<uint32_t, uint32_t, uint32_t>();
+    static constexpr SpecializationMapEntries<uint32_t, uint32_t, uint32_t> MAP_ENTRIES{};
     const VkSpecializationInfo specializationInfo = {
         .mapEntryCount = MAP_ENTRIES.size(),
         .pMapEntries = MAP_ENTRIES.data(),
@@ -1317,8 +1299,7 @@ bool LightBakerGpu::ConvertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
     }
 
     LunaDescriptorPool descriptorPool{};
-    static constexpr LunaDescriptorPoolCreationInfo
-            DESCRIPTOR_POOL_CREATION_INFO = GenerateDescriptorPoolCreationInfo<&DESCRIPTOR_SET_LAYOUT_BINDINGS>();
+    static constexpr DescriptorPoolCreationInfo<&DESCRIPTOR_SET_LAYOUT_BINDINGS> DESCRIPTOR_POOL_CREATION_INFO{};
     if (!CheckResult(lunaCreateDescriptorPool(device, &DESCRIPTOR_POOL_CREATION_INFO, &descriptorPool)))
     {
         return false;
@@ -1357,11 +1338,21 @@ bool LightBakerGpu::ConvertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
         return false;
     }
 
-    std::list<LunaDescriptorBufferInfo> bufferInfos;
-    const std::array writes = GenerateWrites(descriptorSet,
-                                             bufferInfos,
-                                             std::pair{"input lightmap", lightmap},
-                                             std::pair{"output lightmap", &outputLightmapBufferView});
+    const LunaDescriptorBufferInfo inputLightmapBufferInfo{
+        .buffer = lightmap,
+    };
+    const std::array<LunaWriteDescriptorSet, 2> writes{
+        LunaWriteDescriptorSet{
+            .descriptorSet = descriptorSet,
+            .bindingName = "input lightmap",
+            .bufferInfo = &inputLightmapBufferInfo,
+        },
+        LunaWriteDescriptorSet{
+            .descriptorSet = descriptorSet,
+            .bindingName = "output lightmap",
+            .texelBufferView = outputLightmapBufferView,
+        },
+    };
     lunaWriteDescriptorSets(device, writes.size(), writes.data());
 
     const LunaDescriptorSetBindInfo descriptorSetBindInfo = {
