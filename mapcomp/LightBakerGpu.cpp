@@ -626,10 +626,10 @@ bool LightBakerGpu::CreateBLAS(const std::unordered_map<std::string, LevelMeshBu
 
     const LunaBufferCreationInfo bufferCreationInfo = {
         .size = buildSizesInfo.accelerationStructureSize,
+        .alignment = 256, // 256 is directly required by the spec
         .usage = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
         .queueFamilyIndexCount = 1,
         .queueFamilyIndices = &queueFamilyIndex,
-        .alignment = 256, // 256 is directly required by the spec
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
     if (!CheckResult(lunaCreateBuffer(device, &bufferCreationInfo, &blas.buffer)))
@@ -654,10 +654,10 @@ bool LightBakerGpu::CreateBLAS(const std::unordered_map<std::string, LevelMeshBu
 
     const LunaBufferCreationInfo scratchBufferCreationInfo = {
         .size = buildSizesInfo.buildScratchSize,
+        .alignment = physicalDeviceAccelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment,
         .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
         .queueFamilyIndexCount = 1,
         .queueFamilyIndices = &queueFamilyIndex,
-        .alignment = physicalDeviceAccelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment,
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
     if (!CheckResult(lunaCreateBuffer(device, &scratchBufferCreationInfo, &blas.scratchBuffer)))
@@ -706,11 +706,11 @@ bool LightBakerGpu::CreateTLAS()
 
     const LunaBufferCreationInfo instancesBufferCreationInfo = {
         .size = sizeof(VkAccelerationStructureInstanceKHR),
+        .alignment = 16, // 16 is directly required by the spec
         .usage = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
                  VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
         .queueFamilyIndexCount = 1,
         .queueFamilyIndices = &queueFamilyIndex,
-        .alignment = 16, // 16 is directly required by the spec
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
     if (!CheckResult(lunaCreateBuffer(device, &instancesBufferCreationInfo, &accelerationStructureInstancesBuffer)))
@@ -780,10 +780,10 @@ bool LightBakerGpu::CreateTLAS()
 
     const LunaBufferCreationInfo bufferCreationInfo = {
         .size = buildSizesInfo.accelerationStructureSize,
+        .alignment = 256, // 256 is directly required by the spec
         .usage = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
         .queueFamilyIndexCount = 1,
         .queueFamilyIndices = &queueFamilyIndex,
-        .alignment = 256, // 256 is directly required by the spec
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
     if (!CheckResult(lunaCreateBuffer(device, &bufferCreationInfo, &tlas.buffer)))
@@ -808,10 +808,10 @@ bool LightBakerGpu::CreateTLAS()
 
     const LunaBufferCreationInfo scratchBufferCreationInfo = {
         .size = buildSizesInfo.buildScratchSize,
+        .alignment = physicalDeviceAccelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment,
         .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
         .queueFamilyIndexCount = 1,
         .queueFamilyIndices = &queueFamilyIndex,
-        .alignment = physicalDeviceAccelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment,
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
     if (!CheckResult(lunaCreateBuffer(device, &scratchBufferCreationInfo, &tlas.scratchBuffer)))
@@ -1145,10 +1145,10 @@ bool LightBakerGpu::CreateShaderBindingTables()
                                                       VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     const LunaBufferCreationInfo raygenShaderBindingTableCreationInfo = {
         .size = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
+        .alignment = physicalDeviceRayTracingPipelineProperties.shaderGroupBaseAlignment,
         .usage = USAGE_FLAGS,
         .queueFamilyIndexCount = 1,
         .queueFamilyIndices = &queueFamilyIndex,
-        .alignment = physicalDeviceRayTracingPipelineProperties.shaderGroupBaseAlignment,
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
     if (!CheckResult(lunaCreateBuffer(device, &raygenShaderBindingTableCreationInfo, &raygenShaderBindingTable)))
@@ -1158,10 +1158,10 @@ bool LightBakerGpu::CreateShaderBindingTables()
 
     const LunaBufferCreationInfo closestHitShaderBindingTableCreationInfo = {
         .size = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
+        .alignment = physicalDeviceRayTracingPipelineProperties.shaderGroupBaseAlignment,
         .usage = USAGE_FLAGS,
         .queueFamilyIndexCount = 1,
         .queueFamilyIndices = &queueFamilyIndex,
-        .alignment = physicalDeviceRayTracingPipelineProperties.shaderGroupBaseAlignment,
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
     if (!CheckResult(lunaCreateBuffer(device,
