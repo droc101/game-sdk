@@ -44,4 +44,6 @@ class ActorDefinition
         std::unordered_map<std::string, SignalDefinition> inputs{};
         std::unordered_map<std::string, SignalDefinition> outputs{};
         std::unordered_map<std::string, std::shared_ptr<ParamDefinition>> params{};
+    private:
+        static constexpr const char *VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX = R"/(^[A-Za-z_]+$)/";
 };

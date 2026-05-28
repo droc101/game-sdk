@@ -3,20 +3,14 @@
 //
 
 #include "LightBakerCpu.hpp"
-#include <bit>
-#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <glm/geometric.hpp>
 #include <libassets/type/MapVertex.h>
-#include <limits>
-#include <numbers>
 #include <string>
-#include <thread>
 #include <unordered_map>
 #include <vector>
 #include "LevelMeshBuilder.h"
-#include "libassets/type/Actor.h"
 #include "Light.h"
 
 LightBakerCpu::LightBakerCpu(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
@@ -45,9 +39,6 @@ LightBakerCpu::LightBakerCpu(const std::unordered_map<std::string, LevelMeshBuil
     }
 }
 
-void LightBakerCpu::Bake(const uint64_t rayCount, const uint32_t bounceCount, std::vector<uint16_t> &pixelData)
-{
-
-}
+void LightBakerCpu::Bake(const uint64_t rayCount, const uint32_t bounceCount, std::vector<uint16_t> &pixelData) {}
 
 void CastRay(const Light &source, const glm::vec3 &direction, std::vector<uint16_t> &pixelData) {}

@@ -87,7 +87,7 @@ std::string Options::GetAssetsPath() const
 {
     // TODO: Fix this breaking the ability to launch GAME from the SDK on Windows,
     //  without causing a std::filesystem_error when compiling maps on Linux
-    const std::filesystem::path path = std::filesystem::path(gameConfigPath);
+    const std::filesystem::path path = std::filesystem::path(gameConfigPath).lexically_normal();
     return path.parent_path().string();
 }
 
