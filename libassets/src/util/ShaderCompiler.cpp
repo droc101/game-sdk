@@ -77,7 +77,7 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
 
     if (!program.link(MESSAGES))
     {
-        compileLog = shader.getInfoLog();
+        compileLog = program.getInfoLog();
         Logger::Error("GLSL Linking Failed:\n {}", program.getInfoLog());
         return Error::ErrorCode::SHADER_LINK_ERROR;
     }
