@@ -33,7 +33,7 @@ class ShaderAsset final
 
         [[nodiscard]] Error::ErrorCode SaveAsGlsl(const char *glslPath) const;
 
-        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath, std::string *errorLog) const;
+        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath, std::string *errorLog = nullptr) const;
 
         [[nodiscard]] std::string &GetGLSL();
 

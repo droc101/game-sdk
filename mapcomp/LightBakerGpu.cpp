@@ -1217,7 +1217,7 @@ bool LightBakerGpu::ConvertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
     std::stringstream glsl;
     glsl << glslFile.rdbuf();
     glslFile.close();
-    const ShaderCompiler shaderCompiler(glsl.str(),
+    ShaderCompiler shaderCompiler(glsl.str(),
                                         EShLangCompute,
                                         glslang::EShTargetClientVersion::EShTargetVulkan_1_2);
     std::vector<uint32_t> spirv;
