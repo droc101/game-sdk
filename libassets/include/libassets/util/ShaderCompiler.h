@@ -25,10 +25,12 @@ class ShaderCompiler
 
         ShaderCompiler(const std::filesystem::path &path, EShLanguage shaderType);
 
-        [[nodiscard]] Error::ErrorCode Compile(std::vector<uint32_t> &outputSpirv) const;
+        [[nodiscard]] Error::ErrorCode Compile(std::vector<uint32_t> &outputSpirv);
 
         void SetTargetVersions(glslang::EShTargetClientVersion targetVulkanVersion,
                                glslang::EShTargetLanguageVersion targetSpirvVersion);
+
+        [[nodiscard]] const std::string &GetCompileLog() const;
 
     private:
         static TBuiltInResource GetResources();
@@ -40,4 +42,6 @@ class ShaderCompiler
         EShLanguage shaderType = EShLangVertex;
 
         std::string glslSource{};
+
+        std::string compileLog{};
 };

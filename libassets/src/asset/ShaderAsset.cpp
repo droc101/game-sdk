@@ -72,7 +72,7 @@ Error::ErrorCode ShaderAsset::SaveAsGlsl(const char *glslPath) const
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode ShaderAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
+Error::ErrorCode ShaderAsset::SaveToBuffer(std::vector<uint8_t> &buffer, std::string *errorLog) const
 {
     DataWriter writer{};
     writer.Write<uint8_t>(static_cast<uint8_t>(platform));
@@ -90,6 +90,10 @@ Error::ErrorCode ShaderAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
         const Error::ErrorCode error = compiler.Compile(spirv);
         if (error != Error::ErrorCode::OK)
         {
+            if (errorLog != nullptr)
+            {
+                *errorLog = compiler.GetCompileLog();
+            }
             return error;
         }
 
@@ -103,10 +107,10 @@ Error::ErrorCode ShaderAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode ShaderAsset::SaveAsAsset(const char *assetPath) const
+Error::ErrorCode ShaderAsset::SaveAsAsset(const char *assetPath, std::string *errorLog) const
 {
     std::vector<uint8_t> buffer;
-    const Error::ErrorCode e = SaveToBuffer(buffer);
+    const Error::ErrorCode e = SaveToBuffer(buffer, errorLog);
     if (e != Error::ErrorCode::OK)
     {
         return e;

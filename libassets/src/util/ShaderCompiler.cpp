@@ -42,8 +42,9 @@ ShaderCompiler::ShaderCompiler(const std::filesystem::path &path, EShLanguage sh
     this->shaderType = shaderType;
 }
 
-Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv) const
+Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
 {
+    compileLog = "";
     if (!outputSpirv.empty())
     {
         return Error::ErrorCode::INVALID_ARGUMENT;
@@ -66,6 +67,7 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv) con
 
     if (!shader.parse(&resources, 100, ECoreProfile, false, false, MESSAGES))
     {
+        compileLog = shader.getInfoLog();
         Logger::Error("GLSL Parsing Failed:\n {}", shader.getInfoLog());
         return Error::ErrorCode::SHADER_PARSE_ERROR;
     }
@@ -75,6 +77,7 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv) con
 
     if (!program.link(MESSAGES))
     {
+        compileLog = shader.getInfoLog();
         Logger::Error("GLSL Linking Failed:\n {}", program.getInfoLog());
         return Error::ErrorCode::SHADER_LINK_ERROR;
     }
@@ -200,4 +203,9 @@ TBuiltInResource ShaderCompiler::GetResources()
     res.limits.generalVariableIndexing = true;
     res.limits.generalConstantMatrixVectorIndexing = true;
     return res;
+}
+
+const std::string &ShaderCompiler::GetCompileLog() const
+{
+    return compileLog;
 }

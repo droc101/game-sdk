@@ -81,7 +81,7 @@ Error::ErrorCode BatchCompileWindow::Execute()
                                            filename,
                                            shader.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT ? "f" : "v",
                                            ShaderAsset::SHADER_ASSET_EXTENSION)
-                                       .c_str());
+                                       .c_str(), nullptr);
         if (e != Error::ErrorCode::OK)
         {
             return e;

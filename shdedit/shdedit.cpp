@@ -118,10 +118,11 @@ static void SaveGshd(const std::string &path)
 {
     EditorTab &tab = tabs.at(selectedTab);
     tab.shader.GetGLSL() = tab.editor.GetText();
-    const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(path.c_str());
+    std::string errorLog;
+    const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(path.c_str(), &errorLog);
     if (errorCode != Error::ErrorCode::OK)
     {
-        SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}", errorCode));
+        SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}\n{}", errorCode, errorLog));
     } else
     {
         tab.modified = false;
@@ -321,10 +322,11 @@ static void Render()
         } else
         {
             tab.shader.GetGLSL() = tab.editor.GetText();
-            const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(tab.path.c_str());
+            std::string errorLog;
+            const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(tab.path.c_str(), &errorLog);
             if (errorCode != Error::ErrorCode::OK)
             {
-                SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}", errorCode));
+                SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}\n{}", errorCode, errorLog));
             } else
             {
                 tab.modified = false;
@@ -337,12 +339,11 @@ static void Render()
             if (!tab.path.empty())
             {
                 tab.shader.GetGLSL() = tab.editor.GetText();
-                const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(tab.path.c_str());
+                std::string errorLog;
+                const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(tab.path.c_str(), &errorLog);
                 if (errorCode != Error::ErrorCode::OK)
                 {
-                    SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader \"{}\"!\n{}",
-                                                              tab.path,
-                                                              errorCode));
+                    SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}\n{}", errorCode, errorLog));
                 } else
                 {
                     tab.modified = false;
