@@ -23,6 +23,7 @@ class RenderDefinition
             RD_TYPE_POINT,
             RD_TYPE_SPRITE,
             RD_TYPE_WALL,
+            RD_TYPE_CIRCLE,
         };
 
         virtual ~RenderDefinition() = default;

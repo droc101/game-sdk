@@ -150,6 +150,8 @@ add_library(assets SHARED
         src/util/Checksum.cpp
         include/libassets/util/Checksum.h
         src/type/RenderDefinitionValue.cpp
+        src/type/renderDefs/CircleRenderDefinition.cpp
+        include/libassets/type/renderDefs/CircleRenderDefinition.h
 )
 
 set_target_properties(assets PROPERTIES

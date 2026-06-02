@@ -9,6 +9,7 @@
 #include <libassets/type/Actor.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/renderDefs/BoxRenderDefinition.h>
+#include <libassets/type/renderDefs/CircleRenderDefinition.h>
 #include <libassets/type/renderDefs/ModelRenderDefinition.h>
 #include <libassets/type/renderDefs/OrientationRenderDefinition.h>
 #include <libassets/type/renderDefs/PointRenderDefinition.h>
@@ -17,6 +18,7 @@
 #include <libassets/type/Sector.h>
 #include <string>
 #include <vector>
+#include "tools/AddActorTool.h"
 #include "tools/EditorTool.h"
 #include "Viewport.h"
 
@@ -146,4 +148,9 @@ class ViewportRenderer
                                    const Actor &actor,
                                    const glm::mat4 &worldMatrix,
                                    const glm::mat4 &matrix);
+
+        static void RenderCircleRdef(CircleRenderDefinition *rdef,
+                                     const Actor &actor,
+                                     const glm::mat4 &worldMatrix,
+                                     const Viewport::ViewportType type);
 };

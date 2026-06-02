@@ -3,6 +3,7 @@
 //
 
 #include <libassets/type/renderDefs/BoxRenderDefinition.h>
+#include <libassets/type/renderDefs/CircleRenderDefinition.h>
 #include <libassets/type/renderDefs/ModelRenderDefinition.h>
 #include <libassets/type/renderDefs/OrientationRenderDefinition.h>
 #include <libassets/type/renderDefs/PointRenderDefinition.h>
@@ -48,6 +49,9 @@ std::unique_ptr<RenderDefinition> RenderDefinition::Create(const nlohmann::json 
         case RenderDefinitionType::RD_TYPE_WALL:
             output = std::make_unique<WallRenderDefinition>(json);
             break;
+        case RenderDefinitionType::RD_TYPE_CIRCLE:
+            output = std::make_unique<CircleRenderDefinition>(json);
+            break;
     }
 
     output->type = type;
@@ -86,6 +90,10 @@ RenderDefinition::RenderDefinitionType RenderDefinition::ParseType(const std::st
     if (type == "wall")
     {
         return RenderDefinitionType::RD_TYPE_WALL;
+    }
+    if (type == "circle" || type == "sphere")
+    {
+        return RenderDefinitionType::RD_TYPE_CIRCLE;
     }
     return RenderDefinitionType::RD_TYPE_UNKNOWN;
 }

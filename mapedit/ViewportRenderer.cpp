@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <game_sdk/gl/GLHelper.h>
 #include <iterator>
@@ -15,13 +16,16 @@
 #include <libassets/type/BoundingBox.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/renderDefs/BoxRenderDefinition.h>
+#include <libassets/type/renderDefs/CircleRenderDefinition.h>
 #include <libassets/type/renderDefs/ModelRenderDefinition.h>
 #include <libassets/type/renderDefs/OrientationRenderDefinition.h>
 #include <libassets/type/renderDefs/PointRenderDefinition.h>
 #include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/renderDefs/SpriteRenderDefinition.h>
+#include <libassets/type/renderDefs/WallRenderDefinition.h>
 #include <libassets/type/Sector.h>
 #include <memory>
+#include <numbers>
 #include <vector>
 #include "MapEditor.h"
 #include "MapRenderer.h"
@@ -367,6 +371,9 @@ void ViewportRenderer::RenderActor(const Actor &a, const glm::mat4 &matrix, cons
             case RenderDefinition::RenderDefinitionType::RD_TYPE_WALL:
                 RenderWallRdef(dynamic_cast<WallRenderDefinition *>(rdef.get()), a, worldMatrix, matrix);
                 break;
+            case RenderDefinition::RenderDefinitionType::RD_TYPE_CIRCLE:
+                RenderCircleRdef(dynamic_cast<CircleRenderDefinition *>(rdef.get()), a, matrix, vp.GetType());
+                break;
             default:
             case RenderDefinition::RenderDefinitionType::RD_TYPE_UNKNOWN:
                 assert(false); // should be impossible
@@ -409,6 +416,14 @@ bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
         {
             BoxRenderDefinition *boxDef = dynamic_cast<BoxRenderDefinition *>(rdef.get());
             const BoundingBox bb = BoundingBox(boxDef->GetExtents(actor) / 2.0f);
+            for (const glm::vec3 &point: bb.GetPoints())
+            {
+                boundingBoxPoints.emplace_back(worldMatrix * glm::vec4(point, 1.0));
+            }
+        } else if (type == RenderDefinition::RenderDefinitionType::RD_TYPE_CIRCLE)
+        {
+            CircleRenderDefinition *circleDef = dynamic_cast<CircleRenderDefinition *>(rdef.get());
+            const BoundingBox bb = BoundingBox(glm::vec3(circleDef->GetRadius(actor)));
             for (const glm::vec3 &point: bb.GetPoints())
             {
                 boundingBoxPoints.emplace_back(worldMatrix * glm::vec4(point, 1.0));
@@ -556,4 +571,67 @@ void ViewportRenderer::RenderWallRdef(WallRenderDefinition *rdef,
     MapRenderer::RenderLine(startFloor, endFloor, c, matrix, 2.0f);
     MapRenderer::RenderLine(startCeiling, startFloor, c, matrix, 2.0f);
     MapRenderer::RenderLine(endCeiling, endFloor, c, matrix, 2.0f);
+}
+
+void ViewportRenderer::RenderCircleRdef(CircleRenderDefinition *rdef,
+                                        const Actor &actor,
+                                        const glm::mat4 &worldMatrix,
+                                        const Viewport::ViewportType type)
+{
+    const float radius = rdef->GetRadius(actor);
+    const Color color = rdef->GetColor(actor);
+
+    constexpr int NUM_VERTS = 16;
+    std::vector<glm::vec2> pts;
+    pts.reserve(NUM_VERTS);
+    for (int i = 0; i < NUM_VERTS; i++)
+    {
+        const float theta = 1 * (2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / NUM_VERTS);
+        const float x = radius * std::cos(theta);
+        const float y = radius * std::sin(theta);
+        pts.emplace_back(x, y);
+    }
+
+    for (size_t i = 0; i < NUM_VERTS; i++)
+    {
+        const size_t nextIndex = (i + 1) % NUM_VERTS;
+        const glm::vec2 &startPoint = pts.at(i);
+        const glm::vec2 &endPoint = pts.at(nextIndex);
+        switch (type)
+        {
+            case Viewport::ViewportType::TOP_DOWN_XZ:
+                MapRenderer::RenderLine(glm::vec3(startPoint.x + actor.position.x,
+                                                  actor.position.y,
+                                                  startPoint.y + actor.position.z),
+                                        glm::vec3(endPoint.x + actor.position.x,
+                                                  actor.position.y,
+                                                  endPoint.y + actor.position.z),
+                                        color,
+                                        worldMatrix,
+                                        1);
+                break;
+            case Viewport::ViewportType::FRONT_XY:
+                MapRenderer::RenderLine(glm::vec3(startPoint.x + actor.position.x,
+                                                  startPoint.y + actor.position.y,
+                                                  actor.position.z),
+                                        glm::vec3(endPoint.x + actor.position.x,
+                                                  endPoint.y + actor.position.y,
+                                                  actor.position.z),
+                                        color,
+                                        worldMatrix,
+                                        1);
+                break;
+            case Viewport::ViewportType::SIDE_YZ:
+                MapRenderer::RenderLine(glm::vec3(actor.position.x,
+                                                  startPoint.x + actor.position.y,
+                                                  startPoint.y + actor.position.z),
+                                        glm::vec3(actor.position.x,
+                                                  endPoint.x + actor.position.y,
+                                                  endPoint.y + actor.position.z),
+                                        color,
+                                        worldMatrix,
+                                        1);
+                break;
+        }
+    }
 }
