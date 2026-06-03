@@ -14,6 +14,20 @@
 #include "EditorTool.h"
 #include "SelectTool.h"
 
+void AddActorTool::PlaceActor()
+{
+    Actor a{};
+    a.className = newActorType;
+    a.rotation = {0, 0, 0};
+    a.position = {newActorPosition.x, newActorPosition.y, newActorPosition.z};
+
+    const ActorDefinition &def = MapEditor::adm.GetActorDefinition(newActorType);
+    a.ApplyDefinition(def, true);
+
+    MapEditor::map.actors.push_back(a);
+    hasPlacedActor = false;
+}
+
 void AddActorTool::RenderViewport(Viewport &vp)
 {
     bool isHovered = false;
@@ -36,6 +50,10 @@ void AddActorTool::RenderViewport(Viewport &vp)
             {
                 newActorPosition = MapEditor::SnapToGrid(worldSpaceHover);
                 hasPlacedActor = true;
+                if (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_LeftShift))
+                {
+                    PlaceActor();
+                }
             }
 
             if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
@@ -51,16 +69,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
                 hasPlacedActor = false;
             } else if (ImGui::Shortcut(ImGuiKey_Enter) || ImGui::Shortcut(ImGuiKey_KeypadEnter))
             {
-                Actor a{};
-                a.className = newActorType;
-                a.rotation = {0, 0, 0};
-                a.position = {newActorPosition.x, newActorPosition.y, newActorPosition.z};
-
-                const ActorDefinition &def = MapEditor::adm.GetActorDefinition(newActorType);
-                a.ApplyDefinition(def, true);
-
-                MapEditor::map.actors.push_back(a);
-                hasPlacedActor = false;
+                PlaceActor();
             } else
             {
                 if (ImGui::IsMouseDown(ImGuiMouseButton_Left))

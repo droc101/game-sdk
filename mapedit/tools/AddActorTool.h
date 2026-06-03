@@ -22,4 +22,6 @@ class AddActorTool final: public EditorTool
 
         static inline bool hasPlacedActor = false;
         static inline glm::vec3 newActorPosition{};
+
+        static void PlaceActor();
 };
