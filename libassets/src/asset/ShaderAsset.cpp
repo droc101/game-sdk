@@ -33,7 +33,6 @@ Error::ErrorCode ShaderAsset::CreateFromAsset(const char *assetPath, ShaderAsset
         return Error::ErrorCode::INCORRECT_VERSION;
     }
     shader = ShaderAsset();
-    shader.platform = static_cast<ShaderPlatform>(asset.reader.Read<uint8_t>());
     shader.type = static_cast<ShaderType>(asset.reader.Read<uint8_t>());
     const size_t glslLength = asset.reader.Read<size_t>();
     shader.glsl = "";
@@ -75,34 +74,27 @@ Error::ErrorCode ShaderAsset::SaveAsGlsl(const char *glslPath) const
 Error::ErrorCode ShaderAsset::SaveToBuffer(std::vector<uint8_t> &buffer, std::string *errorLog) const
 {
     DataWriter writer{};
-    writer.Write<uint8_t>(static_cast<uint8_t>(platform));
     writer.Write<uint8_t>(static_cast<uint8_t>(type));
     writer.Write<size_t>(glsl.length() + 1);
     writer.WriteBuffer(glsl.c_str(), glsl.length());
     writer.Write<uint8_t>(0); // null byte
-    if (platform == ShaderPlatform::PLATFORM_VULKAN)
+    std::vector<uint32_t> spirv;
+    const EShLanguage shaderType = type == ShaderType::SHADER_TYPE_VERTEX ? EShLangVertex : EShLangFragment;
+    ShaderCompiler compiler = ShaderCompiler(glsl, shaderType);
+    compiler.SetTargetVersions(glslang::EShTargetClientVersion::EShTargetVulkan_1_2,
+                               glslang::EShTargetLanguageVersion::EShTargetSpv_1_0);
+    const Error::ErrorCode error = compiler.Compile(spirv);
+    if (error != Error::ErrorCode::OK)
     {
-        std::vector<uint32_t> spirv;
-        const EShLanguage shaderType = type == ShaderType::SHADER_TYPE_VERTEX ? EShLangVertex : EShLangFragment;
-        ShaderCompiler compiler = ShaderCompiler(glsl, shaderType);
-        compiler.SetTargetVersions(glslang::EShTargetClientVersion::EShTargetVulkan_1_2,
-                                   glslang::EShTargetLanguageVersion::EShTargetSpv_1_0);
-        const Error::ErrorCode error = compiler.Compile(spirv);
-        if (error != Error::ErrorCode::OK)
+        if (errorLog != nullptr)
         {
-            if (errorLog != nullptr)
-            {
-                *errorLog = compiler.GetCompileLog();
-            }
-            return error;
+            *errorLog = compiler.GetCompileLog();
         }
-
-        writer.Write<size_t>(spirv.size());
-        writer.WriteBuffer<uint32_t>(spirv);
-    } else
-    {
-        writer.Write<size_t>(0); // zero spirv for opengl
+        return error;
     }
+
+    writer.Write<size_t>(spirv.size());
+    writer.WriteBuffer<uint32_t>(spirv);
     writer.CopyToVector(buffer);
     return Error::ErrorCode::OK;
 }

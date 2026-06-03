@@ -167,16 +167,6 @@ static void RenderTab(EditorTab &tab)
 
     ImGui::BeginChild("StatsPane", ImVec2(SIDEBAR_WIDTH, availableSize.y), ImGuiChildFlags_Borders);
     {
-        ImGui::TextUnformatted("Platform");
-        if (ImGui::RadioButton("Vulkan", tab.shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_VULKAN))
-        {
-            tab.shader.platform = ShaderAsset::ShaderPlatform::PLATFORM_VULKAN;
-        }
-        if (ImGui::RadioButton("OpenGL", tab.shader.platform == ShaderAsset::ShaderPlatform::PLATFORM_OPENGL))
-        {
-            tab.shader.platform = ShaderAsset::ShaderPlatform::PLATFORM_OPENGL;
-        }
-
         ImGui::TextUnformatted("Type");
         if (ImGui::RadioButton("Fragment", tab.shader.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT))
         {

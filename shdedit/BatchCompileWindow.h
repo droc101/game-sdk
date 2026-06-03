@@ -22,7 +22,6 @@ class BatchCompileWindow
         static inline bool visible = false;
         static inline std::vector<std::string> files;
         static inline std::vector<ShaderAsset::ShaderType> types;
-        static inline bool targetOpenGL = false;
         static inline std::string outputFolder;
 
         static void SelectCallback(const std::vector<std::string> &paths);

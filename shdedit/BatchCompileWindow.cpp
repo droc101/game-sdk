@@ -21,7 +21,6 @@ void BatchCompileWindow::Show()
     visible = true;
     files.clear();
     types.clear();
-    targetOpenGL = false;
     outputFolder = "";
 }
 
@@ -60,9 +59,6 @@ Error::ErrorCode BatchCompileWindow::Execute()
         return Error::ErrorCode::INVALID_DIRECTORY;
     }
 
-    const ShaderAsset::ShaderPlatform platform = targetOpenGL ? ShaderAsset::ShaderPlatform::PLATFORM_OPENGL
-                                                              : ShaderAsset::ShaderPlatform::PLATFORM_VULKAN;
-
     for (size_t i = 0; i < files.size(); i++)
     {
         const std::string &file = files.at(i);
@@ -74,7 +70,6 @@ Error::ErrorCode BatchCompileWindow::Execute()
         {
             return e;
         }
-        shader.platform = platform;
         shader.type = type;
         e = shader.SaveAsAsset(std::format("{}/{}_{}.{}",
                                            outputFolder,
@@ -110,17 +105,6 @@ void BatchCompileWindow::Render()
             if (ImGui::Button("...", ImVec2(40, 0)))
             {
                 SDKWindow::Get().OpenFolderDialog(OutPathCallback);
-            }
-
-            ImGui::Text("Rendering API");
-            if (ImGui::RadioButton("Vulkan", !targetOpenGL))
-            {
-                targetOpenGL = false;
-            }
-            ImGui::SameLine();
-            if (ImGui::RadioButton("OpenGL", targetOpenGL))
-            {
-                targetOpenGL = true;
             }
 
             ImGui::Text("Source Files");

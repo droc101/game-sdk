@@ -12,11 +12,6 @@
 class ShaderAsset final
 {
     public:
-        enum class ShaderPlatform : uint8_t
-        {
-            PLATFORM_OPENGL,
-            PLATFORM_VULKAN
-        };
 
         enum class ShaderType : uint8_t
         {
@@ -37,7 +32,6 @@ class ShaderAsset final
 
         [[nodiscard]] std::string &GetGLSL();
 
-        ShaderPlatform platform = ShaderPlatform::PLATFORM_VULKAN;
         ShaderType type = ShaderType::SHADER_TYPE_FRAGMENT;
 
         static constexpr uint8_t SHADER_ASSET_VERSION = 1;
