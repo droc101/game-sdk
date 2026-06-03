@@ -351,6 +351,10 @@ void ViewportRenderer::RenderActor(const Actor &a, const glm::mat4 &matrix, cons
 
     for (const std::shared_ptr<RenderDefinition> &rdef: definition.renderDefinitions)
     {
+        if (!MapEditor::drawGizmos && rdef.get()->IsGizmo(a))
+        {
+            continue;
+        }
         switch (rdef.get()->GetType())
         {
             case RenderDefinition::RenderDefinitionType::RD_TYPE_BOX:
@@ -396,6 +400,11 @@ bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
 
     for (const std::shared_ptr<RenderDefinition> &rdef: definition.renderDefinitions)
     {
+        if (!MapEditor::drawGizmos && rdef.get()->IsGizmo(actor))
+        {
+            continue;
+        }
+
         const RenderDefinition::RenderDefinitionType type = rdef.get()->GetType();
         if (type == RenderDefinition::RenderDefinitionType::RD_TYPE_POINT ||
             type == RenderDefinition::RenderDefinitionType::RD_TYPE_ORIENTATION ||

@@ -5,10 +5,11 @@
 #include <libassets/type/Actor.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/RenderDefinitionValue.h>
+#include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/renderDefs/SpriteRenderDefinition.h>
 #include <string>
 
-SpriteRenderDefinition::SpriteRenderDefinition(const nlohmann::json &json)
+SpriteRenderDefinition::SpriteRenderDefinition(const nlohmann::json &json): RenderDefinition(json)
 {
     texture = RenderDefinitionValue<std::string>(json, "texture", "");
     tintColor = RenderDefinitionValue<Color>(json, "tint_color", Color(-1));

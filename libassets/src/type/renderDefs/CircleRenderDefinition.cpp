@@ -6,8 +6,9 @@
 #include <libassets/type/Color.h>
 #include <libassets/type/RenderDefinitionValue.h>
 #include <libassets/type/renderDefs/CircleRenderDefinition.h>
+#include <libassets/type/renderDefs/RenderDefinition.h>
 
-CircleRenderDefinition::CircleRenderDefinition(const nlohmann::json &json)
+CircleRenderDefinition::CircleRenderDefinition(const nlohmann::json &json): RenderDefinition(json)
 {
     color = RenderDefinitionValue<Color>(json, "color", Color(0, 1, 0, 1));
     radius = RenderDefinitionValue<float>(json, "radius", 1.0f);

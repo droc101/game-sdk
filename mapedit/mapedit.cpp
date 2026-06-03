@@ -326,6 +326,10 @@ static void Render()
             {
                 MapEditor::drawModels = !MapEditor::drawModels;
             }
+            if (ImGui::MenuItem("Show Gizmos", "", MapEditor::drawGizmos))
+            {
+                MapEditor::drawGizmos = !MapEditor::drawGizmos;
+            }
             if (ImGui::MenuItem("Enable Culling", "", MapEditor::culling))
             {
                 MapEditor::culling = !MapEditor::culling;

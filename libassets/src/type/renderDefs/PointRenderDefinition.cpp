@@ -6,6 +6,7 @@
 #include <libassets/type/Color.h>
 #include <libassets/type/RenderDefinitionValue.h>
 #include <libassets/type/renderDefs/PointRenderDefinition.h>
+#include <libassets/type/renderDefs/RenderDefinition.h>
 
 PointRenderDefinition::PointRenderDefinition()
 {
@@ -14,7 +15,7 @@ PointRenderDefinition::PointRenderDefinition()
     type = RenderDefinitionType::RD_TYPE_POINT;
 }
 
-PointRenderDefinition::PointRenderDefinition(const nlohmann::json &json)
+PointRenderDefinition::PointRenderDefinition(const nlohmann::json &json): RenderDefinition(json)
 {
     color = RenderDefinitionValue<Color>(json, "color", Color(0, 1, 0, 1));
     pointSize = RenderDefinitionValue<float>(json, "point_size", 10.0f);

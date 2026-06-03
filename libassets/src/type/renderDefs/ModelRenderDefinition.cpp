@@ -6,9 +6,10 @@
 #include <libassets/type/Color.h>
 #include <libassets/type/RenderDefinitionValue.h>
 #include <libassets/type/renderDefs/ModelRenderDefinition.h>
+#include <libassets/type/renderDefs/RenderDefinition.h>
 #include <string>
 
-ModelRenderDefinition::ModelRenderDefinition(const nlohmann::json &json)
+ModelRenderDefinition::ModelRenderDefinition(const nlohmann::json &json): RenderDefinition(json)
 {
     model = RenderDefinitionValue<std::string>(json, "model", "model/error.gmdl");
     color = RenderDefinitionValue<Color>(json, "color", Color(0, 1, 0, 1));

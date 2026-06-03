@@ -5,10 +5,11 @@
 #include <libassets/type/Actor.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/RenderDefinitionValue.h>
+#include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/renderDefs/WallRenderDefinition.h>
 #include <string>
 
-WallRenderDefinition::WallRenderDefinition(const nlohmann::json &json)
+WallRenderDefinition::WallRenderDefinition(const nlohmann::json &json): RenderDefinition(json)
 {
     color = RenderDefinitionValue<Color>(json, "color", Color(0, 1, 0, 1));
     zAxisOrientation = RenderDefinitionValue<bool>(json, "z_axis_orientation", false);

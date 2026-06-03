@@ -6,6 +6,7 @@
 #include <libassets/type/Color.h>
 #include <libassets/type/RenderDefinitionValue.h>
 #include <libassets/type/renderDefs/OrientationRenderDefinition.h>
+#include <libassets/type/renderDefs/RenderDefinition.h>
 
 OrientationRenderDefinition::OrientationRenderDefinition()
 {
@@ -13,7 +14,7 @@ OrientationRenderDefinition::OrientationRenderDefinition()
     type = RenderDefinitionType::RD_TYPE_ORIENTATION;
 }
 
-OrientationRenderDefinition::OrientationRenderDefinition(const nlohmann::json &json)
+OrientationRenderDefinition::OrientationRenderDefinition(const nlohmann::json &json): RenderDefinition(json)
 {
     color = RenderDefinitionValue<Color>(json, "color", Color(0, 1, 0, 1));
 }

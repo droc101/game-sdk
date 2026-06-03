@@ -6,8 +6,9 @@
 #include <libassets/type/Color.h>
 #include <libassets/type/RenderDefinitionValue.h>
 #include <libassets/type/renderDefs/BoxRenderDefinition.h>
+#include <libassets/type/renderDefs/RenderDefinition.h>
 
-BoxRenderDefinition::BoxRenderDefinition(const nlohmann::json &json)
+BoxRenderDefinition::BoxRenderDefinition(const nlohmann::json &json): RenderDefinition(json)
 {
     color = RenderDefinitionValue<Color>(json, "color", Color(0, 1, 0, 1));
     width = RenderDefinitionValue<float>(json, "width", 1.0f);

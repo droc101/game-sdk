@@ -47,6 +47,7 @@ class MapEditor
         static inline bool showSidebar = true;
         static inline bool drawModels = true;
         static inline bool culling = true;
+        static inline bool drawGizmos = true;
 
         static constexpr size_t HOVER_DISTANCE_PIXELS = 10;
         static constexpr size_t TOOLBAR_HEIGHT = 48;
