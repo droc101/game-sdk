@@ -52,7 +52,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         return Error::ErrorCode::INCORRECT_FORMAT;
     }
     definition.parentClassName = definitionJson.value("extends", "");
-    if (!std::regex_match(definition.parentClassName, validIdentifierRegex))
+    if (!definition.parentClassName.empty() && !std::regex_match(definition.parentClassName, validIdentifierRegex))
     {
         Logger::Error("Invalid actor parent class name (definition file name) \"{}\". Actor class names may only "
                       "contain letters and underscores.",
