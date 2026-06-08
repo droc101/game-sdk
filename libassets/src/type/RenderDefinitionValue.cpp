@@ -3,13 +3,10 @@
 //
 
 #include <cstddef>
+#include <cstdint>
 #include <libassets/type/Color.h>
-#include <libassets/type/Param.h>
 #include <libassets/type/RenderDefinitionValue.h>
-#include <libassets/util/Logger.h>
-#include <regex>
 #include <string>
-#include <tinyexpr.h>
 
 template<> void RenderDefinitionValue<std::string>::ConstructString(const nlohmann::json &json,
                                                                     const std::string &key,
@@ -100,79 +97,8 @@ template<> void RenderDefinitionValue<float>::ConstructFloat(const nlohmann::jso
             value = json.value(key, defaultValue);
         } else if (json.at(key).type() == nlohmann::detail::value_t::string)
         {
-            usesParam = true;
-            const std::string floatValue = json.value(key, "");
-            std::smatch match;
-            std::string::const_iterator iter = std::string::const_iterator(floatValue.cbegin());
-            size_t matchNum = 0;
-            while (std::regex_search(iter, floatValue.cend(), match, std::regex(PARAM_SEARCH_REGEX)))
-            {
-                if (match.length() < 2)
-                {
-                    Logger::Error("Incorrect number of matches on float render definition regex (string was \"{}\")",
-                                  floatValue);
-                }
-                VectorComponent component = VectorComponent::NONE;
-                if (match.length() >= 3 && !match[2].str().empty())
-                {
-                    const char componentChar = match[2].str()[0];
-                    if (componentChar == 'x')
-                    {
-                        component = VectorComponent::X;
-                    } else if (componentChar == 'y')
-                    {
-                        component = VectorComponent::Y;
-                    } else if (componentChar == 'z')
-                    {
-                        component = VectorComponent::Z;
-                    }
-                }
-
-                std::string expressionVarName = "p";
-                size_t varIndex = matchNum + 1;
-                while (varIndex > 0)
-                {
-                    varIndex--;
-                    const char ltr = static_cast<char>('a' + (varIndex % 26));
-                    expressionVarName += ltr;
-                    varIndex /= 26;
-                }
-
-                const ExpressionVariable var = {
-                    .variableName = expressionVarName,
-                    .original = match[0].str(),
-                    .paramName = match[1].str(),
-                    .vectorComponent = component,
-                    .value = 0,
-                };
-                varMetadata.push_back(var);
-
-                iter = match.suffix().first;
-                matchNum++;
-            }
-            if (matchNum == 0)
-            {
-                Logger::Warning("No matches on string \"{}\"", floatValue);
-            }
-
-            // After this point **DO NOT MODIFY var_metadata**
-
-            expression = floatValue;
-
-            for (const ExpressionVariable &component : varMetadata)
-            {
-                const std::string::size_type pos = expression.find(component.original);
-                expression.replace(pos, component.original.length(), component.variableName);
-            }
-
-            for (const ExpressionVariable &component : varMetadata)
-            {
-                const te_variable var = {.name = component.variableName.c_str(), .address = &component.value};
-                vars.push_back(var);
-            }
-
-            CompileExpression();
-            value = defaultValue;
+            const std::string expr = json.value(key, "");
+            ParseExpression(expr, defaultValue);
         }
     } else
     {
@@ -180,46 +106,22 @@ template<> void RenderDefinitionValue<float>::ConstructFloat(const nlohmann::jso
     }
 }
 
-template<> void RenderDefinitionValue<float>::ProcessExpressionVariable(ExpressionVariable &var, const KvList &params)
+template<> void RenderDefinitionValue<uint32_t>::ConstructUint32(const nlohmann::json &json,
+                                                                 const std::string &key,
+                                                                 const uint32_t &defaultValue)
 {
-    constexpr float DEFAULT_VALUE = 0;
-    if (!params.contains(var.paramName))
+    if (json.contains(key))
     {
-        var.value = DEFAULT_VALUE;
-        return;
-    }
-    if (var.vectorComponent != VectorComponent::NONE)
+        if (json.at(key).type() == nlohmann::detail::value_t::number_unsigned)
+        {
+            value = json.value(key, defaultValue);
+        } else if (json.at(key).type() == nlohmann::detail::value_t::string)
+        {
+            const std::string expr = json.value(key, "");
+            ParseExpression(expr, defaultValue);
+        }
+    } else
     {
-        const Param &p = params.at(var.paramName);
-        if (var.vectorComponent == VectorComponent::Z)
-        {
-            var.value = p.Get<glm::vec3>(glm::vec3{DEFAULT_VALUE}).z;
-            return;
-        }
-        if (p.GetType() == Param::ParamType::PARAM_TYPE_VEC2)
-        {
-            if (var.vectorComponent == VectorComponent::X)
-            {
-                var.value = p.Get<glm::vec2>(glm::vec2{DEFAULT_VALUE}).x;
-                return;
-            }
-            {
-                var.value = p.Get<glm::vec2>(glm::vec2{DEFAULT_VALUE}).y;
-                return;
-            }
-        }
-        if (p.GetType() == Param::ParamType::PARAM_TYPE_VEC3)
-        {
-            if (var.vectorComponent == VectorComponent::X)
-            {
-                var.value = p.Get<glm::vec3>(glm::vec3{DEFAULT_VALUE}).x;
-                return;
-            }
-            {
-                var.value = p.Get<glm::vec3>(glm::vec3{DEFAULT_VALUE}).y;
-                return;
-            }
-        }
+        value = defaultValue;
     }
-    var.value = params.at(var.paramName).Get<float>(DEFAULT_VALUE);
 }

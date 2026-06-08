@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
 #include <iterator>
 #include <libassets/asset/ModelAsset.h>
@@ -590,20 +591,20 @@ void ViewportRenderer::RenderCircleRdef(CircleRenderDefinition *rdef,
     const float radius = rdef->GetRadius(actor);
     const Color color = rdef->GetColor(actor);
 
-    constexpr int NUM_VERTS = 16;
+    const uint32_t numVerts = rdef->GetNumSides(actor);
     std::vector<glm::vec2> pts;
-    pts.reserve(NUM_VERTS);
-    for (int i = 0; i < NUM_VERTS; i++)
+    pts.reserve(numVerts);
+    for (uint32_t i = 0; i < numVerts; i++)
     {
-        const float theta = 1 * (2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / NUM_VERTS);
+        const float theta = 1 * (2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / static_cast<float>(numVerts));
         const float x = radius * std::cos(theta);
         const float y = radius * std::sin(theta);
         pts.emplace_back(x, y);
     }
 
-    for (size_t i = 0; i < NUM_VERTS; i++)
+    for (size_t i = 0; i < numVerts; i++)
     {
-        const size_t nextIndex = (i + 1) % NUM_VERTS;
+        const size_t nextIndex = (i + 1) % numVerts;
         const glm::vec2 &startPoint = pts.at(i);
         const glm::vec2 &endPoint = pts.at(nextIndex);
         switch (type)

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/RenderDefinitionValue.h>
@@ -16,8 +17,10 @@ class CircleRenderDefinition: public RenderDefinition
 
         [[nodiscard]] Color GetColor(const Actor &actor) const;
         [[nodiscard]] float GetRadius(const Actor &actor);
+        [[nodiscard]] uint32_t GetNumSides(const Actor &actor);
 
     private:
         RenderDefinitionValue<Color> color;
         RenderDefinitionValue<float> radius;
+        RenderDefinitionValue<uint32_t> sides;
 };

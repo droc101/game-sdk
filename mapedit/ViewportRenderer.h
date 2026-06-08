@@ -18,7 +18,6 @@
 #include <libassets/type/Sector.h>
 #include <string>
 #include <vector>
-#include "tools/AddActorTool.h"
 #include "tools/EditorTool.h"
 #include "Viewport.h"
 
@@ -152,5 +151,5 @@ class ViewportRenderer
         static void RenderCircleRdef(CircleRenderDefinition *rdef,
                                      const Actor &actor,
                                      const glm::mat4 &worldMatrix,
-                                     const Viewport::ViewportType type);
+                                     Viewport::ViewportType type);
 };

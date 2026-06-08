@@ -152,6 +152,8 @@ add_library(assets SHARED
         src/type/RenderDefinitionValue.cpp
         src/type/renderDefs/CircleRenderDefinition.cpp
         include/libassets/type/renderDefs/CircleRenderDefinition.h
+        src/type/ExpressionParser.cpp
+        include/libassets/type/ExpressionParser.h
 )
 
 set_target_properties(assets PROPERTIES

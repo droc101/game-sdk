@@ -4,20 +4,23 @@
 
 #pragma once
 
+#include <cmath>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <libassets/type/Color.h>
+#include <libassets/type/ExpressionParser.h>
 #include <libassets/type/Param.h>
 #include <libassets/util/Logger.h>
+#include <regex>
 #include <string>
-#include <tinyexpr.h>
 #include <vector>
 
 template<typename T> concept RDVTypeTemplate = std::same_as<T, float> ||
                                                std::same_as<T, bool> ||
                                                std::same_as<T, std::string> ||
-                                               std::same_as<T, Color>;
+                                               std::same_as<T, Color> ||
+                                               std::same_as<T, uint32_t>;
 
 template<RDVTypeTemplate T> class RenderDefinitionValue
 {
@@ -42,52 +45,16 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
             } else if constexpr (std::same_as<T, float>)
             {
                 ConstructFloat(json, key, defaultValue);
-            }
-        }
-
-        ~RenderDefinitionValue()
-        {
-            if (expr != nullptr)
+            } else if constexpr (std::same_as<T, uint32_t>)
             {
-                te_free(expr);
-                expr = nullptr;
+                ConstructUint32(json, key, defaultValue);
             }
-        }
-
-        RenderDefinitionValue &operator=(const RenderDefinitionValue &other)
-        {
-            if (this == &other)
-            {
-                return *this;
-            }
-            usesParam = other.usesParam;
-            paramName = other.paramName;
-            value = other.value;
-            expression = other.expression;
-            varMetadata = other.varMetadata;
-            if constexpr (std::same_as<T, float>)
-            {
-                vars.clear();
-                for (const ExpressionVariable &metadata: varMetadata)
-                {
-                    vars.emplace_back(metadata.variableName.c_str(), &metadata.value, 0, nullptr);
-                }
-                expr = nullptr;
-                if (other.expr != nullptr)
-                {
-                    CompileExpression();
-                }
-            }
-            return *this;
-        }
-        RenderDefinitionValue(const RenderDefinitionValue &other)
-        {
-            *this = other;
         }
 
         T Get(const KvList &params, const T &defaultValue) const
         {
             static_assert(!std::same_as<T, float>); // use GetFloat instead
+            static_assert(!std::same_as<T, uint32_t>); // use GetInt instead
             if (usesParam)
             {
                 if (params.contains(paramName))
@@ -104,19 +71,37 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
         float GetFloat(const KvList &params)
         {
             static_assert(std::same_as<T, float>);
-            if (expr == nullptr || !usesParam)
+            if (!expressionParser.IsReady() || !usesParam)
             {
                 return value;
             }
 
             for (size_t i = 0; i < varMetadata.size(); i++)
             {
-                ProcessExpressionVariable(varMetadata.at(i), params);
-                vars.at(i).address = &varMetadata.at(i).value;
+                expressionParser.SetVariable(varMetadata.at(i).original,
+                                             ProcessExpressionVariable(varMetadata.at(i), params));
             }
 
-            const double result = te_eval(expr);
+            const double result = expressionParser.Evaluate();
             return static_cast<float>(result);
+        }
+
+        uint32_t GetInt(const KvList &params)
+        {
+            static_assert(std::same_as<T, uint32_t>);
+            if (!expressionParser.IsReady() || !usesParam)
+            {
+                return value;
+            }
+
+            for (size_t i = 0; i < varMetadata.size(); i++)
+            {
+                expressionParser.SetVariable(varMetadata.at(i).original,
+                                             ProcessExpressionVariable(varMetadata.at(i), params));
+            }
+
+            const double result = expressionParser.Evaluate();
+            return static_cast<uint32_t>(std::round(result));
         }
 
     private:
@@ -130,11 +115,9 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
 
         struct ExpressionVariable
         {
-                std::string variableName{};
                 std::string original{};
                 std::string paramName{};
                 VectorComponent vectorComponent{};
-                double value{};
         };
 
         /**
@@ -149,29 +132,107 @@ template<RDVTypeTemplate T> class RenderDefinitionValue
         std::string paramName{};
         T value{};
 
-        std::string expression{};
-        te_expr *expr = nullptr;
+        ExpressionParser expressionParser{};
         std::vector<ExpressionVariable> varMetadata{};
-        std::vector<te_variable> vars{};
 
         void ConstructString(const nlohmann::json &json, const std::string &key, const std::string &defaultValue);
         void ConstructColor(const nlohmann::json &json, const std::string &key, const Color &defaultValue);
         void ConstructBool(const nlohmann::json &json, const std::string &key, const bool &defaultValue);
         void ConstructFloat(const nlohmann::json &json, const std::string &key, const float &defaultValue);
+        void ConstructUint32(const nlohmann::json &json, const std::string &key, const uint32_t &defaultValue);
 
-        void ProcessExpressionVariable(ExpressionVariable &var, const KvList &params);
+        T ProcessExpressionVariable(ExpressionVariable &var, const KvList &params)
+        {
+            static_assert(std::same_as<T, float> || std::same_as<T, uint32_t>);
+            constexpr float DEFAULT_VALUE = 0;
+            if (!params.contains(var.paramName))
+            {
+                return DEFAULT_VALUE;
+            }
+            if (var.vectorComponent != VectorComponent::NONE)
+            {
+                const Param &p = params.at(var.paramName);
+                if (var.vectorComponent == VectorComponent::Z)
+                {
+                    return p.Get<glm::vec3>(glm::vec3{DEFAULT_VALUE}).z;
+                }
+                if (p.GetType() == Param::ParamType::PARAM_TYPE_VEC2)
+                {
+                    if (var.vectorComponent == VectorComponent::X)
+                    {
+                        return p.Get<glm::vec2>(glm::vec2{DEFAULT_VALUE}).x;
+                    }
+                    {
+                        return p.Get<glm::vec2>(glm::vec2{DEFAULT_VALUE}).y;
+                    }
+                }
+                if (p.GetType() == Param::ParamType::PARAM_TYPE_VEC3)
+                {
+                    if (var.vectorComponent == VectorComponent::X)
+                    {
+                        return p.Get<glm::vec3>(glm::vec3{DEFAULT_VALUE}).x;
+                    }
+                    {
+                        return p.Get<glm::vec3>(glm::vec3{DEFAULT_VALUE}).y;
+                    }
+                }
+            }
+            return params.at(var.paramName).Get(DEFAULT_VALUE);
+        }
 
         void CompileExpression()
         {
-            static_assert(std::same_as<T, float>);
-            int err = 0;
-            te_expr *compiledExpr = te_compile(expression.c_str(), vars.data(), static_cast<int>(vars.size()), &err);
-            if (compiledExpr == nullptr)
+            static_assert(std::same_as<T, float> || std::same_as<T, uint32_t>);
+            expressionParser.Compile();
+        }
+
+        void ParseExpression(const std::string &expression, const T defaultValue)
+        {
+            usesParam = true;
+            expressionParser = ExpressionParser(expression);
+            std::smatch match;
+            std::string::const_iterator iter = std::string::const_iterator(expression.cbegin());
+            size_t matchNum = 0;
+            while (std::regex_search(iter, expression.cend(), match, std::regex(PARAM_SEARCH_REGEX)))
             {
-                Logger::Error("Failed to parse expression \"{}\": parse error at {}", expression, err);
-            } else
-            {
-                expr = compiledExpr;
+                if (match.length() < 2)
+                {
+                    Logger::Error("Incorrect number of matches on float render definition regex (string was \"{}\")",
+                                  expression);
+                }
+                VectorComponent component = VectorComponent::NONE;
+                if (match.length() >= 3 && !match[2].str().empty())
+                {
+                    const char componentChar = match[2].str()[0];
+                    if (componentChar == 'x')
+                    {
+                        component = VectorComponent::X;
+                    } else if (componentChar == 'y')
+                    {
+                        component = VectorComponent::Y;
+                    } else if (componentChar == 'z')
+                    {
+                        component = VectorComponent::Z;
+                    }
+                }
+
+                const ExpressionVariable var = {
+                    .original = match[0].str(),
+                    .paramName = match[1].str(),
+                    .vectorComponent = component,
+                };
+                varMetadata.push_back(var);
+                expressionParser.AddVariable(var.original);
+
+                iter = match.suffix().first;
+                matchNum++;
             }
+            if (matchNum == 0)
+            {
+                Logger::Warning("No matches on string \"{}\"", expression);
+            }
+
+            CompileExpression();
+            value = defaultValue;
         }
 };
