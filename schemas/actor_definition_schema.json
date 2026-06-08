@@ -1,0 +1,484 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Actor Definition",
+  "description": "A JSON definition of an actor's config",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "virtual": {
+      "type": "boolean"
+    },
+    "extends": {
+      "type": "string"
+    },
+    "renderers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "oneOf": [
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "box"
+                ]
+              },
+              "is_gizmo": {
+                "$ref": "#/$defs/render_definition/bool"
+              },
+              "color": {
+                "$ref": "#/$defs/render_definition/color"
+              },
+              "width": {
+                "$ref": "#/$defs/render_definition/float"
+              },
+              "height": {
+                "$ref": "#/$defs/render_definition/float"
+              },
+              "depth": {
+                "$ref": "#/$defs/render_definition/float"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "model"
+                ]
+              },
+              "is_gizmo": {
+                "$ref": "#/$defs/render_definition/bool"
+              },
+              "model": {
+                "$ref": "#/$defs/render_definition/string"
+              },
+              "color": {
+                "$ref": "#/$defs/render_definition/color"
+              },
+              "affect_lightmap": {
+                "$ref": "#/$defs/render_definition/bool"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "orientation",
+                  "direction"
+                ]
+              },
+              "is_gizmo": {
+                "$ref": "#/$defs/render_definition/bool"
+              },
+              "color": {
+                "$ref": "#/$defs/render_definition/color"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "point"
+                ]
+              },
+              "is_gizmo": {
+                "$ref": "#/$defs/render_definition/bool"
+              },
+              "color": {
+                "$ref": "#/$defs/render_definition/color"
+              },
+              "point_size": {
+                "$ref": "#/$defs/render_definition/float"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "sprite",
+                  "texture"
+                ]
+              },
+              "is_gizmo": {
+                "$ref": "#/$defs/render_definition/bool"
+              },
+              "texture": {
+                "$ref": "#/$defs/render_definition/string"
+              },
+              "tint_color": {
+                "$ref": "#/$defs/render_definition/color"
+              },
+              "point_size": {
+                "$ref": "#/$defs/render_definition/float"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "wall"
+                ]
+              },
+              "is_gizmo": {
+                "$ref": "#/$defs/render_definition/bool"
+              },
+              "color": {
+                "$ref": "#/$defs/render_definition/color"
+              },
+              "z_axis_orientation": {
+                "$ref": "#/$defs/render_definition/bool"
+              },
+              "local_center_x": {
+                "$ref": "#/$defs/render_definition/float"
+              },
+              "local_center_y": {
+                "$ref": "#/$defs/render_definition/float"
+              },
+              "width": {
+                "$ref": "#/$defs/render_definition/float"
+              },
+              "height": {
+                "$ref": "#/$defs/render_definition/float"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "circle",
+                  "sphere"
+                ]
+              },
+              "is_gizmo": {
+                "$ref": "#/$defs/render_definition/bool"
+              },
+              "color": {
+                "$ref": "#/$defs/render_definition/color"
+              },
+              "radius": {
+                "$ref": "#/$defs/render_definition/float"
+              },
+              "num_sides": {
+                "$ref": "#/$defs/render_definition/uint"
+              }
+            },
+            "additionalProperties": false
+          }
+        ],
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "$ref": "#/$defs/io_properties"
+    },
+    "outputs": {
+      "type": "object",
+      "$ref": "#/$defs/io_properties"
+    },
+    "params": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "anyOf": [
+          {
+            "properties": {
+              "type": {
+                "$ref": "#/$defs/param_type"
+              },
+              "options": {
+                "type": "string"
+              },
+              "default": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "display": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "byte",
+                  "int",
+                  "integer",
+                  "uint64",
+                  "uint64_t",
+                  "size_t"
+                ]
+              },
+              "minimum": {
+                "type": "integer"
+              },
+              "maximum": {
+                "type": "integer"
+              },
+              "default": {
+                "type": "integer"
+              },
+              "description": {
+                "type": "string"
+              },
+              "display": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "float",
+                  "decimal"
+                ]
+              },
+              "minimum": {
+                "$ref": "#/$defs/float"
+              },
+              "maximum": {
+                "$ref": "#/$defs/float"
+              },
+              "default": {
+                "$ref": "#/$defs/float"
+              },
+              "step": {
+                "$ref": "#/$defs/float"
+              },
+              "description": {
+                "type": "string"
+              },
+              "display": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "bool",
+                  "boolean"
+                ]
+              },
+              "default": {
+                "type": "boolean"
+              },
+              "description": {
+                "type": "string"
+              },
+              "display": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "string",
+                  "str"
+                ]
+              },
+              "default": {
+                "type": "string"
+              },
+              "string_hint": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "display": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "color",
+                  "col"
+                ]
+              },
+              "default": {
+                "type": "integer"
+              },
+              "show_alpha": {
+                "type": "boolean"
+              },
+              "description": {
+                "type": "string"
+              },
+              "display": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "vec2",
+                  "Vector2"
+                ]
+              },
+              "default_x": {
+                "$ref": "#/$defs/float"
+              },
+              "default_y": {
+                "$ref": "#/$defs/float"
+              },
+              "description": {
+                "type": "string"
+              },
+              "display": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "vec3",
+                  "Vector3"
+                ]
+              },
+              "default_x": {
+                "$ref": "#/$defs/float"
+              },
+              "default_y": {
+                "$ref": "#/$defs/float"
+              },
+              "default_z": {
+                "$ref": "#/$defs/float"
+              },
+              "description": {
+                "type": "string"
+              },
+              "display": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        ],
+        "required": [
+          "type"
+        ]
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "param_type": {
+      "type": "string",
+      "enum": [
+        "byte",
+        "int",
+        "integer",
+        "uint64",
+        "uint64_t",
+        "size_t",
+        "float",
+        "decimal",
+        "bool",
+        "boolean",
+        "string",
+        "str",
+        "color",
+        "col",
+        "vec2",
+        "Vector2",
+        "vec3",
+        "Vector3"
+      ]
+    },
+    "float": {
+      "type": [
+        "integer",
+        "number"
+      ]
+    },
+    "render_definition": {
+      "string": {
+        "type": "string"
+      },
+      "color": {
+        "type": [
+          "integer",
+          "string"
+        ]
+      },
+      "bool": {
+        "type": [
+          "boolean",
+          "string"
+        ]
+      },
+      "float": {
+        "type": [
+          "number",
+          "integer",
+          "string"
+        ]
+      },
+      "uint": {
+        "type": [
+          "integer",
+          "string"
+        ]
+      }
+    },
+    "io_properties": {
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/param_type"
+        }
+      }
+    }
+  }
+}

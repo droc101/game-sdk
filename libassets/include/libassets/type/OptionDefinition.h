@@ -31,11 +31,29 @@ class OptionDefinition
     private:
         template<ParamTypeTemplate T> [[nodiscard]] Error::ErrorCode LoadOptions(const nlohmann::json &definitionJson)
         {
-            const std::vector<std::pair<T, std::string>>
-                    jsonOptions = definitionJson.value("options", std::vector<std::pair<T, std::string>>());
-            for (const std::pair<T, const std::string &> kv: jsonOptions)
+            const nlohmann::json &optionsJson = definitionJson.value("options", nlohmann::json{});
+            for (const auto &[key, value]: optionsJson.items())
             {
-                options[kv.second] = Param(kv.first);
+                if constexpr (std::same_as<T, Color>)
+                {
+                    options[key] = Param(Color(static_cast<uint32_t>(value)));
+                } else if constexpr (std::same_as<T, glm::vec2>)
+                {
+                    options[key] = Param(glm::vec2{
+                        value.value("x", 0.0f),
+                        value.value("y", 0.0f),
+                    });
+                } else if constexpr (std::same_as<T, glm::vec3>)
+                {
+                    options[key] = Param(glm::vec3{
+                        value.value("x", 0.0f),
+                        value.value("y", 0.0f),
+                        value.value("z", 0.0f),
+                    });
+                } else
+                {
+                    options[key] = Param(static_cast<T>(value));
+                }
             }
 
             return Error::ErrorCode::OK;

@@ -60,9 +60,15 @@ Error::ErrorCode OptionDefinition::Create(const std::string &path, OptionDefinit
         case Param::ParamType::PARAM_TYPE_STRING:
             e = def.LoadOptions<std::string>(definitionJson);
             break;
-        case Param::ParamType::PARAM_TYPE_COLOR: // TODO color options
-            // e = def.LoadOptions<Color>(definition_json);
-            // break;
+        case Param::ParamType::PARAM_TYPE_COLOR:
+            e = def.LoadOptions<Color>(definitionJson);
+            break;
+        case Param::ParamType::PARAM_TYPE_VEC2:
+            e = def.LoadOptions<glm::vec2>(definitionJson);
+            break;
+        case Param::ParamType::PARAM_TYPE_VEC3:
+            e = def.LoadOptions<glm::vec3>(definitionJson);
+            break;
         default:
             e = Error::ErrorCode::INCORRECT_FORMAT;
             break;

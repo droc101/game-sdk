@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Options Definition",
+  "description": "A JSON definition of a set of options to be used as a dropdown",
+  "type": "object",
+  "oneOf": [
+    {
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "byte",
+            "int",
+            "integer",
+            "uint64",
+            "uint64_t",
+            "size_t"
+          ]
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "float",
+            "decimal"
+          ]
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/float"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "bool",
+            "boolean"
+          ]
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "string",
+            "str"
+          ]
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "color",
+            "col"
+          ]
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "vec2",
+            "Vector2"
+          ]
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "$ref": "#/$defs/float"
+              },
+              "y": {
+                "$ref": "#/$defs/float"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "vec3",
+            "Vector3"
+          ]
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "$ref": "#/$defs/float"
+              },
+              "y": {
+                "$ref": "#/$defs/float"
+              },
+              "z": {
+                "$ref": "#/$defs/float"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "float": {
+      "type": [
+        "integer",
+        "number"
+      ]
+    }
+  }
+}

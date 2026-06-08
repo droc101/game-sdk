@@ -27,7 +27,7 @@ std::unique_ptr<ParamDefinition> ParamDefinition::Create(const nlohmann::json &j
                                                          const std::string &paramName)
 {
     std::unique_ptr<ParamDefinition> output = nullptr;
-    const Param::ParamType type = Param::ParseType(json.value("type", "int"));
+    const Param::ParamType type = Param::ParseType(json.value("type", "none"));
     if (type == Param::ParamType::PARAM_TYPE_NONE)
     {
         Logger::Error("Failed to parse type of param:\n{}", json.dump(4).c_str());
@@ -67,7 +67,7 @@ std::unique_ptr<ParamDefinition> ParamDefinition::Create(const nlohmann::json &j
         } else if (type == Param::ParamType::PARAM_TYPE_COLOR)
         {
             output = std::make_unique<ColorParamDefinition>(Color(json.value("default", 0xFFFFFFFF)),
-                                                            json.value("showAlpha", true));
+                                                            json.value("show_alpha", true));
         } else if (type == Param::ParamType::PARAM_TYPE_UINT_64)
         {
             output = std::make_unique<Uint64ParamDefinition>(json.value("minimum", 0ull),
