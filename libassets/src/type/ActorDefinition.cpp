@@ -23,7 +23,7 @@
 
 Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinition &definition)
 {
-    const std::regex valid_identifier_regex = std::regex(VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX);
+    const std::regex validIdentifierRegex = std::regex(VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX);
     std::smatch match;
 
     std::ifstream file(path);
@@ -38,13 +38,27 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
     if (definitionJson.is_discarded())
     {
         file.close();
-        // printf("File %s is not valid JSON\n", path.c_str());
+        Logger::Error("File \"{}\" is not a valid JSON file", path);
         return Error::ErrorCode::INCORRECT_FORMAT;
     }
 
     definition = ActorDefinition();
     definition.className = std::filesystem::path(path).stem().string();
+    if (!std::regex_match(definition.className, validIdentifierRegex))
+    {
+        Logger::Error("Invalid actor class name (definition file name) \"{}\". Actor class names may only contain "
+                      "letters and underscores.",
+                      definition.className);
+        return Error::ErrorCode::INCORRECT_FORMAT;
+    }
     definition.parentClassName = definitionJson.value("extends", "");
+    if (!std::regex_match(definition.parentClassName, validIdentifierRegex))
+    {
+        Logger::Error("Invalid actor parent class name (definition file name) \"{}\". Actor class names may only "
+                      "contain letters and underscores.",
+                      definition.parentClassName);
+        return Error::ErrorCode::INCORRECT_FORMAT;
+    }
     definition.description = definitionJson.value("description", "");
     definition.isVirtual = definitionJson.value("virtual", false);
 
@@ -74,7 +88,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         nlohmann::json inputs = definitionJson.at("inputs");
         for (const auto &[key, value]: inputs.items())
         {
-            if (std::regex_match(key, match, valid_identifier_regex))
+            if (std::regex_match(key, match, validIdentifierRegex))
             {
                 const SignalDefinition signal = SignalDefinition(value.value("description", ""),
                                                                  Param::ParseType(value.value("type", "none")));
@@ -94,7 +108,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         nlohmann::json outputs = definitionJson.at("outputs");
         for (const auto &[key, value]: outputs.items())
         {
-            if (std::regex_match(key, match, valid_identifier_regex))
+            if (std::regex_match(key, match, validIdentifierRegex))
             {
                 const SignalDefinition signal = SignalDefinition(value.value("description", ""),
                                                                  Param::ParseType(value.value("type", "none")));
@@ -114,7 +128,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         nlohmann::json params = definitionJson.at("params");
         for (const auto &[key, value]: params.items())
         {
-            if (std::regex_match(key, match, valid_identifier_regex))
+            if (std::regex_match(key, match, validIdentifierRegex))
             {
                 Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
                 std::unique_ptr<ParamDefinition> param = ParamDefinition::Create(value, e, key);

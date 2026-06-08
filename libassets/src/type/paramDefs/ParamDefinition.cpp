@@ -4,6 +4,7 @@
 
 #include <cfloat>
 #include <cstdint>
+#include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/BoolParamDefinition.h>
@@ -20,6 +21,7 @@
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
 #include <memory>
+#include <regex>
 #include <string>
 
 std::unique_ptr<ParamDefinition> ParamDefinition::Create(const nlohmann::json &json,
@@ -38,7 +40,16 @@ std::unique_ptr<ParamDefinition> ParamDefinition::Create(const nlohmann::json &j
     const std::string displayName = json.value("display", paramName);
     if (json.contains("options"))
     {
-        output = std::make_unique<OptionParamDefinition>(json.value("options", ""), json.value("default", ""));
+        const std::string &optionListName = json.value("options", "");
+        if (!std::regex_match(optionListName, std::regex(ActorDefinition::VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX)))
+        {
+            Logger::Error("Invalid options list name \"{}\". Options list names may only contain letters and "
+                          "underscores.",
+                          optionListName);
+            e = Error::ErrorCode::INCORRECT_FORMAT;
+            return nullptr;
+        }
+        output = std::make_unique<OptionParamDefinition>(optionListName, json.value("default", ""));
     } else
     {
         if (type == Param::ParamType::PARAM_TYPE_BYTE)
@@ -75,19 +86,17 @@ std::unique_ptr<ParamDefinition> ParamDefinition::Create(const nlohmann::json &j
                                                              json.value("default", 0ull));
         } else if (type == Param::ParamType::PARAM_TYPE_VEC2)
         {
-            glm::vec2 defaultValue = {
+            output = std::make_unique<Vec2ParamDefinition>(glm::vec2{
                 json.value("default_x", 0.0f),
                 json.value("default_y", 0.0f),
-            };
-            output = std::make_unique<Vec2ParamDefinition>(defaultValue);
+            });
         } else if (type == Param::ParamType::PARAM_TYPE_VEC3)
         {
-            glm::vec3 defaultValue = {
+            output = std::make_unique<Vec3ParamDefinition>(glm::vec3{
                 json.value("default_x", 0.0f),
                 json.value("default_y", 0.0f),
                 json.value("default_z", 0.0f),
-            };
-            output = std::make_unique<Vec3ParamDefinition>(defaultValue);
+            });
         } else
         {
             e = Error::ErrorCode::INCORRECT_FORMAT;

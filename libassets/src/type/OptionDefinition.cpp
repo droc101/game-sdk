@@ -4,11 +4,13 @@
 
 #include <cstdint>
 #include <fstream>
+#include <libassets/type/ActorDefinition.h>
 #include <libassets/type/OptionDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
 #include <nlohmann/json.hpp>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -27,7 +29,6 @@ Error::ErrorCode OptionDefinition::Create(const std::string &path, OptionDefinit
     const nlohmann::json definitionJson = nlohmann::json::parse(j);
     if (definitionJson.is_discarded())
     {
-        file.close();
         return Error::ErrorCode::INCORRECT_FORMAT;
     }
 
@@ -35,11 +36,17 @@ Error::ErrorCode OptionDefinition::Create(const std::string &path, OptionDefinit
     if (def.valueType == Param::ParamType::PARAM_TYPE_NONE)
     {
         Logger::Error("Invalid option value type!");
-        file.close();
         return Error::ErrorCode::INCORRECT_FORMAT;
     }
 
     def.name = std::filesystem::path(path).stem().string();
+    if (!std::regex_match(def.name, std::regex(ActorDefinition::VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX)))
+    {
+        Logger::Error("Invalid options list name (definition file name) \"{}\". Options list names may only contain "
+                      "letters and underscores.",
+                      def.name);
+        return Error::ErrorCode::INCORRECT_FORMAT;
+    }
 
     Error::ErrorCode e = Error::ErrorCode::OK;
 
@@ -75,11 +82,9 @@ Error::ErrorCode OptionDefinition::Create(const std::string &path, OptionDefinit
     }
     if (e != Error::ErrorCode::OK)
     {
-        file.close();
         return e;
     }
 
-    file.close();
     return Error::ErrorCode::OK;
 }
 

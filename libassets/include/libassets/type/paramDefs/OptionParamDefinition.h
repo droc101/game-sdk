@@ -17,6 +17,10 @@ class OptionParamDefinition final: public ParamDefinition
             optionListName(std::move(optionListName)),
             defaultValue(std::move(defaultValue))
         {}
+        OptionParamDefinition(const std::string &optionListName, std::string &&defaultValue):
+            optionListName(optionListName),
+            defaultValue(std::move(defaultValue))
+        {}
 
         std::string optionListName;
         OptionDefinition *definition = nullptr;

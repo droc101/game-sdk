@@ -11,7 +11,7 @@
       "type": "boolean"
     },
     "extends": {
-      "type": "string"
+      "$ref": "#/$defs/valid_identifier"
     },
     "renderers": {
       "type": "array",
@@ -201,215 +201,218 @@
     },
     "params": {
       "type": "object",
-      "additionalProperties": {
-        "type": "object",
-        "anyOf": [
-          {
-            "properties": {
-              "type": {
-                "$ref": "#/$defs/param_type"
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "type": "object",
+          "anyOf": [
+            {
+              "properties": {
+                "type": {
+                  "$ref": "#/$defs/param_type"
+                },
+                "options": {
+                  "$ref": "#/$defs/valid_identifier"
+                },
+                "default": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "display": {
+                  "type": "string"
+                }
               },
-              "options": {
-                "type": "string"
-              },
-              "default": {
-                "type": "string"
-              },
-              "description": {
-                "type": "string"
-              },
-              "display": {
-                "type": "string"
-              }
+              "additionalProperties": false
             },
-            "additionalProperties": false
-          },
-          {
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "byte",
-                  "int",
-                  "integer",
-                  "uint64",
-                  "uint64_t",
-                  "size_t"
-                ]
+            {
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "byte",
+                    "int",
+                    "integer",
+                    "uint64",
+                    "uint64_t",
+                    "size_t"
+                  ]
+                },
+                "minimum": {
+                  "type": "integer"
+                },
+                "maximum": {
+                  "type": "integer"
+                },
+                "default": {
+                  "type": "integer"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "display": {
+                  "type": "string"
+                }
               },
-              "minimum": {
-                "type": "integer"
-              },
-              "maximum": {
-                "type": "integer"
-              },
-              "default": {
-                "type": "integer"
-              },
-              "description": {
-                "type": "string"
-              },
-              "display": {
-                "type": "string"
-              }
+              "additionalProperties": false
             },
-            "additionalProperties": false
-          },
-          {
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "float",
-                  "decimal"
-                ]
+            {
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "float",
+                    "decimal"
+                  ]
+                },
+                "minimum": {
+                  "$ref": "#/$defs/float"
+                },
+                "maximum": {
+                  "$ref": "#/$defs/float"
+                },
+                "default": {
+                  "$ref": "#/$defs/float"
+                },
+                "step": {
+                  "$ref": "#/$defs/float"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "display": {
+                  "type": "string"
+                }
               },
-              "minimum": {
-                "$ref": "#/$defs/float"
-              },
-              "maximum": {
-                "$ref": "#/$defs/float"
-              },
-              "default": {
-                "$ref": "#/$defs/float"
-              },
-              "step": {
-                "$ref": "#/$defs/float"
-              },
-              "description": {
-                "type": "string"
-              },
-              "display": {
-                "type": "string"
-              }
+              "additionalProperties": false
             },
-            "additionalProperties": false
-          },
-          {
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "bool",
-                  "boolean"
-                ]
+            {
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "bool",
+                    "boolean"
+                  ]
+                },
+                "default": {
+                  "type": "boolean"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "display": {
+                  "type": "string"
+                }
               },
-              "default": {
-                "type": "boolean"
-              },
-              "description": {
-                "type": "string"
-              },
-              "display": {
-                "type": "string"
-              }
+              "additionalProperties": false
             },
-            "additionalProperties": false
-          },
-          {
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "string",
-                  "str"
-                ]
+            {
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "string",
+                    "str"
+                  ]
+                },
+                "default": {
+                  "type": "string"
+                },
+                "string_hint": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "display": {
+                  "type": "string"
+                }
               },
-              "default": {
-                "type": "string"
-              },
-              "string_hint": {
-                "type": "string"
-              },
-              "description": {
-                "type": "string"
-              },
-              "display": {
-                "type": "string"
-              }
+              "additionalProperties": false
             },
-            "additionalProperties": false
-          },
-          {
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "color",
-                  "col"
-                ]
+            {
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "color",
+                    "col"
+                  ]
+                },
+                "default": {
+                  "type": "integer"
+                },
+                "show_alpha": {
+                  "type": "boolean"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "display": {
+                  "type": "string"
+                }
               },
-              "default": {
-                "type": "integer"
-              },
-              "show_alpha": {
-                "type": "boolean"
-              },
-              "description": {
-                "type": "string"
-              },
-              "display": {
-                "type": "string"
-              }
+              "additionalProperties": false
             },
-            "additionalProperties": false
-          },
-          {
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "vec2",
-                  "Vector2"
-                ]
+            {
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "vec2",
+                    "Vector2"
+                  ]
+                },
+                "default_x": {
+                  "$ref": "#/$defs/float"
+                },
+                "default_y": {
+                  "$ref": "#/$defs/float"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "display": {
+                  "type": "string"
+                }
               },
-              "default_x": {
-                "$ref": "#/$defs/float"
-              },
-              "default_y": {
-                "$ref": "#/$defs/float"
-              },
-              "description": {
-                "type": "string"
-              },
-              "display": {
-                "type": "string"
-              }
+              "additionalProperties": false
             },
-            "additionalProperties": false
-          },
-          {
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "vec3",
-                  "Vector3"
-                ]
+            {
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "vec3",
+                    "Vector3"
+                  ]
+                },
+                "default_x": {
+                  "$ref": "#/$defs/float"
+                },
+                "default_y": {
+                  "$ref": "#/$defs/float"
+                },
+                "default_z": {
+                  "$ref": "#/$defs/float"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "display": {
+                  "type": "string"
+                }
               },
-              "default_x": {
-                "$ref": "#/$defs/float"
-              },
-              "default_y": {
-                "$ref": "#/$defs/float"
-              },
-              "default_z": {
-                "$ref": "#/$defs/float"
-              },
-              "description": {
-                "type": "string"
-              },
-              "display": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
-          }
-        ],
-        "required": [
-          "type"
-        ]
-      }
+              "additionalProperties": false
+            }
+          ],
+          "required": [
+            "type"
+          ]
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,
@@ -474,11 +477,35 @@
       }
     },
     "io_properties": {
-      "properties": {
-        "type": {
-          "$ref": "#/$defs/param_type"
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/param_type"
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "none"
+                  ]
+                }
+              ]
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
         }
-      }
+      },
+      "additionalProperties": false
+    },
+    "valid_identifier": {
+      "type": "string",
+      "pattern": "^[a-z_]+$"
     }
   }
 }
