@@ -3,6 +3,7 @@
 //
 
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <libassets/type/ExpressionParser.h>
 #include <libassets/util/Logger.h>
@@ -90,6 +91,13 @@ bool ExpressionParser::Compile()
         vars.push_back(var);
     }
 
+    const te_variable falloffFunction = {
+        .name = "falloff",
+        .address = reinterpret_cast<const void *>(&LightFalloffFunction),
+        .type = TE_FUNCTION5,
+    };
+    vars.emplace_back(falloffFunction);
+
     int err = 0;
     te_expr *compiledExpr = te_compile(expression.c_str(), vars.data(), static_cast<int>(vars.size()), &err);
     if (compiledExpr == nullptr)
@@ -116,4 +124,20 @@ double ExpressionParser::Evaluate() const
 bool ExpressionParser::IsReady() const
 {
     return expr != nullptr;
+}
+
+double ExpressionParser::LightFalloffFunction(const double constant,
+                                              const double linear,
+                                              const double quadratic,
+                                              const double scale,
+                                              const double percent)
+{
+    const double linearSquared = linear * linear;
+    const double val = 4.0 * quadratic * (constant - (100.0 / percent));
+    if (val > linearSquared)
+    {
+        return 0.0;
+    }
+
+    return (scale * (std::sqrt(linearSquared - val) - linear)) / (2.0 * quadratic);
 }

@@ -387,71 +387,83 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
 
     lunaDeviceWaitIdle(device);
 
-    for (uint32_t i = 0; i < lights.size() * iterations; i++)
+    for (uint32_t i = 0; i <= bounceCount; i++)
     {
-        Logger::Info("Baking lighting {}%...",
-                     static_cast<float>(100 * i) / static_cast<float>(lights.size() * iterations));
-
-        if (!CheckResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
+        lightIndex = 0;
+        iteration = 0;
+        for (uint32_t j = 0; j < lights.size() * iterations; j++)
         {
-            return false;
-        }
+            Logger::Info("Baking lighting {}%...",
+                         static_cast<float>(100 * (j + lights.size() * iterations * i)) /
+                                 static_cast<float>(lights.size() * iterations * (bounceCount + 1)));
 
-        const VkCommandBuffer vkCommandBuffer = lunaGetVkCommandBuffer(commandBuffer);
+            if (!CheckResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
+            {
+                return false;
+            }
 
-        vkCmdBindDescriptorSets(vkCommandBuffer,
-                                VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
-                                pipelineLayout,
-                                0,
-                                1,
-                                &descriptorSet,
-                                0,
-                                nullptr);
-        vkCmdPushConstants(vkCommandBuffer,
-                           pipelineLayout,
-                           VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-                           0,
-                           sizeof(lightIndex),
-                           &lightIndex);
-        vkCmdPushConstants(vkCommandBuffer,
-                           pipelineLayout,
-                           VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-                           sizeof(lightIndex),
-                           sizeof(iteration),
-                           &iteration);
-        vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline);
+            const VkCommandBuffer vkCommandBuffer = lunaGetVkCommandBuffer(commandBuffer);
 
-        static constexpr VkStridedDeviceAddressRegionKHR STRIDED_DEVICE_ADDRESS_REGION_NONE{};
-        const VkStridedDeviceAddressRegionKHR raygenShaderBindingTableAddressRegion = {
-            .deviceAddress = lunaGetBufferDeviceAddress(device, raygenShaderBindingTable),
-            .stride = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
-            .size = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
-        };
-        const VkStridedDeviceAddressRegionKHR closestHitShaderBindingTableAddressRegion = {
-            .deviceAddress = lunaGetBufferDeviceAddress(device, closestHitShaderBindingTable),
-            .stride = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
-            .size = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
-        };
-        vkCmdTraceRaysKHR(vkCommandBuffer,
-                          &raygenShaderBindingTableAddressRegion,
-                          &STRIDED_DEVICE_ADDRESS_REGION_NONE,
-                          &closestHitShaderBindingTableAddressRegion,
-                          &STRIDED_DEVICE_ADDRESS_REGION_NONE,
-                          width,
-                          height,
-                          1);
-        const LunaCommandBufferSubmitInfo submitInfo = {
-            .queue = queue,
-            // .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        };
-        if (!CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo)))
-        {
-            return false;
-        }
-        iteration = (iteration + 1) % iterations;
-        if (iteration == 0)
-        {
-            lightIndex++;
+            vkCmdBindDescriptorSets(vkCommandBuffer,
+                                    VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
+                                    pipelineLayout,
+                                    0,
+                                    1,
+                                    &descriptorSet,
+                                    0,
+                                    nullptr);
+            vkCmdPushConstants(vkCommandBuffer,
+                               pipelineLayout,
+                               VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+                               0,
+                               sizeof(lightIndex),
+                               &lightIndex);
+            vkCmdPushConstants(vkCommandBuffer,
+                               pipelineLayout,
+                               VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+                               sizeof(lightIndex),
+                               sizeof(iteration),
+                               &iteration);
+            vkCmdPushConstants(vkCommandBuffer,
+                               pipelineLayout,
+                               VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+                               sizeof(lightIndex) + sizeof(iteration),
+                               sizeof(i),
+                               &i);
+            vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline);
+
+            static constexpr VkStridedDeviceAddressRegionKHR STRIDED_DEVICE_ADDRESS_REGION_NONE{};
+            const VkStridedDeviceAddressRegionKHR raygenShaderBindingTableAddressRegion = {
+                .deviceAddress = lunaGetBufferDeviceAddress(device, raygenShaderBindingTable),
+                .stride = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
+                .size = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
+            };
+            const VkStridedDeviceAddressRegionKHR closestHitShaderBindingTableAddressRegion = {
+                .deviceAddress = lunaGetBufferDeviceAddress(device, closestHitShaderBindingTable),
+                .stride = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
+                .size = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
+            };
+            vkCmdTraceRaysKHR(vkCommandBuffer,
+                              &raygenShaderBindingTableAddressRegion,
+                              &STRIDED_DEVICE_ADDRESS_REGION_NONE,
+                              &closestHitShaderBindingTableAddressRegion,
+                              &STRIDED_DEVICE_ADDRESS_REGION_NONE,
+                              width,
+                              height,
+                              1);
+            const LunaCommandBufferSubmitInfo submitInfo = {
+                .queue = queue,
+                // .stageMask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            };
+            if (!CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo)))
+            {
+                return false;
+            }
+            iteration = (iteration + 1) % iterations;
+            if (iteration == 0)
+            {
+                lightIndex++;
+            }
         }
     }
 
@@ -871,13 +883,11 @@ bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize,
     {
             double rayCount;
             uint32_t iterationCount;
-            uint32_t bounces;
     } raygenSpecializationData = {
         .rayCount = static_cast<double>(rayCount),
         .iterationCount = static_cast<uint32_t>(std::max(rayCount / (uint64_t{1} << 30), uint64_t{1})),
-        .bounces = bounceCount,
     };
-    static constexpr SpecializationMapEntries<double, uint32_t, uint32_t> RAYGEN_MAP_ENTRIES{};
+    static constexpr SpecializationMapEntries<double, uint32_t> RAYGEN_MAP_ENTRIES{};
     const VkSpecializationInfo raygenSpecializationInfo = {
         .mapEntryCount = RAYGEN_MAP_ENTRIES.size(),
         .pMapEntries = RAYGEN_MAP_ENTRIES.data(),
@@ -935,7 +945,7 @@ bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize,
     constexpr std::array PUSH_CONSTANT_RANGES = {
         VkPushConstantRange{
             .stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-            .size = sizeof(lightIndex) + sizeof(iteration),
+            .size = sizeof(lightIndex) + sizeof(iteration) + sizeof(uint32_t),
         },
     };
     const VkPipelineLayoutCreateInfo layoutCreateInfo = {
@@ -1217,9 +1227,7 @@ bool LightBakerGpu::ConvertLightmapToFloat16(const glm::uvec2 &lightmapSize, Lun
     std::stringstream glsl;
     glsl << glslFile.rdbuf();
     glslFile.close();
-    ShaderCompiler shaderCompiler(glsl.str(),
-                                        EShLangCompute,
-                                        glslang::EShTargetClientVersion::EShTargetVulkan_1_2);
+    ShaderCompiler shaderCompiler(glsl.str(), EShLangCompute, glslang::EShTargetClientVersion::EShTargetVulkan_1_2);
     std::vector<uint32_t> spirv;
     if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
     {

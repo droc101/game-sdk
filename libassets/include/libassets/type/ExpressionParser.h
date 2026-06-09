@@ -18,7 +18,7 @@ class ExpressionParser
         ExpressionParser &operator=(const ExpressionParser &other);
         ExpressionParser(const ExpressionParser &other);
 
-        void AddVariable(const std::string& variableName);
+        void AddVariable(const std::string &variableName);
 
         bool Compile();
 
@@ -32,12 +32,18 @@ class ExpressionParser
 
         struct ExpressionVariable
         {
-            std::string compiledName{};
-            double value{};
+                std::string compiledName{};
+                double value{};
         };
 
         std::string expression{};
         te_expr *expr = nullptr;
         std::unordered_map<std::string, ExpressionVariable> varMetadata{};
         std::vector<te_variable> vars{};
+
+        static double LightFalloffFunction(double constant,
+                                           double linear,
+                                           double quadratic,
+                                           double scale,
+                                           double percent);
 };

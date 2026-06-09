@@ -1,7 +1,7 @@
 #version 460
 
 #extension GL_EXT_ray_tracing : require
-// #extension GL_EXT_debug_printf : require
+#extension GL_EXT_debug_printf : require
 #extension GL_KHR_memory_scope_semantics : require
 
 /// The format of the map's vertices. Interop with C++ must use std140
@@ -18,11 +18,13 @@ struct Light {
     vec3 position;
     vec3 rotation;
     vec3 color;
-    float brightnessScale;
-    float range;
-    float attenuation;
-    float coneAngle;
-    float angularAttenuation;
+    float brightness;
+    float constantAttenuation;
+    float linearAttenuation;
+    float quadraticAttenuation;
+    float attenuationMultiplier;
+    float brightAngle;
+    float fadingAngle;
 };
 
 struct Payload {
@@ -31,6 +33,8 @@ struct Payload {
     vec3 rayOrigin;
     vec3 rayDirection;
     float distanceTraveled;
+    bool store;
+    uint bounceIndex;
 };
 
 layout (constant_id = 0) const uint WIDTH = 8192;
@@ -85,19 +89,16 @@ int computeLuxelIndex() {
     return int(x + y * WIDTH);
 }
 
+float getLightBrightness(const Light light, const float distance) {
+    float multiplierSquared = light.attenuationMultiplier * light.attenuationMultiplier;
+    return (multiplierSquared * light.brightness) /
+           (multiplierSquared * light.constantAttenuation +
+            light.attenuationMultiplier * light.linearAttenuation * distance +
+            light.quadraticAttenuation * distance * distance);
+}
+
 vec3 getLightColor() {
-    const Light light = payload.sourceLight;
-    payload.distanceTraveled += gl_HitTEXT;
-    if (light.range < payload.distanceTraveled) {
-        return vec3(0);
-    }
-    float inverseRange = 1.0 / light.range;
-    float nd = payload.distanceTraveled * inverseRange;
-    nd *= nd;
-    nd *= nd;
-    nd = max(1.0 - nd, 0.0);
-    nd *= nd;
-    return nd * pow(payload.distanceTraveled, -light.attenuation) * light.brightnessScale * light.color;
+    return payload.sourceLight.color * getLightBrightness(payload.sourceLight, payload.distanceTraveled);
 }
 
 bool atomicLightHitLuxelIndex(uint luxelIndex) {
@@ -110,13 +111,18 @@ void main() {
     if (gl_HitKindEXT == gl_HitKindBackFacingTriangleEXT) {
         return;
     }
-    const uint luxelIndex = computeLuxelIndex();
-    // if (payload.distanceTraveled == 0) {
+    payload.distanceTraveled += gl_HitTEXT;
+    if (payload.store) {
+        const uint luxelIndex = computeLuxelIndex();
         if (!atomicLightHitLuxelIndex(luxelIndex)) {
             return;
         }
-    // }
-    atomicAddColorToLightmap(vec3(getLightColor()), luxelIndex);
+        vec3 color = getLightColor();
+        if (payload.bounceIndex != 0) {
+            // debugPrintfEXT("(%f, %f, %f)\n", color.r, color.g, color.b);
+        }
+        atomicAddColorToLightmap(color, luxelIndex);
+    }
     payload.rayOrigin = (1.0 - barycentric.x - barycentric.y) * vertexData.vertices[indexData.indices[3 * gl_PrimitiveID + 0]].position +
                                 barycentric.x * vertexData.vertices[indexData.indices[3 * gl_PrimitiveID + 1]].position +
                                 barycentric.y * vertexData.vertices[indexData.indices[3 * gl_PrimitiveID + 2]].position;

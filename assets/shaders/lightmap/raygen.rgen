@@ -11,7 +11,6 @@ const float MAX_RAY_LENGTH = 1776; // 2 * sqrt(3) * MAP_MAX_HALF_EXTENTS; Rounde
 
 layout (constant_id = 0) const double RAY_COUNT = 0;
 layout (constant_id = 1) const uint ITERATION_COUNT = 0;
-layout (constant_id = 2) const uint BOUNCES = 0;
 
 /// The format of the lights in the map. Interop with C++ must use std140
 struct Light {
@@ -19,11 +18,13 @@ struct Light {
     vec3 position;
     vec3 rotation;
     vec3 color;
-    float brightnessScale;
-    float range;
-    float attenuation;
-    float coneAngle;
-    float angularAttenuation;
+    float brightness;
+    float constantAttenuation;
+    float linearAttenuation;
+    float quadraticAttenuation;
+    float attenuationMultiplier;
+    float brightAngle;
+    float fadingAngle;
 };
 
 struct Payload {
@@ -32,11 +33,14 @@ struct Payload {
     vec3 rayOrigin;
     vec3 rayDirection;
     float distanceTraveled;
+    bool store;
+    uint bounceIndex;
 };
 
 layout (push_constant) uniform PushConstants {
     uint lightIndex;
     uint iteration;
+    uint bounceIndex;
 } pushConstants;
 
 layout (location = 0) rayPayloadEXT Payload payload;
@@ -58,16 +62,18 @@ vec3 getRay() {
 }
 
 void main() {
-    debugPrintfEXT("%u %u %u\n", uint(RAY_COUNT), ITERATION_COUNT, BOUNCES);
+    // debugPrintfEXT("%u %u %u\n", uint(RAY_COUNT), ITERATION_COUNT, pushConstants.bounceIndex);
     payload.sourceLightIndex = pushConstants.lightIndex;
     payload.sourceLight = lightsData.lights[pushConstants.lightIndex];
     payload.rayOrigin = payload.sourceLight.position;
     payload.rayDirection = getRay();
     payload.distanceTraveled = 0;
-    for (int i = 0; i < BOUNCES; i++) {
+    payload.bounceIndex = pushConstants.bounceIndex;
+    for (int i = 0; i <= pushConstants.bounceIndex; i++) {
+        payload.store = i == pushConstants.bounceIndex;
         traceRayEXT(accelerationStructure, gl_RayFlagsOpaqueEXT, 0xFF, 0, 0, 0, payload.rayOrigin, MIN_RAY_LENGTH, payload.rayDirection, MAX_RAY_LENGTH, 0);
-        if (payload.sourceLight.range < payload.distanceTraveled) {
-            return;
-        }
+        // if (payload.sourceLight.range < payload.distanceTraveled) {
+        //     return;
+        // }
     }
 }
