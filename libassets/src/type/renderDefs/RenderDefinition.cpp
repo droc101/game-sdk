@@ -2,7 +2,6 @@
 // Created by droc101 on 1/9/26.
 //
 
-#include <libassets/type/RenderDefinitionValue.h>
 #include <libassets/type/renderDefs/BoxRenderDefinition.h>
 #include <libassets/type/renderDefs/CircleRenderDefinition.h>
 #include <libassets/type/renderDefs/ModelRenderDefinition.h>
@@ -18,12 +17,12 @@
 
 RenderDefinition::RenderDefinition()
 {
-    gizmo = RenderDefinitionValue<bool>(false);
+    gizmo = BoolDefinitionValue(false);
 }
 
 RenderDefinition::RenderDefinition(const nlohmann::json &json)
 {
-    gizmo = RenderDefinitionValue<bool>(json, "is_gizmo", false);
+    gizmo = BoolDefinitionValue(json, "is_gizmo", false);
 }
 
 std::unique_ptr<RenderDefinition> RenderDefinition::Create(const nlohmann::json &json, Error::ErrorCode &e)
@@ -109,7 +108,7 @@ RenderDefinition::RenderDefinitionType RenderDefinition::ParseType(const std::st
     return RenderDefinitionType::RD_TYPE_UNKNOWN;
 }
 
-bool RenderDefinition::IsGizmo(const Actor &actor) const
+bool RenderDefinition::IsGizmo(const Actor &actor)
 {
     return gizmo.Get(actor.params, false);
 }

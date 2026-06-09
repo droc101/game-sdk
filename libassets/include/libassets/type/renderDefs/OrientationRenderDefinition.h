@@ -4,8 +4,8 @@
 
 #pragma once
 #include <libassets/type/Color.h>
-#include <libassets/type/RenderDefinitionValue.h>
 #include <libassets/type/renderDefs/RenderDefinition.h>
+#include <libassets/type/renderDefs/values/ColorDefinitionValue.h>
 
 class OrientationRenderDefinition: public RenderDefinition
 {
@@ -13,8 +13,8 @@ class OrientationRenderDefinition: public RenderDefinition
         OrientationRenderDefinition();
         explicit OrientationRenderDefinition(const nlohmann::json &json);
 
-        [[nodiscard]] Color GetColor(const Actor &actor) const;
+        [[nodiscard]] Color GetColor(const Actor &actor);
 
     private:
-        RenderDefinitionValue<Color> color;
+        ColorDefinitionValue color;
 };

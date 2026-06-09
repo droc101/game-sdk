@@ -7,6 +7,7 @@
 #include <libassets/type/Color.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
+#include <string>
 
 Color::Color(DataReader &reader, const bool useFloats)
 {
@@ -37,6 +38,34 @@ Color::Color(nlohmann::ordered_json j)
         j["b"],
         j["a"],
     };
+}
+
+Color::Color(const std::string &hexCode)
+{
+    std::string hex = hexCode;
+    if (hex.starts_with("#"))
+    {
+        hex = hex.substr(1);
+    }
+    if (hex.length() == 3 || hex.length() == 4)
+    {
+        color.at(0) = static_cast<float>(std::stoi(hex.substr(0, 1), nullptr, 16)) / 255.0f;
+        color.at(1) = static_cast<float>(std::stoi(hex.substr(1, 1), nullptr, 16)) / 255.0f;
+        color.at(2) = static_cast<float>(std::stoi(hex.substr(2, 1), nullptr, 16)) / 255.0f;
+        if (hex.length() == 4)
+        {
+            color.at(3) = static_cast<float>(std::stoi(hex.substr(3, 1), nullptr, 16)) / 255.0f;
+        }
+    } else if (hex.length() == 6 || hex.length() == 8)
+    {
+        color.at(0) = static_cast<float>(std::stoi(hex.substr(0, 2), nullptr, 16)) / 255.0f;
+        color.at(1) = static_cast<float>(std::stoi(hex.substr(2, 2), nullptr, 16)) / 255.0f;
+        color.at(2) = static_cast<float>(std::stoi(hex.substr(4, 2), nullptr, 16)) / 255.0f;
+        if (hex.length() == 8)
+        {
+            color.at(3) = static_cast<float>(std::stoi(hex.substr(6, 2), nullptr, 16)) / 255.0f;
+        }
+    }
 }
 
 
@@ -108,4 +137,44 @@ nlohmann::ordered_json Color::GenerateJson() const
 void Color::DiscardAlpha()
 {
     color.at(3) = 1.0f;
+}
+
+float &Color::R()
+{
+    return color.at(0);
+}
+
+float &Color::G()
+{
+    return color.at(1);
+}
+
+float &Color::B()
+{
+    return color.at(2);
+}
+
+float &Color::A()
+{
+    return color.at(3);
+}
+
+float Color::R() const
+{
+    return color.at(0);
+}
+
+float Color::G() const
+{
+    return color.at(1);
+}
+
+float Color::B() const
+{
+    return color.at(2);
+}
+
+float Color::A() const
+{
+    return color.at(3);
 }

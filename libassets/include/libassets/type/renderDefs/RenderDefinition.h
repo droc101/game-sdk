@@ -5,7 +5,7 @@
 #pragma once
 
 #include <cstdint>
-#include <libassets/type/RenderDefinitionValue.h>
+#include <libassets/type/renderDefs/values/BoolDefinitionValue.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -37,11 +37,11 @@ class RenderDefinition
 
         [[nodiscard]] RenderDefinitionType GetType() const;
 
-        bool IsGizmo(const Actor &actor) const;
+        [[nodiscard]] bool IsGizmo(const Actor &actor);
 
     protected:
         RenderDefinitionType type = RenderDefinitionType::RD_TYPE_UNKNOWN;
-        RenderDefinitionValue<bool> gizmo;
+        BoolDefinitionValue gizmo;
 
     private:
         static RenderDefinitionType ParseType(const std::string &type);

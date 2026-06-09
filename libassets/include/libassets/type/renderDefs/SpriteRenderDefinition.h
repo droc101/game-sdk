@@ -5,8 +5,10 @@
 #pragma once
 
 #include <libassets/type/Color.h>
-#include <libassets/type/RenderDefinitionValue.h>
 #include <libassets/type/renderDefs/RenderDefinition.h>
+#include <libassets/type/renderDefs/values/ColorDefinitionValue.h>
+#include <libassets/type/renderDefs/values/NumericDefinitionValue.h>
+#include <libassets/type/renderDefs/values/StringDefinitionValue.h>
 #include <string>
 
 class SpriteRenderDefinition: public RenderDefinition
@@ -14,12 +16,12 @@ class SpriteRenderDefinition: public RenderDefinition
     public:
         explicit SpriteRenderDefinition(const nlohmann::json &json);
 
-        [[nodiscard]] std::string GetTexture(const Actor &actor) const;
-        [[nodiscard]] Color GetTintColor(const Actor &actor) const;
+        [[nodiscard]] std::string GetTexture(const Actor &actor);
+        [[nodiscard]] Color GetTintColor(const Actor &actor);
         [[nodiscard]] float GetPointSize(const Actor &actor);
 
     private:
-        RenderDefinitionValue<std::string> texture;
-        RenderDefinitionValue<Color> tintColor;
-        RenderDefinitionValue<float> pointSize;
+        StringDefinitionValue texture;
+        ColorDefinitionValue tintColor;
+        NumericDefinitionValue<float> pointSize;
 };

@@ -5,8 +5,9 @@
 #pragma once
 
 #include <libassets/type/Color.h>
-#include <libassets/type/RenderDefinitionValue.h>
 #include <libassets/type/renderDefs/RenderDefinition.h>
+#include <libassets/type/renderDefs/values/ColorDefinitionValue.h>
+#include <libassets/type/renderDefs/values/NumericDefinitionValue.h>
 
 class PointRenderDefinition: public RenderDefinition
 {
@@ -14,10 +15,10 @@ class PointRenderDefinition: public RenderDefinition
         PointRenderDefinition();
         explicit PointRenderDefinition(const nlohmann::json &json);
 
-        [[nodiscard]] Color GetColor(const Actor &actor) const;
+        [[nodiscard]] Color GetColor(const Actor &actor);
         [[nodiscard]] float GetPointSize(const Actor &actor);
 
     private:
-        RenderDefinitionValue<Color> color;
-        RenderDefinitionValue<float> pointSize;
+        ColorDefinitionValue color;
+        NumericDefinitionValue<float> pointSize;
 };

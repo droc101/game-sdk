@@ -451,9 +451,24 @@
         "type": "string"
       },
       "color": {
-        "type": [
-          "integer",
-          "string"
+        "oneOf": [
+          {
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": [
+                "integer",
+                "string"
+              ]
+            },
+            "minItems": 3,
+            "maxItems": 4
+          }
         ]
       },
       "bool": {

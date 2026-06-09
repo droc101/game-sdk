@@ -5,28 +5,28 @@
 #include <cstdint>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Color.h>
-#include <libassets/type/RenderDefinitionValue.h>
 #include <libassets/type/renderDefs/CircleRenderDefinition.h>
 #include <libassets/type/renderDefs/RenderDefinition.h>
+#include <libassets/type/renderDefs/values/NumericDefinitionValue.h>
 
 CircleRenderDefinition::CircleRenderDefinition(const nlohmann::json &json): RenderDefinition(json)
 {
-    color = RenderDefinitionValue<Color>(json, "color", Color(0, 1, 0, 1));
-    radius = RenderDefinitionValue<float>(json, "radius", 1.0f);
-    sides = RenderDefinitionValue<uint32_t>(json, "num_sides", 16);
+    color = ColorDefinitionValue(json, "color", Color(0, 1, 0, 1));
+    radius = NumericDefinitionValue<float>(json, "radius", 1.0f);
+    sides = NumericDefinitionValue<int32_t>(json, "num_sides", 16);
 }
 
-Color CircleRenderDefinition::GetColor(const Actor &actor) const
+Color CircleRenderDefinition::GetColor(const Actor &actor)
 {
     return color.Get(actor.params, Color(0, 1, 0, 1));
 }
 
 float CircleRenderDefinition::GetRadius(const Actor &actor)
 {
-    return radius.GetFloat(actor.params);
+    return radius.Get(actor.params, 1.0f);
 }
 
-uint32_t CircleRenderDefinition::GetNumSides(const Actor &actor)
+int32_t CircleRenderDefinition::GetNumSides(const Actor &actor)
 {
-    return sides.GetInt(actor.params);
+    return sides.Get(actor.params, 16);
 }

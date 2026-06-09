@@ -134,7 +134,7 @@ add_library(assets SHARED
         src/util/ArgumentParser.cpp
         include/libassets/util/ArgumentParser.h
         include/libassets/util/Logger.h
-        include/libassets/type/RenderDefinitionValue.h
+        include/libassets/type/renderDefs/values/RenderDefinitionValue.h
         src/type/renderDefs/PointRenderDefinition.cpp
         include/libassets/type/renderDefs/PointRenderDefinition.h
         src/type/renderDefs/SpriteRenderDefinition.cpp
@@ -149,11 +149,18 @@ add_library(assets SHARED
         include/libassets/type/renderDefs/WallRenderDefinition.h
         src/util/Checksum.cpp
         include/libassets/util/Checksum.h
-        src/type/RenderDefinitionValue.cpp
         src/type/renderDefs/CircleRenderDefinition.cpp
         include/libassets/type/renderDefs/CircleRenderDefinition.h
         src/type/ExpressionParser.cpp
         include/libassets/type/ExpressionParser.h
+        include/libassets/type/renderDefs/values/NumericDefinitionValue.h
+        src/type/renderDefs/values/StringDefinitionValue.cpp
+        include/libassets/type/renderDefs/values/StringDefinitionValue.h
+        include/libassets/type/renderDefs/values/BasicDefinitionValue.h
+        src/type/renderDefs/values/BoolDefinitionValue.cpp
+        include/libassets/type/renderDefs/values/BoolDefinitionValue.h
+        src/type/renderDefs/values/ColorDefinitionValue.cpp
+        include/libassets/type/renderDefs/values/ColorDefinitionValue.h
 )
 
 set_target_properties(assets PROPERTIES

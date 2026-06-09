@@ -129,12 +129,12 @@ class ViewportRenderer
                                   const glm::mat4 &worldMatrix,
                                   const glm::mat4 &matrix);
 
-        static void RenderModelRdef(const ModelRenderDefinition *rdef,
+        static void RenderModelRdef(ModelRenderDefinition *rdef,
                                     const Actor &actor,
                                     const glm::mat4 &worldMatrix,
                                     const glm::mat4 &matrix);
 
-        static void RenderOrientationRdef(const OrientationRenderDefinition *rdef,
+        static void RenderOrientationRdef(OrientationRenderDefinition *rdef,
                                           const Actor &actor,
                                           const glm::mat4 &matrix,
                                           const Viewport &vp);

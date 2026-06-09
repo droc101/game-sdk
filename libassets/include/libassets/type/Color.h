@@ -9,6 +9,7 @@
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <nlohmann/json.hpp>
+#include <string>
 
 class Color
 {
@@ -22,6 +23,8 @@ class Color
         explicit Color(float r, float g, float b, float a);
 
         explicit Color(nlohmann::ordered_json j);
+
+        explicit Color(const std::string &hexCode);
 
         constexpr Color &operator=(const Color &other) = default;
         constexpr bool operator==(const Color &other) const = default;
@@ -40,6 +43,16 @@ class Color
         [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 
         void DiscardAlpha();
+
+        float &R();
+        float &G();
+        float &B();
+        float &A();
+
+        [[nodiscard]] float R() const;
+        [[nodiscard]] float G() const;
+        [[nodiscard]] float B() const;
+        [[nodiscard]] float A() const;
 
     private:
         std::array<float, 4> color = {1.0f, 1.0f, 1.0f, 1.0f};

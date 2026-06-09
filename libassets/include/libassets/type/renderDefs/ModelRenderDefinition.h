@@ -5,8 +5,9 @@
 #pragma once
 
 #include <libassets/type/Color.h>
-#include <libassets/type/RenderDefinitionValue.h>
 #include <libassets/type/renderDefs/RenderDefinition.h>
+#include <libassets/type/renderDefs/values/ColorDefinitionValue.h>
+#include <libassets/type/renderDefs/values/StringDefinitionValue.h>
 #include <string>
 
 class ModelRenderDefinition: public RenderDefinition
@@ -14,12 +15,12 @@ class ModelRenderDefinition: public RenderDefinition
     public:
         explicit ModelRenderDefinition(const nlohmann::json &json);
 
-        [[nodiscard]] std::string GetModel(const Actor &actor) const;
-        [[nodiscard]] Color GetColor(const Actor &actor) const;
-        [[nodiscard]] bool GetAffectLightmap(const Actor &actor) const;
+        [[nodiscard]] std::string GetModel(const Actor &actor);
+        [[nodiscard]] Color GetColor(const Actor &actor);
+        [[nodiscard]] bool GetAffectLightmap(const Actor &actor);
 
     private:
-        RenderDefinitionValue<std::string> model;
-        RenderDefinitionValue<Color> color;
-        RenderDefinitionValue<bool> affectLightmap;
+        StringDefinitionValue model;
+        ColorDefinitionValue color;
+        BoolDefinitionValue affectLightmap;
 };

@@ -415,7 +415,7 @@ bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
                               std::back_inserter(boundingBoxPoints));
         } else if (type == RenderDefinition::RenderDefinitionType::RD_TYPE_MODEL)
         {
-            const ModelRenderDefinition *modelDef = dynamic_cast<ModelRenderDefinition *>(rdef.get());
+            ModelRenderDefinition *modelDef = dynamic_cast<ModelRenderDefinition *>(rdef.get());
             const ModelAsset &model = MapRenderer::GetModel(modelDef->GetModel(actor));
             const std::array<glm::vec3, 8> &modelBboxPoints = model.GetBoundingBox().GetPoints();
             for (const glm::vec3 &point: modelBboxPoints)
@@ -524,7 +524,7 @@ void ViewportRenderer::RenderBoxRdef(BoxRenderDefinition *rdef,
     }
 }
 
-void ViewportRenderer::RenderModelRdef(const ModelRenderDefinition *rdef,
+void ViewportRenderer::RenderModelRdef(ModelRenderDefinition *rdef,
                                        const Actor &actor,
                                        const glm::mat4 &worldMatrix,
                                        const glm::mat4 &matrix)
@@ -535,7 +535,7 @@ void ViewportRenderer::RenderModelRdef(const ModelRenderDefinition *rdef,
     }
 }
 
-void ViewportRenderer::RenderOrientationRdef(const OrientationRenderDefinition *rdef,
+void ViewportRenderer::RenderOrientationRdef(OrientationRenderDefinition *rdef,
                                              const Actor &actor,
                                              const glm::mat4 &matrix,
                                              const Viewport &vp)
