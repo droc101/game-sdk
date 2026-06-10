@@ -21,18 +21,34 @@ class LevelMaterialAsset
 
         LevelMaterialAsset() = default;
 
-        [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, LevelMaterialAsset &material);
-
-        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
+        /// The texture this material uses
+        std::string texture{};
+        /// The base scale of this material
+        glm::vec2 baseScale = {1, 1};
+        /// The shader this material uses
+        Material::MaterialShader shader = Material::MaterialShader::SHADER_SHADED;
+        /// The sound class this material uses
+        SoundClass soundClass = SoundClass::DEFAULT;
+        /// Whether to skip generating visual geometry for faces with this material
+        bool compileInvisible = false;
+        // Whether to skip generating collision geometry for faces with this material
+        bool compileNoClip = false;
 
         static constexpr uint8_t LEVEL_MATERIAL_ASSET_VERSION = 1;
 
-        std::string texture{};
-        glm::vec2 baseScale = {1, 1};
-        Material::MaterialShader shader = Material::MaterialShader::SHADER_SHADED;
-        SoundClass soundClass = SoundClass::DEFAULT;
-        bool compileInvisible = false; // skip generating visual geometry for faces with this material
-        bool compileNoClip = false; // skip generating collision geometry for faces with this material
+        /**
+         * Create a LevelMaterialAsset from a GMTL file
+         * @param assetPath The path to the GMTL file
+         * @param material The LevelMaterialAsset to populate
+         */
+        [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, LevelMaterialAsset &material);
+
+        /**
+         * Save this LevelMaterialAsset to a GMTL file
+         * @param assetPath The path to the GMTL file
+         */
+        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
+
     private:
         void SaveToBuffer(std::vector<uint8_t> &buffer) const;
 };

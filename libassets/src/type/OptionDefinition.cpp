@@ -88,7 +88,7 @@ Error::ErrorCode OptionDefinition::Create(const std::string &path, OptionDefinit
     return Error::ErrorCode::OK;
 }
 
-Param::ParamType OptionDefinition::GetKeyType() const
+Param::ParamType OptionDefinition::GetValueType() const
 {
     return valueType;
 }

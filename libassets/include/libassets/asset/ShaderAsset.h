@@ -22,21 +22,43 @@ class ShaderAsset final
 
         ShaderAsset() = default;
 
-        [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, ShaderAsset &shader);
-
-        [[nodiscard]] static Error::ErrorCode CreateFromGlsl(const char *glslPath, ShaderAsset &shader);
-
-        [[nodiscard]] Error::ErrorCode SaveAsGlsl(const char *glslPath) const;
-
-        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath, std::string *errorLog = nullptr) const;
-
-        [[nodiscard]] std::string &GetGLSL();
-
         ShaderType type = ShaderType::SHADER_TYPE_FRAGMENT;
 
         static constexpr uint8_t SHADER_ASSET_VERSION = 1;
-
         static constexpr std::string SHADER_ASSET_EXTENSION = "gshd";
+
+        /**
+         * Create a ShaderAsset from a GSHD file
+         * @param assetPath The path to the GSHD file
+         * @param shader The ShaderAsset to populate
+         */
+        [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, ShaderAsset &shader);
+
+        /**
+         * Create a ShaderAsset from a GLSL file
+         * @param glslPath The path to the GLSL file
+         * @param shader The ShaderAsset to populate
+         */
+        [[nodiscard]] static Error::ErrorCode CreateFromGlsl(const char *glslPath, ShaderAsset &shader);
+
+        /**
+         * Save this ShaderAsset as a GLSL file
+         * @param glslPath The path to the GLSL file
+         */
+        [[nodiscard]] Error::ErrorCode SaveAsGlsl(const char *glslPath) const;
+
+        /**
+         * Save this ShaderAsset as a GSHD file
+         * @param assetPath The path to the GSHD file
+         * @param errorLog An optional pointer to a std::string which will be filled with the compile logs
+         * @return
+         */
+        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath, std::string *errorLog = nullptr) const;
+
+        /**
+         * Get the GLSL in this ShaderAsset
+         */
+        [[nodiscard]] std::string &GetGLSL();
 
     private:
         std::string glsl;

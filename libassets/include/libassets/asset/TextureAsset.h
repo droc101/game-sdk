@@ -25,6 +25,12 @@ class TextureAsset final
          */
         TextureAsset() = default;
 
+        bool filter = false;
+        bool repeat = true;
+        bool mipmaps = true;
+
+        static constexpr uint8_t TEXTURE_ASSET_VERSION = 2;
+
         /**
          * Create a @c TextureAsset from a .gtex asset
          * @param assetPath The path to the gtex file
@@ -87,12 +93,6 @@ class TextureAsset final
          * @param assetPath The path to save to
          */
         [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
-
-        static constexpr uint8_t TEXTURE_ASSET_VERSION = 2;
-
-        bool filter = false;
-        bool repeat = true;
-        bool mipmaps = true;
 
     private:
         std::vector<uint8_t> pixelData{}; // just the bytes, NOT an array of pixels

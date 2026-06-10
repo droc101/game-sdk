@@ -13,7 +13,13 @@ class SignalDefinition
         SignalDefinition() = default;
         SignalDefinition(const std::string &description, Param::ParamType type);
 
+        /**
+         * Get the description of this signal
+         */
         [[nodiscard]] const std::string &GetDescription() const;
+        /**
+         * Get the type of this signal
+         */
         [[nodiscard]] Param::ParamType GetType() const;
 
     private:

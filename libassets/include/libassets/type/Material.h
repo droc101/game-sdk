@@ -26,11 +26,9 @@ class Material
 
         Material(const std::string &texture, uint32_t color, MaterialShader shader);
 
-        void Write(DataWriter &writer) const;
-
         std::string texture{};
-
         Color color{};
-
         MaterialShader shader{};
+
+        void Write(DataWriter &writer) const;
 };

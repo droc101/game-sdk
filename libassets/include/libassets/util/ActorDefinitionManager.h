@@ -19,12 +19,24 @@ class ActorDefinitionManager
         ActorDefinitionManager() = default;
         ActorDefinitionManager(const SearchPathManager &searchPathManager, Error::ErrorCode &status);
 
+        /**
+         * Check if a given actor class exists
+         */
         [[nodiscard]] bool HasActorClass(const std::string &className) const;
 
+        /**
+         * Get the definition of a given actor class
+         */
         [[nodiscard]] const ActorDefinition &GetActorDefinition(const std::string &className) const;
 
+        /**
+         * Get the number of actor classes loaded
+         */
         [[nodiscard]] size_t GetActorClassCount() const;
 
+        /**
+         * Get all loaded actor classes
+         */
         [[nodiscard]] const std::vector<std::string> &GetActorClasses() const;
 
     private:

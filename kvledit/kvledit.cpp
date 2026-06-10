@@ -129,9 +129,9 @@ static void RenderArray(ParamVector &vector, const std::string &path)
     }
     if (ImGui::BeginPopup("ArrayNewItem", ImGuiWindowFlags_NoMove))
     {
-        if (ImGui::BeginCombo("##type", Param::paramTypeNames.at(newItemType).c_str()))
+        if (ImGui::BeginCombo("##type", Param::PARAM_TYPE_NAMES.at(newItemType).c_str()))
         {
-            for (const std::pair<const Param::ParamType, std::string> &pair: Param::paramTypeNames)
+            for (const std::pair<const Param::ParamType, std::string> &pair: Param::PARAM_TYPE_NAMES)
             {
                 if (pair.first == Param::ParamType::PARAM_TYPE_NONE)
                 {
@@ -179,9 +179,9 @@ static void RenderKvList(KvList &list, const std::string &path)
         ImGui::Text("New element key:");
         ImGui::InputText("##newName", &newItemName);
 
-        if (ImGui::BeginCombo("##type", Param::paramTypeNames.at(newItemType).c_str()))
+        if (ImGui::BeginCombo("##type", Param::PARAM_TYPE_NAMES.at(newItemType).c_str()))
         {
-            for (const std::pair<const Param::ParamType, std::string> &pair: Param::paramTypeNames)
+            for (const std::pair<const Param::ParamType, std::string> &pair: Param::PARAM_TYPE_NAMES)
             {
                 if (pair.first == Param::ParamType::PARAM_TYPE_NONE)
                 {
@@ -312,7 +312,7 @@ static void RenderSidebar()
         ImGui::PushItemWidth(-1);
         if (ImGui::BeginCombo("##type", p->GetTypeName().c_str()))
         {
-            for (const std::pair<const Param::ParamType, std::string> &pair: Param::paramTypeNames)
+            for (const std::pair<const Param::ParamType, std::string> &pair: Param::PARAM_TYPE_NAMES)
             {
                 if (pair.first == Param::ParamType::PARAM_TYPE_NONE)
                 {

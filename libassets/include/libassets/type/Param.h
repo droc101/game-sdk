@@ -51,7 +51,16 @@ class Param
             PARAM_TYPE_VEC3
         };
 
-        static inline const std::unordered_map<ParamType, std::string> paramTypeNames = {
+        Param();
+        explicit Param(DataReader &reader);
+        template<ParamTypeTemplate T> explicit Param(T value)
+        {
+            Set<T>(value);
+        }
+        explicit Param(nlohmann::ordered_json j);
+        bool operator==(const Param &param) const;
+
+        static inline const std::unordered_map<ParamType, std::string> PARAM_TYPE_NAMES = {
             {ParamType::PARAM_TYPE_BYTE, "byte"},
             {ParamType::PARAM_TYPE_INTEGER, "int"},
             {ParamType::PARAM_TYPE_FLOAT, "float"},
@@ -66,29 +75,44 @@ class Param
             {ParamType::PARAM_TYPE_VEC3, "vec3"},
         };
 
-        Param();
-        explicit Param(DataReader &reader);
-        template<ParamTypeTemplate T> explicit Param(T value)
-        {
-            Set<T>(value);
-        }
-        explicit Param(nlohmann::ordered_json j);
-        bool operator==(const Param &param) const;
-
         void Write(DataWriter &writer) const;
 
+        /**
+         * Get the ParamType from it's string representation
+         */
         static ParamType ParseType(const std::string &type);
 
+        /**
+         * Clear this param
+         */
         void Clear();
 
+        /**
+         * Reset this param to a default value for a given type
+         * @param dataType The type to reset to
+         */
         void ClearToType(ParamType dataType);
 
+        /**
+         * Get the type of this param
+         */
         [[nodiscard]] ParamType GetType() const;
 
+        /**
+         * Get a JSON representation of this param
+         */
         [[nodiscard]] nlohmann::ordered_json GetJson() const;
 
+        /**
+         * Get a string representation of this param's type
+         */
         [[nodiscard]] std::string GetTypeName() const;
 
+        /**
+         * Get the value of this param
+         * @tparam T The type you wish to get
+         * @param defaultValue The default value to return if the value cannot be retrieved
+         */
         template<ParamTypeTemplate T> [[nodiscard]] T Get(T defaultValue) const
         {
             if ((std::same_as<T, uint8_t> && type != ParamType::PARAM_TYPE_BYTE) ||
@@ -108,6 +132,11 @@ class Param
             return std::get<T>(value);
         }
 
+        /**
+         * Get a reference to the value of this param
+         * @tparam T The type you wish to get
+         * @param defaultValue The default value to return if the value cannot be retrieved
+         */
         template<ParamTypeTemplate T> [[nodiscard]] T &GetRef(T &defaultValue)
         {
             if ((std::same_as<T, uint8_t> && type != ParamType::PARAM_TYPE_BYTE) ||
@@ -127,6 +156,11 @@ class Param
             return std::get<T>(value);
         }
 
+        /**
+         * Get a pointer to the value of this param
+         * @tparam T The type you wish to get
+         * @note This can return nullptr
+         */
         template<ParamTypeTemplate T> [[nodiscard]] T *GetPointer()
         {
             if ((std::same_as<T, uint8_t> && type != ParamType::PARAM_TYPE_BYTE) ||
@@ -146,6 +180,11 @@ class Param
             return &std::get<T>(value);
         }
 
+        /**
+         * Set the value of this param
+         * @tparam T The type of value to set
+         * @param newValue The value to set
+         */
         template<ParamTypeTemplate T> void Set(T newValue)
         {
             if (std::same_as<T, uint8_t>)
@@ -195,17 +234,41 @@ class Param
             }
         }
 
+        /**
+         * Write a KvList to a DataWriter
+         */
         static void WriteKvList(DataWriter &writer, const KvList &list);
 
+        /**
+         * Read a KvList from a DataReader
+         */
         static KvList ReadKvList(DataReader &reader);
 
+        /**
+         * Create a JSON representation of a KVList
+         */
         static nlohmann::ordered_json GenerateKvListJson(const KvList &list);
 
+        /**
+         * Create a KvList from JSON
+         */
         static KvList KvListFromJson(const nlohmann::ordered_json &json);
 
+        /**
+         * Get the pointer to an element of an array param
+         */
         Param *ArrayElementPointer(size_t index);
+
+        /**
+         * Get the pointer to a value in a KvList
+         * @param key The key to get the value of
+         */
         Param *KvListElementPointer(const std::string &key);
 
+        /**
+         * Get a string representation of this param
+         * @return
+         */
         [[nodiscard]] std::string ToString() const;
 
     private:

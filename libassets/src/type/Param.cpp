@@ -412,7 +412,7 @@ nlohmann::ordered_json Param::GetJson() const
 
 std::string Param::GetTypeName() const
 {
-    return paramTypeNames.at(GetType());
+    return PARAM_TYPE_NAMES.at(GetType());
 }
 
 nlohmann::ordered_json Param::GenerateKvListJson(const KvList &list)

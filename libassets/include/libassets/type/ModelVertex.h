@@ -23,15 +23,12 @@ class ModelVertex
 
         bool operator==(const ModelVertex &other) const;
 
-        void Write(DataWriter &writer) const;
-
         glm::vec3 position{};
-
         glm::vec2 uv{};
-
         Color color{};
-
         glm::vec3 normal{};
+
+        void Write(DataWriter &writer) const;
 };
 
 template<> struct std::hash<ModelVertex>

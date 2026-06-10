@@ -44,26 +44,52 @@ class DataWriter
             data.insert(data.end(), buf, buf + length * sizeof(T));
         }
 
+        /**
+         * Write an array of same-type values to the buffer
+         * @tparam T The type of value in the array
+         * @param buffer The array
+         */
         template<Primitive T> void WriteBuffer(const std::vector<T> &buffer)
         {
             const uint8_t *bufferData = reinterpret_cast<const uint8_t *>(buffer.data());
             data.insert(data.end(), bufferData, bufferData + buffer.size() * sizeof(T));
         }
 
+        /**
+         * Write an array of same-type values to the buffer
+         * @tparam T The type of value in the array
+         * @tparam LENGTH The size of the array
+         * @param buffer The array
+         */
         template<Primitive T, size_t LENGTH> void WriteBuffer(const std::array<T, LENGTH> &buffer)
         {
             const uint8_t *bufferData = reinterpret_cast<const uint8_t *>(buffer.data());
             data.insert(data.end(), bufferData, bufferData + LENGTH * sizeof(T));
         }
 
+        /**
+         * Copy the written data into a vector
+         */
         void CopyToVector(std::vector<uint8_t> &vector) const;
 
+        /**
+         * Write a string in the format used by @c DataReader::ReadStringWithSize
+         */
         void WriteString(const std::string &str);
 
+        /**
+         * Get the size of the written data
+         */
         [[nodiscard]] size_t GetBufferSize() const;
 
+        /**
+         * Write a vec2
+         */
         void WriteVec2(const glm::vec2 &vec);
 
+        /**
+         * Write a vec3
+         */
         void WriteVec3(const glm::vec3 &vec);
 
     private:

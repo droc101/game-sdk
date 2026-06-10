@@ -35,6 +35,9 @@ class Error
 
         Error() = delete;
 
+        /**
+         * Get a string representation of an error
+         */
         static constexpr std::string ErrorString(const ErrorCode error)
         {
             switch (error)

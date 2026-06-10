@@ -103,6 +103,9 @@ class BoundingBox
             extents = (maxPoint - minPoint) * 0.5f;
         }
 
+        glm::vec3 origin{};
+        glm::vec3 extents = {0.5, 0.5, 0.5};
+
         /**
          * Create a bounding box from a DataReader
          * @param reader The DataReader to read from
@@ -124,7 +127,4 @@ class BoundingBox
          * @param writer The DataWriter to write to
          */
         void Write(DataWriter &writer) const;
-
-        glm::vec3 origin{};
-        glm::vec3 extents = {0.5, 0.5, 0.5};
 };

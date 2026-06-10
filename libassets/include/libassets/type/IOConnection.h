@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <libassets/type/Param.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
@@ -22,9 +23,18 @@ class IOConnection
         Param param{};
         size_t numRefires{};
 
+        /**
+         * Read an IOConnection from a DataReader
+         */
         explicit IOConnection(DataReader &reader);
 
+        /**
+         * Write this IOConnection to a DataWriter
+         */
         void Write(DataWriter &writer) const;
 
+        /**
+         * Generate JSON for this IOConnection
+         */
         [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 };

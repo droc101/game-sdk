@@ -84,21 +84,34 @@ template<typename T> class NumericDefinitionValue: public BasicDefinitionValue<T
         enum class VectorComponent : uint8_t
         {
             NONE,
+            /// vec2 or vec3 X
             X,
+            /// vec2 or vec3 Y
             Y,
+            /// vec3 Z
             Z,
+            /// Color Red
             R,
+            /// Color Green
             G,
+            /// Color Blue
             B,
+            /// Color Alpha
             A
         };
 
         struct ExpressionVariable
         {
+                /// The original text of this variable
                 std::string original{};
+                /// The extracted param name
                 std::string paramName{};
+                /// The vector component to use
                 VectorComponent vectorComponent{};
         };
+
+        ExpressionParser expressionParser{};
+        std::vector<ExpressionVariable> varMetadata{};
 
         /**
          * Capture Groups: on "$param:x"
@@ -107,9 +120,6 @@ template<typename T> class NumericDefinitionValue: public BasicDefinitionValue<T
          * x
          */
         static constexpr const char *PARAM_SEARCH_REGEX = R"/(\$([A-Za-z_]+)(?::([xyzrgba]))?)/";
-
-        ExpressionParser expressionParser{};
-        std::vector<ExpressionVariable> varMetadata{};
 
         static T ProcessExpressionVariable(const ExpressionVariable &var, const KvList &params)
         {

@@ -27,18 +27,42 @@ class Sector
         WallMaterial floorMaterial{};
         WallMaterial ceilingMaterial{};
 
+        /**
+         * Check if this sector is valid
+         */
         [[nodiscard]] bool IsValid() const;
 
+        /**
+         * Check if this sector contains a 2D point
+         */
         [[nodiscard]] bool ContainsPoint(glm::vec2 point) const;
 
+        /**
+         * Create a JSON representation of this sector
+         * @return
+         */
         [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 
+        /**
+         * Get the normal vector of a segment
+         * @param segmentIndex The index of the first point of the segment
+         */
         [[nodiscard]] glm::vec2 SegmentNormal(size_t segmentIndex) const;
 
+        /**
+         * Calculate the area of this sector
+         */
         [[nodiscard]] double CalculateArea() const;
 
+        /**
+         * Calculate the 3D center position of this sector
+         */
         [[nodiscard]] glm::vec3 GetCenter() const;
 
+        /**
+         * Calculate the 2D AABB of this sector
+         * @return {origin.x, origin.y, extents.x, extents.y}
+         */
         [[nodiscard]] glm::vec4 GetAABB() const;
 
     private:

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <libassets/util/DataReader.h>
 
@@ -22,22 +23,15 @@ class Asset
             ASSET_TYPE_KV_LIST = 8,
         };
 
-        static constexpr uint8_t ASSET_CONTAINER_VERSION = 2;
-
-        static constexpr uint32_t ASSET_CONTAINER_MAGIC = 0x454D4147; // "GAME"
-
-        static constexpr size_t ASSET_HEADER_SIZE = sizeof(uint32_t) + (sizeof(uint8_t) * 3) + (sizeof(size_t) * 2);
-
         Asset() = default;
 
-
         uint8_t containerVersion{};
-
         AssetType type{};
-
         uint8_t typeVersion{};
-
         size_t size{};
-
         DataReader reader{};
+
+        static constexpr uint8_t ASSET_CONTAINER_VERSION = 2;
+        static constexpr uint32_t ASSET_CONTAINER_MAGIC = 0x454D4147; // "GAME"
+        static constexpr size_t ASSET_HEADER_SIZE = sizeof(uint32_t) + (sizeof(uint8_t) * 3) + (sizeof(size_t) * 2);
 };

@@ -24,11 +24,20 @@ class Actor
         glm::vec3 position{};
         glm::vec3 rotation{};
 
+        /**
+         * Apply an ActorDefinition to this actor's params
+         * @param definition The definition to apply
+         * @param overwrite Whether to overwrite any existing params
+         */
         void ApplyDefinition(const ActorDefinition &definition, bool overwrite);
+
+        /**
+         * Remove any params not specified in an actor definition
+         * @param definition The definition to check against
+         */
+        void RemoveUnknownParams(const ActorDefinition &definition);
 
         nlohmann::ordered_json GenerateJson() const;
 
         void Write(DataWriter &writer) const;
-
-        void RemoveUnknownParams(const ActorDefinition &definition);
 };

@@ -14,6 +14,9 @@ class Logger
     public:
         Logger() = delete;
 
+        static inline bool ansi = true;
+        static inline bool verbose = false;
+
         template<typename... Args> static void Verbose(std::format_string<Args...> fmt, Args &&...args)
         {
             if (verbose)
@@ -36,9 +39,6 @@ class Logger
         {
             LogInternal(LOG_LEVEL_ERROR, fmt, std::forward<Args>(args)...);
         }
-
-        static inline bool ansi = true;
-        static inline bool verbose = false;
 
     private:
         struct LogLevel

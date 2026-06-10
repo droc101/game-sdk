@@ -19,6 +19,13 @@ class ParamDefinition
         Param::ParamType type = Param::ParamType::PARAM_TYPE_NONE;
         std::string description;
 
+        /**
+         * Create a ParamDefinition from JSON
+         * @param json The JSON to read from
+         * @param e Error code output
+         * @param paramName The name of this param
+         * @return a std::unique_ptr to the ParamDefinition
+         */
         [[nodiscard]] static std::unique_ptr<ParamDefinition> Create(const nlohmann::json &json,
                                                                      Error::ErrorCode &e,
                                                                      const std::string &paramName);

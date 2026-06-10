@@ -12,12 +12,12 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 class ActorDefinition
 {
     public:
         ActorDefinition() = default;
-        ~ActorDefinition() = default; // TODO might have to delete param pointers
 
         std::string className;
         std::string description;
@@ -25,25 +25,58 @@ class ActorDefinition
         std::string parentClassName;
         ActorDefinition *parentClass = nullptr;
 
-        std::vector<std::shared_ptr<RenderDefinition>> renderDefinitions{};
-
         bool isVirtual = false;
 
-        [[nodiscard]] static Error::ErrorCode Create(const std::string &path, ActorDefinition &definition);
-
-        [[nodiscard]] bool Extends(const std::string &baseClass) const;
-
-        void GetInputNames(std::unordered_set<std::string> &out) const;
-        void GetOutputNames(std::unordered_set<std::string> &out) const;
-        void GetParamNames(std::unordered_set<std::string> &out) const;
-
-        [[nodiscard]] Error::ErrorCode GetInput(const std::string &name, SignalDefinition &input) const;
-        [[nodiscard]] Error::ErrorCode GetOutput(const std::string &name, SignalDefinition &output) const;
-        [[nodiscard]] Error::ErrorCode GetParam(const std::string &name, std::shared_ptr<ParamDefinition> &param) const;
+        std::vector<std::shared_ptr<RenderDefinition>> renderDefinitions{};
 
         std::unordered_map<std::string, SignalDefinition> inputs{};
         std::unordered_map<std::string, SignalDefinition> outputs{};
         std::unordered_map<std::string, std::shared_ptr<ParamDefinition>> params{};
 
         static constexpr const char *VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX = R"/(^[a-z_]+$)/";
+
+        /**
+         * Create an ActorDefinition from a JSON file
+         * @param path The path to the JSON file
+         * @param definition The definition to populate
+         */
+        [[nodiscard]] static Error::ErrorCode Create(const std::string &path, ActorDefinition &definition);
+
+        /**
+         * Check if this definition extends another at any point
+         * @param baseClass The class to look for
+         */
+        [[nodiscard]] bool Extends(const std::string &baseClass) const;
+
+        /**
+         * Get all input names in this definition and all parents
+         */
+        void GetInputNames(std::unordered_set<std::string> &out) const;
+        /**
+         * Get all output names in this definition and all parents
+         */
+        void GetOutputNames(std::unordered_set<std::string> &out) const;
+        /**
+         * Get all param names in this definition and all parents
+         */
+        void GetParamNames(std::unordered_set<std::string> &out) const;
+
+        /**
+         * Get an input definition by name
+         * @param name The input name
+         * @param input The SignalDefinition to populate
+         */
+        [[nodiscard]] Error::ErrorCode GetInput(const std::string &name, SignalDefinition &input) const;
+        /**
+         * Get an output definition by name
+         * @param name The output name
+         * @param output The SignalDefinition to populate
+         */
+        [[nodiscard]] Error::ErrorCode GetOutput(const std::string &name, SignalDefinition &output) const;
+        /**
+         * Get a param definition by name
+         * @param name The param name
+         * @param param The ParamDefinition to populate
+         */
+        [[nodiscard]] Error::ErrorCode GetParam(const std::string &name, std::shared_ptr<ParamDefinition> &param) const;
 };

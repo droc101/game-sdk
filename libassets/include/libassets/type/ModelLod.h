@@ -21,17 +21,17 @@ class ModelLod
 
         ModelLod(const std::string &filePath, float distance, Error::ErrorCode &status);
 
+        float distance{};
+        std::vector<ModelVertex> vertices{};
+        std::vector<uint32_t> indexCounts{};
+        std::vector<std::vector<uint32_t>> materialIndices{};
+
         void Export(const char *path) const;
 
         void Write(DataWriter &writer) const;
 
+        /**
+         * Flip Y axis UVs in this LOD
+         */
         void FlipVerticalUVs();
-
-        float distance{};
-
-        std::vector<ModelVertex> vertices{};
-
-        std::vector<uint32_t> indexCounts{};
-
-        std::vector<std::vector<uint32_t>> materialIndices{};
 };
