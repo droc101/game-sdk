@@ -12,6 +12,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 #include "LevelMeshBuilder.h"
+#include "libassets/type/Actor.h"
 #include "Light.h"
 
 class LightBakerGpu
@@ -24,7 +25,6 @@ class LightBakerGpu
         bool Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                   const std::vector<Light> &lights,
                   const glm::uvec2 &lightmapSize,
-                  uint64_t rayCount,
                   uint32_t bounceCount,
                   std::vector<uint16_t> &pixelData);
 
@@ -51,24 +51,33 @@ class LightBakerGpu
             return true;
         }
 
-        VkShaderModule GenerateShaderModule(const std::filesystem::path &path,
-                                            EShLanguage shaderType,
-                                            std::vector<uint32_t> &spirv) const;
+        VkShaderModule GenerateShaderModule(const std::filesystem::path &path, EShLanguage shaderType) const;
+
+        bool CreateVertexAndIndexBuffers(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
+                                         uint32_t &vertexCount,
+                                         uint32_t &indexCount);
+
+        bool PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, uint32_t indexCount);
 
         /// Create the bottom-level acceleration structures
-        bool CreateBLAS(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders);
+        bool CreateBLAS(uint32_t vertexCount, uint32_t indexCount);
 
         /// Create the top-level acceleration structures
         bool CreateTLAS();
 
         bool CreateAndWriteDescriptorSet();
 
-        bool CreatePipeline(const glm::uvec2 &lightmapSize,
-                            uint32_t lightCount,
-                            uint64_t rayCount,
-                            uint32_t bounceCount);
+        bool CreatePipeline(const glm::uvec2 &lightmapSize);
 
         bool CreateShaderBindingTables();
+
+        bool SingleBakeIteration(uint64_t width,
+                                 uint64_t height,
+                                 uint32_t iteration,
+                                 uint32_t lightIndex,
+                                 float percentDone,
+                                 bool directLighting,
+                                 int luxelIndex) const;
 
         bool ConvertLightmapToFloat16(const glm::uvec2 &lightmapSize, LunaBuffer &outputLightmap) const;
 
@@ -90,6 +99,7 @@ class LightBakerGpu
         VkQueue queue{};
         LunaCommandPool commandPool{};
         LunaCommandBuffer commandBuffer{};
+        LunaSemaphore semaphore{};
         /// The ray tracing pipeline layout
         /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
         VkPipelineLayout pipelineLayout{};
@@ -114,13 +124,11 @@ class LightBakerGpu
         LunaBuffer accelerationStructureInstancesBuffer{};
         /// The top-level acceleration structure used for hardware acceleration of path tracing
         AccelerationStructure tlas{};
-        LunaBuffer lightsBuffer{};
-        LunaBuffer lightmap{};
         LunaBuffer vertexBuffer{};
         LunaBuffer indexBuffer{};
-        LunaBuffer lightHitIndicesBuffer{};
-        /// The iteration we're on for this light
-        uint32_t iteration{};
-        /// The index of the light we are drawing rays for. Used as a push constant
-        uint32_t lightIndex{};
+        LunaImage luxelsInformation{};
+        LunaBuffer luxelDistancesTraveledBuffer{};
+        LunaBuffer lightsBuffer{};
+        LunaBuffer lightmap{};
+        VkBufferView lightmapBufferView{};
 };

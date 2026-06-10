@@ -46,7 +46,7 @@ bool LightBaker::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &m
         {
             return false;
         }
-        if (!baker.Bake(meshBuilders, lights, lightmapSize, RAY_COUNT, BOUNCE_COUNT, pixelData))
+        if (!baker.Bake(meshBuilders, lights, lightmapSize, BOUNCE_COUNT, pixelData))
         {
             return false;
         }

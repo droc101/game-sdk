@@ -28,18 +28,15 @@ struct Light {
 };
 
 struct Payload {
-    uint sourceLightIndex;
     Light sourceLight;
     vec3 rayOrigin;
     vec3 rayDirection;
+    int targetLuxelIndex;
     float distanceTraveled;
-    bool store;
-    uint bounceIndex;
 };
 
 layout (constant_id = 0) const uint WIDTH = 8192;
 layout (constant_id = 1) const uint HEIGHT = 4096;
-layout (constant_id = 2) const uint LIGHT_COUNT = 1;
 
 hitAttributeEXT vec2 barycentric;
 
@@ -47,35 +44,33 @@ layout(location = 0) rayPayloadInEXT Payload payload;
 
 layout(set = 0, binding = 0) uniform accelerationStructureEXT accelerationStructure;
 /// The buffer containing the map vertex data
-layout (std140, set = 0, binding = 2) readonly buffer VertexData {
+layout (std140, set = 0, binding = 4) readonly buffer VertexData {
     MapVertex vertices[];
 } vertexData;
 /// The buffer containing the map index data
-layout (set = 0, binding = 3) readonly buffer IndexData {
+layout (set = 0, binding = 5) readonly buffer IndexData {
     uint indices[];
 } indexData;
-layout (set = 0, binding = 4) coherent buffer LightHitIndicesData {
-    uint indices[]; // WIDTH * HEIGHT * LIGHT_COUNT / 32
-} lightHitIndicesData;
 // The lightmap from which data is both read and written to
-layout (set = 0, binding = 5) coherent buffer LightmapLuxels {
-    uint luxels[];
-} lightmap;
+layout (set = 0, binding = 6, rgba16f) coherent uniform imageBuffer lightmap;
+// layout (set = 0, binding = 6) coherent buffer LightmapLuxels {
+//     uint luxels[];
+// } lightmap;
 
-void atomicAddColorToLuxelChannel(uint luxel, int channel, float val) {
-    // lightmap.luxels[luxel + channel] = floatBitsToUint((uintBitsToFloat(lightmap.luxels[luxel + channel]) + val));
-    float val1 = uintBitsToFloat(lightmap.luxels[luxel + channel]);
-    float val2 = uintBitsToFloat(lightmap.luxels[luxel + channel]);
-    do {
-        val1 = val2;
-        val2 = uintBitsToFloat(atomicCompSwap(lightmap.luxels[luxel + channel], floatBitsToUint(val1), floatBitsToUint(val1 + val)));
-    } while (val1 != val2);
-}
-void atomicAddColorToLightmap(vec3 color, uint index) {
-    atomicAddColorToLuxelChannel(3 * index, 0, color.r);
-    atomicAddColorToLuxelChannel(3 * index, 1, color.g);
-    atomicAddColorToLuxelChannel(3 * index, 2, color.b);
-}
+// void atomicAddColorToLuxelChannel(uint luxel, int channel, float val) {
+//     // lightmap.luxels[luxel + channel] = floatBitsToUint((uintBitsToFloat(lightmap.luxels[luxel + channel]) + val));
+//     float val1 = uintBitsToFloat(lightmap.luxels[luxel + channel]);
+//     float val2 = uintBitsToFloat(lightmap.luxels[luxel + channel]);
+//     do {
+//         val1 = val2;
+//         val2 = uintBitsToFloat(atomicCompSwap(lightmap.luxels[luxel + channel], floatBitsToUint(val1), floatBitsToUint(val1 + val)));
+//     } while (val1 != val2);
+// }
+// void atomicAddColorToLightmap(vec3 color, uint index) {
+//     atomicAddColorToLuxelChannel(3 * index, 0, color.r);
+//     atomicAddColorToLuxelChannel(3 * index, 1, color.g);
+//     atomicAddColorToLuxelChannel(3 * index, 2, color.b);
+// }
 
 vec2 computeLuxelUv() {
     return (1.0 - barycentric.x - barycentric.y) * vertexData.vertices[indexData.indices[3 * gl_PrimitiveID + 0]].lightmapUv +
@@ -84,8 +79,8 @@ vec2 computeLuxelUv() {
 }
 int computeLuxelIndex() {
     vec2 uv = clamp(computeLuxelUv(), vec2(0), vec2(1));
-    int x = int(round(uv.x * WIDTH));
-    int y = int(round(uv.y * HEIGHT));
+    int x = int(uv.x * WIDTH);
+    int y = int(uv.y * HEIGHT);
     return int(x + y * WIDTH);
 }
 
@@ -98,36 +93,24 @@ float getLightBrightness(const Light light, const float distance) {
 }
 
 vec3 getLightColor() {
-    return payload.sourceLight.color * getLightBrightness(payload.sourceLight, payload.distanceTraveled);
-}
-
-bool atomicLightHitLuxelIndex(uint luxelIndex) {
-    const uint index = luxelIndex * LIGHT_COUNT + payload.sourceLightIndex;
-    const uint bit = 1u << (index % 32);
-    return (atomicOr(lightHitIndicesData.indices[index / 32], bit) & bit) == 0;
+    const float brightness = getLightBrightness(payload.sourceLight, payload.distanceTraveled);
+    if (brightness < 0.00390625) {
+        return vec3(0);
+    }
+    return payload.sourceLight.color * brightness;
 }
 
 void main() {
     if (gl_HitKindEXT == gl_HitKindBackFacingTriangleEXT) {
         return;
     }
-    payload.distanceTraveled += gl_HitTEXT;
-    if (payload.store) {
-        const uint luxelIndex = computeLuxelIndex();
-        if (!atomicLightHitLuxelIndex(luxelIndex)) {
-            return;
-        }
-        vec3 color = getLightColor();
-        if (payload.bounceIndex != 0) {
-            // debugPrintfEXT("(%f, %f, %f)\n", color.r, color.g, color.b);
-        }
-        atomicAddColorToLightmap(color, luxelIndex);
+    const int luxelIndex = computeLuxelIndex();
+    if (luxelIndex != payload.targetLuxelIndex) {
+        return;
     }
-    payload.rayOrigin = (1.0 - barycentric.x - barycentric.y) * vertexData.vertices[indexData.indices[3 * gl_PrimitiveID + 0]].position +
-                                barycentric.x * vertexData.vertices[indexData.indices[3 * gl_PrimitiveID + 1]].position +
-                                barycentric.y * vertexData.vertices[indexData.indices[3 * gl_PrimitiveID + 2]].position;
-    payload.rayDirection = reflect(payload.rayDirection,
-                                   (1.0 - barycentric.x - barycentric.y) * vertexData.vertices[indexData.indices[3 * gl_PrimitiveID + 0]].normal +
-                                           barycentric.x * vertexData.vertices[indexData.indices[3 * gl_PrimitiveID + 1]].normal +
-                                           barycentric.y * vertexData.vertices[indexData.indices[3 * gl_PrimitiveID + 2]].normal);
+    payload.distanceTraveled += gl_HitTEXT;
+    imageStore(lightmap, luxelIndex, imageLoad(lightmap, luxelIndex) + vec4(getLightColor(), 1));
+    // atomicAddColorToLightmap(payload.sourceLight.color, 2 * payload.targetLuxelIndex);
+    // atomicAddColorToLightmap(getLightColor(), luxelIndex);
+    // imageStore(lightmap, payload.targetLuxelIndex, vec4(1));
 }
