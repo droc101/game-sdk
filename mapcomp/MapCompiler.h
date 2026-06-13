@@ -24,7 +24,6 @@ class MapCompiler
                 std::string executableDirectory;
                 std::string gameConfigParentDirectory;
                 DataAsset gameConfig;
-                bool bakeLightsOnCpu = false;
                 bool skipLighting = false;
                 bool fastCompile = false;
         };

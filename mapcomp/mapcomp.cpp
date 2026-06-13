@@ -54,7 +54,6 @@ int main(const int argc, const char **argv)
         .executableDirectory = args.GetFlagValue("--executable-dir"),
         .gameConfigParentDirectory = std::filesystem::path(assetsPath).parent_path().string(),
         .gameConfig = gameConfig,
-        .bakeLightsOnCpu = args.HasFlag("--bake-on-cpu"),
         .skipLighting = args.HasFlag("--skip-lighting"),
         .fastCompile = args.HasFlag("--fast"),
     };

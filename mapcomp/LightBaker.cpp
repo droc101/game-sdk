@@ -11,13 +11,11 @@
 #include <vector>
 #include "LevelMeshBuilder.h"
 #include "Light.h"
-#include "LightBakerCpu.hpp"
 #include "LightBakerGpu.hpp"
 
 bool LightBaker::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                       const std::vector<Light> &lights,
                       const glm::uvec2 &lightmapSize,
-                      const bool useCpu,
                       std::vector<uint16_t> &pixelData)
 {
     // This is checks that MapVertex and Light are both POD, which is required to directly write from the pointer to the buffer.
@@ -35,21 +33,14 @@ bool LightBaker::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &m
                   "Ray count must be representable as a double in order to be preserved in the shader!");
     static_assert(RAY_COUNT % (1 << 15) == 0, "Ray count must be a multiple of (1 << 15)!");
 
-    if (useCpu)
+    LightBakerGpu baker{};
+    if (!baker.IsInitialized())
     {
-        LightBakerCpu baker{meshBuilders, lights, lightmapSize};
-        baker.Bake(RAY_COUNT, BOUNCE_COUNT, pixelData);
-    } else
+        return false;
+    }
+    if (!baker.Bake(meshBuilders, lights, lightmapSize, BOUNCE_COUNT, pixelData))
     {
-        LightBakerGpu baker{};
-        if (!baker.IsInitialized())
-        {
-            return false;
-        }
-        if (!baker.Bake(meshBuilders, lights, lightmapSize, BOUNCE_COUNT, pixelData))
-        {
-            return false;
-        }
+        return false;
     }
 
     // TODO: Cleanup

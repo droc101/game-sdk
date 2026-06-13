@@ -49,10 +49,6 @@ void MapCompileWindow::StartCompile()
                 "--executable-dir=" + Options::Get().GetExecutablePath(),
                 "--no-ansi",
             };
-            if (bakeOnCpu)
-            {
-                arguments.emplace_back("--bake-on-cpu");
-            }
 
             if (fastCompile)
             {
@@ -123,7 +119,6 @@ void MapCompileWindow::Render()
     }
     ImGui::SeparatorText("Lighting Options");
     ImGui::Checkbox("Skip lighting", &skipLighting);
-    ImGui::Checkbox("CPU light baking (slow!)", &bakeOnCpu);
     ImGui::SeparatorText("Debug Options");
     ImGui::Checkbox("Verbose Logging", &verbose);
     ImGui::SeparatorText("Game Options");
