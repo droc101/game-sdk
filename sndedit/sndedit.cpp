@@ -5,47 +5,18 @@
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
+#include <game_sdk/SoundSystem.h>
 #include <imgui.h>
 #include <libassets/asset/SoundAsset.h>
 #include <libassets/util/Error.h>
-#include <libassets/util/Logger.h>
-#include <miniaudio.h>
 #include <string>
 
-static ma_engine engine{};
-static ma_decoder decoder{};
-
+static SoundSystem::Sound sound{};
 static SoundAsset soundAsset{};
-static ma_sound sound{};
-static bool soundLoaded = false;
-
-static void DestroyExistingSound()
-{
-    if (!soundLoaded)
-    {
-        return;
-    }
-    ma_sound_stop(&sound);
-    ma_sound_uninit(&sound);
-    ma_decoder_uninit(&decoder);
-    soundLoaded = false;
-}
 
 static bool LoadSound()
 {
-    DestroyExistingSound();
-    ma_result result = ma_decoder_init_memory(soundAsset.GetData().data(), soundAsset.GetDataSize(), nullptr, &decoder);
-    if (result != MA_SUCCESS)
-    {
-        return false;
-    }
-    result = ma_sound_init_from_data_source(&engine, &decoder, MA_SOUND_FLAG_DECODE, nullptr, &sound);
-    if (result != MA_SUCCESS)
-    {
-        return false;
-    }
-    soundLoaded = true;
-    return true;
+    return SoundSystem::Get().LoadSound(soundAsset, sound);
 }
 
 static void OpenGsnd(const std::string &path)
@@ -106,8 +77,8 @@ static void Render()
     ImGui::Begin("sndedit", nullptr, WINDOW_FLAGS);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
     bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
-    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && soundLoaded;
-    bool exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && soundLoaded;
+    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S) && sound.IsLoaded();
+    bool exportPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S) && sound.IsLoaded();
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -115,8 +86,8 @@ static void Render()
         {
             openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
             importPressed |= ImGui::MenuItem("Import", "Ctrl+Shift+O");
-            savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, soundLoaded);
-            exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S", false, soundLoaded);
+            savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, sound.IsLoaded());
+            exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S", false, sound.IsLoaded());
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
@@ -142,14 +113,12 @@ static void Render()
         SDKWindow::Get().SaveFileDialog(ExportWav, DialogFilters::WAV_FILTERS);
     }
 
-    if (soundLoaded)
+    if (sound.IsLoaded())
     {
-        float length = 0;
-        float cursor = 0;
-        const bool isPlaying = ma_sound_is_playing(&sound) == 1;
-        bool isLooping = ma_sound_is_looping(&sound) == 1;
-        ma_sound_get_length_in_seconds(&sound, &length);
-        ma_sound_get_cursor_in_seconds(&sound, &cursor);
+        const float length = sound.GetLength();
+        const float cursor = sound.GetCursor();
+        const bool isPlaying = sound.IsPlaying();
+        bool isLooping = sound.IsLooping();
 
         ImGui::SeparatorText("Sound Player");
 
@@ -159,10 +128,10 @@ static void Render()
         {
             if (nCursor != cursor)
             {
-                ma_sound_seek_to_second(&sound, nCursor);
+                sound.Seek(nCursor);
                 if (!isPlaying)
                 {
-                    ma_sound_start(&sound);
+                    sound.Play();
                 }
             }
         }
@@ -171,22 +140,22 @@ static void Render()
         {
             if (ImGui::Button("Play", ImVec2(50, 0)))
             {
-                ma_sound_start(&sound);
+                sound.Play();
             }
         } else
         {
             if (ImGui::Button("Pause", ImVec2(50, 0)))
             {
-                ma_sound_stop(&sound);
+                sound.Stop();
             }
         }
 
         ImGui::SameLine();
         ImGui::PushItemWidth(100);
-        float volume = ma_engine_get_volume(&engine) * 100.0f;
+        float volume = SoundSystem::Get().GetVolume() * 100.0f;
         if (ImGui::SliderFloat("##Volume", &volume, 0.0f, 100.0f, "%.0f%%"))
         {
-            ma_engine_set_volume(&engine, volume / 100.0f);
+            SoundSystem::Get().SetVolume(volume / 100.0f);
         }
 
         const float cursorSeconds = std::fmod(cursor, 60.0f);
@@ -203,22 +172,17 @@ static void Render()
         ImGui::SetCursorPosX(availWidth - checkboxWidth);
         if (ImGui::Checkbox("Loop", &isLooping))
         {
-            // ReSharper disable once CppRedundantCastExpression
-            ma_sound_set_looping(&sound, static_cast<ma_bool32>(isLooping));
+            sound.SetLooping(isLooping);
         }
 
         ImGui::SeparatorText("Sound Information");
         ImGui::TextUnformatted(std::format("Size: {} bytes", soundAsset.GetDataSize()).c_str());
-        ma_format fmt{};
-        ma_uint32 channels = 0;
-        ma_uint32 sampleRate = 0;
-        ma_uint64 pcmLen = 0;
-        ma_decoder_get_data_format(&decoder, &fmt, &channels, &sampleRate, nullptr, 0);
-        ma_sound_get_length_in_pcm_frames(&sound, &pcmLen);
+        SoundSystem::Sound::Format format = sound.GetFormat();
+        ma_uint64 pcmLen = sound.GetLengthInFrames();
         constexpr std::array<const char *, 6> FORMAT_NAMES = {"Unknown", "U8", "S16", "S24", "S32", "F32"};
-        ImGui::TextUnformatted(std::format("Format: {}", FORMAT_NAMES.at(fmt)).c_str());
-        ImGui::TextUnformatted(std::format("Channels: {}", channels).c_str());
-        ImGui::TextUnformatted(std::format("Sample Rate: {} Hz", sampleRate).c_str());
+        ImGui::TextUnformatted(std::format("Format: {}", FORMAT_NAMES.at(format.format)).c_str());
+        ImGui::TextUnformatted(std::format("Channels: {}", format.channels).c_str());
+        ImGui::TextUnformatted(std::format("Sample Rate: {} Hz", format.sampleRate).c_str());
         ImGui::Text("Length: %g:%05.2f", lengthMinutes, lengthSeconds);
         ImGui::TextUnformatted(std::format("Length (PCM frames): {}", pcmLen).c_str());
 
@@ -239,10 +203,8 @@ int main(const int argc, char **argv)
 
     SDKWindow::Get().SetWindowIcon("sndedit");
 
-    const ma_result res = ma_engine_init(nullptr, &engine);
-    if (res != MA_SUCCESS)
+    if (!SoundSystem::Get().Init())
     {
-        Logger::Error("ma_engine_init() failed: {}", static_cast<int>(res));
         return -1;
     }
 
@@ -261,7 +223,7 @@ int main(const int argc, char **argv)
 
     SDKWindow::Get().MainLoop(Render);
 
-    ma_engine_uninit(&engine);
+    SoundSystem::Get().Destroy();
 
     SDKWindow::Get().Destroy();
 

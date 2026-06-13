@@ -33,6 +33,8 @@ target_sources(game_sdk_shared PRIVATE
         include/game_sdk/ModelViewer.h
         src/windows/ModelBrowserWindow.cpp
         include/game_sdk/windows/ModelBrowserWindow.h
+        src/SoundSystem.cpp
+        include/game_sdk/SoundSystem.h
 )
 target_link_libraries(game_sdk_shared PRIVATE glew_s imgui)
 target_link_libraries(game_sdk_shared PUBLIC
