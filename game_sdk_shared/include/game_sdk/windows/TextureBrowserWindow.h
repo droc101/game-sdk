@@ -27,4 +27,8 @@ class TextureBrowserWindow
         std::string *str = nullptr;
 
         std::vector<std::string> textures;
+
+        std::string filter;
+
+        static constexpr int TILE_SIZE = 128;
 };

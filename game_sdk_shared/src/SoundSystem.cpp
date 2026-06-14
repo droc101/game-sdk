@@ -16,22 +16,36 @@ SoundSystem &SoundSystem::Get()
 
 bool SoundSystem::Init()
 {
+    if (initialized)
+    {
+        return true;
+    }
     const ma_result res = ma_engine_init(nullptr, &engine);
     if (res != MA_SUCCESS)
     {
         Logger::Error("ma_engine_init() failed: {}", static_cast<int>(res));
         return false;
     }
+    initialized = true;
     return true;
 }
 
 void SoundSystem::Destroy()
 {
+    if (!initialized)
+    {
+        return;
+    }
     ma_engine_uninit(&engine);
+    initialized = false;
 }
 
 void SoundSystem::UnloadSound(Sound &sound)
 {
+    if (!initialized)
+    {
+        return;
+    }
     if (!sound.loaded)
     {
         return;
@@ -44,6 +58,10 @@ void SoundSystem::UnloadSound(Sound &sound)
 
 bool SoundSystem::LoadSound(const SoundAsset &soundAsset, Sound &dest)
 {
+    if (!initialized)
+    {
+        return false;
+    }
     UnloadSound(dest);
     ma_result result = ma_decoder_init_memory(soundAsset.GetData().data(),
                                               soundAsset.GetDataSize(),
@@ -64,11 +82,19 @@ bool SoundSystem::LoadSound(const SoundAsset &soundAsset, Sound &dest)
 
 float SoundSystem::GetVolume()
 {
+    if (!initialized)
+    {
+        return 0;
+    }
     return ma_engine_get_volume(&engine);
 }
 
 void SoundSystem::SetVolume(const float volume)
 {
+    if (!initialized)
+    {
+        return;
+    }
     ma_engine_set_volume(&engine, volume);
 }
 

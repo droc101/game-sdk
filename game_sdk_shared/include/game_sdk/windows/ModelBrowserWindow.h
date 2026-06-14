@@ -9,7 +9,6 @@
 #include <string>
 #include <vector>
 
-
 class ModelBrowserWindow
 {
     public:
@@ -32,6 +31,8 @@ class ModelBrowserWindow
         std::vector<std::string> models{};
         std::vector<std::string> modelAbsPaths{};
         ModelViewer viewer{};
+
+        std::string filter;
 };
 
 

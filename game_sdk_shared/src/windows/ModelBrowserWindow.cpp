@@ -18,9 +18,6 @@
 #include <utility>
 #include <vector>
 
-constexpr int TILE_SIZE = 256;
-static std::string filter;
-
 ModelBrowserWindow &ModelBrowserWindow::Get()
 {
     static ModelBrowserWindow modelBrowserWindowSingleton{};

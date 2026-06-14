@@ -14,9 +14,6 @@
 #include <string>
 #include <vector>
 
-constexpr int TILE_SIZE = 128;
-static std::string filter;
-
 TextureBrowserWindow &TextureBrowserWindow::Get()
 {
     static TextureBrowserWindow textureBrowserWindowSingleton{};

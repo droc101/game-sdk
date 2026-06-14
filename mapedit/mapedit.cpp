@@ -7,8 +7,10 @@
 #include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
+#include <game_sdk/SoundSystem.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
+#include <game_sdk/windows/SoundBrowserWindow.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -42,6 +44,7 @@ static bool dockspaceSetup = false;
 static std::string textureBrowserToolSelection{};
 static std::string materialBrowserToolSelection{};
 static std::string modelBrowserToolSelection{};
+static std::string soundBrowserToolSelection{};
 
 static bool ToolbarToolButton(const char *id,
                               const char *tooltip,
@@ -385,6 +388,10 @@ static void Render()
             {
                 ModelBrowserWindow::Get().Show(&modelBrowserToolSelection);
             }
+            if (ImGui::MenuItem("Sound Browser"))
+            {
+                SoundBrowserWindow::Get().Show(&soundBrowserToolSelection);
+            }
             ImGui::Separator();
             if (ImGui::MenuItem("Remove unknown/obsolete actor params"))
             {
@@ -552,6 +559,8 @@ int main(const int argc, char **argv)
         return -1;
     }
 
+    SoundSystem::Get().Init();
+
     SDKWindow::Get().SetWindowIcon("mapedit");
 
     Error::ErrorCode adms = Error::ErrorCode::UNKNOWN;
@@ -604,6 +613,7 @@ int main(const int argc, char **argv)
 
     SDKWindow::Get().MainLoop(Render);
 
+    SoundSystem::Get().Destroy();
     MapRenderer::Destroy();
     SDKWindow::Get().Destroy();
     return 0;

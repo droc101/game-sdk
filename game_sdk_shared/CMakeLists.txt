@@ -35,6 +35,8 @@ target_sources(game_sdk_shared PRIVATE
         include/game_sdk/windows/ModelBrowserWindow.h
         src/SoundSystem.cpp
         include/game_sdk/SoundSystem.h
+        src/windows/SoundBrowserWindow.cpp
+        include/game_sdk/windows/SoundBrowserWindow.h
 )
 target_link_libraries(game_sdk_shared PRIVATE glew_s imgui)
 target_link_libraries(game_sdk_shared PUBLIC

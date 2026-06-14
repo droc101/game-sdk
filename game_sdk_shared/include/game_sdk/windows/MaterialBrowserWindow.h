@@ -29,4 +29,8 @@ class MaterialBrowserWindow
 
         std::vector<std::string> materialPaths{};
         std::vector<LevelMaterialAsset> materials{};
+
+        std::string filter;
+
+        static constexpr int TILE_SIZE = 128;
 };

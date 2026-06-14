@@ -60,5 +60,6 @@ class SoundSystem
         float GetVolume();
 
     private:
+        bool initialized = false;
         ma_engine engine{};
 };

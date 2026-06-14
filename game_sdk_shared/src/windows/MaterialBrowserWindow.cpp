@@ -17,9 +17,6 @@
 #include <string>
 #include <vector>
 
-constexpr int TILE_SIZE = 128;
-static std::string filter;
-
 MaterialBrowserWindow &MaterialBrowserWindow::Get()
 {
     static MaterialBrowserWindow materialBrowserWindowSingleton{};

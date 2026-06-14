@@ -11,6 +11,7 @@
 #include <format>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
+#include <game_sdk/windows/SoundBrowserWindow.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
@@ -274,6 +275,9 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                             break;
                         case StringParamDefinition::StringParamHint::MATERIAL:
                             MaterialBrowserWindow::Get().InputMaterial("##value", value);
+                            break;
+                        case StringParamDefinition::StringParamHint::SOUND:
+                            SoundBrowserWindow::Get().InputSound("##value", value);
                             break;
                         case StringParamDefinition::StringParamHint::ACTOR:
                             if (ImGui::BeginCombo("##targetActor", value->c_str()))

@@ -10,6 +10,7 @@
 #include <game_sdk/windows/ModelBrowserWindow.h>
 #include <game_sdk/windows/OptionsWindow.h>
 #include <game_sdk/windows/SetupWindow.h>
+#include <game_sdk/windows/SoundBrowserWindow.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/asset/DataAsset.h>
@@ -105,6 +106,7 @@ void SharedMgr::RenderSharedUI()
     TextureBrowserWindow::Get().Render();
     MaterialBrowserWindow::Get().Render();
     ModelBrowserWindow::Get().Render();
+    SoundBrowserWindow::Get().Render();
     SetupWindow::Get().Render();
     if (metricsVisible)
     {
