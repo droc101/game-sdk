@@ -26,6 +26,7 @@ class LightBakerGpu
                   const std::vector<Light> &lights,
                   const glm::uvec2 &lightmapSize,
                   uint32_t bounceCount,
+                  uint32_t sampleCount,
                   std::vector<uint16_t> &pixelData);
 
         [[nodiscard]] bool IsInitialized() const
@@ -67,11 +68,17 @@ class LightBakerGpu
 
         bool CreateAndWriteDescriptorSet();
 
-        bool CreateRaytracingPipeline(const glm::uvec2 &lightmapSize, uint32_t lightCount);
+        bool CreateDirectLightingPipeline(const glm::uvec2 &lightmapSize, uint32_t lightCount);
+
+        bool CreateGlobalIlluminationPipeline(const glm::uvec2 &lightmapSize, uint32_t sampleCount);
 
         bool CreateShaderBindingTables();
 
-        bool SingleBakeIteration(uint64_t width, uint64_t height, float percentDone, uint32_t baseLuxelIndex) const;
+        bool SingleBakeIteration(uint64_t width,
+                                 uint64_t height,
+                                 float percentDone,
+                                 uint32_t baseLuxelIndex,
+                                 bool directLighting) const;
 
         static inline VkPhysicalDeviceRayTracingPipelinePropertiesKHR physicalDeviceRayTracingPipelineProperties{
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR,
@@ -95,9 +102,12 @@ class LightBakerGpu
         /// The ray tracing pipeline layout
         /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
         VkPipelineLayout pipelineLayout{};
-        /// The ray tracing pipeline
+        /// The ray tracing pipeline used for calculating direct lighting
         /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
-        VkPipeline pipeline{};
+        VkPipeline directLightingPipeline{};
+        /// The ray tracing pipeline used for calculating global illumination
+        /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
+        VkPipeline globalIlluminationPipeline{};
         /// The descriptor set layout
         /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
         VkDescriptorSetLayout descriptorSetLayout{};
@@ -107,8 +117,10 @@ class LightBakerGpu
         /// The descriptor set
         /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
         VkDescriptorSet descriptorSet{};
-        LunaBuffer raygenShaderBindingTable{};
+        LunaBuffer directLightingRaygenShaderBindingTable{};
         LunaBuffer missShaderBindingTable{};
+        LunaBuffer globalIlluminationRaygenShaderBindingTable{};
+        LunaBuffer closestHitShaderBindingTable{};
         /// The bottom-level acceleration structure used for hardware acceleration of path tracing
         AccelerationStructure blas{};
         /// The buffer that holds the blas instances for the tlas to reference
@@ -119,7 +131,10 @@ class LightBakerGpu
         LunaBuffer indexBuffer{};
         LunaImage luxelPositionsImage{};
         LunaImage luxelNormalsImage{};
+        LunaImage luxelAlbedosImage{};
         LunaBuffer lightsBuffer{};
-        LunaBuffer lightmap{};
-        VkBufferView lightmapBufferView{};
+        LunaBuffer lightmapOne{};
+        LunaBuffer lightmapTwo{};
+        VkBufferView lightmapOneBufferView{};
+        VkBufferView lightmapTwoBufferView{};
 };

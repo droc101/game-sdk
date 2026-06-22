@@ -28,7 +28,8 @@ bool LightBaker::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &m
                   std::is_trivially_copyable_v<Light>);
 
     static constexpr uint64_t RAY_COUNT = (uint64_t{1} << 32);
-    static constexpr uint32_t BOUNCE_COUNT = 2;
+    static constexpr uint32_t BOUNCE_COUNT = 1;
+    static constexpr uint32_t SAMPLE_COUNT = 8192;
     static_assert(RAY_COUNT - 1 == static_cast<uint64_t>(static_cast<double>(RAY_COUNT) - 1),
                   "Ray count must be representable as a double in order to be preserved in the shader!");
     static_assert(RAY_COUNT % (1 << 15) == 0, "Ray count must be a multiple of (1 << 15)!");
@@ -38,7 +39,7 @@ bool LightBaker::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &m
     {
         return false;
     }
-    if (!baker.Bake(meshBuilders, lights, lightmapSize, BOUNCE_COUNT, pixelData))
+    if (!baker.Bake(meshBuilders, lights, lightmapSize, BOUNCE_COUNT, SAMPLE_COUNT, pixelData))
     {
         return false;
     }

@@ -10,7 +10,7 @@
 
 const float MIN_RAY_LENGTH = 0.0001;
 const float MIN_BRIGHTNESS = 1.0 / 256.0;
-const uint RAY_FLAGS = gl_RayFlagsOpaqueEXT | gl_RayFlagsCullBackFacingTrianglesEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT;
+const uint RAY_FLAGS = gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT;
 
 layout (constant_id = 0) const uint WIDTH = 8192;
 layout (constant_id = 1) const uint LIGHT_COUNT = 0;
@@ -37,22 +37,20 @@ layout (push_constant) uniform PushConstants {
 layout (location = 0) rayPayloadEXT bool isLightVisible;
 
 layout (set = 0, binding = 0) uniform accelerationStructureEXT accelerationStructure;
-/// The buffer containing the map's lights
-layout (std140, set = 0, binding = 1) readonly buffer LightsData {
+// layout (set = 0, binding = 1, rgba16f) readonly restrict uniform imageBuffer inputLightmap;
+layout (set = 0, binding = 2, rgba16f) writeonly restrict uniform imageBuffer outputLightmap;
+layout (set = 0, binding = 3, rgba32f) readonly restrict uniform image2D luxelPositions;
+layout (set = 0, binding = 4, rgba32f) readonly restrict uniform image2D luxelNormals;
+// layout (set = 0, binding = 5, rgba8) readonly restrict uniform image2D luxelAlbedos;
+layout (std140, set = 0, binding = 6) readonly restrict buffer LightsData {
     Light lights[];
 } lightsData;
-layout (set = 0, binding = 2, rgba32f) readonly uniform image2D luxelPositions;
-layout (set = 0, binding = 3, rgba32f) readonly uniform image2D luxelNormals;
-layout (set = 0, binding = 4, rgba16f) coherent writeonly uniform imageBuffer lightmap;
-
-int getTargetLuxelIndex() {
-    const int index = int(pushConstants.baseLuxelIndex + gl_LaunchIDEXT.x + gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x);
-    return index;
-}
-
-ivec2 getLuxelCoord(const int luxelIndex) {
-    return ivec2(luxelIndex % WIDTH, luxelIndex / WIDTH);
-}
+// layout (std140, set = 0, binding = 7) readonly restrict buffer VertexData {
+//     MapVertex vertices[];
+// } vertexData;
+// layout (set = 0, binding = 8) readonly restrict buffer IndexData {
+//     uint indices[];
+// } indexData;
 
 vec3 getLightColor(const Light light, const float distance) {
     const float multiplierSquared = light.attenuationMultiplier * light.attenuationMultiplier;
@@ -68,8 +66,8 @@ vec3 getLightColor(const Light light, const float distance) {
 }
 
 void main() {
-    const int luxelIndex = getTargetLuxelIndex();
-    const ivec2 luxelCoord = getLuxelCoord(luxelIndex);
+    const int luxelIndex = int(pushConstants.baseLuxelIndex + gl_LaunchIDEXT.x + gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x);
+    const ivec2 luxelCoord = ivec2(luxelIndex % WIDTH, luxelIndex / WIDTH);
     const vec4 luxelPosition = imageLoad(luxelPositions, luxelCoord);
 
 #ifdef DEBUG
@@ -110,5 +108,5 @@ void main() {
         }
     }
 
-    imageStore(lightmap, luxelIndex, vec4(accumulatedColor, 1));
+    imageStore(outputLightmap, luxelIndex, vec4(accumulatedColor, 1));
 }

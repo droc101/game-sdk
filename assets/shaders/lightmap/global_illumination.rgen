@@ -1,0 +1,101 @@
+#version 460
+
+#extension GL_EXT_ray_tracing : require
+#extension GL_EXT_debug_printf : require
+
+/// Enable extra checks and debug printf logging
+// #define DEBUG
+/// A constant multiplier applied to all lights, used for debugging when lights are very dim
+#define LIGHT_MULTIPLIER 1
+
+const float PI = 3.141592653589793;
+const float MIN_RAY_LENGTH = 0.0001;
+const float MAX_RAY_LENGTH = 1776; // 2 * sqrt(3) * MAP_MAX_HALF_EXTENTS; Rounded up slightly
+
+layout (constant_id = 0) const uint WIDTH = 8192;
+layout (constant_id = 1) const uint SAMPLE_COUNT = 1024;
+
+layout (push_constant) uniform PushConstants {
+    uint baseLuxelIndex;
+} pushConstants;
+
+layout (location = 0) rayPayloadEXT vec3 hitColor;
+
+layout (set = 0, binding = 0) uniform accelerationStructureEXT accelerationStructure;
+layout (set = 0, binding = 1, rgba16f) readonly restrict uniform imageBuffer inputLightmap;
+layout (set = 0, binding = 2, rgba16f) writeonly restrict uniform imageBuffer outputLightmap;
+layout (set = 0, binding = 3, rgba32f) readonly restrict uniform image2D luxelPositions;
+layout (set = 0, binding = 4, rgba32f) readonly restrict uniform image2D luxelNormals;
+// layout (set = 0, binding = 5, rgba8) readonly restrict uniform image2D luxelAlbedos;
+// layout (std140, set = 0, binding = 6) readonly restrict buffer LightsData {
+//     Light lights[];
+// } lightsData;
+// layout (std140, set = 0, binding = 7) readonly restrict buffer VertexData {
+//     MapVertex vertices[];
+// } vertexData;
+// layout (set = 0, binding = 8) readonly restrict buffer IndexData {
+//     uint indices[];
+// } indexData;
+
+// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
+// efficient VanDerCorpus calculation.
+float radicalInverse_VdC(uint bits)
+{
+     bits = (bits << 16u) | (bits >> 16u);
+     bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+     bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+     bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+     bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+     return float(bits) * 2.3283064365386963e-10; // / 0x100000000
+}
+
+vec3 getRayDirection(const uint sampleIndex) {
+    const vec2 hammersly = vec2(float(sampleIndex) / float(SAMPLE_COUNT), radicalInverse_VdC(sampleIndex));
+    const float r = sqrt(hammersly.x);
+    const float phi = 2 * PI * hammersly.y;
+    return vec3(r * cos(phi), r * sin(phi), sqrt(max(0.0, 1.0 - hammersly.x)));
+}
+
+vec3 buildTangent(vec3 n) {
+    float s = (n.z >= 0.0) ? 1.0 : -1.0;
+    float a = -1.0 / (s + n.z);
+    float b = n.x * n.y * a;
+    return vec3(1.0 + s * n.x * n.x * a, s * b, -s * n.x);
+}
+
+void main() {
+    const int luxelIndex = int(pushConstants.baseLuxelIndex + gl_LaunchIDEXT.x + gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x);
+    const ivec2 luxelCoord = ivec2(luxelIndex % WIDTH, luxelIndex / WIDTH);
+    const vec4 luxelPosition = imageLoad(luxelPositions, luxelCoord);
+
+#ifdef DEBUG
+    const vec4 luxelNormal = imageLoad(luxelNormals, luxelCoord);
+    if (luxelPosition.w == 0 || luxelNormal.w == 0) {
+        if (luxelPosition.w != luxelNormal.w) {
+            debugPrintfEXT("[ERROR] luxelPosition and luxelNormal disagree about if luxel is on a wall! luxelPosition.w: %f luxelNormal.w: %f\n", luxelPosition.w, luxelNormal.w);
+        }
+        return;
+    }
+#else
+    if (luxelPosition.w == 0) {
+        // The target luxel is not mapped to any wall
+        return;
+    }
+    // On the non-debug path, only load the normal if needed
+    const vec4 luxelNormal = imageLoad(luxelNormals, luxelCoord);
+#endif
+
+    vec3 accumulatedColor = vec3(0);
+
+    for (uint i = 0; i < SAMPLE_COUNT; i++) {
+        hitColor = vec3(0);
+        const vec3 localDir = getRayDirection(i);
+        const vec3 T = buildTangent(luxelNormal.xyz);
+        const vec3 B = cross(luxelNormal.xyz, T);
+        const vec3 rayDirection = localDir.x * T + localDir.y * B + localDir.z * luxelNormal.xyz;
+        traceRayEXT(accelerationStructure, gl_RayFlagsOpaqueEXT, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, rayDirection, MAX_RAY_LENGTH, 0);
+        accumulatedColor += hitColor;
+    }
+
+    imageStore(outputLightmap, luxelIndex, vec4(imageLoad(inputLightmap, luxelIndex).rgb + accumulatedColor / SAMPLE_COUNT, 1));
+}
