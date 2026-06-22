@@ -3,16 +3,17 @@
 #extension GL_EXT_ray_tracing : require
 #extension GL_EXT_debug_printf : require
 
-const double PI = 3.141592653589793lf;
-const double PHI = PI * (sqrt(5.0lf) - 1.0lf);
-const float EPSILON = 1e-6f;
+/// Enable extra checks and debug printf logging
+// #define DEBUG
+/// A constant multiplier applied to all lights, used for debugging when lights are very dim
+#define LIGHT_MULTIPLIER 1
 
 const float MIN_RAY_LENGTH = 0.0001;
-const float MAX_RAY_LENGTH = 1776; // 2 * sqrt(3) * MAP_MAX_HALF_EXTENTS; Rounded up slightly
+const float MIN_BRIGHTNESS = 1.0 / 256.0;
+const uint RAY_FLAGS = gl_RayFlagsOpaqueEXT | gl_RayFlagsCullBackFacingTrianglesEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT;
 
-// layout (constant_id = 0) const bool DIRECT_LIGHTING = true;
-layout (constant_id = 1) const uint WIDTH = 8192;
-layout (constant_id = 2) const uint HEIGHT = 4096;
+layout (constant_id = 0) const uint WIDTH = 8192;
+layout (constant_id = 1) const uint LIGHT_COUNT = 0;
 
 /// The format of the lights in the map. Interop with C++ must use std140
 struct Light {
@@ -29,73 +30,85 @@ struct Light {
     float fadingAngle;
 };
 
-struct Payload {
-    Light sourceLight;
-    vec3 rayOrigin;
-    vec3 rayDirection;
-    int targetLuxelIndex;
-    float distanceTraveled;
-};
-
 layout (push_constant) uniform PushConstants {
-    uint directLighting;
-    uint lightIndex;
-    uint iteration;
-    int luxelIndex;
+    uint baseLuxelIndex;
 } pushConstants;
 
-layout (location = 0) rayPayloadEXT Payload payload;
+layout (location = 0) rayPayloadEXT bool isLightVisible;
 
 layout (set = 0, binding = 0) uniform accelerationStructureEXT accelerationStructure;
 /// The buffer containing the map's lights
-layout (std140, set = 0, binding = 1) buffer LightsData {
+layout (std140, set = 0, binding = 1) readonly buffer LightsData {
     Light lights[];
 } lightsData;
-layout(set = 0, binding = 2) buffer LuxelDistancesTraveled {
-    float luxels[];
-} luxelDistancesTraveled;
-layout (set = 0, binding = 3, rgba32f) readonly uniform image2D luxelsInformation;
+layout (set = 0, binding = 2, rgba32f) readonly uniform image2D luxelPositions;
+layout (set = 0, binding = 3, rgba32f) readonly uniform image2D luxelNormals;
+layout (set = 0, binding = 4, rgba16f) coherent writeonly uniform imageBuffer lightmap;
 
 int getTargetLuxelIndex() {
-    const int index = int(gl_LaunchIDEXT.x + gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x + pushConstants.iteration * gl_LaunchSizeEXT.x * gl_LaunchSizeEXT.y);
+    const int index = int(pushConstants.baseLuxelIndex + gl_LaunchIDEXT.x + gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x);
     return index;
 }
 
-ivec2 getLuxelCoord(int luxelIndex) {
+ivec2 getLuxelCoord(const int luxelIndex) {
     return ivec2(luxelIndex % WIDTH, luxelIndex / WIDTH);
 }
 
-void main() {
-    const bool DIRECT_LIGHTING = pushConstants.directLighting != 0;
+vec3 getLightColor(const Light light, const float distance) {
+    const float multiplierSquared = light.attenuationMultiplier * light.attenuationMultiplier;
+    const float brightness = LIGHT_MULTIPLIER * (multiplierSquared * light.brightness) /
+           (multiplierSquared * light.constantAttenuation +
+            light.attenuationMultiplier * light.linearAttenuation * distance +
+            light.quadraticAttenuation * distance * distance);
 
-    vec4 sourceLuxelInformation;
-    if (!DIRECT_LIGHTING) {
-        sourceLuxelInformation = imageLoad(luxelsInformation, getLuxelCoord(pushConstants.luxelIndex));
-        if (sourceLuxelInformation.w < EPSILON) {
-            // The source luxel is not mapped to any wall
-            return;
-        }
+    if (brightness < MIN_BRIGHTNESS) {
+        return vec3(0);
     }
+    return light.color * brightness;
+}
 
-    payload.targetLuxelIndex = getTargetLuxelIndex();
-    vec4 targetLuxelInformation = imageLoad(luxelsInformation, getLuxelCoord(payload.targetLuxelIndex));
-    if (targetLuxelInformation.w != 1.0)
-    debugPrintfEXT("%f\n", targetLuxelInformation.w);
-    if (targetLuxelInformation.w < EPSILON) {
+void main() {
+    const int luxelIndex = getTargetLuxelIndex();
+    const ivec2 luxelCoord = getLuxelCoord(luxelIndex);
+    const vec4 luxelPosition = imageLoad(luxelPositions, luxelCoord);
+
+#ifdef DEBUG
+    const vec4 luxelNormal = imageLoad(luxelNormals, luxelCoord);
+    if (luxelPosition.w == 0 || luxelNormal.w == 0) {
+        if (luxelPosition.w != luxelNormal.w) {
+            debugPrintfEXT("[ERROR] luxelPosition and luxelNormal disagree about if luxel is on a wall! luxelPosition.w: %f luxelNormal.w: %f\n", luxelPosition.w, luxelNormal.w);
+        }
+        return;
+    }
+#else
+    if (luxelPosition.w == 0) {
         // The target luxel is not mapped to any wall
         return;
     }
+#endif
 
-    if (DIRECT_LIGHTING) {
-        payload.distanceTraveled = 0;
-    } else {
-        payload.distanceTraveled = luxelDistancesTraveled.luxels[pushConstants.luxelIndex];
+    vec3 accumulatedColor = vec3(0);
+
+    for (uint i = 0; i < LIGHT_COUNT; i++) {
+        isLightVisible = false;
+        const Light light = lightsData.lights[i];
+        const vec3 luxelToLight = light.position - luxelPosition.xyz;
+        const float distance = length(luxelToLight);
+        const vec3 luxelToLightNormalized = normalize(luxelToLight);
+#ifdef DEBUG
+        if (distance < MIN_RAY_LENGTH) {
+            debugPrintfEXT("[ERROR] Distance %f from luxel to light is less than minimum ray distance %f!", distance, MIN_RAY_LENGTH);
+        }
+#endif
+        traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, luxelToLightNormalized, distance, 0);
+        if (isLightVisible) {
+#ifndef DEBUG
+            // On the non-debug path, only load the normal if needed
+            const vec4 luxelNormal = imageLoad(luxelNormals, luxelCoord);
+#endif
+            accumulatedColor += getLightColor(light, distance) * max(dot(luxelToLightNormalized, luxelNormal.xyz), 0);
+        }
     }
-    
-    payload.sourceLight = lightsData.lights[pushConstants.lightIndex];
-    payload.rayOrigin = DIRECT_LIGHTING ? payload.sourceLight.position : sourceLuxelInformation.xyz;
-    payload.rayDirection = normalize(targetLuxelInformation.xyz - payload.rayOrigin);
-    traceRayEXT(accelerationStructure, gl_RayFlagsOpaqueEXT, 0xFF, 0, 0, 0, payload.rayOrigin, MIN_RAY_LENGTH, payload.rayDirection, MAX_RAY_LENGTH, 0);
-    
-    luxelDistancesTraveled.luxels[payload.targetLuxelIndex] = payload.distanceTraveled;
+
+    imageStore(lightmap, luxelIndex, vec4(accumulatedColor, 1));
 }

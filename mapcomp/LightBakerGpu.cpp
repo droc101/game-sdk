@@ -308,8 +308,8 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
                          std::vector<uint16_t> &pixelData)
 {
     const uint64_t luxelCount = lightmapSize.x * lightmapSize.y;
-    const uint64_t width = std::min(luxelCount, uint64_t{1} << 15);
-    const uint64_t height = std::min(std::max(luxelCount / width, uint64_t{1}), uint64_t{1} << 15);
+    const uint64_t width = std::min(luxelCount, uint64_t{1} << 10);
+    const uint64_t height = std::min(std::max(luxelCount / width, uint64_t{1}), uint64_t{1} << 10);
     const uint32_t iterations = std::max(luxelCount / width / height, uint64_t{1});
 
     if (meshBuilders.empty())
@@ -396,7 +396,7 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
     {
         return false;
     }
-    if (!CreatePipeline(lightmapSize))
+    if (!CreateRaytracingPipeline(lightmapSize, lights.size()))
     {
         return false;
     }
@@ -404,32 +404,18 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
     lunaDeviceWaitIdle(device);
 
     const std::chrono::time_point<std::chrono::system_clock> start = std::chrono::high_resolution_clock::now();
-    for (uint32_t lightIndex = 0; lightIndex < lights.size(); lightIndex++)
+    for (uint32_t iteration = 0; iteration < iterations; iteration++)
     {
-        for (uint32_t iteration = 0; iteration < iterations; iteration++)
+        if (!SingleBakeIteration(width,
+                                 height,
+                                 static_cast<float>(100 * iteration) / static_cast<float>(iterations),
+                                 width * height * iteration))
         {
-            if (!SingleBakeIteration(width,
-                                     height,
-                                     iteration,
-                                     lightIndex,
-                                     static_cast<float>(100 * (iteration + lightIndex)) /
-                                             static_cast<float>(lights.size() * iterations),
-                                     true,
-                                     0))
-            {
-                return false;
-            }
+            return false;
         }
     }
     const std::chrono::time_point<std::chrono::system_clock> end = std::chrono::high_resolution_clock::now();
     Logger::Info("Compiled in {}us", std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
-
-    // lunaDeviceWaitIdle(device);
-    // LunaBuffer outputLightmap{};
-    // if (!ConvertLightmapToFloat16(lightmapSize, outputLightmap))
-    // {
-    //     return false;
-    // }
 
     lunaDeviceWaitIdle(device);
     Logger::Info("Saving Lightmap...");
@@ -549,18 +535,6 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
     const VkBuffer vkVertexBuffer = lunaGetVkBuffer(vertexBuffer);
     const VkBuffer vkIndexBuffer = lunaGetVkBuffer(indexBuffer);
 
-    const LunaBufferCreationInfo lightmapCreationInfo = {
-        .size = lightmapSize.x * lightmapSize.y * sizeof(float),
-        .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-        .queueFamilyIndexCount = 1,
-        .queueFamilyIndices = &queueFamilyIndex,
-        .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
-    };
-    if (!CheckResult(lunaCreateBuffer(device, &lightmapCreationInfo, &luxelDistancesTraveledBuffer)))
-    {
-        return false;
-    }
-
     static constexpr VkAttachmentDescription ATTACHMENT_DESCRIPTION = {
         .format = VK_FORMAT_R32G32B32A32_SFLOAT,
         .samples = VK_SAMPLE_COUNT_1_BIT,
@@ -571,14 +545,21 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         .initialLayout = VK_IMAGE_LAYOUT_GENERAL,
         .finalLayout = VK_IMAGE_LAYOUT_GENERAL,
     };
-    static constexpr VkAttachmentReference ATTACHMENT_REFERENCE = {
-        .attachment = 0,
-        .layout = VK_IMAGE_LAYOUT_GENERAL,
+    static constexpr std::array ATTACHMENT_DESCRIPTIONS = {ATTACHMENT_DESCRIPTION, ATTACHMENT_DESCRIPTION};
+    static constexpr std::array ATTACHMENT_REFERENCES = {
+        VkAttachmentReference{
+            .attachment = 0,
+            .layout = VK_IMAGE_LAYOUT_GENERAL,
+        },
+        VkAttachmentReference{
+            .attachment = 1,
+            .layout = VK_IMAGE_LAYOUT_GENERAL,
+        },
     };
     static constexpr VkSubpassDescription SUBPASS = {
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &ATTACHMENT_REFERENCE,
+        .colorAttachmentCount = ATTACHMENT_REFERENCES.size(),
+        .pColorAttachments = ATTACHMENT_REFERENCES.data(),
     };
     static constexpr VkSubpassDependency DEPENDENCY = {
         .srcSubpass = VK_SUBPASS_EXTERNAL,
@@ -589,8 +570,8 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
     };
     const VkRenderPassCreateInfo renderPassCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .attachmentCount = 1,
-        .pAttachments = &ATTACHMENT_DESCRIPTION,
+        .attachmentCount = ATTACHMENT_DESCRIPTIONS.size(),
+        .pAttachments = ATTACHMENT_DESCRIPTIONS.data(),
         .subpassCount = 1,
         .pSubpasses = &SUBPASS,
         .dependencyCount = 1,
@@ -617,7 +598,7 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         .submitInfo = &submitInfo,
     };
     const LunaSamplerCreationInfo samplerCreationInfo = {};
-    const LunaImageCreationInfo lightmapMaskCreateInfo = {
+    const LunaImageCreationInfo luxelInformationImageCreateInfo = {
         .format = VK_FORMAT_R32G32B32A32_SFLOAT,
         .width = lightmapSize.x,
         .height = lightmapSize.y,
@@ -630,17 +611,24 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         .writeInfo = writeInfo,
         .samplerCreationInfo = &samplerCreationInfo,
     };
-    if (!CheckResult(lunaCreateImage(device, commandBuffer, &lightmapMaskCreateInfo, &luxelsInformation)))
+    if (!CheckResult(lunaCreateImage(device, commandBuffer, &luxelInformationImageCreateInfo, &luxelPositionsImage)))
+    {
+        return false;
+    }
+    if (!CheckResult(lunaCreateImage(device, commandBuffer, &luxelInformationImageCreateInfo, &luxelNormalsImage)))
     {
         return false;
     }
 
-    VkImageView lightmapMaskImageView = lunaGetVkImageView(luxelsInformation);
+    const std::array attachmentImageViews = {
+        lunaGetVkImageView(luxelPositionsImage),
+        lunaGetVkImageView(luxelNormalsImage),
+    };
     const VkFramebufferCreateInfo framebufferCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .renderPass = renderPass,
-        .attachmentCount = 1,
-        .pAttachments = &lightmapMaskImageView,
+        .attachmentCount = attachmentImageViews.size(),
+        .pAttachments = attachmentImageViews.data(),
         .width = lightmapSize.x,
         .height = lightmapSize.y,
         .layers = 1,
@@ -693,15 +681,22 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         .stride = sizeof(MapVertex),
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
     };
-    static constexpr std::array VERTEX_INPUT_ATTRIBUTE_DESCRIPTIONS = {VkVertexInputAttributeDescription{
-                                                                           .format = VK_FORMAT_R32G32_SFLOAT,
-                                                                           .offset = offsetof(MapVertex, lightmapUv),
-                                                                       },
-                                                                       VkVertexInputAttributeDescription{
-                                                                           .location = 1,
-                                                                           .format = VK_FORMAT_R32G32B32_SFLOAT,
-                                                                           .offset = offsetof(MapVertex, position),
-                                                                       }};
+    static constexpr std::array VERTEX_INPUT_ATTRIBUTE_DESCRIPTIONS = {
+        VkVertexInputAttributeDescription{
+            .format = VK_FORMAT_R32G32_SFLOAT,
+            .offset = offsetof(MapVertex, lightmapUv),
+        },
+        VkVertexInputAttributeDescription{
+            .location = 1,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(MapVertex, position),
+        },
+        VkVertexInputAttributeDescription{
+            .location = 2,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(MapVertex, normal),
+        },
+    };
     const VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .vertexBindingDescriptionCount = 1,
@@ -755,10 +750,11 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
                           VK_COLOR_COMPONENT_B_BIT |
                           VK_COLOR_COMPONENT_A_BIT,
     };
+    static constexpr std::array COLOR_BLEND_ATTACHMENTS = {COLOR_BLEND_ATTACHMENT, COLOR_BLEND_ATTACHMENT};
     const VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-        .attachmentCount = 1,
-        .pAttachments = &COLOR_BLEND_ATTACHMENT,
+        .attachmentCount = COLOR_BLEND_ATTACHMENTS.size(),
+        .pAttachments = COLOR_BLEND_ATTACHMENTS.data(),
     };
     const VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -789,16 +785,17 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
     {
         return false;
     }
-    const VkClearValue clearValue = {
+    static constexpr VkClearValue CLEAR_VALUE = {
         .color = VkClearColorValue{.float32 = {0, 0, 0, 0}},
     };
+    static constexpr std::array CLEAR_VALUES = {CLEAR_VALUE, CLEAR_VALUE};
     const VkRenderPassBeginInfo renderPassBeginInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .renderPass = renderPass,
         .framebuffer = framebuffer,
         .renderArea = VkRect2D{.extent = VkExtent2D{.width = lightmapSize.x, .height = lightmapSize.y}},
-        .clearValueCount = 1,
-        .pClearValues = &clearValue,
+        .clearValueCount = CLEAR_VALUES.size(),
+        .pClearValues = CLEAR_VALUES.data(),
     };
     vkCmdBeginRenderPass(vkCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -1105,7 +1102,7 @@ bool LightBakerGpu::CreateTLAS()
     return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }
 
-bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize)
+bool LightBakerGpu::CreateRaytracingPipeline(const glm::uvec2 &lightmapSize, const uint32_t lightCount)
 {
     const VkShaderModule raygenShaderModule = GenerateShaderModule("assets/shaders/lightmap/raygen.rgen",
                                                                    EShLangRayGen);
@@ -1113,36 +1110,23 @@ bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize)
     {
         return false;
     }
-    const VkShaderModule closestHitShaderModule = GenerateShaderModule("assets/shaders/lightmap/closesthit.rchit",
-                                                                       EShLangClosestHit);
-    if (closestHitShaderModule == VK_NULL_HANDLE)
+    const VkShaderModule missShaderModule = GenerateShaderModule("assets/shaders/lightmap/miss.rmiss", EShLangMiss);
+    if (missShaderModule == VK_NULL_HANDLE)
     {
         return false;
     }
 
 
     const std::array raygenSpecializationData = {
-        uint32_t{true},
         lightmapSize.x,
-        lightmapSize.y,
+        lightCount,
     };
-    static constexpr SpecializationMapEntries<uint32_t, uint32_t, uint32_t> RAYGEN_MAP_ENTRIES{};
+    static constexpr SpecializationMapEntries<uint32_t, uint32_t> RAYGEN_MAP_ENTRIES{};
     const VkSpecializationInfo raygenSpecializationInfo = {
         .mapEntryCount = RAYGEN_MAP_ENTRIES.size(),
         .pMapEntries = RAYGEN_MAP_ENTRIES.data(),
         .dataSize = sizeof(raygenSpecializationData),
         .pData = raygenSpecializationData.data(),
-    };
-    const std::array closestHitSpecializationData = {
-        lightmapSize.x,
-        lightmapSize.y,
-    };
-    static constexpr SpecializationMapEntries<uint32_t, uint32_t> CLOSEST_HIT_MAP_ENTRIES{};
-    const VkSpecializationInfo closestHitSpecializationInfo = {
-        .mapEntryCount = CLOSEST_HIT_MAP_ENTRIES.size(),
-        .pMapEntries = CLOSEST_HIT_MAP_ENTRIES.data(),
-        .dataSize = sizeof(closestHitSpecializationData),
-        .pData = closestHitSpecializationData.data(),
     };
     const std::array shaderStages = {
         VkPipelineShaderStageCreateInfo{
@@ -1154,14 +1138,13 @@ bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize)
         },
         VkPipelineShaderStageCreateInfo{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-            .stage = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
-            .module = closestHitShaderModule,
+            .stage = VK_SHADER_STAGE_MISS_BIT_KHR,
+            .module = missShaderModule,
             .pName = "main",
-            .pSpecializationInfo = &closestHitSpecializationInfo,
         },
     };
 
-    constexpr std::array SHADER_GROUPS = {
+    static constexpr std::array SHADER_GROUPS = {
         VkRayTracingShaderGroupCreateInfoKHR{
             .sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
             .type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR,
@@ -1172,26 +1155,24 @@ bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize)
         },
         VkRayTracingShaderGroupCreateInfoKHR{
             .sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
-            .type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR,
-            .generalShader = VK_SHADER_UNUSED_KHR,
-            .closestHitShader = 1,
+            .type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR,
+            .generalShader = 1,
+            .closestHitShader = VK_SHADER_UNUSED_KHR,
             .anyHitShader = VK_SHADER_UNUSED_KHR,
             .intersectionShader = VK_SHADER_UNUSED_KHR,
         },
     };
 
-    constexpr std::array PUSH_CONSTANT_RANGES = {
-        VkPushConstantRange{
-            .stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-            .size = sizeof(uint32_t) * 4,
-        },
+    static constexpr VkPushConstantRange PUSH_CONSTANT_RANGE = {
+        .stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+        .size = sizeof(uint32_t),
     };
     const VkPipelineLayoutCreateInfo layoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = 1,
         .pSetLayouts = &descriptorSetLayout,
-        .pushConstantRangeCount = PUSH_CONSTANT_RANGES.size(),
-        .pPushConstantRanges = PUSH_CONSTANT_RANGES.data(),
+        .pushConstantRangeCount = 1,
+        .pPushConstantRanges = &PUSH_CONSTANT_RANGE,
     };
     if (!CheckResult(vkCreatePipelineLayout(lunaGetVkDevice(device), &layoutCreateInfo, nullptr, &pipelineLayout)))
     {
@@ -1232,7 +1213,7 @@ bool LightBakerGpu::CreatePipeline(const glm::uvec2 &lightmapSize)
     // }
 
     vkDestroyShaderModule(lunaGetVkDevice(device), raygenShaderModule, nullptr);
-    vkDestroyShaderModule(lunaGetVkDevice(device), closestHitShaderModule, nullptr);
+    vkDestroyShaderModule(lunaGetVkDevice(device), missShaderModule, nullptr);
 
     return CreateShaderBindingTables();
 }
@@ -1242,10 +1223,6 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
     static constexpr DescriptorSetLayoutBindings DESCRIPTOR_SET_LAYOUT_BINDINGS{
         std::pair{
             VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
-            VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
-        },
-        std::pair{
-            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             VK_SHADER_STAGE_RAYGEN_BIT_KHR,
         },
         std::pair{
@@ -1257,16 +1234,12 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
             VK_SHADER_STAGE_RAYGEN_BIT_KHR,
         },
         std::pair{
-            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
-        },
-        std::pair{
-            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+            VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            VK_SHADER_STAGE_RAYGEN_BIT_KHR,
         },
         std::pair{
             VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
-            VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+            VK_SHADER_STAGE_RAYGEN_BIT_KHR,
         },
     };
 
@@ -1290,11 +1263,11 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
         },
         VkDescriptorPoolSize{
             .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .descriptorCount = 5,
+            .descriptorCount = 1,
         },
         VkDescriptorPoolSize{
             .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .descriptorCount = 1,
+            .descriptorCount = 2,
         },
         VkDescriptorPoolSize{
             .type = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
@@ -1336,25 +1309,15 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
         .offset = lunaGetBufferOffset(lightsBuffer),
         .range = lunaGetBufferSize(lightsBuffer),
     };
-    const VkDescriptorBufferInfo luxelDistancesTraveledBufferInfo = {
-        .buffer = lunaGetVkBuffer(lightsBuffer),
-        .offset = lunaGetBufferOffset(lightsBuffer),
-        .range = lunaGetBufferSize(lightsBuffer),
+    const VkDescriptorImageInfo luxelPositionsImageInfo = {
+        .sampler = lunaGetVkSampler(luxelPositionsImage),
+        .imageView = lunaGetVkImageView(luxelPositionsImage),
+        .imageLayout = lunaGetImageLayout(luxelPositionsImage),
     };
-    const VkDescriptorImageInfo luxelsInformationInfo = {
-        .sampler = lunaGetVkSampler(luxelsInformation),
-        .imageView = lunaGetVkImageView(luxelsInformation),
-        .imageLayout = lunaGetImageLayout(luxelsInformation),
-    };
-    const VkDescriptorBufferInfo vertexBufferInfo = {
-        .buffer = lunaGetVkBuffer(vertexBuffer),
-        .offset = lunaGetBufferOffset(vertexBuffer),
-        .range = lunaGetBufferSize(vertexBuffer),
-    };
-    const VkDescriptorBufferInfo indexBufferInfo = {
-        .buffer = lunaGetVkBuffer(indexBuffer),
-        .offset = lunaGetBufferOffset(indexBuffer),
-        .range = lunaGetBufferSize(indexBuffer),
+    const VkDescriptorImageInfo luxelNormalsImageInfo = {
+        .sampler = lunaGetVkSampler(luxelNormalsImage),
+        .imageView = lunaGetVkImageView(luxelNormalsImage),
+        .imageLayout = lunaGetImageLayout(luxelNormalsImage),
     };
     const std::array descriptorSetWrites = {
         VkWriteDescriptorSet{
@@ -1378,8 +1341,8 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
             .dstSet = descriptorSet,
             .dstBinding = 2,
             .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .pBufferInfo = &luxelDistancesTraveledBufferInfo,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            .pImageInfo = &luxelPositionsImageInfo,
         },
         VkWriteDescriptorSet{
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -1387,28 +1350,12 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
             .dstBinding = 3,
             .descriptorCount = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .pImageInfo = &luxelsInformationInfo,
+            .pImageInfo = &luxelNormalsImageInfo,
         },
         VkWriteDescriptorSet{
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .dstSet = descriptorSet,
             .dstBinding = 4,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .pBufferInfo = &vertexBufferInfo,
-        },
-        VkWriteDescriptorSet{
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = descriptorSet,
-            .dstBinding = 5,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .pBufferInfo = &indexBufferInfo,
-        },
-        VkWriteDescriptorSet{
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = descriptorSet,
-            .dstBinding = 6,
             .descriptorCount = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
             .pTexelBufferView = &lightmapBufferView,
@@ -1437,7 +1384,7 @@ bool LightBakerGpu::CreateShaderBindingTables()
         return false;
     }
 
-    const LunaBufferCreationInfo closestHitShaderBindingTableCreationInfo = {
+    const LunaBufferCreationInfo missShaderBindingTableCreationInfo = {
         .size = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
         .alignment = physicalDeviceRayTracingPipelineProperties.shaderGroupBaseAlignment,
         .usage = USAGE_FLAGS,
@@ -1445,9 +1392,7 @@ bool LightBakerGpu::CreateShaderBindingTables()
         .queueFamilyIndices = &queueFamilyIndex,
         .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
     };
-    if (!CheckResult(lunaCreateBuffer(device,
-                                      &closestHitShaderBindingTableCreationInfo,
-                                      &closestHitShaderBindingTable)))
+    if (!CheckResult(lunaCreateBuffer(device, &missShaderBindingTableCreationInfo, &missShaderBindingTable)))
     {
         return false;
     }
@@ -1466,7 +1411,7 @@ bool LightBakerGpu::CreateShaderBindingTables()
     const LunaBufferWriteInfo raygenShaderBindingTableWriteInfo = {
         .bytes = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
         .data = shaderHandles.data(),
-        .stageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        .stageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
     };
     if (!CheckResult(lunaWriteDataToBuffer(device,
                                            commandBuffer,
@@ -1476,24 +1421,21 @@ bool LightBakerGpu::CreateShaderBindingTables()
         return false;
     }
 
-    const LunaBufferWriteInfo closestHitShaderBindingTableWriteInfo = {
+    const LunaBufferWriteInfo missShaderBindingTableWriteInfo = {
         .bytes = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
         .data = shaderHandles.data() + physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
-        .stageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        .stageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
     };
     return CheckResult(lunaWriteDataToBuffer(device,
                                              commandBuffer,
-                                             closestHitShaderBindingTable,
-                                             &closestHitShaderBindingTableWriteInfo));
+                                             missShaderBindingTable,
+                                             &missShaderBindingTableWriteInfo));
 }
 
 bool LightBakerGpu::SingleBakeIteration(const uint64_t width,
                                         const uint64_t height,
-                                        const uint32_t iteration,
-                                        const uint32_t lightIndex,
                                         const float percentDone,
-                                        const bool directLighting,
-                                        const int luxelIndex) const
+                                        const uint32_t baseLuxelIndex) const
 {
     Logger::Info("Baking lighting {}%...", percentDone);
 
@@ -1512,31 +1454,12 @@ bool LightBakerGpu::SingleBakeIteration(const uint64_t width,
                             &descriptorSet,
                             0,
                             nullptr);
-    const uint32_t directLightingUint = uint32_t{directLighting};
     vkCmdPushConstants(vkCommandBuffer,
                        pipelineLayout,
                        VK_SHADER_STAGE_RAYGEN_BIT_KHR,
                        0,
-                       sizeof(uint32_t),
-                       &directLightingUint);
-    vkCmdPushConstants(vkCommandBuffer,
-                       pipelineLayout,
-                       VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-                       sizeof(uint32_t),
-                       sizeof(lightIndex),
-                       &lightIndex);
-    vkCmdPushConstants(vkCommandBuffer,
-                       pipelineLayout,
-                       VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-                       sizeof(uint32_t) + sizeof(lightIndex),
-                       sizeof(iteration),
-                       &iteration);
-    vkCmdPushConstants(vkCommandBuffer,
-                       pipelineLayout,
-                       VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-                       sizeof(uint32_t) + sizeof(lightIndex) + sizeof(iteration),
-                       sizeof(int),
-                       &luxelIndex);
+                       sizeof(baseLuxelIndex),
+                       &baseLuxelIndex);
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline);
 
     static constexpr VkStridedDeviceAddressRegionKHR STRIDED_DEVICE_ADDRESS_REGION_NONE{};
@@ -1545,15 +1468,15 @@ bool LightBakerGpu::SingleBakeIteration(const uint64_t width,
         .stride = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
         .size = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
     };
-    const VkStridedDeviceAddressRegionKHR closestHitShaderBindingTableAddressRegion = {
-        .deviceAddress = lunaGetBufferDeviceAddress(device, closestHitShaderBindingTable),
+    const VkStridedDeviceAddressRegionKHR missShaderBindingTableAddressRegion = {
+        .deviceAddress = lunaGetBufferDeviceAddress(device, missShaderBindingTable),
         .stride = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
         .size = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
     };
     vkCmdTraceRaysKHR(vkCommandBuffer,
                       &raygenShaderBindingTableAddressRegion,
+                      &missShaderBindingTableAddressRegion,
                       &STRIDED_DEVICE_ADDRESS_REGION_NONE,
-                      &closestHitShaderBindingTableAddressRegion,
                       &STRIDED_DEVICE_ADDRESS_REGION_NONE,
                       width,
                       height,
@@ -1566,169 +1489,5 @@ bool LightBakerGpu::SingleBakeIteration(const uint64_t width,
         .signalSemaphoreCount = 1,
         .signalSemaphores = &semaphore,
     };
-    if (!CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo)))
-    {
-        return false;
-    }
-    return true;
-}
-
-bool LightBakerGpu::ConvertLightmapToFloat16(const glm::uvec2 &lightmapSize, LunaBuffer &outputLightmap) const
-{
-    static constexpr glm::uvec2 WORK_GROUP_SIZE{32};
-
-    Logger::Info("Finalizing Lightmap...");
-
-
-    std::ifstream glslFile("assets/shaders/lightmap/convert_to_float16.comp");
-    std::stringstream glsl;
-    glsl << glslFile.rdbuf();
-    glslFile.close();
-    ShaderCompiler shaderCompiler(glsl.str(), EShLangCompute, glslang::EShTargetClientVersion::EShTargetVulkan_1_2);
-    std::vector<uint32_t> spirv;
-    if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
-    {
-        Logger::Error("Error compiling shader assets/shaders/lightmap/convert_to_float16.comp!");
-        return false;
-    }
-
-    LunaShaderModule shaderModule{};
-    const LunaShaderModuleCreationInfo shaderModuleCreationInfo = {
-        .creationInfoType = LUNA_SHADER_MODULE_CREATION_INFO_TYPE_SPIRV,
-        .creationInfoUnion = {.spirv = {.size = spirv.size() * sizeof(uint32_t), .spirv = spirv.data()}},
-    };
-    if (!CheckResult(lunaCreateShaderModule(device, &shaderModuleCreationInfo, &shaderModule)))
-    {
-        return false;
-    }
-
-    LunaDescriptorSetLayout descriptorSetLayout{};
-    static constexpr DescriptorSetLayoutBindings DESCRIPTOR_SET_LAYOUT_BINDINGS{
-        std::pair{
-            VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            std::array{"input lightmap"},
-        },
-        std::pair{
-            VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
-            std::array{"output lightmap"},
-        },
-    };
-    constexpr LunaDescriptorSetLayoutCreationInfo DESCRIPTOR_SET_LAYOUT_CREATION_INFO = {
-        .bindingCount = DESCRIPTOR_SET_LAYOUT_BINDINGS.size(),
-        .bindings = DESCRIPTOR_SET_LAYOUT_BINDINGS.data(),
-    };
-    if (!CheckResult(lunaCreateDescriptorSetLayout(device, &DESCRIPTOR_SET_LAYOUT_CREATION_INFO, &descriptorSetLayout)))
-    {
-        return false;
-    }
-
-    const std::array specializationData = {
-        lightmapSize.x,
-        WORK_GROUP_SIZE.x,
-        WORK_GROUP_SIZE.y,
-    };
-    static constexpr SpecializationMapEntries<uint32_t, uint32_t, uint32_t> MAP_ENTRIES{};
-    const VkSpecializationInfo specializationInfo = {
-        .mapEntryCount = MAP_ENTRIES.size(),
-        .pMapEntries = MAP_ENTRIES.data(),
-        .dataSize = sizeof(specializationData),
-        .pData = specializationData.data(),
-    };
-    const LunaPipelineShaderStageCreationInfo shaderStageCreationInfo = {
-        .stage = VK_SHADER_STAGE_COMPUTE_BIT,
-        .module = shaderModule,
-        .specializationInfo = &specializationInfo,
-    };
-    const LunaPipelineLayoutCreationInfo layoutCreationInfo = {
-        .descriptorSetLayoutCount = 1,
-        .descriptorSetLayouts = &descriptorSetLayout,
-    };
-    const LunaComputePipelineCreationInfo pipelineCreationInfo = {
-        .flags = VK_PIPELINE_CREATE_DISPATCH_BASE,
-        .shaderStageCreationInfo = shaderStageCreationInfo,
-        .layoutCreationInfo = layoutCreationInfo,
-    };
-    LunaComputePipeline pipeline{};
-    if (!CheckResult(lunaCreateComputePipeline(device, &pipelineCreationInfo, &pipeline)))
-    {
-        return false;
-    }
-
-    LunaDescriptorPool descriptorPool{};
-    static constexpr DescriptorPoolCreationInfo<&DESCRIPTOR_SET_LAYOUT_BINDINGS> DESCRIPTOR_POOL_CREATION_INFO{};
-    if (!CheckResult(lunaCreateDescriptorPool(device, &DESCRIPTOR_POOL_CREATION_INFO, &descriptorPool)))
-    {
-        return false;
-    }
-
-    const LunaDescriptorSetAllocationInfo allocationInfo = {
-        .descriptorPool = descriptorPool,
-        .setLayoutCount = 1,
-        .setLayouts = &descriptorSetLayout,
-    };
-    LunaDescriptorSet descriptorSet{};
-    if (!CheckResult(lunaAllocateDescriptorSets(device, &allocationInfo, &descriptorSet)))
-    {
-        return false;
-    }
-
-    const LunaBufferCreationInfo levelGeometryLightmapCreationInfo = {
-        .size = lightmapSize.x * lightmapSize.y * sizeof(_Float16) * 4,
-        .usage = VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT,
-        .queueFamilyIndexCount = 1,
-        .queueFamilyIndices = &queueFamilyIndex,
-        .allocationCreateInfo = &MAPPED_ALLOCATION_CREATE_INFO,
-    };
-    if (!CheckResult(lunaCreateBuffer(device, &levelGeometryLightmapCreationInfo, &outputLightmap)))
-    {
-        return false;
-    }
-
-    LunaBufferView outputLightmapBufferView{};
-    const LunaBufferViewCreationInfo outputLightmapBufferViewCreationInfo = {
-        .buffer = outputLightmap,
-        .format = VK_FORMAT_R16G16B16A16_SFLOAT,
-    };
-    if (!CheckResult(lunaCreateBufferView(device, &outputLightmapBufferViewCreationInfo, &outputLightmapBufferView)))
-    {
-        return false;
-    }
-
-    const LunaDescriptorImageInfo inputLightmapBufferInfo = {
-        .image = luxelsInformation,
-        .imageLayout = lunaGetImageLayout(luxelsInformation),
-    };
-    const std::array writes = {
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "input lightmap",
-            .imageInfo = &inputLightmapBufferInfo,
-        },
-        LunaWriteDescriptorSet{
-            .descriptorSet = descriptorSet,
-            .bindingName = "output lightmap",
-            .texelBufferView = outputLightmapBufferView,
-        },
-    };
-    lunaWriteDescriptorSets(device, writes.size(), writes.data());
-
-    const LunaDescriptorSetBindInfo descriptorSetBindInfo = {
-        .descriptorSetCount = 1,
-        .descriptorSets = &descriptorSet,
-    };
-    assert(lightmapSize.x % WORK_GROUP_SIZE.x == 0 && lightmapSize.y % WORK_GROUP_SIZE.y == 0);
-    const LunaCommandBufferSubmitInfo submitInfo = {
-        .queue = queue,
-        .waitSemaphoreCount = 1,
-        .waitSemaphores = &semaphore,
-        .waitDstStageMasks = &WAIT_STAGE,
-    };
-    const LunaDispatchInfo dispatchInfo = {
-        .pipeline = pipeline,
-        .descriptorSetBindInfo = &descriptorSetBindInfo,
-        .groupCountX = lightmapSize.x / WORK_GROUP_SIZE.x,
-        .groupCountY = lightmapSize.y / WORK_GROUP_SIZE.y,
-        .submitInfo = &submitInfo,
-    };
-    return CheckResult(lunaDispatch(device, commandBuffer, &dispatchInfo));
+    return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }

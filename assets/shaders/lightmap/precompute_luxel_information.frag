@@ -1,12 +1,12 @@
 #version 460
 
-layout (constant_id = 0) const uint WIDTH = 8192;
-layout (constant_id = 1) const uint HEIGHT = 4096;
-
 layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec3 inNormal;
 
-layout(location = 0) out vec4 outLuxelInformation;
+layout(location = 0) out vec4 outLuxelPosition;
+layout(location = 1) out vec4 outLuxelNormal;
 
 void main() {
-    outLuxelInformation = vec4(inPosition, 1);
+    outLuxelPosition = vec4(inPosition, 1);
+    outLuxelNormal = vec4(inNormal, 1);
 }

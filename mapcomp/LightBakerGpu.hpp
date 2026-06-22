@@ -67,19 +67,11 @@ class LightBakerGpu
 
         bool CreateAndWriteDescriptorSet();
 
-        bool CreatePipeline(const glm::uvec2 &lightmapSize);
+        bool CreateRaytracingPipeline(const glm::uvec2 &lightmapSize, uint32_t lightCount);
 
         bool CreateShaderBindingTables();
 
-        bool SingleBakeIteration(uint64_t width,
-                                 uint64_t height,
-                                 uint32_t iteration,
-                                 uint32_t lightIndex,
-                                 float percentDone,
-                                 bool directLighting,
-                                 int luxelIndex) const;
-
-        bool ConvertLightmapToFloat16(const glm::uvec2 &lightmapSize, LunaBuffer &outputLightmap) const;
+        bool SingleBakeIteration(uint64_t width, uint64_t height, float percentDone, uint32_t baseLuxelIndex) const;
 
         static inline VkPhysicalDeviceRayTracingPipelinePropertiesKHR physicalDeviceRayTracingPipelineProperties{
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR,
@@ -116,7 +108,6 @@ class LightBakerGpu
         /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
         VkDescriptorSet descriptorSet{};
         LunaBuffer raygenShaderBindingTable{};
-        LunaBuffer closestHitShaderBindingTable{};
         LunaBuffer missShaderBindingTable{};
         /// The bottom-level acceleration structure used for hardware acceleration of path tracing
         AccelerationStructure blas{};
@@ -126,8 +117,8 @@ class LightBakerGpu
         AccelerationStructure tlas{};
         LunaBuffer vertexBuffer{};
         LunaBuffer indexBuffer{};
-        LunaImage luxelsInformation{};
-        LunaBuffer luxelDistancesTraveledBuffer{};
+        LunaImage luxelPositionsImage{};
+        LunaImage luxelNormalsImage{};
         LunaBuffer lightsBuffer{};
         LunaBuffer lightmap{};
         VkBufferView lightmapBufferView{};
