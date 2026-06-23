@@ -9,24 +9,30 @@
 #define LIGHT_MULTIPLIER 1
 
 const float MIN_RAY_LENGTH = 0.0001;
+const float MAX_RAY_LENGTH = 1776; // 2 * sqrt(3) * MAP_MAX_HALF_EXTENTS; Rounded up slightly
 const float MIN_BRIGHTNESS = 1.0 / 256.0;
 const uint RAY_FLAGS = gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT;
 
 layout (constant_id = 0) const uint WIDTH = 8192;
 layout (constant_id = 1) const uint LIGHT_COUNT = 0;
 
+const uint LIGHT_TYPE_POINT = 0u;
+const uint LIGHT_TYPE_SPOT = 1u;
+const uint LIGHT_TYPE_AREA = 2u;
+const uint LIGHT_TYPE_DIRECTIONAL = 3u;
+
 /// The format of the lights in the map. Interop with C++ must use std140
 struct Light {
     uint type; // Maps to an enum in C++
     vec3 position;
-    vec3 rotation;
+    vec3 forwardDirection;
     vec3 color;
     float brightness;
     float constantAttenuation;
     float linearAttenuation;
     float quadraticAttenuation;
     float attenuationMultiplier;
-    float brightAngle;
+    float brightAngle; // 0-90 degrees
     float fadingAngle;
 };
 
@@ -52,12 +58,29 @@ layout (std140, set = 0, binding = 6) readonly restrict buffer LightsData {
 //     uint indices[];
 // } indexData;
 
-vec3 getLightColor(const Light light, const float distance) {
-    const float multiplierSquared = light.attenuationMultiplier * light.attenuationMultiplier;
-    const float brightness = LIGHT_MULTIPLIER * (multiplierSquared * light.brightness) /
-           (multiplierSquared * light.constantAttenuation +
-            light.attenuationMultiplier * light.linearAttenuation * distance +
-            light.quadraticAttenuation * distance * distance);
+vec3 getLightColor(const Light light, const float distance, const float theta) {
+    float multiplierSquared;
+    float brightness;
+    if (light.type == LIGHT_TYPE_POINT) {
+        multiplierSquared = light.attenuationMultiplier * light.attenuationMultiplier;
+        brightness = LIGHT_MULTIPLIER * (multiplierSquared * light.brightness) /
+            (multiplierSquared * light.constantAttenuation +
+                light.attenuationMultiplier * light.linearAttenuation * distance +
+                light.quadraticAttenuation * distance * distance);
+    } else if (light.type == LIGHT_TYPE_SPOT) {
+        multiplierSquared = light.attenuationMultiplier * light.attenuationMultiplier;
+        brightness = LIGHT_MULTIPLIER * (multiplierSquared * light.brightness) /
+            (multiplierSquared * light.constantAttenuation +
+                light.attenuationMultiplier * light.linearAttenuation * distance +
+                light.quadraticAttenuation * distance * distance);
+        if (theta < light.brightAngle) {
+            brightness *= 0.75 + 0.25 * (light.brightAngle - theta) / light.brightAngle;
+        } else {
+            brightness *= 0.75 * (light.fadingAngle - theta) / (light.fadingAngle - light.brightAngle);
+        }
+    } else if (light.type == LIGHT_TYPE_DIRECTIONAL) {
+        brightness = LIGHT_MULTIPLIER * light.brightness;
+    }
 
     if (brightness < MIN_BRIGHTNESS) {
         return vec3(0);
@@ -88,23 +111,39 @@ void main() {
     vec3 accumulatedColor = vec3(0);
 
     for (uint i = 0; i < LIGHT_COUNT; i++) {
+        float distance;
+        vec3 rayDirection;
+        float theta;
+        
         isLightVisible = false;
         const Light light = lightsData.lights[i];
-        const vec3 luxelToLight = light.position - luxelPosition.xyz;
-        const float distance = length(luxelToLight);
-        const vec3 luxelToLightNormalized = normalize(luxelToLight);
+        if (light.type == LIGHT_TYPE_DIRECTIONAL) {
+            distance = MAX_RAY_LENGTH;
+            rayDirection = -normalize(light.forwardDirection);
+        } else {
+            const vec3 luxelToLight = light.position - luxelPosition.xyz;
+            distance = length(luxelToLight);
+            rayDirection = normalize(luxelToLight);
+        }
 #ifdef DEBUG
         if (distance < MIN_RAY_LENGTH) {
             debugPrintfEXT("[ERROR] Distance %f from luxel to light is less than minimum ray distance %f!", distance, MIN_RAY_LENGTH);
         }
 #endif
-        traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, luxelToLightNormalized, distance, 0);
+        if (light.type == LIGHT_TYPE_SPOT) {
+            const float dottedDirection = dot(rayDirection, -light.forwardDirection);
+            theta = degrees(acos(dottedDirection));
+            if (dottedDirection < 0 || theta > light.fadingAngle) {
+                return;
+            }
+        }
+        traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, rayDirection, distance, 0);
         if (isLightVisible) {
 #ifndef DEBUG
             // On the non-debug path, only load the normal if needed
             const vec4 luxelNormal = imageLoad(luxelNormals, luxelCoord);
 #endif
-            accumulatedColor += getLightColor(light, distance) * max(dot(luxelToLightNormalized, luxelNormal.xyz), 0);
+            accumulatedColor += getLightColor(light, distance, theta) * max(dot(rayDirection, luxelNormal.xyz), 0);
         }
     }
 
