@@ -8,8 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <glm/detail/func_geometric.inl>
-#include <glm/vec2.hpp>
+#include <glm/glm.hpp>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/type/MapVertex.h>
 #include <libassets/type/Material.h>

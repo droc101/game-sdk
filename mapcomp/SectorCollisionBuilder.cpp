@@ -6,7 +6,6 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <glm/detail/func_geometric.inl>
 #include <glm/vec2.hpp>
 #include <libassets/type/Sector.h>
 #include <libassets/util/DataWriter.h>

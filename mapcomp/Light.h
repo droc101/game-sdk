@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <glm/glm.hpp>
 #include <libassets/type/Actor.h>
 #include <type_traits>
 
@@ -26,7 +27,11 @@ class Light // NOLINT(*-pro-type-member-init)
         explicit Light(const Actor &actor)
         {
             position = actor.position;
-            rotation = actor.rotation;
+            forwardDirection = glm::normalize(glm::vec3{
+                -sin(glm::radians(actor.rotation.y)) * cos(glm::radians(actor.rotation.x)),
+                sin(glm::radians(actor.rotation.x)),
+                -cos(glm::radians(actor.rotation.y)) * cos(glm::radians(actor.rotation.x)),
+            });
             const float *colorPtr = actor.params.at("color").Get<Color>(Color(-1u)).GetDataPointer();
             color = glm::vec3{colorPtr[0], colorPtr[1], colorPtr[2]};
             brightness = actor.params.at("brightness").Get<float>(1.0f);
@@ -56,7 +61,7 @@ class Light // NOLINT(*-pro-type-member-init)
 
         alignas(4) Type type;
         alignas(16) glm::vec3 position;
-        alignas(16) glm::vec3 rotation;
+        alignas(16) glm::vec3 forwardDirection;
         alignas(16) glm::vec3 color;
         alignas(4) float brightness;
         alignas(4) float constantAttenuation;
