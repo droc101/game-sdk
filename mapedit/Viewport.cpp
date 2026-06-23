@@ -261,7 +261,7 @@ void Viewport::RecalculateMatrices()
     {
         target = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 8, 0);
         eye = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 18, 0);
-        up = glm::vec3(0, 0, 1);
+        up = glm::vec3(0, 0, -1);
     } else if (type == ViewportType::SIDE_YZ)
     {
         target = glm::vec3(MapEditor::MAP_HALF_SIZE + 8, 0, 0);

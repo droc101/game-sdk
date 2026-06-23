@@ -61,26 +61,22 @@ layout (std140, set = 0, binding = 6) readonly restrict buffer LightsData {
 vec3 getLightColor(const Light light, const float distance, const float theta) {
     float multiplierSquared;
     float brightness;
-    if (light.type == LIGHT_TYPE_POINT) {
-        multiplierSquared = light.attenuationMultiplier * light.attenuationMultiplier;
-        brightness = LIGHT_MULTIPLIER * (multiplierSquared * light.brightness) /
-            (multiplierSquared * light.constantAttenuation +
-                light.attenuationMultiplier * light.linearAttenuation * distance +
-                light.quadraticAttenuation * distance * distance);
-    } else if (light.type == LIGHT_TYPE_SPOT) {
-        multiplierSquared = light.attenuationMultiplier * light.attenuationMultiplier;
-        brightness = LIGHT_MULTIPLIER * (multiplierSquared * light.brightness) /
-            (multiplierSquared * light.constantAttenuation +
-                light.attenuationMultiplier * light.linearAttenuation * distance +
-                light.quadraticAttenuation * distance * distance);
-        if (theta < light.brightAngle) {
-            brightness *= 0.75 + 0.25 * (light.brightAngle - theta) / light.brightAngle;
-        } else {
-            brightness *= 0.75 * (light.fadingAngle - theta) / (light.fadingAngle - light.brightAngle);
-        }
-    } else if (light.type == LIGHT_TYPE_DIRECTIONAL) {
+    if (light.type == LIGHT_TYPE_DIRECTIONAL) {
         brightness = LIGHT_MULTIPLIER * light.brightness;
-    }
+    } else {
+        multiplierSquared = light.attenuationMultiplier * light.attenuationMultiplier;
+        brightness = LIGHT_MULTIPLIER * (multiplierSquared * light.brightness) /
+            (multiplierSquared * light.constantAttenuation +
+                light.attenuationMultiplier * light.linearAttenuation * distance +
+                light.quadraticAttenuation * distance * distance);
+        if (light.type == LIGHT_TYPE_SPOT) {
+            if (theta < light.brightAngle) {
+                brightness *= 0.75 + 0.25 * (light.brightAngle - theta) / light.brightAngle;
+            } else {
+                brightness *= 0.75 * (light.fadingAngle - theta) / (light.fadingAngle - light.brightAngle);
+            }
+        }
+    } 
 
     if (brightness < MIN_BRIGHTNESS) {
         return vec3(0);
@@ -119,7 +115,7 @@ void main() {
         const Light light = lightsData.lights[i];
         if (light.type == LIGHT_TYPE_DIRECTIONAL) {
             distance = MAX_RAY_LENGTH;
-            rayDirection = -normalize(light.forwardDirection);
+            rayDirection = -light.forwardDirection;
         } else {
             const vec3 luxelToLight = light.position - luxelPosition.xyz;
             distance = length(luxelToLight);
@@ -134,7 +130,7 @@ void main() {
             const float dottedDirection = dot(rayDirection, -light.forwardDirection);
             theta = degrees(acos(dottedDirection));
             if (dottedDirection < 0 || theta > light.fadingAngle) {
-                return;
+                continue;
             }
         }
         traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, rayDirection, distance, 0);
