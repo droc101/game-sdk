@@ -187,7 +187,7 @@ void MapCompileWindow::RenderCompileOutput()
                 SDKWindow::Get().SaveFileDialog(SaveLog, DialogFilters::LOG_FILTERS);
             }
             ImGui::SameLine();
-            if (ImGui::Button("OK"))
+            if (ImGui::Button("OK") || ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
             {
                 ImGui::CloseCurrentPopup();
                 outputVisible = false;
