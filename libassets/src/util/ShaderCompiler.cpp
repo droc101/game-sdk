@@ -23,7 +23,7 @@ ShaderCompiler::ShaderCompiler(std::string glslSource,
     shaderName(std::move(shaderName))
 {
     options.SetSourceLanguage(shaderc_source_language_glsl);
-    options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_4);
+    options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2);
     if (optimize)
     {
         options.SetOptimizationLevel(shaderc_optimization_level_performance);
@@ -55,7 +55,11 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
     }
 
     const shaderc::Compiler compiler{};
-    const shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(glslSource, shaderc_vertex_shader, "");
+    const shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(glslSource,
+                                                                           shaderKind,
+                                                                           shaderName.c_str(),
+                                                                           "main",
+                                                                           options);
     if (result.GetCompilationStatus() != shaderc_compilation_status_success)
     {
         errorMessage = result.GetErrorMessage();
