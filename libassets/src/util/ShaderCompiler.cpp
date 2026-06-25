@@ -36,7 +36,7 @@ ShaderCompiler::ShaderCompiler(std::string glslSource,
 ShaderCompiler::ShaderCompiler(const std::filesystem::path &path,
                                const shaderc_shader_kind shaderKind,
                                const bool optimize):
-    ShaderCompiler("", shaderKind, path.filename(), optimize)
+    ShaderCompiler("", shaderKind, path.filename().string(), optimize)
 {
     std::ifstream glslFile(path);
     std::stringstream glsl;
