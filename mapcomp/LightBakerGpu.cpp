@@ -13,7 +13,6 @@
 #include <fstream>
 #include <glm/geometric.hpp>
 #include <glm/glm.hpp>
-#include <glslang/Public/ShaderLang.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/MapVertex.h>
 #include <libassets/util/Error.h>
@@ -496,13 +495,11 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
 }
 
 VkShaderModule LightBakerGpu::GenerateShaderModule(const std::filesystem::path &path,
-                                                   const EShLanguage shaderType) const
+                                                   const shaderc_shader_kind shaderKind) const
 {
     spirv.clear();
 
-    ShaderCompiler shaderCompiler(path, shaderType);
-    shaderCompiler.SetTargetVersions(glslang::EShTargetClientVersion::EShTargetVulkan_1_2,
-                                     glslang::EShTargetLanguageVersion::EShTargetSpv_1_4);
+    ShaderCompiler shaderCompiler(path, shaderKind, true);
     if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
     {
         Logger::Error("Error compiling shader {}!", path.string());
@@ -757,14 +754,14 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
 
     const VkShaderModule vertexShaderModule = GenerateShaderModule("assets/shaders/lightmap/"
                                                                    "precompute_luxel_information.vert",
-                                                                   EShLangVertex);
+                                                                   shaderc_vertex_shader);
     if (vertexShaderModule == VK_NULL_HANDLE)
     {
         return false;
     }
     const VkShaderModule fragmentShaderModule = GenerateShaderModule("assets/shaders/lightmap/"
                                                                      "precompute_luxel_information.frag",
-                                                                     EShLangFragment);
+                                                                     shaderc_fragment_shader);
     if (fragmentShaderModule == VK_NULL_HANDLE)
     {
         return false;
@@ -1214,12 +1211,13 @@ bool LightBakerGpu::CreateDirectLightingPipeline(const glm::uvec2 &lightmapSize,
 {
     const VkShaderModule raygenShaderModule = GenerateShaderModule("assets/shaders/lightmap/"
                                                                    "direct_lighting.rgen",
-                                                                   EShLangRayGen);
+                                                                   shaderc_raygen_shader);
     if (raygenShaderModule == VK_NULL_HANDLE)
     {
         return false;
     }
-    const VkShaderModule missShaderModule = GenerateShaderModule("assets/shaders/lightmap/miss.rmiss", EShLangMiss);
+    const VkShaderModule missShaderModule = GenerateShaderModule("assets/shaders/lightmap/miss.rmiss",
+                                                                 shaderc_miss_shader);
     if (missShaderModule == VK_NULL_HANDLE)
     {
         return false;
@@ -1318,13 +1316,13 @@ bool LightBakerGpu::CreateGlobalIlluminationPipeline(const glm::uvec2 &lightmapS
 {
     const VkShaderModule raygenShaderModule = GenerateShaderModule("assets/shaders/lightmap/"
                                                                    "global_illumination.rgen",
-                                                                   EShLangRayGen);
+                                                                   shaderc_raygen_shader);
     if (raygenShaderModule == VK_NULL_HANDLE)
     {
         return false;
     }
     const VkShaderModule closestHitShaderModule = GenerateShaderModule("assets/shaders/lightmap/closesthit.rchit",
-                                                                   EShLangClosestHit);
+                                                                       shaderc_closesthit_shader);
     if (closestHitShaderModule == VK_NULL_HANDLE)
     {
         return false;

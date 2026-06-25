@@ -6,9 +6,8 @@
 
 #include <cstdint>
 #include <filesystem>
-#include <glslang/Include/ResourceLimits.h>
-#include <glslang/Public/ShaderLang.h>
 #include <libassets/util/Error.h>
+#include <shaderc/shaderc.hpp>
 #include <string>
 #include <vector>
 
@@ -17,31 +16,25 @@ class ShaderCompiler
     public:
         ShaderCompiler() = delete;
 
-        ShaderCompiler(const std::string &glslSource, EShLanguage shaderType);
+        ShaderCompiler(std::string glslSource,
+                       shaderc_shader_kind shaderKind,
+                       std::string shaderName,
+                       bool optimize);
 
-        ShaderCompiler(const std::string &glslSource,
-                       EShLanguage shaderType,
-                       glslang::EShTargetClientVersion targetVulkanVersion);
-
-        ShaderCompiler(const std::filesystem::path &path, EShLanguage shaderType);
+        ShaderCompiler(const std::filesystem::path &path, shaderc_shader_kind shaderKind, bool optimize);
 
         [[nodiscard]] Error::ErrorCode Compile(std::vector<uint32_t> &outputSpirv);
 
-        void SetTargetVersions(glslang::EShTargetClientVersion targetVulkanVersion,
-                               glslang::EShTargetLanguageVersion targetSpirvVersion);
-
-        [[nodiscard]] const std::string &GetCompileLog() const;
+        [[nodiscard]] const std::string &GetErrorMessage() const;
 
     private:
-        static TBuiltInResource GetResources();
+        shaderc::CompileOptions options{};
 
-        glslang::EShTargetClientVersion targetVulkanVersion = glslang::EShTargetVulkan_1_0;
+        shaderc_shader_kind shaderKind;
 
-        glslang::EShTargetLanguageVersion targetSpirvVersion = glslang::EShTargetSpv_1_0;
+        std::string glslSource;
 
-        EShLanguage shaderType = EShLangVertex;
+        std::string shaderName;
 
-        std::string glslSource{};
-
-        std::string compileLog{};
+        std::string errorMessage;
 };

@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <glslang/Public/ShaderLang.h>
 #include <libassets/util/Logger.h>
 #include <luna/lunaTypes.h>
+#include <shaderc/shaderc.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -52,7 +52,7 @@ class LightBakerGpu
             return true;
         }
 
-        VkShaderModule GenerateShaderModule(const std::filesystem::path &path, EShLanguage shaderType) const;
+        VkShaderModule GenerateShaderModule(const std::filesystem::path &path, shaderc_shader_kind shaderKind) const;
 
         bool CreateVertexAndIndexBuffers(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                                          uint32_t &vertexCount,

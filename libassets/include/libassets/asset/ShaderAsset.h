@@ -13,16 +13,16 @@ class ShaderAsset final
 {
     public:
 
-        enum class ShaderType : uint8_t
+        enum class ShaderKind : uint8_t
         {
-            SHADER_TYPE_FRAGMENT,
-            SHADER_TYPE_VERTEX,
-            SHADER_TYPE_COMPUTE
+            SHADER_KIND_FRAGMENT,
+            SHADER_KIND_VERTEX,
+            SHADER_KIND_COMPUTE
         };
 
         ShaderAsset() = default;
 
-        ShaderType type = ShaderType::SHADER_TYPE_FRAGMENT;
+        ShaderKind kind = ShaderKind::SHADER_KIND_FRAGMENT;
 
         static constexpr uint8_t SHADER_ASSET_VERSION = 1;
         static constexpr std::string SHADER_ASSET_EXTENSION = "gshd";
@@ -50,10 +50,13 @@ class ShaderAsset final
         /**
          * Save this ShaderAsset as a GSHD file
          * @param assetPath The path to the GSHD file
+         * @param enableOptimization
          * @param errorLog An optional pointer to a std::string which will be filled with the compile logs
          * @return
          */
-        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath, std::string *errorLog = nullptr) const;
+        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath,
+                                                   bool enableOptimization,
+                                                   std::string *errorLog = nullptr) const;
 
         /**
          * Get the GLSL in this ShaderAsset
@@ -63,5 +66,8 @@ class ShaderAsset final
     private:
         std::string glsl;
 
-        [[nodiscard]] Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer, std::string *errorLog) const;
+        [[nodiscard]] Error::ErrorCode SaveToBuffer(const char *assetPath,
+                                                    bool enableOptimization,
+                                                    std::vector<uint8_t> &buffer,
+                                                    std::string *errorLog) const;
 };

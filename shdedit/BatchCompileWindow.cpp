@@ -16,6 +16,8 @@
 #include <string>
 #include <vector>
 
+static bool enableOptimization;
+
 void BatchCompileWindow::Show()
 {
     visible = true;
@@ -31,18 +33,18 @@ void BatchCompileWindow::SelectCallback(const std::vector<std::string> &paths)
         if (std::ranges::find(files, file) == files.end())
         {
             files.emplace_back(file);
-            ShaderAsset::ShaderType t = ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT;
+            ShaderAsset::ShaderKind kind = ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT;
             if (file.ends_with(".frag") || file.ends_with("_f.glsl"))
             {
-                t = ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT;
+                kind = ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT;
             } else if (file.ends_with(".vert") || file.ends_with("_v.glsl"))
             {
-                t = ShaderAsset::ShaderType::SHADER_TYPE_VERTEX;
+                kind = ShaderAsset::ShaderKind::SHADER_KIND_VERTEX;
             } else if (file.ends_with(".comp") || file.ends_with("_c.glsl"))
             {
-                t = ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE;
+                kind = ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE;
             }
-            types.emplace_back(t);
+            types.emplace_back(kind);
         }
     }
 }
@@ -63,20 +65,22 @@ Error::ErrorCode BatchCompileWindow::Execute()
     {
         const std::string &file = files.at(i);
         const std::string filename = std::filesystem::path(file).stem().string();
-        const ShaderAsset::ShaderType type = types.at(i);
+        const ShaderAsset::ShaderKind kind = types.at(i);
         ShaderAsset shader;
         Error::ErrorCode e = ShaderAsset::CreateFromGlsl(file.c_str(), shader);
         if (e != Error::ErrorCode::OK)
         {
             return e;
         }
-        shader.type = type;
+        shader.kind = kind;
         e = shader.SaveAsAsset(std::format("{}/{}_{}.{}",
                                            outputFolder,
                                            filename,
-                                           shader.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT ? "f" : "v",
+                                           shader.kind == ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT ? "f" : "v",
                                            ShaderAsset::SHADER_ASSET_EXTENSION)
-                                       .c_str(), nullptr);
+                                       .c_str(),
+                               enableOptimization,
+                               nullptr);
         if (e != Error::ErrorCode::OK)
         {
             return e;
@@ -107,6 +111,8 @@ void BatchCompileWindow::Render()
                 SDKWindow::Get().OpenFolderDialog(OutPathCallback);
             }
 
+            (void)ImGui::Checkbox("Enable Optimization", &enableOptimization);
+
             ImGui::Text("Source Files");
             ImGui::SameLine();
             const float sz = ImGui::GetContentRegionAvail().x;
@@ -135,21 +141,21 @@ void BatchCompileWindow::Render()
                         ImGui::InputText(std::format("##path_{}", i).c_str(), &files.at(i));
                         ImGui::TableNextColumn();
                         if (ImGui::RadioButton(std::format("Fragment##{}", i).c_str(),
-                                               types.at(i) == ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT))
+                                               types.at(i) == ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT))
                         {
-                            types.at(i) = ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT;
+                            types.at(i) = ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT;
                         }
                         ImGui::SameLine();
                         if (ImGui::RadioButton(std::format("Vertex##{}", i).c_str(),
-                                               types.at(i) == ShaderAsset::ShaderType::SHADER_TYPE_VERTEX))
+                                               types.at(i) == ShaderAsset::ShaderKind::SHADER_KIND_VERTEX))
                         {
-                            types.at(i) = ShaderAsset::ShaderType::SHADER_TYPE_VERTEX;
+                            types.at(i) = ShaderAsset::ShaderKind::SHADER_KIND_VERTEX;
                         }
                         ImGui::SameLine();
                         if (ImGui::RadioButton(std::format("Compute##{}", i).c_str(),
-                                               types.at(i) == ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE))
+                                               types.at(i) == ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE))
                         {
-                            types.at(i) = ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE;
+                            types.at(i) = ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE;
                         }
                         ImGui::TableNextColumn();
                         if (ImGui::Button(std::format("Del##{}", i).c_str(), ImVec2(40, 0)))

@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
-#include <glslang/Public/ShaderLang.h>
 #include <ios>
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/type/Asset.h>
@@ -33,7 +32,7 @@ Error::ErrorCode ShaderAsset::CreateFromAsset(const char *assetPath, ShaderAsset
         return Error::ErrorCode::INCORRECT_VERSION;
     }
     shader = ShaderAsset();
-    shader.type = static_cast<ShaderType>(asset.reader.Read<uint8_t>());
+    shader.kind = static_cast<ShaderKind>(asset.reader.Read<uint8_t>());
     const size_t glslLength = asset.reader.Read<size_t>();
     shader.glsl = "";
     asset.reader.ReadString(shader.glsl, glslLength);
@@ -71,24 +70,26 @@ Error::ErrorCode ShaderAsset::SaveAsGlsl(const char *glslPath) const
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode ShaderAsset::SaveToBuffer(std::vector<uint8_t> &buffer, std::string *errorLog) const
+Error::ErrorCode ShaderAsset::SaveToBuffer(const char *assetPath,
+                                           const bool enableOptimization,
+                                           std::vector<uint8_t> &buffer,
+                                           std::string *errorLog) const
 {
     DataWriter writer{};
-    writer.Write<uint8_t>(static_cast<uint8_t>(type));
+    writer.Write<uint8_t>(static_cast<uint8_t>(kind));
     writer.Write<size_t>(glsl.length() + 1);
     writer.WriteBuffer(glsl.c_str(), glsl.length());
     writer.Write<uint8_t>(0); // null byte
     std::vector<uint32_t> spirv;
-    const EShLanguage shaderType = type == ShaderType::SHADER_TYPE_VERTEX ? EShLangVertex : EShLangFragment;
-    ShaderCompiler compiler = ShaderCompiler(glsl, shaderType);
-    compiler.SetTargetVersions(glslang::EShTargetClientVersion::EShTargetVulkan_1_2,
-                               glslang::EShTargetLanguageVersion::EShTargetSpv_1_0);
+    const shaderc_shader_kind shaderKind = kind == ShaderKind::SHADER_KIND_VERTEX ? shaderc_vertex_shader
+                                                                                  : shaderc_fragment_shader;
+    ShaderCompiler compiler = ShaderCompiler(glsl, shaderKind, assetPath, enableOptimization);
     const Error::ErrorCode error = compiler.Compile(spirv);
     if (error != Error::ErrorCode::OK)
     {
         if (errorLog != nullptr)
         {
-            *errorLog = compiler.GetCompileLog();
+            *errorLog = compiler.GetErrorMessage();
         }
         return error;
     }
@@ -99,10 +100,12 @@ Error::ErrorCode ShaderAsset::SaveToBuffer(std::vector<uint8_t> &buffer, std::st
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode ShaderAsset::SaveAsAsset(const char *assetPath, std::string *errorLog) const
+Error::ErrorCode ShaderAsset::SaveAsAsset(const char *assetPath,
+                                          const bool enableOptimization,
+                                          std::string *errorLog) const
 {
     std::vector<uint8_t> buffer;
-    const Error::ErrorCode e = SaveToBuffer(buffer, errorLog);
+    const Error::ErrorCode e = SaveToBuffer(assetPath, enableOptimization, buffer, errorLog);
     if (e != Error::ErrorCode::OK)
     {
         return e;

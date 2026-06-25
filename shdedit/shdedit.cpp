@@ -31,6 +31,7 @@ struct EditorTab
         TextEditor editor;
         std::string path;
         bool modified;
+        bool enableOptimization;
 };
 
 static std::vector<EditorTab> tabs{};
@@ -119,7 +120,7 @@ static void SaveGshd(const std::string &path)
     EditorTab &tab = tabs.at(selectedTab);
     tab.shader.GetGLSL() = tab.editor.GetText();
     std::string errorLog;
-    const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(path.c_str(), &errorLog);
+    const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(path.c_str(), tab.enableOptimization, &errorLog);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}\n{}", errorCode, errorLog));
@@ -168,18 +169,22 @@ static void RenderTab(EditorTab &tab)
     ImGui::BeginChild("StatsPane", ImVec2(SIDEBAR_WIDTH, availableSize.y), ImGuiChildFlags_Borders);
     {
         ImGui::TextUnformatted("Type");
-        if (ImGui::RadioButton("Fragment", tab.shader.type == ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT))
+        if (ImGui::RadioButton("Fragment", tab.shader.kind == ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT))
         {
-            tab.shader.type = ShaderAsset::ShaderType::SHADER_TYPE_FRAGMENT;
+            tab.shader.kind = ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT;
         }
-        if (ImGui::RadioButton("Vertex", tab.shader.type == ShaderAsset::ShaderType::SHADER_TYPE_VERTEX))
+        if (ImGui::RadioButton("Vertex", tab.shader.kind == ShaderAsset::ShaderKind::SHADER_KIND_VERTEX))
         {
-            tab.shader.type = ShaderAsset::ShaderType::SHADER_TYPE_VERTEX;
+            tab.shader.kind = ShaderAsset::ShaderKind::SHADER_KIND_VERTEX;
         }
-        if (ImGui::RadioButton("Compute", tab.shader.type == ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE))
+        if (ImGui::RadioButton("Compute", tab.shader.kind == ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE))
         {
-            tab.shader.type = ShaderAsset::ShaderType::SHADER_TYPE_COMPUTE;
+            tab.shader.kind = ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE;
         }
+
+        ImGui::Spacing();
+        ImGui::TextUnformatted("Options");
+        (void)ImGui::Checkbox("Enable Optimization", &tab.enableOptimization);
     }
     ImGui::EndChild();
 }
@@ -313,7 +318,9 @@ static void Render()
         {
             tab.shader.GetGLSL() = tab.editor.GetText();
             std::string errorLog;
-            const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(tab.path.c_str(), &errorLog);
+            const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(tab.path.c_str(),
+                                                                      tab.enableOptimization,
+                                                                      &errorLog);
             if (errorCode != Error::ErrorCode::OK)
             {
                 SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}\n{}", errorCode, errorLog));
@@ -330,10 +337,14 @@ static void Render()
             {
                 tab.shader.GetGLSL() = tab.editor.GetText();
                 std::string errorLog;
-                const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(tab.path.c_str(), &errorLog);
+                const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(tab.path.c_str(),
+                                                                          tab.enableOptimization,
+                                                                          &errorLog);
                 if (errorCode != Error::ErrorCode::OK)
                 {
-                    SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}\n{}", errorCode, errorLog));
+                    SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}\n{}",
+                                                              errorCode,
+                                                              errorLog));
                 } else
                 {
                     tab.modified = false;

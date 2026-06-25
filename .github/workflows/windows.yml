@@ -18,19 +18,19 @@ jobs:
             zip_name: game-sdk.windows.release
 
     steps:
-    - uses: actions/checkout@v6
-      with:
-        submodules: 'true'
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'true'
 
-    - name: Cache Dependencies
-      uses: actions/cache@v5
-      with:
-        path: build-${{ matrix.build_type }}/_deps
-        key: windows-${{ matrix.build_type }}-deps-${{ hashFiles('**/.git/HEAD') }}
+      - name: Cache Dependencies
+        uses: actions/cache@v5
+        with:
+          path: build-${{ matrix.build_type }}/_deps
+          key: windows-${{ matrix.build_type }}-deps-${{ hashFiles('**/.git/HEAD') }}
 
-    - name: Setup MSYS2
-      uses: msys2/setup-msys2@v2.31.0
-      with:
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2.31.0
+        with:
           msystem: UCRT64
           install: >-
             git
@@ -39,28 +39,28 @@ jobs:
             mingw-w64-ucrt-x86_64-zlib
             mingw-w64-ucrt-x86_64-glew
             mingw-w64-ucrt-x86_64-vulkan-headers
-            mingw-w64-ucrt-x86_64-glslang
+            mingw-w64-ucrt-x86_64-shaderc
             mingw-w64-ucrt-x86_64-glm
             mingw-w64-ucrt-x86_64-sdl3
             mingw-w64-ucrt-x86_64-assimp
           update: true
 
-    - name: Convert github.workspace to mingw path
-      shell: msys2 {0}
-      run: echo "MINGW_WORKSPACE=$(cygpath -u '${{github.workspace}}')" >> $GITHUB_ENV
+      - name: Convert github.workspace to mingw path
+        shell: msys2 {0}
+        run: echo "MINGW_WORKSPACE=$(cygpath -u '${{github.workspace}}')" >> $GITHUB_ENV
 
-    - name: Configure CMake
-      shell: msys2 {0}
-      run: cmake -B "$MINGW_WORKSPACE/build-${{ matrix.build_type }}" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      - name: Configure CMake
+        shell: msys2 {0}
+        run: cmake -B "$MINGW_WORKSPACE/build-${{ matrix.build_type }}" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
-    - name: Build
-      shell: msys2 {0}
-      run: cmake --build "$MINGW_WORKSPACE/build-${{ matrix.build_type }}" --config ${{ matrix.build_type }} -j $(nproc)
+      - name: Build
+        shell: msys2 {0}
+        run: cmake --build "$MINGW_WORKSPACE/build-${{ matrix.build_type }}" --config ${{ matrix.build_type }} -j $(nproc)
 
-    - name: Upload results
-      uses: actions/upload-artifact@v7
-      with:
-        name: ${{ matrix.zip_name }}
-        path: |
-          build-${{ matrix.build_type }}/bin/
-        retention-days: 90
+      - name: Upload results
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.zip_name }}
+          path: |
+            build-${{ matrix.build_type }}/bin/
+          retention-days: 90

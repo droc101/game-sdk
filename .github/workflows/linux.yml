@@ -18,36 +18,39 @@ jobs:
             zip_name: game-sdk.linux.release
 
     steps:
-    - uses: actions/checkout@v6
-      with:
-        submodules: 'true'
+      - uses: actions/checkout@v6
+        with:
+          submodules: 'true'
 
-    - name: Cache Dependencies
-      uses: actions/cache@v5
-      with:
-        path: build-${{ matrix.build_type }}/_deps
-        key: linux-${{ matrix.build_type }}-deps-${{ hashFiles('**/.git/HEAD') }}
+      - name: Cache Dependencies
+        uses: actions/cache@v5
+        with:
+          path: build-${{ matrix.build_type }}/_deps
+          key: linux-${{ matrix.build_type }}-deps-${{ hashFiles('**/.git/HEAD') }}
 
-    - name: Install Packages
-      run: |
-        sudo apt update
-        sudo apt install -y libglm-dev glslang-dev libglew-dev build-essential git make pkg-config cmake ninja-build \
-        gnome-desktop-testing libasound2-dev libpulse-dev libaudio-dev libfribidi-dev libjack-dev libsndio-dev \
-        libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev \
-        libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev \
-        libibus-1.0-dev libudev-dev libthai-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
+      - name: Install Packages
+        run: |
+          wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-noble.list http://packages.lunarg.com/vulkan/lunarg-vulkan-noble.list
+          sudo apt update
+          sudo apt install -y libglm-dev vulkan-sdk libglew-dev build-essential git make pkg-config \
+          cmake ninja-build gnome-desktop-testing libasound2-dev libpulse-dev libaudio-dev libfribidi-dev libjack-dev \
+          libsndio-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev \
+          libxtst-dev libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev \
+          libdbus-1-dev libibus-1.0-dev libudev-dev libthai-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev \
+          liburing-dev
 
-    - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build-${{ matrix.build_type }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      - name: Configure CMake
+        run: cmake -B ${{github.workspace}}/build-${{ matrix.build_type }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build-${{ matrix.build_type }} --config ${{ matrix.build_type }} -j $(nproc)
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build-${{ matrix.build_type }} --config ${{ matrix.build_type }} -j $(nproc)
 
-    - name: Upload results
-      uses: actions/upload-artifact@v7
-      with:
-        name: ${{ matrix.zip_name }}
-        path: |
-          build-${{ matrix.build_type }}/bin/
-        retention-days: 90
+      - name: Upload results
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.zip_name }}
+          path: |
+            build-${{ matrix.build_type }}/bin/
+          retention-days: 90
 

@@ -1,11 +1,11 @@
 macro(enable_options)
     foreach (OPTION_TO_SET IN ITEMS ${ARGN})
-        set(${OPTION_TO_SET} ON)
+        set(${OPTION_TO_SET} ON CACHE BOOL "")
     endforeach ()
 endmacro()
 
 macro(disable_options)
     foreach (OPTION_TO_SET IN ITEMS ${ARGN})
-        set(${OPTION_TO_SET} OFF)
+        set(${OPTION_TO_SET} OFF CACHE BOOL "")
     endforeach ()
 endmacro()
