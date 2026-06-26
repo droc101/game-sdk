@@ -39,7 +39,6 @@ jobs:
             mingw-w64-ucrt-x86_64-zlib
             mingw-w64-ucrt-x86_64-glew
             mingw-w64-ucrt-x86_64-vulkan-headers
-            mingw-w64-ucrt-x86_64-glslang
             mingw-w64-ucrt-x86_64-shaderc
             mingw-w64-ucrt-x86_64-glm
             mingw-w64-ucrt-x86_64-sdl3

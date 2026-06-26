@@ -27,27 +27,31 @@ else ()
     fetch_package(https://github.com/assimp/assimp.git v6.*.* assimp)
 endif ()
 
-disable_options(BUILD_WERROR ENABLE_GLSLANG_BINARIES)
-enable_options(ENABLE_SPIRV)
-find_or_fetch_package(https://github.com/KhronosGroup/glslang.git vulkan-sdk-1.4.*.* glslang)
+if (WIN32)
+    find_package(Vulkan QUIET)
+else ()
+    disable_options(BUILD_WERROR ENABLE_GLSLANG_BINARIES)
+    enable_options(ENABLE_SPIRV)
+    find_or_fetch_package(https://github.com/KhronosGroup/glslang.git vulkan-sdk-1.4.*.* glslang)
 
-find_package(Vulkan QUIET COMPONENTS shaderc_combined)
+    find_package(Vulkan QUIET COMPONENTS shaderc_combined)
 
-if (NOT ${Vulkan_shaderc_combined_FOUND})
-    find_package(SPIRV-Tools)
+    if (NOT ${Vulkan_shaderc_combined_FOUND})
+        find_package(SPIRV-Tools)
 
-    if (NOT ${SpirvTools_FOUND})
-        find_or_fetch_package(https://github.com/KhronosGroup/SPIRV-Headers.git vulkan-sdk-1.4.*.* SPIRV-Headers)
-        disable_options(SPIRV_WERROR)
-        enable_options(SPIRV_SKIP_EXECUTABLES SPIRV_SKIP_TESTS)
-        fetch_package(https://github.com/KhronosGroup/SPIRV-Tools.git vulkan-sdk-1.4.*.* SPIRV-Tools)
+        if (NOT ${SpirvTools_FOUND})
+            find_or_fetch_package(https://github.com/KhronosGroup/SPIRV-Headers.git vulkan-sdk-1.4.*.* SPIRV-Headers)
+            disable_options(SPIRV_WERROR)
+            enable_options(SPIRV_SKIP_EXECUTABLES SPIRV_SKIP_TESTS)
+            fetch_package(https://github.com/KhronosGroup/SPIRV-Tools.git vulkan-sdk-1.4.*.* SPIRV-Tools)
+        endif ()
+
+        disable_options(SHADERC_ENABLE_HLSL SHADERC_ENABLE_WERROR_COMPILE)
+        enable_options(SHADERC_SKIP_INSTALL SHADERC_SKIP_TESTS SHADERC_SKIP_EXAMPLES SHADERC_SKIP_EXECUTABLES)
+        find_or_fetch_package(https://github.com/google/shaderc.git v2026.2 shaderc)
+
+        add_library(Vulkan::shaderc_combined ALIAS shaderc)
     endif ()
-
-    disable_options(SHADERC_ENABLE_HLSL SHADERC_ENABLE_WERROR_COMPILE)
-    enable_options(SHADERC_SKIP_INSTALL SHADERC_SKIP_TESTS SHADERC_SKIP_EXAMPLES SHADERC_SKIP_EXECUTABLES)
-    find_or_fetch_package(https://github.com/google/shaderc.git v2026.2 shaderc)
-
-    add_library(Vulkan::shaderc_combined ALIAS shaderc)
 endif ()
 
 if (Vulkan_INCLUDE_DIRS STREQUAL "Vulkan_INCLUDE_DIR-NOTFOUND")
@@ -183,6 +187,11 @@ set_target_properties(assets PROPERTIES
         LINK_FLAGS "-Wl,-rpath='$ORIGIN'"
 )
 
-target_link_libraries(assets PUBLIC assimp::assimp glslang::glslang Vulkan::shaderc_combined nlohmann_json::nlohmann_json glm::glm OpenEXR::OpenEXR tinyexpr)
+target_link_libraries(assets PUBLIC assimp::assimp nlohmann_json::nlohmann_json glm::glm OpenEXR::OpenEXR tinyexpr)
+if (WIN32)
+    target_link_libraries(assets PUBLIC shaderc_shared)
+else ()
+    target_link_libraries(assets PUBLIC glslang::glslang Vulkan::shaderc_combined)
+endif ()
 
 target_include_directories(assets PUBLIC ${Vulkan_INCLUDE_DIRS} "include" "${CMAKE_SOURCE_DIR}/lib/stb")

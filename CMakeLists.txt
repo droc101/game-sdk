@@ -36,6 +36,7 @@ if (WIN32)
             zlib1.dll
             libminizip-1.dll
             libbz2-1.dll
+            libshaderc_shared.dll
     )
 
     add_custom_target(copydlls ALL
