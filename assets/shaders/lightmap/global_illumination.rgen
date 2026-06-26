@@ -1,41 +1,11 @@
 #version 460
 
-#extension GL_EXT_ray_tracing : require
-#extension GL_EXT_debug_printf : require
-
-/// Enable extra checks and debug printf logging
-// #define DEBUG
-/// A constant multiplier applied to all lights, used for debugging when lights are very dim
-#define LIGHT_MULTIPLIER 1
-
-const float PI = 3.141592653589793;
-const float MIN_RAY_LENGTH = 0.0001;
-const float MAX_RAY_LENGTH = 1776; // 2 * sqrt(3) * MAP_MAX_HALF_EXTENTS; Rounded up slightly
+#include "shared.glsl"
 
 layout (constant_id = 0) const uint WIDTH = 8192;
 layout (constant_id = 1) const uint SAMPLE_COUNT = 1024;
 
-layout (push_constant) uniform PushConstants {
-    uint baseLuxelIndex;
-} pushConstants;
-
 layout (location = 0) rayPayloadEXT vec3 hitColor;
-
-layout (set = 0, binding = 0) uniform accelerationStructureEXT accelerationStructure;
-layout (set = 0, binding = 1, rgba16f) readonly restrict uniform imageBuffer inputLightmap;
-layout (set = 0, binding = 2, rgba16f) writeonly restrict uniform imageBuffer outputLightmap;
-layout (set = 0, binding = 3, rgba32f) readonly restrict uniform image2D luxelPositions;
-layout (set = 0, binding = 4, rgba32f) readonly restrict uniform image2D luxelNormals;
-// layout (set = 0, binding = 5, rgba8) readonly restrict uniform image2D luxelAlbedos;
-// layout (std140, set = 0, binding = 6) readonly restrict buffer LightsData {
-//     Light lights[];
-// } lightsData;
-// layout (std140, set = 0, binding = 7) readonly restrict buffer VertexData {
-//     MapVertex vertices[];
-// } vertexData;
-// layout (set = 0, binding = 8) readonly restrict buffer IndexData {
-//     uint indices[];
-// } indexData;
 
 // http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
 // efficient VanDerCorpus calculation.

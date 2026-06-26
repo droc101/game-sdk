@@ -3,6 +3,7 @@
 //
 
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <libassets/util/Error.h>
@@ -13,6 +14,42 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+shaderc_include_result *ShaderCompiler::SDKIncluder::GetInclude(const char *requestedSource,
+                                                                shaderc_include_type /*type*/,
+                                                                const char *requestingSource,
+                                                                size_t /*includeDepth*/)
+{
+    std::filesystem::path requestingSourcePath{requestingSource};
+    const std::filesystem::path requestedSourcePath = requestingSourcePath.remove_filename().append(requestedSource);
+    std::ifstream glslFile(requestedSourcePath);
+    std::stringstream glsl;
+    glsl << glslFile.rdbuf();
+    glslFile.close();
+    const std::string glslString{glsl.str()};
+    includeResults.emplace_back(strdup(requestedSourcePath.c_str()),
+                                requestedSourcePath.string().length(),
+                                strdup(glslString.c_str()),
+                                glslString.length(),
+                                nullptr);
+    return &includeResults.back();
+}
+
+void ShaderCompiler::SDKIncluder::ReleaseInclude(shaderc_include_result *data)
+{
+    for (std::list<shaderc_include_result>::iterator iterator = includeResults.begin();
+         iterator != includeResults.end();
+         ++iterator)
+    {
+        if (&*iterator == data)
+        {
+            free((void *)(iterator->source_name));
+            free((void *)(iterator->content));
+            includeResults.erase(iterator);
+            break;
+        }
+    }
+}
 
 ShaderCompiler::ShaderCompiler(std::string glslSource,
                                const shaderc_shader_kind shaderKind,
@@ -36,7 +73,7 @@ ShaderCompiler::ShaderCompiler(std::string glslSource,
 ShaderCompiler::ShaderCompiler(const std::filesystem::path &path,
                                const shaderc_shader_kind shaderKind,
                                const bool optimize):
-    ShaderCompiler("", shaderKind, path.filename().string(), optimize)
+    ShaderCompiler("", shaderKind, path.string(), optimize)
 {
     std::ifstream glslFile(path);
     std::stringstream glsl;
@@ -44,6 +81,7 @@ ShaderCompiler::ShaderCompiler(const std::filesystem::path &path,
     glslFile.close();
 
     this->glslSource = glsl.str();
+    options.SetIncluder(std::make_unique<SDKIncluder>());
 }
 
 Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)

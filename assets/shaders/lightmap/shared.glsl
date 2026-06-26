@@ -1,0 +1,72 @@
+#extension GL_EXT_ray_tracing : require
+#extension GL_EXT_debug_printf : require
+
+/// Enable extra checks and debug printf logging
+// #define DEBUG
+
+#pragma region Constants
+
+const float PI = 3.141592653589793;
+const float MIN_BRIGHTNESS = 1.0 / 256.0;
+const float MIN_RAY_LENGTH = 0.0001;
+const float MAX_RAY_LENGTH = 1776; // 2 * sqrt(3) * MAP_MAX_HALF_EXTENTS; Rounded up slightly
+
+#pragma endregion Constants
+
+#pragma region Types
+
+/// The format of the map's vertices. Interop with C++ must use std140
+struct MapVertex {
+    vec3 position;
+    vec2 uv;
+    vec2 lightmapUv;
+    vec3 normal;
+};
+
+#pragma region LightTypeEnum
+const uint LIGHT_TYPE_POINT = 0u;
+const uint LIGHT_TYPE_SPOT = 1u;
+const uint LIGHT_TYPE_AREA = 2u;
+const uint LIGHT_TYPE_DIRECTIONAL = 3u;
+#pragma endregion LightTypeEnum
+
+/// The format of the lights in the map. Interop with C++ must use std140
+struct Light {
+    uint type; // Maps to an enum in C++
+    vec3 position;
+    vec3 negativeForwardDirection;
+    vec3 color;
+    float brightness;
+    float constantAttenuation;
+    float linearAttenuation;
+    float quadraticAttenuation;
+    float attenuationMultiplier;
+    float brightAngle; // 0-90 degrees
+    float fadingAngle;
+};
+
+#pragma endregion Types
+
+#pragma region Pipeline Layout
+
+layout (push_constant) uniform PushConstants {
+    uint baseLuxelIndex;
+} pushConstants;
+
+layout (set = 0, binding = 0) uniform accelerationStructureEXT accelerationStructure;
+layout (set = 0, binding = 1, rgba16f) readonly restrict uniform imageBuffer inputLightmap;
+layout (set = 0, binding = 2, rgba16f) writeonly restrict uniform imageBuffer outputLightmap;
+layout (set = 0, binding = 3, rgba32f) readonly restrict uniform image2D luxelPositions;
+layout (set = 0, binding = 4, rgba32f) readonly restrict uniform image2D luxelNormals;
+layout (set = 0, binding = 5, rgba8) readonly restrict uniform image2D luxelAlbedos;
+layout (std140, set = 0, binding = 6) readonly restrict buffer LightsData {
+    Light lights[];
+} lightsData;
+layout (std140, set = 0, binding = 7) readonly restrict buffer VertexData {
+    MapVertex vertices[];
+} vertexData;
+layout (set = 0, binding = 8) readonly restrict buffer IndexData {
+    uint indices[];
+} indexData;
+
+#pragma endregion Pipeline Layout
