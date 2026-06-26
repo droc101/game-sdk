@@ -12,6 +12,7 @@
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/ShaderCompiler.h>
+#include <shaderc/shaderc.h>
 #include <sstream>
 #include <vector>
 

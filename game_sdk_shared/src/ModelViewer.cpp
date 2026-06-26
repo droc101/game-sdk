@@ -4,6 +4,7 @@
 
 #include <array>
 #include <cfloat>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
@@ -17,7 +18,6 @@
 #include <libassets/type/ModelLod.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
-#include <math.h>
 #include <utility>
 #include <vector>
 

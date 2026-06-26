@@ -4,10 +4,12 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <libassets/util/Error.h>
 #include <list>
+#include <shaderc/shaderc.h>
 #include <shaderc/shaderc.hpp>
 #include <string>
 #include <vector>

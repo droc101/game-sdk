@@ -50,7 +50,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
             {
                 newActorPosition = MapEditor::SnapToGrid(worldSpaceHover);
                 hasPlacedActor = true;
-                if (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_LeftShift))
+                if (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift))
                 {
                     PlaceActor();
                 }

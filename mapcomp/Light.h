@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <cstdint>
 #include <glm/glm.hpp>
 #include <libassets/type/Actor.h>

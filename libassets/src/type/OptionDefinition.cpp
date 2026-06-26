@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <fstream>
 #include <libassets/type/ActorDefinition.h>
+#include <libassets/type/Color.h>
 #include <libassets/type/OptionDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/util/Error.h>

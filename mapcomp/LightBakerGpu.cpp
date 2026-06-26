@@ -6,30 +6,26 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <chrono>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
-#include <fstream>
-#include <glm/geometric.hpp>
 #include <glm/glm.hpp>
-#include <libassets/type/Actor.h>
 #include <libassets/type/MapVertex.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
 #include <libassets/util/ShaderCompiler.h>
-#include <list>
-#include <luna/luna.h>
 #include <luna/lunaBuffer.h>
 #include <luna/lunaCommandBuffer.h>
 #include <luna/lunaDevice.h>
+#include <luna/lunaImage.h>
 #include <luna/lunaInstance.h>
 #include <luna/lunaSynchronization.h>
 #include <luna/lunaTypes.h>
 #include <ranges>
-#include <sstream>
+#include <shaderc/shaderc.h>
 #include <string>
-#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -655,7 +651,7 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
         .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
     };
-    const VkRenderPassCreateInfo renderPassCreateInfo = {
+    constexpr VkRenderPassCreateInfo renderPassCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .attachmentCount = ATTACHMENT_DESCRIPTIONS.size(),
         .pAttachments = ATTACHMENT_DESCRIPTIONS.data(),
@@ -684,7 +680,7 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         .destinationAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
         .submitInfo = &submitInfo,
     };
-    const LunaSamplerCreationInfo samplerCreationInfo = {};
+    constexpr LunaSamplerCreationInfo samplerCreationInfo = {};
     const LunaImageCreationInfo luxelInformationImageCreateInfo = {
         .format = VK_FORMAT_R32G32B32A32_SFLOAT,
         .width = lightmapSize.x,
@@ -802,14 +798,14 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
             .offset = offsetof(MapVertex, normal),
         },
     };
-    const VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
+    constexpr VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .vertexBindingDescriptionCount = 1,
         .pVertexBindingDescriptions = &VERTEX_INPUT_BINDING_DESCRIPTION,
         .vertexAttributeDescriptionCount = VERTEX_INPUT_ATTRIBUTE_DESCRIPTIONS.size(),
         .pVertexAttributeDescriptions = VERTEX_INPUT_ATTRIBUTE_DESCRIPTIONS.data(),
     };
-    const VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
+    constexpr VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
     };
@@ -828,18 +824,18 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         .scissorCount = 1,
         .pScissors = &scissors,
     };
-    const VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo = {
+    constexpr VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .polygonMode = VK_POLYGON_MODE_FILL,
         .cullMode = VK_CULL_MODE_NONE,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         .lineWidth = 1,
     };
-    const VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo = {
+    constexpr VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
         .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
     };
-    const VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = {
+    constexpr VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
     };
     static constexpr VkPipelineColorBlendAttachmentState COLOR_BLEND_ATTACHMENT = {
@@ -860,7 +856,7 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         COLOR_BLEND_ATTACHMENT,
         COLOR_BLEND_ATTACHMENT,
     };
-    const VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
+    constexpr VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
         .attachmentCount = COLOR_BLEND_ATTACHMENTS.size(),
         .pAttachments = COLOR_BLEND_ATTACHMENTS.data(),
@@ -912,12 +908,7 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
 
     vkCmdEndRenderPass(vkCommandBuffer);
 
-    if (!CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo)))
-    {
-        return false;
-    }
-
-    return true;
+    return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }
 
 bool LightBakerGpu::CreateBLAS(const uint32_t vertexCount, const uint32_t indexCount)
@@ -1476,7 +1467,7 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
         },
     };
 
-    const VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
+    constexpr VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .bindingCount = DESCRIPTOR_SET_LAYOUT_BINDINGS.size(),
         .pBindings = DESCRIPTOR_SET_LAYOUT_BINDINGS.data(),

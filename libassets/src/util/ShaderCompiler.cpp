@@ -3,13 +3,18 @@
 //
 
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <libassets/util/Error.h>
-#include <libassets/util/Logger.h>
 #include <libassets/util/ShaderCompiler.h>
+#include <list>
+#include <memory>
+#include <shaderc/env.h>
+#include <shaderc/shaderc.h>
 #include <shaderc/shaderc.hpp>
+#include <shaderc/status.h>
 #include <sstream>
 #include <string>
 #include <utility>

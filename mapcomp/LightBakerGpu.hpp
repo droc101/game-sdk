@@ -12,7 +12,6 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 #include "LevelMeshBuilder.h"
-#include "libassets/type/Actor.h"
 #include "Light.h"
 
 class LightBakerGpu
