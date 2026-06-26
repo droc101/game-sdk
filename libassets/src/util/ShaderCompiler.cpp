@@ -27,7 +27,7 @@ shaderc_include_result *ShaderCompiler::SDKIncluder::GetInclude(const char *requ
     glsl << glslFile.rdbuf();
     glslFile.close();
     const std::string glslString{glsl.str()};
-    includeResults.emplace_back(strdup(requestedSourcePath.c_str()),
+    includeResults.emplace_back(strdup(requestedSourcePath.string().c_str()),
                                 requestedSourcePath.string().length(),
                                 strdup(glslString.c_str()),
                                 glslString.length(),
