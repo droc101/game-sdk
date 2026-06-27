@@ -18,6 +18,7 @@
 #include <libassets/type/Color.h>
 #include <libassets/type/renderDefs/BoxRenderDefinition.h>
 #include <libassets/type/renderDefs/CircleRenderDefinition.h>
+#include <libassets/type/renderDefs/ConeRenderDefinition.h>
 #include <libassets/type/renderDefs/ModelRenderDefinition.h>
 #include <libassets/type/renderDefs/OrientationRenderDefinition.h>
 #include <libassets/type/renderDefs/PointRenderDefinition.h>
@@ -379,6 +380,9 @@ void ViewportRenderer::RenderActor(const Actor &a, const glm::mat4 &matrix, cons
             case RenderDefinition::RenderDefinitionType::RD_TYPE_CIRCLE:
                 RenderCircleRdef(dynamic_cast<CircleRenderDefinition *>(rdef.get()), a, matrix, vp.GetType());
                 break;
+            case RenderDefinition::RenderDefinitionType::RD_TYPE_CONE:
+                RenderConeRdef(dynamic_cast<ConeRenderDefinition *>(rdef.get()), a, matrix, worldMatrix);
+                break;
             default:
             case RenderDefinition::RenderDefinitionType::RD_TYPE_UNKNOWN:
                 assert(false); // should be impossible
@@ -438,6 +442,52 @@ bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
             {
                 boundingBoxPoints.emplace_back(worldMatrix * glm::vec4(point, 1.0));
             }
+        } else if (type == RenderDefinition::RenderDefinitionType::RD_TYPE_CONE)
+        {
+            ConeRenderDefinition *coneDef = dynamic_cast<ConeRenderDefinition *>(rdef.get());
+            const float length = coneDef->GetLength(actor);
+            const float angle = coneDef->GetAngle(actor);
+
+            const float radius = glm::tan(glm::radians(angle)) * length;
+
+            constexpr uint32_t NUM_VERTS = 8;
+            std::vector<glm::vec2> pts;
+            pts.reserve(NUM_VERTS);
+            for (uint32_t i = 0; i < NUM_VERTS; i++)
+            {
+                const float theta = 1 * (2.0f *
+                                         std::numbers::pi_v<float> *
+                                         static_cast<float>(i) /
+                                         static_cast<float>(NUM_VERTS));
+                const float x = radius * std::cos(theta);
+                const float y = radius * std::sin(theta);
+                pts.emplace_back(x, y);
+            }
+
+            boundingBoxPoints.emplace_back(actor.position);
+            for (size_t i = 0; i < NUM_VERTS; i++)
+            {
+                const glm::vec3 startPoint = worldMatrix * glm::vec4(pts.at(i).x, pts.at(i).y, -length, 1);
+                boundingBoxPoints.emplace_back(startPoint);
+            }
+        } else if (type == RenderDefinition::RenderDefinitionType::RD_TYPE_WALL)
+        {
+            WallRenderDefinition *wallDef = dynamic_cast<WallRenderDefinition *>(rdef.get());
+            const glm::vec2 size = wallDef->GetSize(actor);
+            const glm::vec2 localOrigin = wallDef->GetLocalCenter(actor);
+            const float bottom = localOrigin.y - (size.y / 2.0f);
+            const float top = localOrigin.y + (size.y / 2.0f);
+            const glm::vec2 startPoint = wallDef->GetZAxisOrientation(actor)
+                                                 ? glm::vec2(0, localOrigin.x - size.x / 2.0f)
+                                                 : glm::vec2(localOrigin.x - size.x / 2.0f, 0);
+            const glm::vec2 endPoint = wallDef->GetZAxisOrientation(actor)
+                                               ? glm::vec2(0, localOrigin.x + size.x / 2.0f)
+                                               : glm::vec2(localOrigin.x + size.x / 2.0f, 0);
+
+            boundingBoxPoints.emplace_back(worldMatrix * glm::vec4(startPoint.x, top, startPoint.y, 1.0f));
+            boundingBoxPoints.emplace_back(worldMatrix * glm::vec4(endPoint.x, top, endPoint.y, 1.0f));
+            boundingBoxPoints.emplace_back(worldMatrix * glm::vec4(startPoint.x, bottom, startPoint.y, 1.0f));
+            boundingBoxPoints.emplace_back(worldMatrix * glm::vec4(endPoint.x, bottom, endPoint.y, 1.0f));
         }
     }
 
@@ -596,7 +646,8 @@ void ViewportRenderer::RenderCircleRdef(CircleRenderDefinition *rdef,
     pts.reserve(numVerts);
     for (uint32_t i = 0; i < numVerts; i++)
     {
-        const float theta = 1 * (2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / static_cast<float>(numVerts));
+        const float theta = 1 *
+                            (2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / static_cast<float>(numVerts));
         const float x = radius * std::cos(theta);
         const float y = radius * std::sin(theta);
         pts.emplace_back(x, y);
@@ -643,5 +694,39 @@ void ViewportRenderer::RenderCircleRdef(CircleRenderDefinition *rdef,
                                         1);
                 break;
         }
+    }
+}
+
+void ViewportRenderer::RenderConeRdef(ConeRenderDefinition *rdef,
+                                      const Actor &actor,
+                                      const glm::mat4 &matrix,
+                                      const glm::mat4 &worldMatrix)
+{
+    const float length = rdef->GetLength(actor);
+    const Color color = rdef->GetColor(actor);
+    const float angle = rdef->GetAngle(actor);
+
+    const float radius = glm::tan(glm::radians(angle)) * length;
+
+    const uint32_t numVerts = rdef->GetNumSides(actor);
+    std::vector<glm::vec2> pts;
+    pts.reserve(numVerts);
+    for (uint32_t i = 0; i < numVerts; i++)
+    {
+        const float theta = 1 *
+                            (2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / static_cast<float>(numVerts));
+        const float x = radius * std::cos(theta);
+        const float y = radius * std::sin(theta);
+        pts.emplace_back(x, y);
+    }
+
+    for (size_t i = 0; i < numVerts; i++)
+    {
+        const size_t nextIndex = (i + 1) % numVerts;
+        const glm::vec3 startPoint = worldMatrix * glm::vec4(pts.at(i).x, pts.at(i).y, -length, 1);
+        const glm::vec3 endPoint = worldMatrix * glm::vec4(pts.at(nextIndex).x, pts.at(nextIndex).y, -length, 1);
+
+        MapRenderer::RenderLine(startPoint, endPoint, color, matrix, 1);
+        MapRenderer::RenderLine(actor.position, startPoint, color, matrix, 1);
     }
 }

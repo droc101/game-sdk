@@ -26,6 +26,7 @@ class RenderDefinition
             RD_TYPE_SPRITE,
             RD_TYPE_WALL,
             RD_TYPE_CIRCLE,
+            RD_TYPE_CONE,
         };
 
         RenderDefinition();

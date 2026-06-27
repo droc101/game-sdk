@@ -10,6 +10,7 @@
 #include <libassets/type/Color.h>
 #include <libassets/type/renderDefs/BoxRenderDefinition.h>
 #include <libassets/type/renderDefs/CircleRenderDefinition.h>
+#include <libassets/type/renderDefs/ConeRenderDefinition.h>
 #include <libassets/type/renderDefs/ModelRenderDefinition.h>
 #include <libassets/type/renderDefs/OrientationRenderDefinition.h>
 #include <libassets/type/renderDefs/PointRenderDefinition.h>
@@ -152,4 +153,9 @@ class ViewportRenderer
                                      const Actor &actor,
                                      const glm::mat4 &worldMatrix,
                                      Viewport::ViewportType type);
+
+        static void RenderConeRdef(ConeRenderDefinition *rdef,
+                                   const Actor &actor,
+                                   const glm::mat4 &matrix,
+                                   const glm::mat4 &worldMatrix);
 };

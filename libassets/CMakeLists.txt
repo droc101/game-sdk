@@ -180,6 +180,8 @@ add_library(assets SHARED
         include/libassets/type/renderDefs/values/BoolDefinitionValue.h
         src/type/renderDefs/values/ColorDefinitionValue.cpp
         include/libassets/type/renderDefs/values/ColorDefinitionValue.h
+        src/type/renderDefs/ConeRenderDefinition.cpp
+        include/libassets/type/renderDefs/ConeRenderDefinition.h
 )
 
 set_target_properties(assets PROPERTIES

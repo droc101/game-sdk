@@ -184,6 +184,32 @@
               }
             },
             "additionalProperties": false
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cone"
+                ]
+              },
+              "is_gizmo": {
+                "$ref": "#/$defs/render_definition/bool"
+              },
+              "color": {
+                "$ref": "#/$defs/render_definition/color"
+              },
+              "angle": {
+                "$ref": "#/$defs/render_definition/float"
+              },
+              "length": {
+                "$ref": "#/$defs/render_definition/float"
+              },
+              "num_sides": {
+                "$ref": "#/$defs/render_definition/uint"
+              }
+            },
+            "additionalProperties": false
           }
         ],
         "required": [
