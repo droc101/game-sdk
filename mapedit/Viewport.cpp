@@ -90,7 +90,7 @@ void Viewport::Render()
                                             ImGuiChildFlags_Borders;
     if (MapEditor::drawViewportInfo && ImGui::BeginChild("_vp_stats", ImVec2(0, 0), CHILD_FLAGS))
     {
-        ImGui::Text("Pos: %.2f, %.2f\nZoom: %.2f units/screen\nGrid: %.2f units",
+        ImGui::Text("Pos: %.2f, %.2f\nZoom: %.2f units/screen\nGrid: %.3f units",
                     scrollCenterPos.x,
                     scrollCenterPos.y,
                     zoom,
