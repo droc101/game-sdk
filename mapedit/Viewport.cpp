@@ -107,7 +107,7 @@ void Viewport::Render()
         ImGui::SetWindowFocus();
     }
 
-    if (ImGui::IsWindowFocused())
+    if (ImGui::IsWindowFocused() && ImGui::IsWindowHovered())
     {
         if (ImGui::IsMouseDown(ImGuiMouseButton_Right) || ImGui::IsMouseDown(ImGuiMouseButton_Middle))
         {

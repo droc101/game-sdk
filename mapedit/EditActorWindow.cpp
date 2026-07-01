@@ -429,12 +429,13 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
 void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &definition)
 {
     const float boxSize = ImGui::GetContentRegionAvail().y - 200;
-    if (ImGui::BeginTable("charTable", 4, ImGuiTableFlags_ScrollY | ImGuiTableFlags_BordersH, ImVec2(-1, boxSize)))
+    if (ImGui::BeginTable("charTable", 5, ImGuiTableFlags_ScrollY | ImGuiTableFlags_BordersH, ImVec2(-1, boxSize)))
     {
         ImGui::TableSetupColumn("Source Output", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Target Name", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Target Input", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Param Override", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("# Refires", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableHeadersRow();
         size_t i = 0;
         for (const IOConnection &connection: actor.connections)
@@ -460,6 +461,15 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
             const Param &param = connection.param;
             ImGui::TextWrapped("%s", param.ToString().c_str());
 
+            ImGui::TableNextColumn();
+            if (connection.numRefires == 0)
+            {
+                ImGui::Text("%zu (Infinite)", connection.numRefires);
+            } else
+            {
+                ImGui::Text("%zu", connection.numRefires);
+            }
+
             i++;
         }
 
@@ -479,217 +489,237 @@ void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &defi
         {
             IOConnection &connection = actor.connections.at(selectedConnection);
             Param &param = connection.param;
-            std::unordered_set<std::string> myOutputNames{};
-            definition.GetOutputNames(myOutputNames);
-            ImGui::Text("Source Output");
-            if (ImGui::BeginCombo("##srcOutput", connection.sourceOutput.c_str()))
-            {
-                for (const std::string &output: myOutputNames)
-                {
-                    if (connection.sourceOutput == output)
-                    {
-                        ImGui::SetItemDefaultFocus();
-                    }
-                    if (ImGui::Selectable(output.c_str(), connection.sourceOutput == output))
-                    {
-                        connection.sourceOutput = output;
-                        selectedParam = 0;
-                    }
-                }
-                ImGui::EndCombo();
-            }
-            SignalDefinition outputDef{};
-            if (definition.GetOutput(connection.sourceOutput, outputDef) != Error::ErrorCode::OK)
-            {
-                ImGui::SameLine();
-                ImGui::TextColored(ImVec4(1, 0, 0, 1), "Unknown Output");
-            }
 
-            ImGui::Text("Target Actor");
-            std::vector<std::string> actorNames{};
-            for (const Actor &levelActor: MapEditor::map.actors)
+            if (ImGui::BeginTable("##classPositionGrid", 2))
             {
-                if (!levelActor.params.contains("name"))
-                {
-                    continue;
-                }
-                const Param &p = levelActor.params.at("name");
-                if (p.GetType() != Param::ParamType::PARAM_TYPE_STRING)
-                {
-                    continue;
-                }
-                const std::string actorName = p.Get<std::string>("");
-                if (std::ranges::find(actorNames, actorName) != actorNames.end())
-                {
-                    continue;
-                }
-                if (actorName.empty())
-                {
-                    continue;
-                }
-                actorNames.push_back(p.Get<std::string>(""));
-            }
-            std::ranges::sort(actorNames);
-            if (ImGui::BeginCombo("##targetActor", connection.targetName.c_str()))
-            {
-                for (const std::string &name: actorNames)
-                {
-                    if (connection.targetName == name)
-                    {
-                        ImGui::SetItemDefaultFocus();
-                    }
-                    if (ImGui::Selectable(name.c_str(), connection.targetName == name))
-                    {
-                        connection.targetName = name;
-                    }
-                }
-                ImGui::EndCombo();
-            }
+                ImGui::TableNextColumn();
+                ImGui::PushItemWidth(-1);
+                std::unordered_set<std::string> myOutputNames{};
+                definition.GetOutputNames(myOutputNames);
+                ImGui::Text("Source Output");
 
-            bool hasInputDef = false;
-            SignalDefinition inputDef;
-
-            if (std::ranges::find(actorNames, connection.targetName) != actorNames.end())
-            {
-                const Actor *targetActor = MapEditor::map.GetActor(connection.targetName);
-                assert(targetActor);
-                const ActorDefinition &targetDef = MapEditor::adm.GetActorDefinition(targetActor->className);
-                std::unordered_set<std::string> targetInputNames{};
-                targetDef.GetInputNames(targetInputNames);
-                ImGui::Text("Target Input");
-                if (ImGui::BeginCombo("##targetInput", connection.targetInput.c_str()))
+                SignalDefinition outputDef{};
+                if (definition.GetOutput(connection.sourceOutput, outputDef) != Error::ErrorCode::OK)
                 {
-                    for (const std::string &input: targetInputNames)
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImVec4(1, 0, 0, 1), "Unknown Output");
+                }
+
+                if (ImGui::BeginCombo("##srcOutput", connection.sourceOutput.c_str()))
+                {
+                    for (const std::string &output: myOutputNames)
                     {
-                        if (connection.targetInput == input)
+                        if (connection.sourceOutput == output)
                         {
                             ImGui::SetItemDefaultFocus();
                         }
-                        if (ImGui::Selectable(input.c_str(), connection.targetInput == input))
+                        if (ImGui::Selectable(output.c_str(), connection.sourceOutput == output))
                         {
-                            connection.targetInput = input;
+                            connection.sourceOutput = output;
+                            selectedParam = 0;
                         }
                     }
                     ImGui::EndCombo();
                 }
 
-                const Error::ErrorCode e = targetDef.GetInput(connection.targetInput, inputDef);
-                if (e == Error::ErrorCode::OK)
+                ImGui::Text("Target Actor");
+                std::vector<std::string> actorNames{};
+                for (const Actor &levelActor: MapEditor::map.actors)
                 {
-                    if (connection.param.GetType() != inputDef.GetType())
+                    if (!levelActor.params.contains("name"))
                     {
-                        connection.param.ClearToType(inputDef.GetType());
+                        continue;
                     }
-                    hasInputDef = true;
+                    const Param &p = levelActor.params.at("name");
+                    if (p.GetType() != Param::ParamType::PARAM_TYPE_STRING)
+                    {
+                        continue;
+                    }
+                    const std::string actorName = p.Get<std::string>("");
+                    if (std::ranges::find(actorNames, actorName) != actorNames.end())
+                    {
+                        continue;
+                    }
+                    if (actorName.empty())
+                    {
+                        continue;
+                    }
+                    actorNames.push_back(p.Get<std::string>(""));
                 }
-            } else
-            {
-                ImGui::SameLine();
-                ImGui::TextColored(ImVec4(1, 0, 0, 1), "Unknown Target Actor");
 
-                ImGui::Text("Target Input");
-                ImGui::BeginDisabled();
-                if (ImGui::BeginCombo("##targetInput", connection.targetInput.c_str()))
+                const bool validTargetActor = std::ranges::find(actorNames, connection.targetName) != actorNames.end();
+                if (!validTargetActor)
                 {
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImVec4(1, 0, 0, 1), "Unknown Target Actor");
+                }
+                std::ranges::sort(actorNames);
+                if (ImGui::BeginCombo("##targetActor", connection.targetName.c_str()))
+                {
+                    for (const std::string &name: actorNames)
+                    {
+                        if (connection.targetName == name)
+                        {
+                            ImGui::SetItemDefaultFocus();
+                        }
+                        if (ImGui::Selectable(name.c_str(), connection.targetName == name))
+                        {
+                            connection.targetName = name;
+                        }
+                    }
                     ImGui::EndCombo();
                 }
-                ImGui::EndDisabled();
-                ImGui::SameLine();
-                ImGui::TextColored(ImVec4(1, 0, 0, 1), "Unknown Target Input");
-            }
 
-            if (hasInputDef)
-            {
-                if (outputDef.GetType() != inputDef.GetType())
+                bool hasInputDef = false;
+                SignalDefinition inputDef;
+
+                if (validTargetActor)
                 {
-                    connection.overridesParam = true;
-                    ImGui::BeginDisabled();
-                    ImGui::Checkbox("Parameter Override", &connection.overridesParam);
-                    ImGui::EndDisabled();
+                    const Actor *targetActor = MapEditor::map.GetActor(connection.targetName);
+                    assert(targetActor);
+                    const ActorDefinition &targetDef = MapEditor::adm.GetActorDefinition(targetActor->className);
+                    std::unordered_set<std::string> targetInputNames{};
+                    targetDef.GetInputNames(targetInputNames);
+                    ImGui::Text("Target Input");
+                    if (ImGui::BeginCombo("##targetInput", connection.targetInput.c_str()))
+                    {
+                        for (const std::string &input: targetInputNames)
+                        {
+                            if (connection.targetInput == input)
+                            {
+                                ImGui::SetItemDefaultFocus();
+                            }
+                            if (ImGui::Selectable(input.c_str(), connection.targetInput == input))
+                            {
+                                connection.targetInput = input;
+                            }
+                        }
+                        ImGui::EndCombo();
+                    }
+
+                    const Error::ErrorCode e = targetDef.GetInput(connection.targetInput, inputDef);
+                    if (e == Error::ErrorCode::OK)
+                    {
+                        if (connection.param.GetType() != inputDef.GetType())
+                        {
+                            connection.param.ClearToType(inputDef.GetType());
+                        }
+                        hasInputDef = true;
+                    }
                 } else
                 {
-                    ImGui::Checkbox("Parameter Override", &connection.overridesParam);
+                    ImGui::Text("Target Input");
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImVec4(1, 0, 0, 1), "Unknown Target Input");
+                    ImGui::BeginDisabled();
+                    if (ImGui::BeginCombo("##targetInput", connection.targetInput.c_str()))
+                    {
+                        ImGui::EndCombo();
+                    }
+                    ImGui::EndDisabled();
                 }
 
-                if (connection.overridesParam)
+                ImGui::TableNextColumn();
+                ImGui::PushItemWidth(-1);
+
+                ImGui::Text("Num Refires (0 for infinite)");
+                ImGui::InputScalar("##nRefires", ImGuiDataType_U64, &connection.numRefires);
+
+                if (hasInputDef)
                 {
-                    // ImGui::TextWrapped("%s", paramDef->description.empty() ? "No Description" : paramDef->description.c_str());
-                    if (param.GetType() == Param::ParamType::PARAM_TYPE_BYTE)
+                    if (outputDef.GetType() != inputDef.GetType())
                     {
-                        uint8_t val = param.Get<uint8_t>(0);
-                        if (ImGui::InputScalar("##value", ImGuiDataType_U8, &val))
-                        {
-                            param.Set<uint8_t>(val);
-                        }
-                    } else if (param.GetType() == Param::ParamType::PARAM_TYPE_INTEGER)
-                    {
-                        int32_t val = param.Get<int32_t>(0);
-                        if (ImGui::InputScalar("##value", ImGuiDataType_S32, &val))
-                        {
-                            param.Set<int32_t>(val);
-                        }
-                    } else if (param.GetType() == Param::ParamType::PARAM_TYPE_FLOAT)
-                    {
-                        float val = param.Get<float>(0);
-                        if (ImGui::InputFloat("##value", &val, 0.01))
-                        {
-                            param.Set<float>(val);
-                        }
-                    } else if (param.GetType() == Param::ParamType::PARAM_TYPE_BOOL)
-                    {
-                        bool val = param.Get<bool>(false);
-                        if (ImGui::Checkbox("##value", &val))
-                        {
-                            param.Set<bool>(val);
-                        }
-                    } else if (param.GetType() == Param::ParamType::PARAM_TYPE_STRING)
-                    {
-                        std::string val = param.Get<std::string>("");
-                        if (ImGui::InputText("##value", &val))
-                        {
-                            param.Set<std::string>(val);
-                        }
-                    } else if (param.GetType() == Param::ParamType::PARAM_TYPE_COLOR)
-                    {
-                        Color col = param.Get<Color>(Color(-1));
-                        std::array<float, 4> colorData = col.CopyData();
-                        if (ImGui::ColorEdit4("##color", colorData.data()))
-                        {
-                            col = Color(colorData.at(0), colorData.at(1), colorData.at(2), colorData.at(3));
-                            param.Set<Color>(col);
-                        }
-                    } else if (param.GetType() == Param::ParamType::PARAM_TYPE_UINT_64)
-                    {
-                        uint64_t val = param.Get<uint64_t>(0);
-                        if (ImGui::InputScalar("##value", ImGuiDataType_U64, &val))
-                        {
-                            param.Set<uint64_t>(val);
-                        }
-                    } else if (param.GetType() == Param::ParamType::PARAM_TYPE_VEC2)
-                    {
-                        glm::vec2 val = param.Get<glm::vec2>({});
-                        if (ImGui::InputFloat2("##value", glm::value_ptr(val)))
-                        {
-                            param.Set<glm::vec2>(val);
-                        }
-                    } else if (param.GetType() == Param::ParamType::PARAM_TYPE_VEC3)
-                    {
-                        glm::vec3 val = param.Get<glm::vec3>({});
-                        if (ImGui::InputFloat3("##value", glm::value_ptr(val)))
-                        {
-                            param.Set<glm::vec3>(val);
-                        }
+                        connection.overridesParam = true;
+                        ImGui::BeginDisabled();
+                        ImGui::Checkbox("Parameter Override", &connection.overridesParam);
+                        ImGui::EndDisabled();
                     } else
                     {
-                        ImGui::TextDisabled("This input does not accept a parameter.");
+                        ImGui::Checkbox("Parameter Override", &connection.overridesParam);
                     }
+
+                    if (connection.overridesParam)
+                    {
+                        // ImGui::TextWrapped("%s", paramDef->description.empty() ? "No Description" : paramDef->description.c_str());
+                        if (param.GetType() == Param::ParamType::PARAM_TYPE_BYTE)
+                        {
+                            uint8_t val = param.Get<uint8_t>(0);
+                            if (ImGui::InputScalar("##value", ImGuiDataType_U8, &val))
+                            {
+                                param.Set<uint8_t>(val);
+                            }
+                        } else if (param.GetType() == Param::ParamType::PARAM_TYPE_INTEGER)
+                        {
+                            int32_t val = param.Get<int32_t>(0);
+                            if (ImGui::InputScalar("##value", ImGuiDataType_S32, &val))
+                            {
+                                param.Set<int32_t>(val);
+                            }
+                        } else if (param.GetType() == Param::ParamType::PARAM_TYPE_FLOAT)
+                        {
+                            float val = param.Get<float>(0);
+                            if (ImGui::InputFloat("##value", &val, 0.01))
+                            {
+                                param.Set<float>(val);
+                            }
+                        } else if (param.GetType() == Param::ParamType::PARAM_TYPE_BOOL)
+                        {
+                            bool val = param.Get<bool>(false);
+                            if (ImGui::Checkbox("##value", &val))
+                            {
+                                param.Set<bool>(val);
+                            }
+                        } else if (param.GetType() == Param::ParamType::PARAM_TYPE_STRING)
+                        {
+                            std::string val = param.Get<std::string>("");
+                            if (ImGui::InputText("##value", &val))
+                            {
+                                param.Set<std::string>(val);
+                            }
+                        } else if (param.GetType() == Param::ParamType::PARAM_TYPE_COLOR)
+                        {
+                            Color col = param.Get<Color>(Color(-1));
+                            std::array<float, 4> colorData = col.CopyData();
+                            if (ImGui::ColorEdit4("##color", colorData.data()))
+                            {
+                                col = Color(colorData.at(0), colorData.at(1), colorData.at(2), colorData.at(3));
+                                param.Set<Color>(col);
+                            }
+                        } else if (param.GetType() == Param::ParamType::PARAM_TYPE_UINT_64)
+                        {
+                            uint64_t val = param.Get<uint64_t>(0);
+                            if (ImGui::InputScalar("##value", ImGuiDataType_U64, &val))
+                            {
+                                param.Set<uint64_t>(val);
+                            }
+                        } else if (param.GetType() == Param::ParamType::PARAM_TYPE_VEC2)
+                        {
+                            glm::vec2 val = param.Get<glm::vec2>({});
+                            if (ImGui::InputFloat2("##value", glm::value_ptr(val)))
+                            {
+                                param.Set<glm::vec2>(val);
+                            }
+                        } else if (param.GetType() == Param::ParamType::PARAM_TYPE_VEC3)
+                        {
+                            glm::vec3 val = param.Get<glm::vec3>({});
+                            if (ImGui::InputFloat3("##value", glm::value_ptr(val)))
+                            {
+                                param.Set<glm::vec3>(val);
+                            }
+                        } else
+                        {
+                            ImGui::TextDisabled("This input does not accept a parameter.");
+                        }
+                    }
+                } else
+                {
+                    ImGui::BeginDisabled();
+                    bool dummy = false;
+                    ImGui::Checkbox("Parameter Override", &dummy);
+                    ImGui::EndDisabled();
                 }
-            } else
-            {
-                ImGui::BeginDisabled();
-                bool dummy = false;
-                ImGui::Checkbox("Parameter Override", &dummy);
-                ImGui::EndDisabled();
+
+                ImGui::EndTable();
             }
         } else
         {
