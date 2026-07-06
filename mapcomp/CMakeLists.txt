@@ -41,6 +41,7 @@ target_link_libraries(mapcomp PRIVATE
         earcut
         Clipper2
         assets
+        game_sdk_shared
         glm::glm
         Luna
 )

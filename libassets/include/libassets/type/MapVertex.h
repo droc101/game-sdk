@@ -19,6 +19,10 @@ struct MapVertex
         /// The normal of the surface this point is on
         /// @note Only used by lightmap compiling. Not actually written to the asset binary.
         alignas(16) glm::vec3 normal;
+
+        /// The texture index used by the material of this vertex
+        /// @note Only used by lightmap compiling. Not actually written to the asset binary.
+        alignas(4) uint32_t textureIndex;
 };
 
 // This is a requirement for MapVertex to be considered a trivial type, and this is not true if the members have a

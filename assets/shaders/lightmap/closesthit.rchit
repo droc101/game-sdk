@@ -14,8 +14,7 @@ vec2 computeLuxelUv() {
                    barycentric.x * vertexData.vertices[indexData.indices[3 * gl_PrimitiveID + 1]].lightmapUv +
                    barycentric.y * vertexData.vertices[indexData.indices[3 * gl_PrimitiveID + 2]].lightmapUv;
 }
-int computeLuxelIndex() {
-    vec2 uv = clamp(computeLuxelUv(), vec2(0), vec2(1));
+int computeLuxelIndex(const vec2 uv) {
     int x = int(uv.x * WIDTH);
     int y = int(uv.y * HEIGHT);
     return int(x + y * WIDTH);
@@ -25,5 +24,7 @@ void main() {
     if (gl_HitKindEXT == gl_HitKindBackFacingTriangleEXT) {
         return;
     }
-    hitColor = imageLoad(inputLightmap, computeLuxelIndex()).rgb;
+    const vec2 luxelUv = computeLuxelUv();
+    const int luxelIndex = computeLuxelIndex(luxelUv);
+    hitColor = imageLoad(luxelAlbedos, ivec2(luxelUv * vec2(WIDTH, HEIGHT))).rgb * imageLoad(inputLightmap, luxelIndex).rgb;
 }

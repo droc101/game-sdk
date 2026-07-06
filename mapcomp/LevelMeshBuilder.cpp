@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include "LightBakerGpu.hpp"
 #include "SectorClipper.h"
 
 #define STB_RECT_PACK_IMPLEMENTATION
@@ -342,6 +343,9 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
         v.uv = (point + mat.uvOffset) * mat.uvScale; // TODO is this the correct way to offset+scale?
         v.normal = {0, isFloor ? 1 : -1, 0};
         v.lightmapUv = glm::vec2(0, 0);
+        if (!LightBakerGpu::Get().GetTextureIndex(mat.material, v.textureIndex)) {
+            v.textureIndex = 0;
+        }
         vertices.push_back(v);
     }
 

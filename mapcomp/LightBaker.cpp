@@ -34,16 +34,5 @@ bool LightBaker::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &m
                   "Ray count must be representable as a double in order to be preserved in the shader!");
     static_assert(RAY_COUNT % (1 << 15) == 0, "Ray count must be a multiple of (1 << 15)!");
 
-    LightBakerGpu baker{};
-    if (!baker.IsInitialized())
-    {
-        return false;
-    }
-    if (!baker.Bake(meshBuilders, lights, lightmapSize, BOUNCE_COUNT, SAMPLE_COUNT, pixelData))
-    {
-        return false;
-    }
-
-    // TODO: Cleanup
-    return true;
+    return LightBakerGpu::Get().Bake(meshBuilders, lights, lightmapSize, BOUNCE_COUNT, SAMPLE_COUNT, pixelData);
 }

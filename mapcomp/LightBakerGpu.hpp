@@ -17,9 +17,7 @@
 class LightBakerGpu
 {
     public:
-        LightBakerGpu();
-
-        ~LightBakerGpu();
+        static LightBakerGpu &Get();
 
         bool Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                   const std::vector<Light> &lights,
@@ -28,12 +26,13 @@ class LightBakerGpu
                   uint32_t sampleCount,
                   std::vector<uint16_t> &pixelData);
 
-        [[nodiscard]] bool IsInitialized() const
-        {
-            return initialized;
-        }
+        bool GetTextureIndex(const std::string &textureName, uint32_t &index);
 
     private:
+        LightBakerGpu();
+
+        ~LightBakerGpu();
+
         struct AccelerationStructure
         {
                 LunaBuffer buffer;
@@ -51,7 +50,8 @@ class LightBakerGpu
             return true;
         }
 
-        VkShaderModule GenerateShaderModule(const std::filesystem::path &path, shaderc_shader_kind shaderKind) const;
+        [[nodiscard]] VkShaderModule GenerateShaderModule(const std::filesystem::path &path,
+                                                          shaderc_shader_kind shaderKind) const;
 
         bool CreateVertexAndIndexBuffers(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                                          uint32_t &vertexCount,
@@ -91,6 +91,8 @@ class LightBakerGpu
             .pNext = &physicalDeviceAccelerationStructureProperties,
         };
 
+        static inline std::vector<std::pair<std::string, LunaImage>> loadedTextures{};
+
         bool initialized{};
         LunaDevice device{};
         uint32_t queueFamilyIndex{};
@@ -98,6 +100,9 @@ class LightBakerGpu
         LunaCommandPool commandPool{};
         LunaCommandBuffer commandBuffer{};
         LunaSemaphore semaphore{};
+        VkDescriptorPool graphicsDescriptorPool{};
+        VkDescriptorSetLayout graphicsDescriptorSetLayout{};
+        VkDescriptorSet graphicsDescriptorSet{};
         /// The ray tracing pipeline layout
         /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
         VkPipelineLayout pipelineLayout{};
