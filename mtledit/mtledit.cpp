@@ -2,6 +2,7 @@
 // Created by droc101 on 11/16/25.
 //
 
+#include <filesystem>
 #include <format>
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/DialogFilters.h>
@@ -12,8 +13,11 @@
 #include <imgui.h>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/type/Material.h>
+#include <libassets/util/ArgumentParser.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <string>
+#include "libassets/util/SearchPathManager.h"
 
 static LevelMaterialAsset material{};
 
@@ -94,12 +98,14 @@ static void Render()
     ImGui::Checkbox("Invisible", &material.compileInvisible);
     ImGui::SameLine();
     ImGui::Checkbox("No Collision", &material.compileNoClip);
+    ImGui::SetNextItemWidth(100);
+    ImGui::InputFloat("Emissive Strength", &material.emissive);
 
 
     ImGui::End();
 }
 
-int main(const int argc, char **argv)
+int main(const int argc, const char **argv)
 {
     if (!SDKWindow::Get().Init("GAME SDK Material Editor"))
     {
@@ -108,6 +114,28 @@ int main(const int argc, char **argv)
 
     SDKWindow::Get().SetWindowIcon("mtledit");
 
+    ArgumentParser args{argc, argv};
+    if (args.HasFlagWithValue("--materials-dir"))
+    {
+        const std::string &directiory = args.GetFlagValue("--materials-dir");
+        if (directiory.empty())
+        {
+            Logger::Error("The `--materials-dir` argument requires a value!");
+            return -1;
+        }
+        std::filesystem::path directoryPath{directiory};
+        if (!std::filesystem::exists(directoryPath)) {
+            Logger::Error("Invalid path `{}`!", directiory);
+            return -1;
+        }
+        const std::vector<std::string> &files = SearchPathManager::ScanFolder(directiory, ".gmtl", false);
+        for (const std::string &file: files) {
+            OpenGmtl(file);
+            SaveGmtl(file);
+        }
+        SDKWindow::Get().Destroy();
+        return 0;
+    }
     const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gmtl"});
     if (!openPath.empty())
     {

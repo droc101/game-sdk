@@ -35,6 +35,7 @@ Error::ErrorCode LevelMaterialAsset::CreateFromAsset(const char *assetPath, Leve
     material.soundClass = static_cast<SoundClass>(asset.reader.Read<uint8_t>());
     material.compileInvisible = asset.reader.Read<uint8_t>() == 1;
     material.compileNoClip = asset.reader.Read<uint8_t>() == 1;
+    material.emissive = asset.reader.Read<float>();
     return Error::ErrorCode::OK;
 }
 
@@ -47,6 +48,7 @@ void LevelMaterialAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     writer.Write<uint8_t>(static_cast<uint8_t>(soundClass));
     writer.Write<uint8_t>(compileInvisible ? 1 : 0);
     writer.Write<uint8_t>(compileNoClip ? 1 : 0);
+    writer.Write<float>(emissive);
     writer.CopyToVector(buffer);
 }
 

@@ -57,7 +57,7 @@ class DesktopInterface
          * @param extensions list of accepted extensions
          * @return file path on success, empty string otherwise
          */
-        std::string GetFileArgument(int argc, char **argv, const std::vector<std::string> &extensions);
+        std::string GetFileArgument(int argc, const char *const *argv, const std::vector<std::string> &extensions);
 
         /**
          * Initialize the desktop interface

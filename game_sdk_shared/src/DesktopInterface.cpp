@@ -77,7 +77,7 @@ bool DesktopInterface::OpenURL(const std::string &url)
     return SDL_OpenURL(url.c_str());
 }
 
-std::string DesktopInterface::GetFileArgument(const int argc, char **argv, const std::vector<std::string> &extensions)
+std::string DesktopInterface::GetFileArgument(const int argc, const char *const *argv, const std::vector<std::string> &extensions)
 {
     for (int i = 0; i < argc; i++)
     {

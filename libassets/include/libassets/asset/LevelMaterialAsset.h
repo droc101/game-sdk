@@ -33,6 +33,9 @@ class LevelMaterialAsset
         bool compileInvisible = false;
         // Whether to skip generating collision geometry for faces with this material
         bool compileNoClip = false;
+        /// The strength of emission by this material
+        /// The color of each luxel this surface maps to will be multipled by this value to determine how much light is emitted
+        float emissive = 0;
 
         static constexpr uint8_t LEVEL_MATERIAL_ASSET_VERSION = 1;
 
