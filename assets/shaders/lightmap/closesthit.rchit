@@ -2,9 +2,6 @@
 
 #include "shared.glsl"
 
-layout (constant_id = 0) const uint WIDTH = 8192;
-layout (constant_id = 1) const uint HEIGHT = 4096;
-
 hitAttributeEXT vec2 barycentric;
 
 layout(location = 0) rayPayloadInEXT vec3 hitColor;

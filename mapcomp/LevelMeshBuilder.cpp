@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <game_sdk/SharedMgr.h>
 #include <glm/glm.hpp>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/type/MapVertex.h>
@@ -259,6 +260,18 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
 
         v.lightmapUv = glm::vec2(0, 0);
 
+        if (!LightBakerGpu::Get().GetTextureIndex(wallMaterial.material, v.textureIndex))
+        {
+            v.textureIndex = 0;
+        }
+        const std::string materialPath = SharedMgr::Get().pathManager.GetAssetPath(wallMaterial.material);
+        LevelMaterialAsset material{};
+        Error::ErrorCode error = LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
+        if (error != Error::ErrorCode::OK)
+        {
+            Logger::Error("Creating material asset failed with error: {}", error);
+        }
+        v.emissive = material.emissive;
         vertices.push_back(v);
     }
 
@@ -343,9 +356,18 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
         v.uv = (point + mat.uvOffset) * mat.uvScale; // TODO is this the correct way to offset+scale?
         v.normal = {0, isFloor ? 1 : -1, 0};
         v.lightmapUv = glm::vec2(0, 0);
-        if (!LightBakerGpu::Get().GetTextureIndex(mat.material, v.textureIndex)) {
+        if (!LightBakerGpu::Get().GetTextureIndex(mat.material, v.textureIndex))
+        {
             v.textureIndex = 0;
         }
+        const std::string materialPath = SharedMgr::Get().pathManager.GetAssetPath(mat.material);
+        LevelMaterialAsset material{};
+        Error::ErrorCode error = LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
+        if (error != Error::ErrorCode::OK)
+        {
+            Logger::Error("Creating material asset failed with error: {}", error);
+        }
+        v.emissive = material.emissive;
         vertices.push_back(v);
     }
 

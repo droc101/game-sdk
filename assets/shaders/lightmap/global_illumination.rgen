@@ -2,8 +2,7 @@
 
 #include "shared.glsl"
 
-layout (constant_id = 0) const uint WIDTH = 8192;
-layout (constant_id = 1) const uint SAMPLE_COUNT = 1024;
+layout (constant_id = 2) const uint SAMPLE_COUNT = 1024;
 
 layout (location = 0) rayPayloadEXT vec3 hitColor;
 
@@ -38,25 +37,13 @@ void main() {
     const ivec2 luxelCoord = ivec2(luxelIndex % WIDTH, luxelIndex / WIDTH);
     const vec4 luxelPosition = imageLoad(luxelPositions, luxelCoord);
 
-#ifdef DEBUG
-    const vec4 luxelNormal = imageLoad(luxelNormals, luxelCoord);
-    if (luxelPosition.w == 0 || luxelNormal.w == 0) {
-        if (luxelPosition.w != luxelNormal.w) {
-            debugPrintfEXT("[ERROR] luxelPosition and luxelNormal disagree about if luxel is on a wall! luxelPosition.w: %f luxelNormal.w: %f\n", luxelPosition.w, luxelNormal.w);
-        }
-        return;
-    }
-#else
     if (luxelPosition.w == 0) {
         // The target luxel is not mapped to any wall
         return;
     }
-    // On the non-debug path, only load the normal if needed
+
     const vec4 luxelNormal = imageLoad(luxelNormals, luxelCoord);
-#endif
-
     vec3 accumulatedColor = vec3(0);
-
     for (uint i = 0; i < SAMPLE_COUNT; i++) {
         hitColor = vec3(0);
         const vec3 localDir = getRayDirection(i);

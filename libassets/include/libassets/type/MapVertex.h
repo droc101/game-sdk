@@ -23,6 +23,10 @@ struct MapVertex
         /// The texture index used by the material of this vertex
         /// @note Only used by lightmap compiling. Not actually written to the asset binary.
         alignas(4) uint32_t textureIndex;
+
+        /// How emissive the material at this vertex is
+        /// @note Only used by lightmap compiling. Not actually written to the asset binary.
+        alignas(4) float emissive;
 };
 
 // This is a requirement for MapVertex to be considered a trivial type, and this is not true if the members have a

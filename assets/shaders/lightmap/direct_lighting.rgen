@@ -4,8 +4,7 @@
 
 const uint RAY_FLAGS = gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT;
 
-layout (constant_id = 0) const uint WIDTH = 8192;
-layout (constant_id = 1) const uint LIGHT_COUNT = 0;
+layout (constant_id = 2) const uint LIGHT_COUNT = 0;
 
 layout (location = 0) rayPayloadEXT bool isLightVisible;
 
@@ -40,28 +39,18 @@ void main() {
     const ivec2 luxelCoord = ivec2(luxelIndex % WIDTH, luxelIndex / WIDTH);
     const vec4 luxelPosition = imageLoad(luxelPositions, luxelCoord);
 
-#ifdef DEBUG
-    const vec4 luxelNormal = imageLoad(luxelNormals, luxelCoord);
-    if (luxelPosition.w == 0 || luxelNormal.w == 0) {
-        if (luxelPosition.w != luxelNormal.w) {
-            debugPrintfEXT("[ERROR] luxelPosition and luxelNormal disagree about if luxel is on a wall! luxelPosition.w: %f luxelNormal.w: %f\n", luxelPosition.w, luxelNormal.w);
-        }
-        return;
-    }
-#else
     if (luxelPosition.w == 0) {
         // The target luxel is not mapped to any wall
         return;
     }
-#endif
 
-    vec3 accumulatedColor = vec3(0);
-
+    const vec4 luxelNormal = imageLoad(luxelNormals, luxelCoord);
+    vec3 accumulatedColor = vec3(luxelNormal.w, luxelNormal.w, luxelNormal.w);
     for (uint i = 0; i < LIGHT_COUNT; i++) {
         float distance;
         vec3 rayDirection;
         float theta;
-        
+
         isLightVisible = false;
         const Light light = lightsData.lights[i];
         if (light.type == LIGHT_TYPE_DIRECTIONAL) {
@@ -86,12 +75,36 @@ void main() {
         }
         traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, rayDirection, distance, 0);
         if (isLightVisible) {
-#ifndef DEBUG
-            // On the non-debug path, only load the normal if needed
-            const vec4 luxelNormal = imageLoad(luxelNormals, luxelCoord);
-#endif
             accumulatedColor += getLightColor(light, distance, theta) * max(dot(rayDirection, luxelNormal.xyz), 0);
         }
+    }
+    vec3 areaLightColor = vec3(0);
+    uint hitCount = 0;
+    for (uint i = 0; i < WIDTH * HEIGHT; i++) {
+        const ivec2 sourceLuxelCoord = ivec2(i % WIDTH, i / WIDTH);
+        const vec4 sourceLuxelPosition = imageLoad(luxelPositions, sourceLuxelCoord);
+        if (sourceLuxelPosition.w == 0) {
+            continue;
+        }
+        const vec4 sourceLuxelNormal = imageLoad(luxelNormals, sourceLuxelCoord);
+        if (sourceLuxelNormal.w < MIN_BRIGHTNESS) {
+            continue;
+        }
+
+        const vec3 luxelToLight = sourceLuxelPosition.xyz - luxelPosition.xyz;
+        const float distance = length(luxelToLight) - EPSILON;
+        const vec3 rayDirection = normalize(luxelToLight);
+
+        isLightVisible = false;
+        traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, rayDirection, distance, 0);
+        if (isLightVisible) {
+            const vec4 color = imageLoad(luxelAlbedos, sourceLuxelCoord);
+            areaLightColor += color.rgb * color.a / (distance * distance) * max(dot(rayDirection, luxelNormal.xyz), 0);
+            ++hitCount;
+        }
+    }
+    if (hitCount > 0) {
+        accumulatedColor += areaLightColor / hitCount;
     }
 
     imageStore(outputLightmap, luxelIndex, vec4(accumulatedColor, 1));

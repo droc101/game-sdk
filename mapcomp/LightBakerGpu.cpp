@@ -449,8 +449,8 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
                          std::vector<uint16_t> &pixelData)
 {
     const uint64_t luxelCount = lightmapSize.x * lightmapSize.y;
-    const uint64_t width = std::min(luxelCount, uint64_t{1} << 8);
-    const uint64_t height = std::min(std::max(luxelCount / width, uint64_t{1}), uint64_t{1} << 8);
+    const uint64_t width = std::min(luxelCount, uint64_t{1} << 6);
+    const uint64_t height = std::min(std::max(luxelCount / width, uint64_t{1}), uint64_t{1} << 6);
     const uint32_t iterations = std::max(luxelCount / width / height, uint64_t{1});
 
     if (meshBuilders.empty())
@@ -955,6 +955,11 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
             .format = VK_FORMAT_R32_UINT,
             .offset = offsetof(MapVertex, textureIndex),
         },
+        VkVertexInputAttributeDescription{
+            .location = 5,
+            .format = VK_FORMAT_R32_SFLOAT,
+            .offset = offsetof(MapVertex, emissive),
+        },
     };
     constexpr VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -1384,9 +1389,10 @@ bool LightBakerGpu::CreateDirectLightingPipeline(const glm::uvec2 &lightmapSize,
 
     const std::array raygenSpecializationData = {
         lightmapSize.x,
+        lightmapSize.y,
         lightCount,
     };
-    static constexpr SpecializationMapEntries<uint32_t, uint32_t> RAYGEN_MAP_ENTRIES{};
+    static constexpr SpecializationMapEntries<uint32_t, uint32_t, uint32_t> RAYGEN_MAP_ENTRIES{};
     const VkSpecializationInfo raygenSpecializationInfo = {
         .mapEntryCount = RAYGEN_MAP_ENTRIES.size(),
         .pMapEntries = RAYGEN_MAP_ENTRIES.data(),
@@ -1489,9 +1495,10 @@ bool LightBakerGpu::CreateGlobalIlluminationPipeline(const glm::uvec2 &lightmapS
 
     const std::array raygenSpecializationData = {
         lightmapSize.x,
+        lightmapSize.y,
         sampleCount,
     };
-    static constexpr SpecializationMapEntries<uint32_t, uint32_t> RAYGEN_MAP_ENTRIES{};
+    static constexpr SpecializationMapEntries<uint32_t, uint32_t, uint32_t> RAYGEN_MAP_ENTRIES{};
     const VkSpecializationInfo raygenSpecializationInfo = {
         .mapEntryCount = RAYGEN_MAP_ENTRIES.size(),
         .pMapEntries = RAYGEN_MAP_ENTRIES.data(),
@@ -1614,7 +1621,7 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
         std::pair{
             // luxelAlbedos
             VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+            VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
         },
         std::pair{
             // lightsData
