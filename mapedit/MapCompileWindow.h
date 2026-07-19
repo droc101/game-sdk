@@ -22,6 +22,7 @@ class MapCompileWindow
         static inline bool visible = false;
         static inline SDL_Process *compilerProcess = nullptr;
         static inline SDL_IOStream *compilerOutputStream = nullptr;
+        static inline SDL_IOStream *compilerErrorStream = nullptr;
         static inline bool playMap = true;
         static inline std::string gameDir{};
         static inline std::string log{};

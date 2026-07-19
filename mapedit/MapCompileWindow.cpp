@@ -3,6 +3,7 @@
 //
 
 #include "MapCompileWindow.h"
+#include <SDL3/SDL_properties.h>
 #include <array>
 #include <cstddef>
 #include <format>
@@ -74,7 +75,17 @@ void MapCompileWindow::StartCompile()
 
             log = "Compiling map file \"" + MapEditor::mapFile + "\"...\n";
 
-            compilerOutputStream = SDL_GetProcessOutput(compilerProcess);
+            const SDL_PropertiesID processProps = SDL_GetProcessProperties(compilerProcess);
+            if (processProps != 0)
+            {
+                compilerOutputStream = static_cast<SDL_IOStream *>(SDL_GetPointerProperty(processProps, SDL_PROP_PROCESS_STDOUT_POINTER, nullptr));
+                compilerErrorStream = static_cast<SDL_IOStream *>(SDL_GetPointerProperty(processProps, SDL_PROP_PROCESS_STDERR_POINTER, nullptr));
+                SDL_DestroyProperties(processProps);
+            } else
+            {
+                Logger::Error("Failed to get compiler properties, output will not be shown.");
+            }
+
             outputVisible = true;
         }
     }
@@ -134,8 +145,6 @@ void MapCompileWindow::Render()
         visible = false;
     }
 
-    if (compilerProcess != nullptr && compilerOutputStream != nullptr)
-    {}
     ImGui::End();
 }
 
@@ -172,7 +181,7 @@ void MapCompileWindow::RenderCompileOutput()
         ImGui::EndChild();
         ImGui::PopFont();
         ImGui::Separator();
-        if (compilerProcess != nullptr || compilerOutputStream != nullptr)
+        if (compilerProcess != nullptr || compilerOutputStream != nullptr || compilerErrorStream != nullptr)
         {
             ImGui::ProgressBar(static_cast<float>(ImGui::GetTime()) * -0.5f, ImVec2(-1, 0), "Compiling...");
         } else
@@ -206,16 +215,25 @@ void MapCompileWindow::ProcessCompilerOutput()
         int exitCode = 0;
         if (SDL_WaitProcess(compilerProcess, false, &exitCode))
         {
-            size_t logSize = 0;
-            const char *output = static_cast<char *>(SDL_ReadProcess(compilerProcess, &logSize, nullptr));
-            if (output != nullptr)
+            while (SDL_GetIOStatus(compilerOutputStream) != SDL_IO_STATUS_EOF)
             {
-                log += std::string(output);
+                std::array<char, 1024> stdOutBuffer = {0};
+                (void)SDL_ReadIO(compilerOutputStream, &stdOutBuffer, 1000);
+                log += std::string(stdOutBuffer.data());
+            }
+
+            while (SDL_GetIOStatus(compilerErrorStream) != SDL_IO_STATUS_EOF)
+            {
+                std::array<char, 1024> stdErrBuffer = {0};
+                (void)SDL_ReadIO(compilerErrorStream, &stdErrBuffer, 1000);
+                log += std::string(stdErrBuffer.data());
             }
 
             log += std::format("\nProcess exited with code {}", exitCode);
             (void)SDL_CloseIO(compilerOutputStream);
+            (void)SDL_CloseIO(compilerErrorStream);
             compilerOutputStream = nullptr;
+            compilerErrorStream = nullptr;
             SDL_DestroyProcess(compilerProcess);
             compilerProcess = nullptr;
 
@@ -248,6 +266,25 @@ void MapCompileWindow::ProcessCompilerOutput()
             {
                 (void)SDL_CloseIO(compilerOutputStream);
                 compilerOutputStream = nullptr;
+            } else if (status != SDL_IO_STATUS_NOT_READY) // not ready just means no new output
+            {
+                Logger::Error("Failed to read SDL IOStream: {} \"{}\"", static_cast<int>(status), SDL_GetError());
+            }
+        }
+    }
+    if (compilerErrorStream != nullptr)
+    {
+        std::array<char, 1024> buffer{};
+        const size_t bytesRead = SDL_ReadIO(compilerErrorStream, buffer.data(), 1000);
+        buffer.at(bytesRead) = 0;
+        log += std::string(buffer.data());
+        if (bytesRead == 0)
+        {
+            const SDL_IOStatus status = SDL_GetIOStatus(compilerErrorStream);
+            if (status == SDL_IO_STATUS_EOF)
+            {
+                (void)SDL_CloseIO(compilerErrorStream);
+                compilerErrorStream = nullptr;
             } else if (status != SDL_IO_STATUS_NOT_READY) // not ready just means no new output
             {
                 Logger::Error("Failed to read SDL IOStream: {} \"{}\"", static_cast<int>(status), SDL_GetError());

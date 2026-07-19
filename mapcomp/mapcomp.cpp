@@ -8,12 +8,14 @@
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
+#include <unistd.h>
 #include <vector>
 #include "MapCompiler.h"
 
 int main(const int argc, const char **argv)
 {
     setvbuf(stdout, nullptr, _IONBF, 0);
+    setvbuf(stderr, nullptr, _IONBF, 0);
     const ArgumentParser args = ArgumentParser(argc, argv);
     Logger::ansi = !args.HasFlag("--no-ansi");
     Logger::verbose = args.HasFlag("--verbose");
