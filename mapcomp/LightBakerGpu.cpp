@@ -94,7 +94,7 @@ template<Concepts::LunaDescriptorSetLayoutBindingPair... T> class DescriptorSetL
         {
             size_t index = 0;
 
-            auto AddEntry = [&index, this]<typename Type>(const Type &binding) {
+            auto addEntry = [&index, this]<typename Type>(const Type &binding) {
                 for (const char *name: binding.second)
                 {
                     this->at(index++) = LunaDescriptorSetLayoutBinding{
@@ -104,7 +104,7 @@ template<Concepts::LunaDescriptorSetLayoutBindingPair... T> class DescriptorSetL
                     };
                 }
             };
-            (AddEntry(bindings), ...);
+            (addEntry(bindings), ...);
         }
 };
 template<Concepts::VkDescriptorSetLayoutBindingPair... T> class DescriptorSetLayoutBindings<T...>
@@ -115,7 +115,7 @@ template<Concepts::VkDescriptorSetLayoutBindingPair... T> class DescriptorSetLay
         {
             size_t index = 0;
 
-            auto AddEntry = [&index, this]<typename Type>(const Type &binding) {
+            auto addEntry = [&index, this]<typename Type>(const Type &binding) {
                 this->at(index) = VkDescriptorSetLayoutBinding{
                     .binding = static_cast<uint32_t>(index),
                     .descriptorType = binding.first,
@@ -124,7 +124,7 @@ template<Concepts::VkDescriptorSetLayoutBindingPair... T> class DescriptorSetLay
                 };
                 index++;
             };
-            (AddEntry(bindings), ...);
+            (addEntry(bindings), ...);
         }
 };
 
@@ -204,7 +204,7 @@ LightBakerGpu::LightBakerGpu()
     }
 
     static constexpr LunaPhysicalDevicePreferenceDefinition PHYSICAL_DEVICE_PREFERENCE_DEFINITION = {
-        .preferredDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
+        .preferredDeviceType = VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,
     };
     static constexpr VkPhysicalDeviceFeatures REQUIRED_1_0_FEATURES = {
         .shaderFloat64 = VK_TRUE,
@@ -797,7 +797,7 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
         .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
     };
-    constexpr VkRenderPassCreateInfo renderPassCreateInfo = {
+    static constexpr VkRenderPassCreateInfo RENDER_PASS_CREATE_INFO = {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         .attachmentCount = ATTACHMENT_DESCRIPTIONS.size(),
         .pAttachments = ATTACHMENT_DESCRIPTIONS.data(),
@@ -807,7 +807,7 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         .pDependencies = &DEPENDENCY,
     };
     VkRenderPass renderPass{};
-    if (!CheckResult(vkCreateRenderPass(vkDevice, &renderPassCreateInfo, nullptr, &renderPass)))
+    if (!CheckResult(vkCreateRenderPass(vkDevice, &RENDER_PASS_CREATE_INFO, nullptr, &renderPass)))
     {
         return false;
     }
@@ -962,14 +962,14 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
             .offset = offsetof(MapVertex, emissive),
         },
     };
-    constexpr VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
+    static constexpr VkPipelineVertexInputStateCreateInfo VERTEX_INPUT_STATE_CREATE_INFO = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .vertexBindingDescriptionCount = 1,
         .pVertexBindingDescriptions = &VERTEX_INPUT_BINDING_DESCRIPTION,
         .vertexAttributeDescriptionCount = VERTEX_INPUT_ATTRIBUTE_DESCRIPTIONS.size(),
         .pVertexAttributeDescriptions = VERTEX_INPUT_ATTRIBUTE_DESCRIPTIONS.data(),
     };
-    constexpr VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
+    static constexpr VkPipelineInputAssemblyStateCreateInfo INPUT_ASSEMBLY_STATE_CREATE_INFO = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
     };
@@ -988,18 +988,18 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         .scissorCount = 1,
         .pScissors = &scissors,
     };
-    constexpr VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo = {
+    static constexpr VkPipelineRasterizationStateCreateInfo RASTERIZATION_STATE_CREATE_INFO = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .polygonMode = VK_POLYGON_MODE_FILL,
         .cullMode = VK_CULL_MODE_NONE,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
         .lineWidth = 1,
     };
-    constexpr VkPipelineMultisampleStateCreateInfo multisampleStateCreateInfo = {
+    static constexpr VkPipelineMultisampleStateCreateInfo MULTISAMPLE_STATE_CREATE_INFO = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
         .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
     };
-    constexpr VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = {
+    static constexpr VkPipelineDepthStencilStateCreateInfo DEPTH_STENCIL_STATE_CREATE_INFO = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
     };
     static constexpr VkPipelineColorBlendAttachmentState COLOR_BLEND_ATTACHMENT = {
@@ -1020,7 +1020,7 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         COLOR_BLEND_ATTACHMENT,
         COLOR_BLEND_ATTACHMENT,
     };
-    constexpr VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo = {
+    static constexpr VkPipelineColorBlendStateCreateInfo COLOR_BLEND_STATE_CREATE_INFO = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
         .attachmentCount = COLOR_BLEND_ATTACHMENTS.size(),
         .pAttachments = COLOR_BLEND_ATTACHMENTS.data(),
@@ -1029,13 +1029,13 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .stageCount = shaderStages.size(),
         .pStages = shaderStages.data(),
-        .pVertexInputState = &vertexInputStateCreateInfo,
-        .pInputAssemblyState = &inputAssemblyStateCreateInfo,
+        .pVertexInputState = &VERTEX_INPUT_STATE_CREATE_INFO,
+        .pInputAssemblyState = &INPUT_ASSEMBLY_STATE_CREATE_INFO,
         .pViewportState = &viewportStateCreateInfo,
-        .pRasterizationState = &rasterizationStateCreateInfo,
-        .pMultisampleState = &multisampleStateCreateInfo,
-        .pDepthStencilState = &depthStencilStateCreateInfo,
-        .pColorBlendState = &colorBlendStateCreateInfo,
+        .pRasterizationState = &RASTERIZATION_STATE_CREATE_INFO,
+        .pMultisampleState = &MULTISAMPLE_STATE_CREATE_INFO,
+        .pDepthStencilState = &DEPTH_STENCIL_STATE_CREATE_INFO,
+        .pColorBlendState = &COLOR_BLEND_STATE_CREATE_INFO,
         .layout = graphicsPipelineLayout,
         .renderPass = renderPass,
     };
@@ -1641,13 +1641,13 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
         },
     };
 
-    constexpr VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
+    static constexpr VkDescriptorSetLayoutCreateInfo DESCRIPTOR_SET_LAYOUT_CREATE_INFO = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .bindingCount = DESCRIPTOR_SET_LAYOUT_BINDINGS.size(),
         .pBindings = DESCRIPTOR_SET_LAYOUT_BINDINGS.data(),
     };
     if (!CheckResult(vkCreateDescriptorSetLayout(lunaGetVkDevice(device),
-                                                 &descriptorSetLayoutCreateInfo,
+                                                 &DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
                                                  nullptr,
                                                  &descriptorSetLayout)))
     {

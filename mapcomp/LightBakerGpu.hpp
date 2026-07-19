@@ -73,11 +73,11 @@ class LightBakerGpu
 
         bool CreateShaderBindingTables();
 
-        bool SingleBakeIteration(uint64_t width,
-                                 uint64_t height,
-                                 float percentDone,
-                                 uint32_t baseLuxelIndex,
-                                 bool directLighting) const;
+        [[nodiscard]] bool SingleBakeIteration(uint64_t width,
+                                               uint64_t height,
+                                               float percentDone,
+                                               uint32_t baseLuxelIndex,
+                                               bool directLighting) const;
 
         static inline VkPhysicalDeviceRayTracingPipelinePropertiesKHR physicalDeviceRayTracingPipelineProperties{
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR,
