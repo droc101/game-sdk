@@ -155,17 +155,17 @@ void MapCompileWindow::RenderCompileOutput()
         return;
     }
     ImGui::OpenPopup("Compiler Output");
-    ImGui::SetNextWindowSize(ImVec2(550, -1));
+    ImGui::SetNextWindowSize(ImVec2(640, 480), ImGuiCond_Appearing);
     if (ImGui::BeginPopupModal("Compiler Output",
                                nullptr,
-                               ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDocking))
+                               ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking))
     {
         ImGui::PushFont(SDKWindow::Get().GetMonospaceFont(), 18);
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 1));
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.1, 0.1, 0.1, 1));
         ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0, 0, 0, 0));
         if (ImGui::BeginChild("scrolling",
-                              ImVec2(-1, 400),
+                              ImVec2(-1, ImGui::GetWindowSize().y - 70),
                               ImGuiChildFlags_Borders,
                               ImGuiWindowFlags_HorizontalScrollbar))
         {
