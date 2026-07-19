@@ -350,7 +350,9 @@ static constexpr VmaAllocationCreateInfo MAPPED_ALLOCATION_CREATE_INFO = {
     .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
 };
 
-bool LightBakerGpu::GetTextureIndex(const std::string &textureName, uint32_t &index)
+bool LightBakerGpu::GetTextureIndex(const std::string &textureName,
+                                    uint32_t &index,
+                                    const SearchPathManager &pathManager)
 {
     for (index = 0; index < loadedTextures.size(); index++)
     {
@@ -445,11 +447,8 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
                          const glm::uvec2 &lightmapSize,
                          const uint32_t bounceCount,
                          const uint32_t sampleCount,
-                         std::vector<uint16_t> &pixelData,
-                         const SearchPathManager &pathManager)
+                         std::vector<uint16_t> &pixelData)
 {
-    this->pathManager = pathManager;
-
     const uint64_t luxelCount = lightmapSize.x * lightmapSize.y;
     const uint64_t width = std::min(luxelCount, uint64_t{1} << 6);
     const uint64_t height = std::min(std::max(luxelCount / width, uint64_t{1}), uint64_t{1} << 6);

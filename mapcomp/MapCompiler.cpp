@@ -378,7 +378,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     if (!skipLighting)
     {
         Logger::Info("Baking lightmap...");
-        if (!LightBaker::Bake(meshBuilders, lights, lightmapSize, pixels, pathManager))
+        if (!LightBaker::Bake(meshBuilders, lights, lightmapSize, pixels))
         {
             return Error::ErrorCode::UNKNOWN;
         }

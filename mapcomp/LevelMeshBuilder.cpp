@@ -264,7 +264,7 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
 
         v.lightmapUv = glm::vec2(0, 0);
 
-        if (!LightBakerGpu::Get().GetTextureIndex(wallMaterial.material, v.textureIndex))
+        if (!LightBakerGpu::Get().GetTextureIndex(wallMaterial.material, v.textureIndex, pathManager))
         {
             v.textureIndex = 0;
         }
@@ -360,7 +360,7 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
         v.uv = (point + mat.uvOffset) * mat.uvScale; // TODO is this the correct way to offset+scale?
         v.normal = {0, isFloor ? 1 : -1, 0};
         v.lightmapUv = glm::vec2(0, 0);
-        if (!LightBakerGpu::Get().GetTextureIndex(mat.material, v.textureIndex))
+        if (!LightBakerGpu::Get().GetTextureIndex(mat.material, v.textureIndex, pathManager))
         {
             v.textureIndex = 0;
         }

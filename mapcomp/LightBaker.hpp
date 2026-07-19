@@ -17,6 +17,5 @@ class LightBaker
         static bool Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                          const std::vector<Light> &lights,
                          const glm::uvec2 &lightmapSize,
-                         std::vector<uint16_t> &pixelData,
-                         const SearchPathManager &pathManager);
+                         std::vector<uint16_t> &pixelData);
 };
