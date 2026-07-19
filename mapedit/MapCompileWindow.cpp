@@ -215,25 +215,11 @@ void MapCompileWindow::ProcessCompilerOutput()
         int exitCode = 0;
         if (SDL_WaitProcess(compilerProcess, false, &exitCode))
         {
-            while (SDL_GetIOStatus(compilerOutputStream) != SDL_IO_STATUS_EOF)
-            {
-                std::array<char, 1024> stdOutBuffer = {0};
-                (void)SDL_ReadIO(compilerOutputStream, &stdOutBuffer, 1000);
-                log += std::string(stdOutBuffer.data());
-            }
-
-            while (SDL_GetIOStatus(compilerErrorStream) != SDL_IO_STATUS_EOF)
-            {
-                std::array<char, 1024> stdErrBuffer = {0};
-                (void)SDL_ReadIO(compilerErrorStream, &stdErrBuffer, 1000);
-                log += std::string(stdErrBuffer.data());
-            }
+            FinishIOSteam(&compilerOutputStream);
+            FinishIOSteam(&compilerErrorStream);
 
             log += std::format("\nProcess exited with code {}", exitCode);
-            (void)SDL_CloseIO(compilerOutputStream);
-            (void)SDL_CloseIO(compilerErrorStream);
-            compilerOutputStream = nullptr;
-            compilerErrorStream = nullptr;
+
             SDL_DestroyProcess(compilerProcess);
             compilerProcess = nullptr;
 
@@ -253,38 +239,25 @@ void MapCompileWindow::ProcessCompilerOutput()
             }
         }
     }
-    if (compilerOutputStream != nullptr)
+    ProcessIOStream(&compilerOutputStream);
+    ProcessIOStream(&compilerErrorStream);
+}
+
+void MapCompileWindow::ProcessIOStream(SDL_IOStream **stream)
+{
+    if (*stream != nullptr)
     {
         std::array<char, 1024> buffer{};
-        const size_t bytesRead = SDL_ReadIO(compilerOutputStream, buffer.data(), 1000);
+        const size_t bytesRead = SDL_ReadIO(*stream, buffer.data(), 1000);
         buffer.at(bytesRead) = 0;
         log += std::string(buffer.data());
         if (bytesRead == 0)
         {
-            const SDL_IOStatus status = SDL_GetIOStatus(compilerOutputStream);
+            const SDL_IOStatus status = SDL_GetIOStatus(*stream);
             if (status == SDL_IO_STATUS_EOF)
             {
-                (void)SDL_CloseIO(compilerOutputStream);
-                compilerOutputStream = nullptr;
-            } else if (status != SDL_IO_STATUS_NOT_READY) // not ready just means no new output
-            {
-                Logger::Error("Failed to read SDL IOStream: {} \"{}\"", static_cast<int>(status), SDL_GetError());
-            }
-        }
-    }
-    if (compilerErrorStream != nullptr)
-    {
-        std::array<char, 1024> buffer{};
-        const size_t bytesRead = SDL_ReadIO(compilerErrorStream, buffer.data(), 1000);
-        buffer.at(bytesRead) = 0;
-        log += std::string(buffer.data());
-        if (bytesRead == 0)
-        {
-            const SDL_IOStatus status = SDL_GetIOStatus(compilerErrorStream);
-            if (status == SDL_IO_STATUS_EOF)
-            {
-                (void)SDL_CloseIO(compilerErrorStream);
-                compilerErrorStream = nullptr;
+                (void)SDL_CloseIO(*stream);
+                *stream = nullptr;
             } else if (status != SDL_IO_STATUS_NOT_READY) // not ready just means no new output
             {
                 Logger::Error("Failed to read SDL IOStream: {} \"{}\"", static_cast<int>(status), SDL_GetError());
@@ -292,3 +265,16 @@ void MapCompileWindow::ProcessCompilerOutput()
         }
     }
 }
+
+void MapCompileWindow::FinishIOSteam(SDL_IOStream **stream)
+{
+    while (SDL_GetIOStatus(*stream) != SDL_IO_STATUS_EOF)
+    {
+        std::array<char, 1024> buffer = {0};
+        (void)SDL_ReadIO(*stream, &buffer, 1000);
+        log += std::string(buffer.data());
+    }
+    (void)SDL_CloseIO(*stream);
+    *stream = nullptr;
+}
+

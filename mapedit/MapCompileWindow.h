@@ -34,6 +34,9 @@ class MapCompileWindow
         static void StartCompile();
         static void SaveLog(const std::string &path);
         static void ProcessCompilerOutput();
+
+        static void ProcessIOStream(SDL_IOStream **stream);
+        static void FinishIOSteam(SDL_IOStream **stream);
 };
 
 
