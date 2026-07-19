@@ -297,7 +297,11 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
             {
                 for (const std::array<float, 2> &segment: solidSegments)
                 {
-                    meshBuilders[mat.material].AddWall(sector, i, segment.at(0), segment.at(1));
+                    if (!meshBuilders.contains(mat.material))
+                    {
+                        meshBuilders.emplace(mat.material, LevelMeshBuilder(pathManager));
+                    }
+                    meshBuilders.at(mat.material).AddWall(sector, i, segment.at(0), segment.at(1));
                 }
             }
 
@@ -314,7 +318,11 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         const LevelMaterialAsset ceilingMaterial = GetMapMaterial(sector.ceilingMaterial.material);
         if (!ceilingMaterial.compileInvisible)
         {
-            meshBuilders[sector.ceilingMaterial.material].AddCeiling(sector, overlappingFloors);
+            if (!meshBuilders.contains(sector.ceilingMaterial.material))
+            {
+                meshBuilders.emplace(sector.ceilingMaterial.material, LevelMeshBuilder(pathManager));
+            }
+            meshBuilders.at(sector.ceilingMaterial.material).AddCeiling(sector, overlappingFloors);
         }
         if (!ceilingMaterial.compileNoClip)
         {
@@ -324,7 +332,11 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         const LevelMaterialAsset floorMaterial = GetMapMaterial(sector.floorMaterial.material);
         if (!floorMaterial.compileInvisible)
         {
-            meshBuilders[sector.floorMaterial.material].AddFloor(sector, overlappingCeilings);
+            if (!meshBuilders.contains(sector.floorMaterial.material))
+            {
+                meshBuilders.emplace(sector.floorMaterial.material, LevelMeshBuilder(pathManager));
+            }
+            meshBuilders.at(sector.floorMaterial.material).AddFloor(sector, overlappingCeilings);
         }
         if (!floorMaterial.compileNoClip)
         {
@@ -366,7 +378,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     if (!skipLighting)
     {
         Logger::Info("Baking lightmap...");
-        if (!LightBaker::Bake(meshBuilders, lights, lightmapSize, pixels))
+        if (!LightBaker::Bake(meshBuilders, lights, lightmapSize, pixels, pathManager))
         {
             return Error::ErrorCode::UNKNOWN;
         }

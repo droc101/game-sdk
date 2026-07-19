@@ -24,7 +24,8 @@ class LightBakerGpu
                   const glm::uvec2 &lightmapSize,
                   uint32_t bounceCount,
                   uint32_t sampleCount,
-                  std::vector<uint16_t> &pixelData);
+                  std::vector<uint16_t> &pixelData,
+                  const SearchPathManager &pathManager);
 
         bool GetTextureIndex(const std::string &textureName, uint32_t &index);
 
@@ -141,4 +142,6 @@ class LightBakerGpu
         LunaBuffer lightmapTwo{};
         VkBufferView lightmapOneBufferView{};
         VkBufferView lightmapTwoBufferView{};
+
+        SearchPathManager pathManager;
 };

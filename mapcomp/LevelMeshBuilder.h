@@ -19,7 +19,7 @@
 class LevelMeshBuilder
 {
     public:
-        LevelMeshBuilder() = default;
+        LevelMeshBuilder(const SearchPathManager &pathManager);
 
         /**
          * Add a wall
@@ -98,4 +98,5 @@ class LevelMeshBuilder
         std::vector<FaceData> faceIndices{};
         std::vector<stbrp_rect> faceRects{};
         uint32_t currentIndex = 0;
+        SearchPathManager pathManager;
 };

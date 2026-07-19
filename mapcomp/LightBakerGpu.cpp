@@ -11,7 +11,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
-#include <game_sdk/SharedMgr.h>
 #include <glm/glm.hpp>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/asset/TextureAsset.h>
@@ -360,19 +359,19 @@ bool LightBakerGpu::GetTextureIndex(const std::string &textureName, uint32_t &in
             return true;
         }
     }
-    const std::string materialPath = SharedMgr::Get().pathManager.GetAssetPath(textureName);
+    const std::string materialPath = pathManager.GetAssetPath(textureName);
     LevelMaterialAsset material{};
     Error::ErrorCode error = LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
     if (error != Error::ErrorCode::OK)
     {
-        Logger::Error("Creating material asset failed with error: {}", error);
+        Logger::Error("Creating material asset \"{}\" failed with error: {}", materialPath, error);
     }
-    const std::string texturePath = SharedMgr::Get().pathManager.GetAssetPath(material.texture);
+    const std::string texturePath = pathManager.GetAssetPath(material.texture);
     TextureAsset image{};
     error = TextureAsset::CreateFromAsset(texturePath.c_str(), image);
     if (error != Error::ErrorCode::OK)
     {
-        Logger::Error("Creating texture asset failed with error: {}", error);
+        Logger::Error("Creating texture asset \"{}\" failed with error: {}", materialPath, error);
     }
     const VkSamplerAddressMode samplerAddressMode = image.repeat ? VK_SAMPLER_ADDRESS_MODE_REPEAT
                                                                  : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
@@ -446,8 +445,11 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
                          const glm::uvec2 &lightmapSize,
                          const uint32_t bounceCount,
                          const uint32_t sampleCount,
-                         std::vector<uint16_t> &pixelData)
+                         std::vector<uint16_t> &pixelData,
+                         const SearchPathManager &pathManager)
 {
+    this->pathManager = pathManager;
+
     const uint64_t luxelCount = lightmapSize.x * lightmapSize.y;
     const uint64_t width = std::min(luxelCount, uint64_t{1} << 6);
     const uint64_t height = std::min(std::max(luxelCount / width, uint64_t{1}), uint64_t{1} << 6);

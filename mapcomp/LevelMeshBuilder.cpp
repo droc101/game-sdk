@@ -8,7 +8,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <game_sdk/SharedMgr.h>
 #include <glm/glm.hpp>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/type/MapVertex.h>
@@ -28,6 +27,11 @@
 
 #define STB_RECT_PACK_IMPLEMENTATION
 #include <stb_rect_pack.h>
+
+LevelMeshBuilder::LevelMeshBuilder(const SearchPathManager &pathManager)
+{
+    this->pathManager = pathManager;
+}
 
 void LevelMeshBuilder::AddCeiling(const Sector &sector, const std::vector<const Sector *> &overlapping)
 {
@@ -264,12 +268,12 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
         {
             v.textureIndex = 0;
         }
-        const std::string materialPath = SharedMgr::Get().pathManager.GetAssetPath(wallMaterial.material);
+        const std::string materialPath = pathManager.GetAssetPath(wallMaterial.material);
         LevelMaterialAsset material{};
         Error::ErrorCode error = LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
         if (error != Error::ErrorCode::OK)
         {
-            Logger::Error("Creating material asset failed with error: {}", error);
+            Logger::Error("Creating material asset \"{}\" failed with error: {}", materialPath, error);
         }
         v.emissive = material.emissive;
         vertices.push_back(v);
@@ -360,12 +364,12 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
         {
             v.textureIndex = 0;
         }
-        const std::string materialPath = SharedMgr::Get().pathManager.GetAssetPath(mat.material);
+        const std::string materialPath = pathManager.GetAssetPath(mat.material);
         LevelMaterialAsset material{};
         Error::ErrorCode error = LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
         if (error != Error::ErrorCode::OK)
         {
-            Logger::Error("Creating material asset failed with error: {}", error);
+            Logger::Error("Creating material asset \"{}\" failed with error: {}", materialPath, error);
         }
         v.emissive = material.emissive;
         vertices.push_back(v);

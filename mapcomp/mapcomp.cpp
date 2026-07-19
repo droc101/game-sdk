@@ -3,7 +3,6 @@
 //
 
 #include <cstdio>
-#include <game_sdk/SharedMgr.h>
 #include <libassets/asset/DataAsset.h>
 #include <libassets/util/ArgumentParser.h>
 #include <libassets/util/Error.h>
@@ -58,8 +57,6 @@ int main(const int argc, const char **argv)
         .skipLighting = args.HasFlag("--skip-lighting"),
         .fastCompile = args.HasFlag("--fast"),
     };
-
-    SharedMgr::Get().InitSharedMgr();
 
     MapCompiler compiler = MapCompiler(settings);
 

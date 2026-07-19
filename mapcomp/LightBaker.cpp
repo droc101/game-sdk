@@ -16,7 +16,8 @@
 bool LightBaker::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
                       const std::vector<Light> &lights,
                       const glm::uvec2 &lightmapSize,
-                      std::vector<uint16_t> &pixelData)
+                      std::vector<uint16_t> &pixelData,
+                      const SearchPathManager &pathManager)
 {
     // This is checks that MapVertex and Light are both POD, which is required to directly write from the pointer to the buffer.
     //  If they are not POD then the data will not be properly packed in memory.
@@ -30,5 +31,5 @@ bool LightBaker::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &m
     static constexpr uint32_t BOUNCE_COUNT = 0;
     static constexpr uint32_t SAMPLE_COUNT = 8192;
 
-    return LightBakerGpu::Get().Bake(meshBuilders, lights, lightmapSize, BOUNCE_COUNT, SAMPLE_COUNT, pixelData);
+    return LightBakerGpu::Get().Bake(meshBuilders, lights, lightmapSize, BOUNCE_COUNT, SAMPLE_COUNT, pixelData, pathManager);
 }
