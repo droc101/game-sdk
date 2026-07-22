@@ -80,16 +80,19 @@ void main() {
     }
     vec3 areaLightColor = vec3(0);
     uint hitCount = 0;
-    for (uint i = 0; i < WIDTH * HEIGHT; i++) {
-        const ivec2 sourceLuxelCoord = ivec2(i % WIDTH, i / WIDTH);
+    for (uint i = 0; i < emissiveLuxelIndices.indexCount; i++) {
+        const int sourceLuxelIndex = emissiveLuxelIndices.indices[i];
+        const ivec2 sourceLuxelCoord = ivec2(sourceLuxelIndex % WIDTH, sourceLuxelIndex / WIDTH);
         const vec4 sourceLuxelPosition = imageLoad(luxelPositions, sourceLuxelCoord);
         if (sourceLuxelPosition.w == 0) {
             continue;
         }
         const vec4 sourceLuxelNormal = imageLoad(luxelNormals, sourceLuxelCoord);
+#ifdef DEBUG
         if (sourceLuxelNormal.w < MIN_BRIGHTNESS) {
-            continue;
+            debugPrintfEXT("[ERROR] Luxel index %d cached as being emissive has been found not to be emissive!", sourceLuxelIndex);
         }
+#endif
 
         const vec3 luxelToLight = sourceLuxelPosition.xyz - luxelPosition.xyz;
         const float distance = length(luxelToLight) - EPSILON;

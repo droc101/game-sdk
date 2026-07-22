@@ -59,6 +59,8 @@ class LightBakerGpu
 
         bool PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, uint32_t indexCount);
 
+        bool CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize);
+
         /// Create the bottom-level acceleration structures
         bool CreateBLAS(uint32_t vertexCount, uint32_t indexCount);
 
@@ -73,8 +75,8 @@ class LightBakerGpu
 
         bool CreateShaderBindingTables();
 
-        [[nodiscard]] bool SingleBakeIteration(uint64_t width,
-                                               uint64_t height,
+        [[nodiscard]] bool SingleBakeIteration(uint32_t width,
+                                               uint32_t height,
                                                float percentDone,
                                                uint32_t baseLuxelIndex,
                                                bool directLighting) const;
@@ -100,6 +102,7 @@ class LightBakerGpu
         LunaCommandPool commandPool{};
         LunaCommandBuffer commandBuffer{};
         LunaSemaphore semaphore{};
+        LunaCommandBufferSubmitInfo submitInfo{};
         VkDescriptorPool graphicsDescriptorPool{};
         VkDescriptorSetLayout graphicsDescriptorSetLayout{};
         VkDescriptorSet graphicsDescriptorSet{};
@@ -137,6 +140,7 @@ class LightBakerGpu
         LunaImage luxelNormalsImage{};
         LunaImage luxelAlbedosImage{};
         LunaBuffer lightsBuffer{};
+        LunaBuffer emissiveLuxelIndicesBuffer{};
         LunaBuffer lightmapOne{};
         LunaBuffer lightmapTwo{};
         VkBufferView lightmapOneBufferView{};

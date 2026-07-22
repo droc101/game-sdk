@@ -39,6 +39,7 @@
 
 namespace
 {
+constexpr uint32_t MAX_DISPATCH_DIMENSION = 1u << 8u;
 constexpr VkPipelineStageFlagBits2 WAIT_STAGE = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT |
                                                 VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
 std::vector<uint32_t> spirv{};
@@ -319,6 +320,15 @@ LightBakerGpu::LightBakerGpu()
         return;
     }
 
+    submitInfo = {
+        .queue = queue,
+        .waitSemaphoreCount = 1,
+        .waitSemaphores = &semaphore,
+        .waitDstStageMasks = &WAIT_STAGE,
+        .signalSemaphoreCount = 1,
+        .signalSemaphores = &semaphore,
+    };
+
     lunaGetPhysicalDeviceProperties2(device, &physicalDeviceProperties);
     Logger::Info("Vulkan Initialized");
     Logger::Info("Vulkan Device: {}", physicalDeviceProperties.properties.deviceName);
@@ -391,14 +401,6 @@ bool LightBakerGpu::GetTextureIndex(const std::string &textureName,
                                                                                     : VK_FORMAT_R8G8B8A8_UNORM;
     const size_t bytesPerTexelChannel = image.GetFormat() == TextureAsset::PixelFormat::RGBAF16 ? sizeof(_Float16)
                                                                                                 : sizeof(uint8_t);
-    const LunaCommandBufferSubmitInfo submitInfo = {
-        .queue = queue,
-        .waitSemaphoreCount = 1,
-        .waitSemaphores = &semaphore,
-        .waitDstStageMasks = &WAIT_STAGE,
-        .signalSemaphoreCount = 1,
-        .signalSemaphores = &semaphore,
-    };
     const LunaImageWriteInfo writeInfo = {
         .bytes = image.GetWidth() * image.GetHeight() * 4 * bytesPerTexelChannel,
         .pixels = image.GetPixelsRGBA(),
@@ -451,8 +453,8 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
                          std::vector<uint16_t> &pixelData)
 {
     const uint64_t luxelCount = lightmapSize.x * lightmapSize.y;
-    const uint64_t width = std::min(luxelCount, uint64_t{1} << 6);
-    const uint64_t height = std::min(std::max(luxelCount / width, uint64_t{1}), uint64_t{1} << 6);
+    const uint32_t width = std::min(luxelCount, uint64_t{MAX_DISPATCH_DIMENSION});
+    const uint32_t height = std::min(std::max(luxelCount / width, uint64_t{1}), uint64_t{MAX_DISPATCH_DIMENSION});
     const uint32_t iterations = std::max(luxelCount / width / height, uint64_t{1});
 
     if (meshBuilders.empty())
@@ -542,6 +544,11 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
     }
 
     if (!PrecomputeLuxelInformation(lightmapSize, indexCount))
+    {
+        return false;
+    }
+
+    if (!CacheEmissiveLuxelIndices(lightmapSize))
     {
         return false;
     }
@@ -813,14 +820,6 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         return false;
     }
 
-    const LunaCommandBufferSubmitInfo submitInfo = {
-        .queue = queue,
-        .waitSemaphoreCount = 1,
-        .waitSemaphores = &semaphore,
-        .waitDstStageMasks = &WAIT_STAGE,
-        .signalSemaphoreCount = 1,
-        .signalSemaphores = &semaphore,
-    };
     const LunaImageWriteInfo writeInfo = {
         .destinationStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
                                 VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -1084,6 +1083,173 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
     return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }
 
+// TODO: This function is a bit of a mess of spaghetti
+bool LightBakerGpu::CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize)
+{
+    spirv.clear();
+    static constexpr const char *PATH_STRING = "assets/shaders/lightmap/cache_emissive_luxel_indices.comp";
+    ShaderCompiler shaderCompiler(PATH_STRING, shaderc_compute_shader, true);
+    if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
+    {
+        Logger::Error("Error compiling shader {}!", PATH_STRING);
+        Logger::Info("{}", shaderCompiler.GetErrorMessage());
+        return false;
+    }
+    const LunaSpirvShaderModuleCreationInfo spirvShaderModuleCreationInfo = {
+        .size = spirv.size() * sizeof(uint32_t),
+        .spirv = spirv.data(),
+    };
+    const LunaShaderModuleCreationInfo shaderModuleCreationInfo = {
+        .creationInfoType = LUNA_SHADER_MODULE_CREATION_INFO_TYPE_SPIRV,
+        .creationInfoUnion = LunaShaderModuleCreationInfoTypeUnion{.spirv = spirvShaderModuleCreationInfo},
+    };
+    LunaShaderModule shaderModule{};
+    if (!CheckResult(lunaCreateShaderModule(device, &shaderModuleCreationInfo, &shaderModule)))
+    {
+        return false;
+    }
+    static constexpr SpecializationMapEntries<uint32_t> SPECIALIZATION_MAP_ENTRIES{};
+    const VkSpecializationInfo specializationInfo = {
+        .mapEntryCount = SPECIALIZATION_MAP_ENTRIES.size(),
+        .pMapEntries = SPECIALIZATION_MAP_ENTRIES.data(),
+        .dataSize = sizeof(lightmapSize.x),
+        .pData = &lightmapSize.x,
+    };
+    const LunaPipelineShaderStageCreationInfo shaderStageCreationInfo = {
+        .stage = VK_SHADER_STAGE_COMPUTE_BIT,
+        .module = shaderModule,
+        .specializationInfo = &specializationInfo,
+    };
+    const std::array descriptorSetLayoutBindings = {
+        LunaDescriptorSetLayoutBinding{
+            .bindingName = "Luxel Normals",
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+        },
+        LunaDescriptorSetLayoutBinding{
+            .bindingName = "Emissive Luxel Indices",
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+        },
+    };
+    const LunaDescriptorSetLayoutCreationInfo descriptorSetLayoutCreationInfo = {
+        .bindingCount = descriptorSetLayoutBindings.size(),
+        .bindings = descriptorSetLayoutBindings.data(),
+    };
+    LunaDescriptorSetLayout computePipelineDescriptorSetLayout{};
+    if (!CheckResult(lunaCreateDescriptorSetLayout(device,
+                                                   &descriptorSetLayoutCreationInfo,
+                                                   &computePipelineDescriptorSetLayout)))
+    {
+        return false;
+    }
+    const LunaPipelineLayoutCreationInfo pipelineLayoutCreationInfo = {
+        .descriptorSetLayoutCount = 1,
+        .descriptorSetLayouts = &computePipelineDescriptorSetLayout,
+    };
+    const LunaComputePipelineCreationInfo computePipelineCreationInfo = {
+        .shaderStageCreationInfo = shaderStageCreationInfo,
+        .layoutCreationInfo = pipelineLayoutCreationInfo,
+    };
+    LunaComputePipeline computePipeline{};
+    if (!CheckResult(lunaCreateComputePipeline(device, &computePipelineCreationInfo, &computePipeline)))
+    {
+        return false;
+    }
+
+    const LunaBufferCreationInfo emissiveLuxelIndicesBufferCreationInfo = {
+        .size = sizeof(uint32_t) + lightmapSize.x * lightmapSize.y * sizeof(int),
+        .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        .queueFamilyIndexCount = 1,
+        .queueFamilyIndices = &queueFamilyIndex,
+        .allocationCreateInfo = &VRAM_ALLOCATION_CREATE_INFO,
+    };
+    if (!CheckResult(lunaCreateBuffer(device, &emissiveLuxelIndicesBufferCreationInfo, &emissiveLuxelIndicesBuffer)))
+    {
+        return false;
+    }
+
+    const std::array descriptorPoolSizes = {
+        VkDescriptorPoolSize{
+            .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            .descriptorCount = 1,
+        },
+        VkDescriptorPoolSize{
+            .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .descriptorCount = 1,
+        },
+    };
+    const LunaDescriptorPoolCreationInfo descriptorPoolCreationInfo = {
+        .maxSets = 1,
+        .poolSizeCount = descriptorPoolSizes.size(),
+        .poolSizes = descriptorPoolSizes.data(),
+    };
+    LunaDescriptorPool computeDescriptorPool{};
+    if (!CheckResult(lunaCreateDescriptorPool(device, &descriptorPoolCreationInfo, &computeDescriptorPool)))
+    {
+        return false;
+    }
+    const LunaDescriptorSetAllocationInfo allocationInfo = {
+        .descriptorPool = computeDescriptorPool,
+        .setLayoutCount = 1,
+        .setLayouts = &computePipelineDescriptorSetLayout,
+    };
+    LunaDescriptorSet computeDescriptorSet{};
+    if (!CheckResult(lunaAllocateDescriptorSets(device, &allocationInfo, &computeDescriptorSet)))
+    {
+        return false;
+    }
+    const LunaDescriptorImageInfo luxelNormalsImageInfo = {
+        .image = luxelNormalsImage,
+        .imageLayout = lunaGetImageLayout(luxelNormalsImage),
+    };
+    const LunaDescriptorBufferInfo emissiveLuxelIndicesBufferInfo = {
+        .buffer = emissiveLuxelIndicesBuffer,
+    };
+    const std::array writes = {
+        LunaWriteDescriptorSet{
+            .descriptorSet = computeDescriptorSet,
+            .bindingName = "Luxel Normals",
+            .imageInfo = &luxelNormalsImageInfo,
+        },
+        LunaWriteDescriptorSet{
+            .descriptorSet = computeDescriptorSet,
+            .bindingName = "Emissive Luxel Indices",
+            .bufferInfo = &emissiveLuxelIndicesBufferInfo,
+        },
+    };
+    lunaWriteDescriptorSets(device, writes.size(), writes.data());
+
+    if (!CheckResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
+    {
+        return false;
+    }
+
+    const LunaDescriptorSetBindInfo descriptorSetBindInfo = {
+        .descriptorSetCount = 1,
+        .descriptorSets = &computeDescriptorSet,
+    };
+    const uint64_t workGroupCount = lightmapSize.x * lightmapSize.y / 256u;
+    const uint32_t width = std::min(workGroupCount, uint64_t{MAX_DISPATCH_DIMENSION});
+    const uint32_t height = std::min(std::max(workGroupCount / width, uint64_t{1}), uint64_t{MAX_DISPATCH_DIMENSION});
+    const uint32_t depth = std::max(workGroupCount / width / height, uint64_t{1});
+    const LunaDispatchBaseInfo dispatchInfo = {
+        .pipeline = computePipeline,
+        .descriptorSetBindInfo = &descriptorSetBindInfo,
+        .groupCountX = width,
+        .groupCountY = height,
+        .groupCountZ = depth,
+    };
+    if (!CheckResult(lunaDispatchBase(device, commandBuffer, &dispatchInfo)))
+    {
+        return false;
+    }
+
+    return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
+}
+
 bool LightBakerGpu::CreateBLAS(const uint32_t vertexCount, const uint32_t indexCount)
 {
     // The position MUST be at the start of the struct for the acceleration structure to work properly
@@ -1203,14 +1369,6 @@ bool LightBakerGpu::CreateBLAS(const uint32_t vertexCount, const uint32_t indexC
     const VkAccelerationStructureBuildRangeInfoKHR *pBuildRangeInfo = &buildRangeInfo;
     vkCmdBuildAccelerationStructuresKHR(lunaGetVkCommandBuffer(commandBuffer), 1, &buildGeometryInfo, &pBuildRangeInfo);
 
-    const LunaCommandBufferSubmitInfo submitInfo = {
-        .queue = queue,
-        .waitSemaphoreCount = 1,
-        .waitSemaphores = &semaphore,
-        .waitDstStageMasks = &WAIT_STAGE,
-        .signalSemaphoreCount = 1,
-        .signalSemaphores = &semaphore,
-    };
     return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }
 
@@ -1361,14 +1519,6 @@ bool LightBakerGpu::CreateTLAS()
     const VkAccelerationStructureBuildRangeInfoKHR *pBuildRangeInfo = &BUILD_RANGE_INFO;
     vkCmdBuildAccelerationStructuresKHR(lunaGetVkCommandBuffer(commandBuffer), 1, &buildGeometryInfo, &pBuildRangeInfo);
 
-    const LunaCommandBufferSubmitInfo submitInfo = {
-        .queue = queue,
-        .waitSemaphoreCount = 1,
-        .waitSemaphores = &semaphore,
-        .waitDstStageMasks = &WAIT_STAGE,
-        .signalSemaphoreCount = 1,
-        .signalSemaphores = &semaphore,
-    };
     return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }
 
@@ -1631,6 +1781,11 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
             VK_SHADER_STAGE_RAYGEN_BIT_KHR,
         },
         std::pair{
+            // emissiveLuxelIndices
+            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+        },
+        std::pair{
             // vertexData
             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
@@ -1670,7 +1825,7 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
         },
         VkDescriptorPoolSize{
             .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .descriptorCount = 3,
+            .descriptorCount = 4,
         },
     };
     const VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
@@ -1722,6 +1877,11 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
         .buffer = lunaGetVkBuffer(lightsBuffer),
         .offset = lunaGetBufferOffset(lightsBuffer),
         .range = lunaGetBufferSize(lightsBuffer),
+    };
+    const VkDescriptorBufferInfo emissiveLuxelIndicesBufferInfo = {
+        .buffer = lunaGetVkBuffer(emissiveLuxelIndicesBuffer),
+        .offset = lunaGetBufferOffset(emissiveLuxelIndicesBuffer),
+        .range = lunaGetBufferSize(emissiveLuxelIndicesBuffer),
     };
     const VkDescriptorBufferInfo vertexBufferInfo = {
         .buffer = lunaGetVkBuffer(vertexBuffer),
@@ -1796,12 +1956,20 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
             .dstBinding = 7,
             .descriptorCount = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .pBufferInfo = &vertexBufferInfo,
+            .pBufferInfo = &emissiveLuxelIndicesBufferInfo,
         },
         VkWriteDescriptorSet{
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .dstSet = descriptorSet,
             .dstBinding = 8,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .pBufferInfo = &vertexBufferInfo,
+        },
+        VkWriteDescriptorSet{
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = descriptorSet,
+            .dstBinding = 9,
             .descriptorCount = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             .pBufferInfo = &indexBufferInfo,
@@ -1914,8 +2082,8 @@ bool LightBakerGpu::CreateShaderBindingTables()
     return true;
 }
 
-bool LightBakerGpu::SingleBakeIteration(const uint64_t width,
-                                        const uint64_t height,
+bool LightBakerGpu::SingleBakeIteration(const uint32_t width,
+                                        const uint32_t height,
                                         const float percentDone,
                                         const uint32_t baseLuxelIndex,
                                         const bool directLighting) const
@@ -1990,13 +2158,5 @@ bool LightBakerGpu::SingleBakeIteration(const uint64_t width,
                           height,
                           1);
     }
-    const LunaCommandBufferSubmitInfo submitInfo = {
-        .queue = queue,
-        .waitSemaphoreCount = 1,
-        .waitSemaphores = &semaphore,
-        .waitDstStageMasks = &WAIT_STAGE,
-        .signalSemaphoreCount = 1,
-        .signalSemaphores = &semaphore,
-    };
     return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }

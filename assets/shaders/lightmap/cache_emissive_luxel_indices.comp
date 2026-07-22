@@ -1,0 +1,27 @@
+#version 460
+
+const float MIN_BRIGHTNESS = 1.0 / 256.0;
+
+layout (constant_id = 0) const uint WIDTH = 8192;
+
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout (set = 0, binding = 0, rgba32f) readonly restrict uniform image2D luxelNormals;
+layout (set = 0, binding = 1) coherent restrict buffer EmissiveLuxelIndices {
+    uint indexCount;
+    int indices[];
+} emissiveLuxelIndices;
+
+void main() {
+    const int luxelIndex = int(gl_GlobalInvocationID.z * gl_WorkGroupSize.y * gl_NumWorkGroups.y * gl_WorkGroupSize.x * gl_NumWorkGroups.x +
+                               gl_GlobalInvocationID.y * gl_WorkGroupSize.x * gl_NumWorkGroups.x +
+                               gl_GlobalInvocationID.x);
+    const ivec2 luxelCoord = ivec2(luxelIndex % WIDTH, luxelIndex / WIDTH);
+    const float emissive = imageLoad(luxelNormals, luxelCoord).w;
+    if (emissive < MIN_BRIGHTNESS) {
+        // Luxel is not emissive
+        return;
+    }
+    const uint index = atomicAdd(emissiveLuxelIndices.indexCount, 1);
+    emissiveLuxelIndices.indices[index] = luxelIndex;
+}

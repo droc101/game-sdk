@@ -69,10 +69,14 @@ layout (set = 0, binding = 5, rgba8) readonly restrict uniform image2D luxelAlbe
 layout (scalar, set = 0, binding = 6) readonly restrict buffer LightsData {
     Light lights[];
 } lightsData;
-layout (scalar, set = 0, binding = 7) readonly restrict buffer VertexData {
+layout (set = 0, binding = 7) readonly restrict buffer EmissiveLuxelIndices {
+    uint indexCount;
+    int indices[];
+} emissiveLuxelIndices;
+layout (scalar, set = 0, binding = 8) readonly restrict buffer VertexData {
     MapVertex vertices[];
 } vertexData;
-layout (set = 0, binding = 8) readonly restrict buffer IndexData {
+layout (set = 0, binding = 9) readonly restrict buffer IndexData {
     uint indices[];
 } indexData;
 
