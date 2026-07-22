@@ -10,23 +10,23 @@
 
 struct MapVertex
 {
-        alignas(16) glm::vec3 position;
+        glm::vec3 position;
 
-        alignas(8) glm::vec2 uv;
+        glm::vec2 uv;
 
-        alignas(8) glm::vec2 lightmapUv;
+        glm::vec2 lightmapUv;
 
         /// The normal of the surface this point is on
         /// @note Only used by lightmap compiling. Not actually written to the asset binary.
-        alignas(16) glm::vec3 normal;
+        glm::vec3 normal;
 
         /// The texture index used by the material of this vertex
         /// @note Only used by lightmap compiling. Not actually written to the asset binary.
-        alignas(4) uint32_t textureIndex;
+        uint32_t textureIndex;
 
         /// How emissive the material at this vertex is
         /// @note Only used by lightmap compiling. Not actually written to the asset binary.
-        alignas(4) float emissive;
+        float emissive;
 };
 
 // This is a requirement for MapVertex to be considered a trivial type, and this is not true if the members have a

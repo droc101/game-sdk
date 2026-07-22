@@ -1,5 +1,6 @@
 #extension GL_EXT_ray_tracing : require
 #extension GL_EXT_debug_printf : require
+#extension GL_EXT_scalar_block_layout : require
 
 /// Enable extra checks and debug printf logging
 // #define DEBUG
@@ -19,12 +20,14 @@ layout (constant_id = 1) const uint HEIGHT = 4096;
 
 #pragma region Types
 
-/// The format of the map's vertices. Interop with C++ must use std140
+/// The format of the map's vertices. Interop with C++ must use scalar block layout
 struct MapVertex {
     vec3 position;
     vec2 uv;
     vec2 lightmapUv;
     vec3 normal;
+    uint textureIndex;
+    float emissive;
 };
 
 #pragma region LightTypeEnum
@@ -34,7 +37,7 @@ const uint LIGHT_TYPE_AREA = 2u;
 const uint LIGHT_TYPE_DIRECTIONAL = 3u;
 #pragma endregion LightTypeEnum
 
-/// The format of the lights in the map. Interop with C++ must use std140
+/// The format of the lights in the map. Interop with C++ must use scalar block layout
 struct Light {
     uint type; // Maps to an enum in C++
     vec3 position;
@@ -63,10 +66,10 @@ layout (set = 0, binding = 2, rgba16f) writeonly restrict uniform imageBuffer ou
 layout (set = 0, binding = 3, rgba32f) readonly restrict uniform image2D luxelPositions;
 layout (set = 0, binding = 4, rgba32f) readonly restrict uniform image2D luxelNormals;
 layout (set = 0, binding = 5, rgba8) readonly restrict uniform image2D luxelAlbedos;
-layout (std140, set = 0, binding = 6) readonly restrict buffer LightsData {
+layout (scalar, set = 0, binding = 6) readonly restrict buffer LightsData {
     Light lights[];
 } lightsData;
-layout (std140, set = 0, binding = 7) readonly restrict buffer VertexData {
+layout (scalar, set = 0, binding = 7) readonly restrict buffer VertexData {
     MapVertex vertices[];
 } vertexData;
 layout (set = 0, binding = 8) readonly restrict buffer IndexData {

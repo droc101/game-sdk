@@ -60,17 +60,17 @@ class Light // NOLINT(*-pro-type-member-init)
         // NOLINTEND(*-pro-type-member-init)
         // ReSharper restore CppPossiblyUninitializedMember
 
-        alignas(4) Type type;
-        alignas(16) glm::vec3 position;
-        alignas(16) glm::vec3 negativeForwardDirection;
-        alignas(16) glm::vec3 color;
-        alignas(4) float brightness;
-        alignas(4) float constantAttenuation;
-        alignas(4) float linearAttenuation;
-        alignas(4) float quadraticAttenuation;
-        alignas(4) float attenuationMultiplier;
-        alignas(4) float brightAngle;
-        alignas(4) float fadingAngle;
+        Type type;
+        glm::vec3 position;
+        glm::vec3 negativeForwardDirection;
+        glm::vec3 color;
+        float brightness;
+        float constantAttenuation;
+        float linearAttenuation;
+        float quadraticAttenuation;
+        float attenuationMultiplier;
+        float brightAngle;
+        float fadingAngle;
 };
 
 // This is a requirement for Light to be considered a trivial type, and this is not true if the members have a
