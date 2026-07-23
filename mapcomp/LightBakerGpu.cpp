@@ -580,6 +580,9 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
 
     lunaDeviceWaitIdle(device);
 
+    Logger::Verbose("{} Emissive luxels in lightmap",
+                    *static_cast<const uint32_t *>(lunaGetBufferDataPointer(emissiveLuxelIndicesBuffer)));
+
     const std::chrono::time_point<std::chrono::system_clock> start = std::chrono::high_resolution_clock::now();
     for (uint32_t iteration = 0; iteration < iterations; iteration++)
     {
@@ -765,7 +768,7 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         .finalLayout = VK_IMAGE_LAYOUT_GENERAL,
     };
     static constexpr VkAttachmentDescription LUXEL_ALBEDO_ATTACHMENT_DESCRIPTION = {
-        .format = VK_FORMAT_R8G8B8A8_UNORM,
+        .format = VK_FORMAT_R16G16B16A16_SFLOAT,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -849,7 +852,7 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
         return false;
     }
     const LunaImageCreationInfo luxelAlbedosImageCreateInfo = {
-        .format = VK_FORMAT_R8G8B8A8_UNORM,
+        .format = VK_FORMAT_R16G16B16A16_SFLOAT,
         .width = lightmapSize.x,
         .height = lightmapSize.y,
         .samples = VK_SAMPLE_COUNT_1_BIT,

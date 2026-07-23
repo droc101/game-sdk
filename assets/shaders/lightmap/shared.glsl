@@ -65,7 +65,7 @@ layout (set = 0, binding = 1, rgba16f) readonly restrict uniform imageBuffer inp
 layout (set = 0, binding = 2, rgba16f) writeonly restrict uniform imageBuffer outputLightmap;
 layout (set = 0, binding = 3, rgba32f) readonly restrict uniform image2D luxelPositions;
 layout (set = 0, binding = 4, rgba32f) readonly restrict uniform image2D luxelNormals;
-layout (set = 0, binding = 5, rgba8) readonly restrict uniform image2D luxelAlbedos;
+layout (set = 0, binding = 5, rgba16f) readonly restrict uniform image2D luxelAlbedos;
 layout (scalar, set = 0, binding = 6) readonly restrict buffer LightsData {
     Light lights[];
 } lightsData;
