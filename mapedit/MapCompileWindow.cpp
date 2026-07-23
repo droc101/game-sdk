@@ -268,11 +268,13 @@ void MapCompileWindow::ProcessIOStream(SDL_IOStream **stream)
 
 void MapCompileWindow::FinishIOSteam(SDL_IOStream **stream)
 {
-    while (SDL_GetIOStatus(*stream) != SDL_IO_STATUS_EOF)
+    SDL_IOStatus status = SDL_GetIOStatus(*stream);
+    while (status != SDL_IO_STATUS_EOF && status != SDL_IO_STATUS_ERROR)
     {
         std::array<char, 1024> buffer = {0};
         (void)SDL_ReadIO(*stream, &buffer, 1000);
         log += std::string(buffer.data());
+        status = SDL_GetIOStatus(*stream);
     }
     (void)SDL_CloseIO(*stream);
     *stream = nullptr;
