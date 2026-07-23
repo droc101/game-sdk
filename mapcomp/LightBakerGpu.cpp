@@ -536,6 +536,25 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
     }
     lightmapTwoBufferView = lunaGetVkBufferView(lightmapTwoLunaBufferView);
 
+    if (!CheckResult(lunaCreateBuffer(device, &lightmapCreationInfo, &lightmapThree)))
+    {
+        return false;
+    }
+    if (!CheckResult(lunaFillBuffer(device, commandBuffer, lightmapThree, 0, nullptr)))
+    {
+        return false;
+    }
+    const LunaBufferViewCreationInfo lightmapThreeBufferViewCreationInfo = {
+        .buffer = lightmapThree,
+        .format = VK_FORMAT_R16G16B16A16_SFLOAT,
+    };
+    LunaBufferView lightmapThreeLunaBufferView{};
+    if (!CheckResult(lunaCreateBufferView(device, &lightmapThreeBufferViewCreationInfo, &lightmapThreeLunaBufferView)))
+    {
+        return false;
+    }
+    lightmapThreeBufferView = lunaGetVkBufferView(lightmapThreeLunaBufferView);
+
     uint32_t vertexCount{};
     uint32_t indexCount{};
     if (!CreateVertexAndIndexBuffers(meshBuilders, vertexCount, indexCount))
@@ -603,18 +622,18 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
             VkWriteDescriptorSet{
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = descriptorSet,
-                .dstBinding = (bounce + 1) % 2 + 1,
+                .dstBinding = (bounce + 1) % 2 + 2,
                 .descriptorCount = 1,
                 .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
-                .pTexelBufferView = &lightmapOneBufferView,
+                .pTexelBufferView = &lightmapTwoBufferView,
             },
             VkWriteDescriptorSet{
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = descriptorSet,
-                .dstBinding = bounce % 2 + 1,
+                .dstBinding = bounce % 2 + 2,
                 .descriptorCount = 1,
                 .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
-                .pTexelBufferView = &lightmapTwoBufferView,
+                .pTexelBufferView = &lightmapThreeBufferView,
             },
         };
         vkUpdateDescriptorSets(lunaGetVkDevice(device),
@@ -640,9 +659,8 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
     Logger::Info("Compiled in {}us", std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
 
     Logger::Info("Saving Lightmap...");
-    const LunaBuffer finalLightmap = bounceCount % 2 == 0 ? lightmapTwo : lightmapOne;
-    uint16_t *bufferData = static_cast<uint16_t *>(lunaGetBufferDataPointer(finalLightmap));
-    pixelData.resize(lunaGetBufferSize(finalLightmap) / 2);
+    uint16_t *bufferData = static_cast<uint16_t *>(lunaGetBufferDataPointer(lightmapOne));
+    pixelData.resize(lunaGetBufferSize(lightmapOne) / sizeof(_Float16));
     std::copy_n(bufferData, pixelData.size(), pixelData.data());
     return true;
 }
@@ -1754,14 +1772,19 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
             VK_SHADER_STAGE_RAYGEN_BIT_KHR,
         },
         std::pair{
-            // inputLightmap
+            // outputLightmap
+            VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
+            VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+        },
+        std::pair{
+            // previousBounceLightmap
             VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
             VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
         },
         std::pair{
-            // outputLightmap
+            // currentBounceLightmap
             VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
-            VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+            VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
         },
         std::pair{
             // luxelPositions
@@ -1820,7 +1843,7 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
         },
         VkDescriptorPoolSize{
             .type = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
-            .descriptorCount = 2,
+            .descriptorCount = 3,
         },
         VkDescriptorPoolSize{
             .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
@@ -1926,8 +1949,8 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
             .dstSet = descriptorSet,
             .dstBinding = 3,
             .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .pImageInfo = &luxelPositionsImageInfo,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
+            .pTexelBufferView = &lightmapThreeBufferView,
         },
         VkWriteDescriptorSet{
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -1935,7 +1958,7 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
             .dstBinding = 4,
             .descriptorCount = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .pImageInfo = &luxelNormalsImageInfo,
+            .pImageInfo = &luxelPositionsImageInfo,
         },
         VkWriteDescriptorSet{
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -1943,15 +1966,15 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
             .dstBinding = 5,
             .descriptorCount = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .pImageInfo = &luxelAlbedosImageInfo,
+            .pImageInfo = &luxelNormalsImageInfo,
         },
         VkWriteDescriptorSet{
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .dstSet = descriptorSet,
             .dstBinding = 6,
             .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .pBufferInfo = &lightsBufferInfo,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            .pImageInfo = &luxelAlbedosImageInfo,
         },
         VkWriteDescriptorSet{
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -1959,7 +1982,7 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
             .dstBinding = 7,
             .descriptorCount = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .pBufferInfo = &emissiveLuxelIndicesBufferInfo,
+            .pBufferInfo = &lightsBufferInfo,
         },
         VkWriteDescriptorSet{
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -1967,12 +1990,20 @@ bool LightBakerGpu::CreateAndWriteDescriptorSet()
             .dstBinding = 8,
             .descriptorCount = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .pBufferInfo = &vertexBufferInfo,
+            .pBufferInfo = &emissiveLuxelIndicesBufferInfo,
         },
         VkWriteDescriptorSet{
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .dstSet = descriptorSet,
             .dstBinding = 9,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .pBufferInfo = &vertexBufferInfo,
+        },
+        VkWriteDescriptorSet{
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = descriptorSet,
+            .dstBinding = 10,
             .descriptorCount = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             .pBufferInfo = &indexBufferInfo,

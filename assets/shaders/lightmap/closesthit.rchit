@@ -23,5 +23,5 @@ void main() {
     }
     const vec2 luxelUv = computeLuxelUv();
     const int luxelIndex = computeLuxelIndex(luxelUv);
-    hitColor = imageLoad(luxelAlbedos, ivec2(luxelUv * vec2(WIDTH, HEIGHT))).rgb * imageLoad(inputLightmap, luxelIndex).rgb;
+    hitColor = imageLoad(luxelAlbedos, ivec2(luxelUv * vec2(WIDTH, HEIGHT))).rgb * imageLoad(previousBounceLightmap, luxelIndex).rgb;
 }

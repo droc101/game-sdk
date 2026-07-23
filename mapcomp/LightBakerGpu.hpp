@@ -143,6 +143,8 @@ class LightBakerGpu
         LunaBuffer emissiveLuxelIndicesBuffer{};
         LunaBuffer lightmapOne{};
         LunaBuffer lightmapTwo{};
+        LunaBuffer lightmapThree{};
         VkBufferView lightmapOneBufferView{};
         VkBufferView lightmapTwoBufferView{};
+        VkBufferView lightmapThreeBufferView{};
 };

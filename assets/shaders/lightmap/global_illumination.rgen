@@ -54,5 +54,6 @@ void main() {
         accumulatedColor += hitColor;
     }
 
-    imageStore(outputLightmap, luxelIndex, vec4(imageLoad(inputLightmap, luxelIndex).rgb + accumulatedColor / SAMPLE_COUNT, 1));
+    imageStore(currentBounceLightmap, luxelIndex, vec4(accumulatedColor / SAMPLE_COUNT, 1));
+    imageStore(outputLightmap, luxelIndex, vec4(imageLoad(outputLightmap, luxelIndex).rgb + accumulatedColor / SAMPLE_COUNT, 1));
 }

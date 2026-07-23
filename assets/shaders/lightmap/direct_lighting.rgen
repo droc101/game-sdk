@@ -111,4 +111,5 @@ void main() {
     }
 
     imageStore(outputLightmap, luxelIndex, vec4(accumulatedColor, 1));
+    imageStore(currentBounceLightmap, luxelIndex, vec4(accumulatedColor, 1));
 }

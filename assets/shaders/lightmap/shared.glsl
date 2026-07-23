@@ -61,22 +61,23 @@ layout (push_constant) uniform PushConstants {
 } pushConstants;
 
 layout (set = 0, binding = 0) uniform accelerationStructureEXT accelerationStructure;
-layout (set = 0, binding = 1, rgba16f) readonly restrict uniform imageBuffer inputLightmap;
-layout (set = 0, binding = 2, rgba16f) writeonly restrict uniform imageBuffer outputLightmap;
-layout (set = 0, binding = 3, rgba32f) readonly restrict uniform image2D luxelPositions;
-layout (set = 0, binding = 4, rgba32f) readonly restrict uniform image2D luxelNormals;
-layout (set = 0, binding = 5, rgba16f) readonly restrict uniform image2D luxelAlbedos;
-layout (scalar, set = 0, binding = 6) readonly restrict buffer LightsData {
+layout (set = 0, binding = 1, rgba16f) restrict uniform imageBuffer outputLightmap;
+layout (set = 0, binding = 2, rgba16f) readonly restrict uniform imageBuffer previousBounceLightmap;
+layout (set = 0, binding = 3, rgba16f) writeonly restrict uniform imageBuffer currentBounceLightmap;
+layout (set = 0, binding = 4, rgba32f) readonly restrict uniform image2D luxelPositions;
+layout (set = 0, binding = 5, rgba32f) readonly restrict uniform image2D luxelNormals;
+layout (set = 0, binding = 6, rgba16f) readonly restrict uniform image2D luxelAlbedos;
+layout (scalar, set = 0, binding = 7) readonly restrict buffer LightsData {
     Light lights[];
 } lightsData;
-layout (set = 0, binding = 7) readonly restrict buffer EmissiveLuxelIndices {
+layout (set = 0, binding = 8) readonly restrict buffer EmissiveLuxelIndices {
     uint indexCount;
     int indices[];
 } emissiveLuxelIndices;
-layout (scalar, set = 0, binding = 8) readonly restrict buffer VertexData {
+layout (scalar, set = 0, binding = 9) readonly restrict buffer VertexData {
     MapVertex vertices[];
 } vertexData;
-layout (set = 0, binding = 9) readonly restrict buffer IndexData {
+layout (set = 0, binding = 10) readonly restrict buffer IndexData {
     uint indices[];
 } indexData;
 
