@@ -19,6 +19,9 @@
 class LevelMeshBuilder
 {
     public:
+        /// Number of pixels around each lightmap rectangle to not use to prevent light spill from texture filtering
+        static constexpr size_t LIGHTMAP_PADDING = 2;
+
         LevelMeshBuilder(const SearchPathManager &pathManager);
 
         /**
@@ -71,9 +74,6 @@ class LevelMeshBuilder
         }
 
     private:
-        /// Number of pixels around each lightmap rectangle to not use to prevent light spill from texture filtering
-        static constexpr size_t LIGHTMAP_PADDING = 2;
-
         struct FaceData
         {
                 std::vector<uint32_t> indices;
