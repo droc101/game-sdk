@@ -356,7 +356,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
 
     const bool skipLighting = lights.empty() || settings.skipLighting;
 
-    glm::uvec2 lightmapSize{};
+    glm::uvec2 lightmapSize{1};
     if (!skipLighting && !LevelMeshBuilder::CalculateLightmapUvs(lightmapSize, meshBuilders, pathManager))
     {
         return Error::ErrorCode::LIGHTMAP_TOO_LARGE;
@@ -382,18 +382,15 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         {
             return Error::ErrorCode::UNKNOWN;
         }
-        writer.Write<size_t>(lightmapSize.x);
-        writer.Write<size_t>(lightmapSize.y);
-        writer.WriteBuffer(pixels);
-
     } else
     {
         Logger::Info("Using fullbright lightmap");
-        writer.Write<size_t>(1);
-        writer.Write<size_t>(1);
-        writer.WriteBuffer(pixels);
     }
 
+    Logger::Info("Finalizing Map...");
+    writer.Write<size_t>(lightmapSize.x);
+    writer.Write<size_t>(lightmapSize.y);
+    writer.WriteBuffer(pixels);
     writer.Write<uint16_t>(lights.size());
     for (const Light &light: lights)
     {

@@ -931,7 +931,7 @@ bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder>
     const std::chrono::time_point<std::chrono::system_clock> end = std::chrono::high_resolution_clock::now();
     Logger::Info("Compiled in {}us", std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
 
-    Logger::Info("Saving Lightmap...");
+    Logger::Info("Padding Lightmap...");
     AddPaddingToLightmap(lightmapSize, static_cast<float16_t *>(lunaGetBufferDataPointer(lightmapOne)), pixelData);
     return true;
 }
