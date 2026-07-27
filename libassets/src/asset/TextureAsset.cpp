@@ -163,17 +163,7 @@ size_t TextureAsset::GetPixelDataSize() const
 Error::ErrorCode TextureAsset::SaveAsPNG(const char *imagePath) const
 {
     std::vector<uint8_t> pixelDataCopy = pixelData;
-    uint32_t *texturePixels = reinterpret_cast<uint32_t *>(pixelDataCopy.data());
-    for (size_t i = 0; i < width * height; i++)
-    {
-        uint32_t *pixel = &texturePixels[i];
-        const uint8_t a = static_cast<uint8_t>(*pixel >> 24);
-        const uint8_t r = static_cast<uint8_t>(*pixel >> 16);
-        const uint8_t g = static_cast<uint8_t>(*pixel >> 8);
-        const uint8_t b = static_cast<uint8_t>(*pixel);
-
-        *pixel = b << 24 | g << 16 | r << 8 | a;
-    }
+    const uint32_t *texturePixels = reinterpret_cast<uint32_t *>(pixelDataCopy.data());
     const int code = stbi_write_png(imagePath,
                                     static_cast<int>(width),
                                     static_cast<int>(height),
