@@ -11,23 +11,19 @@
 #include <cstdint>
 #include <format>
 #include <fstream>
+#include <glm/glm.hpp>
 #include <libassets/type/ModelLod.h>
 #include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/LightmapHelpers.hpp>
 #include <libassets/util/Logger.h>
 #include <numeric>
+#include <stb_rect_pack.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#define STB_RECT_PACK_IMPLEMENTATION
-#include <glm/ext/vector_common.hpp>
-#include <glm/geometric.hpp>
-#include <stb_rect_pack.h>
-
-#include "../../../mapcomp/LevelMeshBuilder.h"
 
 ModelLod::ModelLod(DataReader &reader, const uint32_t materialsPerSkin)
 {
@@ -201,44 +197,16 @@ bool ModelLod::CalculateLightmapUvs()
             const float c = glm::distance(v2, v3);
 
             rects.emplace_back(0,
-                               2 * LevelMeshBuilder::LIGHTMAP_PADDING + std::max(c, (b * b + c * c - a * a) / (2 * c)),
-                               2 * LevelMeshBuilder::LIGHTMAP_PADDING +
+                               2 * LightmapHelpers::LIGHTMAP_PADDING + std::max(c, (b * b + c * c - a * a) / (2 * c)),
+                               2 * LightmapHelpers::LIGHTMAP_PADDING +
                                        b * std::sin(std::acosf((b * b + c * c - a * a) / (2 * b * c))));
         }
     }
 
-
-    int width = 128;
-    int height = 128;
-    stbrp_context context{};
-    bool wasHeightChangedLast = false;
-    constexpr int MAX_LIGHTMAP_SIZE = 1 << 14;
-    std::vector<stbrp_node> nodes{};
-    while (true)
+    glm::uvec2 lightmapSize{};
+    if (!LightmapHelpers::FitLightmap(rects, lightmapSize))
     {
-        nodes.clear();
-        nodes.resize(width * 2);
-        stbrp_init_target(&context, width, height, nodes.data(), static_cast<int>(nodes.size()));
-
-        if (stbrp_pack_rects(&context, rects.data(), static_cast<int>(rects.size())) == 0)
-        {
-            if (width == MAX_LIGHTMAP_SIZE && height == MAX_LIGHTMAP_SIZE)
-            {
-                return false;
-            }
-            if (wasHeightChangedLast)
-            {
-                width = width << 1;
-                wasHeightChangedLast = false;
-            } else
-            {
-                height = height << 1;
-                wasHeightChangedLast = true;
-            }
-        } else
-        {
-            break;
-        }
+        return false;
     }
 
     for (uint32_t materialSlotIndex = 0; materialSlotIndex < indexCounts.size(); materialSlotIndex++)
@@ -257,24 +225,14 @@ bool ModelLod::CalculateLightmapUvs()
             const float b = glm::distance(v1.position, v3.position);
             const float c = glm::distance(v2.position, v3.position);
 
-            v1.lightmapUv.x = static_cast<float>(rect.x + LevelMeshBuilder::LIGHTMAP_PADDING) /
-                              static_cast<float>(width);
-            v1.lightmapUv.y = static_cast<float>(rect.y + LevelMeshBuilder::LIGHTMAP_PADDING) /
-                              static_cast<float>(height);
-            v2.lightmapUv.x = (static_cast<float>(rect.x + LevelMeshBuilder::LIGHTMAP_PADDING) +
-                               c * static_cast<float>(rect.w - 2 * LevelMeshBuilder::LIGHTMAP_PADDING)) /
-                              static_cast<float>(width);
-            v2.lightmapUv.y = v1.lightmapUv.y;
-            v2.lightmapUv.x = (static_cast<float>(rect.x + LevelMeshBuilder::LIGHTMAP_PADDING) +
-                               (b * b + c * c - a * a) /
-                                       (2 * c) *
-                                       static_cast<float>(rect.w - 2 * LevelMeshBuilder::LIGHTMAP_PADDING)) /
-                              static_cast<float>(width);
-            v3.lightmapUv.y = (static_cast<float>(rect.y + LevelMeshBuilder::LIGHTMAP_PADDING) +
-                               b *
-                                       std::sin(std::acosf((b * b + c * c - a * a) / (2 * b * c))) *
-                                       static_cast<float>(rect.h - 2 * LevelMeshBuilder::LIGHTMAP_PADDING)) /
-                              static_cast<float>(height);
+            v1.lightmapUv = LightmapHelpers::GetUv(lightmapSize, rect, {0, 0});
+            v2.lightmapUv = LightmapHelpers::GetUv(lightmapSize, rect, {c, 0});
+            v3.lightmapUv = LightmapHelpers::GetUv(lightmapSize,
+                                                   rect,
+                                                   {
+                                                       (b * b + c * c - a * a) / (2 * c),
+                                                       b * std::sin(std::acosf((b * b + c * c - a * a) / (2 * b * c))),
+                                                   });
         }
     }
 

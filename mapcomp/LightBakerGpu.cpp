@@ -16,6 +16,7 @@
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/type/MapVertex.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/LightmapHelpers.hpp>
 #include <libassets/util/Logger.h>
 #include <libassets/util/ShaderCompiler.h>
 #include <luna/luna.h>
@@ -208,7 +209,7 @@ constexpr bool NonZero(const float16_t value)
 
 void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *lightmapData, std::vector<uint16_t> &output)
 {
-    static_assert(2 <= LevelMeshBuilder::LIGHTMAP_PADDING,
+    static_assert(2 <= LightmapHelpers::LIGHTMAP_PADDING,
                   "Padding does not work correctly with fewer than two luxels of padding.");
 
     static constexpr bool OVERWRITE_EDGE = false;
@@ -218,18 +219,18 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
     float16_t *outputData = reinterpret_cast<float16_t *>(output.data());
 
     const uint32_t lightmapWidthChannelCount = lightmapSize.x * 4;
-    for (uint32_t i = 3; i < lightmapWidthChannelCount * (lightmapSize.y - LevelMeshBuilder::LIGHTMAP_PADDING); i += 4)
+    for (uint32_t i = 3; i < lightmapWidthChannelCount * (lightmapSize.y - LightmapHelpers::LIGHTMAP_PADDING); i += 4)
     {
         float16_t *edgeLuxel; // NOLINT(*-init-variables)
         std::array<float16_t, 4> color; // NOLINT(*-pro-type-member-init)
         const float16_t currentLuxelAlpha = lightmapData[i];
         if (IsZero(currentLuxelAlpha) &&
-            NonZero(lightmapData[i + LevelMeshBuilder::LIGHTMAP_PADDING * lightmapWidthChannelCount]))
+            NonZero(lightmapData[i + LightmapHelpers::LIGHTMAP_PADDING * lightmapWidthChannelCount]))
         {
             // We've detected that there is a luxel with vertical padding that potentially ends at our current luxel
 
             bool hasFullPadding = true;
-            for (uint32_t j = LevelMeshBuilder::LIGHTMAP_PADDING - 1; j > 0; j--)
+            for (uint32_t j = LightmapHelpers::LIGHTMAP_PADDING - 1; j > 0; j--)
             {
                 if (NonZero(lightmapData[i + j * lightmapWidthChannelCount]))
                 {
@@ -240,10 +241,10 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
 
             if (hasFullPadding)
             {
-                edgeLuxel = &outputData[i + LevelMeshBuilder::LIGHTMAP_PADDING * lightmapWidthChannelCount - 3];
+                edgeLuxel = &outputData[i + LightmapHelpers::LIGHTMAP_PADDING * lightmapWidthChannelCount - 3];
 
                 // Check the alpha of the luxel two rows down
-                if (NonZero(lightmapData[i + (LevelMeshBuilder::LIGHTMAP_PADDING + 2) * lightmapWidthChannelCount]) &&
+                if (NonZero(lightmapData[i + (LightmapHelpers::LIGHTMAP_PADDING + 2) * lightmapWidthChannelCount]) &&
                     OVERWRITE_EDGE)
                 {
                     // There are at least three used luxels.
@@ -251,7 +252,7 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
                     //  otherwise we pull the luxel inset one from the edge to reduce the effects of light leakage.
 
                     std::copy_n(&lightmapData[i +
-                                              (LevelMeshBuilder::LIGHTMAP_PADDING + 1) * lightmapWidthChannelCount -
+                                              (LightmapHelpers::LIGHTMAP_PADDING + 1) * lightmapWidthChannelCount -
                                               3],
                                 4,
                                 color.data());
@@ -260,11 +261,11 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
                     std::copy_n(color.data(), 4, edgeLuxel);
                 } else
                 {
-                    std::copy_n(&lightmapData[i + LevelMeshBuilder::LIGHTMAP_PADDING * lightmapWidthChannelCount - 3],
+                    std::copy_n(&lightmapData[i + LightmapHelpers::LIGHTMAP_PADDING * lightmapWidthChannelCount - 3],
                                 4,
                                 color.data());
                 }
-                for (uint32_t j = LevelMeshBuilder::LIGHTMAP_PADDING; j > 0; j--)
+                for (uint32_t j = LightmapHelpers::LIGHTMAP_PADDING; j > 0; j--)
                 {
                     std::copy_n(color.data(), 4, edgeLuxel - j * lightmapWidthChannelCount);
                 }
@@ -292,18 +293,18 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
                 std::copy_n(&lightmapData[i - 3], 4, color.data());
             }
             // We assume that there is sufficient padding, to save time on checking
-            for (uint32_t j = LevelMeshBuilder::LIGHTMAP_PADDING; j > 0; j--)
+            for (uint32_t j = LightmapHelpers::LIGHTMAP_PADDING; j > 0; j--)
             {
                 std::copy_n(color.data(), 4, edgeLuxel + j * lightmapWidthChannelCount);
             }
         }
 
-        if (IsZero(currentLuxelAlpha) && NonZero(lightmapData[i + LevelMeshBuilder::LIGHTMAP_PADDING * 4]))
+        if (IsZero(currentLuxelAlpha) && NonZero(lightmapData[i + LightmapHelpers::LIGHTMAP_PADDING * 4]))
         {
             // We've detected that there is a luxel with horizontal padding that potentially ends at our current luxel
 
             bool hasFullPadding = true;
-            for (uint32_t j = LevelMeshBuilder::LIGHTMAP_PADDING - 1; j > 0; j--)
+            for (uint32_t j = LightmapHelpers::LIGHTMAP_PADDING - 1; j > 0; j--)
             {
                 if (NonZero(lightmapData[i + j * 4]))
                 {
@@ -315,13 +316,13 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
             if (hasFullPadding)
             {
                 bool topCorner = IsZero(lightmapData[i +
-                                                     LevelMeshBuilder::LIGHTMAP_PADDING * 4 -
+                                                     LightmapHelpers::LIGHTMAP_PADDING * 4 -
                                                      lightmapWidthChannelCount]);
                 if (topCorner)
                 {
-                    for (uint32_t j = LevelMeshBuilder::LIGHTMAP_PADDING; j > 0; j--)
+                    for (uint32_t j = LightmapHelpers::LIGHTMAP_PADDING; j > 0; j--)
                     {
-                        for (uint32_t k = 0; k <= LevelMeshBuilder::LIGHTMAP_PADDING; k++)
+                        for (uint32_t k = 0; k <= LightmapHelpers::LIGHTMAP_PADDING; k++)
                         {
                             if (NonZero(lightmapData[i - j * lightmapWidthChannelCount + k * 4]))
                             {
@@ -332,13 +333,13 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
                     }
                 }
                 bool bottomCorner = IsZero(lightmapData[i +
-                                                        LevelMeshBuilder::LIGHTMAP_PADDING * 4 +
+                                                        LightmapHelpers::LIGHTMAP_PADDING * 4 +
                                                         lightmapWidthChannelCount]);
                 if (bottomCorner)
                 {
-                    for (uint32_t j = LevelMeshBuilder::LIGHTMAP_PADDING; j > 0; j--)
+                    for (uint32_t j = LightmapHelpers::LIGHTMAP_PADDING; j > 0; j--)
                     {
-                        for (uint32_t k = 0; k <= LevelMeshBuilder::LIGHTMAP_PADDING; k++)
+                        for (uint32_t k = 0; k <= LightmapHelpers::LIGHTMAP_PADDING; k++)
                         {
                             if (NonZero(lightmapData[i + j * lightmapWidthChannelCount + k * 4]))
                             {
@@ -349,36 +350,36 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
                     }
                 }
 
-                edgeLuxel = &outputData[i + LevelMeshBuilder::LIGHTMAP_PADDING * 4 - 3];
+                edgeLuxel = &outputData[i + LightmapHelpers::LIGHTMAP_PADDING * 4 - 3];
 
                 // Check the alpha of the luxel two columns over
-                if (NonZero(lightmapData[i + (LevelMeshBuilder::LIGHTMAP_PADDING + 2) * 4]) && OVERWRITE_EDGE)
+                if (NonZero(lightmapData[i + (LightmapHelpers::LIGHTMAP_PADDING + 2) * 4]) && OVERWRITE_EDGE)
                 {
                     // There are at least three used luxels.
                     // If there are two or fewer luxels we just use the luxel at the edge,
                     //  otherwise we pull the luxel inset one from the edge to reduce the effects of light leakage.
 
-                    std::copy_n(&lightmapData[i + (LevelMeshBuilder::LIGHTMAP_PADDING + 1) * 4 - 3], 4, color.data());
+                    std::copy_n(&lightmapData[i + (LightmapHelpers::LIGHTMAP_PADDING + 1) * 4 - 3], 4, color.data());
                     assert(NonZero(color.at(4))); // Internal state check.
 
                     std::copy_n(color.data(), 4, edgeLuxel);
                 } else
                 {
-                    std::copy_n(&lightmapData[i + LevelMeshBuilder::LIGHTMAP_PADDING * 4 - 3], 4, color.data());
+                    std::copy_n(&lightmapData[i + LightmapHelpers::LIGHTMAP_PADDING * 4 - 3], 4, color.data());
                 }
-                for (uint32_t j = LevelMeshBuilder::LIGHTMAP_PADDING; j > 0; j--)
+                for (uint32_t j = LightmapHelpers::LIGHTMAP_PADDING; j > 0; j--)
                 {
                     std::copy_n(color.data(), 4, edgeLuxel - j * 4);
                     if (topCorner)
                     {
-                        for (uint32_t k = LevelMeshBuilder::LIGHTMAP_PADDING; k > 0; k--)
+                        for (uint32_t k = LightmapHelpers::LIGHTMAP_PADDING; k > 0; k--)
                         {
                             std::copy_n(color.data(), 4, edgeLuxel - j * lightmapWidthChannelCount - k * 4);
                         }
                     }
                     if (bottomCorner)
                     {
-                        for (uint32_t k = LevelMeshBuilder::LIGHTMAP_PADDING; k > 0; k--)
+                        for (uint32_t k = LightmapHelpers::LIGHTMAP_PADDING; k > 0; k--)
                         {
                             std::copy_n(color.data(), 4, edgeLuxel + j * lightmapWidthChannelCount - k * 4);
                         }
@@ -390,13 +391,13 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
             // We've detected that our current luxel is the right edge
 
             bool topCorner = IsZero(lightmapData[i +
-                                                 LevelMeshBuilder::LIGHTMAP_PADDING * 4 -
+                                                 LightmapHelpers::LIGHTMAP_PADDING * 4 -
                                                  lightmapWidthChannelCount]);
             if (topCorner)
             {
-                for (uint32_t j = LevelMeshBuilder::LIGHTMAP_PADDING; j > 0; j--)
+                for (uint32_t j = LightmapHelpers::LIGHTMAP_PADDING; j > 0; j--)
                 {
-                    for (uint32_t k = 0; k <= LevelMeshBuilder::LIGHTMAP_PADDING; k++)
+                    for (uint32_t k = 0; k <= LightmapHelpers::LIGHTMAP_PADDING; k++)
                     {
                         if (NonZero(lightmapData[i - j * lightmapWidthChannelCount + k * 4]))
                         {
@@ -407,13 +408,13 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
                 }
             }
             bool bottomCorner = IsZero(lightmapData[i +
-                                                    LevelMeshBuilder::LIGHTMAP_PADDING * 4 +
+                                                    LightmapHelpers::LIGHTMAP_PADDING * 4 +
                                                     lightmapWidthChannelCount]);
             if (bottomCorner)
             {
-                for (uint32_t j = LevelMeshBuilder::LIGHTMAP_PADDING; j > 0; j--)
+                for (uint32_t j = LightmapHelpers::LIGHTMAP_PADDING; j > 0; j--)
                 {
-                    for (uint32_t k = 0; k <= LevelMeshBuilder::LIGHTMAP_PADDING; k++)
+                    for (uint32_t k = 0; k <= LightmapHelpers::LIGHTMAP_PADDING; k++)
                     {
                         if (NonZero(lightmapData[i + j * lightmapWidthChannelCount + k * 4]))
                         {
@@ -441,19 +442,19 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
                 std::copy_n(&lightmapData[i - 3], 4, color.data());
             }
             // We assume that there is sufficient padding, to save time on checking
-            for (uint32_t j = LevelMeshBuilder::LIGHTMAP_PADDING; j > 0; j--)
+            for (uint32_t j = LightmapHelpers::LIGHTMAP_PADDING; j > 0; j--)
             {
                 std::copy_n(color.data(), 4, edgeLuxel + j * 4);
                 if (topCorner)
                 {
-                    for (uint32_t k = LevelMeshBuilder::LIGHTMAP_PADDING; k > 0; k--)
+                    for (uint32_t k = LightmapHelpers::LIGHTMAP_PADDING; k > 0; k--)
                     {
                         std::copy_n(color.data(), 4, edgeLuxel - j * lightmapWidthChannelCount + k * 4);
                     }
                 }
                 if (bottomCorner)
                 {
-                    for (uint32_t k = LevelMeshBuilder::LIGHTMAP_PADDING; k > 0; k--)
+                    for (uint32_t k = LightmapHelpers::LIGHTMAP_PADDING; k > 0; k--)
                     {
                         std::copy_n(color.data(), 4, edgeLuxel + j * lightmapWidthChannelCount + k * 4);
                     }

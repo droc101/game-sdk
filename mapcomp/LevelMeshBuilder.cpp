@@ -15,18 +15,17 @@
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/DataWriter.h>
+#include <libassets/util/LightmapHelpers.hpp>
 #include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <ranges>
+#include <stb_rect_pack.h>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 #include "LightBakerGpu.hpp"
 #include "SectorClipper.h"
-
-#define STB_RECT_PACK_IMPLEMENTATION
-#include <stb_rect_pack.h>
 
 LevelMeshBuilder::LevelMeshBuilder(const SearchPathManager &pathManager)
 {
@@ -105,13 +104,6 @@ bool LevelMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
         assert(builder.faceIndices.size() == builder.faceRects.size());
     }
 
-    int width = 1 << 4;
-    int height = 1 << 4;
-    bool wasHeightChangedLast = true;
-    constexpr int MAX_LIGHTMAP_SIZE = 1 << 14;
-
-    stbrp_context context{};
-
     std::vector<stbrp_rect> rects{};
     for (const std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)
     {
@@ -124,38 +116,11 @@ bool LevelMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
         }
     }
 
-    std::vector<stbrp_node> nodes{};
-    while (true)
+    if (!LightmapHelpers::FitLightmap(rects, lightmapSize))
     {
-        nodes.clear();
-        nodes.resize(width * 2);
-        stbrp_init_target(&context, width, height, nodes.data(), static_cast<int>(nodes.size()));
-
-        if (stbrp_pack_rects(&context, rects.data(), static_cast<int>(rects.size())) == 0)
-        {
-            // printf("Lightmap size of %d by %d didn't fit :(\n", width, height);
-            if (width == MAX_LIGHTMAP_SIZE && height == MAX_LIGHTMAP_SIZE)
-            {
-                return false;
-            }
-            if (wasHeightChangedLast)
-            {
-                width = width << 1;
-                wasHeightChangedLast = false;
-            } else
-            {
-                height = height << 1;
-                wasHeightChangedLast = true;
-            }
-        } else
-        {
-            break;
-        }
+        return false;
     }
-
-    Logger::Info("Lightmap size: {} by {}", width, height);
-
-    lightmapSize = {width, height};
+    Logger::Info("Lightmap size: {} by {}", lightmapSize.x, lightmapSize.y);
 
     size_t rectIndexBegin = 0;
     for (std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)
@@ -179,18 +144,7 @@ bool LevelMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
                 const uint32_t index = faceData.indices.at(j);
                 MapVertex &vertex = builder.second.vertices.at(index);
                 const glm::vec2 &positionInRect = faceData.positionsInRect.at(j);
-                vertex.lightmapUv.x = MapRange(positionInRect.x,
-                                               0.0f,
-                                               1.0f,
-                                               static_cast<float>(rect.x) + LIGHTMAP_PADDING,
-                                               static_cast<float>(rect.x + rect.w) - LIGHTMAP_PADDING) /
-                                      static_cast<float>(width);
-                vertex.lightmapUv.y = MapRange(positionInRect.y,
-                                               0.0f,
-                                               1.0f,
-                                               static_cast<float>(rect.y) + LIGHTMAP_PADDING,
-                                               static_cast<float>(rect.y + rect.h) - LIGHTMAP_PADDING) /
-                                      static_cast<float>(height);
+                vertex.lightmapUv = LightmapHelpers::GetUv(lightmapSize, rect, positionInRect);
             }
         }
         rectIndexBegin += builder.second.faceRects.size();
@@ -330,7 +284,9 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
     faceIndices.emplace_back(newIndices, positionsInRect);
     const float luxelsX = fmaxf(width * static_cast<float>(wallMaterial.luxelsPerUnit), 1.0f);
     const float luxelsY = fmaxf(height * static_cast<float>(wallMaterial.luxelsPerUnit), 1.0f);
-    faceRects.emplace_back(0, luxelsX + LIGHTMAP_PADDING * 2, luxelsY + LIGHTMAP_PADDING * 2);
+    faceRects.emplace_back(0,
+                           luxelsX + LightmapHelpers::LIGHTMAP_PADDING * 2,
+                           luxelsY + LightmapHelpers::LIGHTMAP_PADDING * 2);
 
     currentIndex += 4;
 }
@@ -418,8 +374,8 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
         const float luxelsY = fmaxf(height * static_cast<float>(luxelsPerUnit), 1.0f);
         const stbrp_rect rect = {
             .id = 0,
-            .w = static_cast<stbrp_coord>(luxelsX + LIGHTMAP_PADDING * 2),
-            .h = static_cast<stbrp_coord>(luxelsY + LIGHTMAP_PADDING * 2),
+            .w = static_cast<stbrp_coord>(luxelsX + LightmapHelpers::LIGHTMAP_PADDING * 2),
+            .h = static_cast<stbrp_coord>(luxelsY + LightmapHelpers::LIGHTMAP_PADDING * 2),
         };
         faceRects.push_back(rect);
     }

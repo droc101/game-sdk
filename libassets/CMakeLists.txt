@@ -182,6 +182,8 @@ add_library(assets SHARED
         include/libassets/type/renderDefs/values/ColorDefinitionValue.h
         src/type/renderDefs/ConeRenderDefinition.cpp
         include/libassets/type/renderDefs/ConeRenderDefinition.h
+        include/libassets/util/LightmapHelpers.hpp
+        src/util/LightmapHelpers.cpp
 )
 
 set_target_properties(assets PROPERTIES
