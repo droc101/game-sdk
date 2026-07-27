@@ -7,6 +7,7 @@
 #include <assimp/mesh.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <format>
@@ -199,7 +200,7 @@ bool ModelLod::CalculateLightmapUvs()
             rects.emplace_back(0,
                                2 * LightmapHelpers::LIGHTMAP_PADDING + std::max(c, (b * b + c * c - a * a) / (2 * c)),
                                2 * LightmapHelpers::LIGHTMAP_PADDING +
-                                       b * std::sin(std::acosf((b * b + c * c - a * a) / (2 * b * c))));
+                                       b * std::sin(std::acos((b * b + c * c - a * a) / (2 * b * c))));
         }
     }
 
@@ -231,7 +232,7 @@ bool ModelLod::CalculateLightmapUvs()
                                                    rect,
                                                    {
                                                        (b * b + c * c - a * a) / (2 * c),
-                                                       b * std::sin(std::acosf((b * b + c * c - a * a) / (2 * b * c))),
+                                                       b * std::sin(std::acos((b * b + c * c - a * a) / (2 * b * c))),
                                                    });
         }
     }

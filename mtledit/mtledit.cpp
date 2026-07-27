@@ -16,8 +16,8 @@
 #include <libassets/util/ArgumentParser.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
+#include <libassets/util/SearchPathManager.h>
 #include <string>
-#include "libassets/util/SearchPathManager.h"
 
 static LevelMaterialAsset material{};
 
@@ -124,12 +124,14 @@ int main(const int argc, const char **argv)
             return -1;
         }
         std::filesystem::path directoryPath{directiory};
-        if (!std::filesystem::exists(directoryPath)) {
+        if (!std::filesystem::exists(directoryPath))
+        {
             Logger::Error("Invalid path `{}`!", directiory);
             return -1;
         }
         const std::vector<std::string> &files = SearchPathManager::ScanFolder(directiory, ".gmtl", false);
-        for (const std::string &file: files) {
+        for (const std::string &file: files)
+        {
             OpenGmtl(file);
             SaveGmtl(file);
         }

@@ -5,10 +5,10 @@
 #pragma once
 
 #include <libassets/type/Color.h>
-#include <string>
-#include "libassets/type/renderDefs/values/NumericDefinitionValue.h"
 #include <libassets/type/Param.h>
+#include <libassets/type/renderDefs/values/NumericDefinitionValue.h>
 #include <libassets/type/renderDefs/values/RenderDefinitionValue.h>
+#include <string>
 
 class ColorDefinitionValue: public RenderDefinitionValue<Color>
 {

@@ -7,8 +7,7 @@
 #include <cstddef>
 #include <glm/glm.hpp>
 #include <stb_rect_pack.h>
-
-#include "libassets/type/Actor.h"
+#include <vector>
 
 namespace LightmapHelpers
 {
