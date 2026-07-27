@@ -22,6 +22,13 @@
 #include <unordered_map>
 #include <vector>
 
+#define STB_RECT_PACK_IMPLEMENTATION
+#include <glm/ext/vector_common.hpp>
+#include <glm/geometric.hpp>
+#include <stb_rect_pack.h>
+
+#include "../../../mapcomp/LevelMeshBuilder.h"
+
 ModelLod::ModelLod(DataReader &reader, const uint32_t materialsPerSkin)
 {
     distance = reader.Read<float>();
@@ -173,6 +180,105 @@ void ModelLod::Write(DataWriter &writer) const
     {
         writer.WriteBuffer<uint32_t>(lodIndices);
     }
+}
+
+bool ModelLod::CalculateLightmapUvs()
+{
+    std::vector<stbrp_rect> rects{};
+    assert(indexCounts.size() == materialIndices.size());
+    for (uint32_t materialSlotIndex = 0; materialSlotIndex < indexCounts.size(); materialSlotIndex++)
+    {
+        const uint32_t indexCount = indexCounts.at(materialSlotIndex);
+        const std::vector<uint32_t> &indices = materialIndices.at(materialSlotIndex);
+        for (uint32_t i = 0; i < indexCount; i += 3)
+        {
+            const glm::vec3 &v1 = vertices.at(indices.at(i + 0)).position;
+            const glm::vec3 &v2 = vertices.at(indices.at(i + 1)).position;
+            const glm::vec3 &v3 = vertices.at(indices.at(i + 2)).position;
+
+            const float a = glm::distance(v1, v2);
+            const float b = glm::distance(v1, v3);
+            const float c = glm::distance(v2, v3);
+
+            rects.emplace_back(0,
+                               2 * LevelMeshBuilder::LIGHTMAP_PADDING + std::max(c, (b * b + c * c - a * a) / (2 * c)),
+                               2 * LevelMeshBuilder::LIGHTMAP_PADDING +
+                                       b * std::sin(std::acosf((b * b + c * c - a * a) / (2 * b * c))));
+        }
+    }
+
+
+    int width = 128;
+    int height = 128;
+    stbrp_context context{};
+    bool wasHeightChangedLast = false;
+    constexpr int MAX_LIGHTMAP_SIZE = 1 << 14;
+    std::vector<stbrp_node> nodes{};
+    while (true)
+    {
+        nodes.clear();
+        nodes.resize(width * 2);
+        stbrp_init_target(&context, width, height, nodes.data(), static_cast<int>(nodes.size()));
+
+        if (stbrp_pack_rects(&context, rects.data(), static_cast<int>(rects.size())) == 0)
+        {
+            if (width == MAX_LIGHTMAP_SIZE && height == MAX_LIGHTMAP_SIZE)
+            {
+                return false;
+            }
+            if (wasHeightChangedLast)
+            {
+                width = width << 1;
+                wasHeightChangedLast = false;
+            } else
+            {
+                height = height << 1;
+                wasHeightChangedLast = true;
+            }
+        } else
+        {
+            break;
+        }
+    }
+
+    for (uint32_t materialSlotIndex = 0; materialSlotIndex < indexCounts.size(); materialSlotIndex++)
+    {
+        const uint32_t indexCount = indexCounts.at(materialSlotIndex);
+        const std::vector<uint32_t> &indices = materialIndices.at(materialSlotIndex);
+        for (uint32_t i = 0; i < indexCount; i += 3)
+        {
+            const stbrp_rect &rect = rects.at(i / 3);
+
+            ModelVertex &v1 = vertices.at(indices.at(i + 0));
+            ModelVertex &v2 = vertices.at(indices.at(i + 1));
+            ModelVertex &v3 = vertices.at(indices.at(i + 2));
+
+            const float a = glm::distance(v1.position, v2.position);
+            const float b = glm::distance(v1.position, v3.position);
+            const float c = glm::distance(v2.position, v3.position);
+
+            v1.lightmapUv.x = static_cast<float>(rect.x + LevelMeshBuilder::LIGHTMAP_PADDING) /
+                              static_cast<float>(width);
+            v1.lightmapUv.y = static_cast<float>(rect.y + LevelMeshBuilder::LIGHTMAP_PADDING) /
+                              static_cast<float>(height);
+            v2.lightmapUv.x = (static_cast<float>(rect.x + LevelMeshBuilder::LIGHTMAP_PADDING) +
+                               c * static_cast<float>(rect.w - 2 * LevelMeshBuilder::LIGHTMAP_PADDING)) /
+                              static_cast<float>(width);
+            v2.lightmapUv.y = v1.lightmapUv.y;
+            v2.lightmapUv.x = (static_cast<float>(rect.x + LevelMeshBuilder::LIGHTMAP_PADDING) +
+                               (b * b + c * c - a * a) /
+                                       (2 * c) *
+                                       static_cast<float>(rect.w - 2 * LevelMeshBuilder::LIGHTMAP_PADDING)) /
+                              static_cast<float>(width);
+            v3.lightmapUv.y = (static_cast<float>(rect.y + LevelMeshBuilder::LIGHTMAP_PADDING) +
+                               b *
+                                       std::sin(std::acosf((b * b + c * c - a * a) / (2 * b * c))) *
+                                       static_cast<float>(rect.h - 2 * LevelMeshBuilder::LIGHTMAP_PADDING)) /
+                              static_cast<float>(height);
+        }
+    }
+
+    return true;
 }
 
 void ModelLod::FlipVerticalUVs()

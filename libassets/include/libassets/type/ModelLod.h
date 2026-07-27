@@ -30,6 +30,8 @@ class ModelLod
 
         void Write(DataWriter &writer) const;
 
+        bool CalculateLightmapUvs();
+
         /**
          * Flip Y axis UVs in this LOD
          */

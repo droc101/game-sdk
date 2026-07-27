@@ -327,10 +327,7 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
         }
     }
     assert(newIndices.size() == positionsInRect.size());
-    faceIndices.push_back({
-        .indices = newIndices,
-        .positionsInRect = positionsInRect,
-    });
+    faceIndices.emplace_back(newIndices, positionsInRect);
     const float luxelsX = fmaxf(width * static_cast<float>(wallMaterial.luxelsPerUnit), 1.0f);
     const float luxelsY = fmaxf(height * static_cast<float>(wallMaterial.luxelsPerUnit), 1.0f);
     faceRects.emplace_back(0, luxelsX + LIGHTMAP_PADDING * 2, luxelsY + LIGHTMAP_PADDING * 2);

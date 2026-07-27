@@ -27,6 +27,7 @@ class ModelVertex
         glm::vec2 uv{};
         Color color{};
         glm::vec3 normal{};
+        glm::vec2 lightmapUv{};
 
         void Write(DataWriter &writer) const;
 };
@@ -53,6 +54,9 @@ template<> struct std::hash<ModelVertex>
             {
                 hashValue ^= std::hash<float>()(color) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
             }
+
+            hashValue ^= std::hash<float>()(vertex.lightmapUv.x) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(vertex.lightmapUv.y) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
             return hashValue;
         }
 };

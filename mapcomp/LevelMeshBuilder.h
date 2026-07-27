@@ -20,7 +20,7 @@ class LevelMeshBuilder
 {
     public:
         /// Number of pixels around each lightmap rectangle to not use to prevent light spill from texture filtering
-        static constexpr size_t LIGHTMAP_PADDING = 2;
+        static constexpr size_t LIGHTMAP_PADDING = 3;
 
         LevelMeshBuilder(const SearchPathManager &pathManager);
 

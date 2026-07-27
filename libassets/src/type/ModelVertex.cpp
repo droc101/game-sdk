@@ -36,7 +36,8 @@ bool ModelVertex::operator==(const ModelVertex &other) const
     return this->normal == other.normal &&
            this->position == other.position &&
            this->uv == other.uv &&
-           this->color == other.color;
+           this->color == other.color &&
+           this->lightmapUv == other.lightmapUv;
 }
 
 void ModelVertex::Write(DataWriter &writer) const
@@ -45,4 +46,5 @@ void ModelVertex::Write(DataWriter &writer) const
     writer.WriteVec2(uv);
     color.WriteFloats(writer);
     writer.WriteVec3(normal);
+    writer.WriteVec2(lightmapUv);
 }
