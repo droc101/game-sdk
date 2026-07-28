@@ -192,9 +192,9 @@ void AddPrimitiveTool::RenderToolWindow()
 
     ImGui::Separator();
     ImGui::Text("Ceiling Height");
-    ImGui::InputFloat("##ceilHeight", &ceiling);
+    ImGui::InputFloat("##ceilHeight", &ceiling, 1, 1, "%.0f");
     ImGui::Text("Floor Height");
-    ImGui::InputFloat("##floorHeight", &floor);
+    ImGui::InputFloat("##floorHeight", &floor, 1, 1, "%.0f");
 }
 
 std::vector<glm::vec2> AddPrimitiveTool::BuildNgon(const int n,

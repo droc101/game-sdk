@@ -40,8 +40,8 @@ class AddPrimitiveTool final: public EditorTool
         bool isDragging = false;
         glm::vec3 shapeStart{};
         glm::vec3 shapeEnd{};
-        float ceiling = 1;
-        float floor = -1;
+        float ceiling = 16;
+        float floor = -16;
 
         static inline int32_t ngonSides = 16;
         static inline float ngonStartAngle = 0;

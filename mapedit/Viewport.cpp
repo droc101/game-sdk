@@ -134,7 +134,7 @@ void Viewport::Render()
             }
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
         }
-        ChangeZoom(ImGui::GetIO().MouseWheel * -5.0f);
+        ChangeZoom(ImGui::GetIO().MouseWheel * -ZOOM_STEP);
     }
 
     ImGui::End();
@@ -227,7 +227,7 @@ glm::vec3 Viewport::GetWorldSpaceMousePos() const
 
 void Viewport::ChangeZoom(const float by)
 {
-    zoom = glm::clamp(zoom + by, 5.0f, MapEditor::MAP_SIZE + 500.0f);
+    zoom = glm::clamp(zoom + by, 20.0f, MapEditor::MAP_SIZE + 1000.0f);
     // TODO: zoom around mouse cursor instead of origin
 }
 

@@ -61,7 +61,7 @@ bool ModelViewer::Init()
 
     glGenBuffers(1, &staticCollisionVbo);
 
-    UpdateView(0, 0, 1);
+    UpdateView(0, 0, 16);
 
     initDone = true;
 
@@ -129,7 +129,7 @@ void ModelViewer::ReloadModel()
     LoadHulls();
     LoadStaticCollision();
 
-    UpdateView(0, 0, 1);
+    UpdateView(0, 0, 16);
 }
 
 ModelAsset &ModelViewer::GetModel()
@@ -223,7 +223,7 @@ void ModelViewer::RenderImGui()
     const float mouseWheel = io.MouseWheel;
     if (mouseWheel != 0 && previewFocused)
     {
-        UpdateViewRel(0, 0, mouseWheel / -10.0f);
+        UpdateViewRel(0, 0, mouseWheel / -2.5f);
     }
 }
 
@@ -468,9 +468,9 @@ void ModelViewer::ResizeWindow(GLsizei width, GLsizei height)
 void ModelViewer::ClampView()
 {
     pitch = glm::clamp(pitch, static_cast<float>(-(M_PI_2 - FLT_EPSILON)), static_cast<float>(M_PI_2 - FLT_EPSILON));
-    if (distance < 0.1)
+    if (distance < 1)
     {
-        distance = 0.1;
+        distance = 1;
     }
 }
 
@@ -503,22 +503,22 @@ void ModelViewer::LoadCube()
     // clang-format off
     constexpr std::array CUBE_VERTS = {
         // Bottom face
-        -0.5f, -0.5f, -0.5f,   0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,   0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,  -0.5f,  0.5f, -0.5f,
-        -0.5f,  0.5f, -0.5f,  -0.5f, -0.5f, -0.5f,
+        -8.0f, -8.0f, -8.0f,   8.0f, -8.0f, -8.0f,
+         8.0f, -8.0f, -8.0f,   8.0f,  8.0f, -8.0f,
+         8.0f,  8.0f, -8.0f,  -8.0f,  8.0f, -8.0f,
+        -8.0f,  8.0f, -8.0f,  -8.0f, -8.0f, -8.0f,
 
         // Top face
-        -0.5f, -0.5f,  0.5f,   0.5f, -0.5f,  0.5f,
-         0.5f, -0.5f,  0.5f,   0.5f,  0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,  -0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,  -0.5f, -0.5f,  0.5f,
+        -8.0f, -8.0f,  8.0f,   8.0f, -8.0f,  8.0f,
+         8.0f, -8.0f,  8.0f,   8.0f,  8.0f,  8.0f,
+         8.0f,  8.0f,  8.0f,  -8.0f,  8.0f,  8.0f,
+        -8.0f,  8.0f,  8.0f,  -8.0f, -8.0f,  8.0f,
 
         // Vertical edges
-        -0.5f, -0.5f, -0.5f,  -0.5f, -0.5f,  0.5f,
-         0.5f, -0.5f, -0.5f,   0.5f, -0.5f,  0.5f,
-         0.5f,  0.5f, -0.5f,   0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f,  -0.5f,  0.5f,  0.5f,
+        -8.0f, -8.0f, -8.0f,  -8.0f, -8.0f,  8.0f,
+         8.0f, -8.0f, -8.0f,   8.0f, -8.0f,  8.0f,
+         8.0f,  8.0f, -8.0f,   8.0f,  8.0f,  8.0f,
+        -8.0f,  8.0f, -8.0f,  -8.0f,  8.0f,  8.0f,
     };
     // clang-format on
 

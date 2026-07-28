@@ -38,7 +38,7 @@ class MapEditor
         static inline MapAsset map{};
         static inline std::string mapFile{};
 
-        static inline int gridSpacingIndex = 1;
+        static inline int gridSpacingIndex = 3;
         static inline bool drawGrid = true;
         static inline bool drawAxisHelper = true;
         static inline bool drawWorldBorder = true;
@@ -52,11 +52,12 @@ class MapEditor
         static constexpr size_t HOVER_DISTANCE_PIXELS = 10;
         static constexpr size_t TOOLBAR_HEIGHT = 48;
         static constexpr size_t SIDEBAR_WIDTH = 300;
-        static constexpr size_t DEFAULT_GRID_SPACING_INDEX = 1;
-        static constexpr size_t DEFAULT_ZOOM = 10.0f;
-        static constexpr std::array<float, 10> GRID_SPACING_VALUES = {0.125, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0};
+        static constexpr size_t DEFAULT_GRID_SPACING_INDEX = 3;
+        static constexpr size_t DEFAULT_ZOOM = 160.0f;
+        static constexpr std::array<float, 9> GRID_SPACING_VALUES = {1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0};
         static constexpr float MAP_HALF_SIZE = MapAsset::MAP_MAX_HALF_EXTENTS;
         static constexpr float MAP_SIZE = MAP_HALF_SIZE * 2;
+        static constexpr std::array<float, 7> luxelScaleValues = {0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0};
 
         static constexpr const char *SELECT_ICON_NAME = "editor/icon_select";
         static constexpr const char *ACTOR_ICON_NAME = "editor/icon_actor";

@@ -168,14 +168,14 @@ static void Render()
 
     if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Minus, ImGuiInputFlags_RouteGlobal | ImGuiInputFlags_Repeat))
     {
-        vpTopDown.ChangeZoom(5);
-        vpFront.ChangeZoom(5);
-        vpSide.ChangeZoom(5);
+        vpTopDown.ChangeZoom(Viewport::ZOOM_STEP);
+        vpFront.ChangeZoom(Viewport::ZOOM_STEP);
+        vpSide.ChangeZoom(Viewport::ZOOM_STEP);
     } else if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Equal, ImGuiInputFlags_RouteGlobal | ImGuiInputFlags_Repeat))
     {
-        vpTopDown.ChangeZoom(-5);
-        vpFront.ChangeZoom(-5);
-        vpSide.ChangeZoom(-5);
+        vpTopDown.ChangeZoom(-Viewport::ZOOM_STEP);
+        vpFront.ChangeZoom(-Viewport::ZOOM_STEP);
+        vpSide.ChangeZoom(-Viewport::ZOOM_STEP);
     } else if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_0, ImGuiInputFlags_RouteGlobal))
     {
         vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
@@ -282,21 +282,21 @@ static void Render()
             ImGui::Separator();
             if (ImGui::MenuItem("Zoom In", "Ctrl+="))
             {
-                vpTopDown.ChangeZoom(-5);
-                vpFront.ChangeZoom(-5);
-                vpSide.ChangeZoom(-5);
+                vpTopDown.ChangeZoom(-Viewport::ZOOM_STEP);
+                vpFront.ChangeZoom(-Viewport::ZOOM_STEP);
+                vpSide.ChangeZoom(-Viewport::ZOOM_STEP);
             }
             if (ImGui::MenuItem("Zoom Out", "Ctrl+-"))
             {
-                vpTopDown.ChangeZoom(5);
-                vpFront.ChangeZoom(5);
-                vpSide.ChangeZoom(5);
+                vpTopDown.ChangeZoom(Viewport::ZOOM_STEP);
+                vpFront.ChangeZoom(Viewport::ZOOM_STEP);
+                vpSide.ChangeZoom(Viewport::ZOOM_STEP);
             }
             if (ImGui::MenuItem("Reset Zoom", "Ctrl+0"))
             {
-                vpTopDown.GetZoom() = 20;
-                vpFront.GetZoom() = 20;
-                vpSide.GetZoom() = 20;
+                vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
+                vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;
+                vpSide.GetZoom() = MapEditor::DEFAULT_ZOOM;
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Center Origin", "Ctrl+Home"))
@@ -360,7 +360,7 @@ static void Render()
             }
             if (ImGui::MenuItem("Reset Grid", "\\"))
             {
-                MapEditor::gridSpacingIndex = 3;
+                MapEditor::gridSpacingIndex = MapEditor::DEFAULT_GRID_SPACING_INDEX;
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Show Sidebar", "", MapEditor::showSidebar))

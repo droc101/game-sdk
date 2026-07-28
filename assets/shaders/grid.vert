@@ -8,7 +8,7 @@ uniform mat4 matrix;
 #define PLANE_XY 1
 #define PLANE_YZ 2
 
-#define LEVEL_HALF_SIZE 512
+#define LEVEL_HALF_SIZE 8192
 #define LEVEL_SIZE (LEVEL_HALF_SIZE * 2)
 
 out vec3 lineColor;
@@ -33,9 +33,9 @@ void main() {
         gl_Position = matrix * toWorld(vec2(LEVEL_HALF_SIZE * offAxisSign, axisPosition), plane);
     }
     if (axisPosition == floor(axisPosition)) {
-        if (int(abs(axisPosition)) % 16 == 0) {
+        if (int(abs(axisPosition)) % 128 == 0) {
             lineColor = vec3(0.5,0,0.5);
-        } else if (int(abs(axisPosition)) % 8 == 0) {
+        } else if (int(abs(axisPosition)) % 64 == 0) {
             lineColor = vec3(0,0.5,0.5);
         } else {
             lineColor = vec3(0.2);

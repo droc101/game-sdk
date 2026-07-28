@@ -19,7 +19,7 @@ class WallMaterial
         std::string material;
         glm::vec2 uvOffset{};
         glm::vec2 uvScale = {1, 1};
-        uint8_t luxelsPerUnit = 16;
+        float unitsPerLuxel = 1.0f;
 
         [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 };

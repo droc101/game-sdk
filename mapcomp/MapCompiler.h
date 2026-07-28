@@ -52,7 +52,7 @@ class MapCompiler
         SearchPathManager pathManager;
         ActorDefinitionManager defManager;
 
-        static constexpr uint8_t FAST_COMPILE_MAX_LUXELS_PER_UNIT = 8;
+        static constexpr float FAST_COMPILE_MIN_UNITS_PER_LUXEL = 2.0f;
 
         Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer);
 

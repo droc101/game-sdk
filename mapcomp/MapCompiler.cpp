@@ -187,13 +187,13 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     {
         for (Sector &sector: map.sectors)
         {
-            sector.ceilingMaterial.luxelsPerUnit = std::min<uint8_t>(sector.ceilingMaterial.luxelsPerUnit,
-                                                                     FAST_COMPILE_MAX_LUXELS_PER_UNIT);
-            sector.floorMaterial.luxelsPerUnit = std::min<uint8_t>(sector.floorMaterial.luxelsPerUnit,
-                                                                   FAST_COMPILE_MAX_LUXELS_PER_UNIT);
+            sector.ceilingMaterial.unitsPerLuxel = std::max<float>(sector.ceilingMaterial.unitsPerLuxel,
+                                                                     FAST_COMPILE_MIN_UNITS_PER_LUXEL);
+            sector.floorMaterial.unitsPerLuxel = std::max<float>(sector.floorMaterial.unitsPerLuxel,
+                                                                   FAST_COMPILE_MIN_UNITS_PER_LUXEL);
             for (WallMaterial &mat: sector.wallMaterials)
             {
-                mat.luxelsPerUnit = std::min<uint8_t>(mat.luxelsPerUnit, FAST_COMPILE_MAX_LUXELS_PER_UNIT);
+                mat.unitsPerLuxel = std::max<float>(mat.unitsPerLuxel, FAST_COMPILE_MIN_UNITS_PER_LUXEL);
             }
         }
     }

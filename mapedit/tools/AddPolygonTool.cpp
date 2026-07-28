@@ -26,9 +26,9 @@ void AddPolygonTool::RenderToolWindow()
     MapEditor::MaterialToolWindow(MapEditor::mat);
     ImGui::Separator();
     ImGui::Text("Ceiling Height");
-    ImGui::InputFloat("##ceilHeight", &ceiling);
+    ImGui::InputFloat("##ceilHeight", &ceiling, 1, 1, "%.0f");
     ImGui::Text("Floor Height");
-    ImGui::InputFloat("##floorHeight", &floor);
+    ImGui::InputFloat("##floorHeight", &floor, 1, 1, "%.0f");
 }
 
 void AddPolygonTool::RenderViewport(Viewport &vp)
@@ -56,8 +56,8 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
                 points = {pt};
-                ceiling = 1;
-                floor = -1;
+                ceiling = 16;
+                floor = -16;
                 isDrawing = true;
             }
 

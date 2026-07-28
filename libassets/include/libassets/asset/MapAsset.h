@@ -36,7 +36,7 @@ class MapAsset final
         static constexpr uint8_t MAP_ASSET_VERSION = 1;
         static constexpr uint8_t MAP_JSON_VERSION = 1;
 
-        static constexpr float MAP_MAX_HALF_EXTENTS = 512; // 1024 unit wide map
+        static constexpr float MAP_MAX_HALF_EXTENTS = 8192;
 
         /**
          * Create a MapAsset from a JSON source file

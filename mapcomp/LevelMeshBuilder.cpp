@@ -207,7 +207,8 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
         {
             v.uv.x += wallLength;
         }
-        v.uv.y = -point.y;
+        v.uv.x /= 16.0f;
+        v.uv.y = -point.y / 16.0f;
 
         v.uv += wallMaterial.uvOffset;
         v.uv *= wallMaterial.uvScale; // TODO is this the correct way to offset+scale?
@@ -282,8 +283,8 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
     }
     assert(newIndices.size() == positionsInRect.size());
     faceIndices.emplace_back(newIndices, positionsInRect);
-    const float luxelsX = fmaxf(width * static_cast<float>(wallMaterial.luxelsPerUnit), 1.0f);
-    const float luxelsY = fmaxf(height * static_cast<float>(wallMaterial.luxelsPerUnit), 1.0f);
+    const float luxelsX = ceilf(fmaxf(width / wallMaterial.unitsPerLuxel, 1.0f));
+    const float luxelsY = ceilf(fmaxf(height / wallMaterial.unitsPerLuxel, 1.0f));
     faceRects.emplace_back(0,
                            luxelsX + LightmapHelpers::LIGHTMAP_PADDING * 2,
                            luxelsY + LightmapHelpers::LIGHTMAP_PADDING * 2);
@@ -310,7 +311,7 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
     {
         MapVertex v{};
         v.position = {point.x, isFloor ? sector.floorHeight : sector.ceilingHeight, point.y};
-        v.uv = (point + mat.uvOffset) * mat.uvScale; // TODO is this the correct way to offset+scale?
+        v.uv = ((point / glm::vec2(16.0f)) + mat.uvOffset) * mat.uvScale; // TODO is this the correct way to offset+scale?
         v.normal = {0, isFloor ? 1 : -1, 0};
         v.lightmapUv = glm::vec2(0, 0);
         if (!LightBakerGpu::Get().GetTextureIndex(mat.material, v.textureIndex, pathManager))
@@ -368,10 +369,10 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
         {
             std::swap(width, height);
         }
-        const float luxelsPerUnit = isFloor ? sector.floorMaterial.luxelsPerUnit : sector.ceilingMaterial.luxelsPerUnit;
+        const float unitsPerLuxel = isFloor ? sector.floorMaterial.unitsPerLuxel : sector.ceilingMaterial.unitsPerLuxel;
         faceIndices.emplace_back(idx, positionsInRect);
-        const float luxelsX = fmaxf(width * static_cast<float>(luxelsPerUnit), 1.0f);
-        const float luxelsY = fmaxf(height * static_cast<float>(luxelsPerUnit), 1.0f);
+        const float luxelsX = ceilf(fmaxf(width / unitsPerLuxel, 1.0f));
+        const float luxelsY = ceilf(fmaxf(height / unitsPerLuxel, 1.0f));
         const stbrp_rect rect = {
             .id = 0,
             .w = static_cast<stbrp_coord>(luxelsX + LightmapHelpers::LIGHTMAP_PADDING * 2),

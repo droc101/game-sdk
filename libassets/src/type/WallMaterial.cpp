@@ -15,7 +15,7 @@ WallMaterial::WallMaterial(nlohmann::ordered_json json)
     material = json.value("material", "");
     uvOffset = {json["uvOffset"].value("x", 0.0f), json["uvOffset"].value("y", 0.0f)};
     uvScale = {json["uvScale"].value("x", 0.0f), json["uvScale"].value("y", 0.0f)};
-    luxelsPerUnit = json.value("luxels_per_unit", 16);
+    unitsPerLuxel = json.value("units_per_luxel", 1.0f);
 }
 
 
@@ -27,6 +27,6 @@ nlohmann::ordered_json WallMaterial::GenerateJson() const
     j["uvOffset"]["y"] = uvOffset.y;
     j["uvScale"]["x"] = uvScale.x;
     j["uvScale"]["y"] = uvScale.y;
-    j["luxels_per_unit"] = luxelsPerUnit;
+    j["units_per_luxel"] = unitsPerLuxel;
     return j;
 }

@@ -100,6 +100,8 @@ class Viewport
          */
         [[nodiscard]] glm::vec3 GetCameraPos() const;
 
+        static constexpr float ZOOM_STEP = 20.0f;
+
     private:
         /// Screen space window position
         ImVec2 windowPos;
@@ -121,7 +123,7 @@ class Viewport
         /// The camera's center position
         ImVec2 scrollCenterPos{};
         /// The number of units visible along the vertical axis of the viewport
-        float zoom = 10.0f;
+        float zoom = 160.0f;
 
         void RecalculateMatrices();
 };

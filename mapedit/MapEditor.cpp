@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <format>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <glm/gtc/type_ptr.hpp>
@@ -154,6 +155,16 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
     ImGui::InputFloat2("##uvOffset", glm::value_ptr(wallMat.uvOffset));
     ImGui::Text("UV Scale");
     ImGui::InputFloat2("##uvScale", glm::value_ptr(wallMat.uvScale));
-    ImGui::Text("Luxels per unit");
-    ImGui::InputScalar("##luxelsPerUnit", ImGuiDataType_U8, &wallMat.luxelsPerUnit);
+    ImGui::Text("Units per Luxel (lower is higher quality)");
+    if (ImGui::BeginCombo("##unitsPerLuxel", std::format("{}", wallMat.unitsPerLuxel).c_str()))
+    {
+        for (float luxelScaleValue : luxelScaleValues)
+        {
+            if (ImGui::Selectable(std::format("{}", luxelScaleValue).c_str(), wallMat.unitsPerLuxel == luxelScaleValue))
+            {
+                wallMat.unitsPerLuxel = luxelScaleValue;
+            }
+        }
+        ImGui::EndCombo();
+    }
 }
