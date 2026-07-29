@@ -29,7 +29,7 @@ void PreviewOptionsTab::Render()
         ImGui::TableNextColumn();
         ImGui::Checkbox("Cull Backfaces", &ModelEditor::modelViewer.cullBackfaces);
         ImGui::TableNextColumn();
-        ImGui::Checkbox("Show Unit Cube", &ModelEditor::modelViewer.showUnitCube);
+        ImGui::Checkbox("Show 16-Unit Cube", &ModelEditor::modelViewer.showUnitCube);
         ImGui::TableNextColumn();
         ImGui::Checkbox("Show Bounding Box", &ModelEditor::modelViewer.showBoundingBox);
         ImGui::TableNextColumn();

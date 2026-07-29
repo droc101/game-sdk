@@ -153,7 +153,7 @@ void ModelBrowserWindow::Render()
                     ImGui::TableNextColumn();
                     ImGui::Checkbox("Cull Backfaces", &viewer.cullBackfaces);
                     ImGui::TableNextColumn();
-                    ImGui::Checkbox("Unit Cube", &viewer.showUnitCube);
+                    ImGui::Checkbox("16-Unit Cube", &viewer.showUnitCube);
                     ImGui::TableNextColumn();
                     ImGui::Checkbox("Bounding Box", &viewer.showBoundingBox);
                     ImGui::TableNextColumn();

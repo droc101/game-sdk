@@ -136,7 +136,7 @@ static void HandleMenuAndShortcuts()
             {
                 ModelEditor::modelViewer.cullBackfaces = !ModelEditor::modelViewer.cullBackfaces;
             }
-            if (ImGui::MenuItem("Show Unit Cube", "", ModelEditor::modelViewer.showUnitCube))
+            if (ImGui::MenuItem("Show 16-Unit Cube", "", ModelEditor::modelViewer.showUnitCube))
             {
                 ModelEditor::modelViewer.showUnitCube = !ModelEditor::modelViewer.showUnitCube;
             }
