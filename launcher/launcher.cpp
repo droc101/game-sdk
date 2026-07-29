@@ -139,7 +139,10 @@ static void Render()
             for (const auto &[key, value]: items.items())
             {
                 ImTextureID textureId = 0;
-                (void)SharedMgr::Get().textureCache.GetTextureID(value.value("icon", "file"), textureId);
+                if (SharedMgr::Get().textureCache.GetTextureID(value.value("icon", "file"), textureId) != Error::ErrorCode::OK)
+                {
+                    textureId = SharedMgr::Get().textureCache.GetMissingTextureID();
+                }
                 const std::string title = std::format("##item_{}_{}", category, key);
                 const bool selected = ImGui::Selectable(title.c_str(),
                                                         selectionCategory == category && selectionIndex == key,

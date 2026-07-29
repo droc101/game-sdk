@@ -328,7 +328,7 @@ void ModelViewer::RenderFramebuffer()
         const Error::ErrorCode code = SharedMgr::Get().textureCache.GetTextureGLuint(mat.texture, texture);
         if (code != Error::ErrorCode::OK)
         {
-            continue;
+            texture = SharedMgr::Get().textureCache.GetMissingTextureGLuint();
         }
         glBindTexture(GL_TEXTURE_2D, texture);
         glUniform1i(glGetUniformLocation(ModelViewerShared::Get().program, "ALBEDO_TEXTURE"), 0);

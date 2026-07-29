@@ -42,7 +42,10 @@ void MaterialsTab::Render()
         {
             Material &mat = ModelEditor::modelViewer.GetModel().GetMaterial(m);
             ImTextureID textureId;
-            SharedMgr::Get().textureCache.GetTextureID(mat.texture, textureId);
+            if (SharedMgr::Get().textureCache.GetTextureID(mat.texture, textureId) != Error::ErrorCode::OK)
+            {
+                textureId = SharedMgr::Get().textureCache.GetMissingTextureID();
+            }
             const std::string title = std::format("##picker_{}", m);
             const bool selected = ImGui::Selectable(title.c_str(),
                                                     selectedIndex == m,

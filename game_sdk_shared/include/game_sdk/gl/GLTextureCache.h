@@ -23,6 +23,12 @@ class GLTextureCache
          */
         void InitMissingTexture();
 
+        [[nodiscard]] ImTextureID GetMissingTextureID() const;
+
+        [[nodiscard]] GLuint GetMissingTextureGLuint() const;
+
+        [[nodiscard]] ImVec2 GetMissingTextureSize() const;
+
         /**
          * Get the ImGUI texture ID for a given path
          * @param relPath The texture path

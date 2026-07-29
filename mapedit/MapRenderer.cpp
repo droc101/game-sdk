@@ -271,7 +271,10 @@ void MapRenderer::RenderBillboardSprite(const glm::vec3 position,
 
     GLuint textureId = -1;
     const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureGLuint(texture, textureId);
-    assert(e == Error::ErrorCode::OK); // TODO handle properly
+    if (e != Error::ErrorCode::OK)
+    {
+        textureId = SharedMgr::Get().textureCache.GetMissingTextureGLuint();
+    }
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureId);

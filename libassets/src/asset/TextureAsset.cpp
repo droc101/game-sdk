@@ -36,7 +36,7 @@ using namespace IMATH_NAMESPACE;
 Error::ErrorCode TextureAsset::CreateFromPNG(const char *imagePath, TextureAsset &texture)
 {
     texture = TextureAsset();
-    if (!std::filesystem::exists(imagePath))
+    if (access(imagePath, F_OK | R_OK))
     {
         CreateMissingTexture(texture);
         return Error::ErrorCode::OK;
@@ -104,7 +104,7 @@ void TextureAsset::CreateMissingTexture(TextureAsset &texture)
 Error::ErrorCode TextureAsset::CreateFromAsset(const char *assetPath, TextureAsset &texture)
 {
     texture = TextureAsset();
-    if (!std::filesystem::exists(assetPath))
+    if (access(assetPath, F_OK | R_OK))
     {
         CreateMissingTexture(texture);
         return Error::ErrorCode::OK;

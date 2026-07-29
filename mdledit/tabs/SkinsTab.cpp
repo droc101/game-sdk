@@ -61,7 +61,10 @@ void SkinsTab::Render()
                                               .at(i);
         Material &currentMaterial = ModelEditor::modelViewer.GetModel().GetMaterial(currentMaterialIndex);
         ImTextureID currentTextureId;
-        SharedMgr::Get().textureCache.GetTextureID(currentMaterial.texture, currentTextureId);
+        if (SharedMgr::Get().textureCache.GetTextureID(currentMaterial.texture, currentTextureId) != Error::ErrorCode::OK)
+        {
+            currentTextureId = SharedMgr::Get().textureCache.GetMissingTextureID();
+        }
         const float *currentColor = currentMaterial.color.GetDataPointer();
         ImGui::Image(currentTextureId,
                      {18, 18},
@@ -78,7 +81,10 @@ void SkinsTab::Render()
             {
                 Material &mat = ModelEditor::modelViewer.GetModel().GetMaterial(m);
                 ImTextureID textureId;
-                SharedMgr::Get().textureCache.GetTextureID(mat.texture, textureId);
+                if (SharedMgr::Get().textureCache.GetTextureID(mat.texture, textureId) != Error::ErrorCode::OK)
+                {
+                    textureId = SharedMgr::Get().textureCache.GetMissingTextureID();
+                }
                 const std::string title = std::format("##picker_{}_{}", m, i);
                 const bool selected = ImGui::Selectable(title.c_str(),
                                                         ModelEditor::modelViewer.GetModel()

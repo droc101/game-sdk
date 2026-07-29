@@ -154,3 +154,23 @@ Error::ErrorCode GLTextureCache::RegisterPng(const std::string &pngPath,
     textureBuffers.insert({name, glTex});
     return Error::ErrorCode::OK;
 }
+
+GLuint GLTextureCache::GetMissingTextureGLuint() const
+{
+    return static_cast<GLuint>(missingTexture);
+}
+
+ImTextureID GLTextureCache::GetMissingTextureID() const
+{
+    return missingTexture;
+}
+
+ImVec2 GLTextureCache::GetMissingTextureSize() const
+{
+    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(missingTexture));
+    int w = 0;
+    int h = 0;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+    return {static_cast<float>(w), static_cast<float>(h)};
+}

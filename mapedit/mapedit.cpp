@@ -68,7 +68,10 @@ static bool ToolbarToolButton(const char *id,
     }
     ImTextureID tex = 0;
     const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(icon, tex);
-    assert(e == Error::ErrorCode::OK);
+    if (e != Error::ErrorCode::OK)
+    {
+        tex = SharedMgr::Get().textureCache.GetMissingTextureID();
+    }
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 40);
     ImGui::Image(tex, ImVec2(32, 32));

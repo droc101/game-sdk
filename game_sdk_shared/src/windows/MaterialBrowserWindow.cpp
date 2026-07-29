@@ -80,14 +80,14 @@ void MaterialBrowserWindow::Render()
                     const std::string textureName = materials.at(i).texture;
 
                     ImVec2 texSize;
-                    if (SharedMgr::Get().textureCache.GetTextureSize(textureName, texSize) != Error::ErrorCode::OK)
-                    {
-                        continue;
-                    }
                     ImTextureID tex = 0;
                     if (SharedMgr::Get().textureCache.GetTextureID(textureName, tex) != Error::ErrorCode::OK)
                     {
-                        continue;
+                        texSize = SharedMgr::Get().textureCache.GetMissingTextureSize();
+                        tex = SharedMgr::Get().textureCache.GetMissingTextureID();
+                    } else
+                    {
+                        assert(SharedMgr::Get().textureCache.GetTextureSize(textureName, texSize) == Error::ErrorCode::OK);
                     }
 
                     ImGui::PushID(static_cast<int>(i));

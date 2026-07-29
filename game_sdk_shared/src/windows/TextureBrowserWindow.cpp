@@ -62,16 +62,14 @@ void TextureBrowserWindow::Render()
                     }
 
                     ImVec2 texSize;
-                    if (SharedMgr::Get().textureCache.GetTextureSize("texture/" + textures.at(i), texSize) !=
-                        Error::ErrorCode::OK)
-                    {
-                        continue;
-                    }
                     ImTextureID tex = 0;
-                    if (SharedMgr::Get().textureCache.GetTextureID("texture/" + textures.at(i), tex) !=
-                        Error::ErrorCode::OK)
+                    if (SharedMgr::Get().textureCache.GetTextureID("texture/" + textures.at(i), tex) != Error::ErrorCode::OK)
                     {
-                        continue;
+                        texSize = SharedMgr::Get().textureCache.GetMissingTextureSize();
+                        tex = SharedMgr::Get().textureCache.GetMissingTextureID();
+                    } else
+                    {
+                        assert(SharedMgr::Get().textureCache.GetTextureSize("texture/" + textures.at(i), texSize) == Error::ErrorCode::OK);
                     }
 
                     ImGui::PushID(static_cast<int>(i));
