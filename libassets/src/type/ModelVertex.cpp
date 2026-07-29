@@ -46,5 +46,5 @@ void ModelVertex::Write(DataWriter &writer) const
     writer.WriteVec2(uv);
     color.WriteFloats(writer);
     writer.WriteVec3(normal);
-    writer.WriteVec2(lightmapUv);
+    // writer.WriteVec2(lightmapUv);
 }
