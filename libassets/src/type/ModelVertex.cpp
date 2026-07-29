@@ -17,6 +17,7 @@ ModelVertex::ModelVertex(DataReader &reader)
     uv = reader.ReadVec2();
     color = Color(reader, true);
     normal = reader.ReadVec3();
+    lightmapUv = reader.ReadVec2();
 }
 
 ModelVertex::ModelVertex(const aiMesh *mesh, const uint32_t vertexIndex)
@@ -46,5 +47,5 @@ void ModelVertex::Write(DataWriter &writer) const
     writer.WriteVec2(uv);
     color.WriteFloats(writer);
     writer.WriteVec3(normal);
-    // writer.WriteVec2(lightmapUv);
+    writer.WriteVec2(lightmapUv);
 }

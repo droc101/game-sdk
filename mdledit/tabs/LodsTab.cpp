@@ -67,7 +67,7 @@ void LodsTab::Render()
         }
         ImGui::Dummy(ImVec2(0.0f, 2.0f));
         const ImVec2 space = ImGui::GetContentRegionAvail();
-        const float buttonWidth = (space.x / 3.0f) - 6.0f;
+        const float buttonWidth = (space.x / 4.0f) - 6.0f;
         if (ImGui::Button(std::format("Export##{}", lodIndex).c_str(), ImVec2(buttonWidth, 0)))
         {
             lodToExport = &lod;
@@ -79,6 +79,18 @@ void LodsTab::Render()
             ModelAsset model = ModelEditor::modelViewer.GetModel();
             model.GetLod(lodIndex).FlipVerticalUVs();
             ModelEditor::modelViewer.SetModel(std::move(model));
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(std::format("Bake Lightmap UVs##{}", lodIndex).c_str(), ImVec2(buttonWidth, 0)))
+        {
+            ModelAsset model = ModelEditor::modelViewer.GetModel();
+            if (!model.GetLod(lodIndex).CalculateLightmapUvs())
+            {
+                SDKWindow::Get().ErrorMessage("Failed to bake lightmap UVs");
+            } else
+            {
+                ModelEditor::modelViewer.SetModel(std::move(model));
+            }
         }
         if (ModelEditor::modelViewer.GetModel().GetLodCount() != 1)
         {

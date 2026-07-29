@@ -30,6 +30,9 @@ ModelLod::ModelLod(DataReader &reader, const uint32_t materialsPerSkin)
 {
     distance = reader.Read<float>();
     reader.Skip<float>();
+    unitsPerLuxel = reader.Read<float>();
+    lightmapSize.x = reader.Read<uint32_t>();
+    lightmapSize.y = reader.Read<uint32_t>();
     const size_t vertexCount = reader.Read<size_t>();
     for (size_t _i = 0; _i < vertexCount; _i++)
     {
@@ -165,6 +168,9 @@ void ModelLod::Write(DataWriter &writer) const
 {
     writer.Write<float>(distance);
     writer.Write<float>(distance * distance);
+    writer.Write<float>(unitsPerLuxel);
+    writer.Write<uint32_t>(lightmapSize.x);
+    writer.Write<uint32_t>(lightmapSize.y);
     writer.Write<size_t>(vertices.size());
     for (const ModelVertex &vertex: vertices)
     {
@@ -196,6 +202,8 @@ bool ModelLod::CalculateLightmapUvs()
             const float a = glm::distance(v1, v2);
             const float b = glm::distance(v1, v3);
             const float c = glm::distance(v2, v3);
+
+            assert(std::abs(c) > FLT_EPSILON);
 
             rects.emplace_back(0,
                                2 * LightmapHelpers::LIGHTMAP_PADDING + std::max(c, (b * b + c * c - a * a) / (2 * c)),

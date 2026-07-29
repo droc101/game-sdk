@@ -22,6 +22,8 @@ class ModelLod
         ModelLod(const std::string &filePath, float distance, Error::ErrorCode &status);
 
         float distance{};
+        float unitsPerLuxel{};
+        glm::uvec2 lightmapSize{1};
         std::vector<ModelVertex> vertices{};
         std::vector<uint32_t> indexCounts{};
         std::vector<std::vector<uint32_t>> materialIndices{};
