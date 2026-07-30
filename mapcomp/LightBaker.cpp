@@ -5,15 +5,13 @@
 #include "LightBaker.hpp"
 #include <cstdint>
 #include <libassets/type/MapVertex.h>
-#include <string>
 #include <type_traits>
-#include <unordered_map>
 #include <vector>
 #include "LevelMeshBuilder.h"
 #include "Light.h"
 #include "LightBakerGpu.hpp"
 
-bool LightBaker::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
+bool LightBaker::Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
                       const std::vector<Light> &lights,
                       const glm::uvec2 &lightmapSize,
                       std::vector<uint16_t> &pixelData)

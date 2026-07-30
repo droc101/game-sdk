@@ -20,6 +20,7 @@
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
+#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -198,7 +199,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         }
     }
 
-    std::unordered_map<std::string, LevelMeshBuilder> meshBuilders{};
+    std::vector<LevelMeshBuilder> mapMeshBuilders{};
     std::vector<SectorCollisionBuilder> collisionBuilders{};
     for (size_t sectorIndex = 0; sectorIndex < map.sectors.size(); sectorIndex++)
     {
@@ -206,6 +207,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         std::vector<const Sector *> overlappingCeilings{};
         std::vector<const Sector *> overlappingFloors{};
         SectorCollisionBuilder builder = SectorCollisionBuilder(sector);
+        std::unordered_map<std::string, LevelMeshBuilder> sectorMeshBuilders{};
         for (size_t i = 0; i < sector.points.size(); i++)
         {
             const glm::vec2 &wallStart = sector.points.at(i);
@@ -297,11 +299,11 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
             {
                 for (const std::array<float, 2> &segment: solidSegments)
                 {
-                    if (!meshBuilders.contains(mat.material))
+                    if (!sectorMeshBuilders.contains(mat.material))
                     {
-                        meshBuilders.emplace(mat.material, LevelMeshBuilder(pathManager));
+                        sectorMeshBuilders.emplace(mat.material, LevelMeshBuilder(pathManager, mat.material));
                     }
-                    meshBuilders.at(mat.material).AddWall(sector, i, segment.at(0), segment.at(1));
+                    sectorMeshBuilders.at(mat.material).AddWall(sector, i, segment.at(0), segment.at(1));
                 }
             }
 
@@ -318,11 +320,11 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         const LevelMaterialAsset ceilingMaterial = GetMapMaterial(sector.ceilingMaterial.material);
         if (!ceilingMaterial.compileInvisible)
         {
-            if (!meshBuilders.contains(sector.ceilingMaterial.material))
+            if (!sectorMeshBuilders.contains(sector.ceilingMaterial.material))
             {
-                meshBuilders.emplace(sector.ceilingMaterial.material, LevelMeshBuilder(pathManager));
+                sectorMeshBuilders.emplace(sector.ceilingMaterial.material, LevelMeshBuilder(pathManager, sector.ceilingMaterial.material));
             }
-            meshBuilders.at(sector.ceilingMaterial.material).AddCeiling(sector, overlappingFloors);
+            sectorMeshBuilders.at(sector.ceilingMaterial.material).AddCeiling(sector, overlappingFloors);
         }
         if (!ceilingMaterial.compileNoClip)
         {
@@ -332,11 +334,11 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         const LevelMaterialAsset floorMaterial = GetMapMaterial(sector.floorMaterial.material);
         if (!floorMaterial.compileInvisible)
         {
-            if (!meshBuilders.contains(sector.floorMaterial.material))
+            if (!sectorMeshBuilders.contains(sector.floorMaterial.material))
             {
-                meshBuilders.emplace(sector.floorMaterial.material, LevelMeshBuilder(pathManager));
+                sectorMeshBuilders.emplace(sector.floorMaterial.material, LevelMeshBuilder(pathManager, sector.floorMaterial.material));
             }
-            meshBuilders.at(sector.floorMaterial.material).AddFloor(sector, overlappingCeilings);
+            sectorMeshBuilders.at(sector.floorMaterial.material).AddFloor(sector, overlappingCeilings);
         }
         if (!floorMaterial.compileNoClip)
         {
@@ -345,27 +347,31 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         }
 
         collisionBuilders.push_back(builder);
+        for (const LevelMeshBuilder &b : sectorMeshBuilders | std::views::values)
+        {
+            mapMeshBuilders.push_back(b);
+        }
     }
 
-    std::erase_if(meshBuilders,
-                  [](const std::pair<std::string, LevelMeshBuilder> &item) -> bool { return item.second.IsEmpty(); });
+    std::erase_if(mapMeshBuilders,
+                  [](const LevelMeshBuilder &item) -> bool { return item.IsEmpty(); });
 
-    Logger::Info("Level has {} visual meshes", meshBuilders.size());
+    Logger::Info("Level has {} visual meshes", mapMeshBuilders.size());
     Logger::Info("Level has {} physics meshes", collisionBuilders.size());
     Logger::Info("Level has {} lights", lights.size());
 
     const bool skipLighting = lights.empty() || settings.skipLighting;
 
     glm::uvec2 lightmapSize{1};
-    if (!skipLighting && !LevelMeshBuilder::CalculateLightmapUvs(lightmapSize, meshBuilders, pathManager))
+    if (!skipLighting && !LevelMeshBuilder::CalculateLightmapUvs(lightmapSize, mapMeshBuilders, pathManager))
     {
         return Error::ErrorCode::LIGHTMAP_TOO_LARGE;
     }
 
-    writer.Write<size_t>(meshBuilders.size());
-    for (const std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)
+    writer.Write<size_t>(mapMeshBuilders.size());
+    for (const LevelMeshBuilder &builder: mapMeshBuilders)
     {
-        builder.second.Write(writer, builder.first);
+        builder.Write(writer);
     }
 
     writer.Write<size_t>(collisionBuilders.size());
@@ -378,7 +384,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     if (!skipLighting)
     {
         Logger::Info("Baking lightmap...");
-        if (!LightBaker::Bake(meshBuilders, lights, lightmapSize, pixels))
+        if (!LightBaker::Bake(mapMeshBuilders, lights, lightmapSize, pixels))
         {
             return Error::ErrorCode::UNKNOWN;
         }

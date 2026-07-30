@@ -13,14 +13,13 @@
 #include <libassets/util/SearchPathManager.h>
 #include <stb_rect_pack.h>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 class LevelMeshBuilder
 {
     public:
 
-        LevelMeshBuilder(const SearchPathManager &pathManager);
+        LevelMeshBuilder(const SearchPathManager &pathManager, const std::string &materialPath);
 
         /**
          * Add a wall
@@ -48,9 +47,8 @@ class LevelMeshBuilder
         /**
          * Write this mesh to a DataWriter
          * @param writer The DataWriter to write to
-         * @param materialPath The material to use
          */
-        void Write(DataWriter &writer, const std::string &materialPath) const;
+        void Write(DataWriter &writer) const;
 
         /**
          * Check if this builder is empty
@@ -58,7 +56,7 @@ class LevelMeshBuilder
         [[nodiscard]] bool IsEmpty() const;
 
         static bool CalculateLightmapUvs(glm::uvec2 &lightmapSize,
-                                         std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
+                                         std::vector<LevelMeshBuilder> &meshBuilders,
                                          const SearchPathManager &pathMgr);
 
         [[nodiscard]] const std::vector<MapVertex> &GetVertices() const
@@ -70,6 +68,8 @@ class LevelMeshBuilder
         {
             return indices;
         }
+
+        [[nodiscard]] const std::string &GetMaterialPath() const;
 
     private:
         struct FaceData
@@ -97,4 +97,5 @@ class LevelMeshBuilder
         std::vector<stbrp_rect> faceRects{};
         uint32_t currentIndex = 0;
         SearchPathManager pathManager;
+        std::string materialPath;
 };

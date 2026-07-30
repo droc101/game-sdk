@@ -27,10 +27,8 @@
 #include <luna/lunaInstance.h>
 #include <luna/lunaSynchronization.h>
 #include <luna/lunaTypes.h>
-#include <ranges>
 #include <shaderc/shaderc.h>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <volk.h>
@@ -719,7 +717,7 @@ bool LightBakerGpu::GetTextureIndex(const std::string &textureName,
     return true;
 }
 
-bool LightBakerGpu::Bake(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
+bool LightBakerGpu::Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
                          const std::vector<Light> &lights,
                          const glm::uvec2 &lightmapSize,
                          const uint32_t bounceCount,
@@ -964,14 +962,14 @@ VkShaderModule LightBakerGpu::GenerateShaderModule(const std::filesystem::path &
     return shaderModule;
 }
 
-bool LightBakerGpu::CreateVertexAndIndexBuffers(const std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
+bool LightBakerGpu::CreateVertexAndIndexBuffers(const std::vector<LevelMeshBuilder> &meshBuilders,
                                                 uint32_t &vertexCount,
                                                 uint32_t &indexCount)
 {
     size_t indexOffset = 0;
     std::vector<MapVertex> vertices{};
     std::vector<uint32_t> indices{};
-    for (const LevelMeshBuilder &builder: meshBuilders | std::views::values)
+    for (const LevelMeshBuilder &builder: meshBuilders)
     {
         vertices.insert(vertices.end(), builder.GetVertices().begin(), builder.GetVertices().end());
         for (const uint32_t index: builder.GetIndices())

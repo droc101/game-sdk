@@ -18,18 +18,17 @@
 #include <libassets/util/LightmapHelpers.hpp>
 #include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
-#include <ranges>
 #include <stb_rect_pack.h>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include "LightBakerGpu.hpp"
 #include "SectorClipper.h"
 
-LevelMeshBuilder::LevelMeshBuilder(const SearchPathManager &pathManager)
+LevelMeshBuilder::LevelMeshBuilder(const SearchPathManager &pathManager, const std::string &materialPath)
 {
     this->pathManager = pathManager;
+    this->materialPath = materialPath;
 }
 
 void LevelMeshBuilder::AddCeiling(const Sector &sector, const std::vector<const Sector *> &overlapping)
@@ -60,7 +59,7 @@ void LevelMeshBuilder::AddWall(const Sector &sector,
     AddWallBase(startPoint, endPoint, mat, normal, sLength, floorHeight, ceilingHeight, ccw);
 }
 
-void LevelMeshBuilder::Write(DataWriter &writer, const std::string &materialPath) const
+void LevelMeshBuilder::Write(DataWriter &writer) const
 {
     writer.WriteString(materialPath);
     writer.Write<uint32_t>(vertices.size());
@@ -96,23 +95,23 @@ static float MapRange(const float value,
 }
 
 bool LevelMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
-                                            std::unordered_map<std::string, LevelMeshBuilder> &meshBuilders,
+                                            std::vector<LevelMeshBuilder> &meshBuilders,
                                             const SearchPathManager &pathMgr)
 {
-    for (const LevelMeshBuilder &builder: meshBuilders | std::views::values)
+    for (const LevelMeshBuilder &builder: meshBuilders)
     {
         assert(builder.faceIndices.size() == builder.faceRects.size());
     }
 
     std::vector<stbrp_rect> rects{};
-    for (const std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)
+    for (const LevelMeshBuilder &builder: meshBuilders)
     {
-        const std::string materialPath = pathMgr.GetAssetPath(builder.first);
+        const std::string materialPath = pathMgr.GetAssetPath(builder.GetMaterialPath());
         LevelMaterialAsset material{};
         LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
         if (material.shader == Material::MaterialShader::SHADER_SHADED)
         {
-            rects.insert(rects.end(), builder.second.faceRects.begin(), builder.second.faceRects.end());
+            rects.insert(rects.end(), builder.faceRects.begin(), builder.faceRects.end());
         }
     }
 
@@ -123,9 +122,9 @@ bool LevelMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
     Logger::Info("Lightmap size: {} by {}", lightmapSize.x, lightmapSize.y);
 
     size_t rectIndexBegin = 0;
-    for (std::pair<const std::string, LevelMeshBuilder> &builder: meshBuilders)
+    for (LevelMeshBuilder &builder: meshBuilders)
     {
-        const std::string materialPath = pathMgr.GetAssetPath(builder.first);
+        const std::string materialPath = pathMgr.GetAssetPath(builder.GetMaterialPath());
         LevelMaterialAsset material{};
         LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
         if (material.shader != Material::MaterialShader::SHADER_SHADED)
@@ -133,21 +132,21 @@ bool LevelMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
             continue;
         }
 
-        for (size_t i = 0; i < builder.second.faceIndices.size(); i++)
+        for (size_t i = 0; i < builder.faceIndices.size(); i++)
         {
             const stbrp_rect &rect = rects.at(i + rectIndexBegin);
-            const FaceData &faceData = builder.second.faceIndices.at(i);
+            const FaceData &faceData = builder.faceIndices.at(i);
             assert(rect.h != 0);
             assert(rect.w != 0);
             for (size_t j = 0; j < faceData.indices.size(); j++)
             {
                 const uint32_t index = faceData.indices.at(j);
-                MapVertex &vertex = builder.second.vertices.at(index);
+                MapVertex &vertex = builder.vertices.at(index);
                 const glm::vec2 &positionInRect = faceData.positionsInRect.at(j);
                 vertex.lightmapUv = LightmapHelpers::GetUv(lightmapSize, rect, positionInRect);
             }
         }
-        rectIndexBegin += builder.second.faceRects.size();
+        rectIndexBegin += builder.faceRects.size();
     }
 
     return true;
@@ -382,4 +381,9 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
     }
 
     currentIndex += points.size();
+}
+
+const std::string &LevelMeshBuilder::GetMaterialPath() const
+{
+    return materialPath;
 }
