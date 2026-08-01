@@ -397,11 +397,12 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     writer.Write<size_t>(lightmapSize.x);
     writer.Write<size_t>(lightmapSize.y);
     writer.WriteBuffer(pixels);
-    writer.Write<uint16_t>(lights.size());
+    writer.Write<uint32_t>(lights.size());
     for (const Light &light: lights)
     {
         writer.Write<uint32_t>(static_cast<uint32_t>(light.type));
         writer.WriteVec3(light.position);
+        writer.WriteVec3(light.rotation);
         writer.WriteVec3(light.negativeForwardDirection);
         writer.WriteVec3(light.color);
         writer.Write<float>(light.brightness);

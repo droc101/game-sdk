@@ -28,6 +28,7 @@ class Light // NOLINT(*-pro-type-member-init)
         explicit Light(const Actor &actor)
         {
             position = actor.position;
+            rotation = actor.rotation;
             negativeForwardDirection = glm::normalize(glm::vec3{
                 sin(glm::radians(actor.rotation.y)) * cos(glm::radians(actor.rotation.x)),
                 -sin(glm::radians(actor.rotation.x)),
@@ -62,6 +63,7 @@ class Light // NOLINT(*-pro-type-member-init)
 
         Type type;
         glm::vec3 position;
+        glm::vec3 rotation;
         glm::vec3 negativeForwardDirection;
         glm::vec3 color;
         float brightness;

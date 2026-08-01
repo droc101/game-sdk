@@ -41,6 +41,7 @@ const uint LIGHT_TYPE_DIRECTIONAL = 3u;
 struct Light {
     uint type; // Maps to an enum in C++
     vec3 position;
+    vec3 rotation;
     vec3 negativeForwardDirection;
     vec3 color;
     float brightness;
