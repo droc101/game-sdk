@@ -68,6 +68,7 @@ void LevelMeshBuilder::Write(DataWriter &writer) const
         writer.WriteVec3(vertex.position);
         writer.WriteVec2(vertex.uv);
         writer.WriteVec2(vertex.lightmapUv);
+        writer.WriteVec3(vertex.normal);
     }
     writer.Write<uint32_t>(indices.size());
     writer.WriteBuffer<uint32_t>(indices);
