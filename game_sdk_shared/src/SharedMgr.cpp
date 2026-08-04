@@ -121,7 +121,7 @@ void SharedMgr::RenderSharedUI()
 void SharedMgr::UpdateAssetPaths()
 {
     DataAsset gameConfig{};
-    const Error::ErrorCode e = DataAsset::CreateFromAsset(Options::Get().gameConfigPath.c_str(), gameConfig);
+    const Error::ErrorCode e = gameConfig.LoadFromAsset(Options::Get().gameConfigPath);
     if (e != Error::ErrorCode::OK)
     {
         return;

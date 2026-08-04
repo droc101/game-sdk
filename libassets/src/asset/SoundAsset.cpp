@@ -7,70 +7,52 @@
 #include <cstdint>
 #include <fstream>
 #include <ios>
+#include <libassets/asset/Asset.h>
 #include <libassets/asset/SoundAsset.h>
-#include <libassets/type/Asset.h>
-#include <libassets/util/AssetReader.h>
 #include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <ostream>
+#include <string>
 #include <vector>
 
-Error::ErrorCode SoundAsset::CreateFromAsset(const char *assetPath, SoundAsset &sound)
+Asset::AssetType SoundAsset::GetAssetType() const
 {
-    Asset asset;
-    const Error::ErrorCode error = AssetReader::LoadFromFile(assetPath, asset);
-    if (error != Error::ErrorCode::OK)
-    {
-        return error;
-    }
-    if (asset.type != Asset::AssetType::ASSET_TYPE_WAV)
-    {
-        return Error::ErrorCode::INCORRECT_FORMAT;
-    }
-    if (asset.typeVersion != SOUND_ASSET_VERSION)
-    {
-        return Error::ErrorCode::INCORRECT_VERSION;
-    }
-    sound = SoundAsset();
-    sound.wavData.reserve(asset.reader.TotalSize());
-    asset.reader.ReadToVector<uint8_t>(sound.wavData, asset.reader.TotalSize());
+    return AssetType::ASSET_TYPE_WAV;
+}
+
+uint8_t SoundAsset::GetAssetTypeVersion() const
+{
+    return SOUND_ASSET_VERSION;
+}
+
+Error::ErrorCode SoundAsset::LoadFromBuffer(DataReader &reader)
+{
+    wavData.reserve(reader.TotalSize());
+    reader.ReadToVector<uint8_t>(wavData, reader.TotalSize());
     return Error::ErrorCode::OK;
 }
 
-void SoundAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
+Error::ErrorCode SoundAsset::SaveToBuffer(DataWriter &writer) const
 {
-    assert(buffer.empty());
-    buffer.resize(wavData.size());
-    buffer.insert(buffer.begin(), wavData.begin(), wavData.end());
+    writer.WriteBuffer(wavData);
+    return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode SoundAsset::SaveAsAsset(const char *assetPath) const
+Error::ErrorCode SoundAsset::Import(const std::string &filePath)
 {
-    std::vector<uint8_t> buffer;
-    SaveToBuffer(buffer);
-    return AssetReader::SaveToFile(assetPath,
-                                   buffer,
-                                   Asset::AssetType::ASSET_TYPE_WAV,
-                                   SOUND_ASSET_VERSION,
-                                   AssetReader::BEST_COMPRESSION);
-}
-
-
-Error::ErrorCode SoundAsset::CreateFromWAV(const char *wavPath, SoundAsset &sound)
-{
-    sound = SoundAsset();
-    std::ifstream file(wavPath, std::ios::binary | std::ios::ate);
+    std::ifstream file(filePath, std::ios::binary | std::ios::ate);
     const std::ifstream::pos_type fileSize = file.tellg();
     file.seekg(0, std::ios::beg);
-    sound.wavData.resize(fileSize);
-    file.read(reinterpret_cast<char *>(sound.wavData.data()), fileSize);
+    wavData.resize(fileSize);
+    file.read(reinterpret_cast<char *>(wavData.data()), fileSize);
     file.close();
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode SoundAsset::SaveAsWAV(const char *wavPath) const
+Error::ErrorCode SoundAsset::Export(const std::string &filePath) const
 {
-    std::ofstream file(wavPath);
+    std::ofstream file(filePath);
     if (!file)
     {
         return Error::ErrorCode::CANT_OPEN_FILE;

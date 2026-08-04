@@ -363,7 +363,7 @@ MapRenderer::ModelBuffer MapRenderer::LoadModel(const std::string &path)
 {
     Logger::Info("Loading model \"{}\"", path);
     ModelBuffer buf{};
-    const Error::ErrorCode e = ModelAsset::CreateFromAsset(path, buf.model);
+    const Error::ErrorCode e = buf.model.LoadFromAsset(path);
     assert(e == Error::ErrorCode::OK); // TODO proper handling
     glGenVertexArrays(1, &buf.vao);
     glBindVertexArray(buf.vao);

@@ -6,12 +6,15 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <libassets/asset/Asset.h>
+#include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <string>
 #include <string_view>
 #include <vector>
 
-class FontAsset final
+class FontAsset final: public Asset
 {
     public:
         FontAsset() = default;
@@ -39,25 +42,16 @@ class FontAsset final
         /// The widths of the characters in this font
         std::vector<uint8_t> charWidths{};
 
-        static constexpr uint8_t FONT_ASSET_VERSION = 1;
-
         static constexpr std::string_view FONT_VALID_CHARS = "!\"#$%&'()*+,-./"
                                                              "0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`"
                                                              "abcdefghijklmnopqrstuvwxyz{|}~";
         static constexpr size_t FONT_MAX_SYMBOLS = FONT_VALID_CHARS.length();
 
-        /**
-         * Create a FontAsset from a GFON file
-         * @param assetPath The path to the GFON file
-         * @param font The FontAsset to populate
-         */
-        [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, FontAsset &font);
+        [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
+        [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
 
-        /**
-         * Save this FontAsset as a GFON file
-         * @param assetPath The path to the GFON file
-         */
-        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
+        [[nodiscard]] AssetType GetAssetType() const override;
+        [[nodiscard]] uint8_t GetAssetTypeVersion() const override;
 
         /**
          * Get the list of valid characters formatted nicely for display (such as "a (0x61)")
@@ -65,5 +59,5 @@ class FontAsset final
         static std::vector<std::string> GetCharListForDisplay();
 
     private:
-        void SaveToBuffer(std::vector<uint8_t> &buffer) const;
+        static constexpr uint8_t FONT_ASSET_VERSION = 1;
 };

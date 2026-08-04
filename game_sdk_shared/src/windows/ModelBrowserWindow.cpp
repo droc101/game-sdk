@@ -43,7 +43,7 @@ void ModelBrowserWindow::Show(std::string *model)
         modelAbsPaths.push_back(mPath.absolutePath);
     }
     ModelAsset mdlAsset{};
-    (void)ModelAsset::CreateFromAsset(SharedMgr::Get().pathManager.GetAssetPath(*model), mdlAsset);
+    (void)mdlAsset.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(*model));
     viewer.SetModel(std::move(mdlAsset));
     visible = true;
 }
@@ -98,7 +98,7 @@ void ModelBrowserWindow::Render()
                         if (*str != "model/" + model)
                         {
                             ModelAsset mdlAsset{};
-                            const Error::ErrorCode e = ModelAsset::CreateFromAsset(modelAbs, mdlAsset);
+                            const Error::ErrorCode e = mdlAsset.LoadFromAsset(modelAbs);
                             assert(e == Error::ErrorCode::OK);
                             viewer.SetModel(std::move(mdlAsset));
                         }

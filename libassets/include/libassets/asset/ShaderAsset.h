@@ -5,11 +5,13 @@
 #pragma once
 
 #include <cstdint>
+#include <libassets/asset/Asset.h>
+#include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <string>
-#include <vector>
 
-class ShaderAsset final
+class ShaderAsset final: public Asset
 {
     public:
 
@@ -24,39 +26,25 @@ class ShaderAsset final
 
         ShaderKind kind = ShaderKind::SHADER_KIND_FRAGMENT;
 
-        static constexpr uint8_t SHADER_ASSET_VERSION = 1;
         static constexpr std::string SHADER_ASSET_EXTENSION = "gshd";
 
-        /**
-         * Create a ShaderAsset from a GSHD file
-         * @param assetPath The path to the GSHD file
-         * @param shader The ShaderAsset to populate
-         */
-        [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, ShaderAsset &shader);
+        [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
+        [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
+        [[nodiscard]] Error::ErrorCode SaveToBufferEx(DataWriter &writer,
+                                                    bool enableOptimization,
+                                                    std::string *errorLog = nullptr,
+                                                    const std::string &shaderFilename = "glsl_source") const;
 
-        /**
-         * Create a ShaderAsset from a GLSL file
-         * @param glslPath The path to the GLSL file
-         * @param shader The ShaderAsset to populate
-         */
-        [[nodiscard]] static Error::ErrorCode CreateFromGlsl(const char *glslPath, ShaderAsset &shader);
-
-        /**
-         * Save this ShaderAsset as a GLSL file
-         * @param glslPath The path to the GLSL file
-         */
-        [[nodiscard]] Error::ErrorCode SaveAsGlsl(const char *glslPath) const;
-
-        /**
-         * Save this ShaderAsset as a GSHD file
-         * @param assetPath The path to the GSHD file
-         * @param enableOptimization
-         * @param errorLog An optional pointer to a std::string which will be filled with the compile logs
-         * @return
-         */
-        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath,
+        [[nodiscard]] Error::ErrorCode SaveToAssetEx(const std::string &filePath,
                                                    bool enableOptimization,
-                                                   std::string *errorLog = nullptr) const;
+                                                   std::string *errorLog = nullptr,
+                                                   const std::string &shaderFilename = "glsl_source") const;
+
+        [[nodiscard]] Error::ErrorCode Import(const std::string &filePath) override;
+        [[nodiscard]] Error::ErrorCode Export(const std::string &filePath) const override;
+
+        [[nodiscard]] AssetType GetAssetType() const override;
+        [[nodiscard]] uint8_t GetAssetTypeVersion() const override;
 
         /**
          * Get the GLSL in this ShaderAsset
@@ -64,10 +52,7 @@ class ShaderAsset final
         [[nodiscard]] std::string &GetGLSL();
 
     private:
-        std::string glsl;
+        static constexpr uint8_t SHADER_ASSET_VERSION = 1;
 
-        [[nodiscard]] Error::ErrorCode SaveToBuffer(const char *assetPath,
-                                                    bool enableOptimization,
-                                                    std::vector<uint8_t> &buffer,
-                                                    std::string *errorLog) const;
+        std::string glsl;
 };

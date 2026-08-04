@@ -15,12 +15,11 @@
 #include <ImfOutputFile.h>
 #include <ImfPixelType.h>
 #include <libassets/asset/MapAsset.h>
-#include <libassets/type/Asset.h>
 #include <libassets/type/IOConnection.h>
 #include <libassets/type/MapVertex.h>
 #include <libassets/type/Param.h>
 #include <libassets/util/ArgumentParser.h>
-#include <libassets/util/AssetReader.h>
+#include <libassets/util/AssetContainer.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
 #include <OpenEXRConfig.h>
@@ -56,8 +55,8 @@ int main(const int argc, const char **argv)
 
     Logger::Info("Loading map...");
 
-    Asset asset;
-    const Error::ErrorCode e = AssetReader::LoadFromFile(args.GetFlagValue("--map").c_str(), asset);
+    AssetContainer asset;
+    const Error::ErrorCode e = AssetContainer::LoadFromFile(args.GetFlagValue("--map").c_str(), asset);
     if (e != Error::ErrorCode::OK)
     {
         Logger::Error("Failed to open map file: {}", Error::ErrorString(e).c_str());

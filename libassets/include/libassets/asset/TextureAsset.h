@@ -6,10 +6,14 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <libassets/asset/Asset.h>
+#include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <string>
 #include <vector>
 
-class TextureAsset final
+class TextureAsset final: public Asset
 {
     public:
         enum class PixelFormat : uint8_t
@@ -29,34 +33,19 @@ class TextureAsset final
         bool repeat = true;
         bool mipmaps = true;
 
-        static constexpr uint8_t TEXTURE_ASSET_VERSION = 2;
+        [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
+        [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
 
-        /**
-         * Create a @c TextureAsset from a .gtex asset
-         * @param assetPath The path to the gtex file
-         * @param texture The texture to load into
-         * @return Error Code
-         */
-        [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, TextureAsset &texture);
+        [[nodiscard]] Error::ErrorCode LoadFromAsset(const std::string &filePath) override;
 
-        /**
-         * Create an SDR @c TextureAsset from a PNG image
-         * @param imagePath The path to the PNG
-         * @param texture The texture to load into
-         * @return Error Code
-         */
-        [[nodiscard]] static Error::ErrorCode CreateFromPNG(const char *imagePath, TextureAsset &texture);
+        [[nodiscard]] Error::ErrorCode Import(const std::string &filePath) override;
+        [[nodiscard]] Error::ErrorCode Export(const std::string &filePath) const override;
 
-        /**
-         * Create an HDR @c TextureAsset from an EXR image
-         * @param imagePath The path to the EXR
-         * @param texture The texture to load into
-         * @return Error Code
-         */
-        [[nodiscard]] static Error::ErrorCode CreateFromEXR(const char *imagePath, TextureAsset &texture);
+        [[nodiscard]] AssetType GetAssetType() const override;
+        [[nodiscard]] uint8_t GetAssetTypeVersion() const override;
 
         /// Create a TextureAsset with the "missing texture" pattern
-        static void CreateMissingTexture(TextureAsset &texture);
+        void CreateMissingTexture();
 
         /// Get the pixel data in RGBA format
         [[nodiscard]] uint8_t *GetPixelsRGBA();
@@ -76,33 +65,37 @@ class TextureAsset final
          */
         [[nodiscard]] PixelFormat GetFormat() const;
 
-        /**
-         * Save this @c TextureAsset as a standard PNG image
-         * @param imagePath The path to save to
-         */
-        [[nodiscard]] Error::ErrorCode SaveAsPNG(const char *imagePath) const;
-
-        /**
-         * Save this @c TextureAsset as a standard EXR image
-         * @param imagePath The path to save to
-         */
-        [[nodiscard]] Error::ErrorCode SaveAsEXR(const char *imagePath);
-
-        /**
-         * Save this @c TextureAsset as a GTEX file
-         * @param assetPath The path to save to
-         */
-        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
-
     private:
+        static constexpr uint8_t TEXTURE_ASSET_VERSION = 2;
+
         std::vector<uint8_t> pixelData{}; // just the bytes, NOT an array of pixels
         size_t width{};
         size_t height{};
         PixelFormat pixelFormat{};
 
         /**
-         * Create the uncompressed gtex payload
-         * @param[out] buffer The output buffer to store the payload in
+        * Create an SDR @c TextureAsset from a PNG image
+        * @param imagePath The path to the PNG
+        * @return Error Code
+        */
+        [[nodiscard]] Error::ErrorCode CreateFromPNG(const std::string &imagePath);
+
+        /**
+         * Create an HDR @c TextureAsset from an EXR image
+         * @param imagePath The path to the EXR
+         * @return Error Code
          */
-        void SaveToBuffer(std::vector<uint8_t> &buffer) const;
+        [[nodiscard]] Error::ErrorCode CreateFromEXR(const std::string &imagePath);
+
+        /**
+         * Save this @c TextureAsset as a standard PNG image
+         * @param imagePath The path to save to
+         */
+        [[nodiscard]] Error::ErrorCode SaveAsPNG(const std::string &imagePath) const;
+
+        /**
+         * Save this @c TextureAsset as a standard EXR image
+         * @param imagePath The path to save to
+         */
+        [[nodiscard]] Error::ErrorCode SaveAsEXR(const std::string &imagePath) const;
 };

@@ -121,8 +121,7 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
     LevelMaterialAsset mat;
-    LevelMaterialAsset::CreateFromAsset(SharedMgr::Get().pathManager.GetAssetPath(wallMat.material).c_str(),
-                                        mat); // TODO improve
+    mat.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(wallMat.material)); // TODO improve
     const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e == Error::ErrorCode::OK)
@@ -158,7 +157,7 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
     ImGui::Text("Units per Luxel (lower is higher quality)");
     if (ImGui::BeginCombo("##unitsPerLuxel", std::format("{}", wallMat.unitsPerLuxel).c_str()))
     {
-        for (float luxelScaleValue : luxelScaleValues)
+        for (float luxelScaleValue: luxelScaleValues)
         {
             if (ImGui::Selectable(std::format("{}", luxelScaleValue).c_str(), wallMat.unitsPerLuxel == luxelScaleValue))
             {

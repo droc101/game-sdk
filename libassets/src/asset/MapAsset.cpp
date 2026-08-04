@@ -3,8 +3,10 @@
 //
 
 #include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <ios>
+#include <libassets/asset/Asset.h>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Param.h>
@@ -16,9 +18,19 @@
 #include <unordered_map>
 #include <vector>
 
-Error::ErrorCode MapAsset::CreateFromMapSrc(const char *mapSrcPath, MapAsset &map)
+Asset::AssetType MapAsset::GetAssetType() const
 {
-    std::ifstream file(mapSrcPath, std::ios::binary | std::ios::ate);
+    return AssetType::ASSET_TYPE_LEVEL;
+}
+
+uint8_t MapAsset::GetAssetTypeVersion() const
+{
+    return MAP_ASSET_VERSION;
+}
+
+Error::ErrorCode MapAsset::Import(const std::string &filePath)
+{
+    std::ifstream file(filePath, std::ios::binary | std::ios::ate);
     std::ostringstream ss;
     file.seekg(0, std::ios::beg);
     ss << file.rdbuf();
@@ -36,32 +48,29 @@ Error::ErrorCode MapAsset::CreateFromMapSrc(const char *mapSrcPath, MapAsset &ma
     {
         return Error::ErrorCode::INCORRECT_VERSION;
     }
+    discordRpcIconId = json.value("discord_rpc_icon_id", "icon");
+    discordRpcMapName = json.value("discord_rpc_map_name", "Unnamed Map");
 
-    map = MapAsset();
+    hasSky = json.value("has_sky", true);
+    skyTexture = json.value("sky_texture", "texture/level/sky_test.gtex");
 
-    map.discordRpcIconId = json.value("discord_rpc_icon_id", "icon");
-    map.discordRpcMapName = json.value("discord_rpc_map_name", "Unnamed Map");
-
-    map.hasSky = json.value("has_sky", true);
-    map.skyTexture = json.value("sky_texture", "texture/level/sky_test.gtex");
-
-    map.lightCubeLuxelsPerUnit = json.value("light_cube_luxels_per_unit", 4);
+    lightCubeLuxelsPerUnit = json.value("light_cube_luxels_per_unit", 4);
 
     const nlohmann::ordered_json &jsonSectors = json.at("sectors");
     for (const nlohmann::ordered_json &sect: jsonSectors)
     {
-        map.sectors.emplace_back(sect);
+        sectors.emplace_back(sect);
     }
 
     const nlohmann::ordered_json &jsonActors = json.at("actors");
     for (const nlohmann::ordered_json &actor: jsonActors)
     {
-        map.actors.emplace_back(actor);
+        actors.emplace_back(actor);
     }
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode MapAsset::SaveAsMapSrc(const char *mapSrcPath) const
+Error::ErrorCode MapAsset::Export(const std::string &filePath) const
 {
     nlohmann::ordered_json src = nlohmann::ordered_json();
     src["version"] = MAP_JSON_VERSION;
@@ -81,7 +90,7 @@ Error::ErrorCode MapAsset::SaveAsMapSrc(const char *mapSrcPath) const
         src["actors"].push_back(actor.GenerateJson());
     }
 
-    std::ofstream file(mapSrcPath);
+    std::ofstream file(filePath);
     if (!file)
     {
         return Error::ErrorCode::CANT_OPEN_FILE;

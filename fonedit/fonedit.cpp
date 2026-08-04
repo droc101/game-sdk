@@ -26,7 +26,7 @@ static FontAsset font{};
 
 static void OpenGfon(const std::string &path)
 {
-    const Error::ErrorCode errorCode = FontAsset::CreateFromAsset(path.c_str(), font);
+    const Error::ErrorCode errorCode = font.LoadFromAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the font!\n{}", errorCode));
@@ -35,7 +35,7 @@ static void OpenGfon(const std::string &path)
 
 static void SaveGfon(const std::string &path)
 {
-    const Error::ErrorCode errorCode = font.SaveAsAsset(path.c_str());
+    const Error::ErrorCode errorCode = font.SaveToAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to save the font!\n{}", errorCode));

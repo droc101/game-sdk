@@ -67,20 +67,21 @@ Error::ErrorCode BatchCompileWindow::Execute()
         const std::string filename = std::filesystem::path(file).stem().string();
         const ShaderAsset::ShaderKind kind = types.at(i);
         ShaderAsset shader;
-        Error::ErrorCode e = ShaderAsset::CreateFromGlsl(file.c_str(), shader);
+        Error::ErrorCode e = shader.Import(file);
         if (e != Error::ErrorCode::OK)
         {
             return e;
         }
         shader.kind = kind;
-        e = shader.SaveAsAsset(std::format("{}/{}_{}.{}",
+        e = shader.SaveToAssetEx(std::format("{}/{}_{}.{}",
                                            outputFolder,
                                            filename,
                                            shader.kind == ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT ? "f" : "v",
                                            ShaderAsset::SHADER_ASSET_EXTENSION)
                                        .c_str(),
                                enableOptimization,
-                               nullptr);
+                               nullptr,
+                               filename);
         if (e != Error::ErrorCode::OK)
         {
             return e;

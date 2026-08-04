@@ -6,12 +6,14 @@
 
 #include <cstdint>
 #include <glm/vec2.hpp>
+#include <libassets/asset/Asset.h>
 #include <libassets/type/Material.h>
+#include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <string>
-#include <vector>
 
-class LevelMaterialAsset
+class LevelMaterialAsset final: public Asset
 {
     public:
         enum class SoundClass : uint8_t
@@ -37,21 +39,12 @@ class LevelMaterialAsset
         /// The color of each luxel this surface maps to will be multipled by this value to determine how much light is emitted
         float emissive = 0;
 
-        static constexpr uint8_t LEVEL_MATERIAL_ASSET_VERSION = 1;
+        [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
+        [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
 
-        /**
-         * Create a LevelMaterialAsset from a GMTL file
-         * @param assetPath The path to the GMTL file
-         * @param material The LevelMaterialAsset to populate
-         */
-        [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, LevelMaterialAsset &material);
-
-        /**
-         * Save this LevelMaterialAsset to a GMTL file
-         * @param assetPath The path to the GMTL file
-         */
-        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
+        [[nodiscard]] AssetType GetAssetType() const override;
+        [[nodiscard]] uint8_t GetAssetTypeVersion() const override;
 
     private:
-        void SaveToBuffer(std::vector<uint8_t> &buffer) const;
+        static constexpr uint8_t LEVEL_MATERIAL_ASSET_VERSION = 1;
 };

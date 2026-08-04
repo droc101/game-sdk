@@ -47,7 +47,7 @@ static void LoadTexture()
 
 static void OpenGtex(const std::string &path)
 {
-    const Error::ErrorCode errorCode = TextureAsset::CreateFromAsset(path.c_str(), texture);
+    const Error::ErrorCode errorCode = texture.LoadFromAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the texture!\n{}", errorCode));
@@ -58,14 +58,7 @@ static void OpenGtex(const std::string &path)
 
 static void ImportImage(const std::string &path)
 {
-    Error::ErrorCode errorCode = Error::ErrorCode::INCORRECT_FORMAT;
-    if (path.ends_with(".png"))
-    {
-        errorCode = TextureAsset::CreateFromPNG(path.c_str(), texture);
-    } else
-    {
-        errorCode = TextureAsset::CreateFromEXR(path.c_str(), texture);
-    }
+    Error::ErrorCode errorCode = texture.Import(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to import the texture!\n{}", errorCode));
@@ -76,25 +69,16 @@ static void ImportImage(const std::string &path)
 
 static void SaveGtex(const std::string &path)
 {
-    const Error::ErrorCode errorCode = texture.SaveAsAsset(path.c_str());
+    const Error::ErrorCode errorCode = texture.SaveToAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to save the texture!\n{}", errorCode));
     }
 }
 
-static void ExportPng(const std::string &path)
+static void Export(const std::string &path)
 {
-    const Error::ErrorCode errorCode = texture.SaveAsPNG(path.c_str());
-    if (errorCode != Error::ErrorCode::OK)
-    {
-        SDKWindow::Get().ErrorMessage(std::format("Failed to export the texture!\n{}", errorCode));
-    }
-}
-
-static void ExportExr(const std::string &path)
-{
-    const Error::ErrorCode errorCode = texture.SaveAsEXR(path.c_str());
+    const Error::ErrorCode errorCode = texture.Export(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to export the texture!\n{}", errorCode));
@@ -178,10 +162,10 @@ static void Render()
     {
         if (texture.GetFormat() == TextureAsset::PixelFormat::RGBA8)
         {
-            SDKWindow::Get().SaveFileDialog(ExportPng, DialogFilters::PNG_FILTERS);
+            SDKWindow::Get().SaveFileDialog(Export, DialogFilters::PNG_FILTERS);
         } else
         {
-            SDKWindow::Get().SaveFileDialog(ExportExr, DialogFilters::EXR_FILTERS);
+            SDKWindow::Get().SaveFileDialog(Export, DialogFilters::EXR_FILTERS);
         }
     } else if (zoomInPressed)
     {
