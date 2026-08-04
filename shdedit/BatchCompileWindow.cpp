@@ -43,6 +43,9 @@ void BatchCompileWindow::SelectCallback(const std::vector<std::string> &paths)
             } else if (file.ends_with(".comp") || file.ends_with("_c.glsl"))
             {
                 kind = ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE;
+            } else if (file.ends_with(".geom") || file.ends_with("_g.glsl"))
+            {
+                kind = ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY;
             }
             types.emplace_back(kind);
         }
@@ -66,6 +69,22 @@ Error::ErrorCode BatchCompileWindow::Execute()
         const std::string &file = files.at(i);
         const std::string filename = std::filesystem::path(file).stem().string();
         const ShaderAsset::ShaderKind kind = types.at(i);
+        char extension = 'f';
+        switch (kind)
+        {
+            case ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT:
+                extension = 'f';
+                break;
+            case ShaderAsset::ShaderKind::SHADER_KIND_VERTEX:
+                extension = 'v';
+                break;
+            case ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE:
+                extension = 'c';
+                break;
+            case ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY:
+                extension = 'g';
+                break;
+        }
         ShaderAsset shader;
         Error::ErrorCode e = shader.Import(file);
         if (e != Error::ErrorCode::OK)
@@ -74,14 +93,14 @@ Error::ErrorCode BatchCompileWindow::Execute()
         }
         shader.kind = kind;
         e = shader.SaveToAssetEx(std::format("{}/{}_{}.{}",
-                                           outputFolder,
-                                           filename,
-                                           shader.kind == ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT ? "f" : "v",
-                                           ShaderAsset::SHADER_ASSET_EXTENSION)
-                                       .c_str(),
-                               enableOptimization,
-                               nullptr,
-                               filename);
+                                             outputFolder,
+                                             filename,
+                                             extension,
+                                             ShaderAsset::SHADER_ASSET_EXTENSION)
+                                         .c_str(),
+                                 enableOptimization,
+                                 nullptr,
+                                 filename);
         if (e != Error::ErrorCode::OK)
         {
             return e;
@@ -157,6 +176,12 @@ void BatchCompileWindow::Render()
                                                types.at(i) == ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE))
                         {
                             types.at(i) = ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE;
+                        }
+                        ImGui::SameLine();
+                        if (ImGui::RadioButton(std::format("Geometry##{}", i).c_str(),
+                                               types.at(i) == ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY))
+                        {
+                            types.at(i) = ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY;
                         }
                         ImGui::TableNextColumn();
                         if (ImGui::Button(std::format("Del##{}", i).c_str(), ImVec2(40, 0)))

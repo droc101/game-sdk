@@ -19,7 +19,8 @@ class ShaderAsset final: public Asset
         {
             SHADER_KIND_FRAGMENT,
             SHADER_KIND_VERTEX,
-            SHADER_KIND_COMPUTE
+            SHADER_KIND_COMPUTE,
+            SHADER_KIND_GEOMETRY,
         };
 
         ShaderAsset() = default;
@@ -31,14 +32,14 @@ class ShaderAsset final: public Asset
         [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
         [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
         [[nodiscard]] Error::ErrorCode SaveToBufferEx(DataWriter &writer,
-                                                    bool enableOptimization,
-                                                    std::string *errorLog = nullptr,
-                                                    const std::string &shaderFilename = "glsl_source") const;
+                                                      bool enableOptimization,
+                                                      std::string *errorLog = nullptr,
+                                                      const std::string &shaderFilename = "glsl_source") const;
 
         [[nodiscard]] Error::ErrorCode SaveToAssetEx(const std::string &filePath,
-                                                   bool enableOptimization,
-                                                   std::string *errorLog = nullptr,
-                                                   const std::string &shaderFilename = "glsl_source") const;
+                                                     bool enableOptimization,
+                                                     std::string *errorLog = nullptr,
+                                                     const std::string &shaderFilename = "glsl_source") const;
 
         [[nodiscard]] Error::ErrorCode Import(const std::string &filePath) override;
         [[nodiscard]] Error::ErrorCode Export(const std::string &filePath) const override;

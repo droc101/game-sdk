@@ -181,6 +181,10 @@ static void RenderTab(EditorTab &tab)
         {
             tab.shader.kind = ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE;
         }
+        if (ImGui::RadioButton("Geometry", tab.shader.kind == ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY))
+        {
+            tab.shader.kind = ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY;
+        }
 
         ImGui::Spacing();
         ImGui::TextUnformatted("Options");

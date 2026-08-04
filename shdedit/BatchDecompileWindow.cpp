@@ -67,6 +67,10 @@ Error::ErrorCode BatchDecompileWindow::Execute()
         {
             const size_t suffixPosition = filename.rfind("_c." + ShaderAsset::SHADER_ASSET_EXTENSION);
             e = shd.Export(std::format("{}/{}.comp", outputFolder, filename.substr(0, suffixPosition)).c_str());
+        } else if (shd.kind == ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY)
+        {
+            const size_t suffixPosition = filename.rfind("_g." + ShaderAsset::SHADER_ASSET_EXTENSION);
+            e = shd.Export(std::format("{}/{}.geom", outputFolder, filename.substr(0, suffixPosition)).c_str());
         }
         if (e != Error::ErrorCode::OK)
         {
