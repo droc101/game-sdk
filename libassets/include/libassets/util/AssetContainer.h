@@ -4,25 +4,25 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
-#include <libassets/type/Asset.h>
+#include <libassets/asset/Asset.h>
+#include <libassets/util/DataReader.h>
 #include <libassets/util/Error.h>
 #include <vector>
 #include <zlib.h>
 
-class AssetReader
+// TODO replace const char * arguments with std::string &
+class AssetContainer
 {
     public:
-        /**
-         * Do not create this. Don't do it. Do not.
-         */
-        AssetReader() = delete;
+        AssetContainer() = default;
 
         static constexpr uint8_t BEST_COMPRESSION = Z_BEST_COMPRESSION;
         static constexpr uint8_t FASTEST_COMPRESSION = Z_BEST_SPEED;
         static constexpr uint8_t NO_COMPRESSION = Z_NO_COMPRESSION;
 
-        [[nodiscard]] static Error::ErrorCode Decompress(std::vector<uint8_t> &asset, Asset &outAsset);
+        [[nodiscard]] static Error::ErrorCode Decompress(std::vector<uint8_t> &asset, AssetContainer &outAsset);
 
         /**
          * Create an asset given the uncompressed payload
@@ -38,7 +38,7 @@ class AssetReader
                                                        uint8_t typeVersion,
                                                        uint8_t compressionLevel);
 
-        [[nodiscard]] static Error::ErrorCode LoadFromFile(const char *filePath, Asset &outAsset);
+        [[nodiscard]] static Error::ErrorCode LoadFromFile(const char *filePath, AssetContainer &outAsset);
 
         /**
          * Create an asset file on disk
@@ -53,4 +53,14 @@ class AssetReader
                                                          Asset::AssetType type,
                                                          uint8_t typeVersion,
                                                          uint8_t compressionLevel);
+
+        uint8_t containerVersion{};
+        Asset::AssetType type{};
+        uint8_t typeVersion{};
+        size_t size{};
+        DataReader reader{};
+
+        static constexpr uint8_t ASSET_CONTAINER_VERSION = 2;
+        static constexpr uint32_t ASSET_CONTAINER_MAGIC = 0x454D4147; // "GAME"
+        static constexpr size_t ASSET_HEADER_SIZE = sizeof(uint32_t) + (sizeof(uint8_t) * 3) + (sizeof(size_t) * 2);
 };

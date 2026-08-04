@@ -6,42 +6,26 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <libassets/util/AssetReader.h>
+#include <libassets/asset/Asset.h>
+#include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <string>
 #include <vector>
 
-class SoundAsset final
+class SoundAsset final: public Asset
 {
     public:
         SoundAsset() = default;
 
-        static constexpr uint8_t SOUND_ASSET_VERSION = 1;
+        [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
+        [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
 
-        /**
-         * Create a SoundAsset from a GSND file
-         * @param assetPath The path to the GSND file
-         * @param sound The SoundAsset to populate
-         */
-        [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, SoundAsset &sound);
+        [[nodiscard]] Error::ErrorCode Import(const std::string &filePath) override;
+        [[nodiscard]] Error::ErrorCode Export(const std::string &filePath) const override;
 
-        /**
-         * Create a SoundAsset from a WAV file
-         * @param wavPath The path to the WAV file
-         * @param sound The SoundAsset to populate
-         */
-        [[nodiscard]] static Error::ErrorCode CreateFromWAV(const char *wavPath, SoundAsset &sound);
-
-        /**
-         * Save this SoundAsset as a WAV file
-         * @param wavPath The path to the WAV file
-         */
-        [[nodiscard]] Error::ErrorCode SaveAsWAV(const char *wavPath) const;
-
-        /**
-         * Save this SoundAsset as a GSND file
-         * @param assetPath The path to the GSND file
-         */
-        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
+        [[nodiscard]] AssetType GetAssetType() const override;
+        [[nodiscard]] uint8_t GetAssetTypeVersion() const override;
 
         /**
          * Get the WAV file data
@@ -53,7 +37,7 @@ class SoundAsset final
         [[nodiscard]] size_t GetDataSize() const;
 
     private:
-        std::vector<uint8_t> wavData;
+        static constexpr uint8_t SOUND_ASSET_VERSION = 1;
 
-        void SaveToBuffer(std::vector<uint8_t> &buffer) const;
+        std::vector<uint8_t> wavData;
 };

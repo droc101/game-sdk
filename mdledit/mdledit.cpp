@@ -29,7 +29,7 @@ static bool dockspaceSetup = false;
 static void OpenGmdl(const std::string &path)
 {
     ModelAsset model;
-    const Error::ErrorCode errorCode = ModelAsset::CreateFromAsset(path, model);
+    const Error::ErrorCode errorCode = model.LoadFromAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the model!\n{}", errorCode));
@@ -43,7 +43,11 @@ static void OpenGmdl(const std::string &path)
 static void ImportModel(const std::string &path)
 {
     ModelAsset model;
-    const Error::ErrorCode errorCode = ModelAsset::CreateFromStandardModel(path, model, Options::Get().defaultTexture);
+    const Error::ErrorCode errorCode = model.Import(path);
+    for (size_t i = 0; i < model.GetMaterialCount(); i++)
+    {
+        model.GetMaterial(i).texture =  Options::Get().defaultTexture;
+    }
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to import the model!\n{}", errorCode));
@@ -56,7 +60,7 @@ static void ImportModel(const std::string &path)
 
 static void SaveGmdl(const std::string &path)
 {
-    const Error::ErrorCode errorCode = ModelEditor::modelViewer.GetModel().SaveAsAsset(path);
+    const Error::ErrorCode errorCode = ModelEditor::modelViewer.GetModel().SaveToAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to save the model!\n{}", errorCode));

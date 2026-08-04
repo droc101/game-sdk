@@ -25,7 +25,7 @@ GLTextureCache::~GLTextureCache()
 void GLTextureCache::InitMissingTexture()
 {
     TextureAsset texture;
-    TextureAsset::CreateMissingTexture(texture);
+    texture.CreateMissingTexture();
     this->missingTexture = static_cast<ImTextureID>(CreateTexture(texture));
 }
 
@@ -89,7 +89,7 @@ Error::ErrorCode GLTextureCache::GetTextureID(const std::string &relPath, ImText
         return Error::ErrorCode::OK;
     }
     TextureAsset asset;
-    const Error::ErrorCode error = TextureAsset::CreateFromAsset(texturePath.c_str(), asset);
+    const Error::ErrorCode error = asset.LoadFromAsset(texturePath);
     if (error != Error::ErrorCode::OK)
     {
         return error;
@@ -142,7 +142,7 @@ Error::ErrorCode GLTextureCache::RegisterPng(const std::string &pngPath,
                                              const bool mipmaps)
 {
     TextureAsset tex;
-    const Error::ErrorCode e = TextureAsset::CreateFromPNG(pngPath.c_str(), tex);
+    const Error::ErrorCode e = tex.Import(pngPath);
     if (e != Error::ErrorCode::OK)
     {
         return e;

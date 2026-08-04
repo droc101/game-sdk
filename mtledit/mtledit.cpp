@@ -23,7 +23,7 @@ static LevelMaterialAsset material{};
 
 static void OpenGmtl(const std::string &path)
 {
-    const Error::ErrorCode errorCode = LevelMaterialAsset::CreateFromAsset(path.c_str(), material);
+    const Error::ErrorCode errorCode = material.LoadFromAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the material!\n{}", errorCode));
@@ -32,7 +32,7 @@ static void OpenGmtl(const std::string &path)
 
 static void SaveGmtl(const std::string &path)
 {
-    const Error::ErrorCode errorCode = material.SaveAsAsset(path.c_str());
+    const Error::ErrorCode errorCode = material.SaveToAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to save the material!\n{}", errorCode));

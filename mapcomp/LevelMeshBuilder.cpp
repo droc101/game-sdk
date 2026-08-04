@@ -108,7 +108,7 @@ bool LevelMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
     {
         const std::string materialPath = pathMgr.GetAssetPath(builder.GetMaterialPath());
         LevelMaterialAsset material{};
-        LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
+        material.LoadFromAsset(materialPath);
         if (material.shader == Material::MaterialShader::SHADER_SHADED)
         {
             rects.insert(rects.end(), builder.faceRects.begin(), builder.faceRects.end());
@@ -126,7 +126,7 @@ bool LevelMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
     {
         const std::string materialPath = pathMgr.GetAssetPath(builder.GetMaterialPath());
         LevelMaterialAsset material{};
-        LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
+        material.LoadFromAsset(materialPath);
         if (material.shader != Material::MaterialShader::SHADER_SHADED)
         {
             continue;
@@ -224,7 +224,7 @@ void LevelMeshBuilder::AddWallBase(const glm::vec2 &startPoint,
         }
         const std::string materialPath = pathManager.GetAssetPath(wallMaterial.material);
         LevelMaterialAsset material{};
-        Error::ErrorCode error = LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
+        Error::ErrorCode error = material.LoadFromAsset(materialPath);
         if (error != Error::ErrorCode::OK)
         {
             Logger::Error("Creating material asset \"{}\" failed with error: {}", materialPath, error);
@@ -319,7 +319,7 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
         }
         const std::string materialPath = pathManager.GetAssetPath(mat.material);
         LevelMaterialAsset material{};
-        Error::ErrorCode error = LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
+        Error::ErrorCode error = material.LoadFromAsset(materialPath);
         if (error != Error::ErrorCode::OK)
         {
             Logger::Error("Creating material asset \"{}\" failed with error: {}", materialPath, error);

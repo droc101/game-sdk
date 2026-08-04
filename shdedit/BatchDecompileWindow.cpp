@@ -50,7 +50,7 @@ Error::ErrorCode BatchDecompileWindow::Execute()
     {
         const std::string filename = std::filesystem::path(file).filename().string();
         ShaderAsset shd;
-        Error::ErrorCode e = ShaderAsset::CreateFromAsset(file.c_str(), shd);
+        Error::ErrorCode e = shd.LoadFromAsset(file);
         if (e != Error::ErrorCode::OK)
         {
             return e;
@@ -58,15 +58,15 @@ Error::ErrorCode BatchDecompileWindow::Execute()
         if (shd.kind == ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT)
         {
             const size_t suffixPosition = filename.rfind("_f." + ShaderAsset::SHADER_ASSET_EXTENSION);
-            e = shd.SaveAsGlsl(std::format("{}/{}.frag", outputFolder, filename.substr(0, suffixPosition)).c_str());
+            e = shd.Export(std::format("{}/{}.frag", outputFolder, filename.substr(0, suffixPosition)).c_str());
         } else if (shd.kind == ShaderAsset::ShaderKind::SHADER_KIND_VERTEX)
         {
             const size_t suffixPosition = filename.rfind("_v." + ShaderAsset::SHADER_ASSET_EXTENSION);
-            e = shd.SaveAsGlsl(std::format("{}/{}.vert", outputFolder, filename.substr(0, suffixPosition)).c_str());
+            e = shd.Export(std::format("{}/{}.vert", outputFolder, filename.substr(0, suffixPosition)).c_str());
         } else if (shd.kind == ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE)
         {
             const size_t suffixPosition = filename.rfind("_c." + ShaderAsset::SHADER_ASSET_EXTENSION);
-            e = shd.SaveAsGlsl(std::format("{}/{}.comp", outputFolder, filename.substr(0, suffixPosition)).c_str());
+            e = shd.Export(std::format("{}/{}.comp", outputFolder, filename.substr(0, suffixPosition)).c_str());
         }
         if (e != Error::ErrorCode::OK)
         {

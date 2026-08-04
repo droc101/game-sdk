@@ -42,7 +42,7 @@ int main(const int argc, const char **argv)
 
     const std::string gameConfigPath = args.GetFlagValue("--assets-dir") + "/game.gkvl";
     DataAsset gameConfig{};
-    const Error::ErrorCode e = DataAsset::CreateFromAsset(gameConfigPath.c_str(), gameConfig);
+    const Error::ErrorCode e = gameConfig.LoadFromAsset(gameConfigPath);
     if (e != Error::ErrorCode::OK)
     {
         Logger::Error("Failed to open {}: {}", gameConfigPath.c_str(), Error::ErrorString(e).c_str());

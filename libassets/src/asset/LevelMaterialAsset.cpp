@@ -3,45 +3,37 @@
 //
 
 #include <cstdint>
+#include <libassets/asset/Asset.h>
 #include <libassets/asset/LevelMaterialAsset.h>
-#include <libassets/type/Asset.h>
 #include <libassets/type/Material.h>
-#include <libassets/util/AssetReader.h>
+#include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
-#include <vector>
 
-Error::ErrorCode LevelMaterialAsset::CreateFromAsset(const char *assetPath, LevelMaterialAsset &material)
+Asset::AssetType LevelMaterialAsset::GetAssetType() const
 {
-    Asset asset;
-    const Error::ErrorCode error = AssetReader::LoadFromFile(assetPath, asset);
-    if (error != Error::ErrorCode::OK)
-    {
-        return error;
-    }
-    if (asset.type != Asset::AssetType::ASSET_TYPE_LEVEL_MATERIAL)
-    {
-        return Error::ErrorCode::INCORRECT_FORMAT;
-    }
-    if (asset.typeVersion != LEVEL_MATERIAL_ASSET_VERSION)
-    {
-        return Error::ErrorCode::INCORRECT_VERSION;
-    }
-    material = LevelMaterialAsset();
-    asset.reader.ReadStringWithSize(material.texture);
-    material.baseScale.x = asset.reader.Read<float>();
-    material.baseScale.y = asset.reader.Read<float>();
-    material.shader = static_cast<Material::MaterialShader>(asset.reader.Read<uint8_t>());
-    material.soundClass = static_cast<SoundClass>(asset.reader.Read<uint8_t>());
-    material.compileInvisible = asset.reader.Read<uint8_t>() == 1;
-    material.compileNoClip = asset.reader.Read<uint8_t>() == 1;
-    material.emissive = asset.reader.Read<float>();
+    return AssetType::ASSET_TYPE_LEVEL_MATERIAL;
+}
+
+uint8_t LevelMaterialAsset::GetAssetTypeVersion() const
+{
+    return LEVEL_MATERIAL_ASSET_VERSION;
+}
+
+Error::ErrorCode LevelMaterialAsset::LoadFromBuffer(DataReader &reader)
+{
+    reader.ReadStringWithSize(texture);
+    baseScale = reader.ReadVec2();
+    shader = static_cast<Material::MaterialShader>(reader.Read<uint8_t>());
+    soundClass = static_cast<SoundClass>(reader.Read<uint8_t>());
+    compileInvisible = reader.Read<uint8_t>() == 1;
+    compileNoClip = reader.Read<uint8_t>() == 1;
+    emissive = reader.Read<float>();
     return Error::ErrorCode::OK;
 }
 
-void LevelMaterialAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
+Error::ErrorCode LevelMaterialAsset::SaveToBuffer(DataWriter &writer) const
 {
-    DataWriter writer{};
     writer.WriteString(texture);
     writer.WriteVec2(baseScale);
     writer.Write<uint8_t>(static_cast<uint8_t>(shader));
@@ -49,16 +41,5 @@ void LevelMaterialAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
     writer.Write<uint8_t>(compileInvisible ? 1 : 0);
     writer.Write<uint8_t>(compileNoClip ? 1 : 0);
     writer.Write<float>(emissive);
-    writer.CopyToVector(buffer);
-}
-
-Error::ErrorCode LevelMaterialAsset::SaveAsAsset(const char *assetPath) const
-{
-    std::vector<uint8_t> buffer;
-    SaveToBuffer(buffer);
-    return AssetReader::SaveToFile(assetPath,
-                                   buffer,
-                                   Asset::AssetType::ASSET_TYPE_LEVEL_MATERIAL,
-                                   LEVEL_MATERIAL_ASSET_VERSION,
-                                   AssetReader::BEST_COMPRESSION);
+    return Error::ErrorCode::OK;
 }

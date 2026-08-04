@@ -27,7 +27,7 @@ static std::string selectedPath = "/";
 
 static void OpenGkvl(const std::string &path)
 {
-    const Error::ErrorCode errorCode = DataAsset::CreateFromAsset(path.c_str(), dataAsset);
+    const Error::ErrorCode errorCode = dataAsset.LoadFromAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the KvList!\n{}", errorCode));
@@ -36,7 +36,7 @@ static void OpenGkvl(const std::string &path)
 
 static void OpenKvl(const std::string &path)
 {
-    const Error::ErrorCode errorCode = DataAsset::CreateFromKvlFile(path.c_str(), dataAsset);
+    const Error::ErrorCode errorCode = dataAsset.CreateFromKvlFile(path.c_str());
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the KvList!\n{}", errorCode));
@@ -45,7 +45,7 @@ static void OpenKvl(const std::string &path)
 
 static void ImportJson(const std::string &path)
 {
-    const Error::ErrorCode errorCode = DataAsset::CreateFromJson(path.c_str(), dataAsset);
+    const Error::ErrorCode errorCode = dataAsset.Import(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to import the KvList!\n{}", errorCode));
@@ -54,7 +54,7 @@ static void ImportJson(const std::string &path)
 
 static void SaveGkvl(const std::string &path)
 {
-    const Error::ErrorCode errorCode = dataAsset.SaveAsAsset(path.c_str());
+    const Error::ErrorCode errorCode = dataAsset.SaveToAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to save the KvList!\n{}", errorCode));
@@ -72,7 +72,7 @@ static void SaveKvl(const std::string &path)
 
 static void ExportJson(const std::string &path)
 {
-    const Error::ErrorCode errorCode = dataAsset.SaveAsJson(path.c_str());
+    const Error::ErrorCode errorCode = dataAsset.Export(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to export the KvList!\n{}", errorCode));

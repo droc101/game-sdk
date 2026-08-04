@@ -6,94 +6,85 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <libassets/asset/Asset.h>
 #include <libassets/asset/ModelAsset.h>
-#include <libassets/type/Asset.h>
 #include <libassets/type/BoundingBox.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/ConvexHull.h>
 #include <libassets/type/Material.h>
 #include <libassets/type/ModelLod.h>
 #include <libassets/type/ModelVertex.h>
-#include <libassets/util/AssetReader.h>
+#include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <string>
 #include <vector>
 
-Error::ErrorCode ModelAsset::CreateFromAsset(const std::string &assetPath, ModelAsset &modelAsset)
+Asset::AssetType ModelAsset::GetAssetType() const
 {
-    modelAsset.lods.clear();
-    modelAsset.skins.clear();
-    Asset asset;
-    const Error::ErrorCode e = AssetReader::LoadFromFile(assetPath.c_str(), asset);
-    if (e != Error::ErrorCode::OK)
-    {
-        return e;
-    }
-    if (asset.type != Asset::AssetType::ASSET_TYPE_MODEL)
-    {
-        return Error::ErrorCode::INCORRECT_FORMAT;
-    }
-    if (asset.typeVersion != MODEL_ASSET_VERSION)
-    {
-        return Error::ErrorCode::INCORRECT_VERSION;
-    }
-    modelAsset = ModelAsset();
-    const uint32_t materialCount = asset.reader.Read<uint32_t>();
-    const uint32_t materialsPerSkin = asset.reader.Read<uint32_t>();
-    const uint32_t skinCount = asset.reader.Read<uint32_t>();
-    const uint32_t lodCount = asset.reader.Read<uint32_t>();
-    modelAsset.collisionModelType = static_cast<CollisionModelType>(asset.reader.Read<uint8_t>());
+    return AssetType::ASSET_TYPE_MODEL;
+}
 
-    modelAsset.materials.reserve(materialCount);
+uint8_t ModelAsset::GetAssetTypeVersion() const
+{
+    return MODEL_ASSET_VERSION;
+}
+
+Error::ErrorCode ModelAsset::LoadFromBuffer(DataReader &reader)
+{
+    const uint32_t materialCount = reader.Read<uint32_t>();
+    const uint32_t materialsPerSkin = reader.Read<uint32_t>();
+    const uint32_t skinCount = reader.Read<uint32_t>();
+    const uint32_t lodCount = reader.Read<uint32_t>();
+    collisionModelType = static_cast<CollisionModelType>(reader.Read<uint8_t>());
+
+    materials.reserve(materialCount);
     for (uint32_t i = 0; i < materialCount; i++)
     {
-        modelAsset.materials.emplace_back(asset.reader);
+        materials.emplace_back(reader);
     }
 
-    modelAsset.skins.resize(skinCount);
-    for (std::vector<uint32_t> &skin: modelAsset.skins)
+    skins.resize(skinCount);
+    for (std::vector<uint32_t> &skin: skins)
     {
         skin.reserve(materialsPerSkin);
         for (uint32_t _i = 0; _i < materialsPerSkin; _i++)
         {
-            skin.emplace_back(asset.reader.Read<uint32_t>());
+            skin.emplace_back(reader.Read<uint32_t>());
         }
     }
 
     for (uint32_t _i = 0; _i < lodCount; _i++)
     {
-        modelAsset.lods.emplace_back(asset.reader, materialsPerSkin);
+        lods.emplace_back(reader, materialsPerSkin);
     }
 
-    modelAsset.boundingBox = BoundingBox(asset.reader);
+    boundingBox = BoundingBox(reader);
 
-    if (modelAsset.collisionModelType == CollisionModelType::DYNAMIC_MULTIPLE_CONVEX)
+    if (collisionModelType == CollisionModelType::DYNAMIC_MULTIPLE_CONVEX)
     {
-        const size_t hullCount = asset.reader.Read<size_t>();
+        const size_t hullCount = reader.Read<size_t>();
         for (size_t i = 0; i < hullCount; i++)
         {
-            const ConvexHull hull = ConvexHull(asset.reader);
-            modelAsset.convexHulls.push_back(hull);
+            const ConvexHull hull = ConvexHull(reader);
+            convexHulls.push_back(hull);
         }
-    } else if (modelAsset.collisionModelType == CollisionModelType::STATIC_SINGLE_CONCAVE)
+    } else if (collisionModelType == CollisionModelType::STATIC_SINGLE_CONCAVE)
     {
-        modelAsset.staticCollisionMesh = StaticCollisionMesh(asset.reader);
+        staticCollisionMesh = StaticCollisionMesh(reader);
     }
 
     return Error::ErrorCode::OK;
 }
 
-void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
+Error::ErrorCode ModelAsset::SaveToBuffer(DataWriter &writer) const
 {
-    assert(buffer.empty());
     assert(!skins.empty()); // you gotta have a skin
     assert(!skins.at(0).empty()); // you gotta have materials
     assert(!lods.empty()); // you gotta have a lod
     assert(lods.at(0).distance == 0); // lod 0 must be distance 0
     assert(lods.at(0).vertices.size() >= 3); // triangle required
 
-    DataWriter writer;
     writer.Write<uint32_t>(materials.size());
     writer.Write<uint32_t>(skins.at(0).size());
     writer.Write<uint32_t>(skins.size());
@@ -132,18 +123,22 @@ void ModelAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
         staticCollisionMesh.Write(writer);
     }
 
-    writer.CopyToVector(buffer);
+    return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode ModelAsset::SaveAsAsset(const std::string &assetPath) const
+Error::ErrorCode ModelAsset::Import(const std::string &filePath)
 {
-    std::vector<uint8_t> data;
-    SaveToBuffer(data);
-    return AssetReader::SaveToFile(assetPath.c_str(),
-                                   data,
-                                   Asset::AssetType::ASSET_TYPE_MODEL,
-                                   MODEL_ASSET_VERSION,
-                                   AssetReader::BEST_COMPRESSION);
+    Error::ErrorCode lodCode = Error::ErrorCode::UNKNOWN;
+    lods.emplace_back(filePath, 0, lodCode);
+    if (lodCode != Error::ErrorCode::OK)
+    {
+        return lodCode;
+    }
+    const ModelLod &lod = lods.back();
+    const uint32_t materialCount = lod.indexCounts.size();
+    skins.emplace_back(materialCount);
+    materials = {Material("", -1u, Material::MaterialShader::SHADER_SHADED)};
+    return Error::ErrorCode::OK;
 }
 
 ModelLod &ModelAsset::GetLod(const uint32_t index)
@@ -196,24 +191,6 @@ void ModelAsset::GetVertexBuffer(const uint32_t lodIndex, DataWriter &writer)
         vertex.color.WriteFloats(writer);
         writer.WriteVec3(vertex.normal);
     }
-}
-
-Error::ErrorCode ModelAsset::CreateFromStandardModel(const std::string &modelPath,
-                                                     ModelAsset &model,
-                                                     const std::string &defaultTexture)
-{
-    model = ModelAsset();
-    Error::ErrorCode lodCode = Error::ErrorCode::UNKNOWN;
-    model.lods.emplace_back(modelPath, 0, lodCode);
-    if (lodCode != Error::ErrorCode::OK)
-    {
-        return lodCode;
-    }
-    const ModelLod &lod = model.lods.back();
-    const uint32_t materialCount = lod.indexCounts.size();
-    model.skins.emplace_back(materialCount);
-    model.materials = {Material(defaultTexture, -1u, Material::MaterialShader::SHADER_SHADED)};
-    return Error::ErrorCode::OK;
 }
 
 bool ModelAsset::LODSortCompare(const ModelLod &a, const ModelLod &b)

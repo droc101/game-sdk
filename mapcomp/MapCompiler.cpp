@@ -13,10 +13,9 @@
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
-#include <libassets/type/Asset.h>
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
-#include <libassets/util/AssetReader.h>
+#include <libassets/util/AssetContainer.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
@@ -47,7 +46,7 @@ MapCompiler::MapCompiler(MapCompilerSettings &settings)
 Error::ErrorCode MapCompiler::LoadMapSource(const std::string &mapSourceFile)
 {
     mapBasename = std::filesystem::path(mapSourceFile).stem().string();
-    return MapAsset::CreateFromMapSrc(mapSourceFile.c_str(), map);
+    return map.Import(mapSourceFile);
 }
 
 Error::ErrorCode MapCompiler::Compile()
@@ -61,19 +60,19 @@ Error::ErrorCode MapCompiler::Compile()
 
     const std::string outPath = settings.assetsDirectory + "/map/" + mapBasename + ".gmap";
     Logger::Info("Saving map to \"{}\"", outPath.c_str());
-    return AssetReader::SaveToFile(outPath.c_str(),
+    return AssetContainer::SaveToFile(outPath.c_str(),
                                    buffer,
                                    Asset::AssetType::ASSET_TYPE_LEVEL,
                                    MapAsset::MAP_ASSET_VERSION,
-                                   settings.fastCompile ? AssetReader::FASTEST_COMPRESSION
-                                                        : AssetReader::BEST_COMPRESSION);
+                                   settings.fastCompile ? AssetContainer::FASTEST_COMPRESSION
+                                                        : AssetContainer::BEST_COMPRESSION);
 }
 
 LevelMaterialAsset MapCompiler::GetMapMaterial(const std::string &path) const
 {
     LevelMaterialAsset mapMaterial;
     const std::string absPath = pathManager.GetAssetPath(path);
-    const Error::ErrorCode e = LevelMaterialAsset::CreateFromAsset(absPath.c_str(), mapMaterial);
+    const Error::ErrorCode e = mapMaterial.LoadFromAsset(absPath);
     if (e != Error::ErrorCode::OK)
     {
         Logger::Error("Failed to load material \"{}\": {}", path.c_str(), Error::ErrorString(e).c_str());

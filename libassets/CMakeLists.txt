@@ -73,8 +73,8 @@ fetch_tinyexpr()
 
 add_library(assets SHARED
         include/libassets/libassets.h
-        src/util/AssetReader.cpp
-        include/libassets/util/AssetReader.h
+        src/util/AssetContainer.cpp
+        include/libassets/util/AssetContainer.h
         include/libassets/asset/TextureAsset.h
         src/asset/TextureAsset.cpp
         src/asset/ModelAsset.cpp
@@ -90,7 +90,6 @@ add_library(assets SHARED
         src/type/Color.cpp
         include/libassets/type/Color.h
         include/libassets/util/Primitive.h
-        include/libassets/type/Asset.h
         src/type/ModelVertex.cpp
         include/libassets/type/ModelVertex.h
         src/type/Material.cpp
@@ -184,6 +183,8 @@ add_library(assets SHARED
         include/libassets/type/renderDefs/ConeRenderDefinition.h
         include/libassets/util/LightmapHelpers.hpp
         src/util/LightmapHelpers.cpp
+        include/libassets/asset/Asset.h
+        src/asset/Asset.cpp
 )
 
 set_target_properties(assets PROPERTIES

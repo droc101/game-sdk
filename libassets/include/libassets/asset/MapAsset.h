@@ -11,7 +11,9 @@
 #include <string>
 #include <vector>
 
-class MapAsset final
+#include "Asset.h"
+
+class MapAsset final: public Asset
 {
     public:
         MapAsset() = default;
@@ -38,18 +40,11 @@ class MapAsset final
 
         static constexpr float MAP_MAX_HALF_EXTENTS = 8192;
 
-        /**
-         * Create a MapAsset from a JSON source file
-         * @param mapSrcPath The path to the source file
-         * @param map The MapAsset to populate
-         */
-        [[nodiscard]] static Error::ErrorCode CreateFromMapSrc(const char *mapSrcPath, MapAsset &map);
+        [[nodiscard]] Error::ErrorCode Import(const std::string &filePath) override;
+        [[nodiscard]] Error::ErrorCode Export(const std::string &filePath) const override;
 
-        /**
-         * Save this MapAsset as JSON
-         * @param mapSrcPath The path to the JSON file
-         */
-        [[nodiscard]] Error::ErrorCode SaveAsMapSrc(const char *mapSrcPath) const;
+        [[nodiscard]] AssetType GetAssetType() const override;
+        [[nodiscard]] uint8_t GetAssetTypeVersion() const override;
 
         /**
          * Get an actor by name

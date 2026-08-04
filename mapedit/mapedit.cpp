@@ -82,7 +82,7 @@ static bool ToolbarToolButton(const char *id,
 
 static void SaveJson(const std::string &path)
 {
-    const Error::ErrorCode errorCode = MapEditor::map.SaveAsMapSrc(path.c_str());
+    const Error::ErrorCode errorCode = MapEditor::map.Export(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to save the map!\n{}", errorCode));
@@ -93,7 +93,7 @@ static void SaveJson(const std::string &path)
 
 static void OpenJson(const std::string &path)
 {
-    const Error::ErrorCode errorCode = MapAsset::CreateFromMapSrc(path.c_str(), MapEditor::map);
+    const Error::ErrorCode errorCode = MapEditor::map.Import(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the map!\n{}", errorCode));

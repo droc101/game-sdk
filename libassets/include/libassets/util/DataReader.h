@@ -14,13 +14,13 @@
 #include <string>
 #include <vector>
 
-class AssetReader;
+class AssetContainer;
 class Checksum;
 
 class DataReader
 {
     public:
-        friend AssetReader;
+        friend AssetContainer;
         friend Checksum;
 
         DataReader() = default;

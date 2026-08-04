@@ -90,7 +90,7 @@ static void OpenGshdFiles(const std::vector<std::string> &paths)
     for (const std::string &path: paths)
     {
         ShaderAsset shader{};
-        const Error::ErrorCode errorCode = ShaderAsset::CreateFromAsset(path.c_str(), shader);
+        const Error::ErrorCode errorCode = shader.LoadFromAsset(path);
         if (errorCode != Error::ErrorCode::OK)
         {
             SDKWindow::Get().ErrorMessage(std::format("Failed to open the shader!\n{}", errorCode));
@@ -105,7 +105,7 @@ static void ImportGLSLFiles(const std::vector<std::string> &paths)
     for (const std::string &path: paths)
     {
         ShaderAsset shader{};
-        const Error::ErrorCode errorCode = ShaderAsset::CreateFromGlsl(path.c_str(), shader);
+        const Error::ErrorCode errorCode = shader.Import(path);
         if (errorCode != Error::ErrorCode::OK)
         {
             SDKWindow::Get().ErrorMessage(std::format("Failed to import the shader!\n{}", errorCode));
@@ -120,7 +120,7 @@ static void SaveGshd(const std::string &path)
     EditorTab &tab = tabs.at(selectedTab);
     tab.shader.GetGLSL() = tab.editor.GetText();
     std::string errorLog;
-    const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(path.c_str(), tab.enableOptimization, &errorLog);
+    const Error::ErrorCode errorCode = tab.shader.SaveToAssetEx(path, tab.enableOptimization, &errorLog, path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}\n{}", errorCode, errorLog));
@@ -134,7 +134,7 @@ static void ExportGlsl(const std::string &path)
 {
     EditorTab &tab = tabs.at(selectedTab);
     tab.shader.GetGLSL() = tab.editor.GetText();
-    const Error::ErrorCode errorCode = tab.shader.SaveAsGlsl(path.c_str());
+    const Error::ErrorCode errorCode = tab.shader.Export(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to export the shader!\n{}", errorCode));
@@ -318,9 +318,10 @@ static void Render()
         {
             tab.shader.GetGLSL() = tab.editor.GetText();
             std::string errorLog;
-            const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(tab.path.c_str(),
-                                                                      tab.enableOptimization,
-                                                                      &errorLog);
+            const Error::ErrorCode errorCode = tab.shader.SaveToAssetEx(tab.path,
+                                                                        tab.enableOptimization,
+                                                                        &errorLog,
+                                                                        tab.path);
             if (errorCode != Error::ErrorCode::OK)
             {
                 SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}\n{}", errorCode, errorLog));
@@ -337,9 +338,10 @@ static void Render()
             {
                 tab.shader.GetGLSL() = tab.editor.GetText();
                 std::string errorLog;
-                const Error::ErrorCode errorCode = tab.shader.SaveAsAsset(tab.path.c_str(),
-                                                                          tab.enableOptimization,
-                                                                          &errorLog);
+                const Error::ErrorCode errorCode = tab.shader.SaveToAssetEx(tab.path,
+                                                                            tab.enableOptimization,
+                                                                            &errorLog,
+                                                                            tab.path);
                 if (errorCode != Error::ErrorCode::OK)
                 {
                     SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}\n{}",

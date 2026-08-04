@@ -646,14 +646,14 @@ bool LightBakerGpu::GetTextureIndex(const std::string &textureName,
     }
     const std::string materialPath = pathManager.GetAssetPath(textureName);
     LevelMaterialAsset material{};
-    Error::ErrorCode error = LevelMaterialAsset::CreateFromAsset(materialPath.c_str(), material);
+    Error::ErrorCode error = material.LoadFromAsset(materialPath);
     if (error != Error::ErrorCode::OK)
     {
         Logger::Error("Creating material asset \"{}\" failed with error: {}", materialPath, error);
     }
     const std::string texturePath = pathManager.GetAssetPath(material.texture);
     TextureAsset image{};
-    error = TextureAsset::CreateFromAsset(texturePath.c_str(), image);
+    error = image.LoadFromAsset(texturePath);
     if (error != Error::ErrorCode::OK)
     {
         Logger::Error("Creating texture asset \"{}\" failed with error: {}", materialPath, error);

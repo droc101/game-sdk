@@ -30,7 +30,7 @@ void MapCompileWindow::StartCompile()
         SDKWindow::Get().ErrorMessage("The level must be saved before compiling");
     } else
     {
-        const Error::ErrorCode errorCode = MapEditor::map.SaveAsMapSrc(MapEditor::mapFile.c_str());
+        const Error::ErrorCode errorCode = MapEditor::map.Export(MapEditor::mapFile);
         if (errorCode != Error::ErrorCode::OK)
         {
             log += std::format("Failed to save the level!{}\n", Error::ErrorString(errorCode));

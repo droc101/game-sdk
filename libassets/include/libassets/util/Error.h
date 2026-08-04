@@ -30,6 +30,7 @@ class Error
             NOT_FOUND,
             INVALID_SHADER_TYPE,
             LIGHTMAP_TOO_LARGE,
+            NOT_IMPLEMENTED,
         };
 
         Error() = delete;
@@ -69,6 +70,8 @@ class Error
                     return "Invalid Shader Type";
                 case ErrorCode::LIGHTMAP_TOO_LARGE:
                     return "Lightmap Too Large";
+                case ErrorCode::NOT_IMPLEMENTED:
+                    return "Not Implemented";
                 case ErrorCode::UNKNOWN:
                 default:
                     return "Unknown Error";

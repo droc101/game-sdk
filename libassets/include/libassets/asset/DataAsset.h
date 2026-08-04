@@ -5,49 +5,34 @@
 #pragma once
 
 #include <cstdint>
+#include <libassets/asset/Asset.h>
 #include <libassets/type/Param.h>
+#include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
-#include <vector>
+#include <string>
 
-class DataAsset
+class DataAsset final: public Asset
 {
     public:
         DataAsset() = default;
 
         KvList data{};
 
-        static constexpr uint8_t DATA_ASSET_VERSION = 1;
+        [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
+        [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
 
-        // "KVLF" in ASCII
-        static constexpr uint32_t KVL_MAGIC = 0x464c564b;
-        static constexpr uint16_t KVL_VERSION = 1;
+        [[nodiscard]] Error::ErrorCode Import(const std::string &filePath) override;
+        [[nodiscard]] Error::ErrorCode Export(const std::string &filePath) const override;
 
-        /**
-         * Create a DataAsset from a GKVL file
-         * @param assetPath The path to the GKVL file
-         * @param dataAsset The DataAsset to populate
-         */
-        [[nodiscard]] static Error::ErrorCode CreateFromAsset(const char *assetPath, DataAsset &dataAsset);
+        [[nodiscard]] AssetType GetAssetType() const override;
+        [[nodiscard]] uint8_t GetAssetTypeVersion() const override;
 
         /**
          * Create a DataAsset from a KVL file
          * @param kvlPath The path to the KVL file
-         * @param dataAsset The DataAsset to populate
          */
-        [[nodiscard]] static Error::ErrorCode CreateFromKvlFile(const char *kvlPath, DataAsset &dataAsset);
-
-        /**
-         * Create a DataAsset from a JSON file
-         * @param jsonPath The path to the JSON file
-         * @param dataAsset The DataAsset to populate
-         */
-        [[nodiscard]] static Error::ErrorCode CreateFromJson(const char *jsonPath, DataAsset &dataAsset);
-
-        /**
-         * Save this DataAsset to a JSON file
-         * @param jsonPath The path to the JSON file
-         */
-        [[nodiscard]] Error::ErrorCode SaveAsJson(const char *jsonPath) const;
+        [[nodiscard]] Error::ErrorCode CreateFromKvlFile(const char *kvlPath);
 
         /**
          * Save this DataAsset as a KVL file
@@ -55,23 +40,21 @@ class DataAsset
          */
         [[nodiscard]] Error::ErrorCode SaveAsKvlFile(const char *kvlFile) const;
 
-        /**
-         * Save this DataAsset as a GKVL file
-         * @param assetPath The path to the GKVL file
-         */
-        [[nodiscard]] Error::ErrorCode SaveAsAsset(const char *assetPath) const;
-
     private:
         struct KvlFileHeader
         {
-            /// Magic bytes, should match @c KVL_MAGIC
-            uint32_t magic;
-            /// KVL format version, should match @c KVL_VERSION
-            uint16_t version;
-            /// Checksum of the content (the file data, minus the header)
-            uint16_t checksum;
+                /// Magic bytes, should match @c KVL_MAGIC
+                uint32_t magic;
+                /// KVL format version, should match @c KVL_VERSION
+                uint16_t version;
+                /// Checksum of the content (the file data, minus the header)
+                uint16_t checksum;
         };
         static_assert(sizeof(KvlFileHeader) == 8);
 
-        void SaveToBuffer(std::vector<uint8_t> &buffer) const;
+        static constexpr uint8_t DATA_ASSET_VERSION = 1;
+
+        // "KVLF" in ASCII
+        static constexpr uint32_t KVL_MAGIC = 0x464c564b;
+        static constexpr uint16_t KVL_VERSION = 1;
 };

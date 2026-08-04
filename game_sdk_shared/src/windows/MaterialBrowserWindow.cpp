@@ -38,7 +38,7 @@ void MaterialBrowserWindow::Show(std::string *material)
     for (const SearchPathManager::AssetResult &path: absMaterialPaths)
     {
         LevelMaterialAsset mat;
-        const Error::ErrorCode e = LevelMaterialAsset::CreateFromAsset(path.absolutePath.c_str(), mat);
+        const Error::ErrorCode e = mat.LoadFromAsset(path.absolutePath);
         if (e != Error::ErrorCode::OK)
         {
             Logger::Error("Failed to load level material asset \"{}\"", path.absolutePath.c_str());

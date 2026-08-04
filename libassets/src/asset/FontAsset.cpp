@@ -5,72 +5,54 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
+#include <libassets/asset/Asset.h>
 #include <libassets/asset/FontAsset.h>
-#include <libassets/type/Asset.h>
-#include <libassets/util/AssetReader.h>
+#include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <string>
 #include <vector>
 
-Error::ErrorCode FontAsset::CreateFromAsset(const char *assetPath, FontAsset &font)
+Asset::AssetType FontAsset::GetAssetType() const
 {
-    Asset asset;
-    const Error::ErrorCode error = AssetReader::LoadFromFile(assetPath, asset);
-    if (error != Error::ErrorCode::OK)
-    {
-        return error;
-    }
-    if (asset.type != Asset::AssetType::ASSET_TYPE_FONT)
-    {
-        return Error::ErrorCode::INCORRECT_FORMAT;
-    }
-    if (asset.typeVersion != FONT_ASSET_VERSION)
-    {
-        return Error::ErrorCode::INCORRECT_VERSION;
-    }
-    font = FontAsset();
-    font.charWidth = asset.reader.Read<uint8_t>();
-    font.textureHeight = asset.reader.Read<uint8_t>();
-    font.baseline = asset.reader.Read<uint8_t>();
-    font.charSpacing = asset.reader.Read<uint8_t>();
-    font.lineSpacing = asset.reader.Read<uint8_t>();
-    font.spaceWidth = asset.reader.Read<uint8_t>();
-    font.defaultSize = asset.reader.Read<uint8_t>();
-    font.uppercaseOnly = asset.reader.Read<bool>();
-    const size_t textureLength = asset.reader.Read<size_t>();
-    asset.reader.ReadString(font.texture, textureLength);
-    const uint8_t charCount = asset.reader.Read<uint8_t>();
+    return AssetType::ASSET_TYPE_FONT;
+}
+
+uint8_t FontAsset::GetAssetTypeVersion() const
+{
+    return FONT_ASSET_VERSION;
+}
+
+Error::ErrorCode FontAsset::LoadFromBuffer(DataReader &reader)
+{
+    charWidth = reader.Read<uint8_t>();
+    textureHeight = reader.Read<uint8_t>();
+    baseline = reader.Read<uint8_t>();
+    charSpacing = reader.Read<uint8_t>();
+    lineSpacing = reader.Read<uint8_t>();
+    spaceWidth = reader.Read<uint8_t>();
+    defaultSize = reader.Read<uint8_t>();
+    uppercaseOnly = reader.Read<bool>();
+    const size_t textureLength = reader.Read<size_t>();
+    reader.ReadString(texture, textureLength);
+    const uint8_t charCount = reader.Read<uint8_t>();
     if (charCount > FONT_MAX_SYMBOLS)
     {
         return Error::ErrorCode::INVALID_BODY;
     }
     for (uint8_t i = 0; i < charCount; i++)
     {
-        const char character = asset.reader.Read<char>();
-        const uint8_t width = asset.reader.Read<uint8_t>();
-        font.chars.push_back(character);
-        font.charWidths.push_back(width);
+        const char character = reader.Read<char>();
+        const uint8_t width = reader.Read<uint8_t>();
+        chars.push_back(character);
+        charWidths.push_back(width);
     }
 
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode FontAsset::SaveAsAsset(const char *assetPath) const
+Error::ErrorCode FontAsset::SaveToBuffer(DataWriter &writer) const
 {
-    std::vector<uint8_t> buffer;
-    SaveToBuffer(buffer);
-    return AssetReader::SaveToFile(assetPath,
-                                   buffer,
-                                   Asset::AssetType::ASSET_TYPE_FONT,
-                                   FONT_ASSET_VERSION,
-                                   AssetReader::BEST_COMPRESSION);
-}
-
-
-void FontAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
-{
-    DataWriter writer{};
     writer.Write<uint8_t>(charWidth);
     writer.Write<uint8_t>(textureHeight);
     writer.Write<uint8_t>(baseline);
@@ -87,7 +69,7 @@ void FontAsset::SaveToBuffer(std::vector<uint8_t> &buffer) const
         writer.Write<char>(chars.at(i));
         writer.Write<uint8_t>(charWidths.at(i));
     }
-    writer.CopyToVector(buffer);
+    return Error::ErrorCode::OK;
 }
 
 std::vector<std::string> FontAsset::GetCharListForDisplay()

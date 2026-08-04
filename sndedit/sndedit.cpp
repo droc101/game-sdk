@@ -21,7 +21,7 @@ static bool LoadSound()
 
 static void OpenGsnd(const std::string &path)
 {
-    const Error::ErrorCode errorCode = SoundAsset::CreateFromAsset(path.c_str(), soundAsset);
+    const Error::ErrorCode errorCode = soundAsset.LoadFromAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to open the sound!\n{}", errorCode));
@@ -35,7 +35,7 @@ static void OpenGsnd(const std::string &path)
 
 static void ImportWav(const std::string &path)
 {
-    const Error::ErrorCode errorCode = SoundAsset::CreateFromWAV(path.c_str(), soundAsset);
+    const Error::ErrorCode errorCode = soundAsset.Import(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to import the sound!\n{}", errorCode));
@@ -49,7 +49,7 @@ static void ImportWav(const std::string &path)
 
 static void SaveGsnd(const std::string &path)
 {
-    const Error::ErrorCode errorCode = soundAsset.SaveAsAsset(path.c_str());
+    const Error::ErrorCode errorCode = soundAsset.SaveToAsset(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to save the sound!\n{}", errorCode));
@@ -58,7 +58,7 @@ static void SaveGsnd(const std::string &path)
 
 static void ExportWav(const std::string &path)
 {
-    const Error::ErrorCode errorCode = soundAsset.SaveAsWAV(path.c_str());
+    const Error::ErrorCode errorCode = soundAsset.Export(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         SDKWindow::Get().ErrorMessage(std::format("Failed to export the sound!\n{}", errorCode));

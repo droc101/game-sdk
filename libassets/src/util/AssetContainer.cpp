@@ -5,8 +5,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <libassets/type/Asset.h>
-#include <libassets/util/AssetReader.h>
+#include <libassets/asset/Asset.h>
+#include <libassets/util/AssetContainer.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
@@ -15,26 +15,26 @@
 #include <zconf.h>
 #include <zlib.h>
 
-Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &outAsset)
+Error::ErrorCode AssetContainer::Decompress(std::vector<uint8_t> &asset, AssetContainer &outAsset)
 {
     if (!outAsset.reader.bytes.empty())
     {
         return Error::ErrorCode::INVALID_ARGUMENT;
     }
     outAsset.reader.offset = 0;
-    if (Asset::ASSET_HEADER_SIZE > asset.size())
+    if (ASSET_HEADER_SIZE > asset.size())
     {
         return Error::ErrorCode::INVALID_HEADER;
     }
 
     DataReader reader = DataReader(asset);
     const uint32_t magic = reader.Read<uint32_t>();
-    if (magic != Asset::ASSET_CONTAINER_MAGIC)
+    if (magic != ASSET_CONTAINER_MAGIC)
     {
         return Error::ErrorCode::INVALID_HEADER;
     }
     const uint8_t version = reader.Read<uint8_t>();
-    if (version != Asset::ASSET_CONTAINER_VERSION)
+    if (version != ASSET_CONTAINER_VERSION)
     {
         return Error::ErrorCode::INCORRECT_VERSION;
     }
@@ -49,7 +49,7 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
 
     z_stream zStream{};
 
-    zStream.next_in = asset.data() + Asset::ASSET_HEADER_SIZE;
+    zStream.next_in = asset.data() + ASSET_HEADER_SIZE;
     zStream.avail_in = compressedSize;
     zStream.next_out = outAsset.reader.bytes.data();
     zStream.avail_out = outAsset.reader.size;
@@ -85,11 +85,11 @@ Error::ErrorCode AssetReader::Decompress(std::vector<uint8_t> &asset, Asset &out
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
-                                       std::vector<uint8_t> &outBuffer,
-                                       const Asset::AssetType type,
-                                       const uint8_t typeVersion,
-                                       const uint8_t compressionLevel)
+Error::ErrorCode AssetContainer::Compress(std::vector<uint8_t> &inBuffer,
+                                          std::vector<uint8_t> &outBuffer,
+                                          const Asset::AssetType type,
+                                          const uint8_t typeVersion,
+                                          const uint8_t compressionLevel)
 {
     if (inBuffer.empty())
     {
@@ -101,8 +101,8 @@ Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
     }
 
     DataWriter writer{};
-    writer.Write<uint32_t>(Asset::ASSET_CONTAINER_MAGIC);
-    writer.Write<uint8_t>(Asset::ASSET_CONTAINER_VERSION);
+    writer.Write<uint32_t>(ASSET_CONTAINER_MAGIC);
+    writer.Write<uint8_t>(ASSET_CONTAINER_VERSION);
     writer.Write<uint8_t>(static_cast<uint8_t>(type));
     writer.Write<uint8_t>(typeVersion);
     writer.Write<size_t>(inBuffer.size());
@@ -143,11 +143,11 @@ Error::ErrorCode AssetReader::Compress(std::vector<uint8_t> &inBuffer,
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode AssetReader::SaveToFile(const char *filePath,
-                                         std::vector<uint8_t> &data,
-                                         const Asset::AssetType type,
-                                         const uint8_t typeVersion,
-                                         const uint8_t compressionLevel)
+Error::ErrorCode AssetContainer::SaveToFile(const char *filePath,
+                                            std::vector<uint8_t> &data,
+                                            const Asset::AssetType type,
+                                            const uint8_t typeVersion,
+                                            const uint8_t compressionLevel)
 {
     FILE *file = fopen(filePath, "wb");
     if (file == nullptr)
@@ -162,7 +162,7 @@ Error::ErrorCode AssetReader::SaveToFile(const char *filePath,
     return e;
 }
 
-Error::ErrorCode AssetReader::LoadFromFile(const char *filePath, Asset &outAsset)
+Error::ErrorCode AssetContainer::LoadFromFile(const char *filePath, AssetContainer &outAsset)
 {
     std::FILE *file = std::fopen(filePath, "rb");
     if (file == nullptr)

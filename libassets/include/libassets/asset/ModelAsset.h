@@ -16,7 +16,9 @@
 #include <string>
 #include <vector>
 
-class ModelAsset final
+#include "Asset.h"
+
+class ModelAsset final: public Asset
 {
     public:
         enum class CollisionModelType : uint8_t
@@ -31,32 +33,14 @@ class ModelAsset final
          */
         ModelAsset() = default;
 
-        static constexpr uint8_t MODEL_ASSET_VERSION = 1;
+        [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
+        [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
 
-        /**
-         * Create a ModelAsset from a GMDL file
-         * @param assetPath The path to the GMDL file
-         * @param modelAsset The ModelAsset to populate
-         */
-        [[nodiscard]] static Error::ErrorCode CreateFromAsset(const std::string &assetPath, ModelAsset &modelAsset);
+        [[nodiscard]] Error::ErrorCode Import(const std::string &filePath) override;
 
-        /**
-         * Create a ModelAsset from a conventional model format
-         * @param modelPath The path to the model file
-         * @param model The ModelAsset to populate
-         * @param defaultTexture The texture to use for materials
-         */
-        [[nodiscard]] static Error::ErrorCode CreateFromStandardModel(const std::string &modelPath,
-                                                                      ModelAsset &model,
-                                                                      const std::string &defaultTexture);
-
-        /**
-         * Save this ModelAsset to a GMDL file
-         * @param assetPath The GMDL file to save to
-         */
-        [[nodiscard]] Error::ErrorCode SaveAsAsset(const std::string &assetPath) const;
-
-
+        [[nodiscard]] AssetType GetAssetType() const override;
+        [[nodiscard]] uint8_t GetAssetTypeVersion() const override;
+        
         /**
          * Get a LOD by index
          */
@@ -194,6 +178,8 @@ class ModelAsset final
         void SetStaticCollisionMesh(const StaticCollisionMesh &mesh);
 
     private:
+        static constexpr uint8_t MODEL_ASSET_VERSION = 1;
+
         std::vector<Material> materials{};
         std::vector<std::vector<uint32_t>> skins{};
         std::vector<ModelLod> lods{};
@@ -202,8 +188,6 @@ class ModelAsset final
         BoundingBox boundingBox{};
         std::vector<ConvexHull> convexHulls{};
         StaticCollisionMesh staticCollisionMesh{};
-
-        void SaveToBuffer(std::vector<uint8_t> &buffer) const;
 
         static bool LODSortCompare(const ModelLod &a, const ModelLod &b);
 };
