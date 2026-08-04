@@ -78,9 +78,9 @@ Error::ErrorCode DataAsset::Export(const std::string &filePath) const
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode DataAsset::CreateFromKvlFile(const char *kvlPath)
+Error::ErrorCode DataAsset::CreateFromKvlFile(const std::string &kvlPath)
 {
-    std::FILE *file = std::fopen(kvlPath, "rb");
+    std::FILE *file = std::fopen(kvlPath.c_str(), "rb");
     if (file == nullptr)
     {
         return Error::ErrorCode::FILE_NOT_FOUND;
@@ -118,9 +118,9 @@ Error::ErrorCode DataAsset::CreateFromKvlFile(const char *kvlPath)
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode DataAsset::SaveAsKvlFile(const char *kvlFile) const
+Error::ErrorCode DataAsset::SaveAsKvlFile(const std::string &kvlFile) const
 {
-    FILE *file = fopen(kvlFile, "wb");
+    FILE *file = fopen(kvlFile.c_str(), "wb");
     if (file == nullptr)
     {
         Logger::Error("Unable to open file for writing");

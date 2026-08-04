@@ -74,9 +74,9 @@ Error::ErrorCode TextureAsset::SaveToBuffer(DataWriter &writer) const
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode TextureAsset::CreateFromPNG(const char *imagePath)
+Error::ErrorCode TextureAsset::CreateFromPNG(const string &imagePath)
 {
-    if (access(imagePath, F_OK | R_OK))
+    if (access(imagePath.c_str(), F_OK | R_OK))
     {
         CreateMissingTexture();
         return Error::ErrorCode::OK;
@@ -84,7 +84,7 @@ Error::ErrorCode TextureAsset::CreateFromPNG(const char *imagePath)
     int pngWidth = 0;
     int pngHeight = 0;
     int channels = 0;
-    uint8_t *data = stbi_load(imagePath, &pngWidth, &pngHeight, &channels, STBI_rgb_alpha);
+    uint8_t *data = stbi_load(imagePath.c_str(), &pngWidth, &pngHeight, &channels, STBI_rgb_alpha);
     if (data == nullptr)
     {
         Logger::Error("stbi_load failed: {}", stbi_failure_reason());
@@ -103,9 +103,9 @@ Error::ErrorCode TextureAsset::CreateFromPNG(const char *imagePath)
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode TextureAsset::CreateFromEXR(const char *imagePath)
+Error::ErrorCode TextureAsset::CreateFromEXR(const string &imagePath)
 {
-    RgbaInputFile file = RgbaInputFile(imagePath);
+    RgbaInputFile file = RgbaInputFile(imagePath.c_str());
     const Box2i dw = file.dataWindow();
     width = dw.max.x - dw.min.x + 1;
     height = dw.max.y - dw.min.y + 1;
@@ -209,11 +209,11 @@ size_t TextureAsset::GetPixelDataSize() const
     return pixelData.size();
 }
 
-Error::ErrorCode TextureAsset::SaveAsPNG(const char *imagePath) const
+Error::ErrorCode TextureAsset::SaveAsPNG(const string &imagePath) const
 {
     std::vector<uint8_t> pixelDataCopy = pixelData;
     const uint32_t *texturePixels = reinterpret_cast<uint32_t *>(pixelDataCopy.data());
-    const int code = stbi_write_png(imagePath,
+    const int code = stbi_write_png(imagePath.c_str(),
                                     static_cast<int>(width),
                                     static_cast<int>(height),
                                     4,
@@ -222,7 +222,7 @@ Error::ErrorCode TextureAsset::SaveAsPNG(const char *imagePath) const
     return code != 0 ? Error::ErrorCode::OK : Error::ErrorCode::UNKNOWN;
 }
 
-Error::ErrorCode TextureAsset::SaveAsEXR(const char *imagePath) const
+Error::ErrorCode TextureAsset::SaveAsEXR(const string &imagePath) const
 {
     Header header = Header(static_cast<int>(width), static_cast<int>(height));
     header.channels().insert("R", Channel(HALF));
@@ -243,7 +243,7 @@ Error::ErrorCode TextureAsset::SaveAsEXR(const char *imagePath) const
 
     framebuffer.insert("A", Slice(HALF, base + sizeof(half) * 3, PIXEL_SIZE, PIXEL_SIZE * width));
 
-    OutputFile file(imagePath, header);
+    OutputFile file(imagePath.c_str(), header);
     file.setFrameBuffer(framebuffer);
     file.writePixels(static_cast<int>(height));
     return Error::ErrorCode::OK;

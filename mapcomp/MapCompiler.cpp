@@ -61,11 +61,11 @@ Error::ErrorCode MapCompiler::Compile()
     const std::string outPath = settings.assetsDirectory + "/map/" + mapBasename + ".gmap";
     Logger::Info("Saving map to \"{}\"", outPath.c_str());
     return AssetContainer::SaveToFile(outPath.c_str(),
-                                   buffer,
-                                   Asset::AssetType::ASSET_TYPE_LEVEL,
-                                   MapAsset::MAP_ASSET_VERSION,
-                                   settings.fastCompile ? AssetContainer::FASTEST_COMPRESSION
-                                                        : AssetContainer::BEST_COMPRESSION);
+                                      buffer,
+                                      Asset::AssetType::ASSET_TYPE_LEVEL,
+                                      MapAsset::MAP_ASSET_VERSION,
+                                      settings.fastCompile ? AssetContainer::FASTEST_COMPRESSION
+                                                           : AssetContainer::BEST_COMPRESSION);
 }
 
 LevelMaterialAsset MapCompiler::GetMapMaterial(const std::string &path) const

@@ -8,6 +8,8 @@
 #include <glm/vec2.hpp>
 #include <libassets/asset/Asset.h>
 #include <libassets/type/Material.h>
+#include <libassets/util/DataReader.h>
+#include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <string>
 

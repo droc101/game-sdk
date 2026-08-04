@@ -14,7 +14,7 @@
 Error::ErrorCode Asset::LoadFromAsset(const std::string &filePath)
 {
     AssetContainer asset;
-    const Error::ErrorCode error = AssetContainer::LoadFromFile(filePath.c_str(), asset);
+    const Error::ErrorCode error = AssetContainer::LoadFromFile(filePath, asset);
     if (error != Error::ErrorCode::OK)
     {
         return error;
@@ -41,7 +41,7 @@ Error::ErrorCode Asset::SaveToAsset(const std::string &filePath) const
     std::vector<uint8_t> data{};
     data.reserve(writer.GetBufferSize());
     writer.CopyToVector(data);
-    return AssetContainer::SaveToFile(filePath.c_str(),
+    return AssetContainer::SaveToFile(filePath,
                                       data,
                                       GetAssetType(),
                                       GetAssetTypeVersion(),

@@ -32,13 +32,13 @@ class DataAsset final: public Asset
          * Create a DataAsset from a KVL file
          * @param kvlPath The path to the KVL file
          */
-        [[nodiscard]] Error::ErrorCode CreateFromKvlFile(const char *kvlPath);
+        [[nodiscard]] Error::ErrorCode CreateFromKvlFile(const std::string &kvlPath);
 
         /**
          * Save this DataAsset as a KVL file
          * @param kvlFile The path to the KVL file
          */
-        [[nodiscard]] Error::ErrorCode SaveAsKvlFile(const char *kvlFile) const;
+        [[nodiscard]] Error::ErrorCode SaveAsKvlFile(const std::string &kvlFile) const;
 
     private:
         struct KvlFileHeader

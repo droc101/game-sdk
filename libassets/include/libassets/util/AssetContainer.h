@@ -9,10 +9,10 @@
 #include <libassets/asset/Asset.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/Error.h>
+#include <string>
 #include <vector>
 #include <zlib.h>
 
-// TODO replace const char * arguments with std::string &
 class AssetContainer
 {
     public:
@@ -21,6 +21,33 @@ class AssetContainer
         static constexpr uint8_t BEST_COMPRESSION = Z_BEST_COMPRESSION;
         static constexpr uint8_t FASTEST_COMPRESSION = Z_BEST_SPEED;
         static constexpr uint8_t NO_COMPRESSION = Z_NO_COMPRESSION;
+
+        [[nodiscard]] static Error::ErrorCode LoadFromFile(const std::string &filePath, AssetContainer &outAsset);
+
+        /**
+         * Create an asset file on disk
+         * @param filePath The file to save as
+         * @param data The payload data
+         * @param type The type of asset
+         * @param typeVersion The version of the asset type to store
+         * @param compressionLevel The compression level to use
+         */
+        [[nodiscard]] static Error::ErrorCode SaveToFile(const std::string &filePath,
+                                                         std::vector<uint8_t> &data,
+                                                         Asset::AssetType type,
+                                                         uint8_t typeVersion,
+                                                         uint8_t compressionLevel);
+
+        uint8_t containerVersion{};
+        Asset::AssetType type{};
+        uint8_t typeVersion{};
+        size_t size{};
+        DataReader reader{};
+    private:
+
+        static constexpr uint8_t ASSET_CONTAINER_VERSION = 2;
+        static constexpr uint32_t ASSET_CONTAINER_MAGIC = 0x454D4147; // "GAME"
+        static constexpr size_t ASSET_HEADER_SIZE = sizeof(uint32_t) + (sizeof(uint8_t) * 3) + (sizeof(size_t) * 2);
 
         [[nodiscard]] static Error::ErrorCode Decompress(std::vector<uint8_t> &asset, AssetContainer &outAsset);
 
@@ -37,30 +64,4 @@ class AssetContainer
                                                        Asset::AssetType type,
                                                        uint8_t typeVersion,
                                                        uint8_t compressionLevel);
-
-        [[nodiscard]] static Error::ErrorCode LoadFromFile(const char *filePath, AssetContainer &outAsset);
-
-        /**
-         * Create an asset file on disk
-         * @param filePath The file to save as
-         * @param data The payload data
-         * @param type The type of asset
-         * @param typeVersion The version of the asset type to store
-         * @param compressionLevel The compression level to use
-         */
-        [[nodiscard]] static Error::ErrorCode SaveToFile(const char *filePath,
-                                                         std::vector<uint8_t> &data,
-                                                         Asset::AssetType type,
-                                                         uint8_t typeVersion,
-                                                         uint8_t compressionLevel);
-
-        uint8_t containerVersion{};
-        Asset::AssetType type{};
-        uint8_t typeVersion{};
-        size_t size{};
-        DataReader reader{};
-
-        static constexpr uint8_t ASSET_CONTAINER_VERSION = 2;
-        static constexpr uint32_t ASSET_CONTAINER_MAGIC = 0x454D4147; // "GAME"
-        static constexpr size_t ASSET_HEADER_SIZE = sizeof(uint32_t) + (sizeof(uint8_t) * 3) + (sizeof(size_t) * 2);
 };

@@ -143,13 +143,13 @@ Error::ErrorCode AssetContainer::Compress(std::vector<uint8_t> &inBuffer,
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode AssetContainer::SaveToFile(const char *filePath,
+Error::ErrorCode AssetContainer::SaveToFile(const std::string &filePath,
                                             std::vector<uint8_t> &data,
                                             const Asset::AssetType type,
                                             const uint8_t typeVersion,
                                             const uint8_t compressionLevel)
 {
-    FILE *file = fopen(filePath, "wb");
+    FILE *file = fopen(filePath.c_str(), "wb");
     if (file == nullptr)
     {
         Logger::Error("Unable to open file for writing");
@@ -162,9 +162,9 @@ Error::ErrorCode AssetContainer::SaveToFile(const char *filePath,
     return e;
 }
 
-Error::ErrorCode AssetContainer::LoadFromFile(const char *filePath, AssetContainer &outAsset)
+Error::ErrorCode AssetContainer::LoadFromFile(const std::string &filePath, AssetContainer &outAsset)
 {
-    std::FILE *file = std::fopen(filePath, "rb");
+    std::FILE *file = std::fopen(filePath.c_str(), "rb");
     if (file == nullptr)
     {
         return Error::ErrorCode::FILE_NOT_FOUND;

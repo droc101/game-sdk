@@ -78,24 +78,24 @@ class TextureAsset final: public Asset
         * @param imagePath The path to the PNG
         * @return Error Code
         */
-        [[nodiscard]] Error::ErrorCode CreateFromPNG(const char *imagePath);
+        [[nodiscard]] Error::ErrorCode CreateFromPNG(const std::string &imagePath);
 
         /**
          * Create an HDR @c TextureAsset from an EXR image
          * @param imagePath The path to the EXR
          * @return Error Code
          */
-        [[nodiscard]] Error::ErrorCode CreateFromEXR(const char *imagePath);
+        [[nodiscard]] Error::ErrorCode CreateFromEXR(const std::string &imagePath);
 
         /**
          * Save this @c TextureAsset as a standard PNG image
          * @param imagePath The path to save to
          */
-        [[nodiscard]] Error::ErrorCode SaveAsPNG(const char *imagePath) const;
+        [[nodiscard]] Error::ErrorCode SaveAsPNG(const std::string &imagePath) const;
 
         /**
          * Save this @c TextureAsset as a standard EXR image
          * @param imagePath The path to save to
          */
-        [[nodiscard]] Error::ErrorCode SaveAsEXR(const char *imagePath) const;
+        [[nodiscard]] Error::ErrorCode SaveAsEXR(const std::string &imagePath) const;
 };
