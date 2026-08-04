@@ -6,7 +6,6 @@
 
 #include <cstdint>
 #include <libassets/asset/Asset.h>
-#include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <string>
@@ -19,7 +18,8 @@ class ShaderAsset final: public Asset
         {
             SHADER_KIND_FRAGMENT,
             SHADER_KIND_VERTEX,
-            SHADER_KIND_COMPUTE
+            SHADER_KIND_COMPUTE,
+            SHADER_KIND_GEOMETRY,
         };
 
         ShaderAsset() = default;
@@ -28,7 +28,6 @@ class ShaderAsset final: public Asset
 
         static constexpr std::string SHADER_ASSET_EXTENSION = "gshd";
 
-        [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
         [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
         [[nodiscard]] Error::ErrorCode SaveToBufferEx(DataWriter &writer,
                                                     bool enableOptimization,
@@ -41,18 +40,12 @@ class ShaderAsset final: public Asset
                                                    const std::string &shaderFilename = "glsl_source") const;
 
         [[nodiscard]] Error::ErrorCode Import(const std::string &filePath) override;
-        [[nodiscard]] Error::ErrorCode Export(const std::string &filePath) const override;
 
         [[nodiscard]] AssetType GetAssetType() const override;
         [[nodiscard]] uint8_t GetAssetTypeVersion() const override;
 
-        /**
-         * Get the GLSL in this ShaderAsset
-         */
-        [[nodiscard]] std::string &GetGLSL();
-
     private:
-        static constexpr uint8_t SHADER_ASSET_VERSION = 1;
+        static constexpr uint8_t SHADER_ASSET_VERSION = 2;
 
         std::string glsl;
 };

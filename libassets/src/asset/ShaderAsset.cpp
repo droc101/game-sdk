@@ -9,7 +9,6 @@
 #include <libassets/asset/Asset.h>
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/AssetContainer.h>
-#include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/ShaderCompiler.h>
@@ -27,18 +26,6 @@ uint8_t ShaderAsset::GetAssetTypeVersion() const
     return SHADER_ASSET_VERSION;
 }
 
-Error::ErrorCode ShaderAsset::LoadFromBuffer(DataReader &reader)
-{
-    kind = static_cast<ShaderKind>(reader.Read<uint8_t>());
-    const size_t glslLength = reader.Read<size_t>();
-    glsl = "";
-    reader.ReadString(glsl, glslLength);
-    // Following entries are present in the binary format but are not used for editing and therefore are not read
-    // size_t spirvSize;
-    // uint32_t[spirvSize] spirvData;
-    return Error::ErrorCode::OK;
-}
-
 Error::ErrorCode ShaderAsset::SaveToBuffer(DataWriter &writer) const
 {
     return SaveToBufferEx(writer, false);
@@ -50,9 +37,6 @@ Error::ErrorCode ShaderAsset::SaveToBufferEx(DataWriter &writer,
                                              const std::string &shaderFilename) const
 {
     writer.Write<uint8_t>(static_cast<uint8_t>(kind));
-    writer.Write<size_t>(glsl.length() + 1);
-    writer.WriteBuffer(glsl.c_str(), glsl.length());
-    writer.Write<uint8_t>(0); // null byte
     std::vector<uint32_t> spirv;
     const shaderc_shader_kind shaderKind = kind == ShaderKind::SHADER_KIND_VERTEX ? shaderc_vertex_shader
                                                                                   : shaderc_fragment_shader;
@@ -87,18 +71,6 @@ Error::ErrorCode ShaderAsset::Import(const std::string &filePath)
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode ShaderAsset::Export(const std::string &filePath) const
-{
-    std::ofstream file(filePath);
-    if (!file)
-    {
-        return Error::ErrorCode::CANT_OPEN_FILE;
-    }
-    file.write(glsl.c_str(), static_cast<std::streamsize>(glsl.length()));
-    file.close();
-    return Error::ErrorCode::OK;
-}
-
 Error::ErrorCode ShaderAsset::SaveToAssetEx(const std::string &filePath,
                                             const bool enableOptimization,
                                             std::string *errorLog,
@@ -118,9 +90,4 @@ Error::ErrorCode ShaderAsset::SaveToAssetEx(const std::string &filePath,
                                       GetAssetType(),
                                       GetAssetTypeVersion(),
                                       AssetContainer::BEST_COMPRESSION);
-}
-
-std::string &ShaderAsset::GetGLSL()
-{
-    return glsl;
 }
