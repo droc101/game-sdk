@@ -3,194 +3,107 @@
 //
 
 #include <algorithm>
-#include <cassert>
-#include <cstdint>
-#include <cstdio>
+#include <filesystem>
 #include <format>
-#include <game_sdk/DesktopInterface.h>
 #include <game_sdk/DialogFilters.h>
-#include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
 #include <imgui.h>
-#include <LanguageDefinition.h>
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
-#include <Palette.h>
-#include <SDL3/SDL_video.h>
+#include <map>
+#include <misc/cpp/imgui_stdlib.h>
 #include <string>
-#include <TextEditor.h>
-#include <Types.h>
+#include <utility>
 #include <vector>
-#include "BatchCompileWindow.h"
-#include "BatchDecompileWindow.h"
 
-struct EditorTab
+static std::vector<std::string> files;
+static std::vector<ShaderAsset::ShaderKind> types;
+
+static std::string outputFolder;
+static bool enableOptimization;
+
+static void SelectCallback(const std::vector<std::string> &paths)
 {
+    for (const std::string &file: paths)
+    {
+        if (std::ranges::find(files, file) == files.end())
+        {
+            files.emplace_back(file);
+            ShaderAsset::ShaderKind kind = ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT;
+            if (file.ends_with(".frag") || file.ends_with("_f.glsl"))
+            {
+                kind = ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT;
+            } else if (file.ends_with(".vert") || file.ends_with("_v.glsl"))
+            {
+                kind = ShaderAsset::ShaderKind::SHADER_KIND_VERTEX;
+            } else if (file.ends_with(".comp") || file.ends_with("_c.glsl"))
+            {
+                kind = ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE;
+            } else if (file.ends_with(".geom") || file.ends_with("_g.glsl"))
+            {
+                kind = ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY;
+            }
+            types.emplace_back(kind);
+        }
+    }
+}
+
+static void OutPathCallback(const std::string &path)
+{
+    outputFolder = path;
+}
+
+static Error::ErrorCode Execute()
+{
+    if (!std::filesystem::is_directory(outputFolder))
+    {
+        return Error::ErrorCode::INVALID_DIRECTORY;
+    }
+
+    for (size_t i = 0; i < files.size(); i++)
+    {
+        const std::string &file = files.at(i);
+        const std::string filename = std::filesystem::path(file).stem().string();
+        const ShaderAsset::ShaderKind kind = types.at(i);
         ShaderAsset shader;
-        TextEditor editor;
-        std::string path;
-        bool modified;
-        bool enableOptimization;
-};
-
-static std::vector<EditorTab> tabs{};
-static size_t selectedTab = 0;
-
-static bool showWhitespaces = false;
-static bool syntaxHighlighting = true;
-
-static void ThemeChanged()
-{
-    bool dark = true;
-    if (Options::Get().theme == Options::Theme::SYSTEM)
-    {
-        if (SDL_GetSystemTheme() == SDL_SYSTEM_THEME_LIGHT)
+        Error::ErrorCode e = shader.Import(file);
+        if (e != Error::ErrorCode::OK)
         {
-            dark = false;
+            return e;
         }
-    } else if (Options::Get().theme == Options::Theme::LIGHT)
-    {
-        dark = false;
-    }
-
-    for (EditorTab &tab: tabs)
-    {
-        tab.editor.SetColorizerEnable(syntaxHighlighting);
-        tab.editor.SetShowWhitespaces(showWhitespaces);
-        if (dark)
+        shader.kind = kind;
+        std::string suffix;
+        switch (shader.kind)
         {
-            tab.editor.SetPalette(GetDarkPalette());
-        } else
+            case ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT:
+                suffix = "f";
+                break;
+            case ShaderAsset::ShaderKind::SHADER_KIND_VERTEX:
+                suffix = "v";
+                break;
+            case ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE:
+                suffix = "c";
+                break;
+            case ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY:
+                suffix = "g";
+                break;
+        }
+        e = shader.SaveToAssetEx(std::format("{}/{}_{}.{}",
+                                             outputFolder,
+                                             filename,
+                                             suffix,
+                                             ShaderAsset::SHADER_ASSET_EXTENSION),
+                                 enableOptimization,
+                                 nullptr,
+                                 filename);
+        if (e != Error::ErrorCode::OK)
         {
-            tab.editor.SetPalette(GetLightPalette());
+            return e;
         }
     }
-}
 
-static void AddTab(const ShaderAsset &shader, const std::string &path)
-{
-    // TODO prevent opening the same file twice
-    tabs.push_back({
-        .shader = shader,
-        .editor = TextEditor(),
-        .path = path,
-        .modified = false,
-    });
-    EditorTab &tab = tabs.back();
-    tab.editor.SetLanguageDefinition(LanguageDefinition::GLSL());
-    tab.editor.SetTabSize(4);
-    tab.editor.SetReadOnly(false);
-    tab.editor.SetText(tab.shader.GetGLSL());
-    ThemeChanged();
-}
-
-static void OpenGshdFiles(const std::vector<std::string> &paths)
-{
-    for (const std::string &path: paths)
-    {
-        ShaderAsset shader{};
-        const Error::ErrorCode errorCode = shader.LoadFromAsset(path);
-        if (errorCode != Error::ErrorCode::OK)
-        {
-            SDKWindow::Get().ErrorMessage(std::format("Failed to open the shader!\n{}", errorCode));
-            return;
-        }
-        AddTab(shader, path);
-    }
-}
-
-static void ImportGLSLFiles(const std::vector<std::string> &paths)
-{
-    for (const std::string &path: paths)
-    {
-        ShaderAsset shader{};
-        const Error::ErrorCode errorCode = shader.Import(path);
-        if (errorCode != Error::ErrorCode::OK)
-        {
-            SDKWindow::Get().ErrorMessage(std::format("Failed to import the shader!\n{}", errorCode));
-            return;
-        }
-        AddTab(shader, "");
-    }
-}
-
-static void SaveGshd(const std::string &path)
-{
-    EditorTab &tab = tabs.at(selectedTab);
-    tab.shader.GetGLSL() = tab.editor.GetText();
-    std::string errorLog;
-    const Error::ErrorCode errorCode = tab.shader.SaveToAssetEx(path, tab.enableOptimization, &errorLog, path);
-    if (errorCode != Error::ErrorCode::OK)
-    {
-        SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}\n{}", errorCode, errorLog));
-    } else
-    {
-        tab.modified = false;
-    }
-}
-
-static void ExportGlsl(const std::string &path)
-{
-    EditorTab &tab = tabs.at(selectedTab);
-    tab.shader.GetGLSL() = tab.editor.GetText();
-    const Error::ErrorCode errorCode = tab.shader.Export(path);
-    if (errorCode != Error::ErrorCode::OK)
-    {
-        SDKWindow::Get().ErrorMessage(std::format("Failed to export the shader!\n{}", errorCode));
-    }
-}
-
-static void RenderTab(EditorTab &tab)
-{
-    const ImVec2 &availableSize = ImGui::GetContentRegionAvail();
-    const ImVec2 cursorPos = ImGui::GetCursorPos();
-
-    constexpr float SIDEBAR_WIDTH = 150.0f;
-    const float imageWidth = availableSize.x - SIDEBAR_WIDTH - 8.0f;
-
-    ImGui::PushFont(SDKWindow::Get().GetMonospaceFont(), 18);
-    tab.editor.Render("##glsl", {imageWidth, availableSize.y - 18}, true);
-    if (tab.editor.IsTextChanged())
-    {
-        tab.modified = true;
-    }
-    ImGui::PopFont();
-    const Coordinates cursor = tab.editor.GetCursorPosition();
-    ImGui::Text("Line %d Column %d", cursor.mLine + 1, cursor.mColumn + 1);
-    if (tab.editor.IsOverwrite())
-    {
-        ImGui::SameLine();
-        ImGui::Text("Overwrite");
-    }
-    ImGui::SetCursorPosY(cursorPos.y);
-    ImGui::SetCursorPosX(cursorPos.x + imageWidth + ImGui::GetStyle().WindowPadding.x);
-
-    ImGui::BeginChild("StatsPane", ImVec2(SIDEBAR_WIDTH, availableSize.y), ImGuiChildFlags_Borders);
-    {
-        ImGui::TextUnformatted("Type");
-        if (ImGui::RadioButton("Fragment", tab.shader.kind == ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT))
-        {
-            tab.shader.kind = ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT;
-        }
-        if (ImGui::RadioButton("Vertex", tab.shader.kind == ShaderAsset::ShaderKind::SHADER_KIND_VERTEX))
-        {
-            tab.shader.kind = ShaderAsset::ShaderKind::SHADER_KIND_VERTEX;
-        }
-        if (ImGui::RadioButton("Compute", tab.shader.kind == ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE))
-        {
-            tab.shader.kind = ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE;
-        }
-        if (ImGui::RadioButton("Geometry", tab.shader.kind == ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY))
-        {
-            tab.shader.kind = ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY;
-        }
-
-        ImGui::Spacing();
-        ImGui::TextUnformatted("Options");
-        (void)ImGui::Checkbox("Enable Optimization", &tab.enableOptimization);
-    }
-    ImGui::EndChild();
+    return Error::ErrorCode::OK;
 }
 
 static void Render()
@@ -203,269 +116,112 @@ static void Render()
                                               ImGuiWindowFlags_NoSavedSettings |
                                               ImGuiWindowFlags_NoBringToFrontOnFocus;
     ImGui::Begin("shdedit", nullptr, WINDOW_FLAGS);
-    bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N) || ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_T);
-    bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O);
-    bool importPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_O);
-    bool savePressed = !tabs.empty() && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S);
-    bool saveAllPressed = !tabs.empty() && ImGui::Shortcut(ImGuiMod_Alt | ImGuiMod_Shift | ImGuiKey_S);
-    bool exportPressed = !tabs.empty() && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S);
-    bool closeTabPressed = !tabs.empty() && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_W);
 
     if (ImGui::BeginMainMenuBar())
     {
         if (ImGui::BeginMenu("File"))
         {
-            newPressed |= ImGui::MenuItem("New", "Ctrl+N");
-            ImGui::Separator();
-            openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
-            importPressed |= ImGui::MenuItem("Import", "Ctrl+Shift+O");
-            savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, !tabs.empty());
-            saveAllPressed |= ImGui::MenuItem("Save All", "Alt+Shift+S", false, !tabs.empty());
-            exportPressed |= ImGui::MenuItem("Export", "Ctrl+Shift+S", false, !tabs.empty());
-            ImGui::Separator();
-            closeTabPressed |= ImGui::MenuItem("Close Tab", "Ctrl+W", false, !tabs.empty());
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
                 SDKWindow::Get().PostQuit();
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Edit"))
-        {
-            bool canUndo = !tabs.empty();
-            bool canRedo = !tabs.empty();
-            bool hasSelection = false;
-            TextEditor *editor = nullptr;
-            if (!tabs.empty())
-            {
-                editor = &tabs.at(selectedTab).editor;
-                canUndo = editor->CanUndo();
-                canRedo = editor->CanRedo();
-                hasSelection = editor->HasSelection();
-            }
-            if (ImGui::MenuItem("Undo", "Ctrl+Z", false, canUndo))
-            {
-                assert(editor);
-                editor->Undo();
-            }
-            if (ImGui::MenuItem("Redo", "Ctrl+Shift+Z", false, canRedo))
-            {
-                assert(editor);
-                editor->Redo();
-            }
-            ImGui::Separator();
-            if (ImGui::MenuItem("Cut", "Ctrl+X", false, !tabs.empty() && hasSelection))
-            {
-                assert(editor);
-                editor->Cut();
-            }
-            if (ImGui::MenuItem("Copy", "Ctrl+C", false, !tabs.empty() && hasSelection))
-            {
-                assert(editor);
-                editor->Copy();
-            }
-            if (ImGui::MenuItem("Paste", "Ctrl+V", false, !tabs.empty()))
-            {
-                assert(editor);
-                editor->Paste();
-            }
-            ImGui::Separator();
-            if (ImGui::MenuItem("Select All", "Ctrl+A", false, !tabs.empty()))
-            {
-                assert(editor);
-                editor->SelectAll();
-            }
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("View"))
-        {
-            if (ImGui::MenuItem("Show Whitespaces", "", &showWhitespaces))
-            {
-                ThemeChanged();
-            }
-            if (ImGui::MenuItem("Syntax Highlighting", "", &syntaxHighlighting))
-            {
-                ThemeChanged();
-            }
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("Tools"))
-        {
-            if (ImGui::MenuItem("Batch Compile"))
-            {
-                BatchCompileWindow::Show();
-            }
-            if (ImGui::MenuItem("Batch Decompile"))
-            {
-                BatchDecompileWindow::Show();
-            }
-            ImGui::Separator();
-            ImGui::EndMenu();
-        }
         SharedMgr::Get().SharedMenuUI("shdedit");
         ImGui::EndMainMenuBar();
     }
 
-    if (openPressed)
+    ImGui::Text("Output Folder");
+    ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
+    ImGui::InputText("##outFolder", &outputFolder);
+    ImGui::SameLine();
+    if (ImGui::Button("...", ImVec2(40, 0)))
     {
-        SDKWindow::Get().OpenMultiFileDialog(OpenGshdFiles, DialogFilters::GSHD_FILTERS);
-    } else if (importPressed)
+        SDKWindow::Get().OpenFolderDialog(OutPathCallback);
+    }
+
+    (void)ImGui::Checkbox("Enable Optimization", &enableOptimization);
+
+    ImGui::Text("Source Files");
+    ImGui::SameLine();
+    ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - 60 - ImGui::GetStyle().WindowPadding.x, 0));
+    ImGui::SameLine();
+    if (ImGui::Button("Add##src", ImVec2(60, 0)))
     {
-        SDKWindow::Get().OpenMultiFileDialog(ImportGLSLFiles, DialogFilters::GLSL_FILTERS);
-    } else if (savePressed)
+        SDKWindow::Get().OpenMultiFileDialog(SelectCallback, DialogFilters::GLSL_FILTERS);
+    }
+    if (ImGui::BeginChild("##picker", ImVec2(-1, -26), ImGuiChildFlags_Borders, 0))
     {
-        EditorTab &tab = tabs.at(selectedTab);
-        if (tab.path.empty())
+        const ImVec2 availSize = ImGui::GetContentRegionAvail();
+        if (ImGui::BeginTable("fileTable", 3, ImGuiTableFlags_ScrollY, availSize))
         {
-            SDKWindow::Get().SaveFileDialog(SaveGshd, DialogFilters::GSHD_FILTERS);
-        } else
-        {
-            tab.shader.GetGLSL() = tab.editor.GetText();
-            std::string errorLog;
-            const Error::ErrorCode errorCode = tab.shader.SaveToAssetEx(tab.path,
-                                                                        tab.enableOptimization,
-                                                                        &errorLog,
-                                                                        tab.path);
-            if (errorCode != Error::ErrorCode::OK)
+            ImGui::TableSetupColumn("Path", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthFixed);
+            ImGui::TableSetupColumn("",
+                                    ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthFixed,
+                                    40 + ImGui::GetStyle().WindowPadding.x);
+            ImGui::TableHeadersRow();
+            for (size_t i = 0; i < files.size(); i++)
             {
-                SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}\n{}", errorCode, errorLog));
-            } else
-            {
-                tab.modified = false;
-            }
-        }
-    } else if (saveAllPressed)
-    {
-        for (EditorTab &tab: tabs)
-        {
-            if (!tab.path.empty())
-            {
-                tab.shader.GetGLSL() = tab.editor.GetText();
-                std::string errorLog;
-                const Error::ErrorCode errorCode = tab.shader.SaveToAssetEx(tab.path,
-                                                                            tab.enableOptimization,
-                                                                            &errorLog,
-                                                                            tab.path);
-                if (errorCode != Error::ErrorCode::OK)
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::PushItemWidth(-1);
+                ImGui::InputText(std::format("##path_{}", i).c_str(), &files.at(i));
+                ImGui::TableNextColumn();
+                const std::map<ShaderAsset::ShaderKind, std::string> typeNames = {
+                    {ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT, "Fragment"},
+                    {ShaderAsset::ShaderKind::SHADER_KIND_VERTEX, "Vertex"},
+                    {ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE, "Compute"},
+                    {ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY, "Geometry"},
+                };
+
+                ImGui::PushItemWidth(150);
+                if (ImGui::BeginCombo(std::format("##type{}", i).c_str(), typeNames.at(types.at(i)).c_str()))
                 {
-                    SDKWindow::Get().ErrorMessage(std::format("Failed to save the shader!\n{}\n{}",
-                                                              errorCode,
-                                                              errorLog));
-                } else
+                    for (const std::pair<const ShaderAsset::ShaderKind, std::string> &typePair: typeNames)
+                    {
+                        if (ImGui::Selectable(typePair.second.c_str(), types.at(i) == typePair.first))
+                        {
+                            types.at(i) = typePair.first;
+                        }
+                    }
+                    ImGui::EndCombo();
+                }
+                ImGui::TableNextColumn();
+                if (ImGui::Button(std::format("Del##src{}", i).c_str(), ImVec2(40, 0)))
                 {
-                    tab.modified = false;
+                    files.erase(files.begin() + static_cast<ptrdiff_t>(i));
+                    types.erase(types.begin() + static_cast<ptrdiff_t>(i));
                 }
             }
+            ImGui::EndTable();
         }
-    } else if (exportPressed)
+
+        ImGui::EndChild();
+    }
+
+    if (ImGui::Button("Compile", ImVec2(-1, 0)))
     {
-        SDKWindow::Get().SaveFileDialog(ExportGlsl, DialogFilters::GLSL_FILTERS);
-    } else if (newPressed)
-    {
-        AddTab(ShaderAsset(), "");
-    } else if (closeTabPressed)
-    {
-        tabs.erase(tabs.begin() + selectedTab);
-        if (!tabs.empty())
+        Error::ErrorCode e = Execute();
+        if (e == Error::ErrorCode::OK)
         {
-            selectedTab = std::ranges::clamp(selectedTab, static_cast<size_t>(0), tabs.size() - 1);
+            SDKWindow::Get().InfoMessage("Successfully compiled", "");
         } else
         {
-            selectedTab = 0;
+            SDKWindow::Get().ErrorMessage(std::format("Failed to compile shaders!\n{}", e));
         }
     }
-
-    if (ImGui::BeginTabBar("editorTabs",
-                           ImGuiTabBarFlags_AutoSelectNewTabs |
-                                   ImGuiTabBarFlags_Reorderable |
-                                   ImGuiTabBarFlags_FittingPolicyMixed))
-    {
-        if (ImGui::TabItemButton(" + ", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip))
-        {
-            AddTab(ShaderAsset(), "");
-        }
-
-        size_t indexToClose = SIZE_MAX;
-        for (size_t i = 0; i < tabs.size(); i++)
-        {
-            EditorTab &tab = tabs.at(i);
-            std::string title = "Untitled";
-
-            if (!tab.path.empty())
-            {
-#ifdef WIN32
-                constexpr char const *PATH_SEP = "\\";
-#else
-                constexpr char const *PATH_SEP = "/";
-#endif
-                title = tab.path.substr(tab.path.find_last_of(PATH_SEP) + 1);
-            }
-            title += std::format("##{}", i);
-
-            bool open = true;
-            ImGuiTabItemFlags flags = ImGuiTabItemFlags_None;
-            if (tab.modified)
-            {
-                flags |= ImGuiTabItemFlags_UnsavedDocument;
-            }
-            if (ImGui::BeginTabItem(title.c_str(), &open, flags))
-            {
-                selectedTab = i;
-                RenderTab(tab);
-                ImGui::EndTabItem();
-            }
-            if (!open)
-            {
-                indexToClose = i;
-            }
-        }
-
-        if (indexToClose != SIZE_MAX)
-        {
-            tabs.erase(tabs.begin() + indexToClose);
-        }
-
-        ImGui::EndTabBar();
-    }
-
     ImGui::End();
-
-    BatchCompileWindow::Render();
-    BatchDecompileWindow::Render();
 }
 
 int main(const int argc, char **argv)
 {
-    if (!SDKWindow::Get().Init("GAME SDK Shader Editor", {1366, 768}))
+    if (!SDKWindow::Get().Init("GAME SDK Shader Editor", {800, 600}))
     {
         return -1;
     }
 
     SDKWindow::Get().SetWindowIcon("shdedit");
-
-    SDKWindow::Get().SetThemeChangeCallback(ThemeChanged);
-
-    ThemeChanged();
-
-    const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gshd"});
-    if (!openPath.empty())
-    {
-        OpenGshdFiles({openPath});
-    } else
-    {
-        const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc,
-                                                                                argv,
-                                                                                {
-                                                                                    ".glsl",
-                                                                                    ".frag",
-                                                                                    ".vert",
-                                                                                    ".comp",
-                                                                                });
-        if (!importPath.empty())
-        {
-            ImportGLSLFiles({importPath});
-        }
-    }
 
     SDKWindow::Get().MainLoop(Render);
 

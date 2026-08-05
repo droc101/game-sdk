@@ -310,6 +310,7 @@ void SelectTool::ProcessVertexHover(const Viewport &viewport,
                 if (sector.points.size() > 3)
                 {
                     sector.points.erase(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex));
+                    selectionType = ItemType::SECTOR;
                 } else
                 {
                     MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + static_cast<int64_t>(sectorIndex));

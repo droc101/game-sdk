@@ -3,12 +3,7 @@ project(shdedit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(shdedit shdedit.cpp
-        BatchCompileWindow.cpp
-        BatchCompileWindow.h
-        BatchDecompileWindow.cpp
-        BatchDecompileWindow.h
-        $<$<BOOL:${WIN32}>:shdedit.rc>)
+add_executable(shdedit shdedit.cpp $<$<BOOL:${WIN32}>:shdedit.rc>)
 
 set_target_properties(shdedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 
