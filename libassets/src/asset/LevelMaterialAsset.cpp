@@ -22,6 +22,7 @@ uint8_t LevelMaterialAsset::GetAssetTypeVersion() const
 
 Error::ErrorCode LevelMaterialAsset::LoadFromBuffer(DataReader &reader)
 {
+    texture.clear();
     reader.ReadStringWithSize(texture);
     baseScale = reader.ReadVec2();
     shader = static_cast<Material::MaterialShader>(reader.Read<uint8_t>());
