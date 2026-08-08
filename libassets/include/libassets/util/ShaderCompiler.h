@@ -53,7 +53,7 @@ class ShaderCompiler
 
         std::string glslSource;
 
-        std::string shaderName;
+        std::string shaderPath;
 
         std::string errorMessage;
 };

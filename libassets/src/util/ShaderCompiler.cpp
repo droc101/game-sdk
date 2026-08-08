@@ -62,7 +62,7 @@ ShaderCompiler::ShaderCompiler(std::string glslSource,
                                const bool optimize):
     shaderKind(shaderKind),
     glslSource(std::move(glslSource)),
-    shaderName(std::move(shaderName))
+    shaderPath(std::move(shaderName))
 {
     options.SetSourceLanguage(shaderc_source_language_glsl);
     options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2);
@@ -73,6 +73,7 @@ ShaderCompiler::ShaderCompiler(std::string glslSource,
     {
         options.SetGenerateDebugInfo();
     }
+    options.SetIncluder(std::make_unique<SDKIncluder>());
 }
 
 ShaderCompiler::ShaderCompiler(const std::filesystem::path &path,
@@ -86,7 +87,6 @@ ShaderCompiler::ShaderCompiler(const std::filesystem::path &path,
     glslFile.close();
 
     this->glslSource = glsl.str();
-    options.SetIncluder(std::make_unique<SDKIncluder>());
 }
 
 Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
@@ -100,7 +100,7 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
     const shaderc::Compiler compiler{};
     const shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(glslSource,
                                                                            shaderKind,
-                                                                           shaderName.c_str(),
+                                                                           shaderPath.c_str(),
                                                                            "main",
                                                                            options);
     if (result.GetCompilationStatus() != shaderc_compilation_status_success)

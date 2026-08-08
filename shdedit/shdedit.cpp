@@ -96,7 +96,7 @@ static Error::ErrorCode Execute()
                                              ShaderAsset::SHADER_ASSET_EXTENSION),
                                  enableOptimization,
                                  nullptr,
-                                 filename);
+                                 file);
         if (e != Error::ErrorCode::OK)
         {
             return e;
