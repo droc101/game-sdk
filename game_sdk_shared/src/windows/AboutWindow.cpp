@@ -3,15 +3,14 @@
 //
 
 #include <format>
-#include <fstream>
 #include <game_sdk/SDKWindow.h>
 #include <game_sdk/windows/AboutWindow.h>
 #include <imgui.h>
 #include <libassets/libassets.h>
+#include <libassets/util/FileIo.h>
 #include <libassets/util/SearchPathManager.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <ranges>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -28,10 +27,13 @@ void AboutWindow::Show()
         const std::vector<std::string> paths = SearchPathManager::ScanFolder("assets/licenses", "", true);
         for (const std::string &path: paths)
         {
-            const std::ifstream file = std::ifstream("assets/licenses/" + path);
-            std::stringstream buffer{};
-            buffer << file.rdbuf();
-            thirdPartyComponents[path] = buffer.str();
+            std::string text;
+            const Error::ErrorCode readError = FileIo::ReadFileToString("assets/licenses/" + path, text);
+            if (readError != Error::ErrorCode::OK)
+            {
+                continue;
+            }
+            thirdPartyComponents[path] = text;
         }
         selectedComponent = std::views::keys(thirdPartyComponents).front();
     }

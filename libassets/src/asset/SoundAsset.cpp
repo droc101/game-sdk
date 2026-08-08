@@ -5,14 +5,12 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <fstream>
-#include <ios>
 #include <libassets/asset/Asset.h>
 #include <libassets/asset/SoundAsset.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
-#include <ostream>
+#include <libassets/util/FileIo.h>
 #include <string>
 #include <vector>
 
@@ -53,26 +51,12 @@ Error::ErrorCode SoundAsset::SaveToBuffer(DataWriter &writer) const
 Error::ErrorCode SoundAsset::Import(const std::string &filePath)
 {
     Reset();
-    std::ifstream file(filePath, std::ios::binary | std::ios::ate);
-    const std::ifstream::pos_type fileSize = file.tellg();
-    file.seekg(0, std::ios::beg);
-    wavData.resize(fileSize);
-    file.read(reinterpret_cast<char *>(wavData.data()), fileSize);
-    file.close();
-    return Error::ErrorCode::OK;
+    return FileIo::ReadFileToBuffer(filePath, wavData);
 }
 
 Error::ErrorCode SoundAsset::Export(const std::string &filePath) const
 {
-    std::ofstream file(filePath);
-    if (!file)
-    {
-        return Error::ErrorCode::CANT_OPEN_FILE;
-    }
-    file.write(reinterpret_cast<const std::ostream::char_type *>(wavData.data()),
-               static_cast<std::streamsize>(wavData.size()));
-    file.close();
-    return Error::ErrorCode::OK;
+    return FileIo::WriteBufferToFile(filePath, wavData);
 }
 
 const std::vector<uint8_t> &SoundAsset::GetData() const

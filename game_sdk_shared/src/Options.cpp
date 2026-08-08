@@ -3,12 +3,11 @@
 //
 
 #include <filesystem>
-#include <fstream>
 #include <game_sdk/Options.h>
+#include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
 #include <nlohmann/json.hpp>
 #include <SDL3/SDL_filesystem.h>
-#include <sstream>
 #include <string>
 
 Options &Options::Get()
@@ -21,24 +20,21 @@ Options &Options::Get()
 void Options::Load()
 {
     const std::string path = SDL_GetBasePath() + std::string("sdk_options.json");
-    std::ifstream file(path);
-    if (!file.is_open())
+    std::string jsonString;
+    Error::ErrorCode readError = FileIo::ReadFileToString(path, jsonString);
+    if (readError != Error::ErrorCode::OK)
     {
-        Logger::Error("Could not open file {}", path.data());
+        Logger::Error("Could not open options file {}: {}", path.data(), readError);
         LoadDefault();
         return;
     }
-    std::ostringstream ss;
-    ss << file.rdbuf();
-    const std::string j = ss.str();
-    if (j.empty())
+    if (jsonString.empty())
     {
         Logger::Warning("options.json was empty, loading defaults.");
         LoadDefault();
-        file.close();
         return;
     }
-    const nlohmann::json savedata = nlohmann::json::parse(j);
+    const nlohmann::json savedata = nlohmann::json::parse(jsonString);
     if (savedata.is_discarded())
     {
         Logger::Error("Failed to parse options JSON, loading defaults.");
@@ -51,7 +47,6 @@ void Options::Load()
         defaultMaterial = savedata.value("default_material", DEFAULT_MATERIAL);
         theme = savedata.value("theme", Theme::SYSTEM);
     }
-    file.close();
 }
 
 void Options::LoadDefault()
@@ -73,14 +68,11 @@ void Options::Save()
         {"game_config_path", gameConfigPath},
     };
     const std::string path = SDL_GetBasePath() + std::string("sdk_options.json");
-    std::ofstream file(path);
-    if (!file.is_open())
+    const Error::ErrorCode writeError = FileIo::WriteStringToFile(path, savedata.dump(4));
+    if (writeError != Error::ErrorCode::OK)
     {
-        Logger::Error("Could not open file {}", path);
-        return;
+        Logger::Error("Failed to write options to \"{}\": {}", path, writeError);
     }
-    file << savedata.dump(4); // a shift operator should not write to a stream this is not ok
-    file.close();
 }
 
 std::string Options::GetAssetsPath() const

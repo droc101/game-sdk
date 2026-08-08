@@ -4,16 +4,13 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <fstream>
-#include <ios>
 #include <libassets/asset/Asset.h>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/Sector.h>
 #include <libassets/util/Error.h>
-#include <ostream>
-#include <sstream>
+#include <libassets/util/FileIo.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -46,20 +43,17 @@ void MapAsset::Reset()
 
 Error::ErrorCode MapAsset::Import(const std::string &filePath)
 {
-    std::ifstream file(filePath, std::ios::binary | std::ios::ate);
-    std::ostringstream ss;
-    file.seekg(0, std::ios::beg);
-    ss << file.rdbuf();
-    const std::string j = ss.str();
-    const nlohmann::ordered_json json = nlohmann::ordered_json::parse(j);
+    std::string jsonString;
+    const Error::ErrorCode readError = FileIo::ReadFileToString(filePath, jsonString);
+    if (readError != Error::ErrorCode::OK)
+    {
+        return readError;
+    }
+    const nlohmann::ordered_json json = nlohmann::ordered_json::parse(jsonString);
     if (json.is_discarded())
     {
-        file.close();
-        // printf("File %s is not valid JSON\n", path.c_str());
         return Error::ErrorCode::INCORRECT_FORMAT;
     }
-    file.close();
-
     if (json.value("version", 0) != MAP_JSON_VERSION)
     {
         return Error::ErrorCode::INCORRECT_VERSION;
@@ -109,14 +103,7 @@ Error::ErrorCode MapAsset::Export(const std::string &filePath) const
         src["actors"].push_back(actor.GenerateJson());
     }
 
-    std::ofstream file(filePath);
-    if (!file)
-    {
-        return Error::ErrorCode::CANT_OPEN_FILE;
-    }
-    file << src.dump(4);
-    file.close();
-    return Error::ErrorCode::OK;
+    return FileIo::WriteStringToFile(filePath, src.dump(4));
 }
 
 Actor *MapAsset::GetActor(const std::string &name)

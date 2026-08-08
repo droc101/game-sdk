@@ -6,8 +6,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
-#include <fstream>
 #include <libassets/util/Error.h>
+#include <libassets/util/FileIo.h>
+#include <libassets/util/Logger.h>
 #include <libassets/util/ShaderCompiler.h>
 #include <list>
 #include <memory>
@@ -15,7 +16,6 @@
 #include <shaderc/shaderc.h>
 #include <shaderc/shaderc.hpp>
 #include <shaderc/status.h>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -27,11 +27,13 @@ shaderc_include_result *ShaderCompiler::SDKIncluder::GetInclude(const char *requ
 {
     std::filesystem::path requestingSourcePath{requestingSource};
     const std::filesystem::path requestedSourcePath = requestingSourcePath.remove_filename().append(requestedSource);
-    std::ifstream glslFile(requestedSourcePath);
-    std::stringstream glsl;
-    glsl << glslFile.rdbuf();
-    glslFile.close();
-    const std::string glslString{glsl.str()};
+    std::string glslString{};
+    const Error::ErrorCode readError = FileIo::ReadFileToString(requestedSourcePath, glslString);
+    if (readError != Error::ErrorCode::OK)
+    {
+        Logger::Error("Failed to read include file \"{}\": {}", requestedSource, readError);
+        glslString = "";
+    }
     includeResults.emplace_back(strdup(requestedSourcePath.string().c_str()),
                                 requestedSourcePath.string().length(),
                                 strdup(glslString.c_str()),
@@ -81,12 +83,7 @@ ShaderCompiler::ShaderCompiler(const std::filesystem::path &path,
                                const bool optimize):
     ShaderCompiler("", shaderKind, path.string(), optimize)
 {
-    std::ifstream glslFile(path);
-    std::stringstream glsl;
-    glsl << glslFile.rdbuf();
-    glslFile.close();
-
-    this->glslSource = glsl.str();
+    FileIo::ReadFileToString(path, this->glslSource);
 }
 
 Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
