@@ -32,6 +32,11 @@
 using namespace OPENEXR_IMF_NAMESPACE;
 using namespace IMATH_NAMESPACE;
 
+TextureAsset::TextureAsset()
+{
+    Reset();
+}
+
 Asset::AssetType TextureAsset::GetAssetType() const
 {
     return AssetType::ASSET_TYPE_TEXTURE;
@@ -42,8 +47,20 @@ uint8_t TextureAsset::GetAssetTypeVersion() const
     return TEXTURE_ASSET_VERSION;
 }
 
+void TextureAsset::Reset()
+{
+    width = 0;
+    height = 0;
+    filter = true;
+    repeat = true;
+    mipmaps = true;
+    pixelFormat = PixelFormat::RGBA8;
+    pixelData = {};
+}
+
 Error::ErrorCode TextureAsset::LoadFromBuffer(DataReader &reader)
 {
+    Reset();
     width = reader.Read<size_t>();
     height = reader.Read<size_t>();
     filter = reader.Read<uint8_t>() != 0;
@@ -90,6 +107,7 @@ Error::ErrorCode TextureAsset::CreateFromPNG(const string &imagePath)
         Logger::Error("stbi_load failed: {}", stbi_failure_reason());
         return Error::ErrorCode::UNKNOWN;
     }
+    Reset();
     width = pngWidth;
     height = pngHeight;
     pixelFormat = PixelFormat::RGBA8;
@@ -105,6 +123,7 @@ Error::ErrorCode TextureAsset::CreateFromPNG(const string &imagePath)
 
 Error::ErrorCode TextureAsset::CreateFromEXR(const string &imagePath)
 {
+    Reset();
     RgbaInputFile file = RgbaInputFile(imagePath.c_str());
     const Box2i dw = file.dataWindow();
     width = dw.max.x - dw.min.x + 1;
@@ -118,6 +137,7 @@ Error::ErrorCode TextureAsset::CreateFromEXR(const string &imagePath)
 
 void TextureAsset::CreateMissingTexture()
 {
+    Reset();
     width = 64;
     height = 64;
     pixelFormat = PixelFormat::RGBA8;
@@ -142,6 +162,7 @@ void TextureAsset::CreateMissingTexture()
 
 Error::ErrorCode TextureAsset::LoadFromAsset(const std::string &filePath)
 {
+    Reset();
     AssetContainer asset;
     const Error::ErrorCode error = AssetContainer::LoadFromFile(filePath.c_str(), asset);
     if (error != Error::ErrorCode::OK)

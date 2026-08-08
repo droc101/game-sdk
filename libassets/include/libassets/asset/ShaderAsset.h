@@ -22,11 +22,13 @@ class ShaderAsset final: public Asset
             SHADER_KIND_GEOMETRY,
         };
 
-        ShaderAsset() = default;
+        ShaderAsset();
 
-        ShaderKind kind = ShaderKind::SHADER_KIND_FRAGMENT;
+        ShaderKind kind;
 
         static constexpr std::string SHADER_ASSET_EXTENSION = "gshd";
+
+        void Reset() override;
 
         [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
         [[nodiscard]] Error::ErrorCode SaveToBufferEx(DataWriter &writer,

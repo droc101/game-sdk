@@ -10,6 +10,11 @@
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 
+LevelMaterialAsset::LevelMaterialAsset()
+{
+    Reset();
+}
+
 Asset::AssetType LevelMaterialAsset::GetAssetType() const
 {
     return AssetType::ASSET_TYPE_LEVEL_MATERIAL;
@@ -20,8 +25,20 @@ uint8_t LevelMaterialAsset::GetAssetTypeVersion() const
     return LEVEL_MATERIAL_ASSET_VERSION;
 }
 
+void LevelMaterialAsset::Reset()
+{
+    texture = "";
+    baseScale = {1, 1};
+    shader = Material::MaterialShader::SHADER_SHADED;
+    soundClass = SoundClass::DEFAULT;
+    compileInvisible = false;
+    compileNoClip = false;
+    emissive = 0;
+}
+
 Error::ErrorCode LevelMaterialAsset::LoadFromBuffer(DataReader &reader)
 {
+    Reset();
     reader.ReadStringWithSize(texture);
     baseScale = reader.ReadVec2();
     shader = static_cast<Material::MaterialShader>(reader.Read<uint8_t>());

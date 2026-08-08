@@ -20,6 +20,11 @@
 #include <string>
 #include <vector>
 
+ModelAsset::ModelAsset()
+{
+    Reset();
+}
+
 Asset::AssetType ModelAsset::GetAssetType() const
 {
     return AssetType::ASSET_TYPE_MODEL;
@@ -30,8 +35,21 @@ uint8_t ModelAsset::GetAssetTypeVersion() const
     return MODEL_ASSET_VERSION;
 }
 
+void ModelAsset::Reset()
+{
+    materials = {};
+    skins = {};
+    lods = {};
+
+    collisionModelType = CollisionModelType::NONE;
+    boundingBox = BoundingBox();
+    convexHulls = {};
+    staticCollisionMesh = StaticCollisionMesh();
+}
+
 Error::ErrorCode ModelAsset::LoadFromBuffer(DataReader &reader)
 {
+    Reset();
     const uint32_t materialCount = reader.Read<uint32_t>();
     const uint32_t materialsPerSkin = reader.Read<uint32_t>();
     const uint32_t skinCount = reader.Read<uint32_t>();
@@ -134,6 +152,7 @@ Error::ErrorCode ModelAsset::Import(const std::string &filePath)
     {
         return lodCode;
     }
+    Reset();
     const ModelLod &lod = lods.back();
     const uint32_t materialCount = lod.indexCounts.size();
     skins.emplace_back(materialCount);

@@ -27,11 +27,13 @@ class TextureAsset final: public Asset
         /**
          * Please use @c TextureAsset::Create* instead.
          */
-        TextureAsset() = default;
+        TextureAsset();
 
         bool filter = false;
         bool repeat = true;
         bool mipmaps = true;
+
+        void Reset() override;
 
         [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
         [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;

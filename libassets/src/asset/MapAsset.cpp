@@ -18,6 +18,11 @@
 #include <unordered_map>
 #include <vector>
 
+MapAsset::MapAsset()
+{
+    Reset();
+}
+
 Asset::AssetType MapAsset::GetAssetType() const
 {
     return AssetType::ASSET_TYPE_LEVEL;
@@ -26,6 +31,17 @@ Asset::AssetType MapAsset::GetAssetType() const
 uint8_t MapAsset::GetAssetTypeVersion() const
 {
     return MAP_ASSET_VERSION;
+}
+
+void MapAsset::Reset()
+{
+    sectors = {};
+    actors = {};
+    discordRpcIconId = "logo";
+    discordRpcMapName = "Unnamed Map";
+    hasSky = true;
+    skyTexture = "texture/level/sky_test.gtex";
+    lightCubeLuxelsPerUnit = 4;
 }
 
 Error::ErrorCode MapAsset::Import(const std::string &filePath)
@@ -48,6 +64,9 @@ Error::ErrorCode MapAsset::Import(const std::string &filePath)
     {
         return Error::ErrorCode::INCORRECT_VERSION;
     }
+
+    Reset();
+
     discordRpcIconId = json.value("discord_rpc_icon_id", "icon");
     discordRpcMapName = json.value("discord_rpc_map_name", "Unnamed Map");
 

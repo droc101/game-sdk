@@ -18,26 +18,28 @@ class LevelMaterialAsset final: public Asset
     public:
         enum class SoundClass : uint8_t
         {
-            DEFAULT
+            DEFAULT,
         };
 
-        LevelMaterialAsset() = default;
+        LevelMaterialAsset();
 
         /// The texture this material uses
-        std::string texture{};
+        std::string texture;
         /// The base scale of this material
-        glm::vec2 baseScale = {1, 1};
+        glm::vec2 baseScale;
         /// The shader this material uses
-        Material::MaterialShader shader = Material::MaterialShader::SHADER_SHADED;
+        Material::MaterialShader shader;
         /// The sound class this material uses
-        SoundClass soundClass = SoundClass::DEFAULT;
+        SoundClass soundClass;
         /// Whether to skip generating visual geometry for faces with this material
-        bool compileInvisible = false;
+        bool compileInvisible;
         // Whether to skip generating collision geometry for faces with this material
-        bool compileNoClip = false;
+        bool compileNoClip;
         /// The strength of emission by this material
         /// The color of each luxel this surface maps to will be multipled by this value to determine how much light is emitted
-        float emissive = 0;
+        float emissive;
+
+        void Reset() override;
 
         [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
         [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;

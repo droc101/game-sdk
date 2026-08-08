@@ -5,40 +5,41 @@
 #pragma once
 
 #include <cstdint>
+#include <libassets/asset/Asset.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Sector.h>
 #include <libassets/util/Error.h>
 #include <string>
 #include <vector>
 
-#include "Asset.h"
-
 class MapAsset final: public Asset
 {
     public:
-        MapAsset() = default;
+        MapAsset();
 
         /// The sectors in this map
-        std::vector<Sector> sectors{};
+        std::vector<Sector> sectors;
         /// The actors in this map
-        std::vector<Actor> actors{};
+        std::vector<Actor> actors;
 
         /// The ID of the icon for this map in Discord Rich Presence
-        std::string discordRpcIconId = "logo";
-        /// The display name of this map in Discord Rick Presence
-        std::string discordRpcMapName = "Unnamed Map";
+        std::string discordRpcIconId;
+        /// The display name of this map in Discord Rich Presence
+        std::string discordRpcMapName;
 
         /// Whether this map has a sky
-        bool hasSky = true;
+        bool hasSky;
         /// The texture of the sky in this level
-        std::string skyTexture = "texture/level/sky_test.gtex";
+        std::string skyTexture;
 
-        uint8_t lightCubeLuxelsPerUnit = 4;
+        uint8_t lightCubeLuxelsPerUnit;
 
         static constexpr uint8_t MAP_ASSET_VERSION = 1;
         static constexpr uint8_t MAP_JSON_VERSION = 1;
 
         static constexpr float MAP_MAX_HALF_EXTENTS = 8192;
+
+        void Reset() override;
 
         [[nodiscard]] Error::ErrorCode Import(const std::string &filePath) override;
         [[nodiscard]] Error::ErrorCode Export(const std::string &filePath) const override;

@@ -20,6 +20,11 @@
 #include <string>
 #include <vector>
 
+DataAsset::DataAsset()
+{
+    Reset();
+}
+
 Asset::AssetType DataAsset::GetAssetType() const
 {
     return AssetType::ASSET_TYPE_KV_LIST;
@@ -30,8 +35,14 @@ uint8_t DataAsset::GetAssetTypeVersion() const
     return DATA_ASSET_VERSION;
 }
 
+void DataAsset::Reset()
+{
+    data = {};
+}
+
 Error::ErrorCode DataAsset::LoadFromBuffer(DataReader &reader)
 {
+    Reset();
     data = Param::ReadKvList(reader);
     return Error::ErrorCode::OK;
 }
@@ -62,6 +73,7 @@ Error::ErrorCode DataAsset::Import(const std::string &filePath)
         file.close();
         return Error::ErrorCode::INCORRECT_FORMAT;
     }
+    Reset();
     data = Param::KvListFromJson(json);
     return Error::ErrorCode::OK;
 }
@@ -114,6 +126,7 @@ Error::ErrorCode DataAsset::CreateFromKvlFile(const std::string &kvlPath)
         Logger::Error("KvlFile checksum mismatch, expected {}, got {}", header.checksum, calculatedChecksum);
         return Error::ErrorCode::INVALID_BODY;
     }
+    Reset();
     data = Param::ReadKvList(reader);
     return Error::ErrorCode::OK;
 }

@@ -16,7 +16,9 @@
 class SoundAsset final: public Asset
 {
     public:
-        SoundAsset() = default;
+        SoundAsset();
+
+        void Reset() override;
 
         [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
         [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;

@@ -16,6 +16,11 @@
 #include <string>
 #include <vector>
 
+SoundAsset::SoundAsset()
+{
+    Reset();
+}
+
 Asset::AssetType SoundAsset::GetAssetType() const
 {
     return AssetType::ASSET_TYPE_WAV;
@@ -26,8 +31,14 @@ uint8_t SoundAsset::GetAssetTypeVersion() const
     return SOUND_ASSET_VERSION;
 }
 
+void SoundAsset::Reset()
+{
+    wavData = {};
+}
+
 Error::ErrorCode SoundAsset::LoadFromBuffer(DataReader &reader)
 {
+    Reset();
     wavData.reserve(reader.TotalSize());
     reader.ReadToVector<uint8_t>(wavData, reader.TotalSize());
     return Error::ErrorCode::OK;
@@ -41,6 +52,7 @@ Error::ErrorCode SoundAsset::SaveToBuffer(DataWriter &writer) const
 
 Error::ErrorCode SoundAsset::Import(const std::string &filePath)
 {
+    Reset();
     std::ifstream file(filePath, std::ios::binary | std::ios::ate);
     const std::ifstream::pos_type fileSize = file.tellg();
     file.seekg(0, std::ios::beg);

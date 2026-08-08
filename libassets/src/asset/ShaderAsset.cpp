@@ -16,6 +16,11 @@
 #include <sstream>
 #include <vector>
 
+ShaderAsset::ShaderAsset()
+{
+    Reset();
+}
+
 Asset::AssetType ShaderAsset::GetAssetType() const
 {
     return AssetType::ASSET_TYPE_SHADER;
@@ -24,6 +29,12 @@ Asset::AssetType ShaderAsset::GetAssetType() const
 uint8_t ShaderAsset::GetAssetTypeVersion() const
 {
     return SHADER_ASSET_VERSION;
+}
+
+void ShaderAsset::Reset()
+{
+    kind = ShaderKind::SHADER_KIND_FRAGMENT;
+    glsl = "";
 }
 
 Error::ErrorCode ShaderAsset::SaveToBuffer(DataWriter &writer) const
@@ -63,6 +74,7 @@ Error::ErrorCode ShaderAsset::Import(const std::string &filePath)
     {
         return Error::ErrorCode::CANT_OPEN_FILE;
     }
+    Reset();
     file.seekg(0, std::ios::beg);
     std::stringstream buffer;
     buffer << file.rdbuf();

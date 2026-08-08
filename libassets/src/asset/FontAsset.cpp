@@ -13,6 +13,11 @@
 #include <string>
 #include <vector>
 
+FontAsset::FontAsset()
+{
+    Reset();
+}
+
 Asset::AssetType FontAsset::GetAssetType() const
 {
     return AssetType::ASSET_TYPE_FONT;
@@ -23,8 +28,24 @@ uint8_t FontAsset::GetAssetTypeVersion() const
     return FONT_ASSET_VERSION;
 }
 
+void FontAsset::Reset()
+{
+    textureHeight = 1;
+    baseline = 1;
+    charSpacing = 1;
+    lineSpacing = 1;
+    charWidth = 1;
+    spaceWidth = 1;
+    defaultSize = 1;
+    uppercaseOnly = false;
+    texture = "";
+    chars = {};
+    charWidths = {};
+}
+
 Error::ErrorCode FontAsset::LoadFromBuffer(DataReader &reader)
 {
+    Reset();
     charWidth = reader.Read<uint8_t>();
     textureHeight = reader.Read<uint8_t>();
     baseline = reader.Read<uint8_t>();
