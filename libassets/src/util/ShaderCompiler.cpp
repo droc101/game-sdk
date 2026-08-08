@@ -83,7 +83,7 @@ ShaderCompiler::ShaderCompiler(const std::filesystem::path &path,
                                const bool optimize):
     ShaderCompiler("", shaderKind, path.string(), optimize)
 {
-    FileIo::ReadFileToString(path, this->glslSource);
+    FileIo::ReadFileToString(path.string(), this->glslSource);
 }
 
 Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
