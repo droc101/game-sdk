@@ -28,7 +28,7 @@ shaderc_include_result *ShaderCompiler::SDKIncluder::GetInclude(const char *requ
     std::filesystem::path requestingSourcePath{requestingSource};
     const std::filesystem::path requestedSourcePath = requestingSourcePath.remove_filename().append(requestedSource);
     std::string glslString{};
-    const Error::ErrorCode readError = FileIo::ReadFileToString(requestedSourcePath, glslString);
+    const Error::ErrorCode readError = FileIo::ReadFileToString(requestedSourcePath.string(), glslString);
     if (readError != Error::ErrorCode::OK)
     {
         Logger::Error("Failed to read include file \"{}\": {}", requestedSource, readError);
