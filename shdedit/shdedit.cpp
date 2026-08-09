@@ -3,6 +3,7 @@
 //
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <filesystem>
 #include <format>
@@ -14,6 +15,8 @@
 #include <libassets/util/Error.h>
 #include <map>
 #include <misc/cpp/imgui_stdlib.h>
+#include <SDL3/SDL_messagebox.h>
+#include <SDL3/SDL_video.h>
 #include <string>
 #include <utility>
 #include <vector>
@@ -30,6 +33,39 @@ static void SelectCallback(const std::vector<std::string> &paths)
     {
         if (std::ranges::find(files, file) == files.end())
         {
+            if (file.ends_with(".inc.glsl"))
+            {
+                SDL_Window *w = SDKWindow::Get().GetWindow();
+                constexpr std::array<SDL_MessageBoxButtonData, 2> BUTTONS = {
+                    (SDL_MessageBoxButtonData){
+                        .flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT,
+                        .buttonID = 0,
+                        .text = "Yes",
+                    },
+                    (SDL_MessageBoxButtonData){
+                        .flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT,
+                        .buttonID = 1,
+                        .text = "No",
+                    },
+                };
+                const std::string message = std::format("The file \"{}\" appears to be an include file which cannot be compiled standalone. Are you sure you want to add it?", file);
+                const SDL_MessageBoxData mbox = {
+                    .flags = SDL_MESSAGEBOX_WARNING,
+                    .window = w,
+                    .title = nullptr,
+                    .message = message.c_str(),
+                    .numbuttons = 2,
+                    .buttons = BUTTONS.data(),
+                    .colorScheme = nullptr,
+                };
+                int chosenButton = 0;
+                (void)SDL_ShowMessageBox(&mbox, &chosenButton);
+                if (chosenButton == 1)
+                {
+                    continue;
+                }
+            }
+
             files.emplace_back(file);
             ShaderAsset::ShaderKind kind = ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT;
             if (file.ends_with(".frag") || file.ends_with("_f.glsl"))
