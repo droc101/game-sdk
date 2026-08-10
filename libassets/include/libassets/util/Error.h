@@ -31,6 +31,7 @@ class Error
             INVALID_SHADER_TYPE,
             LIGHTMAP_TOO_LARGE,
             NOT_IMPLEMENTED,
+            PERMISSION_DENIED,
         };
 
         Error() = delete;
@@ -72,6 +73,8 @@ class Error
                     return "Lightmap Too Large";
                 case ErrorCode::NOT_IMPLEMENTED:
                     return "Not Implemented";
+                case ErrorCode::PERMISSION_DENIED:
+                    return "Permission Denied";
                 case ErrorCode::UNKNOWN:
                 default:
                     return "Unknown Error";

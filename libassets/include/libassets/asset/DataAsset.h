@@ -15,9 +15,11 @@
 class DataAsset final: public Asset
 {
     public:
-        DataAsset() = default;
+        DataAsset();
 
-        KvList data{};
+        KvList data;
+
+        void Reset() override;
 
         [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
         [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;

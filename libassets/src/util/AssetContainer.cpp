@@ -10,7 +10,9 @@
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
+#include <string>
 #include <vector>
 #include <zconf.h>
 #include <zlib.h>
@@ -149,35 +151,23 @@ Error::ErrorCode AssetContainer::SaveToFile(const std::string &filePath,
                                             const uint8_t typeVersion,
                                             const uint8_t compressionLevel)
 {
-    FILE *file = fopen(filePath.c_str(), "wb");
-    if (file == nullptr)
-    {
-        Logger::Error("Unable to open file for writing");
-        return Error::ErrorCode::CANT_OPEN_FILE;
-    }
     std::vector<uint8_t> compressedData;
-    const Error::ErrorCode e = Compress(data, compressedData, type, typeVersion, compressionLevel);
-    fwrite(compressedData.data(), 1, compressedData.size(), file);
-    fclose(file);
-    return e;
+    const Error::ErrorCode compressError = Compress(data, compressedData, type, typeVersion, compressionLevel);
+    if (compressError != Error::ErrorCode::OK)
+    {
+        return compressError;
+    }
+    const Error::ErrorCode writeError = FileIo::WriteBufferToFile(filePath, compressedData);
+    return writeError;
 }
 
 Error::ErrorCode AssetContainer::LoadFromFile(const std::string &filePath, AssetContainer &outAsset)
 {
-    std::FILE *file = std::fopen(filePath.c_str(), "rb");
-    if (file == nullptr)
+    std::vector<uint8_t> compressedData;
+    const Error::ErrorCode readError = FileIo::ReadFileToBuffer(filePath, compressedData);
+    if (readError != Error::ErrorCode::OK)
     {
-        return Error::ErrorCode::FILE_NOT_FOUND;
+        return readError;
     }
-    fseek(file, 0, SEEK_END);
-    const size_t dataSize = ftell(file);
-    if (dataSize < sizeof(uint32_t) * 4)
-    {
-        return Error::ErrorCode::INVALID_HEADER;
-    }
-    std::vector<uint8_t> compressedData(dataSize);
-    fseek(file, 0, SEEK_SET);
-    fread(compressedData.data(), 1, dataSize, file);
-    fclose(file);
     return Decompress(compressedData, outAsset);
 }

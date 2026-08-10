@@ -185,6 +185,8 @@ add_library(assets SHARED
         src/util/LightmapHelpers.cpp
         include/libassets/asset/Asset.h
         src/asset/Asset.cpp
+        src/util/FileIo.cpp
+        include/libassets/util/FileIo.h
 )
 
 set_target_properties(assets PROPERTIES

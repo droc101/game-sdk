@@ -4,17 +4,20 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <fstream>
-#include <ios>
 #include <libassets/asset/Asset.h>
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/AssetContainer.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/FileIo.h>
 #include <libassets/util/ShaderCompiler.h>
 #include <shaderc/shaderc.h>
-#include <sstream>
 #include <vector>
+
+ShaderAsset::ShaderAsset()
+{
+    Reset();
+}
 
 Asset::AssetType ShaderAsset::GetAssetType() const
 {
@@ -24,6 +27,12 @@ Asset::AssetType ShaderAsset::GetAssetType() const
 uint8_t ShaderAsset::GetAssetTypeVersion() const
 {
     return SHADER_ASSET_VERSION;
+}
+
+void ShaderAsset::Reset()
+{
+    kind = ShaderKind::SHADER_KIND_FRAGMENT;
+    glsl = "";
 }
 
 Error::ErrorCode ShaderAsset::SaveToBuffer(DataWriter &writer) const
@@ -72,17 +81,8 @@ Error::ErrorCode ShaderAsset::SaveToBufferEx(DataWriter &writer,
 
 Error::ErrorCode ShaderAsset::Import(const std::string &filePath)
 {
-    std::ifstream file(filePath, std::ios::binary | std::ios::ate);
-    if (!file)
-    {
-        return Error::ErrorCode::CANT_OPEN_FILE;
-    }
-    file.seekg(0, std::ios::beg);
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    glsl = buffer.str();
-    file.close();
-    return Error::ErrorCode::OK;
+    Reset();
+    return FileIo::ReadFileToString(filePath, glsl);
 }
 
 Error::ErrorCode ShaderAsset::SaveToAssetEx(const std::string &filePath,
@@ -99,7 +99,7 @@ Error::ErrorCode ShaderAsset::SaveToAssetEx(const std::string &filePath,
     std::vector<uint8_t> data{};
     data.reserve(writer.GetBufferSize());
     writer.CopyToVector(data);
-    return AssetContainer::SaveToFile(filePath.c_str(),
+    return AssetContainer::SaveToFile(filePath,
                                       data,
                                       GetAssetType(),
                                       GetAssetTypeVersion(),

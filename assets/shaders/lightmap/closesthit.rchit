@@ -1,6 +1,6 @@
 #version 460
 
-#include "shared.glsl"
+#include "shared.inc.glsl"
 
 hitAttributeEXT vec2 barycentric;
 

@@ -3,31 +3,28 @@
 //
 
 #include <cstdint>
-#include <fstream>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/OptionDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
 #include <nlohmann/json.hpp>
 #include <regex>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
 
 Error::ErrorCode OptionDefinition::Create(const std::string &path, OptionDefinition &def)
 {
-    std::ifstream file(path);
-    if (!file.is_open())
+    std::string jsonStr;
+    const Error::ErrorCode readError = FileIo::ReadFileToString(path, jsonStr);
+    if (readError != Error::ErrorCode::OK)
     {
-        return Error::ErrorCode::CANT_OPEN_FILE;
+        return readError;
     }
-    std::ostringstream ss;
-    ss << file.rdbuf();
-    const std::string j = ss.str();
-    const nlohmann::json definitionJson = nlohmann::json::parse(j);
+    const nlohmann::json definitionJson = nlohmann::json::parse(jsonStr);
     if (definitionJson.is_discarded())
     {
         return Error::ErrorCode::INCORRECT_FORMAT;

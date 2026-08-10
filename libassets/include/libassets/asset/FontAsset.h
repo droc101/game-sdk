@@ -17,35 +17,37 @@
 class FontAsset final: public Asset
 {
     public:
-        FontAsset() = default;
+        FontAsset();
 
         /// The height of the texture
-        uint8_t textureHeight = 1;
+        uint8_t textureHeight;
         /// The baseline position, starting from the top
-        uint8_t baseline = 1;
+        uint8_t baseline;
         /// The spacing between characters
-        uint8_t charSpacing = 1;
+        uint8_t charSpacing;
         /// The spacing between lines
-        uint8_t lineSpacing = 1;
+        uint8_t lineSpacing;
         /// The width of any characters not explicitly set in @c charWidths
-        uint8_t charWidth = 1;
+        uint8_t charWidth;
         /// The width of a space
-        uint8_t spaceWidth = 1;
+        uint8_t spaceWidth;
         /// The default size of this font
-        uint8_t defaultSize = 1;
+        uint8_t defaultSize;
         /// Whether lowercase characters should be treated and rendered as uppercase
-        bool uppercaseOnly{};
+        bool uppercaseOnly;
         /// The path to the texture this font uses
-        std::string texture{};
+        std::string texture;
         /// The characters this font contains
-        std::vector<char> chars{};
+        std::vector<char> chars;
         /// The widths of the characters in this font
-        std::vector<uint8_t> charWidths{};
+        std::vector<uint8_t> charWidths;
 
         static constexpr std::string_view FONT_VALID_CHARS = "!\"#$%&'()*+,-./"
                                                              "0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`"
                                                              "abcdefghijklmnopqrstuvwxyz{|}~";
         static constexpr size_t FONT_MAX_SYMBOLS = FONT_VALID_CHARS.length();
+
+        void Reset() override;
 
         [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
         [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;

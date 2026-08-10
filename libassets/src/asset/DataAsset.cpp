@@ -4,9 +4,7 @@
 
 #include <cassert>
 #include <cstdint>
-#include <cstdio>
 #include <fstream>
-#include <ios>
 #include <libassets/asset/Asset.h>
 #include <libassets/asset/DataAsset.h>
 #include <libassets/type/Param.h>
@@ -14,11 +12,16 @@
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
 #include <ostream>
-#include <sstream>
 #include <string>
 #include <vector>
+
+DataAsset::DataAsset()
+{
+    Reset();
+}
 
 Asset::AssetType DataAsset::GetAssetType() const
 {
@@ -30,8 +33,14 @@ uint8_t DataAsset::GetAssetTypeVersion() const
     return DATA_ASSET_VERSION;
 }
 
+void DataAsset::Reset()
+{
+    data = {};
+}
+
 Error::ErrorCode DataAsset::LoadFromBuffer(DataReader &reader)
 {
+    Reset();
     data = Param::ReadKvList(reader);
     return Error::ErrorCode::OK;
 }
@@ -48,54 +57,37 @@ Error::ErrorCode DataAsset::SaveToBuffer(DataWriter &writer) const
 
 Error::ErrorCode DataAsset::Import(const std::string &filePath)
 {
-    std::ifstream file(filePath);
-    if (!file.is_open())
+    std::string jsonString;
+    const Error::ErrorCode readError = FileIo::ReadFileToString(filePath, jsonString);
+    if (readError != Error::ErrorCode::OK)
     {
-        return Error::ErrorCode::CANT_OPEN_FILE;
+        return readError;
     }
-    std::ostringstream ss;
-    ss << file.rdbuf();
-    const std::string j = ss.str();
-    const nlohmann::json json = nlohmann::json::parse(j);
+    const nlohmann::json json = nlohmann::json::parse(jsonString);
     if (json.is_discarded())
     {
-        file.close();
         return Error::ErrorCode::INCORRECT_FORMAT;
     }
+    Reset();
     data = Param::KvListFromJson(json);
     return Error::ErrorCode::OK;
 }
 
 Error::ErrorCode DataAsset::Export(const std::string &filePath) const
 {
-    std::ofstream file(filePath);
-    if (!file)
-    {
-        return Error::ErrorCode::CANT_OPEN_FILE;
-    }
-    file << Param::GenerateKvListJson(data).dump(); // evil syntax >:(
-    file.close();
-    return Error::ErrorCode::OK;
+    const std::string json = Param::GenerateKvListJson(data).dump();
+    const Error::ErrorCode writeError = FileIo::WriteStringToFile(filePath, json);
+    return writeError;
 }
 
 Error::ErrorCode DataAsset::CreateFromKvlFile(const std::string &kvlPath)
 {
-    std::FILE *file = std::fopen(kvlPath.c_str(), "rb");
-    if (file == nullptr)
+    DataReader reader;
+    const Error::ErrorCode readError = FileIo::CreateFileDataReader(kvlPath, reader);
+    if (readError != Error::ErrorCode::OK)
     {
-        return Error::ErrorCode::FILE_NOT_FOUND;
+        return readError;
     }
-    fseek(file, 0, SEEK_END);
-    const size_t dataSize = ftell(file);
-    if (dataSize < sizeof(KvlFileHeader))
-    {
-        return Error::ErrorCode::INVALID_HEADER;
-    }
-    std::vector<uint8_t> dataBuffer(dataSize);
-    fseek(file, 0, SEEK_SET);
-    fread(dataBuffer.data(), 1, dataSize, file);
-    fclose(file);
-    DataReader reader = DataReader(dataBuffer);
     KvlFileHeader header{};
     header.magic = reader.Read<uint32_t>();
     header.version = reader.Read<uint16_t>();
@@ -114,17 +106,18 @@ Error::ErrorCode DataAsset::CreateFromKvlFile(const std::string &kvlPath)
         Logger::Error("KvlFile checksum mismatch, expected {}, got {}", header.checksum, calculatedChecksum);
         return Error::ErrorCode::INVALID_BODY;
     }
+    Reset();
     data = Param::ReadKvList(reader);
     return Error::ErrorCode::OK;
 }
 
 Error::ErrorCode DataAsset::SaveAsKvlFile(const std::string &kvlFile) const
 {
-    FILE *file = fopen(kvlFile.c_str(), "wb");
-    if (file == nullptr)
+    std::ofstream file;
+    const Error::ErrorCode openError = FileIo::OpenFileW(kvlFile, file);
+    if (openError != Error::ErrorCode::OK)
     {
-        Logger::Error("Unable to open file for writing");
-        return Error::ErrorCode::CANT_OPEN_FILE;
+        return Error::ErrorCode::OK;
     }
     DataWriter writer{};
     Param::WriteKvList(writer, data);
@@ -133,10 +126,10 @@ Error::ErrorCode DataAsset::SaveAsKvlFile(const std::string &kvlFile) const
         .version = KVL_VERSION,
         .checksum = Checksum::Calculate(writer),
     };
-    fwrite(&header, sizeof(KvlFileHeader), 1, file);
+    file.write(reinterpret_cast<const std::ostream::char_type *>(&header), sizeof(KvlFileHeader));
     std::vector<uint8_t> bytes{};
     writer.CopyToVector(bytes);
-    fwrite(bytes.data(), 1, bytes.size(), file);
-    fclose(file);
+    file.write(reinterpret_cast<const std::ostream::char_type *>(bytes.data()), bytes.size());
+    file.close();
     return Error::ErrorCode::OK;
 }

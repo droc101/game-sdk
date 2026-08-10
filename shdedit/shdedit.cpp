@@ -3,6 +3,8 @@
 //
 
 #include <algorithm>
+#include <array>
+#include <cstddef>
 #include <filesystem>
 #include <format>
 #include <game_sdk/DialogFilters.h>
@@ -13,6 +15,8 @@
 #include <libassets/util/Error.h>
 #include <map>
 #include <misc/cpp/imgui_stdlib.h>
+#include <SDL3/SDL_messagebox.h>
+#include <SDL3/SDL_video.h>
 #include <string>
 #include <utility>
 #include <vector>
@@ -29,6 +33,39 @@ static void SelectCallback(const std::vector<std::string> &paths)
     {
         if (std::ranges::find(files, file) == files.end())
         {
+            if (file.ends_with(".inc.glsl"))
+            {
+                SDL_Window *w = SDKWindow::Get().GetWindow();
+                constexpr std::array<SDL_MessageBoxButtonData, 2> BUTTONS = {
+                    (SDL_MessageBoxButtonData){
+                        .flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT,
+                        .buttonID = 0,
+                        .text = "Yes",
+                    },
+                    (SDL_MessageBoxButtonData){
+                        .flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT,
+                        .buttonID = 1,
+                        .text = "No",
+                    },
+                };
+                const std::string message = std::format("The file \"{}\" appears to be an include file which cannot be compiled standalone. Are you sure you want to add it?", file);
+                const SDL_MessageBoxData mbox = {
+                    .flags = SDL_MESSAGEBOX_WARNING,
+                    .window = w,
+                    .title = nullptr,
+                    .message = message.c_str(),
+                    .numbuttons = 2,
+                    .buttons = BUTTONS.data(),
+                    .colorScheme = nullptr,
+                };
+                int chosenButton = 0;
+                (void)SDL_ShowMessageBox(&mbox, &chosenButton);
+                if (chosenButton == 1)
+                {
+                    continue;
+                }
+            }
+
             files.emplace_back(file);
             ShaderAsset::ShaderKind kind = ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT;
             if (file.ends_with(".frag") || file.ends_with("_f.glsl"))
@@ -54,7 +91,7 @@ static void OutPathCallback(const std::string &path)
     outputFolder = path;
 }
 
-static Error::ErrorCode Execute()
+static Error::ErrorCode Execute(std::string &errorLog)
 {
     if (!std::filesystem::is_directory(outputFolder))
     {
@@ -95,7 +132,7 @@ static Error::ErrorCode Execute()
                                              suffix,
                                              ShaderAsset::SHADER_ASSET_EXTENSION),
                                  enableOptimization,
-                                 nullptr,
+                                 &errorLog,
                                  file);
         if (e != Error::ErrorCode::OK)
         {
@@ -142,6 +179,8 @@ static void Render()
 
     (void)ImGui::Checkbox("Enable Optimization", &enableOptimization);
 
+    ImGui::Separator();
+
     ImGui::Text("Source Files");
     ImGui::SameLine();
     ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - 60 - ImGui::GetStyle().WindowPadding.x, 0));
@@ -150,7 +189,7 @@ static void Render()
     {
         SDKWindow::Get().OpenMultiFileDialog(SelectCallback, DialogFilters::GLSL_FILTERS);
     }
-    if (ImGui::BeginChild("##picker", ImVec2(-1, -26), ImGuiChildFlags_Borders, 0))
+    if (ImGui::BeginChild("##picker", ImVec2(-1, -32), ImGuiChildFlags_Borders, 0))
     {
         const ImVec2 availSize = ImGui::GetContentRegionAvail();
         if (ImGui::BeginTable("fileTable", 3, ImGuiTableFlags_ScrollY, availSize))
@@ -200,15 +239,30 @@ static void Render()
         ImGui::EndChild();
     }
 
+    ImGui::Separator();
+
     if (ImGui::Button("Compile", ImVec2(-1, 0)))
     {
-        Error::ErrorCode e = Execute();
-        if (e == Error::ErrorCode::OK)
+        if (outputFolder.empty())
         {
-            SDKWindow::Get().InfoMessage("Successfully compiled", "");
+            SDKWindow::Get().ErrorMessage("The output directory must be specified.", "Error");
+        } else if (files.empty())
+        {
+            SDKWindow::Get().ErrorMessage("No source files provided", "Error");
         } else
         {
-            SDKWindow::Get().ErrorMessage(std::format("Failed to compile shaders!\n{}", e));
+            std::string compileLog;
+            Error::ErrorCode e = Execute(compileLog);
+            if (e == Error::ErrorCode::OK)
+            {
+                SDKWindow::Get().InfoMessage("Successfully compiled", "");
+            } else
+            {
+                SDKWindow::Get().ErrorMessage(std::format("Failed to compile shaders: {}\n\nCompiler "
+                                                          "log:\n{}\n\nCompilation terminated.",
+                                                          e,
+                                                          compileLog.empty() ? "(empty)" : compileLog));
+            }
         }
     }
     ImGui::End();

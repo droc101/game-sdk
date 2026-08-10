@@ -5,7 +5,6 @@
 #include <cstdlib>
 #include <filesystem>
 #include <format>
-#include <fstream>
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
@@ -13,12 +12,12 @@
 #include <game_sdk/windows/SetupWindow.h>
 #include <imgui.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <nlohmann/json.hpp>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_filesystem.h>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -30,18 +29,15 @@ static std::string selectionIndex;
 
 static Error::ErrorCode LoadLauncherConfig()
 {
-    std::ifstream file("assets/launcher.json");
-    if (!file.is_open())
+    std::string jsonStr;
+    const Error::ErrorCode readError = FileIo::ReadFileToString("assets/launcher.json", jsonStr);
+    if (readError != Error::ErrorCode::OK)
     {
-        return Error::ErrorCode::CANT_OPEN_FILE;
+        return readError;
     }
-    std::ostringstream ss;
-    ss << file.rdbuf();
-    const std::string j = ss.str();
-    launcherJson = nlohmann::ordered_json::parse(j);
+    launcherJson = nlohmann::ordered_json::parse(jsonStr);
     if (launcherJson.is_discarded())
     {
-        file.close();
         // printf("File %s is not valid JSON\n", path.c_str());
         return Error::ErrorCode::INCORRECT_FORMAT;
     }
@@ -139,7 +135,8 @@ static void Render()
             for (const auto &[key, value]: items.items())
             {
                 ImTextureID textureId = 0;
-                if (SharedMgr::Get().textureCache.GetTextureID(value.value("icon", "file"), textureId) != Error::ErrorCode::OK)
+                if (SharedMgr::Get().textureCache.GetTextureID(value.value("icon", "file"), textureId) !=
+                    Error::ErrorCode::OK)
                 {
                     textureId = SharedMgr::Get().textureCache.GetMissingTextureID();
                 }

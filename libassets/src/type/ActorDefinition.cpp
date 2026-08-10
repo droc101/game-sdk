@@ -2,7 +2,6 @@
 // Created by droc101 on 10/18/25.
 //
 
-#include <fstream>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
@@ -11,12 +10,12 @@
 #include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <ranges>
 #include <regex>
-#include <sstream>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -26,18 +25,15 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
     const std::regex validIdentifierRegex = std::regex(VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX);
     std::smatch match;
 
-    std::ifstream file(path);
-    if (!file.is_open())
+    std::string jsonString;
+    const Error::ErrorCode readError = FileIo::ReadFileToString(path, jsonString);
+    if (readError != Error::ErrorCode::OK)
     {
-        return Error::ErrorCode::CANT_OPEN_FILE;
+        return readError;
     }
-    std::ostringstream ss;
-    ss << file.rdbuf();
-    const std::string j = ss.str();
-    const nlohmann::json definitionJson = nlohmann::json::parse(j);
+    const nlohmann::json definitionJson = nlohmann::json::parse(jsonString);
     if (definitionJson.is_discarded())
     {
-        file.close();
         Logger::Error("File \"{}\" is not a valid JSON file", path);
         return Error::ErrorCode::INCORRECT_FORMAT;
     }
@@ -152,7 +148,6 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         }
     }
 
-    file.close();
     return Error::ErrorCode::OK;
 }
 

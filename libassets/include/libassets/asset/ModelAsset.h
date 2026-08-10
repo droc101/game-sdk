@@ -6,17 +6,17 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <libassets/asset/Asset.h>
 #include <libassets/type/BoundingBox.h>
 #include <libassets/type/ConvexHull.h>
 #include <libassets/type/Material.h>
 #include <libassets/type/ModelLod.h>
 #include <libassets/type/StaticCollisionMesh.h>
+#include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
 #include <string>
 #include <vector>
-
-#include "Asset.h"
 
 class ModelAsset final: public Asset
 {
@@ -31,7 +31,9 @@ class ModelAsset final: public Asset
         /**
          * Please use @c ModelAsset::Create* instead.
          */
-        ModelAsset() = default;
+        ModelAsset();
+
+        void Reset() override;
 
         [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
         [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
@@ -40,7 +42,7 @@ class ModelAsset final: public Asset
 
         [[nodiscard]] AssetType GetAssetType() const override;
         [[nodiscard]] uint8_t GetAssetTypeVersion() const override;
-        
+
         /**
          * Get a LOD by index
          */
@@ -180,14 +182,14 @@ class ModelAsset final: public Asset
     private:
         static constexpr uint8_t MODEL_ASSET_VERSION = 1;
 
-        std::vector<Material> materials{};
-        std::vector<std::vector<uint32_t>> skins{};
-        std::vector<ModelLod> lods{};
+        std::vector<Material> materials;
+        std::vector<std::vector<uint32_t>> skins;
+        std::vector<ModelLod> lods;
 
-        CollisionModelType collisionModelType = CollisionModelType::NONE;
-        BoundingBox boundingBox{};
-        std::vector<ConvexHull> convexHulls{};
-        StaticCollisionMesh staticCollisionMesh{};
+        CollisionModelType collisionModelType;
+        BoundingBox boundingBox;
+        std::vector<ConvexHull> convexHulls;
+        StaticCollisionMesh staticCollisionMesh;
 
         static bool LODSortCompare(const ModelLod &a, const ModelLod &b);
 };

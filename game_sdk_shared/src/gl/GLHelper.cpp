@@ -5,14 +5,13 @@
 #include <array>
 #include <cassert>
 #include <cstdio>
-#include <fstream>
 #include <game_sdk/gl/GLDebug.h>
 #include <game_sdk/gl/GLHelper.h>
 #include <glm/vec2.hpp>
-#include <ios>
 #include <libassets/util/Error.h>
+#include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
-#include <vector>
+#include <string>
 
 bool GLHelper::Init()
 {
@@ -50,19 +49,15 @@ bool GLHelper::Init()
 
 Error::ErrorCode GLHelper::CreateShader(const char *filename, const GLenum type, GLuint &outShader)
 {
-    std::ifstream file(filename, std::ios::binary | std::ios::ate);
-    if (!file.is_open())
+    std::string glsl;
+    Error::ErrorCode readError = FileIo::ReadFileToString(filename, glsl);
+    if (readError != Error::ErrorCode::OK)
     {
-        Logger::Error("Failed to open shader file {}!", filename);
-        return Error::ErrorCode::CANT_OPEN_FILE;
+        Logger::Error("Failed to open shader file {}: {}!", filename, readError);
+        return readError;
     }
-    const std::streamsize size = file.tellg();
-    file.seekg(0, std::ios::beg);
-    std::vector<char> shaderSource(size + 1);
-    file.read(shaderSource.data(), size);
-    file.close();
     const GLuint shader = glCreateShader(type);
-    const char *shaderSourceData = shaderSource.data();
+    const char *shaderSourceData = glsl.c_str();
     glShaderSource(shader, 1, &shaderSourceData, nullptr);
     glCompileShader(shader);
     GLint success = 0;

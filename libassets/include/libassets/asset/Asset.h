@@ -28,6 +28,8 @@ class Asset
 
         virtual ~Asset() = default;
 
+        virtual void Reset() = 0;
+
         [[nodiscard]] virtual Error::ErrorCode LoadFromBuffer(DataReader &reader);
         [[nodiscard]] virtual Error::ErrorCode SaveToBuffer(DataWriter &writer) const;
 
