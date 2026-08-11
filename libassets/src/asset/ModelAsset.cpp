@@ -146,13 +146,13 @@ Error::ErrorCode ModelAsset::SaveToBuffer(DataWriter &writer) const
 
 Error::ErrorCode ModelAsset::Import(const std::string &filePath)
 {
+    Reset();
     Error::ErrorCode lodCode = Error::ErrorCode::UNKNOWN;
     lods.emplace_back(filePath, 0, lodCode);
     if (lodCode != Error::ErrorCode::OK)
     {
         return lodCode;
     }
-    Reset();
     const ModelLod &lod = lods.back();
     const uint32_t materialCount = lod.indexCounts.size();
     skins.emplace_back(materialCount);

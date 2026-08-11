@@ -34,14 +34,6 @@ Error::ErrorCode FileIo::OpenFileR(const std::string &filename, std::ifstream &s
 
 Error::ErrorCode FileIo::OpenFileW(const std::string &filename, std::ofstream &stream, const std::ios::openmode mode)
 {
-    if (access(filename.c_str(), F_OK))
-    {
-        return Error::ErrorCode::FILE_NOT_FOUND;
-    }
-    if (access(filename.c_str(), W_OK))
-    {
-        return Error::ErrorCode::PERMISSION_DENIED;
-    }
     stream = std::ofstream(filename, mode);
     if (!stream.is_open())
     {
