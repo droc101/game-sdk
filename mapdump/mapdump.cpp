@@ -116,6 +116,7 @@ int main(const int argc, const char **argv)
             v.position = asset.reader.ReadVec3();
             v.uv = asset.reader.ReadVec2();
             v.lightmapUv = asset.reader.ReadVec2();
+            v.normal = asset.reader.ReadVec3();
             mapVerts.push_back(v);
         }
         const uint32_t numIndices = asset.reader.Read<uint32_t>();
