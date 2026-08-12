@@ -1503,12 +1503,12 @@ bool LightBakerGpu::CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize)
         LunaWriteDescriptorSet{
             .descriptorSet = computeDescriptorSet,
             .bindingName = "Luxel Normals",
-            .imageInfo = &luxelNormalsImageInfo,
+            .imageInfos = &luxelNormalsImageInfo,
         },
         LunaWriteDescriptorSet{
             .descriptorSet = computeDescriptorSet,
             .bindingName = "Emissive Luxel Indices",
-            .bufferInfo = &emissiveLuxelIndicesBufferInfo,
+            .bufferInfos = &emissiveLuxelIndicesBufferInfo,
         },
     };
     lunaWriteDescriptorSets(device, writes.size(), writes.data());
