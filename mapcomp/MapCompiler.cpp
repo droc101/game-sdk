@@ -117,6 +117,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
 
     Logger::Info("Compiling actors...");
 
+    bool hasDirectionalLight{};
     std::vector<Light> lights{};
 
     size_t numPlayerActors = 0;
@@ -138,6 +139,15 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
 
         if (def.Extends("light"))
         {
+            if (actor.className == "light_directional")
+            {
+                if (hasDirectionalLight)
+                {
+                    Logger::Error("Found more than one directional light!");
+                    return Error::ErrorCode::INCORRECT_FORMAT;
+                }
+                hasDirectionalLight = true;
+            }
             lights.emplace_back(actor);
             continue;
         }
