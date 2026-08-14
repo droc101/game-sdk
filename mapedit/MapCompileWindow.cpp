@@ -183,7 +183,12 @@ void MapCompileWindow::RenderCompileOutput()
         ImGui::Separator();
         if (compilerProcess != nullptr || compilerOutputStream != nullptr || compilerErrorStream != nullptr)
         {
-            ImGui::ProgressBar(static_cast<float>(ImGui::GetTime()) * -0.5f, ImVec2(-1, 0), "Compiling...");
+            ImGui::ProgressBar(static_cast<float>(ImGui::GetTime()) * -0.5f, ImVec2(-108, 0), "Compiling...");
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(100, 0)))
+            {
+                (void)SDL_KillProcess(compilerProcess, false);
+            }
         } else
         {
             if (ImGui::Button("Copy Output"))
