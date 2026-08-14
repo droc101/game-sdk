@@ -82,6 +82,9 @@ void main() {
     uint hitCount = 0;
     for (uint i = 0; i < emissiveLuxelIndices.indexCount; i++) {
         const int sourceLuxelIndex = emissiveLuxelIndices.indices[i];
+        if (luxelIndex == sourceLuxelIndex) {
+            continue;
+        }
         const ivec2 sourceLuxelCoord = ivec2(sourceLuxelIndex % WIDTH, sourceLuxelIndex / WIDTH);
         const vec4 sourceLuxelPosition = imageLoad(luxelPositions, sourceLuxelCoord);
         if (sourceLuxelPosition.w == 0) {

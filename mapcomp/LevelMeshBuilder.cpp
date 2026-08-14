@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 #include <libassets/asset/LevelMaterialAsset.h>
+#include <libassets/type/BoundingBox.h>
 #include <libassets/type/MapVertex.h>
 #include <libassets/type/Material.h>
 #include <libassets/type/Sector.h>
@@ -62,6 +63,8 @@ void LevelMeshBuilder::AddWall(const Sector &sector,
 void LevelMeshBuilder::Write(DataWriter &writer) const
 {
     writer.WriteString(materialPath);
+    const BoundingBox boundingBox{vertices};
+    boundingBox.Write(writer);
     writer.Write<uint32_t>(vertices.size());
     for (const MapVertex &vertex: vertices)
     {
@@ -311,7 +314,8 @@ void LevelMeshBuilder::AddSectorBase(const Sector &sector,
     {
         MapVertex v{};
         v.position = {point.x, isFloor ? sector.floorHeight : sector.ceilingHeight, point.y};
-        v.uv = ((point / glm::vec2(16.0f)) + mat.uvOffset) * mat.uvScale; // TODO is this the correct way to offset+scale?
+        v.uv = ((point / glm::vec2(16.0f)) + mat.uvOffset) *
+               mat.uvScale; // TODO is this the correct way to offset+scale?
         v.normal = {0, isFloor ? 1 : -1, 0};
         v.lightmapUv = glm::vec2(0, 0);
         if (!LightBakerGpu::Get().GetTextureIndex(mat.material, v.textureIndex, pathManager))

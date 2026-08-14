@@ -109,6 +109,8 @@ int main(const int argc, const char **argv)
     {
         std::string materialName{};
         asset.reader.ReadStringWithSize(materialName);
+        (void)asset.reader.ReadVec3();
+        (void)asset.reader.ReadVec3();
         const uint32_t numVerts = asset.reader.Read<uint32_t>();
         for (size_t j = 0; j < numVerts; j++)
         {
