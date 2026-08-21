@@ -54,6 +54,7 @@ void TextureAsset::Reset()
     filter = true;
     repeat = true;
     mipmaps = true;
+    opaque = true;
     pixelFormat = PixelFormat::RGBA8;
     pixelData = {};
 }
@@ -66,6 +67,7 @@ Error::ErrorCode TextureAsset::LoadFromBuffer(DataReader &reader)
     filter = reader.Read<uint8_t>() != 0;
     repeat = reader.Read<uint8_t>() != 0;
     mipmaps = reader.Read<uint8_t>() != 0;
+    opaque = reader.Read<uint8_t>() != 0;
     pixelFormat = static_cast<PixelFormat>(reader.Read<uint8_t>());
     size_t pixelDataSize = width * height;
     if (pixelFormat == PixelFormat::RGBA8)
@@ -86,6 +88,7 @@ Error::ErrorCode TextureAsset::SaveToBuffer(DataWriter &writer) const
     writer.Write<uint8_t>(filter ? 1 : 0);
     writer.Write<uint8_t>(repeat ? 1 : 0);
     writer.Write<uint8_t>(mipmaps ? 1 : 0);
+    writer.Write<uint8_t>(opaque ? 1 : 0);
     writer.Write<uint8_t>(static_cast<uint8_t>(pixelFormat));
     writer.WriteBuffer<uint8_t>(pixelData);
     return Error::ErrorCode::OK;
@@ -93,7 +96,7 @@ Error::ErrorCode TextureAsset::SaveToBuffer(DataWriter &writer) const
 
 Error::ErrorCode TextureAsset::CreateFromPNG(const string &imagePath)
 {
-    if (access(imagePath.c_str(), F_OK | R_OK))
+    if (access(imagePath.c_str(), F_OK | R_OK) != 0)
     {
         CreateMissingTexture();
         return Error::ErrorCode::OK;
@@ -118,6 +121,17 @@ Error::ErrorCode TextureAsset::CreateFromPNG(const string &imagePath)
         pixelData.at(i) = data[i];
     }
     stbi_image_free(data);
+
+    opaque = true;
+    for (size_t i = 3; i < pixelDataSize; i += 4)
+    {
+        if (pixelData.at(i) != std::numeric_limits<uint8_t>::max())
+        {
+            opaque = false;
+            break;
+        }
+    }
+
     return Error::ErrorCode::OK;
 }
 
@@ -132,6 +146,17 @@ Error::ErrorCode TextureAsset::CreateFromEXR(const string &imagePath)
     pixelFormat = PixelFormat::RGBAF16;
     file.setFrameBuffer(reinterpret_cast<Rgba *>(GetPixelsRGBA()), 1, width);
     file.readPixels(dw.min.y, dw.max.y);
+
+    opaque = true;
+    for (size_t i = 6; i < pixelData.size(); i += 8)
+    {
+        if (*reinterpret_cast<_Float16 *>(&pixelData.at(i)) < 1)
+        {
+            opaque = false;
+            break;
+        }
+    }
+
     return Error::ErrorCode::OK;
 }
 

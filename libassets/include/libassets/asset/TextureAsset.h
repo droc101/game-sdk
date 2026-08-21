@@ -32,6 +32,7 @@ class TextureAsset final: public Asset
         bool filter = false;
         bool repeat = true;
         bool mipmaps = true;
+        bool opaque = true;
 
         void Reset() override;
 
