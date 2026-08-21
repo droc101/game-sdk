@@ -10,8 +10,7 @@ fetch_clipper2()
 FetchContent_Declare(
         Luna
         GIT_REPOSITORY https://github.com/NBT22/Luna
-        GIT_TAG main
-        GIT_SHALLOW TRUE
+        GIT_TAG 4902420b47ef06d6dc4e67fb3af2c6a989e9d6a1
         GIT_PROGRESS TRUE
 )
 FetchContent_MakeAvailable(Luna)
