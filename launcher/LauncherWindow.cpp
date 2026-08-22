@@ -174,7 +174,7 @@ void LauncherWindow::LaunchSelectedTool()
         Logger::Info("Launching process \"{}\"...", folder.c_str());
         if (!DesktopInterface::Get().ExecuteProcessNonBlocking(folder, args))
         {
-            // SDKWindow::Get().ErrorMessage(std::format("Failed to launch process: {}", SDL_GetError())); // TODO
+            ErrorMessage(std::format("Failed to launch process: {}", SDL_GetError()));
         }
     } else if (item.contains("file"))
     {

@@ -25,9 +25,13 @@ class WindowManager
 
         void ApplyTheme();
 
+        [[nodiscard]] Window *GetCurrentWindow() const;
+
     private:
         SDL_GLContext glContext = nullptr;
-        std::vector<std::shared_ptr<Window>> windows;
+        std::shared_ptr<Window> workingWindow = nullptr;
+        std::vector<std::shared_ptr<Window>> windowsToAdd{};
+        std::vector<std::shared_ptr<Window>> windows{};
 
         void Destroy();
 };

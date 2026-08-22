@@ -4,7 +4,6 @@
 
 #include "MapCompileWindow.h"
 #include <format>
-#include <game_sdk/SDKWindow.h>
 #include <imgui.h>
 #include <memory>
 #include "CompileProgressWindow.h"
@@ -15,7 +14,7 @@ void MapCompileWindow::StartCompile()
 {
     if (MapEditor::mapFile.empty())
     {
-        SDKWindow::Get().ErrorMessage("The level must be saved before compiling");
+        ErrorMessage("The level must be saved before compiling");
     } else
     {
         WindowManager::Get().AddWindow(std::make_shared<CompileProgressWindow>(opts));

@@ -3,7 +3,6 @@
 //
 
 #include <format>
-#include <game_sdk/SDKWindow.h>
 #include <game_sdk/windows/AboutWindow.h>
 #include <imgui.h>
 #include <libassets/libassets.h>
@@ -61,7 +60,7 @@ void AboutWindow::Render()
         ImGui::EndListBox();
     }
     ImGui::SameLine();
-    ImGui::PushFont(SDKWindow::Get().GetMonospaceFont(), 18);
+    ImGui::PushFont(monospaceFont, 18);
     ImGui::InputTextMultiline("##glsl",
                               &thirdPartyComponents[selectedComponent],
                               ImVec2(-1, s),

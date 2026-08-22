@@ -127,18 +127,18 @@ int WindowManager::Run()
 {
     while (true)
     {
-        for (const std::shared_ptr<Window> &window: windows)
+        for (const std::shared_ptr<Window> &window: windowsToAdd)
         {
             Window *w = window.get();
-            if (w->NeedsInit())
+            workingWindow = window;
+            if (!w->BaseInit())
             {
-                if (!w->BaseInit())
-                {
-                    Logger::Error("Failed to init window!");
-                    exit(1);
-                }
+                Logger::Error("Failed to init window!");
+                exit(1);
             }
+            windows.push_back(window);
         }
+        windowsToAdd.clear();
 
         SDL_Event event;
         while (SDL_PollEvent(&event))
@@ -149,6 +149,7 @@ int WindowManager::Run()
                 const SDL_Window *sdlWnd = SDL_GetWindowFromEvent(&event);
                 if (sdlWnd == nullptr || sdlWnd == w->GetWindow())
                 {
+                    workingWindow = window;
                     w->BaseProcessEvent(&event);
                 }
             }
@@ -158,6 +159,7 @@ int WindowManager::Run()
         {
             if (window != nullptr && !window->NeedsInit())
             {
+                workingWindow = window;
                 window->BaseProcess();
             }
         }
@@ -173,7 +175,7 @@ int WindowManager::Run()
 
 void WindowManager::AddWindow(const std::shared_ptr<Window> &window)
 {
-    windows.push_back(window);
+    windowsToAdd.push_back(window);
 }
 
 void WindowManager::ApplyTheme()
@@ -187,4 +189,9 @@ void WindowManager::ApplyTheme()
         }
     }
     ImGui::SetCurrentContext(ctx);
+}
+
+Window *WindowManager::GetCurrentWindow() const
+{
+    return workingWindow.get();
 }

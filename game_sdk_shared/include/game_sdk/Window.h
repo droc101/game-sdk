@@ -25,6 +25,20 @@
 class Window
 {
     public:
+        /**
+         * Function signature for single file/folder dialogs
+         * @param path The path the user chose
+         */
+        using FileDialogCallback = std::function<void(const std::string &)>;
+        /**
+         * Function signature for multi-file open dialog
+         * @param paths The paths the user chose
+         */
+        using MultiFileDialogCallback = std::function<void(const std::vector<std::string> &paths)>;
+
+        ImFont *normalFont = nullptr;
+        ImFont *monospaceFont = nullptr;
+
         Window() = default;
         virtual ~Window() = default;
 
@@ -41,34 +55,6 @@ class Window
 
         [[nodiscard]] SDL_Window *GetWindow() const;
 
-    protected:
-
-        /**
-         * Function signature for single file/folder dialogs
-         * @param path The path the user chose
-         */
-        using FileDialogCallback = std::function<void(const std::string &)>;
-        /**
-         * Function signature for multi-file open dialog
-         * @param paths The paths the user chose
-         */
-        using MultiFileDialogCallback = std::function<void(const std::vector<std::string> &paths)>;
-
-
-        SDL_Window *window = nullptr;
-        bool closeRequest = false;
-        ImFont *normalFont = nullptr;
-        ImFont *monospaceFont = nullptr;
-
-        struct WindowProperties
-        {
-                std::string title;
-                glm::ivec2 defaultSize;
-                std::string icon;
-                SDL_WindowFlags defaultFlags;
-                bool defaultImguiWindow;
-        };
-
         void ErrorMessage(const std::string &body, const std::string &title = "Error") const;
 
         void WarningMessage(const std::string &body, const std::string &title = "Warning") const;
@@ -83,6 +69,19 @@ class Window
         void SaveFileDialog(FileDialogCallback &&Callback, const std::vector<SDL_DialogFileFilter> &filters) const;
 
         void OpenFolderDialog(FileDialogCallback &&Callback) const;
+
+    protected:
+        SDL_Window *window = nullptr;
+        bool closeRequest = false;
+
+        struct WindowProperties
+        {
+                std::string title;
+                glm::ivec2 defaultSize;
+                std::string icon;
+                SDL_WindowFlags defaultFlags;
+                bool defaultImguiWindow;
+        };
 
         [[nodiscard]] virtual const WindowProperties &GetProperties() const;
 

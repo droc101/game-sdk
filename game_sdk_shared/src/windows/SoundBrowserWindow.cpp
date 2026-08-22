@@ -4,17 +4,15 @@
 
 #include <cfloat>
 #include <format>
-#include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/SoundSystem.h>
+#include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/SoundBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/asset/SoundAsset.h>
 #include <libassets/util/Error.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
-
-#include "game_sdk/WindowManager.h"
 
 SoundBrowserWindow::SoundBrowserWindow(std::string *sound)
 {
@@ -43,7 +41,7 @@ void SoundBrowserWindow::InputSound(const char *label, std::string &sound)
 void SoundBrowserWindow::InputSound(const char *label, std::string *sound)
 {
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::PushFont(SDKWindow::Get().GetMonospaceFont());
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->monospaceFont);
     ImGui::InputText(label, sound);
     ImGui::PopFont();
     ImGui::SameLine();
@@ -96,9 +94,7 @@ void SoundBrowserWindow::Render()
                                                    .LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(*str));
         if (loadError != Error::ErrorCode::OK)
         {
-            SDKWindow::Get().ErrorMessage(std::format("Failed to open sound \"{}\": {}",
-                                                      *str,
-                                                      Error::ErrorString(loadError)));
+            ErrorMessage(std::format("Failed to open sound \"{}\": {}", *str, Error::ErrorString(loadError)));
         } else
         {
             if (SoundSystem::Get().LoadSound(previewSoundAsset, previewSound))
@@ -106,7 +102,7 @@ void SoundBrowserWindow::Render()
                 previewSound.Play();
             } else
             {
-                SDKWindow::Get().ErrorMessage("Failed to create sound");
+                ErrorMessage("Failed to create sound");
             }
         }
     }

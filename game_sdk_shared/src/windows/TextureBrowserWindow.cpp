@@ -5,7 +5,6 @@
 #include <cfloat>
 #include <cstddef>
 #include <format>
-#include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
@@ -144,7 +143,7 @@ void TextureBrowserWindow::InputTexture(const char *label, std::string &texture)
 void TextureBrowserWindow::InputTexture(const char *label, std::string *texture)
 {
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::PushFont(SDKWindow::Get().GetMonospaceFont());
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->monospaceFont);
     ImGui::InputText(label, texture);
     ImGui::PopFont();
     ImGui::SameLine();

@@ -6,7 +6,6 @@
 #include <cfloat>
 #include <cstddef>
 #include <game_sdk/ModelViewer.h>
-#include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
 #include <imgui.h>
@@ -56,7 +55,7 @@ void ModelBrowserWindow::InputModel(const char *label, std::string &model)
 void ModelBrowserWindow::InputModel(const char *label, std::string *model)
 {
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::PushFont(SDKWindow::Get().GetMonospaceFont());
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->monospaceFont);
     ImGui::InputText(label, model);
     ImGui::PopFont();
     ImGui::SameLine();

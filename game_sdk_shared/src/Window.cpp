@@ -39,7 +39,10 @@ bool Window::BaseInit()
         return false;
     }
 
-    SetWindowIcon(props.icon);
+    if (!props.icon.empty())
+    {
+        SetWindowIcon(props.icon);
+    }
 
     glContext = WindowManager::Get().GetOrCreateContext(window);
 
@@ -151,6 +154,9 @@ void Window::BaseProcess()
 void Window::BaseDestroy()
 {
     this->Destroy();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui::DestroyContext(icx);
     if (!SDL_GL_DestroyContext(glContext))
     {
         Logger::Error("SDL_GL_DestroyContext() failed: {}", SDL_GetError());

@@ -13,8 +13,6 @@ target_sources(game_sdk_shared PRIVATE
         include/game_sdk/Options.h
         src/DesktopInterface.cpp
         include/game_sdk/DesktopInterface.h
-        src/SDKWindow.cpp
-        include/game_sdk/SDKWindow.h
         src/SharedMgr.cpp
         include/game_sdk/SharedMgr.h
         src/gl/GLDebug.cpp
