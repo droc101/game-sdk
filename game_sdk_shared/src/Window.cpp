@@ -29,7 +29,7 @@ bool Window::BaseInit(const std::shared_ptr<Window> &modalParent)
 {
     const WindowProperties &props = this->GetProperties();
 
-    const SDL_WindowFlags sdlWindowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | props.defaultFlags;
+    const SDL_WindowFlags sdlWindowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | SDL_WINDOW_HIGH_PIXEL_DENSITY | props.defaultFlags;
     window = SDL_CreateWindow(props.title.c_str(), props.defaultSize.x, props.defaultSize.y, sdlWindowFlags);
     if (window == nullptr)
     {
