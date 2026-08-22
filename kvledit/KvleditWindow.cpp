@@ -405,7 +405,7 @@ void KvleditWindow::Render()
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
-                closeRequest = true;
+                RequestClose();
             }
             ImGui::EndMenu();
         }

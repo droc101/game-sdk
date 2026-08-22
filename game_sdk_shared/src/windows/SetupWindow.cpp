@@ -36,7 +36,7 @@ void SetupWindow::AssetsPathCallback(const std::string &path)
 
 void SetupWindow::Render()
 {
-    ImGui::PushFont(normalFont, 24);
+    ImGui::PushFont(GetNormalFont(), 24);
     ImGui::Text("GAME SDK Setup");
     ImGui::PopFont();
     ImGui::Separator();
@@ -90,7 +90,7 @@ void SetupWindow::Render()
     {
         Options::Get().Save();
         SharedMgr::Get().UpdateAssetPaths();
-        closeRequest = true;
+        RequestClose();
     }
     ImGui::EndDisabled();
     ImGui::SameLine();
@@ -108,7 +108,7 @@ void SetupWindow::Render()
         {
             Options::Get().Load();
             SharedMgr::Get().UpdateAssetPaths();
-            closeRequest = true;
+            RequestClose();
         }
     }
 }

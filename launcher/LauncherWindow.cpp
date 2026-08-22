@@ -89,7 +89,7 @@ void LauncherWindow::Render()
 
     if (ImGui::Button("Options", ImVec2(80, 32)))
     {
-        WindowManager::Get().AddWindow(std::make_shared<SetupWindow>(false));
+        WindowManager::Get().AddModalWindow(std::make_shared<SetupWindow>(false));
     }
     // ImGui::SameLine();
     // ImGui::TextDisabled("GAME SDK\nVersion %s", LIBASSETS_VERSION_STRING);

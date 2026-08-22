@@ -133,7 +133,7 @@ void TextureBrowserWindow::Render()
     ImGui::SameLine();
     if (ImGui::Button("OK", ImVec2(60, 0)))
     {
-        closeRequest = true;
+        RequestClose();
     }
 }
 
@@ -145,7 +145,7 @@ void TextureBrowserWindow::InputTexture(const char *label, std::string &texture)
 void TextureBrowserWindow::InputTexture(const char *label, std::string *texture)
 {
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->monospaceFont);
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
     ImGui::InputText(label, texture);
     ImGui::PopFont();
     ImGui::SameLine();
@@ -157,5 +157,5 @@ void TextureBrowserWindow::InputTexture(const char *label, std::string *texture)
 
 void TextureBrowserWindow::Show(std::string *texture)
 {
-    WindowManager::Get().AddWindow(std::make_shared<TextureBrowserWindow>(texture));
+    WindowManager::Get().AddModalWindow(std::make_shared<TextureBrowserWindow>(texture));
 }

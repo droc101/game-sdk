@@ -60,7 +60,7 @@ void AboutWindow::Render()
         ImGui::EndListBox();
     }
     ImGui::SameLine();
-    ImGui::PushFont(monospaceFont, 18);
+    ImGui::PushFont(GetMonospaceFont(), 18);
     ImGui::InputTextMultiline("##glsl",
                               &thirdPartyComponents[selectedComponent],
                               ImVec2(-1, s),
@@ -74,6 +74,6 @@ void AboutWindow::Render()
     ImGui::SameLine();
     if (ImGui::Button("OK", ImVec2(60, 0)))
     {
-        closeRequest = true;
+        RequestClose();
     }
 }

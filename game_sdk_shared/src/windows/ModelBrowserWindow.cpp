@@ -7,17 +7,17 @@
 #include <cstddef>
 #include <game_sdk/ModelViewer.h>
 #include <game_sdk/SharedMgr.h>
+#include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/SearchPathManager.h>
+#include <memory>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "game_sdk/WindowManager.h"
 
 ModelBrowserWindow::ModelBrowserWindow(std::string *model)
 {
@@ -55,7 +55,7 @@ void ModelBrowserWindow::InputModel(const char *label, std::string &model)
 void ModelBrowserWindow::InputModel(const char *label, std::string *model)
 {
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->monospaceFont);
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
     ImGui::InputText(label, model);
     ImGui::PopFont();
     ImGui::SameLine();
@@ -67,7 +67,7 @@ void ModelBrowserWindow::InputModel(const char *label, std::string *model)
 
 void ModelBrowserWindow::Show(std::string *texture)
 {
-    WindowManager::Get().AddWindow(std::make_shared<ModelBrowserWindow>(texture));
+    WindowManager::Get().AddModalWindow(std::make_shared<ModelBrowserWindow>(texture));
 }
 
 const Window::WindowProperties &ModelBrowserWindow::GetProperties() const
@@ -203,6 +203,6 @@ void ModelBrowserWindow::Render()
     ImGui::SameLine();
     if (ImGui::Button("OK", ImVec2(60, 0)))
     {
-        closeRequest = true;
+        RequestClose();
     }
 }

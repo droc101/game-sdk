@@ -22,10 +22,11 @@
 #include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_surface.h>
 #include <SDL3/SDL_video.h>
+#include <memory>
 #include <utility>
 #include <vector>
 
-bool Window::BaseInit()
+bool Window::BaseInit(const std::shared_ptr<Window> &modalParent)
 {
     SharedMgr::Get().InitSharedMgr();
 
@@ -39,12 +40,19 @@ bool Window::BaseInit()
         return false;
     }
 
+    if (modalParent != nullptr)
+    {
+        (void)SDL_SetWindowParent(window, modalParent.get()->GetWindow());
+        (void)SDL_SetWindowModal(window, true);
+        parent = modalParent;
+    }
+
     if (!props.icon.empty())
     {
         SetWindowIcon(props.icon);
     }
 
-    glContext = WindowManager::Get().GetOrCreateContext(window);
+    glContext = WindowManager::Get().CreateGlContext(window);
 
     if (!SDL_GL_MakeCurrent(window, glContext))
     {
@@ -58,6 +66,7 @@ bool Window::BaseInit()
     ImGuiIO &io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    baseConfigFlags = io.ConfigFlags;
 
     ApplyTheme();
 
@@ -89,11 +98,11 @@ void Window::BaseProcessEvent(SDL_Event *event)
 {
     if (event->type == SDL_EVENT_QUIT)
     {
-        closeRequest = true;
+        RequestClose();
     }
     if (event->type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
     {
-        closeRequest = true;
+        RequestClose();
     } else if (!ProcessEvent(event))
     {
         MakeCurrent();
@@ -145,14 +154,20 @@ void Window::BaseProcess()
         Logger::Error("SDL_GL_SwapWindow() failed: {}", SDL_GetError());
     }
 
-    if (closeRequest)
+    if (queueCloseWhenNotModalBlocked && modalCounter == 0)
     {
-        BaseDestroy();
+        queueCloseWhenNotModalBlocked = false;
+        closeRequest = true;
     }
 }
 
 void Window::BaseDestroy()
 {
+    if (parent != nullptr)
+    {
+        parent.get()->ModalUnblock();
+        MakeCurrent();
+    }
     this->Destroy();
     ImGui_ImplSDL3_Shutdown();
     ImGui_ImplOpenGL3_Shutdown();
@@ -173,6 +188,21 @@ bool Window::IsDestroyed() const
 bool Window::NeedsInit() const
 {
     return !initDone;
+}
+
+bool Window::HasCloseRequest() const
+{
+    return closeRequest;
+}
+
+ImFont *Window::GetNormalFont() const
+{
+    return normalFont;
+}
+
+ImFont *Window::GetMonospaceFont() const
+{
+    return monospaceFont;
 }
 
 SDL_Window *Window::GetWindow() const
@@ -204,7 +234,7 @@ void Window::ApplyTheme() const
     this->ThemeChanged();
 }
 
-void Window::MakeCurrent()
+void Window::MakeCurrent() const
 {
     if (!SDL_GL_MakeCurrent(window, glContext))
     {
@@ -241,6 +271,38 @@ void Window::SetWindowIcon(const std::string &iconName) const
         }
     }
     SDL_DestroySurface(surface);
+}
+
+void Window::ModalBlock()
+{
+    modalCounter++;
+    MakeCurrent();
+    ImGuiIO &io = ImGui::GetIO();
+    io.ConfigFlags = baseConfigFlags | ImGuiConfigFlags_NoMouse | ImGuiConfigFlags_NoKeyboard;
+    (void)SDL_SetWindowFocusable(window, false);
+}
+
+void Window::ModalUnblock()
+{
+    modalCounter--;
+    if (modalCounter == 0)
+    {
+        MakeCurrent();
+        ImGuiIO &io = ImGui::GetIO();
+        io.ConfigFlags = baseConfigFlags;
+        (void)SDL_SetWindowFocusable(window, true);
+    }
+}
+
+void Window::RequestClose()
+{
+    if (modalCounter == 0)
+    {
+        closeRequest = true;
+    } else
+    {
+        queueCloseWhenNotModalBlocked = true;
+    }
 }
 
 #pragma region Default Virtual Functions
@@ -303,6 +365,9 @@ void Window::SDLMultiFileDialogMainThreadCallback(void *userdata)
 
 void Window::SDLMultiFileDialogCallback(void *callbackPtr, const char *const *fileList, int /*filter*/)
 {
+    MultiFileDialogCallbackData *data = static_cast<MultiFileDialogCallbackData *>(callbackPtr);
+    data->wnd->ModalUnblock();
+
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
@@ -315,7 +380,6 @@ void Window::SDLMultiFileDialogCallback(void *callbackPtr, const char *const *fi
         fileList++;
     }
 
-    MultiFileDialogCallbackData *data = static_cast<MultiFileDialogCallbackData *>(callbackPtr);
     data->paths = std::move(files);
 
     if (!SDL_RunOnMainThread(SDLMultiFileDialogMainThreadCallback, data, true))
@@ -326,12 +390,14 @@ void Window::SDLMultiFileDialogCallback(void *callbackPtr, const char *const *fi
 
 void Window::SDLFileDialogCallback(void *callbackPtr, const char *const *fileList, int /*filter*/)
 {
+    FileDialogCallbackData *data = static_cast<FileDialogCallbackData *>(callbackPtr);
+    data->wnd->ModalUnblock();
+
     if (fileList == nullptr || fileList[0] == nullptr)
     {
         return;
     }
 
-    FileDialogCallbackData *data = static_cast<FileDialogCallbackData *>(callbackPtr);
     data->path = fileList[0];
 
     if (!SDL_RunOnMainThread(SDLFileDialogMainThreadCallback, data, true))
@@ -340,10 +406,12 @@ void Window::SDLFileDialogCallback(void *callbackPtr, const char *const *fileLis
     }
 }
 
-void Window::OpenFileDialog(FileDialogCallback &&Callback, const std::vector<SDL_DialogFileFilter> &filters) const
+void Window::OpenFileDialog(FileDialogCallback &&Callback, const std::vector<SDL_DialogFileFilter> &filters)
 {
+    ModalBlock();
     FileDialogCallbackData *data = new FileDialogCallbackData();
     data->Callback = std::move(Callback);
+    data->wnd = this;
 
     SDL_ShowOpenFileDialog(SDLFileDialogCallback,
                            data,
@@ -355,10 +423,12 @@ void Window::OpenFileDialog(FileDialogCallback &&Callback, const std::vector<SDL
 }
 
 void Window::OpenMultiFileDialog(MultiFileDialogCallback &&Callback,
-                                 const std::vector<SDL_DialogFileFilter> &filters) const
+                                 const std::vector<SDL_DialogFileFilter> &filters)
 {
+    ModalBlock();
     MultiFileDialogCallbackData *data = new MultiFileDialogCallbackData();
     data->Callback = std::move(Callback);
+    data->wnd = this;
 
     SDL_ShowOpenFileDialog(SDLMultiFileDialogCallback,
                            data,
@@ -369,10 +439,12 @@ void Window::OpenMultiFileDialog(MultiFileDialogCallback &&Callback,
                            true);
 }
 
-void Window::SaveFileDialog(FileDialogCallback &&Callback, const std::vector<SDL_DialogFileFilter> &filters) const
+void Window::SaveFileDialog(FileDialogCallback &&Callback, const std::vector<SDL_DialogFileFilter> &filters)
 {
+    ModalBlock();
     FileDialogCallbackData *data = new FileDialogCallbackData();
     data->Callback = std::move(Callback);
+    data->wnd = this;
 
     SDL_ShowSaveFileDialog(SDLFileDialogCallback,
                            data,
@@ -382,10 +454,12 @@ void Window::SaveFileDialog(FileDialogCallback &&Callback, const std::vector<SDL
                            nullptr);
 }
 
-void Window::OpenFolderDialog(FileDialogCallback &&Callback) const
+void Window::OpenFolderDialog(FileDialogCallback &&Callback)
 {
+    ModalBlock();
     FileDialogCallbackData *data = new FileDialogCallbackData();
     data->Callback = std::move(Callback);
+    data->wnd = this;
 
     SDL_ShowOpenFolderDialog(SDLFileDialogCallback, data, window, nullptr, false);
 }

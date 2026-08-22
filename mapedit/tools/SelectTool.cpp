@@ -15,6 +15,7 @@
 #include <libassets/type/Actor.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
+#include <memory>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
 #include <tuple>
@@ -25,7 +26,7 @@
 #include "../Viewport.h"
 #include "../ViewportRenderer.h"
 #include "EditorTool.h"
-#include "game_sdk/WindowManager.h"
+#include <game_sdk/WindowManager.h>
 
 void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {
@@ -604,7 +605,7 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
             if (ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_Enter))
             {
                 Actor &toEdit = MapEditor::map.actors.at(selectionIndex);
-                WindowManager::Get().AddWindow(std::make_shared<EditActorWindow>(toEdit));
+                WindowManager::Get().AddModalWindow(std::make_shared<EditActorWindow>(toEdit));
             }
         }
     }
@@ -809,7 +810,7 @@ void SelectTool::RenderToolWindow()
             if (ImGui::Button("Actor Properties"))
             {
                 Actor &toEdit = MapEditor::map.actors.at(selectionIndex);
-                WindowManager::Get().AddWindow(std::make_shared<EditActorWindow>(toEdit));
+                WindowManager::Get().AddModalWindow(std::make_shared<EditActorWindow>(toEdit));
             }
             break;
         default:

@@ -78,13 +78,13 @@ void OptionsWindow::Render()
     {
         Options::Get().Save();
         SharedMgr::Get().UpdateAssetPaths();
-        closeRequest = true;
+        RequestClose();
     }
     ImGui::SameLine();
     if (ImGui::Button("Cancel", ImVec2(60, 0)))
     {
         Options::Get().Load();
         SharedMgr::Get().UpdateAssetPaths();
-        closeRequest = true;
+        RequestClose();
     }
 }

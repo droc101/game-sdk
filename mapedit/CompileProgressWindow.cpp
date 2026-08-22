@@ -176,7 +176,7 @@ void CompileProgressWindow::ProcessCompilerOutput()
 
 void CompileProgressWindow::Render()
 {
-    ImGui::PushFont(monospaceFont, 18);
+    ImGui::PushFont(GetMonospaceFont(), 18);
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 1));
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.1, 0.1, 0.1, 1));
     ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0, 0, 0, 0));
@@ -219,7 +219,7 @@ void CompileProgressWindow::Render()
         ImGui::SameLine();
         if (ImGui::Button("OK") || ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
         {
-            closeRequest = true;
+            RequestClose();
         }
     }
 

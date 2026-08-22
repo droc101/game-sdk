@@ -41,7 +41,7 @@ void SoundBrowserWindow::InputSound(const char *label, std::string &sound)
 void SoundBrowserWindow::InputSound(const char *label, std::string *sound)
 {
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->monospaceFont);
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
     ImGui::InputText(label, sound);
     ImGui::PopFont();
     ImGui::SameLine();
@@ -53,7 +53,7 @@ void SoundBrowserWindow::InputSound(const char *label, std::string *sound)
 
 void SoundBrowserWindow::Show(std::string *sound)
 {
-    WindowManager::Get().AddWindow(std::make_shared<SoundBrowserWindow>(sound));
+    WindowManager::Get().AddModalWindow(std::make_shared<SoundBrowserWindow>(sound));
 }
 
 void SoundBrowserWindow::Render()
@@ -123,6 +123,6 @@ void SoundBrowserWindow::Render()
     ImGui::SameLine();
     if (ImGui::Button("OK", ImVec2(60, 0)))
     {
-        closeRequest = true;
+        RequestClose();
     }
 }

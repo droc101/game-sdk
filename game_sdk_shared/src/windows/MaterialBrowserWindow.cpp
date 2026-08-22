@@ -152,7 +152,7 @@ void MaterialBrowserWindow::Render()
     ImGui::SameLine();
     if (ImGui::Button("OK", ImVec2(60, 0)))
     {
-        closeRequest = true;
+        RequestClose();
     }
 }
 
@@ -164,7 +164,7 @@ void MaterialBrowserWindow::InputMaterial(const char *label, std::string &materi
 void MaterialBrowserWindow::InputMaterial(const char *label, std::string *material)
 {
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->monospaceFont);
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
     ImGui::InputText(label, material);
     ImGui::PopFont();
     ImGui::SameLine();
@@ -176,5 +176,5 @@ void MaterialBrowserWindow::InputMaterial(const char *label, std::string *materi
 
 void MaterialBrowserWindow::Show(std::string *material)
 {
-    WindowManager::Get().AddWindow(std::make_shared<MaterialBrowserWindow>(material));
+    WindowManager::Get().AddModalWindow(std::make_shared<MaterialBrowserWindow>(material));
 }

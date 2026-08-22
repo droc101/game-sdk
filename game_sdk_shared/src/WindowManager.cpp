@@ -17,6 +17,7 @@
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
 #include <string>
+#include <utility>
 
 WindowManager &WindowManager::Get()
 {
@@ -78,9 +79,9 @@ bool WindowManager::Init(const std::string &appName)
     return true;
 }
 
-SDL_GLContext WindowManager::GetOrCreateContext(SDL_Window *window)
+SDL_GLContext WindowManager::CreateGlContext(SDL_Window *window)
 {
-    if (!SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, glContext == nullptr ? 0 : 1))
+    if (!SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, firstGlContextCreated ? 0 : 1))
     {
         Logger::Error("Failed to set OpenGL context sharing: {}", SDL_GetError());
     }
@@ -91,7 +92,7 @@ SDL_GLContext WindowManager::GetOrCreateContext(SDL_Window *window)
         return nullptr;
     }
 
-    if (glContext == nullptr)
+    if (!firstGlContextCreated)
     {
         if (!GLHelper::Init())
         {
@@ -105,7 +106,7 @@ SDL_GLContext WindowManager::GetOrCreateContext(SDL_Window *window)
 
         SharedMgr::Get().textureCache.InitMissingTexture();
 
-        glContext = ctx;
+        firstGlContextCreated = true;
     }
 
     if (!SDL_GL_SetSwapInterval(1)) // Enable vsync
@@ -127,42 +128,37 @@ int WindowManager::Run()
 {
     while (true)
     {
-        for (const std::shared_ptr<Window> &window: windowsToAdd)
+        for (const std::pair<std::shared_ptr<Window>, std::shared_ptr<Window>> &window: windowsToAdd)
         {
-            Window *w = window.get();
-            workingWindow = window;
-            if (!w->BaseInit())
+            Window *w = window.second.get();
+            workingWindow = window.second;
+            if (!w->BaseInit(window.first))
             {
                 Logger::Error("Failed to init window!");
                 exit(1);
             }
-            windows.push_back(window);
+            windows.push_back(window.second);
         }
         windowsToAdd.clear();
 
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            for (const std::shared_ptr<Window> &window: windows)
-            {
-                Window *w = window.get();
-                const SDL_Window *sdlWnd = SDL_GetWindowFromEvent(&event);
-                if (sdlWnd == nullptr || sdlWnd == w->GetWindow())
-                {
-                    workingWindow = window;
-                    w->BaseProcessEvent(&event);
-                }
-            }
-        }
-
         for (const std::shared_ptr<Window> &window: windows)
         {
-            if (window != nullptr && !window->NeedsInit())
+            ProcessEventQueue();
+            if (window != nullptr && !window->NeedsInit() && !window->HasCloseRequest())
             {
                 workingWindow = window;
                 window->BaseProcess();
             }
         }
+
+        for (const std::shared_ptr<Window> &window: windows)
+        {
+            if (window->HasCloseRequest())
+            {
+                window->BaseDestroy();
+            }
+        }
+
         std::erase_if(windows, [](const std::shared_ptr<Window> &w) { return w.get()->IsDestroyed(); });
 
         if (windows.empty())
@@ -173,12 +169,36 @@ int WindowManager::Run()
     }
 }
 
-void WindowManager::AddWindow(const std::shared_ptr<Window> &window)
+void WindowManager::ProcessEventQueue()
 {
-    windowsToAdd.push_back(window);
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
+    {
+        for (const std::shared_ptr<Window> &window: windows)
+        {
+            Window *w = window.get();
+            const SDL_Window *sdlWnd = SDL_GetWindowFromEvent(&event);
+            if (sdlWnd == nullptr || sdlWnd == w->GetWindow())
+            {
+                workingWindow = window;
+                w->BaseProcessEvent(&event);
+            }
+        }
+    }
 }
 
-void WindowManager::ApplyTheme()
+void WindowManager::AddWindow(const std::shared_ptr<Window> &window)
+{
+    windowsToAdd.emplace_back(nullptr, window);
+}
+
+void WindowManager::AddModalWindow(const std::shared_ptr<Window> &window)
+{
+    workingWindow->ModalBlock();
+    windowsToAdd.emplace_back(workingWindow, window);
+}
+
+void WindowManager::ApplyTheme() const
 {
     ImGuiContext *ctx = ImGui::GetCurrentContext();
     for (const std::shared_ptr<Window> &window: windows)
