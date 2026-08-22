@@ -199,10 +199,9 @@ void ModelViewer::DestroyModel()
 void ModelViewer::RenderImGui()
 {
     ImGuiIO &io = ImGui::GetIO();
-    ImVec2 windowSize = ImGui::GetContentRegionMax();
-    windowSize.x += 8;
-    windowSize.y += 8;
-    ResizeWindow(static_cast<GLsizei>(windowSize.x), static_cast<GLsizei>(windowSize.y));
+    const float windowSizeX = ImGui::GetContentRegionAvail().x + ImGui::GetCursorScreenPos().x - ImGui::GetWindowPos().x + 8;
+    const float windowSizeY = ImGui::GetContentRegionAvail().y + ImGui::GetCursorScreenPos().y - ImGui::GetWindowPos().y + 8;
+    ResizeWindow(static_cast<GLsizei>(windowSizeX), static_cast<GLsizei>(windowSizeY));
 
     const bool previewFocused = ImGui::IsWindowHovered();
     ImGui::Image(GetFramebufferTexture(), GetFramebufferSize(), {0, 1}, {1, 0});

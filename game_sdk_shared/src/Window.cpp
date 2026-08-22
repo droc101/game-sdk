@@ -5,7 +5,6 @@
 #include <cassert>
 #include <cstdint>
 #include <game_sdk/Options.h>
-#include <game_sdk/SharedMgr.h>
 #include <game_sdk/Window.h>
 #include <game_sdk/WindowManager.h>
 #include <imgui.h>
@@ -28,8 +27,6 @@
 
 bool Window::BaseInit(const std::shared_ptr<Window> &modalParent)
 {
-
-
     const WindowProperties &props = this->GetProperties();
 
     const SDL_WindowFlags sdlWindowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | props.defaultFlags;
@@ -253,8 +250,12 @@ void Window::SetWindowIcon(const std::string &iconName) const
     {
         iconAsset.CreateMissingTexture();
     }
+    if (iconAsset.GetFormat() != TextureAsset::PixelFormat::RGBA8)
+    {
+        Logger::Error("Cannot set non-RGBA8 texture as window icon");
+        return;
+    }
     uint8_t *pixels = iconAsset.GetPixelsRGBA();
-    assert(iconAsset.GetFormat() == TextureAsset::PixelFormat::RGBA8);
     SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(iconAsset.GetWidth()),
                                                  static_cast<int>(iconAsset.GetHeight()),
                                                  SDL_PIXELFORMAT_ABGR8888,

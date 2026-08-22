@@ -57,9 +57,9 @@ void Viewport::Render()
     lastLocalMousePos = {mPos.x - wPos.x, mPos.y - wPos.y};
 
     windowPos = ImGui::GetWindowPos();
-    windowSize = ImGui::GetContentRegionMax();
-    windowSize.x += 8;
-    windowSize.y += 8;
+    const float windowSizeX = ImGui::GetContentRegionAvail().x + ImGui::GetCursorScreenPos().x - ImGui::GetWindowPos().x + 8;
+    const float windowSizeY = ImGui::GetContentRegionAvail().y + ImGui::GetCursorScreenPos().y - ImGui::GetWindowPos().y + 8;
+    windowSize = {windowSizeX, windowSizeY};
 
     if (!framebuffer.created)
     {

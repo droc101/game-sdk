@@ -58,7 +58,12 @@ void MaterialsTab::Render()
             }
             const float *color = mat.color.GetDataPointer();
             ImGui::SameLine();
-            ImGui::Image(textureId, {18, 18}, {0, 0}, {1, 1}, {color[0], color[1], color[2], color[3]}, {0, 0, 0, 0});
+            ImGui::ImageWithBg(textureId,
+                               {18, 18},
+                               {0, 0},
+                               {1, 1},
+                               {0, 0, 0, 0},
+                               {color[0], color[1], color[2], color[3]});
             ImGui::SameLine();
             ImGui::Text("Material %zu: %s", m, mat.texture.c_str());
         }
@@ -93,7 +98,7 @@ void MaterialsTab::Render()
             pos.y += (sz.y - imageSize.y) * 0.5f;
 
             ImGui::SetCursorPos(pos);
-            ImGui::Image(tid, imageSize, {0, 0}, {1, 1}, {color[0], color[1], color[2], color[3]}, {0, 0, 0, 0});
+            ImGui::ImageWithBg(tid, imageSize, {0, 0}, {1, 1}, {0, 0, 0, 0}, {color[0], color[1], color[2], color[3]});
         }
         ImGui::EndChild();
     }

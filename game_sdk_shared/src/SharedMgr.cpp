@@ -7,11 +7,7 @@
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/AboutWindow.h>
-#include <game_sdk/windows/MaterialBrowserWindow.h>
-#include <game_sdk/windows/ModelBrowserWindow.h>
 #include <game_sdk/windows/OptionsWindow.h>
-#include <game_sdk/windows/SoundBrowserWindow.h>
-#include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/asset/DataAsset.h>
 #include <libassets/util/Error.h>

@@ -41,7 +41,7 @@ void TextureBrowserWindow::Render()
     if (ImGui::BeginChild("##picker", ImVec2(-1, -36), ImGuiChildFlags_Borders, 0))
     {
         const float spacing = ImGui::GetStyle().ItemSpacing.x;
-        const float regionMaxX = ImGui::GetWindowPos().x + ImGui::GetContentRegionMax().x;
+        const float regionMaxX = ImGui::GetContentRegionAvail().x + ImGui::GetCursorScreenPos().x;
         bool foundResults = false;
 
         for (size_t i = 0; i < textures.size(); i++)
@@ -145,7 +145,7 @@ void TextureBrowserWindow::InputTexture(const char *label, std::string &texture)
 void TextureBrowserWindow::InputTexture(const char *label, std::string *texture)
 {
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont(), 0.0f);
     ImGui::InputText(label, texture);
     ImGui::PopFont();
     ImGui::SameLine();

@@ -31,5 +31,5 @@ class FoneditWindow final: public Window
 
         void OpenGfon(const std::string &path);
         void SaveGfon(const std::string &path);
-        static bool ComboGetter(void *data, int index, const char **outText);
+        static const char* ComboGetter(void* user_data, int index);
 };

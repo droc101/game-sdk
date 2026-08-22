@@ -41,7 +41,7 @@ void SoundBrowserWindow::InputSound(const char *label, std::string &sound)
 void SoundBrowserWindow::InputSound(const char *label, std::string *sound)
 {
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont(), 0.0f);
     ImGui::InputText(label, sound);
     ImGui::PopFont();
     ImGui::SameLine();

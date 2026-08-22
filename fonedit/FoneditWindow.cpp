@@ -34,15 +34,14 @@ void FoneditWindow::SaveGfon(const std::string &path)
     }
 }
 
-bool FoneditWindow::ComboGetter(void *data, const int index, const char **outText)
+const char *FoneditWindow::ComboGetter(void *user_data, int index)
 {
-    const std::vector<std::string> &items = *static_cast<std::vector<std::string> *>(data);
+    const std::vector<std::string> &items = *static_cast<std::vector<std::string> *>(user_data);
     if (index < 0 || static_cast<size_t>(index) >= items.size())
     {
-        return false;
+        return nullptr;
     }
-    *outText = items.at(index).c_str();
-    return true;
+    return items.at(index).c_str();
 }
 
 void FoneditWindow::Render()
@@ -121,7 +120,7 @@ void FoneditWindow::Render()
                 ImGui::TableNextColumn();
                 int charIndex = static_cast<int>(FontAsset::FONT_VALID_CHARS.find(font.chars.at(i)));
                 ImGui::PushItemWidth(-1);
-                if (ImGui::Combo(std::format("##Char_{}", i).c_str(),
+                if (ImGui::Combo(std::format("##char_{}", i).c_str(),
                                  &charIndex,
                                  ComboGetter,
                                  &charDisplayList,
