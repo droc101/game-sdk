@@ -97,6 +97,14 @@ bool CompileProgressWindow::Init()
     return true;
 }
 
+void CompileProgressWindow::Destroy()
+{
+    if (compilerProcess)
+    {
+        (void)SDL_KillProcess(compilerProcess, false);
+    }
+}
+
 void CompileProgressWindow::SaveLog(const std::string &path) const
 {
     FileIo::WriteStringToFile(path, log);
@@ -181,7 +189,7 @@ void CompileProgressWindow::Render()
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.1, 0.1, 0.1, 1));
     ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0, 0, 0, 0));
     if (ImGui::BeginChild("scrolling",
-                          ImVec2(-1, ImGui::GetWindowSize().y - 70),
+                          ImVec2(-1, ImGui::GetWindowSize().y - 45),
                           ImGuiChildFlags_Borders,
                           ImGuiWindowFlags_HorizontalScrollbar))
     {

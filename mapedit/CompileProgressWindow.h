@@ -26,6 +26,7 @@ class CompileProgressWindow final: public Window
 
     protected:
         bool Init() override;
+        void Destroy() override;
         void Render() override;
         [[nodiscard]] const WindowProperties &GetProperties() const override;
 

@@ -19,7 +19,7 @@ class ActorBrowserWindow final: public Window
     private:
         WindowProperties properties = {
             .title = "Actor Class Browser",
-            .defaultSize = {640, 480},
+            .defaultSize = {1000, 600},
             .icon = "",
             .defaultFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_UTILITY,
             .defaultImguiWindow = true,

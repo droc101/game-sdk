@@ -45,7 +45,7 @@ void AboutWindow::Render()
     ImGui::TextLinkOpenURL("GAME", "https://github.com/droc101/c-game-engine");
     ImGui::TextUnformatted(std::format("Version {}", LIBASSETS_VERSION_STRING).c_str());
 
-    const float s = ImGui::GetContentRegionAvail().y - 64;
+    const float s = ImGui::GetContentRegionAvail().y - 55;
 
     ImGui::SeparatorText("Third-Party Components");
     if (ImGui::BeginListBox("##thirdParty", ImVec2(150, s)))

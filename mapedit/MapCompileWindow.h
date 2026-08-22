@@ -18,7 +18,7 @@ class MapCompileWindow final: public Window
     private:
         WindowProperties properties = {
             .title = "Compile Map",
-            .defaultSize = glm::ivec2(250, 300),
+            .defaultSize = glm::ivec2(250, 290),
             .icon = "",
             .defaultFlags = SDL_WINDOW_UTILITY,
             .defaultImguiWindow = true,

@@ -23,7 +23,7 @@ class EditActorWindow final: public Window
     private:
         WindowProperties properties = {
             .title = "Actor Properties",
-            .defaultSize = {600, 400},
+            .defaultSize = {1000, 600},
             .icon = "",
             .defaultFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_UTILITY,
             .defaultImguiWindow = true,
