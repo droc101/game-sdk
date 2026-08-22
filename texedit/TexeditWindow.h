@@ -8,7 +8,6 @@
 #include <GL/glew.h>
 #include <imgui.h>
 #include <libassets/asset/TextureAsset.h>
-#include <libassets/util/Logger.h>
 #include <SDL3/SDL_video.h>
 #include <string>
 

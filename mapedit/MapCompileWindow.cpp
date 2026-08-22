@@ -3,11 +3,11 @@
 //
 
 #include "MapCompileWindow.h"
-#include <format>
+#include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <imgui.h>
 #include <memory>
 #include "CompileProgressWindow.h"
-#include "game_sdk/WindowManager.h"
 #include "MapEditor.h"
 
 void MapCompileWindow::StartCompile()

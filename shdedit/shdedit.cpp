@@ -2,11 +2,12 @@
 // Created by droc101 on 7/23/25.
 //
 
-#include <string>
 #include <game_sdk/WindowManager.h>
+#include <memory>
+#include <string>
 #include "ShdeditWindow.h"
 
-int main(const int argc, char **argv)
+int main()
 {
     WindowManager &mgr = WindowManager::Get();
     if (!mgr.Init("GAME SDK Shader Editor"))

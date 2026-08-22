@@ -205,7 +205,7 @@ void TexeditWindow::Render()
         if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
         {
             const ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
-            pan = {pan.x + (dragDelta.x), pan.y + (dragDelta.y)};
+            pan = {pan.x + dragDelta.x, pan.y + dragDelta.y};
             ImGui::ResetMouseDragDelta(ImGuiMouseButton_Right);
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
         }

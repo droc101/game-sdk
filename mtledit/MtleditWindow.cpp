@@ -3,12 +3,16 @@
 //
 
 #include "MtleditWindow.h"
-
+#include <format>
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/SharedMgr.h>
+#include <game_sdk/Window.h>
+#include <game_sdk/windows/TextureBrowserWindow.h>
 #include <glm/gtc/type_ptr.hpp>
-
-#include "game_sdk/DialogFilters.h"
-#include "game_sdk/SharedMgr.h"
-#include "game_sdk/windows/TextureBrowserWindow.h"
+#include <imgui.h>
+#include <libassets/type/Material.h>
+#include <libassets/util/Error.h>
+#include <string>
 
 const Window::WindowProperties &MtleditWindow::GetProperties() const
 {

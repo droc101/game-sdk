@@ -3,13 +3,22 @@
 //
 
 #include "KvleditWindow.h"
-
+#include <cassert>
+#include <cstdint>
+#include <cstdlib>
+#include <filesystem>
+#include <format>
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/SharedMgr.h>
+#include <game_sdk/Window.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <imgui.h>
+#include <libassets/type/Param.h>
+#include <libassets/util/Error.h>
+#include <libassets/util/VectorMove.h>
 #include <misc/cpp/imgui_stdlib.h>
-
-#include "game_sdk/DialogFilters.h"
-#include "game_sdk/SharedMgr.h"
-#include "libassets/util/VectorMove.h"
+#include <string>
+#include <utility>
 
 void KvleditWindow::OpenGkvl(const std::string &path)
 {
@@ -22,7 +31,7 @@ void KvleditWindow::OpenGkvl(const std::string &path)
 
 void KvleditWindow::OpenKvl(const std::string &path)
 {
-    const Error::ErrorCode errorCode = dataAsset.CreateFromKvlFile(path.c_str());
+    const Error::ErrorCode errorCode = dataAsset.CreateFromKvlFile(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         ErrorMessage(std::format("Failed to open the KvList!\n{}", errorCode));
@@ -49,7 +58,7 @@ void KvleditWindow::SaveGkvl(const std::string &path)
 
 void KvleditWindow::SaveKvl(const std::string &path)
 {
-    const Error::ErrorCode errorCode = dataAsset.SaveAsKvlFile(path.c_str());
+    const Error::ErrorCode errorCode = dataAsset.SaveAsKvlFile(path);
     if (errorCode != Error::ErrorCode::OK)
     {
         ErrorMessage(std::format("Failed to save the KvList!\n{}", errorCode));

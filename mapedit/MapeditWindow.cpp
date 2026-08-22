@@ -3,19 +3,18 @@
 //
 
 #include "MapeditWindow.h"
-
+#include <game_sdk/DesktopInterface.h>
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/SharedMgr.h>
+#include <game_sdk/SoundSystem.h>
+#include <game_sdk/WindowManager.h>
+#include <game_sdk/windows/MaterialBrowserWindow.h>
+#include <game_sdk/windows/ModelBrowserWindow.h>
+#include <game_sdk/windows/SoundBrowserWindow.h>
+#include <game_sdk/windows/TextureBrowserWindow.h>
+#include <imgui_internal.h>
 #include "ActorBrowserWindow.h"
-#include "game_sdk/DesktopInterface.h"
-#include "game_sdk/DialogFilters.h"
 #include "game_sdk/Options.h"
-#include "game_sdk/SharedMgr.h"
-#include "game_sdk/SoundSystem.h"
-#include "game_sdk/WindowManager.h"
-#include "game_sdk/windows/MaterialBrowserWindow.h"
-#include "game_sdk/windows/ModelBrowserWindow.h"
-#include "game_sdk/windows/SoundBrowserWindow.h"
-#include "game_sdk/windows/TextureBrowserWindow.h"
-#include "imgui_internal.h"
 #include "MapCompileWindow.h"
 #include "MapEditor.h"
 #include "MapPropertiesWindow.h"
@@ -44,15 +43,15 @@ bool MapeditWindow::Init()
     if (!MapEditor::adm.HasActorClass("player"))
     {
         ErrorMessage("Could not find definition for required actor class \"player\". Please check the "
-                                      "game paths from the SDK launcher.",
-                                      "Error");
+                     "game paths from the SDK launcher.",
+                     "Error");
         return false;
     }
     if (!MapEditor::adm.HasActorClass("actor"))
     {
         ErrorMessage("Could not find definition for required actor class \"actor\". Please check the "
-                                      "game paths from the SDK launcher.",
-                                      "Error");
+                     "game paths from the SDK launcher.",
+                     "Error");
         return false;
     }
 
@@ -149,7 +148,7 @@ void MapeditWindow::SetupDockspace()
     ImGui::DockBuilderFinish(rootDockspaceID);
 }
 
-void MapeditWindow::OpenJson(const std::string &path)
+void MapeditWindow::OpenJson(const std::string &path) const
 {
     const Error::ErrorCode errorCode = MapEditor::map.Import(path);
     if (errorCode != Error::ErrorCode::OK)
@@ -163,8 +162,8 @@ void MapeditWindow::OpenJson(const std::string &path)
         if (!MapEditor::adm.HasActorClass(actor.className))
         {
             ErrorMessage(std::format("Failed to open the map because it contains an unknown actor "
-                                                      "class \"{}\"",
-                                                      actor.className));
+                                     "class \"{}\"",
+                                     actor.className));
             MapEditor::map = MapAsset();
             return;
         }
@@ -173,7 +172,7 @@ void MapeditWindow::OpenJson(const std::string &path)
     }
 }
 
-void MapeditWindow::SaveJson(const std::string &path)
+void MapeditWindow::SaveJson(const std::string &path) const
 {
     const Error::ErrorCode errorCode = MapEditor::map.Export(path);
     if (errorCode != Error::ErrorCode::OK)
@@ -418,7 +417,7 @@ void MapeditWindow::Render()
         {
             if (ImGui::MenuItem("Actor Class Browser"))
             {
-                ActorBrowserWindow::visible = true;
+                WindowManager::Get().AddWindow(std::make_shared<ActorBrowserWindow>());
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Texture Browser"))
@@ -457,14 +456,14 @@ void MapeditWindow::Render()
     {
         MapEditor::map = MapAsset();
         MapEditor::toolType = MapEditor::EditorToolType::SELECT;
-        MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+        MapEditor::tool = std::make_unique<SelectTool>();
         MapEditor::mapFile = "";
     }
     if (openPressed)
     {
         OpenFileDialog(FILE_DIALOG_CALLBACK(OpenJson), DialogFilters::MAP_JSON_FILTERS);
         MapEditor::toolType = MapEditor::EditorToolType::SELECT;
-        MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+        MapEditor::tool = std::make_unique<SelectTool>();
     }
     if (savePressed)
     {
@@ -507,7 +506,7 @@ void MapeditWindow::Render()
                           ImGuiMod_Ctrl | ImGuiKey_1))
     {
         MapEditor::toolType = MapEditor::EditorToolType::SELECT;
-        MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+        MapEditor::tool = std::make_unique<SelectTool>();
     }
 
     if (ToolbarToolButton("##actorTool",
@@ -519,7 +518,7 @@ void MapeditWindow::Render()
                           ImGuiMod_Ctrl | ImGuiKey_2))
     {
         MapEditor::toolType = MapEditor::EditorToolType::ADD_ACTOR;
-        MapEditor::tool = std::unique_ptr<EditorTool>(new AddActorTool());
+        MapEditor::tool = std::make_unique<AddActorTool>();
     }
 
     if (ToolbarToolButton("##primTool",
@@ -531,7 +530,7 @@ void MapeditWindow::Render()
                           ImGuiMod_Ctrl | ImGuiKey_3))
     {
         MapEditor::toolType = MapEditor::EditorToolType::ADD_PRIMITIVE;
-        MapEditor::tool = std::unique_ptr<EditorTool>(new AddPrimitiveTool());
+        MapEditor::tool = std::make_unique<AddPrimitiveTool>();
     }
 
     if (ToolbarToolButton("##polyTool",
@@ -543,7 +542,7 @@ void MapeditWindow::Render()
                           ImGuiMod_Ctrl | ImGuiKey_4))
     {
         MapEditor::toolType = MapEditor::EditorToolType::ADD_POLYGON;
-        MapEditor::tool = std::unique_ptr<EditorTool>(new AddPolygonTool());
+        MapEditor::tool = std::make_unique<AddPolygonTool>();
     }
 
     ImGui::Dummy({1, 1});
@@ -590,6 +589,4 @@ void MapeditWindow::Render()
     vpTopDown.Render();
     vpFront.Render();
     vpSide.Render();
-
-    ActorBrowserWindow::Render();
 }

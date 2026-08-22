@@ -5,8 +5,8 @@
 #pragma once
 
 #include <game_sdk/Window.h>
-
-#include "libassets/asset/FontAsset.h"
+#include <libassets/asset/FontAsset.h>
+#include <SDL3/SDL_video.h>
 #include <string>
 #include <vector>
 
@@ -15,7 +15,7 @@ class FoneditWindow final: public Window
     protected:
         bool Init() override;
         void Render() override;
-        const WindowProperties &GetProperties() const override;
+        [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
         WindowProperties properties = {
@@ -31,5 +31,5 @@ class FoneditWindow final: public Window
 
         void OpenGfon(const std::string &path);
         void SaveGfon(const std::string &path);
-        static bool ComboGetter(void *data, const int index, const char **outText);
+        static bool ComboGetter(void *data, int index, const char **outText);
 };

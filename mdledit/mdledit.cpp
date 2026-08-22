@@ -1,10 +1,9 @@
+#include <game_sdk/WindowManager.h>
 #include <memory>
 #include <string>
-#include "game_sdk/WindowManager.h"
 #include "MdleditWindow.h"
-#include "ModelEditor.h"
 
-int main(const int argc, char **argv)
+int main()
 {
     WindowManager &mgr = WindowManager::Get();
     if (!mgr.Init("GAME SDK Model Editor"))

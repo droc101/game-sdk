@@ -3,11 +3,10 @@
 //
 
 #include "MdleditWindow.h"
-
-#include "game_sdk/DialogFilters.h"
-#include "game_sdk/Options.h"
-#include "game_sdk/SharedMgr.h"
-#include "imgui_internal.h"
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/Options.h>
+#include <game_sdk/SharedMgr.h>
+#include <imgui_internal.h>
 #include "ModelEditor.h"
 #include "tabs/CollisionTab.h"
 #include "tabs/LodsTab.h"
@@ -46,7 +45,7 @@ bool MdleditWindow::Init()
     return true;
 }
 
-void MdleditWindow::OpenGmdl(const std::string &path)
+void MdleditWindow::OpenGmdl(const std::string &path) const
 {
     ModelAsset model;
     const Error::ErrorCode errorCode = model.LoadFromAsset(path);
@@ -60,7 +59,7 @@ void MdleditWindow::OpenGmdl(const std::string &path)
     ModelEditor::modelLoaded = true;
 }
 
-void MdleditWindow::ImportModel(const std::string &path)
+void MdleditWindow::ImportModel(const std::string &path) const
 {
     ModelAsset model;
     const Error::ErrorCode errorCode = model.Import(path);
@@ -78,7 +77,7 @@ void MdleditWindow::ImportModel(const std::string &path)
     ModelEditor::modelLoaded = true;
 }
 
-void MdleditWindow::SaveGmdl(const std::string &path)
+void MdleditWindow::SaveGmdl(const std::string &path) const
 {
     const Error::ErrorCode errorCode = ModelEditor::modelViewer.GetModel().SaveToAsset(path);
     if (errorCode != Error::ErrorCode::OK)

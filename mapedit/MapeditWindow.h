@@ -5,9 +5,10 @@
 #pragma once
 
 #include <game_sdk/Window.h>
-
+#include <imgui.h>
+#include <SDL3/SDL_video.h>
+#include <string>
 #include "Viewport.h"
-#include "imgui.h"
 
 class MapeditWindow final: public Window
 {
@@ -43,18 +44,17 @@ class MapeditWindow final: public Window
         std::string modelBrowserToolSelection{};
         std::string soundBrowserToolSelection{};
 
-        bool ToolbarToolButton(const char *id,
-                              const char *tooltip,
-                              const char *icon,
-                              const bool selected,
-                              const int spacing = 2,
-                              const char *shortcutText = nullptr,
-                              const ImGuiKeyChord shortcut = 0);
+        static bool ToolbarToolButton(const char *id,
+                               const char *tooltip,
+                               const char *icon,
+                               bool selected,
+                               int spacing = 2,
+                               const char *shortcutText = nullptr,
+                               ImGuiKeyChord shortcut = 0);
 
-        void SaveJson(const std::string &path);
+        void SaveJson(const std::string &path) const;
 
-        void OpenJson(const std::string &path);
+        void OpenJson(const std::string &path) const;
 
         void SetupDockspace();
-
 };

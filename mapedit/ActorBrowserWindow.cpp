@@ -5,6 +5,7 @@
 #include "ActorBrowserWindow.h"
 #include <algorithm>
 #include <cstddef>
+#include <game_sdk/Window.h>
 #include <imgui.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Param.h>
@@ -26,15 +27,13 @@
 #include <vector>
 #include "MapEditor.h"
 
+const Window::WindowProperties &ActorBrowserWindow::GetProperties() const
+{
+    return properties;
+}
+
 void ActorBrowserWindow::Render()
 {
-    if (!visible)
-    {
-        return;
-    }
-
-    ImGui::Begin("Actor Class Browser", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
-
     if (MapEditor::adm.GetActorClassCount() == 0 || !MapEditor::adm.HasActorClass("actor"))
     {
         ImGui::TextDisabled("No actor definitions are loaded. Is the game path set correctly?");
@@ -88,8 +87,6 @@ void ActorBrowserWindow::Render()
         }
         ImGui::EndTabBar();
     }
-
-    ImGui::End();
 }
 
 void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)

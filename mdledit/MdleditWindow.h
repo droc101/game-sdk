@@ -5,6 +5,9 @@
 #pragma once
 
 #include <game_sdk/Window.h>
+#include <imgui.h>
+#include <SDL3/SDL_video.h>
+#include <string>
 
 class MdleditWindow final: public Window
 {
@@ -12,7 +15,7 @@ class MdleditWindow final: public Window
 
         bool Init() override;
         void Render() override;
-        const WindowProperties &GetProperties() const override;
+        [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
         WindowProperties properties = {
@@ -27,13 +30,13 @@ class MdleditWindow final: public Window
         bool newPressed = false;
         bool savePressed = false;
 
-        ImGuiID dockspaceId;
-        ImGuiID rootDockspaceID;
+        ImGuiID dockspaceId = 0;
+        ImGuiID rootDockspaceID = 0;
         bool dockspaceSetup = false;
 
-        void OpenGmdl(const std::string &path);
-        void ImportModel(const std::string &path);
-        void SaveGmdl(const std::string &path);
+        void OpenGmdl(const std::string &path) const;
+        void ImportModel(const std::string &path) const;
+        void SaveGmdl(const std::string &path) const;
 
         void HandleMenuAndShortcuts();
         void SetupDockspace();

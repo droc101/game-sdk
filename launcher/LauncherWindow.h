@@ -7,6 +7,7 @@
 #include <game_sdk/Window.h>
 #include <libassets/util/Error.h>
 #include <nlohmann/json.hpp>
+#include <string>
 
 class LauncherWindow final: public Window
 {
@@ -35,9 +36,9 @@ class LauncherWindow final: public Window
 
         Error::ErrorCode LoadLauncherConfig();
 
-        constexpr void StringReplace(std::string &string, const std::string &find, const std::string &replace);
+        static constexpr void StringReplace(std::string &string, const std::string &find, const std::string &replace);
 
-        void ParsePath(std::string &path);
+        void ParsePath(std::string &path) const;
 
         void LaunchSelectedTool();
 };

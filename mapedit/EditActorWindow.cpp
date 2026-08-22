@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
+#include <game_sdk/Window.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
 #include <game_sdk/windows/SoundBrowserWindow.h>
@@ -41,9 +42,7 @@
 #include <vector>
 #include "MapEditor.h"
 
-EditActorWindow::EditActorWindow(Actor &actorToEdit): actor(actorToEdit)
-{
-}
+EditActorWindow::EditActorWindow(Actor &actorToEdit): actor(actorToEdit) {}
 
 const Window::WindowProperties &EditActorWindow::GetProperties() const
 {

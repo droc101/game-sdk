@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <SDL3/SDL_video.h>
 #include <game_sdk/Window.h>
 #include <SDL3/SDL_iostream.h>
 #include <SDL3/SDL_process.h>

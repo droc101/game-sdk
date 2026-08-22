@@ -1,8 +1,9 @@
 #include <game_sdk/WindowManager.h>
+#include <memory>
 #include <string>
 #include "SndeditWindow.h"
 
-int main(const int argc, char **argv)
+int main()
 {
     WindowManager &mgr = WindowManager::Get();
     if (!mgr.Init("GAME SDK Sound Editor"))

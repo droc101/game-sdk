@@ -4,6 +4,7 @@
 
 #include "MapPropertiesWindow.h"
 #include <cmath>
+#include <game_sdk/Window.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>

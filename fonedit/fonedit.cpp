@@ -6,10 +6,11 @@
 //
 
 #include <game_sdk/WindowManager.h>
+#include <memory>
 #include <string>
 #include "FoneditWindow.h"
 
-int main(const int argc, char **argv)
+int main()
 {
     WindowManager &mgr = WindowManager::Get();
     if (!mgr.Init("GAME SDK Font Editor"))

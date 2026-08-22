@@ -2,13 +2,12 @@
 // Created by droc101 on 11/16/25.
 //
 
-#include <filesystem>
+#include <game_sdk/WindowManager.h>
+#include <memory>
 #include <string>
-
-#include "game_sdk/WindowManager.h"
 #include "MtleditWindow.h"
 
-int main(const int argc, const char **argv)
+int main()
 {
     WindowManager &mgr = WindowManager::Get();
     if (!mgr.Init("GAME SDK Material Editor"))

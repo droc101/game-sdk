@@ -4,8 +4,11 @@
 
 #pragma once
 
+#include <cstddef>
 #include <game_sdk/Window.h>
 #include <libassets/type/Actor.h>
+#include <libassets/type/ActorDefinition.h>
+#include <SDL3/SDL_video.h>
 
 class EditActorWindow final: public Window
 {
@@ -15,7 +18,7 @@ class EditActorWindow final: public Window
     protected:
         void Render() override;
 
-        const WindowProperties &GetProperties() const override;
+        [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
         WindowProperties properties = {

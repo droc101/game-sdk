@@ -3,6 +3,7 @@
 //
 
 #include "LauncherWindow.h"
+#include <SDL3/SDL_error.h>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
@@ -138,7 +139,7 @@ constexpr void LauncherWindow::StringReplace(std::string &string, const std::str
     }
 }
 
-void LauncherWindow::ParsePath(std::string &path)
+void LauncherWindow::ParsePath(std::string &path) const
 {
 #ifdef WIN32
     StringReplace(path, "/", "\\");
@@ -180,14 +181,14 @@ void LauncherWindow::LaunchSelectedTool()
     {
         std::string folder = item.value("file", "");
         ParsePath(folder);
-        DesktopInterface::Get().OpenFilesystemPath(folder);
+        (void)DesktopInterface::Get().OpenFilesystemPath(folder);
     } else if (item.contains("folder"))
     {
         std::string folder = item.value("folder", "");
         ParsePath(folder);
-        DesktopInterface::Get().OpenFilesystemPath(folder);
+        (void)DesktopInterface::Get().OpenFilesystemPath(folder);
     } else if (item.contains("url"))
     {
-        DesktopInterface::Get().OpenURL(item.value("url", ""));
+        (void)DesktopInterface::Get().OpenURL(item.value("url", ""));
     }
 }

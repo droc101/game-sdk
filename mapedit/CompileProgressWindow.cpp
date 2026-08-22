@@ -3,18 +3,25 @@
 //
 
 #include "CompileProgressWindow.h"
+#include <array>
+#include <cstddef>
+#include <format>
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/Options.h>
+#include <game_sdk/Window.h>
 #include <imgui.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
 #include <SDL3/SDL_clipboard.h>
+#include <SDL3/SDL_error.h>
 #include <SDL3/SDL_filesystem.h>
+#include <SDL3/SDL_iostream.h>
+#include <SDL3/SDL_process.h>
+#include <SDL3/SDL_properties.h>
 #include <vector>
 #include "MapEditor.h"
-#include "game_sdk/Window.h"
 
 CompileProgressWindow::CompileProgressWindow(const CompileOptions &opts)
 {

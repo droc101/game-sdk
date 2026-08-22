@@ -3,11 +3,18 @@
 //
 
 #include "FoneditWindow.h"
-
-#include "game_sdk/DialogFilters.h"
-#include "game_sdk/SharedMgr.h"
-#include "game_sdk/windows/TextureBrowserWindow.h"
-#include "libassets/util/VectorMove.h"
+#include <cstddef>
+#include <cstdint>
+#include <format>
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/SharedMgr.h>
+#include <game_sdk/Window.h>
+#include <game_sdk/windows/TextureBrowserWindow.h>
+#include <imgui.h>
+#include <libassets/util/Error.h>
+#include <libassets/util/VectorMove.h>
+#include <string>
+#include <vector>
 
 void FoneditWindow::OpenGfon(const std::string &path)
 {

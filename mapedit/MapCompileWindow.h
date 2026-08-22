@@ -5,17 +5,15 @@
 #ifndef GAME_SDK_MAPCOMPILEWINDOW_H
 #define GAME_SDK_MAPCOMPILEWINDOW_H
 
-#include <SDL3/SDL_iostream.h>
-#include <SDL3/SDL_process.h>
-#include <string>
-
+#include <game_sdk/Window.h>
+#include <SDL3/SDL_video.h>
 #include "CompileProgressWindow.h"
 
 class MapCompileWindow final: public Window
 {
     protected:
         void Render() override;
-        const WindowProperties &GetProperties() const override;
+        [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
         WindowProperties properties = {
