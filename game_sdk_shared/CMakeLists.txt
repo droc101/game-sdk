@@ -3,7 +3,11 @@ project(game_sdk_shared)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_library(game_sdk_shared SHARED)
+add_library(game_sdk_shared SHARED
+        src/WindowManager.cpp
+        include/game_sdk/WindowManager.h
+        src/Window.cpp
+        include/game_sdk/Window.h)
 target_sources(game_sdk_shared PRIVATE
         src/Options.cpp
         include/game_sdk/Options.h

@@ -4,21 +4,24 @@
 
 #pragma once
 
-class OptionsWindow
+#include <game_sdk/Window.h>
+#include <string>
+
+class OptionsWindow final: public Window
 {
-    public:
-        static OptionsWindow &Get();
+    protected:
+        void Render() override;
 
-        void Show();
-
-        void Hide();
-
-        void Render();
+        [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
-        OptionsWindow() = default;
-
-        bool visible = false;
+        WindowProperties properties = {
+            .title = "GAME SDK Setup",
+            .defaultSize = {450, 370},
+            .icon = "",
+            .defaultFlags = SDL_WINDOW_UTILITY,
+            .defaultImguiWindow = true,
+        };
 
         static void GamePathCallback(const std::string &path);
 

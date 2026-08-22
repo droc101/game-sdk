@@ -100,7 +100,7 @@ void MaterialsTab::Render()
 
     ImGui::PushItemWidth(-1);
     ImGui::TextUnformatted("Texture");
-    TextureBrowserWindow::Get().InputTexture("##texture", mat.texture);
+    TextureBrowserWindow::InputTexture("##texture", mat.texture);
     ImGui::PushItemWidth(-1);
 
     ImGui::TextUnformatted("Color");

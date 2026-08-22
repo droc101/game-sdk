@@ -4,26 +4,36 @@
 
 #pragma once
 
+#include <SDL3/SDL_video.h>
+#include <game_sdk/Window.h>
 #include <string>
 #include <vector>
 
-class TextureBrowserWindow
+class TextureBrowserWindow final: public Window
 {
     public:
-        static TextureBrowserWindow &Get();
+        TextureBrowserWindow(std::string *texture);
 
-        void Show(std::string *texture);
-        void Hide();
-        void Render();
+        static void InputTexture(const char *label, std::string &texture);
 
-        void InputTexture(const char *label, std::string &texture);
+        static void InputTexture(const char *label, std::string *texture);
 
-        void InputTexture(const char *label, std::string *texture);
+        static void Show(std::string *texture);
+
+    protected:
+        bool Init() override;
+        void Render() override;
+        [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
-        TextureBrowserWindow() = default;
+        WindowProperties properties = {
+            .title = "Choose Texture",
+            .defaultSize = glm::ivec2(600, 500),
+            .icon = "",
+            .defaultFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_UTILITY,
+            .defaultImguiWindow = true,
+        };
 
-        bool visible = false;
         std::string *str = nullptr;
 
         std::vector<std::string> textures;

@@ -3,7 +3,9 @@ project(kvledit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(kvledit kvledit.cpp $<$<BOOL:${WIN32}>:kvledit.rc>)
+add_executable(kvledit kvledit.cpp $<$<BOOL:${WIN32}>:kvledit.rc>
+        KvleditWindow.cpp
+        KvleditWindow.h)
 
 set_target_properties(kvledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 

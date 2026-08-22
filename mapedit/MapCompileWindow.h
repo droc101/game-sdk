@@ -9,34 +9,26 @@
 #include <SDL3/SDL_process.h>
 #include <string>
 
-class MapCompileWindow
-{
-    public:
-        MapCompileWindow() = delete;
+#include "CompileProgressWindow.h"
 
-        static void Show();
-        static void Render();
-        static void RenderCompileOutput();
+class MapCompileWindow final: public Window
+{
+    protected:
+        void Render() override;
+        const WindowProperties &GetProperties() const override;
 
     private:
-        static inline bool visible = false;
-        static inline SDL_Process *compilerProcess = nullptr;
-        static inline SDL_IOStream *compilerOutputStream = nullptr;
-        static inline SDL_IOStream *compilerErrorStream = nullptr;
-        static inline bool playMap = true;
-        static inline std::string gameDir{};
-        static inline std::string log{};
-        static inline bool outputVisible = false;
-        static inline bool fastCompile = false;
-        static inline bool skipLighting = false;
-        static inline bool verbose = false;
+        WindowProperties properties = {
+            .title = "Compile Map",
+            .defaultSize = glm::ivec2(250, 300),
+            .icon = "",
+            .defaultFlags = SDL_WINDOW_UTILITY,
+            .defaultImguiWindow = true,
+        };
 
-        static void StartCompile();
-        static void SaveLog(const std::string &path);
-        static void ProcessCompilerOutput();
+        CompileProgressWindow::CompileOptions opts;
 
-        static void ProcessIOStream(SDL_IOStream **stream);
-        static void FinishIOSteam(SDL_IOStream **stream);
+        void StartCompile();
 };
 
 

@@ -5,16 +5,17 @@
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
+#include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/AboutWindow.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
 #include <game_sdk/windows/OptionsWindow.h>
-#include <game_sdk/windows/SetupWindow.h>
 #include <game_sdk/windows/SoundBrowserWindow.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/asset/DataAsset.h>
 #include <libassets/util/Error.h>
+#include <memory>
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_misc.h>
 #include <string>
@@ -40,7 +41,7 @@ void SharedMgr::InitSharedMgr()
     DesktopInterface::Get().InitDesktopInterface();
     if (!Options::Get().ValidateGamePath())
     {
-        SetupWindow::Get().Show();
+        // SetupWindow::Get().Show(); // TODO: show setup
     }
 }
 
@@ -55,24 +56,10 @@ void SharedMgr::SharedMenuUI(const std::string &programName)
     {
         if (ImGui::MenuItem("Options"))
         {
-            OptionsWindow::Get().Show();
+            WindowManager::Get().AddWindow(std::make_shared<OptionsWindow>());
         }
         ImGui::EndMenu();
     }
-#ifdef BUILDSTYLE_DEBUG
-    if (ImGui::BeginMenu("Debug"))
-    {
-        if (ImGui::MenuItem("Dear ImGui Metrics"))
-        {
-            metricsVisible = true;
-        }
-        if (ImGui::MenuItem("Dear ImGui Demo"))
-        {
-            demoVisible = true;
-        }
-        ImGui::EndMenu();
-    }
-#endif
     if (ImGui::BeginMenu("Help"))
     {
         if (!programName.empty())
@@ -93,28 +80,9 @@ void SharedMgr::SharedMenuUI(const std::string &programName)
         }
         if (ImGui::MenuItem("About"))
         {
-            AboutWindow::Get().Show();
+            WindowManager::Get().AddWindow(std::make_shared<AboutWindow>());
         }
         ImGui::EndMenu();
-    }
-}
-
-void SharedMgr::RenderSharedUI()
-{
-    OptionsWindow::Get().Render();
-    AboutWindow::Get().Render();
-    TextureBrowserWindow::Get().Render();
-    MaterialBrowserWindow::Get().Render();
-    ModelBrowserWindow::Get().Render();
-    SoundBrowserWindow::Get().Render();
-    SetupWindow::Get().Render();
-    if (metricsVisible)
-    {
-        ImGui::ShowMetricsWindow(&metricsVisible);
-    }
-    if (demoVisible)
-    {
-        ImGui::ShowDemoWindow(&demoVisible);
     }
 }
 

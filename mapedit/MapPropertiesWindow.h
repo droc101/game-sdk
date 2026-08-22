@@ -4,13 +4,20 @@
 
 #pragma once
 
+#include <SDL3/SDL_video.h>
+#include <game_sdk/Window.h>
 
-class MapPropertiesWindow
+class MapPropertiesWindow final: public Window
 {
-    public:
-        MapPropertiesWindow() = delete;
-
-        static inline bool visible = false;
-
-        static void Render();
+    protected:
+        void Render() override;
+        [[nodiscard]] const WindowProperties &GetProperties() const override;
+    private:
+        WindowProperties properties = {
+            .title = "Map Properties",
+            .defaultSize = glm::ivec2(400, 250),
+            .icon = "",
+            .defaultFlags = SDL_WINDOW_UTILITY,
+            .defaultImguiWindow = true,
+        };
 };

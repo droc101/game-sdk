@@ -3,7 +3,9 @@ project(mtledit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(mtledit mtledit.cpp $<$<BOOL:${WIN32}>:mtledit.rc>)
+add_executable(mtledit mtledit.cpp $<$<BOOL:${WIN32}>:mtledit.rc>
+        MtleditWindow.cpp
+        MtleditWindow.h)
 
 set_target_properties(mtledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 

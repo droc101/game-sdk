@@ -3,7 +3,9 @@ project(launcher)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(launcher launcher.cpp $<$<BOOL:${WIN32}>:launcher.rc>)
+add_executable(launcher launcher.cpp $<$<BOOL:${WIN32}>:launcher.rc>
+        LauncherWindow.cpp
+        LauncherWindow.h)
 
 set_target_properties(launcher PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 

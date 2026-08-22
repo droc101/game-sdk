@@ -14,13 +14,12 @@
 #include <string>
 #include <vector>
 
-AboutWindow &AboutWindow::Get()
+const Window::WindowProperties &AboutWindow::GetProperties() const
 {
-    static AboutWindow aboutWindowSingleton{};
-    return aboutWindowSingleton;
+    return properties;
 }
 
-void AboutWindow::Show()
+bool AboutWindow::Init()
 {
     if (thirdPartyComponents.empty())
     {
@@ -37,59 +36,45 @@ void AboutWindow::Show()
         }
         selectedComponent = std::views::keys(thirdPartyComponents).front();
     }
-    visible = true;
-}
-
-void AboutWindow::Hide()
-{
-    visible = false;
+    return true;
 }
 
 void AboutWindow::Render()
 {
-    if (visible)
+    ImGui::TextUnformatted("Development & Authoring tools for");
+    ImGui::SameLine();
+    ImGui::TextLinkOpenURL("GAME", "https://github.com/droc101/c-game-engine");
+    ImGui::TextUnformatted(std::format("Version {}", LIBASSETS_VERSION_STRING).c_str());
+
+    const float s = ImGui::GetContentRegionAvail().y - 64;
+
+    ImGui::SeparatorText("Third-Party Components");
+    if (ImGui::BeginListBox("##thirdParty", ImVec2(150, s)))
     {
-        ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_Appearing);
-        ImGui::Begin("About the GAME SDK",
-                     &visible,
-                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking);
-        ImGui::TextUnformatted("Development & Authoring tools for");
-        ImGui::SameLine();
-        ImGui::TextLinkOpenURL("GAME", "https://github.com/droc101/c-game-engine");
-        ImGui::TextUnformatted(std::format("Version {}", LIBASSETS_VERSION_STRING).c_str());
-
-        const float s = ImGui::GetContentRegionAvail().y - 64;
-
-        ImGui::SeparatorText("Third-Party Components");
-        if (ImGui::BeginListBox("##thirdParty", ImVec2(150, s)))
+        for (const std::string &component: std::views::keys(thirdPartyComponents))
         {
-            for (const std::string &component: std::views::keys(thirdPartyComponents))
+            if (ImGui::Selectable(component.c_str(), selectedComponent == component))
             {
-                if (ImGui::Selectable(component.c_str(), selectedComponent == component))
-                {
-                    selectedComponent = component;
-                }
+                selectedComponent = component;
             }
-            ImGui::EndListBox();
         }
-        ImGui::SameLine();
-        ImGui::PushFont(SDKWindow::Get().GetMonospaceFont(), 18);
-        ImGui::InputTextMultiline("##glsl",
-                                  &thirdPartyComponents[selectedComponent],
-                                  ImVec2(-1, s),
-                                  ImGuiInputTextFlags_ReadOnly |
-                                          ImGuiInputTextFlags_WordWrap |
-                                          ImGuiInputTextFlags_NoHorizontalScroll);
-        ImGui::PopFont();
+        ImGui::EndListBox();
+    }
+    ImGui::SameLine();
+    ImGui::PushFont(SDKWindow::Get().GetMonospaceFont(), 18);
+    ImGui::InputTextMultiline("##glsl",
+                              &thirdPartyComponents[selectedComponent],
+                              ImVec2(-1, s),
+                              ImGuiInputTextFlags_ReadOnly |
+                                      ImGuiInputTextFlags_WordWrap |
+                                      ImGuiInputTextFlags_NoHorizontalScroll);
+    ImGui::PopFont();
 
-        ImGui::Separator();
-        ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 60, 0));
-        ImGui::SameLine();
-        if (ImGui::Button("OK", ImVec2(60, 0)))
-        {
-            visible = false;
-        }
-
-        ImGui::End();
+    ImGui::Separator();
+    ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 60, 0));
+    ImGui::SameLine();
+    if (ImGui::Button("OK", ImVec2(60, 0)))
+    {
+        closeRequest = true;
     }
 }

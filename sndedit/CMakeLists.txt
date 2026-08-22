@@ -3,7 +3,9 @@ project(sndedit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(sndedit sndedit.cpp $<$<BOOL:${WIN32}>:sndedit.rc>)
+add_executable(sndedit sndedit.cpp $<$<BOOL:${WIN32}>:sndedit.rc>
+        SndeditWindow.cpp
+        SndeditWindow.h)
 
 set_target_properties(sndedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
 

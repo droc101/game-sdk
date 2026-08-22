@@ -25,6 +25,7 @@
 #include "../Viewport.h"
 #include "../ViewportRenderer.h"
 #include "EditorTool.h"
+#include "game_sdk/WindowManager.h"
 
 void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {
@@ -602,8 +603,8 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
         {
             if (ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_Enter))
             {
-                EditActorWindow::selectedParam = 0;
-                EditActorWindow::visible = true;
+                Actor &toEdit = MapEditor::map.actors.at(selectionIndex);
+                WindowManager::Get().AddWindow(std::make_shared<EditActorWindow>(toEdit));
             }
         }
     }
@@ -735,11 +736,6 @@ void SelectTool::RenderViewport(Viewport &vp)
         ProcessViewportSelectMode(vp, isHovered, worldSpaceHover);
     }
 
-    if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ && selectionType == ItemType::ACTOR)
-    {
-        EditActorWindow::Render(MapEditor::map.actors.at(selectionIndex));
-    }
-
     const ViewportRenderer::ViewportRenderSettings vps = {
         .sectorFocusMode = sectorFocusMode,
         .focusedSectorIndex = focusedSectorIndex,
@@ -812,8 +808,8 @@ void SelectTool::RenderToolWindow()
             ImGui::Separator();
             if (ImGui::Button("Actor Properties"))
             {
-                EditActorWindow::selectedParam = 0;
-                EditActorWindow::visible = true;
+                Actor &toEdit = MapEditor::map.actors.at(selectionIndex);
+                WindowManager::Get().AddWindow(std::make_shared<EditActorWindow>(toEdit));
             }
             break;
         default:

@@ -2,28 +2,9 @@
 // Created by droc101 on 2/2/26.
 //
 
-#include <cassert>
-#include <cstdint>
-#include <game_sdk/gl/GLHelper.h>
-#include <game_sdk/ModelViewer.h>
-#include <game_sdk/Options.h>
 #include <game_sdk/SDKWindow.h>
-#include <game_sdk/SharedMgr.h>
 #include <imgui.h>
-#include <imgui_impl_opengl3.h>
-#include <imgui_impl_sdl3.h>
-#include <libassets/asset/TextureAsset.h>
-#include <libassets/util/Error.h>
-#include <libassets/util/Logger.h>
 #include <SDL3/SDL_dialog.h>
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_hints.h>
-#include <SDL3/SDL_init.h>
-#include <SDL3/SDL_messagebox.h>
-#include <SDL3/SDL_pixels.h>
-#include <SDL3/SDL_surface.h>
-#include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <vector>
@@ -37,379 +18,60 @@ SDKWindow &SDKWindow::Get()
 
 bool SDKWindow::Init(const std::string &appName, const glm::ivec2 windowSize, const SDL_WindowFlags windowFlags)
 {
-    assert(!initDone);
-    Logger::Info("Starting {}...", appName);
-
-    (void)SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, appName.c_str());
-    (void)SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, "Droc101 Development");
-    (void)SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, "application");
-    (void)SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, "https://github.com/droc101/game-sdk");
-
-    (void)SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
-
-#ifdef SDL_PLATFORM_LINUX
-    (void)SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "wayland,x11");
-    (void)SDL_SetHint(SDL_HINT_VIDEO_FORCE_EGL, "1");
-#endif
-
-    if (!SDL_Init(SDL_INIT_VIDEO))
-    {
-        Logger::Error("SDL_Init() failed: {}", SDL_GetError());
-        return false;
-    }
-
-    SharedMgr::Get().InitSharedMgr();
-
-    const char *glslVersion = "#version 460";
-    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0))
-    {
-        Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE))
-    {
-        Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4))
-    {
-        Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6))
-    {
-        Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1))
-    {
-        Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0))
-    {
-        Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
-    }
-    if (!SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0))
-    {
-        Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
-    }
-
-    const SDL_WindowFlags sdlWindowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | windowFlags;
-    window = SDL_CreateWindow(appName.c_str(), windowSize.x, windowSize.y, sdlWindowFlags);
-    if (window == nullptr)
-    {
-        Logger::Error("SDL_CreateWindow() failed: {}", SDL_GetError());
-        return false;
-    }
-
-    glContext = SDL_GL_CreateContext(window);
-    if (glContext == nullptr)
-    {
-        Logger::Error("SDL_GL_CreateContext() failed: {}", SDL_GetError());
-        return false;
-    }
-
-    if (!SDL_GL_MakeCurrent(window, glContext))
-    {
-        Logger::Error("SDL_GL_MakeCurrent() failed: {}", SDL_GetError());
-        return false;
-    }
-
-    if (!GLHelper::Init())
-    {
-        return false;
-    }
-
-    if (!ModelViewer::GlobalInit())
-    {
-        return false;
-    }
-
-    if (!SDL_GL_SetSwapInterval(1)) // Enable vsync
-    {
-        Logger::Error("SDL_GL_SetSwapInterval() failed: {}", SDL_GetError());
-    }
-
-    SharedMgr::Get().textureCache.InitMissingTexture();
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-
-    normalFont = io.Fonts->AddFontFromFileTTF("assets/fonts/NotoSans.ttf");
-    monospaceFont = io.Fonts->AddFontFromFileTTF("assets/fonts/JetBrainsMono.ttf");
-
-    ApplyTheme();
-
-    ImGui_ImplSDL3_InitForOpenGL(window, glContext);
-    ImGui_ImplOpenGL3_Init(glslVersion);
-
-    if (!SDL_ShowWindow(window))
-    {
-        Logger::Error("SDL_ShowWindow() failed: {}", SDL_GetError());
-        return false;
-    }
-
-    initDone = true;
-    return true;
+    return false;
 }
 
-void SDKWindow::SetWindowIcon(const std::string &iconName) const
-{
-    TextureAsset iconAsset{};
-    const Error::ErrorCode e = iconAsset.Import("assets/icons/" + iconName + ".png");
-    if (e != Error::ErrorCode::OK)
-    {
-        iconAsset.CreateMissingTexture();
-    }
-    uint8_t *pixels = iconAsset.GetPixelsRGBA();
-    assert(iconAsset.GetFormat() == TextureAsset::PixelFormat::RGBA8);
-    SDL_Surface *surface = SDL_CreateSurfaceFrom(static_cast<int>(iconAsset.GetWidth()),
-                                                 static_cast<int>(iconAsset.GetHeight()),
-                                                 SDL_PIXELFORMAT_ABGR8888,
-                                                 pixels,
-                                                 static_cast<int>(sizeof(uint32_t) * iconAsset.GetWidth()));
-    if (surface == nullptr)
-    {
-        Logger::Error("SDL_CreateSurfaceFrom failed: {}", SDL_GetError());
-    } else
-    {
-        if (!SDL_SetWindowIcon(window, surface))
-        {
-            Logger::Error("SDL_SetWindowIcon failed: {}", SDL_GetError());
-        }
-    }
-    SDL_DestroySurface(surface);
-}
+void SDKWindow::SetWindowIcon(const std::string &iconName) const {}
 
-void SDKWindow::MainLoop(const SDKWindowRenderFunction Render, const SDKWindowProcessEventFunction ProcessEvent)
-{
-    assert(initDone);
-    while (true)
-    {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_EVENT_QUIT)
-            {
-                quitRequest = true;
-            }
-            if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(window))
-            {
-                quitRequest = true;
-            } else if (ProcessEvent == nullptr || !ProcessEvent(&event))
-            {
-                ImGui_ImplSDL3_ProcessEvent(&event);
-            }
-        }
-
-        if ((SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0)
-        {
-            SDL_Delay(10);
-            continue;
-        }
-
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();
-
-        Render();
-
-        SharedMgr::Get().RenderSharedUI();
-        ImGui::Render();
-
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        if (!SDL_GL_SwapWindow(window))
-        {
-            Logger::Error("SDL_GL_SwapWindow() failed: {}", SDL_GetError());
-        }
-
-        if (quitRequest)
-        {
-            break;
-        }
-    }
-}
+void SDKWindow::MainLoop(const SDKWindowRenderFunction Render, const SDKWindowProcessEventFunction ProcessEvent) {}
 
 SDL_Window *SDKWindow::GetWindow() const
 {
-    assert(initDone);
-    return window;
+    return nullptr;
 }
 
-void SDKWindow::PostQuit()
-{
-    assert(initDone);
-    quitRequest = true;
-}
+void SDKWindow::PostQuit() {}
 
-void SDKWindow::Destroy() const
-{
-    assert(initDone);
-    ModelViewer::GlobalDestroy();
-    SharedMgr::Get().DestroySharedMgr();
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL3_Shutdown();
-    ImGui::DestroyContext();
-    if (!SDL_GL_DestroyContext(glContext))
-    {
-        Logger::Error("SDL_GL_DestroyContext() failed: {}", SDL_GetError());
-    }
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-}
+void SDKWindow::Destroy() const {}
 
-void SDKWindow::ErrorMessage(const std::string &body, const std::string &title) const
-{
-    (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title.c_str(), body.c_str(), window);
-}
+void SDKWindow::ErrorMessage(const std::string &body, const std::string &title) const {}
 
-void SDKWindow::WarningMessage(const std::string &body, const std::string &title) const
-{
-    (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, title.c_str(), body.c_str(), window);
-}
+void SDKWindow::WarningMessage(const std::string &body, const std::string &title) const {}
 
-void SDKWindow::InfoMessage(const std::string &body, const std::string &title) const
-{
-    (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, title.c_str(), body.c_str(), window);
-}
+void SDKWindow::InfoMessage(const std::string &body, const std::string &title) const {}
 
-void SDKWindow::FileDialogMainThreadCallback(void *userdata)
-{
-    const FileDialogMainThreadCallbackData *data = static_cast<FileDialogMainThreadCallbackData *>(userdata);
-    data->Callback(data->path);
-}
+void SDKWindow::FileDialogMainThreadCallback(void *userdata) {}
 
-void SDKWindow::MultiFileDialogMainThreadCallback(void *userdata)
-{
-    const MultiFileDialogMainThreadCallbackData *data = static_cast<MultiFileDialogMainThreadCallbackData *>(userdata);
-    data->Callback(data->paths);
-}
+void SDKWindow::MultiFileDialogMainThreadCallback(void *userdata) {}
 
-void SDKWindow::MultiFileDialogCallback(void *callbackPtr, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
+void SDKWindow::MultiFileDialogCallback(void *callbackPtr, const char *const *fileList, int /*filter*/) {}
 
-    std::vector<std::string> files{};
-    while (*fileList != nullptr)
-    {
-        files.emplace_back(*fileList);
-        fileList++;
-    }
-
-    const SDKWindowMultiFileDialogCallback Callback = reinterpret_cast<SDKWindowMultiFileDialogCallback>(callbackPtr);
-    if (SDL_IsMainThread())
-    {
-        Callback(files);
-    } else
-    {
-        MultiFileDialogMainThreadCallbackData data = {.Callback = Callback, .paths = files};
-        if (!SDL_RunOnMainThread(MultiFileDialogMainThreadCallback, &data, true))
-        {
-            Logger::Error("Failed to call MultiFileDialogMainThreadCallback on main thread: {}", SDL_GetError());
-        }
-    }
-}
-
-void SDKWindow::FileDialogCallback(void *callbackPtr, const char *const *fileList, int /*filter*/)
-{
-    if (fileList == nullptr || fileList[0] == nullptr)
-    {
-        return;
-    }
-
-    const SDKWindowFileDialogCallback Callback = reinterpret_cast<SDKWindowFileDialogCallback>(callbackPtr);
-    if (SDL_IsMainThread())
-    {
-        Callback(fileList[0]);
-    } else
-    {
-        FileDialogMainThreadCallbackData data = {.Callback = Callback, .path = fileList[0]};
-        if (!SDL_RunOnMainThread(FileDialogMainThreadCallback, &data, true))
-        {
-            Logger::Error("Failed to call FileDialogMainThreadCallback on main thread: {}", SDL_GetError());
-        }
-    }
-}
+void SDKWindow::FileDialogCallback(void *callbackPtr, const char *const *fileList, int /*filter*/) {}
 
 void SDKWindow::OpenFileDialog(const SDKWindowFileDialogCallback Callback,
                                const std::vector<SDL_DialogFileFilter> &filters) const
-{
-    SDL_ShowOpenFileDialog(FileDialogCallback,
-                           reinterpret_cast<void *>(Callback),
-                           GetWindow(),
-                           filters.data(),
-                           static_cast<int>(filters.size()),
-                           nullptr,
-                           false);
-}
+{}
 
 void SDKWindow::OpenMultiFileDialog(const SDKWindowMultiFileDialogCallback Callback,
                                     const std::vector<SDL_DialogFileFilter> &filters) const
-{
-    SDL_ShowOpenFileDialog(MultiFileDialogCallback,
-                           reinterpret_cast<void *>(Callback),
-                           GetWindow(),
-                           filters.data(),
-                           static_cast<int>(filters.size()),
-                           nullptr,
-                           true);
-}
+{}
 
 void SDKWindow::SaveFileDialog(const SDKWindowFileDialogCallback Callback,
                                const std::vector<SDL_DialogFileFilter> &filters) const
-{
-    SDL_ShowSaveFileDialog(FileDialogCallback,
-                           reinterpret_cast<void *>(Callback),
-                           GetWindow(),
-                           filters.data(),
-                           static_cast<int>(filters.size()),
-                           nullptr);
-}
+{}
 
-void SDKWindow::OpenFolderDialog(const SDKWindowFileDialogCallback Callback) const
-{
-    SDL_ShowOpenFolderDialog(FileDialogCallback, reinterpret_cast<void *>(Callback), GetWindow(), nullptr, false);
-}
+void SDKWindow::OpenFolderDialog(const SDKWindowFileDialogCallback Callback) const {}
 
-void SDKWindow::ApplyTheme() const
-{
-    if (Options::Get().theme == Options::Theme::SYSTEM)
-    {
-        if (SDL_GetSystemTheme() == SDL_SYSTEM_THEME_DARK)
-        {
-            ImGui::StyleColorsDark();
-        } else
-        {
-            ImGui::StyleColorsLight();
-        }
-    } else if (Options::Get().theme == Options::Theme::LIGHT)
-    {
-        ImGui::StyleColorsLight();
-    } else
-    {
-        ImGui::StyleColorsDark();
-    }
-    ImGuiStyle &style = ImGui::GetStyle();
-    style.FontSizeBase = 16.0;
-    if (ThemeChangeCallback != nullptr)
-    {
-        ThemeChangeCallback();
-    }
-}
+void SDKWindow::ApplyTheme() const {}
 
 ImFont *SDKWindow::GetNormalFont() const
 {
-    return normalFont;
+    return nullptr;
 }
 
 ImFont *SDKWindow::GetMonospaceFont() const
 {
-    return monospaceFont;
+    return nullptr;
 }
 
-void SDKWindow::SetThemeChangeCallback(const SDKWindowThemeChangeCallback Callback)
-{
-    ThemeChangeCallback = Callback;
-}
+void SDKWindow::SetThemeChangeCallback(const SDKWindowThemeChangeCallback Callback) {}

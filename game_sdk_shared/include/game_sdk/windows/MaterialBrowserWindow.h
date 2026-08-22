@@ -4,27 +4,39 @@
 
 #pragma once
 
+#include <SDL3/SDL_video.h>
+#include <game_sdk/Window.h>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <string>
 #include <vector>
 
-class MaterialBrowserWindow
+class MaterialBrowserWindow final: public Window
 {
     public:
-        static MaterialBrowserWindow &Get();
+        MaterialBrowserWindow(std::string *material);
 
-        void Show(std::string *material);
-        void Hide();
-        void Render();
+        static void InputMaterial(const char *label, std::string &material);
 
-        void InputMaterial(const char *label, std::string &material);
+        static void InputMaterial(const char *label, std::string *material);
 
-        void InputMaterial(const char *label, std::string *material);
+        static void Show(std::string *material);
+
+    protected:
+        bool Init() override;
+
+        void Render() override;
+
+        [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
-        MaterialBrowserWindow() = default;
+        WindowProperties properties = {
+            .title = "Choose Material",
+            .defaultSize = glm::ivec2(600, 500),
+            .icon = "",
+            .defaultFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_UTILITY,
+            .defaultImguiWindow = true,
+        };
 
-        bool visible = false;
         std::string *str = nullptr;
 
         std::vector<std::string> materialPaths{};

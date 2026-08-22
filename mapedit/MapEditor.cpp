@@ -148,7 +148,7 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
         }
         ImGui::EndChild();
     }
-    MaterialBrowserWindow::Get().InputMaterial("##Texture", wallMat.material);
+    MaterialBrowserWindow::InputMaterial("##Texture", wallMat.material);
     ImGui::Separator();
     ImGui::Text("UV Offset");
     ImGui::InputFloat2("##uvOffset", glm::value_ptr(wallMat.uvOffset));
