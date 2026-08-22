@@ -79,7 +79,8 @@ void MaterialBrowserWindow::Render()
                 tex = SharedMgr::Get().textureCache.GetMissingTextureID();
             } else
             {
-                assert(SharedMgr::Get().textureCache.GetTextureSize(textureName, texSize) == Error::ErrorCode::OK);
+                const Error::ErrorCode sizeError = SharedMgr::Get().textureCache.GetTextureSize(textureName, texSize);
+                assert(sizeError == Error::ErrorCode::OK);
             }
 
             ImGui::PushID(static_cast<int>(i));
@@ -177,4 +178,3 @@ void MaterialBrowserWindow::Show(std::string *material)
 {
     WindowManager::Get().AddWindow(std::make_shared<MaterialBrowserWindow>(material));
 }
-

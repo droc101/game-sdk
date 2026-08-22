@@ -2,6 +2,7 @@
 // Created by droc101 on 7/6/25.
 //
 
+#include <cassert>
 #include <cfloat>
 #include <cstddef>
 #include <format>
@@ -58,8 +59,9 @@ void TextureBrowserWindow::Render()
                 tex = SharedMgr::Get().textureCache.GetMissingTextureID();
             } else
             {
-                assert(SharedMgr::Get().textureCache.GetTextureSize("texture/" + textures.at(i), texSize) ==
-                       Error::ErrorCode::OK);
+                const Error::ErrorCode sizeError = SharedMgr::Get().textureCache.GetTextureSize("texture/" + textures.at(i),
+                                                                                          texSize);
+                assert(sizeError == Error::ErrorCode::OK);
             }
 
             ImGui::PushID(static_cast<int>(i));
