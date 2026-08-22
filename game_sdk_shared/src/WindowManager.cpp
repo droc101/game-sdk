@@ -76,6 +76,8 @@ bool WindowManager::Init(const std::string &appName)
         Logger::Error("SDL_GL_SetAttribute() failed: {}", SDL_GetError());
     }
 
+    SharedMgr::Get().InitSharedMgr();
+
     return true;
 }
 

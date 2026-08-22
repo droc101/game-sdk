@@ -28,7 +28,7 @@
 
 bool Window::BaseInit(const std::shared_ptr<Window> &modalParent)
 {
-    SharedMgr::Get().InitSharedMgr();
+
 
     const WindowProperties &props = this->GetProperties();
 
@@ -370,6 +370,7 @@ void Window::SDLMultiFileDialogCallback(void *callbackPtr, const char *const *fi
 
     if (fileList == nullptr || fileList[0] == nullptr)
     {
+        delete data;
         return;
     }
 
@@ -395,6 +396,7 @@ void Window::SDLFileDialogCallback(void *callbackPtr, const char *const *fileLis
 
     if (fileList == nullptr || fileList[0] == nullptr)
     {
+        delete data;
         return;
     }
 
