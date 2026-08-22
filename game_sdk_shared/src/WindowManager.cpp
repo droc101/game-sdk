@@ -83,7 +83,7 @@ bool WindowManager::Init(const std::string &appName)
 
 SDL_GLContext WindowManager::CreateGlContext(SDL_Window *window)
 {
-    if (!SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, firstGlContextCreated ? 0 : 1))
+    if (!SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, firstGlContextCreated ? 1 : 0))
     {
         Logger::Error("Failed to set OpenGL context sharing: {}", SDL_GetError());
     }
