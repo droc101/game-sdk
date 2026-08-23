@@ -117,8 +117,8 @@ void ModelViewer::ReloadModel()
             glGenBuffers(1, &ebo);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                         static_cast<GLsizeiptr>(lod.indexCounts.at(j) * sizeof(uint32_t)),
-                         lod.materialIndices.at(j).data(),
+                         static_cast<GLsizeiptr>(lod.components.at(j).indices.size() * sizeof(uint32_t)),
+                         lod.components.at(j).indices.data(),
                          GL_STATIC_DRAW);
             glod.ebos.push_back(ebo);
         }
@@ -336,7 +336,7 @@ void ModelViewer::RenderFramebuffer()
         const GLuint ebo = glod.ebos.at(i);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glDrawElements(GL_TRIANGLES,
-                       static_cast<GLsizei>(model.GetLod(lodIndex).indexCounts.at(i)),
+                       static_cast<GLsizei>(model.GetLod(lodIndex).components.at(i).indices.size()),
                        GL_UNSIGNED_INT,
                        nullptr);
     }

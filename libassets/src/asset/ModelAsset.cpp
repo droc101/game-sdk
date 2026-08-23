@@ -51,7 +51,7 @@ Error::ErrorCode ModelAsset::LoadFromBuffer(DataReader &reader)
 {
     Reset();
     const uint32_t materialCount = reader.Read<uint32_t>();
-    const uint32_t materialsPerSkin = reader.Read<uint32_t>();
+    const uint32_t componentCount = reader.Read<uint32_t>();
     const uint32_t skinCount = reader.Read<uint32_t>();
     const uint32_t lodCount = reader.Read<uint32_t>();
     collisionModelType = static_cast<CollisionModelType>(reader.Read<uint8_t>());
@@ -65,16 +65,16 @@ Error::ErrorCode ModelAsset::LoadFromBuffer(DataReader &reader)
     skins.resize(skinCount);
     for (std::vector<uint32_t> &skin: skins)
     {
-        skin.reserve(materialsPerSkin);
-        for (uint32_t _i = 0; _i < materialsPerSkin; _i++)
+        skin.reserve(componentCount);
+        for (uint32_t _ = 0; _ < componentCount; _++)
         {
             skin.emplace_back(reader.Read<uint32_t>());
         }
     }
 
-    for (uint32_t _i = 0; _i < lodCount; _i++)
+    for (uint32_t _ = 0; _ < lodCount; _++)
     {
-        lods.emplace_back(reader, materialsPerSkin);
+        lods.emplace_back(reader, componentCount);
     }
 
     boundingBox = BoundingBox(reader);
@@ -154,8 +154,8 @@ Error::ErrorCode ModelAsset::Import(const std::string &filePath)
         return lodCode;
     }
     const ModelLod &lod = lods.back();
-    const uint32_t materialCount = lod.indexCounts.size();
-    skins.emplace_back(materialCount);
+    const uint32_t materialSlotCount = lod.components.size();
+    skins.emplace_back(materialSlotCount);
     materials = {Material("", -1u, Material::MaterialShader::SHADER_SHADED)};
     return Error::ErrorCode::OK;
 }
@@ -231,7 +231,7 @@ bool ModelAsset::AddLod(const std::string &path)
     {
         return false;
     }
-    if (lod.indexCounts.size() != GetMaterialsPerSkin())
+    if (lod.components.size() != GetMaterialsPerSkin())
     {
         return false;
     }

@@ -14,10 +14,17 @@
 
 class ModelLod
 {
+        struct ModelComponent
+        {
+                std::vector<uint32_t> indices;
+                glm::vec3 centerOffset;
+                float radius;
+        };
+
     public:
         ModelLod() = default;
 
-        ModelLod(DataReader &reader, uint32_t materialsPerSkin);
+        ModelLod(DataReader &reader, uint32_t componentCount);
 
         ModelLod(const std::string &filePath, float distance, Error::ErrorCode &status);
 
@@ -25,8 +32,8 @@ class ModelLod
         float unitsPerLuxel{};
         glm::uvec2 lightmapSize{1};
         std::vector<ModelVertex> vertices{};
-        std::vector<uint32_t> indexCounts{};
-        std::vector<std::vector<uint32_t>> materialIndices{};
+        uint32_t totalIndexCount{};
+        std::vector<ModelComponent> components{};
 
         void Export(const char *path) const;
 

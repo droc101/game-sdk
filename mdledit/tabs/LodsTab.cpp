@@ -54,7 +54,7 @@ void LodsTab::Render()
         const std::string title = std::format("LOD {}", lodIndex);
         ImGui::SeparatorText(title.c_str());
         ModelLod &lod = ModelEditor::modelViewer.GetModel().GetLod(lodIndex);
-        const uint32_t tris = std::accumulate(lod.indexCounts.begin(), lod.indexCounts.end(), 0u) / 3u;
+        const uint32_t tris = lod.totalIndexCount / 3u;
         ImGui::TextUnformatted(std::format("{} vertices, {} triangles", lod.vertices.size(), tris).c_str());
         ImGui::Dummy(ImVec2(0.0f, 2.0f));
         ImGui::TextUnformatted("Distance");

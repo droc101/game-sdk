@@ -26,7 +26,9 @@
 #include <unordered_map>
 #include <vector>
 
-ModelLod::ModelLod(DataReader &reader, const uint32_t materialsPerSkin)
+#include "libassets/type/BoundingBox.h"
+
+ModelLod::ModelLod(DataReader &reader, const uint32_t componentCount)
 {
     distance = reader.Read<float>();
     reader.Skip<float>();
@@ -34,23 +36,20 @@ ModelLod::ModelLod(DataReader &reader, const uint32_t materialsPerSkin)
     lightmapSize.x = reader.Read<uint32_t>();
     lightmapSize.y = reader.Read<uint32_t>();
     const size_t vertexCount = reader.Read<size_t>();
-    for (size_t _i = 0; _i < vertexCount; _i++)
+    for (size_t _ = 0; _ < vertexCount; _++)
     {
         vertices.emplace_back(reader);
     }
     reader.Skip<uint32_t>(); // Skips the total index count which is not needed for editing
-    for (uint32_t _i = 0; _i < materialsPerSkin; _i++)
+    for (uint32_t _ = 0; _ < componentCount; _++)
     {
-        indexCounts.push_back(reader.Read<uint32_t>());
-    }
-    for (const uint32_t indexCount: indexCounts)
-    {
+        const uint32_t indexCount = reader.Read<uint32_t>();
         std::vector<uint32_t> indices;
-        for (size_t _i = 0; _i < indexCount; _i++)
-        {
-            indices.push_back(reader.Read<uint32_t>());
-        }
-        materialIndices.push_back(indices);
+        reader.ReadToVector<uint32_t>(indices, indexCount);
+        const glm::vec3 centerOffset = reader.ReadVec3();
+        const float radius = reader.Read<float>();
+        components.emplace_back(std::move(indices), centerOffset, radius);
+        totalIndexCount += indexCount;
     }
 }
 
@@ -78,14 +77,14 @@ ModelLod::ModelLod(const std::string &filePath, const float distance, Error::Err
     for (uint32_t i = 0; i < scene->mNumMeshes; i++)
     {
         const aiMesh *mesh = scene->mMeshes[i];
-        const uint32_t materialIndex = mesh->mMaterialIndex;
+        const uint32_t componentIndex = mesh->mMaterialIndex;
 
-        if (materialIndex >= materialIndices.size())
+        if (componentIndex >= components.size())
         {
-            materialIndices.resize(materialIndex + 1);
+            components.resize(componentIndex + 1);
         }
 
-        std::vector<uint32_t> &indices = materialIndices.at(materialIndex);
+        ModelComponent &component = components.at(componentIndex);
 
         for (uint32_t j = 0; j < mesh->mNumFaces; j++)
         {
@@ -96,32 +95,31 @@ ModelLod::ModelLod(const std::string &filePath, const float distance, Error::Err
                 const ModelVertex vertex(mesh, vertexIndex);
                 if (vertexToIndex.contains(vertex))
                 {
-                    indices.push_back(vertexToIndex.at(vertex));
+                    component.indices.push_back(vertexToIndex.at(vertex));
                 } else
                 {
-                    indices.push_back(this->vertices.size());
+                    component.indices.push_back(this->vertices.size());
                     this->vertices.push_back(vertex);
-                    vertexToIndex[vertex] = indices.back();
+                    vertexToIndex[vertex] = component.indices.back();
                 }
             }
         }
     }
 
-    std::vector<int64_t> toErase{};
-    for (uint32_t i = 0; i < materialIndices.size(); i++)
-    {
-        const std::vector<uint32_t> &indices = materialIndices.at(i);
-        if (indices.size() < 3) // check for materials with no triangles
-        {
-            toErase.push_back(i);
-        }
-        indexCounts.push_back(indices.size());
-    }
+    std::erase_if(components, [](const ModelComponent &component) -> bool { return component.indices.size() < 3; });
 
-    for (const int64_t &index: toErase)
+    for (ModelComponent &component: components)
     {
-        materialIndices.erase(materialIndices.begin() + index);
-        indexCounts.erase(indexCounts.begin() + index);
+        glm::vec3 minPoint{std::numeric_limits<float>::max()};
+        glm::vec3 maxPoint{std::numeric_limits<float>::lowest()};
+        for (const uint32_t index: component.indices)
+        {
+            minPoint = glm::min(minPoint, vertices.at(index).position);
+            maxPoint = glm::max(maxPoint, vertices.at(index).position);
+            totalIndexCount++;
+        }
+        component.centerOffset = (minPoint + maxPoint) * 0.5f;
+        component.radius = glm::length((maxPoint - minPoint) * 0.5f);
     }
 
     status = Error::ErrorCode::OK;
@@ -148,14 +146,15 @@ void ModelLod::Export(const char *path) const
 
     file << "\n\n";
 
-    for (size_t m = 0; m < materialIndices.size(); m++)
+    for (size_t m = 0; m < components.size(); m++)
     {
         file << std::format("usemtl mat_{}\n", m);
-        for (uint32_t i = 0; i < indexCounts.at(m); i += 3)
+        const ModelComponent &component = components.at(m);
+        for (uint32_t i = 0; i < component.indices.size(); i += 3)
         {
-            const uint32_t index0 = materialIndices.at(m).at(i + 0) + 1;
-            const uint32_t index1 = materialIndices.at(m).at(i + 1) + 1;
-            const uint32_t index2 = materialIndices.at(m).at(i + 2) + 1;
+            const uint32_t index0 = component.indices.at(i + 0) + 1;
+            const uint32_t index1 = component.indices.at(i + 1) + 1;
+            const uint32_t index2 = component.indices.at(i + 2) + 1;
             file << std::format("f {0}/{0}/{0} {1}/{1}/{1} {2}/{2}/{2}\n", index0, index1, index2);
         }
         file << "\n";
@@ -176,24 +175,23 @@ void ModelLod::Write(DataWriter &writer) const
     {
         vertex.Write(writer);
     }
-    const uint32_t totalIndexCount = std::accumulate(indexCounts.begin(), indexCounts.end(), 0ul);
     writer.Write<uint32_t>(totalIndexCount);
-    writer.WriteBuffer<uint32_t>(indexCounts);
-    for (const std::vector<uint32_t> &lodIndices: materialIndices)
+    for (const ModelComponent &component: components)
     {
-        writer.WriteBuffer<uint32_t>(lodIndices);
+        writer.Write<uint32_t>(component.indices.size());
+        writer.WriteBuffer<uint32_t>(component.indices);
+        writer.WriteVec3(component.centerOffset);
+        writer.Write<float>(component.radius);
     }
 }
 
 bool ModelLod::CalculateLightmapUvs()
 {
     std::vector<stbrp_rect> rects{};
-    assert(indexCounts.size() == materialIndices.size());
-    for (uint32_t materialSlotIndex = 0; materialSlotIndex < indexCounts.size(); materialSlotIndex++)
+    for (const ModelComponent &component: components)
     {
-        const uint32_t indexCount = indexCounts.at(materialSlotIndex);
-        const std::vector<uint32_t> &indices = materialIndices.at(materialSlotIndex);
-        for (uint32_t i = 0; i < indexCount; i += 3)
+        const std::vector<uint32_t> &indices = component.indices;
+        for (uint32_t i = 0; i < component.indices.size(); i += 3)
         {
             const glm::vec3 &v1 = vertices.at(indices.at(i + 0)).position;
             const glm::vec3 &v2 = vertices.at(indices.at(i + 1)).position;
@@ -218,11 +216,10 @@ bool ModelLod::CalculateLightmapUvs()
         return false;
     }
 
-    for (uint32_t materialSlotIndex = 0; materialSlotIndex < indexCounts.size(); materialSlotIndex++)
+    for (const ModelComponent &component: components)
     {
-        const uint32_t indexCount = indexCounts.at(materialSlotIndex);
-        const std::vector<uint32_t> &indices = materialIndices.at(materialSlotIndex);
-        for (uint32_t i = 0; i < indexCount; i += 3)
+        const std::vector<uint32_t> &indices = component.indices;
+        for (uint32_t i = 0; i < component.indices.size(); i += 3)
         {
             const stbrp_rect &rect = rects.at(i / 3);
 
