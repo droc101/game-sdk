@@ -36,7 +36,7 @@ add_executable(mapedit mapedit.cpp
         CompileProgressWindow.h
 )
 
-set_target_properties(mapedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
+set_target_properties(mapedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" FOLDER "game__sdk__tools")
 
 target_link_libraries(mapedit PRIVATE game_sdk_shared)
 

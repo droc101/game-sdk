@@ -34,7 +34,7 @@ add_executable(mapcomp mapcomp.cpp
 
 target_compile_options(mapcomp PRIVATE -pthread)
 
-set_target_properties(mapcomp PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
+set_target_properties(mapcomp PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" FOLDER "game__sdk__tools")
 
 target_link_libraries(mapcomp PRIVATE
         earcut

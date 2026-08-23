@@ -7,7 +7,7 @@ add_executable(mapdump mapdump.cpp
         $<$<BOOL:${WIN32}>:mapdump.rc>
 )
 
-set_target_properties(mapdump PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
+set_target_properties(mapdump PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" FOLDER "game__sdk__tools")
 
 target_link_libraries(mapdump PRIVATE
         assets

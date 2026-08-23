@@ -7,7 +7,7 @@ add_executable(kvledit kvledit.cpp $<$<BOOL:${WIN32}>:kvledit.rc>
         KvleditWindow.cpp
         KvleditWindow.h)
 
-set_target_properties(kvledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
+set_target_properties(kvledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" FOLDER "game__sdk__tools")
 
 target_link_libraries(kvledit PRIVATE game_sdk_shared)
 

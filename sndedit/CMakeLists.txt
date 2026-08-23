@@ -7,7 +7,7 @@ add_executable(sndedit sndedit.cpp $<$<BOOL:${WIN32}>:sndedit.rc>
         SndeditWindow.cpp
         SndeditWindow.h)
 
-set_target_properties(sndedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
+set_target_properties(sndedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" FOLDER "game__sdk__tools")
 
 target_link_libraries(sndedit PRIVATE game_sdk_shared)
 

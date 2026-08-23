@@ -21,7 +21,7 @@ add_executable(mdledit mdledit.cpp
         MdleditWindow.h
 )
 
-set_target_properties(mdledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
+set_target_properties(mdledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" FOLDER "game__sdk__tools")
 
 target_link_libraries(mdledit PRIVATE game_sdk_shared)
 

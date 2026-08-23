@@ -7,7 +7,7 @@ add_executable(shdedit shdedit.cpp $<$<BOOL:${WIN32}>:shdedit.rc>
         ShdeditWindow.cpp
         ShdeditWindow.h)
 
-set_target_properties(shdedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
+set_target_properties(shdedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" FOLDER "game__sdk__tools")
 
 target_link_libraries(shdedit PRIVATE game_sdk_shared)
 
