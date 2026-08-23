@@ -2,7 +2,7 @@
 #include <string>
 #include "MdleditWindow.h"
 
-int main()
+int main(const int argc, const char **argv)
 {
-    return WindowManager::Run<MdleditWindow>("GAME SDK Model Editor");
+    return WindowManager::Run<MdleditWindow>(argc, argv, "GAME SDK Model Editor");
 }

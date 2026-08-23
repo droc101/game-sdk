@@ -6,7 +6,7 @@
 #include <string>
 #include "KvleditWindow.h"
 
-int main()
+int main(const int argc, const char **argv)
 {
-    return WindowManager::Run<KvleditWindow>("GAME SDK Key-Value List Editor", false);
+    return WindowManager::Run<KvleditWindow>(argc, argv, "GAME SDK Key-Value List Editor", false);
 }

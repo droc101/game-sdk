@@ -9,6 +9,7 @@
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/util/Error.h>
@@ -222,11 +223,11 @@ bool FoneditWindow::Init()
 {
     charDisplayList = FontAsset::GetCharListForDisplay();
 
-    // const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gfon"});
-    // if (!openPath.empty())
-    // {
-    //     OpenGfon(openPath);
-    // }
+    const std::string &openPath = WindowManager::Get().GetArgumentParser().GetFileArgument({".gfon"});
+    if (!openPath.empty())
+    {
+        OpenGfon(openPath);
+    }
 
     return true;
 }

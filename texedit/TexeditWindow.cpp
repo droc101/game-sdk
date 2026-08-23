@@ -8,6 +8,7 @@
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <imgui.h>
 #include <libassets/util/Error.h>
 #include <utility>
@@ -26,23 +27,21 @@ bool TexeditWindow::Init()
     const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(CHECKERBOARD_ICON_NAME, checkerboardTexture);
     assert(e == Error::ErrorCode::OK);
 
-    // const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gtex"});
-    // if (!openPath.empty())
-    // {
-    //     OpenGtex(openPath);
-    // } else
-    // {
-    //     const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc,
-    //                                                                             argv,
-    //                                                                             {
-    //                                                                                 ".png",
-    //                                                                                 ".exr",
-    //                                                                             });
-    //     if (!importPath.empty())
-    //     {
-    //         ImportImage(importPath);
-    //     }
-    // }
+    const std::string &openPath = WindowManager::Get().GetArgumentParser().GetFileArgument({".gtex"});
+    if (!openPath.empty())
+    {
+        OpenGtex(openPath);
+    } else
+    {
+        const std::string &importPath = WindowManager::Get().GetArgumentParser().GetFileArgument({
+            ".png",
+            ".exr",
+        });
+        if (!importPath.empty())
+        {
+            ImportImage(importPath);
+        }
+    }
     return true;
 }
 

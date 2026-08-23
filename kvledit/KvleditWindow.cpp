@@ -11,6 +11,7 @@
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/Param.h>
@@ -456,25 +457,25 @@ const Window::WindowProperties &KvleditWindow::GetProperties() const
 
 bool KvleditWindow::Init()
 {
-    // const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gkvl"});
-    // if (!openPath.empty())
-    // {
-    //     OpenGkvl(openPath);
-    // } else
-    // {
-    //     const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".json"});
-    //     if (!importPath.empty())
-    //     {
-    //         ImportJson(importPath);
-    //     } else
-    //     {
-    //         const std::string &kvlFilePath = DesktopInterface::Get().GetFileArgument(argc, argv, {".kvl"});
-    //         if (!kvlFilePath.empty())
-    //         {
-    //             OpenKvl(kvlFilePath);
-    //         }
-    //     }
-    // }
+    const std::string &openPath = WindowManager::Get().GetArgumentParser().GetFileArgument({".gkvl"});
+    if (!openPath.empty())
+    {
+        OpenGkvl(openPath);
+    } else
+    {
+        const std::string &importPath = WindowManager::Get().GetArgumentParser().GetFileArgument({".json"});
+        if (!importPath.empty())
+        {
+            ImportJson(importPath);
+        } else
+        {
+            const std::string &kvlFilePath = WindowManager::Get().GetArgumentParser().GetFileArgument({".kvl"});
+            if (!kvlFilePath.empty())
+            {
+                OpenKvl(kvlFilePath);
+            }
+        }
+    }
 
     return true;
 }

@@ -25,9 +25,11 @@ WindowManager &WindowManager::Get()
     return windowManagerSingleton;
 }
 
-bool WindowManager::Init(const std::string &appName)
+bool WindowManager::Init(const std::string &appName, const int argc, const char **argv)
 {
     Logger::Info("Starting {}...", appName);
+
+    args = ArgumentParser(argc, argv);
 
     (void)SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_NAME_STRING, appName.c_str());
     (void)SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, "Droc101 Development");
@@ -205,4 +207,9 @@ void WindowManager::ApplyTheme() const
 Window *WindowManager::GetCurrentWindow() const
 {
     return workingWindow.get();
+}
+
+const ArgumentParser &WindowManager::GetArgumentParser() const
+{
+    return args;
 }

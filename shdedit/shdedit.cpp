@@ -6,7 +6,7 @@
 #include <string>
 #include "ShdeditWindow.h"
 
-int main()
+int main(const int argc, const char **argv)
 {
-    return WindowManager::Run<ShdeditWindow>("GAME SDK Shader Editor", false);
+    return WindowManager::Run<ShdeditWindow>(argc, argv, "GAME SDK Shader Editor", false);
 }

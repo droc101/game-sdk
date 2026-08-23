@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include <game_sdk/Options.h>
 #include <game_sdk/Window.h>
+#include <libassets/util/ArgumentParser.h>
 #include <memory>
 #include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
@@ -12,9 +14,6 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-
-#include "Options.h"
-#include "windows/SetupWindow.h"
 
 template<typename T> concept DerivedWindow = std::is_base_of_v<Window, T>;
 
@@ -25,21 +24,28 @@ class WindowManager
         /**
          * Run and SDK app using the WindowManager system
          * @tparam T The main window class
+         * @param argc main function argc
+         * @param argv main function argv
          * @param appName The name of the app
          * @param requireGamePath Whether or not to require a valid game path to launch this program
          * @return Process return code
          */
-        template <DerivedWindow T> static int Run(const std::string &appName, const bool requireGamePath = true)
+        template<DerivedWindow T>
+        static int Run(const int argc, const char **argv, const std::string &appName, const bool requireGamePath = true)
         {
             WindowManager &mgr = Get();
-            if (!mgr.Init(appName))
+            if (!mgr.Init(appName, argc, argv))
             {
                 return 1;
             }
 
             if (requireGamePath && !Options::Get().ValidateGamePath())
             {
-                (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Configuration Error", "An error was detected in the game path configuration. Please correct the configuration from the GAME SDK launcher.", nullptr);
+                (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                               "Configuration Error",
+                                               "An error was detected in the game path configuration. Please correct "
+                                               "the configuration from the GAME SDK launcher.",
+                                               nullptr);
                 return 2;
             }
 
@@ -62,7 +68,7 @@ class WindowManager
         /**
          * Add a non-modal window
          */
-        template <DerivedWindow T, typename... Args> void AddWindow(Args &&...args)
+        template<DerivedWindow T, typename... Args> void AddWindow(Args &&...args)
         {
             windowsToAdd.emplace_back(nullptr, std::make_shared<T>(std::forward<Args>(args)...));
         }
@@ -70,7 +76,7 @@ class WindowManager
         /**
          * Add a window as a modal to the currently processing window
          */
-        template <DerivedWindow T, typename... Args> void AddModalWindow(Args &&...args)
+        template<DerivedWindow T, typename... Args> void AddModalWindow(Args &&...args)
         {
             workingWindow->ModalBlock();
             windowsToAdd.emplace_back(workingWindow, std::make_shared<T>(std::forward<Args>(args)...));
@@ -86,6 +92,8 @@ class WindowManager
          */
         [[nodiscard]] Window *GetCurrentWindow() const;
 
+        const ArgumentParser &GetArgumentParser() const;
+
     private:
         /// Whether the first OpenGL context has been created
         bool firstGlContextCreated = false;
@@ -95,12 +103,13 @@ class WindowManager
         std::vector<std::pair<std::shared_ptr<Window>, std::shared_ptr<Window>>> windowsToAdd{};
         /// Windows to process
         std::vector<std::shared_ptr<Window>> windows{};
+        ArgumentParser args{};
 
         /**
          * Initialize the window manager
          * @return Success or failure
          */
-        bool Init(const std::string &);
+        bool Init(const std::string &appName, int argc, const char **argv);
 
         /**
          * Run the window manager

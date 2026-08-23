@@ -6,7 +6,7 @@
 #include <string>
 #include "MtleditWindow.h"
 
-int main()
+int main(const int argc, const char **argv)
 {
-    return WindowManager::Run<MtleditWindow>("GAME SDK Material Editor");
+    return WindowManager::Run<MtleditWindow>(argc, argv, "GAME SDK Material Editor");
 }

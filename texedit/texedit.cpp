@@ -2,7 +2,7 @@
 #include <string>
 #include "TexeditWindow.h"
 
-int main()
+int main(const int argc, const char **argv)
 {
-    return WindowManager::Run<TexeditWindow>("GAME SDK Texture Editor", false);
+    return WindowManager::Run<TexeditWindow>(argc, argv, "GAME SDK Texture Editor", false);
 }

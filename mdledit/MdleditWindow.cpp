@@ -6,6 +6,7 @@
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
+#include <game_sdk/WindowManager.h>
 #include <imgui_internal.h>
 #include "ModelEditor.h"
 #include "tabs/CollisionTab.h"
@@ -27,20 +28,21 @@ bool MdleditWindow::Init()
         return false;
     }
 
-    // const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gmdl"});
-    // if (!openPath.empty())
-    // {
-    //     OpenGmdl(openPath);
-    // } else
-    // {
-    //     const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc,
-    //                                                                             argv,
-    //                                                                             {".obj", ".fbx", ".gltf", ".dae"});
-    //     if (!importPath.empty())
-    //     {
-    //         ImportModel(importPath);
-    //     }
-    // }
+    const std::string &openPath = WindowManager::Get().GetArgumentParser().GetFileArgument({".gmdl"});
+    if (!openPath.empty())
+    {
+        OpenGmdl(openPath);
+    } else
+    {
+        const std::string &importPath = WindowManager::Get().GetArgumentParser().GetFileArgument({".obj",
+                                                                                                  ".fbx",
+                                                                                                  ".gltf",
+                                                                                                  ".dae"});
+        if (!importPath.empty())
+        {
+            ImportModel(importPath);
+        }
+    }
 
     return true;
 }

@@ -7,6 +7,7 @@
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
@@ -21,35 +22,11 @@ const Window::WindowProperties &MtleditWindow::GetProperties() const
 
 bool MtleditWindow::Init()
 {
-    // ArgumentParser args{argc, argv};
-    // if (args.HasFlagWithValue("--materials-dir"))
-    // {
-    //     const std::string &directiory = args.GetFlagValue("--materials-dir");
-    //     if (directiory.empty())
-    //     {
-    //         Logger::Error("The `--materials-dir` argument requires a value!");
-    //         return -1;
-    //     }
-    //     std::filesystem::path directoryPath{directiory};
-    //     if (!std::filesystem::exists(directoryPath))
-    //     {
-    //         Logger::Error("Invalid path `{}`!", directiory);
-    //         return -1;
-    //     }
-    //     const std::vector<std::string> &files = SearchPathManager::ScanFolder(directiory, ".gmtl", false);
-    //     for (const std::string &file: files)
-    //     {
-    //         OpenGmtl(file);
-    //         SaveGmtl(file);
-    //     }
-    //     SDKWindow::Get().Destroy();
-    //     return 0;
-    // }
-    // const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gmtl"});
-    // if (!openPath.empty())
-    // {
-    //     OpenGmtl(openPath);
-    // }
+    const std::string &openPath = WindowManager::Get().GetArgumentParser().GetFileArgument({".gmtl"});
+    if (!openPath.empty())
+    {
+        OpenGmtl(openPath);
+    }
     return true;
 }
 

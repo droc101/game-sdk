@@ -6,7 +6,7 @@
 #include <string>
 #include "LauncherWindow.h"
 
-int main()
+int main(const int argc, const char **argv)
 {
-    return WindowManager::Run<LauncherWindow>("GAME SDK", false);
+    return WindowManager::Run<LauncherWindow>(argc, argv, "GAME SDK", false);
 }

@@ -2,7 +2,7 @@
 #include <string>
 #include "SndeditWindow.h"
 
-int main()
+int main(const int argc, const char **argv)
 {
-    return WindowManager::Run<SndeditWindow>("GAME SDK Sound Editor", false);
+    return WindowManager::Run<SndeditWindow>(argc, argv, "GAME SDK Sound Editor", false);
 }

@@ -6,7 +6,7 @@
 #include <string>
 #include "FoneditWindow.h"
 
-int main()
+int main(const int argc, const char **argv)
 {
-    return WindowManager::Run<FoneditWindow>("GAME SDK Font Editor");
+    return WindowManager::Run<FoneditWindow>(argc, argv, "GAME SDK Font Editor");
 }

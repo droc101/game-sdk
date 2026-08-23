@@ -72,11 +72,11 @@ bool MapeditWindow::Init()
     vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;
     vpSide.GetZoom() = MapEditor::DEFAULT_ZOOM;
 
-    // const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".json"});
-    // if (!openPath.empty())
-    // {
-    //     OpenJson(openPath);
-    // }
+    const std::string &openPath = WindowManager::Get().GetArgumentParser().GetFileArgument({".json"});
+    if (!openPath.empty())
+    {
+        OpenJson(openPath);
+    }
 
     return true;
 }

@@ -10,6 +10,7 @@
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/SoundSystem.h>
 #include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <imgui.h>
 #include <libassets/util/Error.h>
 #include <miniaudio.h>
@@ -78,18 +79,18 @@ bool SndeditWindow::Init()
         return false;
     }
 
-    // const std::string &openPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".gsnd"});
-    // if (!openPath.empty())
-    // {
-    //     OpenGsnd(openPath);
-    // } else
-    // {
-    //     const std::string &importPath = DesktopInterface::Get().GetFileArgument(argc, argv, {".wav"});
-    //     if (!importPath.empty())
-    //     {
-    //         ImportWav(importPath);
-    //     }
-    // }
+    const std::string &openPath = WindowManager::Get().GetArgumentParser().GetFileArgument({".gsnd"});
+    if (!openPath.empty())
+    {
+        OpenGsnd(openPath);
+    } else
+    {
+        const std::string &importPath = WindowManager::Get().GetArgumentParser().GetFileArgument({".wav"});
+        if (!importPath.empty())
+        {
+            ImportWav(importPath);
+        }
+    }
     return true;
 }
 

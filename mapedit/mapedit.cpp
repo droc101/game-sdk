@@ -2,7 +2,7 @@
 #include <string>
 #include "MapeditWindow.h"
 
-int main()
+int main(const int argc, const char **argv)
 {
-    return WindowManager::Run<MapeditWindow>("GAME SDK Map Editor");
+    return WindowManager::Run<MapeditWindow>(argc, argv, "GAME SDK Map Editor");
 }
