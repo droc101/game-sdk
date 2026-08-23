@@ -3,17 +3,8 @@ project(kvledit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(kvledit kvledit.cpp $<$<BOOL:${WIN32}>:kvledit.rc>
+add_executable(kvledit kvledit.cpp
         KvleditWindow.cpp
         KvleditWindow.h)
 
-set_target_properties(kvledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" FOLDER "game__sdk__tools")
-
-target_link_libraries(kvledit PRIVATE game_sdk_shared)
-
-add_dependencies(kvledit assets)
-
-if (WIN32)
-    add_dependencies(kvledit copydlls)
-    target_sources(kvledit PRIVATE ../app.manifest)
-endif()
+configure_sdk_program(kvledit)

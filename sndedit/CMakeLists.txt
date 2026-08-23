@@ -3,17 +3,8 @@ project(sndedit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(sndedit sndedit.cpp $<$<BOOL:${WIN32}>:sndedit.rc>
+add_executable(sndedit sndedit.cpp
         SndeditWindow.cpp
         SndeditWindow.h)
 
-set_target_properties(sndedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" FOLDER "game__sdk__tools")
-
-target_link_libraries(sndedit PRIVATE game_sdk_shared)
-
-add_dependencies(sndedit assets)
-
-if (WIN32)
-    add_dependencies(sndedit copydlls)
-    target_sources(sndedit PRIVATE ../app.manifest)
-endif()
+configure_sdk_program(sndedit)

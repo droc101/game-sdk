@@ -12,7 +12,6 @@ add_executable(mdledit mdledit.cpp
         tabs/MaterialsTab.h
         tabs/CollisionTab.cpp
         tabs/CollisionTab.h
-        $<$<BOOL:${WIN32}>:mdledit.rc>
         tabs/PreviewOptionsTab.cpp
         tabs/PreviewOptionsTab.h
         ModelEditor.cpp
@@ -21,15 +20,4 @@ add_executable(mdledit mdledit.cpp
         MdleditWindow.h
 )
 
-set_target_properties(mdledit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" FOLDER "game__sdk__tools")
-
-target_link_libraries(mdledit PRIVATE game_sdk_shared)
-
-add_dependencies(mdledit assets)
-
-add_dependencies(mdledit copy_assets)
-
-if (WIN32)
-    add_dependencies(mdledit copydlls)
-    target_sources(mdledit PRIVATE ../app.manifest)
-endif()
+configure_sdk_program(mdledit)

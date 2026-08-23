@@ -3,17 +3,8 @@ project(fonedit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(fonedit fonedit.cpp $<$<BOOL:${WIN32}>:fonedit.rc>
+add_executable(fonedit fonedit.cpp
         FoneditWindow.cpp
         FoneditWindow.h)
 
-set_target_properties(fonedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" FOLDER "game__sdk__tools")
-
-target_link_libraries(fonedit PRIVATE game_sdk_shared)
-
-add_dependencies(fonedit assets)
-
-if (WIN32)
-    add_dependencies(fonedit copydlls)
-    target_sources(fonedit PRIVATE ../app.manifest)
-endif()
+configure_sdk_program(fonedit)
