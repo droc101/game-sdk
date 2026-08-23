@@ -67,7 +67,7 @@ void ModelBrowserWindow::InputModel(const char *label, std::string *model)
 
 void ModelBrowserWindow::Show(std::string *texture)
 {
-    WindowManager::Get().AddModalWindow(std::make_shared<ModelBrowserWindow>(texture));
+    WindowManager::Get().AddModalWindow<ModelBrowserWindow>(texture);
 }
 
 const Window::WindowProperties &ModelBrowserWindow::GetProperties() const

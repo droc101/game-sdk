@@ -52,7 +52,7 @@ void SharedMgr::SharedMenuUI(const std::string &programName)
     {
         if (ImGui::MenuItem("Options"))
         {
-            WindowManager::Get().AddModalWindow(std::make_shared<OptionsWindow>());
+            WindowManager::Get().AddModalWindow<OptionsWindow>();
         }
         ImGui::EndMenu();
     }
@@ -76,7 +76,7 @@ void SharedMgr::SharedMenuUI(const std::string &programName)
         }
         if (ImGui::MenuItem("About"))
         {
-            WindowManager::Get().AddModalWindow(std::make_shared<AboutWindow>());
+            WindowManager::Get().AddModalWindow<AboutWindow>();
         }
         ImGui::EndMenu();
     }

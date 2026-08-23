@@ -176,5 +176,5 @@ void MaterialBrowserWindow::InputMaterial(const char *label, std::string *materi
 
 void MaterialBrowserWindow::Show(std::string *material)
 {
-    WindowManager::Get().AddModalWindow(std::make_shared<MaterialBrowserWindow>(material));
+    WindowManager::Get().AddModalWindow<MaterialBrowserWindow>(material);
 }

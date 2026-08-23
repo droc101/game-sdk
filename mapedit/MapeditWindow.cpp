@@ -278,7 +278,7 @@ void MapeditWindow::Render()
         {
             if (ImGui::MenuItem("Map Properties", ""))
             {
-                WindowManager::Get().AddModalWindow(std::make_shared<MapPropertiesWindow>());
+                WindowManager::Get().AddModalWindow<MapPropertiesWindow>();
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Snap on Grid", "", MapEditor::snapToGrid))
@@ -417,7 +417,7 @@ void MapeditWindow::Render()
         {
             if (ImGui::MenuItem("Actor Class Browser"))
             {
-                WindowManager::Get().AddModalWindow(std::make_shared<ActorBrowserWindow>());
+                WindowManager::Get().AddModalWindow<ActorBrowserWindow>();
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Texture Browser"))
@@ -471,7 +471,7 @@ void MapeditWindow::Render()
     }
     if (compilePressed)
     {
-        WindowManager::Get().AddModalWindow(std::make_shared<MapCompileWindow>());
+        WindowManager::Get().AddModalWindow<MapCompileWindow>();
     }
     if (cutPressed)
     {

@@ -157,5 +157,5 @@ void TextureBrowserWindow::InputTexture(const char *label, std::string *texture)
 
 void TextureBrowserWindow::Show(std::string *texture)
 {
-    WindowManager::Get().AddModalWindow(std::make_shared<TextureBrowserWindow>(texture));
+    WindowManager::Get().AddModalWindow<TextureBrowserWindow>(texture);
 }

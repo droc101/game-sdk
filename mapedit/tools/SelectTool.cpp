@@ -605,7 +605,7 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
             if (ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_Enter))
             {
                 Actor &toEdit = MapEditor::map.actors.at(selectionIndex);
-                WindowManager::Get().AddModalWindow(std::make_shared<EditActorWindow>(toEdit));
+                WindowManager::Get().AddModalWindow<EditActorWindow>(toEdit);
             }
         }
     }
@@ -810,7 +810,7 @@ void SelectTool::RenderToolWindow()
             if (ImGui::Button("Actor Properties"))
             {
                 Actor &toEdit = MapEditor::map.actors.at(selectionIndex);
-                WindowManager::Get().AddModalWindow(std::make_shared<EditActorWindow>(toEdit));
+                WindowManager::Get().AddModalWindow<EditActorWindow>(toEdit);
             }
             break;
         default:

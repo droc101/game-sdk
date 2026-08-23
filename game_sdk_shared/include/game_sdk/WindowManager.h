@@ -31,7 +31,7 @@ class WindowManager
             {
                 return 1;
             }
-            mgr.AddWindow(std::make_shared<T>());
+            mgr.AddWindow<T>();
             return mgr.Loop();
         }
 
@@ -49,15 +49,20 @@ class WindowManager
 
         /**
          * Add a non-modal window
-         * @param window The window to add
          */
-        void AddWindow(const std::shared_ptr<Window> &window);
+        template <DerivedWindow T, typename... Args> void AddWindow(Args &&...args)
+        {
+            windowsToAdd.emplace_back(nullptr, std::make_shared<T>(std::forward<Args>(args)...));
+        }
 
         /**
          * Add a window as a modal to the currently processing window
-         * @param window The window to add
          */
-        void AddModalWindow(const std::shared_ptr<Window> &window);
+        template <DerivedWindow T, typename... Args> void AddModalWindow(Args &&...args)
+        {
+            workingWindow->ModalBlock();
+            windowsToAdd.emplace_back(workingWindow, std::make_shared<T>(std::forward<Args>(args)...));
+        }
 
         /**
          * Apply the ImGui theme from SDK options

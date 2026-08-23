@@ -53,7 +53,7 @@ void SoundBrowserWindow::InputSound(const char *label, std::string *sound)
 
 void SoundBrowserWindow::Show(std::string *sound)
 {
-    WindowManager::Get().AddModalWindow(std::make_shared<SoundBrowserWindow>(sound));
+    WindowManager::Get().AddModalWindow<SoundBrowserWindow>(sound);
 }
 
 void SoundBrowserWindow::Render()

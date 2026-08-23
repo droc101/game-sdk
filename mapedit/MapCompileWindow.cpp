@@ -17,7 +17,7 @@ void MapCompileWindow::StartCompile()
         ErrorMessage("The level must be saved before compiling");
     } else
     {
-        WindowManager::Get().AddModalWindow(std::make_shared<CompileProgressWindow>(opts));
+        WindowManager::Get().AddModalWindow<CompileProgressWindow>(opts);
     }
 }
 

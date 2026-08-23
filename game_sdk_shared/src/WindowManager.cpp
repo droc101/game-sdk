@@ -189,17 +189,6 @@ void WindowManager::ProcessEventQueue()
     }
 }
 
-void WindowManager::AddWindow(const std::shared_ptr<Window> &window)
-{
-    windowsToAdd.emplace_back(nullptr, window);
-}
-
-void WindowManager::AddModalWindow(const std::shared_ptr<Window> &window)
-{
-    workingWindow->ModalBlock();
-    windowsToAdd.emplace_back(workingWindow, window);
-}
-
 void WindowManager::ApplyTheme() const
 {
     ImGuiContext *ctx = ImGui::GetCurrentContext();
