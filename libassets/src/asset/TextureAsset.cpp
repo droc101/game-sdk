@@ -138,6 +138,9 @@ Error::ErrorCode TextureAsset::CreateFromEXR(const string &imagePath)
 void TextureAsset::CreateMissingTexture()
 {
     Reset();
+    filter = false;
+    mipmaps = false;
+    repeat = true;
     width = 64;
     height = 64;
     pixelFormat = PixelFormat::RGBA8;

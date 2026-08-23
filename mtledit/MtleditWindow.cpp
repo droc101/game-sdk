@@ -106,22 +106,61 @@ void MtleditWindow::Render()
         material = LevelMaterialAsset();
     }
 
+    ImGui::PushItemWidth(-1);
+    ImTextureID tid{};
+    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(material.texture, tid);
+    ImVec2 sz = ImGui::GetContentRegionAvail();
+    if (e == Error::ErrorCode::OK)
+    {
+        constexpr int IMAGE_PANEL_HEIGHT = 128;
+        ImVec2 imageSize{};
+        SharedMgr::Get().textureCache.GetTextureSize(material.texture, imageSize);
+        const glm::vec2 scales = {(sz.x - 16) / imageSize.x, IMAGE_PANEL_HEIGHT / imageSize.y};
+        const float scale = std::ranges::min(scales.x, scales.y);
+
+        imageSize = {imageSize.x * scale, imageSize.y * scale};
+        if (ImGui::BeginChild("##imageBox",
+                              {sz.x, IMAGE_PANEL_HEIGHT + 16},
+                              ImGuiChildFlags_Borders,
+                              ImGuiWindowFlags_NoResize))
+        {
+            sz = ImGui::GetContentRegionAvail();
+            ImVec2 pos = ImGui::GetCursorPos();
+            pos.x += (sz.x - imageSize.x) * 0.5f;
+            pos.y += (sz.y - imageSize.y) * 0.5f;
+
+            ImGui::SetCursorPos(pos);
+            ImGui::Image(tid, imageSize);
+        }
+        ImGui::EndChild();
+    }
+    ImGui::Separator();
+
     ImGui::Text("Texture");
     TextureBrowserWindow::InputTexture("##texture", material.texture);
     ImGui::Text("Base Scale");
     ImGui::PushItemWidth(-1);
     ImGui::InputFloat2("##baseScale", glm::value_ptr(material.baseScale));
     // TODO soundClass (when more exist)
+    ImGui::Separator();
     bool unshaded = material.shader == Material::MaterialShader::SHADER_UNSHADED;
     if (ImGui::Checkbox("Unshaded", &unshaded))
     {
         material.shader = unshaded ? Material::MaterialShader::SHADER_UNSHADED
                                    : Material::MaterialShader::SHADER_SHADED;
     }
-    ImGui::SameLine();
     ImGui::Checkbox("Invisible", &material.compileInvisible);
-    ImGui::SameLine();
     ImGui::Checkbox("No Collision", &material.compileNoClip);
-    ImGui::SetNextItemWidth(100);
-    ImGui::InputFloat("Emissive Strength", &material.emissive);
+    ImGui::Separator();
+    ImGui::SetNextItemWidth(-1);
+    ImGui::Text("Emissive Strength");
+
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 0});
+
+    ImGui::InputFloat("##emissive", &material.emissive);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {0, 0});
+    ImGui::PushFont(GetNormalFont(), 8);
+    ImGui::SliderFloat("##emissiveSlider", &material.emissive, 0.0, 1.0, "", ImGuiSliderFlags_NoRoundToFormat);
+    ImGui::PopFont();
+    ImGui::PopStyleVar(2);
 }

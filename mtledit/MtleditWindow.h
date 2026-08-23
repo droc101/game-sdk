@@ -18,7 +18,7 @@ class MtleditWindow final: public Window
     private:
         WindowProperties properties = {
             .title = "GAME SDK Material Editor",
-            .defaultSize = glm::ivec2(400, 200),
+            .defaultSize = glm::ivec2(400, 420),
             .icon = "mtledit",
             .defaultFlags = 0,
             .defaultImguiWindow = true,
