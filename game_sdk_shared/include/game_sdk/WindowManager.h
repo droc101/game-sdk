@@ -8,28 +8,37 @@
 #include <memory>
 #include <SDL3/SDL_video.h>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
+
+template<typename T> concept DerivedWindow = std::is_base_of_v<Window, T>;
 
 class WindowManager
 {
     public:
+
+        /**
+         * Run and SDK app using the WindowManager system
+         * @tparam T The main window class
+         * @param appName The name of the app
+         * @return Process return code
+         */
+        template <DerivedWindow T> static int Run(const std::string &appName)
+        {
+            WindowManager &mgr = Get();
+            if (!mgr.Init(appName))
+            {
+                return 1;
+            }
+            mgr.AddWindow(std::make_shared<T>());
+            return mgr.Loop();
+        }
+
         /**
          * Get the @c WindowManager singleton
          */
         static WindowManager &Get();
-
-        /**
-         * Initialize the window manager
-         * @return Success or failure
-         */
-        bool Init(const std::string &);
-
-        /**
-         * Run the window manager
-         * @return Process return code
-         */
-        int Run();
 
         /**
          * Get or create an OpenGL context
@@ -69,6 +78,18 @@ class WindowManager
         std::vector<std::pair<std::shared_ptr<Window>, std::shared_ptr<Window>>> windowsToAdd{};
         /// Windows to process
         std::vector<std::shared_ptr<Window>> windows{};
+
+        /**
+         * Initialize the window manager
+         * @return Success or failure
+         */
+        bool Init(const std::string &);
+
+        /**
+         * Run the window manager
+         * @return Process return code
+         */
+        int Loop();
 
         /**
          * Process the SDL event queue

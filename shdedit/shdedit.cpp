@@ -3,17 +3,10 @@
 //
 
 #include <game_sdk/WindowManager.h>
-#include <memory>
 #include <string>
 #include "ShdeditWindow.h"
 
 int main()
 {
-    WindowManager &mgr = WindowManager::Get();
-    if (!mgr.Init("GAME SDK Shader Editor"))
-    {
-        return 1;
-    }
-    mgr.AddWindow(std::make_shared<ShdeditWindow>());
-    return mgr.Run();
+    return WindowManager::Run<ShdeditWindow>("GAME SDK Shader Editor");
 }

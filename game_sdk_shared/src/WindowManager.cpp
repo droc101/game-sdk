@@ -126,7 +126,7 @@ void WindowManager::Destroy()
     SDL_Quit();
 }
 
-int WindowManager::Run()
+int WindowManager::Loop()
 {
     while (true)
     {
