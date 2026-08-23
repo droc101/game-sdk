@@ -6,11 +6,15 @@
 
 #include <game_sdk/Window.h>
 #include <memory>
+#include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
 #include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
+
+#include "Options.h"
+#include "windows/SetupWindow.h"
 
 template<typename T> concept DerivedWindow = std::is_base_of_v<Window, T>;
 
@@ -22,15 +26,23 @@ class WindowManager
          * Run and SDK app using the WindowManager system
          * @tparam T The main window class
          * @param appName The name of the app
+         * @param requireGamePath Whether or not to require a valid game path to launch this program
          * @return Process return code
          */
-        template <DerivedWindow T> static int Run(const std::string &appName)
+        template <DerivedWindow T> static int Run(const std::string &appName, const bool requireGamePath = true)
         {
             WindowManager &mgr = Get();
             if (!mgr.Init(appName))
             {
                 return 1;
             }
+
+            if (requireGamePath && !Options::Get().ValidateGamePath())
+            {
+                (void)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Configuration Error", "An error was detected in the game path configuration. Please correct the configuration from the GAME SDK launcher.", nullptr);
+                return 2;
+            }
+
             mgr.AddWindow<T>();
             return mgr.Loop();
         }

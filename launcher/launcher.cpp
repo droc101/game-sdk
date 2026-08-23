@@ -8,5 +8,5 @@
 
 int main()
 {
-    return WindowManager::Run<LauncherWindow>("GAME SDK");
+    return WindowManager::Run<LauncherWindow>("GAME SDK", false);
 }

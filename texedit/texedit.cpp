@@ -4,5 +4,5 @@
 
 int main()
 {
-    return WindowManager::Run<TexeditWindow>("GAME SDK Texture Editor");
+    return WindowManager::Run<TexeditWindow>("GAME SDK Texture Editor", false);
 }

@@ -8,5 +8,5 @@
 
 int main()
 {
-    return WindowManager::Run<KvleditWindow>("GAME SDK Key-Value List Editor");
+    return WindowManager::Run<KvleditWindow>("GAME SDK Key-Value List Editor", false);
 }

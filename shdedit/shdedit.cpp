@@ -8,5 +8,5 @@
 
 int main()
 {
-    return WindowManager::Run<ShdeditWindow>("GAME SDK Shader Editor");
+    return WindowManager::Run<ShdeditWindow>("GAME SDK Shader Editor", false);
 }

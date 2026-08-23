@@ -35,10 +35,6 @@ void SharedMgr::InitSharedMgr()
     Options::Get().Load();
     UpdateAssetPaths();
     DesktopInterface::Get().InitDesktopInterface();
-    if (!Options::Get().ValidateGamePath())
-    {
-        // SetupWindow::Get().Show(); // TODO: show setup
-    }
 }
 
 void SharedMgr::DestroySharedMgr()

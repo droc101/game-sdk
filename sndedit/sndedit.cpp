@@ -4,5 +4,5 @@
 
 int main()
 {
-    return WindowManager::Run<SndeditWindow>("GAME SDK Sound Editor");
+    return WindowManager::Run<SndeditWindow>("GAME SDK Sound Editor", false);
 }
