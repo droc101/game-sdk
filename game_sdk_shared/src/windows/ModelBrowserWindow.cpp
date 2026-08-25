@@ -13,7 +13,6 @@
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/SearchPathManager.h>
-#include <memory>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
 #include <utility>
@@ -43,7 +42,7 @@ bool ModelBrowserWindow::Init()
     const Error::ErrorCode e = mdlAsset.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(*str));
     if (e != Error::ErrorCode::OK)
     {
-        return false;
+        return true;
     }
     viewer.SetModel(std::move(mdlAsset));
     return true;
