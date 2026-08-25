@@ -4,26 +4,33 @@
 
 #pragma once
 
+#include <SDL3/SDL_video.h>
 #include <cstddef>
+#include <game_sdk/Window.h>
 #include <libassets/type/ActorDefinition.h>
 #include <string>
 
-class ActorBrowserWindow
+class ActorBrowserWindow final: public Window
 {
-    public:
-        ActorBrowserWindow() = delete;
-
-        static inline bool visible = false;
-
-        static void Render();
+    protected:
+        void Render() override;
+        [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
-        static inline std::string selectedClass = "actor";
-        static inline size_t selectedParam = 0;
+        WindowProperties properties = {
+            .title = "Actor Class Browser",
+            .defaultSize = {1000, 600},
+            .icon = "",
+            .defaultFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_UTILITY,
+            .defaultImguiWindow = true,
+        };
 
-        static void RenderParamsTab(const ActorDefinition &def);
+        std::string selectedClass = "actor";
+        size_t selectedParam = 0;
 
-        static void RenderInputsTab(const ActorDefinition &def);
+        void RenderParamsTab(const ActorDefinition &def);
 
-        static void RenderOutputsTab(const ActorDefinition &def);
+        void RenderInputsTab(const ActorDefinition &def);
+
+        void RenderOutputsTab(const ActorDefinition &def);
 };

@@ -61,17 +61,18 @@ void SkinsTab::Render()
                                               .at(i);
         Material &currentMaterial = ModelEditor::modelViewer.GetModel().GetMaterial(currentMaterialIndex);
         ImTextureID currentTextureId;
-        if (SharedMgr::Get().textureCache.GetTextureID(currentMaterial.texture, currentTextureId) != Error::ErrorCode::OK)
+        if (SharedMgr::Get().textureCache.GetTextureID(currentMaterial.texture, currentTextureId) !=
+            Error::ErrorCode::OK)
         {
             currentTextureId = SharedMgr::Get().textureCache.GetMissingTextureID();
         }
         const float *currentColor = currentMaterial.color.GetDataPointer();
-        ImGui::Image(currentTextureId,
-                     {18, 18},
-                     {0, 0},
-                     {1, 1},
-                     {currentColor[0], currentColor[1], currentColor[2], currentColor[3]},
-                     {0, 0, 0, 0});
+        ImGui::ImageWithBg(currentTextureId,
+                           {18, 18},
+                           {0, 0},
+                           {1, 1},
+                           {0, 0, 0, 0},
+                           {currentColor[0], currentColor[1], currentColor[2], currentColor[3]});
         ImGui::SameLine();
         ImGui::PushItemWidth(-1);
         if (ImGui::BeginCombo(std::format("##materiallistbox_{}", i).c_str(),
@@ -99,12 +100,12 @@ void SkinsTab::Render()
                 }
                 const float *color = mat.color.GetDataPointer();
                 ImGui::SameLine();
-                ImGui::Image(textureId,
-                             {18, 18},
-                             {0, 0},
-                             {1, 1},
-                             {color[0], color[1], color[2], color[3]},
-                             {0, 0, 0, 0});
+                ImGui::ImageWithBg(textureId,
+                                   {18, 18},
+                                   {0, 0},
+                                   {1, 1},
+                                   {0, 0, 0, 0},
+                                   {color[0], color[1], color[2], color[3]});
                 ImGui::SameLine();
                 ImGui::Text("Material %zu: %s", m, mat.texture.c_str());
             }

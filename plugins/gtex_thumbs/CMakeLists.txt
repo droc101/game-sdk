@@ -28,7 +28,7 @@ target_sources(gtex_thumbs PRIVATE
 
 add_dependencies(gtex_thumbs assets)
 
-set_target_properties(gtex_thumbs PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'"  )
+set_target_properties(gtex_thumbs PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'")
 
 target_link_libraries(gtex_thumbs PRIVATE Qt6::Core Qt6::Gui KF6::KIOCore KF6::KIOGui assets)
 

@@ -6,22 +6,25 @@
 
 #include <map>
 #include <string>
+#include <game_sdk/Window.h>
 
-class AboutWindow
+class AboutWindow final: public Window
 {
     public:
-        static AboutWindow &Get();
+        bool Init() override;
 
-        void Show();
+        void Render() override;
 
-        void Hide();
-
-        void Render();
+        const WindowProperties &GetProperties() const override;
 
     private:
-        AboutWindow() = default;
-
-        bool visible = false;
+        WindowProperties properties = {
+            .title = "About the GAME SDK",
+            .defaultSize = {500, 400},
+            .icon = "",
+            .defaultFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_UTILITY,
+            .defaultImguiWindow = true,
+        };
 
         std::string selectedComponent{};
         std::map<std::string, std::string> thirdPartyComponents{};

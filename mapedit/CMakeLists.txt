@@ -23,22 +23,17 @@ add_executable(mapedit mapedit.cpp
         tools/AddActorTool.h
         EditActorWindow.cpp
         EditActorWindow.h
-        $<$<BOOL:${WIN32}>:mapedit.rc>
         MapPropertiesWindow.cpp
         MapPropertiesWindow.h
         MapCompileWindow.cpp
         MapCompileWindow.h
         ViewportRenderer.cpp
         ViewportRenderer.h
+        MapeditWindow.cpp
+        MapeditWindow.h
+        CompileProgressWindow.cpp
+        CompileProgressWindow.h
 )
 
-set_target_properties(mapedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
-
-target_link_libraries(mapedit PRIVATE game_sdk_shared)
-
-add_dependencies(mapedit assets copy_assets mapcomp)
-
-if (WIN32)
-    add_dependencies(mapedit copydlls)
-    target_sources(mapedit PRIVATE ../app.manifest)
-endif()
+configure_sdk_gui_program(mapedit)
+add_dependencies(mapedit mapcomp)

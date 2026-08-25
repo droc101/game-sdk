@@ -51,15 +51,6 @@ class DesktopInterface
         bool OpenURL(const std::string &url);
 
         /**
-         * Get a file path argument
-         * @param argc main function argc
-         * @param argv main function argv
-         * @param extensions list of accepted extensions
-         * @return file path on success, empty string otherwise
-         */
-        std::string GetFileArgument(int argc, const char *const *argv, const std::vector<std::string> &extensions);
-
-        /**
          * Initialize the desktop interface
          */
         void InitDesktopInterface();

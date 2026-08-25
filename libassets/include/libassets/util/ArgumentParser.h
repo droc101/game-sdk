@@ -10,6 +10,7 @@
 class ArgumentParser
 {
     public:
+        ArgumentParser() = default;
         ArgumentParser(int argc, const char **argv);
 
         /**
@@ -26,6 +27,13 @@ class ArgumentParser
          * Get the value of a flag
          */
         [[nodiscard]] std::string GetFlagValue(const std::string &flag) const;
+
+        /**
+         * Get a file path argument
+         * @param extensions list of accepted extensions
+         * @return file path on success, empty string otherwise
+         */
+        [[nodiscard]] std::string GetFileArgument(const std::vector<std::string> &extensions) const;
 
     private:
         std::vector<std::string> arguments{};

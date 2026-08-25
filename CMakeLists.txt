@@ -115,14 +115,10 @@ target_compile_definitions(imgui INTERFACE
         IMGUI_ENABLE_FREETYPE
         IMGUI_DISABLE_DEFAULT_FONT
         IMGUI_DISABLE_STB_TRUETYPE_IMPLEMENTATION
+        IMGUI_DISABLE_DEMO_WINDOWS
+        IMGUI_DISABLE_DEBUG_TOOLS
+        IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 )
-
-if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
-    target_compile_definitions(imgui INTERFACE
-            IMGUI_DISABLE_DEMO_WINDOWS
-            IMGUI_DISABLE_DEBUG_TOOLS
-    )
-endif ()
 
 add_custom_target(
         copy_assets
