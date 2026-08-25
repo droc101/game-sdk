@@ -1,0 +1,294 @@
+//
+// Created by droc101 on 8/21/26.
+//
+
+#include "MdleditWindow.h"
+#include <game_sdk/DialogFilters.h>
+#include <game_sdk/Options.h>
+#include <game_sdk/SharedMgr.h>
+#include <game_sdk/WindowManager.h>
+#include <imgui_internal.h>
+#include "ModelEditor.h"
+#include "tabs/CollisionTab.h"
+#include "tabs/LodsTab.h"
+#include "tabs/MaterialsTab.h"
+#include "tabs/PreviewOptionsTab.h"
+#include "tabs/SkinsTab.h"
+
+const Window::WindowProperties &MdleditWindow::GetProperties() const
+{
+    return properties;
+}
+
+bool MdleditWindow::Init()
+{
+    if (!ModelEditor::modelViewer.Init())
+    {
+        Logger::Error("Failed to start renderer!");
+        return false;
+    }
+
+    const std::string &openPath = WindowManager::Get().GetArgumentParser().GetFileArgument({".gmdl"});
+    if (!openPath.empty())
+    {
+        OpenGmdl(openPath);
+    } else
+    {
+        const std::string &importPath = WindowManager::Get().GetArgumentParser().GetFileArgument({".obj",
+                                                                                                  ".fbx",
+                                                                                                  ".gltf",
+                                                                                                  ".dae"});
+        if (!importPath.empty())
+        {
+            ImportModel(importPath);
+        }
+    }
+
+    return true;
+}
+
+void MdleditWindow::OpenGmdl(const std::string &path) const
+{
+    ModelAsset model;
+    const Error::ErrorCode errorCode = model.LoadFromAsset(path);
+    if (errorCode != Error::ErrorCode::OK)
+    {
+        ErrorMessage(std::format("Failed to open the model!\n{}", errorCode));
+        return;
+    }
+    ModelEditor::DestroyExistingModel();
+    ModelEditor::modelViewer.SetModel(std::move(model));
+    ModelEditor::modelLoaded = true;
+}
+
+void MdleditWindow::ImportModel(const std::string &path) const
+{
+    ModelAsset model;
+    const Error::ErrorCode errorCode = model.Import(path);
+    for (size_t i = 0; i < model.GetMaterialCount(); i++)
+    {
+        model.GetMaterial(i).texture = Options::Get().defaultTexture;
+    }
+    if (errorCode != Error::ErrorCode::OK)
+    {
+        ErrorMessage(std::format("Failed to import the model!\n{}", errorCode));
+        return;
+    }
+    ModelEditor::DestroyExistingModel();
+    ModelEditor::modelViewer.SetModel(std::move(model));
+    ModelEditor::modelLoaded = true;
+}
+
+void MdleditWindow::SaveGmdl(const std::string &path) const
+{
+    const Error::ErrorCode errorCode = ModelEditor::modelViewer.GetModel().SaveToAsset(path);
+    if (errorCode != Error::ErrorCode::OK)
+    {
+        ErrorMessage(std::format("Failed to save the model!\n{}", errorCode));
+    }
+}
+
+void MdleditWindow::HandleMenuAndShortcuts()
+{
+    newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N, ImGuiInputFlags_RouteGlobal);
+    openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O, ImGuiInputFlags_RouteGlobal);
+    savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S, ImGuiInputFlags_RouteGlobal) && ModelEditor::modelLoaded;
+
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            newPressed |= ImGui::MenuItem("New", "Ctrl+N");
+            ImGui::Separator();
+            openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
+            savePressed |= ImGui::MenuItem("Save", "Ctrl+S", false, ModelEditor::modelLoaded);
+            ImGui::Separator();
+            if (ImGui::MenuItem("Quit", "Alt+F4"))
+            {
+                RequestClose();
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("View", ModelEditor::modelLoaded))
+        {
+            if (ImGui::MenuItem("Reset View"))
+            {
+                ModelEditor::modelViewer.UpdateView(0, 0, 1);
+            }
+            ImGui::Separator();
+            if (ImGui::BeginMenu("Display Mode"))
+            {
+                if (ImGui::MenuItem("Unshaded",
+                                    "",
+                                    ModelEditor::modelViewer.displayMode == ModelViewer::DisplayMode::COLORED))
+                {
+                    ModelEditor::modelViewer.displayMode = ModelViewer::DisplayMode::COLORED;
+                }
+                if (ImGui::MenuItem("Shaded",
+                                    "",
+                                    ModelEditor::modelViewer.displayMode == ModelViewer::DisplayMode::COLORED_SHADED))
+                {
+                    ModelEditor::modelViewer.displayMode = ModelViewer::DisplayMode::COLORED_SHADED;
+                }
+                if (ImGui::MenuItem("Textured Unshaded",
+                                    "",
+                                    ModelEditor::modelViewer.displayMode == ModelViewer::DisplayMode::TEXTURED))
+                {
+                    ModelEditor::modelViewer.displayMode = ModelViewer::DisplayMode::TEXTURED;
+                }
+                if (ImGui::MenuItem("Textured Shaded",
+                                    "",
+                                    ModelEditor::modelViewer.displayMode == ModelViewer::DisplayMode::TEXTURED_SHADED))
+                {
+                    ModelEditor::modelViewer.displayMode = ModelViewer::DisplayMode::TEXTURED_SHADED;
+                }
+                if (ImGui::MenuItem("UV Debug",
+                                    "",
+                                    ModelEditor::modelViewer.displayMode == ModelViewer::DisplayMode::UV))
+                {
+                    ModelEditor::modelViewer.displayMode = ModelViewer::DisplayMode::UV;
+                }
+                if (ImGui::MenuItem("Normal Debug",
+                                    "",
+                                    ModelEditor::modelViewer.displayMode == ModelViewer::DisplayMode::NORMAL))
+                {
+                    ModelEditor::modelViewer.displayMode = ModelViewer::DisplayMode::NORMAL;
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Show Backfaces", "", !ModelEditor::modelViewer.cullBackfaces))
+            {
+                ModelEditor::modelViewer.cullBackfaces = !ModelEditor::modelViewer.cullBackfaces;
+            }
+            if (ImGui::MenuItem("Show 16-Unit Cube", "", ModelEditor::modelViewer.showUnitCube))
+            {
+                ModelEditor::modelViewer.showUnitCube = !ModelEditor::modelViewer.showUnitCube;
+            }
+            if (ImGui::MenuItem("Wireframe", "", ModelEditor::modelViewer.wireframe))
+            {
+                ModelEditor::modelViewer.wireframe = !ModelEditor::modelViewer.wireframe;
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Show Bounding Box", "", ModelEditor::modelViewer.showBoundingBox))
+            {
+                ModelEditor::modelViewer.showBoundingBox = !ModelEditor::modelViewer.showBoundingBox;
+            }
+            if (ImGui::MenuItem("Show Collision Model", "", ModelEditor::modelViewer.showCollisionModel))
+            {
+                ModelEditor::modelViewer.showCollisionModel = !ModelEditor::modelViewer.showCollisionModel;
+            }
+            ImGui::EndMenu();
+        }
+        SharedMgr::Get().SharedMenuUI("mdledit");
+        ImGui::EndMainMenuBar();
+    }
+
+    if (openPressed)
+    {
+        OpenFileDialog(FILE_DIALOG_CALLBACK(OpenGmdl), DialogFilters::GMDL_FILTERS);
+    } else if (newPressed)
+    {
+        OpenFileDialog(FILE_DIALOG_CALLBACK(ImportModel), DialogFilters::STANDARD_MODEL_FILTERS);
+    } else if (savePressed)
+    {
+        if (!ModelEditor::modelViewer.GetModel().ValidateLodDistances())
+        {
+            ErrorMessage("LOD distances are invalid! Please fix them in the LOD editor and make sure "
+                         "that:\n- The first LOD (LOD 0) has a distance of 0\n- No two LODs have the "
+                         "same distance",
+                         "Invalid Model");
+        } else
+        {
+            SaveFileDialog(FILE_DIALOG_CALLBACK(SaveGmdl), DialogFilters::GMDL_FILTERS);
+        }
+    }
+}
+
+void MdleditWindow::SetupDockspace()
+{
+    if (dockspaceSetup)
+    {
+        return;
+    }
+    dockspaceSetup = true;
+    dockspaceId = ImGui::GetID("dockspace");
+    rootDockspaceID = dockspaceId;
+    ImGui::DockBuilderRemoveNode(dockspaceId);
+    ImGui::DockBuilderAddNode(dockspaceId, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_NoCloseButton);
+    ImGui::DockBuilderSetNodeSize(dockspaceId, ImGui::GetMainViewport()->Size);
+
+    const ImGuiID rightDock = ImGui::DockBuilderSplitNode(dockspaceId, ImGuiDir_Right, 0.4f, nullptr, &dockspaceId);
+
+    ImGui::DockBuilderDockWindow("Model Preview", dockspaceId);
+    ImGui::DockBuilderDockWindow("Preview Options", rightDock);
+    ImGui::DockBuilderDockWindow("Collision", rightDock);
+    ImGui::DockBuilderDockWindow("LODs", rightDock);
+    ImGui::DockBuilderDockWindow("Materials", rightDock);
+    ImGui::DockBuilderDockWindow("Skins", rightDock);
+
+    ImGui::DockBuilderFinish(rootDockspaceID);
+}
+
+void MdleditWindow::Render()
+{
+    SetupDockspace();
+
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+    const ImVec2 vpAreaTopLeft = ImVec2(viewport->WorkPos.x, viewport->WorkPos.y);
+    const ImVec2 vpAreaSize = ImVec2((viewport->WorkSize.x), (viewport->WorkSize.y));
+    ImGui::SetNextWindowPos(vpAreaTopLeft);
+    ImGui::SetNextWindowSize(vpAreaSize);
+
+    if (!ModelEditor::modelLoaded)
+    {
+        ImGui::Begin("CentralDock",
+                     nullptr,
+                     ImGuiWindowFlags_NoSavedSettings |
+                             ImGuiWindowFlags_NoDecoration |
+                             ImGuiWindowFlags_NoMove |
+                             ImGuiWindowFlags_NoCollapse |
+                             ImGuiWindowFlags_NoBringToFrontOnFocus);
+        ImGui::TextDisabled("No model is open. Open or create one from the File menu.");
+        ImGui::End();
+
+        HandleMenuAndShortcuts();
+
+        return;
+    }
+
+    ImGui::PushStyleVarX(ImGuiStyleVar_WindowPadding, 0.0f);
+    ImGui::PushStyleVarY(ImGuiStyleVar_WindowPadding, 0.0f);
+    ImGui::Begin("CentralDock",
+                 nullptr,
+                 ImGuiWindowFlags_NoSavedSettings |
+                         ImGuiWindowFlags_NoDecoration |
+                         ImGuiWindowFlags_NoMove |
+                         ImGuiWindowFlags_NoCollapse |
+                         ImGuiWindowFlags_NoBringToFrontOnFocus);
+    ImGui::DockSpace(rootDockspaceID);
+    ImGui::End();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleVar();
+
+    HandleMenuAndShortcuts();
+
+    PreviewOptionsTab::Render();
+    MaterialsTab::Render();
+    SkinsTab::Render();
+    LodsTab::Render();
+    CollisionTab::Render();
+
+    constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoCollapse |
+                                              ImGuiWindowFlags_NoMove |
+                                              ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                              ImGuiWindowFlags_NoDecoration |
+                                              ImGuiWindowFlags_NoScrollbar |
+                                              ImGuiWindowFlags_NoScrollWithMouse;
+    ImGui::PushStyleVarX(ImGuiStyleVar_WindowPadding, 0.0f);
+    ImGui::PushStyleVarY(ImGuiStyleVar_WindowPadding, 0.0f);
+    ModelEditor::modelViewer.RenderWindow("Model Preview", WINDOW_FLAGS);
+    ImGui::PopStyleVar();
+    ImGui::PopStyleVar();
+}

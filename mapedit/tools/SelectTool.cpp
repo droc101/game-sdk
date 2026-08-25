@@ -10,11 +10,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
+#include <game_sdk/WindowManager.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
+#include <memory>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
 #include <tuple>
@@ -602,8 +604,8 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
         {
             if (ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_Enter))
             {
-                EditActorWindow::selectedParam = 0;
-                EditActorWindow::visible = true;
+                Actor &toEdit = MapEditor::map.actors.at(selectionIndex);
+                WindowManager::Get().AddModalWindow<EditActorWindow>(toEdit);
             }
         }
     }
@@ -735,11 +737,6 @@ void SelectTool::RenderViewport(Viewport &vp)
         ProcessViewportSelectMode(vp, isHovered, worldSpaceHover);
     }
 
-    if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ && selectionType == ItemType::ACTOR)
-    {
-        EditActorWindow::Render(MapEditor::map.actors.at(selectionIndex));
-    }
-
     const ViewportRenderer::ViewportRenderSettings vps = {
         .sectorFocusMode = sectorFocusMode,
         .focusedSectorIndex = focusedSectorIndex,
@@ -782,13 +779,21 @@ void SelectTool::RenderToolWindow()
             MapEditor::MaterialToolWindow(MapEditor::map.sectors.at(focusedSectorIndex).ceilingMaterial);
             ImGui::Separator();
             ImGui::Text("Height");
-            ImGui::InputFloat("##ceilHeight", &MapEditor::map.sectors.at(focusedSectorIndex).ceilingHeight, 1, 1, "%.0f");
+            ImGui::InputFloat("##ceilHeight",
+                              &MapEditor::map.sectors.at(focusedSectorIndex).ceilingHeight,
+                              1,
+                              1,
+                              "%.0f");
             break;
         case ItemType::FLOOR:
             MapEditor::MaterialToolWindow(MapEditor::map.sectors.at(focusedSectorIndex).floorMaterial);
             ImGui::Separator();
             ImGui::Text("Height");
-            ImGui::InputFloat("##floorHeight", &MapEditor::map.sectors.at(focusedSectorIndex).floorHeight, 1, 1, "%.0f");
+            ImGui::InputFloat("##floorHeight",
+                              &MapEditor::map.sectors.at(focusedSectorIndex).floorHeight,
+                              1,
+                              1,
+                              "%.0f");
             break;
         case ItemType::SECTOR:
             if (sectorFocusMode)
@@ -812,8 +817,8 @@ void SelectTool::RenderToolWindow()
             ImGui::Separator();
             if (ImGui::Button("Actor Properties"))
             {
-                EditActorWindow::selectedParam = 0;
-                EditActorWindow::visible = true;
+                Actor &toEdit = MapEditor::map.actors.at(selectionIndex);
+                WindowManager::Get().AddModalWindow<EditActorWindow>(toEdit);
             }
             break;
         default:

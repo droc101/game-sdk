@@ -7,7 +7,8 @@
 #include <cstdint>
 #include <format>
 #include <game_sdk/DialogFilters.h>
-#include <game_sdk/SDKWindow.h>
+#include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <imgui.h>
 #include <libassets/type/ModelLod.h>
 #include <numeric>
@@ -21,7 +22,8 @@ void LodsTab::Render()
     ImGui::PushItemWidth(-1);
     if (ImGui::Button("Add", ImVec2(70, 0)))
     {
-        SDKWindow::Get().OpenFileDialog(ModelEditor::ImportLod, DialogFilters::STANDARD_MODEL_FILTERS);
+        WindowManager::Get().GetCurrentWindow()->OpenFileDialog(ModelEditor::ImportLod,
+                                                                DialogFilters::STANDARD_MODEL_FILTERS);
     }
     ImGui::SameLine();
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 70);
@@ -36,12 +38,12 @@ void LodsTab::Render()
     {
         if (!ModelEditor::modelViewer.GetModel().ValidateLodDistances())
         {
-            SDKWindow::Get().WarningMessage("LOD distances are invalid! Make sure that:\n"
-                                            "- The first LOD (LOD 0) has a distance of 0\n"
-                                            "- No two LODs have the same distance");
+            WindowManager::Get().GetCurrentWindow()->WarningMessage("LOD distances are invalid! Make sure that:\n"
+                                                                    "- The first LOD (LOD 0) has a distance of 0\n"
+                                                                    "- No two LODs have the same distance");
         } else
         {
-            SDKWindow::Get().InfoMessage("LOD distances are valid", "Success");
+            WindowManager::Get().GetCurrentWindow()->InfoMessage("LOD distances are valid", "Success");
         }
     }
 
@@ -71,7 +73,7 @@ void LodsTab::Render()
         if (ImGui::Button(std::format("Export##{}", lodIndex).c_str(), ImVec2(buttonWidth, 0)))
         {
             lodToExport = &lod;
-            SDKWindow::Get().SaveFileDialog(SaveLodCallback, DialogFilters::OBJ_FILTERS);
+            WindowManager::Get().GetCurrentWindow()->SaveFileDialog(SaveLodCallback, DialogFilters::OBJ_FILTERS);
         }
         ImGui::SameLine();
         if (ImGui::Button(std::format("Flip UVs##{}", lodIndex).c_str(), ImVec2(buttonWidth, 0)))
@@ -86,7 +88,7 @@ void LodsTab::Render()
             ModelAsset model = ModelEditor::modelViewer.GetModel();
             if (!model.GetLod(lodIndex).CalculateLightmapUvs())
             {
-                SDKWindow::Get().ErrorMessage("Failed to bake lightmap UVs");
+                WindowManager::Get().GetCurrentWindow()->ErrorMessage("Failed to bake lightmap UVs");
             } else
             {
                 ModelEditor::modelViewer.SetModel(std::move(model));

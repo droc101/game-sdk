@@ -3,6 +3,7 @@
 //
 
 #include <algorithm>
+#include <filesystem>
 #include <libassets/util/ArgumentParser.h>
 #include <string>
 
@@ -40,6 +41,21 @@ std::string ArgumentParser::GetFlagValue(const std::string &flag) const
         if (arg.starts_with(prefix))
         {
             return arg.substr(prefix.size());
+        }
+    }
+    return "";
+}
+
+std::string ArgumentParser::GetFileArgument(const std::vector<std::string> &extensions) const
+{
+    for (const std::string &argument: arguments)
+    {
+        for (const std::string &extension: extensions)
+        {
+            if (argument.ends_with(extension) && std::filesystem::exists(argument))
+            {
+                return argument;
+            }
         }
     }
     return "";

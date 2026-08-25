@@ -5,32 +5,32 @@
 #include <cfloat>
 #include <cstddef>
 #include <format>
-#include <game_sdk/SDKWindow.h>
 #include <game_sdk/SharedMgr.h>
+#include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
+#include <memory>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
 #include <vector>
 
-MaterialBrowserWindow &MaterialBrowserWindow::Get()
-{
-    static MaterialBrowserWindow materialBrowserWindowSingleton{};
-    return materialBrowserWindowSingleton;
-}
-
-void MaterialBrowserWindow::Hide()
-{
-    visible = false;
-}
-
-void MaterialBrowserWindow::Show(std::string *material)
+MaterialBrowserWindow::MaterialBrowserWindow(std::string *material)
 {
     str = material;
+}
+
+const Window::WindowProperties &MaterialBrowserWindow::GetProperties() const
+{
+    return properties;
+}
+
+bool MaterialBrowserWindow::Init()
+{
     materialPaths.clear();
     materials.clear();
     const std::vector<SearchPathManager::AssetResult>
@@ -46,127 +46,112 @@ void MaterialBrowserWindow::Show(std::string *material)
         materials.push_back(mat);
         materialPaths.push_back(path.relativePath);
     }
-    visible = true;
+    return true;
 }
+
 
 void MaterialBrowserWindow::Render()
 {
-    if (visible)
+    ImGui::PushItemWidth(-1);
+    ImGui::InputTextWithHint("##search", "Filter", &filter);
+    ImGui::Dummy({0, 4});
+    if (ImGui::BeginChild("##picker", ImVec2(-1, -36), ImGuiChildFlags_Borders, 0))
     {
-        ImGui::OpenPopup("Choose Material");
-        ImGui::SetNextWindowSize(ImVec2(600, 500), ImGuiCond_Appearing);
-        ImGui::SetNextWindowSizeConstraints(ImVec2(192, 192), ImVec2(FLT_MAX, FLT_MAX));
-        constexpr ImGuiWindowFlags WINDOW_FLAGS = ImGuiWindowFlags_NoCollapse |
-                                                  ImGuiWindowFlags_NoSavedSettings |
-                                                  ImGuiWindowFlags_NoDocking;
-        if (ImGui::BeginPopupModal("Choose Material", &visible, WINDOW_FLAGS))
+        const float spacing = ImGui::GetStyle().ItemSpacing.x;
+        const float regionMaxX = ImGui::GetContentRegionAvail().x + ImGui::GetCursorScreenPos().x;
+        bool foundResults = false;
+
+        for (size_t i = 0; i < materialPaths.size(); i++)
         {
-            ImGui::PushItemWidth(-1);
-            ImGui::InputTextWithHint("##search", "Filter", &filter);
-            ImGui::Dummy({0, 4});
-            if (ImGui::BeginChild("##picker", ImVec2(-1, -36), ImGuiChildFlags_Borders, 0))
+            if (materialPaths.at(i).find(filter) == std::string::npos)
             {
-                const float spacing = ImGui::GetStyle().ItemSpacing.x;
-                const float regionMaxX = ImGui::GetWindowPos().x + ImGui::GetContentRegionMax().x;
-                bool foundResults = false;
-
-                for (size_t i = 0; i < materialPaths.size(); i++)
-                {
-                    if (materialPaths.at(i).find(filter) == std::string::npos)
-                    {
-                        continue;
-                    }
-
-                    const std::string textureName = materials.at(i).texture;
-
-                    ImVec2 texSize;
-                    ImTextureID tex = 0;
-                    if (SharedMgr::Get().textureCache.GetTextureID(textureName, tex) != Error::ErrorCode::OK)
-                    {
-                        texSize = SharedMgr::Get().textureCache.GetMissingTextureSize();
-                        tex = SharedMgr::Get().textureCache.GetMissingTextureID();
-                    } else
-                    {
-                        assert(SharedMgr::Get().textureCache.GetTextureSize(textureName, texSize) == Error::ErrorCode::OK);
-                    }
-
-                    ImGui::PushID(static_cast<int>(i));
-
-                    const ImVec2 pos = ImGui::GetCursorScreenPos();
-                    if (pos.x + TILE_SIZE > regionMaxX && i > 0)
-                    {
-                        ImGui::NewLine();
-                    }
-
-                    const float cursor = ImGui::GetCursorPosX();
-
-                    if (ImGui::Selectable("##tile",
-                                          "material/" + materialPaths.at(i) == *str,
-                                          0,
-                                          ImVec2(TILE_SIZE, TILE_SIZE)))
-                    {
-                        *str = "material/" + materialPaths.at(i);
-                    }
-                    if (ImGui::BeginItemTooltip())
-                    {
-                        const std::string tooltip = materialPaths.at(i);
-                        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-                        ImGui::TextUnformatted(tooltip.c_str());
-                        ImGui::PopTextWrapPos();
-                        ImGui::EndTooltip();
-                    }
-                    ImGui::SameLine();
-                    ImGui::SetCursorPosX(cursor);
-
-
-                    const float aspect = texSize.x / texSize.y;
-                    float drawWidth = 0.0f;
-                    float drawHeight = 0.0f;
-                    if (aspect > 1.0f)
-                    {
-                        drawWidth = TILE_SIZE;
-                        drawHeight = TILE_SIZE / aspect;
-                    } else
-                    {
-                        drawWidth = TILE_SIZE * aspect;
-                        drawHeight = TILE_SIZE;
-                    }
-
-                    const ImVec2 cursorPos = ImGui::GetCursorPos();
-                    ImGui::SetCursorPos(ImVec2(cursorPos.x + (TILE_SIZE - drawWidth) * 0.5f,
-                                               cursorPos.y + (TILE_SIZE - drawHeight) * 0.5f));
-
-                    ImGui::Image(tex, ImVec2(drawWidth, drawHeight));
-
-                    ImGui::SameLine(0.0f, spacing);
-                    ImGui::SetCursorPosX(cursor + TILE_SIZE + spacing);
-                    ImGui::Dummy(ImVec2(0, 0));
-                    ImGui::SameLine(0, 0);
-                    ImGui::PopID();
-
-                    foundResults = true;
-                }
-
-                if (!foundResults)
-                {
-                    ImGui::Text("No results");
-                }
-
-                ImGui::EndChild();
+                continue;
             }
-            ImGui::Dummy({0, 4});
 
-            const float sizeX = ImGui::GetContentRegionAvail().x;
+            const std::string textureName = materials.at(i).texture;
 
-            ImGui::Dummy(ImVec2(sizeX - 60 - ImGui::GetStyle().WindowPadding.x, 0));
+            ImVec2 texSize;
+            ImTextureID tex = 0;
+            if (SharedMgr::Get().textureCache.GetTextureID(textureName, tex) != Error::ErrorCode::OK)
+            {
+                texSize = SharedMgr::Get().textureCache.GetMissingTextureSize();
+                tex = SharedMgr::Get().textureCache.GetMissingTextureID();
+            } else
+            {
+                const Error::ErrorCode sizeError = SharedMgr::Get().textureCache.GetTextureSize(textureName, texSize);
+                assert(sizeError == Error::ErrorCode::OK);
+            }
+
+            ImGui::PushID(static_cast<int>(i));
+
+            const ImVec2 pos = ImGui::GetCursorScreenPos();
+            if (pos.x + TILE_SIZE > regionMaxX && i > 0)
+            {
+                ImGui::NewLine();
+            }
+
+            const float cursor = ImGui::GetCursorPosX();
+
+            if (ImGui::Selectable("##tile", "material/" + materialPaths.at(i) == *str, 0, ImVec2(TILE_SIZE, TILE_SIZE)))
+            {
+                *str = "material/" + materialPaths.at(i);
+            }
+            if (ImGui::BeginItemTooltip())
+            {
+                const std::string tooltip = materialPaths.at(i);
+                ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+                ImGui::TextUnformatted(tooltip.c_str());
+                ImGui::PopTextWrapPos();
+                ImGui::EndTooltip();
+            }
             ImGui::SameLine();
-            if (ImGui::Button("OK", ImVec2(60, 0)))
+            ImGui::SetCursorPosX(cursor);
+
+
+            const float aspect = texSize.x / texSize.y;
+            float drawWidth = 0.0f;
+            float drawHeight = 0.0f;
+            if (aspect > 1.0f)
             {
-                visible = false;
+                drawWidth = TILE_SIZE;
+                drawHeight = TILE_SIZE / aspect;
+            } else
+            {
+                drawWidth = TILE_SIZE * aspect;
+                drawHeight = TILE_SIZE;
             }
 
-            ImGui::EndPopup();
+            const ImVec2 cursorPos = ImGui::GetCursorPos();
+            ImGui::SetCursorPos(ImVec2(cursorPos.x + (TILE_SIZE - drawWidth) * 0.5f,
+                                       cursorPos.y + (TILE_SIZE - drawHeight) * 0.5f));
+
+            ImGui::Image(tex, ImVec2(drawWidth, drawHeight));
+
+            ImGui::SameLine(0.0f, spacing);
+            ImGui::SetCursorPosX(cursor + TILE_SIZE + spacing);
+            ImGui::Dummy(ImVec2(0, 0));
+            ImGui::SameLine(0, 0);
+            ImGui::PopID();
+
+            foundResults = true;
         }
+
+        if (!foundResults)
+        {
+            ImGui::Text("No results");
+        }
+
+        ImGui::EndChild();
+    }
+    ImGui::Dummy({0, 4});
+
+    const float sizeX = ImGui::GetContentRegionAvail().x;
+
+    ImGui::Dummy(ImVec2(sizeX - 60 - ImGui::GetStyle().WindowPadding.x, 0));
+    ImGui::SameLine();
+    if (ImGui::Button("OK", ImVec2(60, 0)))
+    {
+        RequestClose();
     }
 }
 
@@ -178,7 +163,7 @@ void MaterialBrowserWindow::InputMaterial(const char *label, std::string &materi
 void MaterialBrowserWindow::InputMaterial(const char *label, std::string *material)
 {
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
-    ImGui::PushFont(SDKWindow::Get().GetMonospaceFont());
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont(), 0.0f);
     ImGui::InputText(label, material);
     ImGui::PopFont();
     ImGui::SameLine();
@@ -186,4 +171,9 @@ void MaterialBrowserWindow::InputMaterial(const char *label, std::string *materi
     {
         Show(material);
     }
+}
+
+void MaterialBrowserWindow::Show(std::string *material)
+{
+    WindowManager::Get().AddModalWindow<MaterialBrowserWindow>(material);
 }

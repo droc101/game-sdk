@@ -4,21 +4,36 @@
 
 #pragma once
 
+#include <cstddef>
+#include <game_sdk/Window.h>
 #include <libassets/type/Actor.h>
+#include <libassets/type/ActorDefinition.h>
+#include <SDL3/SDL_video.h>
 
-class EditActorWindow
+class EditActorWindow final: public Window
 {
     public:
-        EditActorWindow() = delete;
+        EditActorWindow(Actor &actor);
 
-        static inline bool visible = false;
-        static inline size_t selectedParam = 0;
-        static inline size_t selectedConnection = 0;
+    protected:
+        void Render() override;
 
-        static void Render(Actor &actor);
+        [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
-        static void RenderParamsTab(Actor &actor, const ActorDefinition &definition);
+        WindowProperties properties = {
+            .title = "Actor Properties",
+            .defaultSize = {1000, 600},
+            .icon = "",
+            .defaultFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_UTILITY,
+            .defaultImguiWindow = true,
+        };
 
-        static void RenderOutputsTab(Actor &actor, const ActorDefinition &definition);
+        Actor &actor;
+        size_t selectedParam = 0;
+        size_t selectedConnection = 0;
+
+        void RenderParamsTab(const ActorDefinition &definition);
+
+        void RenderOutputsTab(const ActorDefinition &definition);
 };

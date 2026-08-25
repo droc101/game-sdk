@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
+#include <game_sdk/Window.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
 #include <game_sdk/windows/SoundBrowserWindow.h>
@@ -41,13 +42,15 @@
 #include <vector>
 #include "MapEditor.h"
 
-void EditActorWindow::Render(Actor &actor)
-{
-    if (!visible)
-    {
-        return;
-    }
+EditActorWindow::EditActorWindow(Actor &actorToEdit): actor(actorToEdit) {}
 
+const Window::WindowProperties &EditActorWindow::GetProperties() const
+{
+    return properties;
+}
+
+void EditActorWindow::Render()
+{
     if (selectedConnection > actor.connections.size() - 1)
     {
         selectedConnection = actor.connections.size() - 1;
@@ -56,8 +59,6 @@ void EditActorWindow::Render(Actor &actor)
     {
         selectedParam = actor.params.size() - 1;
     }
-
-    ImGui::Begin("Actor Properties", &visible, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
 
     if (MapEditor::adm.GetActorClassCount() == 0 || !MapEditor::adm.HasActorClass("actor"))
     {
@@ -112,21 +113,19 @@ void EditActorWindow::Render(Actor &actor)
         const ActorDefinition &classDef = MapEditor::adm.GetActorDefinition(actor.className);
         if (ImGui::BeginTabItem("Params"))
         {
-            RenderParamsTab(actor, classDef);
+            RenderParamsTab(classDef);
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("I/O Connections"))
         {
-            RenderOutputsTab(actor, classDef);
+            RenderOutputsTab(classDef);
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
     }
-
-    ImGui::End();
 }
 
-void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &definition)
+void EditActorWindow::RenderParamsTab(const ActorDefinition &definition)
 {
     const float boxSize = ImGui::GetContentRegionAvail().x - 300;
     ImVec2 cursorPos = ImGui::GetCursorPos();
@@ -271,13 +270,13 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                     switch (stringDef->hintType)
                     {
                         case StringParamDefinition::StringParamHint::TEXTURE:
-                            TextureBrowserWindow::Get().InputTexture("##value", value);
+                            TextureBrowserWindow::InputTexture("##value", value);
                             break;
                         case StringParamDefinition::StringParamHint::MATERIAL:
-                            MaterialBrowserWindow::Get().InputMaterial("##value", value);
+                            MaterialBrowserWindow::InputMaterial("##value", value);
                             break;
                         case StringParamDefinition::StringParamHint::SOUND:
-                            SoundBrowserWindow::Get().InputSound("##value", value);
+                            SoundBrowserWindow::InputSound("##value", value);
                             break;
                         case StringParamDefinition::StringParamHint::ACTOR:
                             if (ImGui::BeginCombo("##targetActor", value->c_str()))
@@ -305,7 +304,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
                             }
                             break;
                         case StringParamDefinition::StringParamHint::MODEL:
-                            ModelBrowserWindow::Get().InputModel("##value", value);
+                            ModelBrowserWindow::InputModel("##value", value);
                             break;
                         case StringParamDefinition::StringParamHint::NONE:
                         default:
@@ -426,7 +425,7 @@ void EditActorWindow::RenderParamsTab(Actor &actor, const ActorDefinition &defin
     }
 }
 
-void EditActorWindow::RenderOutputsTab(Actor &actor, const ActorDefinition &definition)
+void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
 {
     const float boxSize = ImGui::GetContentRegionAvail().y - 200;
     if (ImGui::BeginTable("charTable", 5, ImGuiTableFlags_ScrollY | ImGuiTableFlags_BordersH, ImVec2(-1, boxSize)))

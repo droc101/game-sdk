@@ -3,15 +3,8 @@ project(texedit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(texedit texedit.cpp $<$<BOOL:${WIN32}>:texedit.rc>)
+add_executable(texedit texedit.cpp
+        TexeditWindow.cpp
+        TexeditWindow.h)
 
-set_target_properties(texedit PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "")
-
-target_link_libraries(texedit PRIVATE game_sdk_shared)
-
-add_dependencies(texedit assets)
-
-if (WIN32)
-    add_dependencies(texedit copydlls)
-    target_sources(texedit PRIVATE ../app.manifest)
-endif()
+configure_sdk_gui_program(texedit)

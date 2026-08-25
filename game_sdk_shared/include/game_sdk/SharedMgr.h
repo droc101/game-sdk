@@ -26,11 +26,6 @@ class SharedMgr
         void SharedMenuUI(const std::string &programName);
 
         /**
-         * Render shared ImGui windows
-         */
-        void RenderSharedUI();
-
-        /**
          * Clean up the SDK shared manager
          */
         void DestroySharedMgr();
@@ -42,8 +37,5 @@ class SharedMgr
         SearchPathManager pathManager{};
 
     private:
-        bool metricsVisible = false;
-        bool demoVisible = false;
-
         SharedMgr() = default;
 };

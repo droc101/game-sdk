@@ -6,26 +6,39 @@
 #define GAME_SDK_MODELBROWSERWINDOW_H
 
 #include <game_sdk/ModelViewer.h>
+#include <game_sdk/Window.h>
 #include <string>
 #include <vector>
 
-class ModelBrowserWindow
+class ModelBrowserWindow final: public Window
 {
     public:
-        static ModelBrowserWindow &Get();
+        ModelBrowserWindow(std::string *model);
 
-        void Show(std::string *model);
-        void Hide();
-        void Render();
+        static void InputModel(const char *label, std::string &model);
 
-        void InputModel(const char *label, std::string &model);
+        static void InputModel(const char *label, std::string *model);
 
-        void InputModel(const char *label, std::string *model);
+        static void Show(std::string *texture);
+
+    protected:
+        bool Init() override;
+
+        void Destroy() override;
+
+        void Render() override;
+
+        const WindowProperties &GetProperties() const override;
 
     private:
-        ModelBrowserWindow() = default;
+        WindowProperties properties = {
+            .title = "Choose Model",
+            .defaultSize = glm::ivec2(1366, 768),
+            .icon = "",
+            .defaultFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_UTILITY,
+            .defaultImguiWindow = true,
+        };
 
-        bool visible = false;
         std::string *str = nullptr;
 
         std::vector<std::string> models{};
