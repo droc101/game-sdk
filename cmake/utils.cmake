@@ -13,7 +13,7 @@ endmacro()
 macro(configure_sdk_program target)
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" FOLDER "game__sdk__tools")
 
-    link_libraries(${target} PRIVATE assets)
+    target_link_libraries(${target} PRIVATE assets)
 
     if (WIN32)
         add_dependencies(${target} copydlls)
