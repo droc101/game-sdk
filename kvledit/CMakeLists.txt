@@ -7,4 +7,4 @@ add_executable(kvledit kvledit.cpp
         KvleditWindow.cpp
         KvleditWindow.h)
 
-configure_sdk_program(kvledit)
+configure_sdk_gui_program(kvledit)

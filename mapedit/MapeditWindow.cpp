@@ -5,6 +5,7 @@
 #include "MapeditWindow.h"
 #include <game_sdk/DesktopInterface.h>
 #include <game_sdk/DialogFilters.h>
+#include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/SoundSystem.h>
 #include <game_sdk/WindowManager.h>
@@ -14,7 +15,6 @@
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui_internal.h>
 #include "ActorBrowserWindow.h"
-#include "game_sdk/Options.h"
 #include "MapCompileWindow.h"
 #include "MapEditor.h"
 #include "MapPropertiesWindow.h"

@@ -202,3 +202,5 @@ else ()
 endif ()
 
 target_include_directories(assets PUBLIC ${Vulkan_INCLUDE_DIRS} "include" "${CMAKE_SOURCE_DIR}/lib/stb")
+
+add_dependencies(assets copy_assets)

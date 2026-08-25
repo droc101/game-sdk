@@ -314,8 +314,6 @@ bool Window::ProcessEvent(SDL_Event *event)
     return false;
 }
 
-void Window::Render() {}
-
 void Window::ThemeChanged() const {}
 
 const Window::WindowProperties &Window::GetProperties() const

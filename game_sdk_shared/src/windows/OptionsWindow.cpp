@@ -6,6 +6,7 @@
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
+#include <game_sdk/Window.h>
 #include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/OptionsWindow.h>
@@ -13,7 +14,6 @@
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
-#include "game_sdk/Window.h"
 
 void OptionsWindow::GamePathCallback(const std::string &path)
 {

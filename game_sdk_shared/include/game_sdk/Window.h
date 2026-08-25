@@ -192,7 +192,7 @@ class Window
         /**
          * Perform subclass-specific processing & rendering
          */
-        virtual void Render();
+        virtual void Render() = 0;
 
         /**
          * Perform subclass-specific event handling

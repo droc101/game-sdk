@@ -37,12 +37,12 @@ void ShdeditWindow::SelectCallback(const std::vector<std::string> &paths)
             {
                 SDL_Window *w = GetWindow();
                 constexpr std::array<SDL_MessageBoxButtonData, 2> BUTTONS = {
-                    (SDL_MessageBoxButtonData){
+                    SDL_MessageBoxButtonData{
                         .flags = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT,
                         .buttonID = 0,
                         .text = "Yes",
                     },
-                    (SDL_MessageBoxButtonData){
+                    SDL_MessageBoxButtonData{
                         .flags = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT,
                         .buttonID = 1,
                         .text = "No",

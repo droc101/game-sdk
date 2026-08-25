@@ -16,7 +16,6 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Luna)
 
 add_executable(mapcomp mapcomp.cpp
-        $<$<BOOL:${WIN32}>:mapcomp.rc>
         LevelMeshBuilder.cpp
         LevelMeshBuilder.h
         MapCompiler.cpp
@@ -32,20 +31,11 @@ add_executable(mapcomp mapcomp.cpp
         LightBakerGpu.hpp
 )
 
-target_compile_options(mapcomp PRIVATE -pthread)
-
-set_target_properties(mapcomp PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" FOLDER "game__sdk__tools")
+configure_sdk_program(mapcomp)
 
 target_link_libraries(mapcomp PRIVATE
         earcut
         Clipper2
-        assets
         glm::glm
         Luna
 )
-
-add_dependencies(mapcomp assets copy_assets)
-
-if (WIN32)
-    add_dependencies(mapcomp copydlls)
-endif ()

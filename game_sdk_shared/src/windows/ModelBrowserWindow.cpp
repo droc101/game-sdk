@@ -26,7 +26,10 @@ ModelBrowserWindow::ModelBrowserWindow(std::string *model)
 
 bool ModelBrowserWindow::Init()
 {
-    (void)viewer.Init();
+    if (!viewer.Init())
+    {
+        return false;
+    }
     models.clear();
     modelAbsPaths.clear();
     const std::vector<SearchPathManager::AssetResult> absModels = SharedMgr::Get().pathManager.ScanAssetFolder("/model",
@@ -37,7 +40,11 @@ bool ModelBrowserWindow::Init()
         modelAbsPaths.push_back(mPath.absolutePath);
     }
     ModelAsset mdlAsset{};
-    (void)mdlAsset.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(*str));
+    const Error::ErrorCode e = mdlAsset.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(*str));
+    if (e != Error::ErrorCode::OK)
+    {
+        return false;
+    }
     viewer.SetModel(std::move(mdlAsset));
     return true;
 }

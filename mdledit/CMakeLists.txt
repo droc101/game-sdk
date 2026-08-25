@@ -20,4 +20,4 @@ add_executable(mdledit mdledit.cpp
         MdleditWindow.h
 )
 
-configure_sdk_program(mdledit)
+configure_sdk_gui_program(mdledit)

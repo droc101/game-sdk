@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <format>
+#include <game_sdk/WindowManager.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
@@ -26,7 +27,6 @@
 #include "../Viewport.h"
 #include "../ViewportRenderer.h"
 #include "EditorTool.h"
-#include <game_sdk/WindowManager.h>
 
 void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {
@@ -779,13 +779,21 @@ void SelectTool::RenderToolWindow()
             MapEditor::MaterialToolWindow(MapEditor::map.sectors.at(focusedSectorIndex).ceilingMaterial);
             ImGui::Separator();
             ImGui::Text("Height");
-            ImGui::InputFloat("##ceilHeight", &MapEditor::map.sectors.at(focusedSectorIndex).ceilingHeight, 1, 1, "%.0f");
+            ImGui::InputFloat("##ceilHeight",
+                              &MapEditor::map.sectors.at(focusedSectorIndex).ceilingHeight,
+                              1,
+                              1,
+                              "%.0f");
             break;
         case ItemType::FLOOR:
             MapEditor::MaterialToolWindow(MapEditor::map.sectors.at(focusedSectorIndex).floorMaterial);
             ImGui::Separator();
             ImGui::Text("Height");
-            ImGui::InputFloat("##floorHeight", &MapEditor::map.sectors.at(focusedSectorIndex).floorHeight, 1, 1, "%.0f");
+            ImGui::InputFloat("##floorHeight",
+                              &MapEditor::map.sectors.at(focusedSectorIndex).floorHeight,
+                              1,
+                              1,
+                              "%.0f");
             break;
         case ItemType::SECTOR:
             if (sectorFocusMode)

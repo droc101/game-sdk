@@ -6,13 +6,13 @@
 #include <cstddef>
 #include <format>
 #include <game_sdk/DialogFilters.h>
+#include <game_sdk/WindowManager.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/type/ConvexHull.h>
 #include <string>
 #include "../ModelEditor.h"
-#include "game_sdk/WindowManager.h"
 
 void CollisionTab::Render()
 {
@@ -71,7 +71,8 @@ void CollisionTab::RenderStaticMeshUI()
     ModelAsset &model = ModelEditor::modelViewer.GetModel();
     if (ImGui::Button("Import Collision Mesh"))
     {
-        WindowManager::Get().GetCurrentWindow()->OpenFileDialog(ModelEditor::ImportStaticCollider, DialogFilters::STANDARD_MODEL_FILTERS);
+        WindowManager::Get().GetCurrentWindow()->OpenFileDialog(ModelEditor::ImportStaticCollider,
+                                                                DialogFilters::STANDARD_MODEL_FILTERS);
     }
     ImGui::Text("%zu triangles", model.GetStaticCollisionMesh().GetNumTriangles());
 }
@@ -81,12 +82,14 @@ void CollisionTab::RenderCHullUI()
 {
     if (ImGui::Button("Import Hull"))
     {
-        WindowManager::Get().GetCurrentWindow()->OpenFileDialog(ModelEditor::ImportSingleHull, DialogFilters::STANDARD_MODEL_FILTERS);
+        WindowManager::Get().GetCurrentWindow()->OpenFileDialog(ModelEditor::ImportSingleHull,
+                                                                DialogFilters::STANDARD_MODEL_FILTERS);
     }
     ImGui::SameLine();
     if (ImGui::Button("Import Hulls"))
     {
-        WindowManager::Get().GetCurrentWindow()->OpenFileDialog(ModelEditor::ImportMultipleHulls, DialogFilters::STANDARD_MODEL_FILTERS);
+        WindowManager::Get().GetCurrentWindow()->OpenFileDialog(ModelEditor::ImportMultipleHulls,
+                                                                DialogFilters::STANDARD_MODEL_FILTERS);
     }
     constexpr float PANEL_HEIGHT = 250.0f;
     ImGui::BeginChild("ScrollableRegion",

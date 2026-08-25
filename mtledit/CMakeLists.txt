@@ -7,4 +7,4 @@ add_executable(mtledit mtledit.cpp
         MtleditWindow.cpp
         MtleditWindow.h)
 
-configure_sdk_program(mtledit)
+configure_sdk_gui_program(mtledit)

@@ -35,9 +35,9 @@ void FoneditWindow::SaveGfon(const std::string &path)
     }
 }
 
-const char *FoneditWindow::ComboGetter(void *user_data, int index)
+const char *FoneditWindow::ComboGetter(void *userData, const int index)
 {
-    const std::vector<std::string> &items = *static_cast<std::vector<std::string> *>(user_data);
+    const std::vector<std::string> &items = *static_cast<std::vector<std::string> *>(userData);
     if (index < 0 || static_cast<size_t>(index) >= items.size())
     {
         return nullptr;

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <game_sdk/WindowManager.h>
 #include <imgui.h>
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
@@ -16,7 +17,6 @@
 #include "../Viewport.h"
 #include "../ViewportRenderer.h"
 #include "EditorTool.h"
-#include "game_sdk/WindowManager.h"
 #include "SelectTool.h"
 
 void AddPrimitiveTool::RenderViewport(Viewport &vp)
@@ -66,7 +66,8 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
                     }
                     if (!s.IsValid())
                     {
-                        WindowManager::Get().GetCurrentWindow()->ErrorMessage("Sector has invalid shape and will not be added");
+                        WindowManager::Get().GetCurrentWindow()->ErrorMessage("Sector has invalid shape and will not "
+                                                                              "be added");
                     } else
                     {
                         MapEditor::map.sectors.push_back(s);

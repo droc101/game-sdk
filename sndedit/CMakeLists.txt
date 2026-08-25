@@ -7,4 +7,4 @@ add_executable(sndedit sndedit.cpp
         SndeditWindow.cpp
         SndeditWindow.h)
 
-configure_sdk_program(sndedit)
+configure_sdk_gui_program(sndedit)

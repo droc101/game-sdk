@@ -7,4 +7,4 @@ add_executable(texedit texedit.cpp
         TexeditWindow.cpp
         TexeditWindow.h)
 
-configure_sdk_program(texedit)
+configure_sdk_gui_program(texedit)

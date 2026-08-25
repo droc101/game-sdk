@@ -35,13 +35,13 @@ const Window::WindowProperties &CompileProgressWindow::GetProperties() const
 
 bool CompileProgressWindow::Init()
 {
+    log = "";
     const Error::ErrorCode errorCode = MapEditor::map.Export(MapEditor::mapFile);
     if (errorCode != Error::ErrorCode::OK)
     {
         log += std::format("Failed to save the level!{}\n", Error::ErrorString(errorCode));
         return false;
     }
-    log = "";
     std::string compilerPath = SDL_GetBasePath();
     compilerPath += "mapcomp";
 #ifdef WIN32

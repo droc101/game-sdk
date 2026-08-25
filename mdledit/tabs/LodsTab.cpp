@@ -7,14 +7,14 @@
 #include <cstdint>
 #include <format>
 #include <game_sdk/DialogFilters.h>
+#include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <imgui.h>
 #include <libassets/type/ModelLod.h>
 #include <numeric>
 #include <string>
 #include <utility>
 #include "../ModelEditor.h"
-#include "game_sdk/Window.h"
-#include "game_sdk/WindowManager.h"
 
 void LodsTab::Render()
 {
@@ -22,7 +22,8 @@ void LodsTab::Render()
     ImGui::PushItemWidth(-1);
     if (ImGui::Button("Add", ImVec2(70, 0)))
     {
-        WindowManager::Get().GetCurrentWindow()->OpenFileDialog(ModelEditor::ImportLod, DialogFilters::STANDARD_MODEL_FILTERS);
+        WindowManager::Get().GetCurrentWindow()->OpenFileDialog(ModelEditor::ImportLod,
+                                                                DialogFilters::STANDARD_MODEL_FILTERS);
     }
     ImGui::SameLine();
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().WindowPadding.x - 70);
@@ -38,8 +39,8 @@ void LodsTab::Render()
         if (!ModelEditor::modelViewer.GetModel().ValidateLodDistances())
         {
             WindowManager::Get().GetCurrentWindow()->WarningMessage("LOD distances are invalid! Make sure that:\n"
-                                            "- The first LOD (LOD 0) has a distance of 0\n"
-                                            "- No two LODs have the same distance");
+                                                                    "- The first LOD (LOD 0) has a distance of 0\n"
+                                                                    "- No two LODs have the same distance");
         } else
         {
             WindowManager::Get().GetCurrentWindow()->InfoMessage("LOD distances are valid", "Success");

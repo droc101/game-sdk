@@ -7,4 +7,4 @@ add_executable(launcher launcher.cpp
         LauncherWindow.cpp
         LauncherWindow.h)
 
-configure_sdk_program(launcher)
+configure_sdk_gui_program(launcher)

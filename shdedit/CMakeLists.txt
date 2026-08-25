@@ -7,4 +7,4 @@ add_executable(shdedit shdedit.cpp
         ShdeditWindow.cpp
         ShdeditWindow.h)
 
-configure_sdk_program(shdedit)
+configure_sdk_gui_program(shdedit)

@@ -7,4 +7,4 @@ add_executable(fonedit fonedit.cpp
         FoneditWindow.cpp
         FoneditWindow.h)
 
-configure_sdk_program(fonedit)
+configure_sdk_gui_program(fonedit)

@@ -6,6 +6,8 @@
 #include <cstddef>
 #include <format>
 #include <game_sdk/SharedMgr.h>
+#include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/asset/LevelMaterialAsset.h>
@@ -16,9 +18,6 @@
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
 #include <vector>
-
-#include "game_sdk/Window.h"
-#include "game_sdk/WindowManager.h"
 
 MaterialBrowserWindow::MaterialBrowserWindow(std::string *material)
 {

@@ -35,5 +35,5 @@ add_executable(mapedit mapedit.cpp
         CompileProgressWindow.h
 )
 
-configure_sdk_program(mapedit)
+configure_sdk_gui_program(mapedit)
 add_dependencies(mapedit mapcomp)
