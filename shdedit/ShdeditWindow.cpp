@@ -135,7 +135,8 @@ Error::ErrorCode ShdeditWindow::Execute(std::string &errorLog)
                                              ShaderAsset::SHADER_ASSET_EXTENSION),
                                  enableOptimization,
                                  &errorLog,
-                                 file);
+                                 file,
+                                 dumpBinaries);
         if (e != Error::ErrorCode::OK)
         {
             return e;
@@ -171,6 +172,8 @@ void ShdeditWindow::Render()
     }
 
     (void)ImGui::Checkbox("Enable Optimization", &enableOptimization);
+    ImGui::SameLine();
+    (void)ImGui::Checkbox("Dump SPIR-V binaries", &dumpBinaries);
 
     ImGui::Separator();
 

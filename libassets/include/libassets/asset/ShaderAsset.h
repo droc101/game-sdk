@@ -39,7 +39,8 @@ class ShaderAsset final: public Asset
         [[nodiscard]] Error::ErrorCode SaveToAssetEx(const std::string &filePath,
                                                      bool enableOptimization,
                                                      std::string *errorLog = nullptr,
-                                                     const std::string &shaderFilename = "glsl_source") const;
+                                                     const std::string &shaderFilename = "glsl_source",
+                                                     bool dumpSpvBinary = false) const;
 
         [[nodiscard]] Error::ErrorCode Import(const std::string &filePath) override;
 

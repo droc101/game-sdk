@@ -31,6 +31,7 @@ class ShdeditWindow final: public Window
 
         std::string outputFolder{};
         bool enableOptimization = false;
+        bool dumpBinaries = false;
 
         void SelectCallback(const std::vector<std::string> &paths);
         void OutPathCallback(const std::string &path);
