@@ -2,8 +2,10 @@
 // Created by droc101 on 7/23/25.
 //
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <libassets/asset/Asset.h>
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/AssetContainer.h>
@@ -74,7 +76,8 @@ Error::ErrorCode ShaderAsset::Import(const std::string &filePath)
 Error::ErrorCode ShaderAsset::SaveToAssetEx(const std::string &filePath,
                                             const bool enableOptimization,
                                             std::string *errorLog,
-                                            const std::string &shaderFilename) const
+                                            const std::string &shaderFilename,
+                                            const bool dumpSpvBinary) const
 {
     DataWriter writer{};
     const Error::ErrorCode writeError = SaveToBufferEx(writer, enableOptimization, errorLog, shaderFilename);
@@ -85,6 +88,19 @@ Error::ErrorCode ShaderAsset::SaveToAssetEx(const std::string &filePath,
     std::vector<uint8_t> data{};
     data.reserve(writer.GetBufferSize());
     writer.CopyToVector(data);
+
+    if (dumpSpvBinary)
+    {
+        std::vector<uint8_t> spv{};
+        spv.reserve(data.size() - sizeof(size_t) - sizeof(uint8_t));
+        std::copy(data.begin() + sizeof(size_t) + sizeof(uint8_t), data.end(), std::back_inserter(spv));
+        const Error::ErrorCode e = FileIo::WriteBufferToFile(filePath + ".spv", spv);
+        if (e != Error::ErrorCode::OK)
+        {
+            return e;
+        }
+    }
+
     return AssetContainer::SaveToFile(filePath,
                                       data,
                                       GetAssetType(),
