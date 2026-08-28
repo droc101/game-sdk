@@ -471,7 +471,7 @@ void MapeditWindow::Render()
     }
     if (compilePressed)
     {
-        WindowManager::Get().AddModalWindow<MapCompileWindow>();
+        WindowManager::Get().AddOrFocusWindow<MapCompileWindow>();
     }
     if (cutPressed)
     {
