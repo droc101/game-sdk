@@ -14,6 +14,7 @@
 
 class ModelLod
 {
+    public:
         struct ModelComponent
         {
                 std::vector<uint32_t> indices;
@@ -21,7 +22,6 @@ class ModelLod
                 float radius;
         };
 
-    public:
         ModelLod() = default;
 
         ModelLod(DataReader &reader, uint32_t componentCount);

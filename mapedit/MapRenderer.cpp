@@ -377,15 +377,14 @@ MapRenderer::ModelBuffer MapRenderer::LoadModel(const std::string &path)
     writer.CopyToVector(buffer);
     glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(writer.GetBufferSize()), buffer.data(), GL_STATIC_DRAW);
 
-    const ModelLod &lod = buf.model.GetLod(0);
-    for (size_t i = 0; i < lod.indexCounts.size(); i++)
+    for (const ModelLod::ModelComponent &component: buf.model.GetLod(0).components)
     {
         GLuint ebo = 0;
         glGenBuffers(1, &ebo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                     static_cast<GLsizeiptr>(lod.indexCounts.at(i) * sizeof(uint32_t)),
-                     lod.materialIndices.at(i).data(),
+                     static_cast<GLsizeiptr>(component.indices.size() * sizeof(uint32_t)),
+                     component.indices.data(),
                      GL_STATIC_DRAW);
         buf.ebos.push_back(ebo);
     }
@@ -419,7 +418,7 @@ void MapRenderer::RenderModel(ModelBuffer &buffer,
         const GLuint ebo = buffer.ebos.at(i);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glDrawElements(GL_TRIANGLES,
-                       static_cast<GLsizei>(buffer.model.GetLod(0).indexCounts.at(i)),
+                       static_cast<GLsizei>(buffer.model.GetLod(0).components.at(i).indices.size()),
                        GL_UNSIGNED_INT,
                        nullptr);
     }
