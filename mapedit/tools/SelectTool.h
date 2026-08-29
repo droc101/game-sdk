@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
 #include <tuple>
