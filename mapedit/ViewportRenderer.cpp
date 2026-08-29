@@ -170,9 +170,22 @@ void ViewportRenderer::RenderSector(const Viewport &vp,
         {
             MapRenderer::RenderLine(startFloor, endFloor, c, matrix, 4);
             MapRenderer::RenderLine(startCeiling, startFloor, c, matrix, 4);
+
             if (isFocusedSector &&
-                settings.selectionType == EditorTool::ItemType::LINE &&
-                settings.selectionVertexIndex == vertexIndex)
+                (settings.selectionType == EditorTool::ItemType::LINE && settings.selectionVertexIndex == vertexIndex))
+            {
+                MapRenderer::RenderLine(endCeiling, endFloor, c, matrix, 4);
+                MapRenderer::RenderLine(startFloor, startCeiling, Color(1, 0, 1, 1), matrix, 8);
+                MapRenderer::RenderLine(endFloor, endCeiling, Color(1, 0, 1, 1), matrix, 8);
+            }
+        }
+
+        if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ ||
+            settings.selectionType == EditorTool::ItemType::FLOOR)
+        {
+            if (isFocusedSector && ((settings.selectionType == EditorTool::ItemType::LINE &&
+                                     settings.selectionVertexIndex == vertexIndex) ||
+                                    settings.selectionType == EditorTool::ItemType::FLOOR))
             {
                 MapRenderer::RenderLine(startFloor, endFloor, Color(1, 0, 1, 1), matrix, 8);
             }
@@ -180,8 +193,8 @@ void ViewportRenderer::RenderSector(const Viewport &vp,
 
         MapRenderer::RenderLine(startCeiling, endCeiling, c, matrix, 4);
         if (isFocusedSector &&
-            settings.selectionType == EditorTool::ItemType::LINE &&
-            settings.selectionVertexIndex == vertexIndex)
+            ((settings.selectionType == EditorTool::ItemType::LINE && settings.selectionVertexIndex == vertexIndex) ||
+             settings.selectionType == EditorTool::ItemType::CEILING))
         {
             MapRenderer::RenderLine(startCeiling, endCeiling, Color(1, 0, 1, 1), matrix, 8);
         }
