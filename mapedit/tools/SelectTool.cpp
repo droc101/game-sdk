@@ -7,10 +7,12 @@
 #include <array>
 #include <cassert>
 #include <cfloat>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <format>
 #include <game_sdk/WindowManager.h>
+#include <glm/gtc/round.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
@@ -27,6 +29,20 @@
 #include "../ViewportRenderer.h"
 #include "EditorTool.h"
 
+float SelectTool::WrapAndSnapAngle(float angle)
+{
+    while (angle < 0.0f)
+    {
+        angle += 360.0f;
+    }
+    while (angle > 360.0f)
+    {
+        angle -= 360.0f;
+    }
+    angle = std::round(angle / 22.5f) * 22.5f;
+    return angle;
+}
+
 void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {
     if (!isHovered)
@@ -39,6 +55,40 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
         if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
         {
             dragging = true;
+            if (selectionType == ItemType::ACTOR)
+            {
+                const ImVec2 lmp = vp.GetLocalMousePos();
+                const Actor &actor = MapEditor::map.actors.at(selectionIndex);
+                const float dist = glm::distance({lmp.x, lmp.y}, vp.WorldToScreenPos(actor.position));
+                if (dist > 40)
+                {
+                    actorDraggingRotationGizmo = true;
+
+                    const glm::vec2 actorScreenPos = vp.WorldToScreenPos(actor.position);
+                    const glm::vec2 mousePos = {vp.GetLocalMousePos().x, vp.GetLocalMousePos().y};
+                    const glm::vec2 mousePosDifference = mousePos - actorScreenPos;
+                    rotationGizmoLastAngle = atanf(mousePosDifference.x / mousePosDifference.y);
+                    if (mousePosDifference.y > 0)
+                    {
+                        rotationGizmoLastAngle += std::numbers::pi_v<float>;
+                    }
+                    switch (vp.GetType())
+                    {
+                        case Viewport::ViewportType::TOP_DOWN_XZ:
+                            rotationGizmoActorAngle = actor.rotation.y;
+                            break;
+                        case Viewport::ViewportType::FRONT_XY:
+                            rotationGizmoActorAngle = actor.rotation.z;
+                            break;
+                        case Viewport::ViewportType::SIDE_YZ:
+                            rotationGizmoActorAngle = actor.rotation.x;
+                            break;
+                    }
+                } else
+                {
+                    actorDraggingRotationGizmo = false;
+                }
+            }
         }
         return;
     }
@@ -80,6 +130,39 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             {
                 sector.floorHeight = vertexDragOriginalPoint.y;
             }
+        }
+    }
+
+    if (selectionType == ItemType::ACTOR)
+    {
+        if (actorDraggingRotationGizmo)
+        {
+            Actor &actor = MapEditor::map.actors.at(selectionIndex);
+            const glm::vec2 actorScreenPos = vp.WorldToScreenPos(actor.position);
+            const glm::vec2 mousePos = {vp.GetLocalMousePos().x, vp.GetLocalMousePos().y};
+            const glm::vec2 mousePosDifference = mousePos - actorScreenPos;
+            float newAngle = atanf(mousePosDifference.x / mousePosDifference.y);
+            if (mousePosDifference.y > 0)
+            {
+                newAngle += std::numbers::pi_v<float>;
+            }
+            const float angleDiff = glm::degrees(newAngle - rotationGizmoLastAngle);
+            rotationGizmoLastAngle = newAngle;
+            rotationGizmoActorAngle += angleDiff;
+
+            switch (vp.GetType())
+            {
+                case Viewport::ViewportType::TOP_DOWN_XZ:
+                    actor.rotation.y = WrapAndSnapAngle(rotationGizmoActorAngle);
+                    break;
+                case Viewport::ViewportType::FRONT_XY:
+                    actor.rotation.z = WrapAndSnapAngle(rotationGizmoActorAngle);
+                    break;
+                case Viewport::ViewportType::SIDE_YZ:
+                    actor.rotation.x = WrapAndSnapAngle(rotationGizmoActorAngle);
+                    break;
+            }
+            return;
         }
     }
 
@@ -425,10 +508,30 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
     }
 
     std::vector<std::tuple<ItemType, size_t, float>> hoverStack{};
+
+    if (dragging)
+    {
+        hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);
+        return hoverStack;
+    }
+
+
     hoverStack.reserve(actorHoverStack.size() + sectorHoverStack.size() + 1);
     if (selectionHovered)
     {
         hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);
+    }
+
+
+    if (selectionType == ItemType::ACTOR)
+    {
+        const ImVec2 lmp = vp.GetLocalMousePos();
+        const Actor &actor = MapEditor::map.actors.at(selectionIndex);
+        const float dist = glm::distance({lmp.x, lmp.y}, vp.WorldToScreenPos(actor.position));
+        if (dist >= 44 && dist <= 52)
+        {
+            hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);
+        }
     }
 
     hoverStack.insert(hoverStack.end(), actorHoverStack.begin(), actorHoverStack.end());
@@ -712,6 +815,15 @@ void SelectTool::RenderViewport(Viewport &vp)
         ProcessViewportSelectMode(vp, isHovered, worldSpaceHover);
     }
 
+    ViewportRenderer::ViewportRenderGizmo gizmo = {
+        .position = glm::vec3(0),
+        .radiusInPx = 48,
+    };
+    if (selectionType == ItemType::ACTOR)
+    {
+        gizmo.position = MapEditor::map.actors.at(selectionIndex).position;
+    }
+
     const ViewportRenderer::ViewportRenderSettings vps = {
         .sectorFocusMode = sectorFocusMode,
         .focusedSectorIndex = focusedSectorIndex,
@@ -723,6 +835,7 @@ void SelectTool::RenderViewport(Viewport &vp)
         .point = nullptr,
         .newPrimitive = nullptr,
         .newActor = nullptr,
+        .gizmo = selectionType == ItemType::ACTOR ? &gizmo : nullptr,
     };
     ViewportRenderer::RenderViewport(vp, vps);
 }

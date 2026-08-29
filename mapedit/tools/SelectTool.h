@@ -89,7 +89,13 @@ class SelectTool final: public EditorTool
 
         glm::vec2 vertexDragOriginalPoint{};
 
+        bool actorDraggingRotationGizmo = false;
+        float rotationGizmoLastAngle = 0.0f;
+        float rotationGizmoActorAngle = 0.0f;
+
         std::vector<std::tuple<ItemType, size_t, float>> menuHoveredItems{};
 
         bool dragging = false;
+
+        static float WrapAndSnapAngle(float angle);
 };

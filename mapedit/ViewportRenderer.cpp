@@ -115,6 +115,12 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
         GLHelper::ClearDepth();
         RenderSector(vp, settings, settings.focusedSectorIndex, matrix);
     }
+
+    if (settings.gizmo != nullptr)
+    {
+        GLHelper::ClearDepth();
+        RenderGizmo(vp, settings.gizmo, matrix);
+    }
 }
 
 void ViewportRenderer::RenderSector(const Viewport &vp,
@@ -296,6 +302,66 @@ void ViewportRenderer::RenderNewPolygon(const Viewport &vp,
     }
 }
 
+void ViewportRenderer::RenderGizmo(const Viewport &vp, const ViewportRenderGizmo *gizmo, const glm::mat4 &matrix)
+{
+    const float radius = vp.PixelsToWorldDistance(gizmo->radiusInPx);
+
+    constexpr uint32_t NUM_VERTS = 32;
+    std::vector<glm::vec2> pts;
+    pts.reserve(NUM_VERTS);
+    for (uint32_t i = 0; i < NUM_VERTS; i++)
+    {
+        const float theta = 1 *
+                            (2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / static_cast<float>(NUM_VERTS));
+        const float x = radius * std::cos(theta);
+        const float y = radius * std::sin(theta);
+        pts.emplace_back(x, y);
+    }
+
+    for (size_t i = 0; i < NUM_VERTS; i++)
+    {
+        const size_t nextIndex = (i + 1) % NUM_VERTS;
+        const glm::vec2 &startPoint = pts.at(i);
+        const glm::vec2 &endPoint = pts.at(nextIndex);
+        switch (vp.GetType())
+        {
+            case Viewport::ViewportType::TOP_DOWN_XZ:
+                MapRenderer::RenderLine(glm::vec3(startPoint.x + gizmo->position.x,
+                                                  gizmo->position.y,
+                                                  startPoint.y + gizmo->position.z),
+                                        glm::vec3(endPoint.x + gizmo->position.x,
+                                                  gizmo->position.y,
+                                                  endPoint.y + gizmo->position.z),
+                                        Color(0x40C040FF),
+                                        matrix,
+                                        4);
+                break;
+            case Viewport::ViewportType::FRONT_XY:
+                MapRenderer::RenderLine(glm::vec3(startPoint.x + gizmo->position.x,
+                                                  startPoint.y + gizmo->position.y,
+                                                  gizmo->position.z),
+                                        glm::vec3(endPoint.x + gizmo->position.x,
+                                                  endPoint.y + gizmo->position.y,
+                                                  gizmo->position.z),
+                                        Color(0x4040C0FF),
+                                        matrix,
+                                        4);
+                break;
+            case Viewport::ViewportType::SIDE_YZ:
+                MapRenderer::RenderLine(glm::vec3(gizmo->position.x,
+                                                  startPoint.x + gizmo->position.y,
+                                                  startPoint.y + gizmo->position.z),
+                                        glm::vec3(gizmo->position.x,
+                                                  endPoint.x + gizmo->position.y,
+                                                  endPoint.y + gizmo->position.z),
+                                        Color(0xC04040FF),
+                                        matrix,
+                                        4);
+                break;
+        }
+    }
+}
+
 bool ViewportRenderer::SectorIsCulled(const Sector &sector, const Viewport &vp)
 {
     const glm::vec4 aabb = sector.GetAABB();
@@ -362,7 +428,7 @@ void ViewportRenderer::RenderActor(const Actor &a, const glm::mat4 &matrix, cons
     worldMatrix = glm::translate(worldMatrix, a.position);
     worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.y), glm::vec3(0, 1, 0));
     worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.x), glm::vec3(1, 0, 0));
-    worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.z), glm::vec3(0, 0, 1));
+    worldMatrix = glm::rotate(worldMatrix, -glm::radians(a.rotation.z), glm::vec3(0, 0, 1));
 
     for (const std::shared_ptr<RenderDefinition> &rdef: definition.renderDefinitions)
     {
