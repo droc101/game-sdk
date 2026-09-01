@@ -60,6 +60,8 @@ class Viewport
          */
         [[nodiscard]] glm::vec2 WorldToScreenPos(glm::vec3 worldPos) const;
 
+        [[nodiscard]] float PixelsToWorldDistance(float pixels) const;
+
         /**
          * Center the camera on a 3D position
          */

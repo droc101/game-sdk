@@ -12,8 +12,10 @@
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/Window.h>
 #include <imgui.h>
+#include <iterator>
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/SearchPathManager.h>
 #include <map>
 #include <misc/cpp/imgui_stdlib.h>
 #include <SDL3/SDL_messagebox.h>
@@ -93,6 +95,43 @@ void ShdeditWindow::OutPathCallback(const std::string &path)
     outputFolder = path;
 }
 
+void ShdeditWindow::BasePathCallback(const std::string &path)
+{
+    sourcesBaseFolder = path;
+}
+
+void ShdeditWindow::AddFolderCallback(const std::string &folder)
+{
+    const std::vector<std::string> vertexSources = SearchPathManager::ScanFolder(folder, ".vert", true);
+    const std::vector<std::string> fragmentSources = SearchPathManager::ScanFolder(folder, ".frag", true);
+    const std::vector<std::string> computeSources = SearchPathManager::ScanFolder(folder, ".comp", true);
+    const std::vector<std::string> geometrySources = SearchPathManager::ScanFolder(folder, ".geom", true);
+
+    std::vector<std::string> sourcePaths{};
+    sourcePaths.reserve(vertexSources.size() + fragmentSources.size() + computeSources.size() + geometrySources.size());
+    std::ranges::copy(vertexSources, std::back_inserter(sourcePaths));
+    std::ranges::copy(fragmentSources, std::back_inserter(sourcePaths));
+    std::ranges::copy(computeSources, std::back_inserter(sourcePaths));
+    std::ranges::copy(geometrySources, std::back_inserter(sourcePaths));
+
+    for (std::string &path: sourcePaths)
+    {
+        if (folder.ends_with('/') || folder.ends_with('\\'))
+        {
+            path = folder + path;
+        } else
+        {
+            path = folder + '/' + path;
+        }
+    }
+
+    std::ranges::sort(sourcePaths, [](const std::string &a, const std::string &b) {
+        return std::filesystem::path(a).filename().string() < std::filesystem::path(b).filename().string();
+    });
+
+    SelectCallback(sourcePaths);
+}
+
 Error::ErrorCode ShdeditWindow::Execute(std::string &errorLog)
 {
     if (!std::filesystem::is_directory(outputFolder))
@@ -103,7 +142,6 @@ Error::ErrorCode ShdeditWindow::Execute(std::string &errorLog)
     for (size_t i = 0; i < files.size(); i++)
     {
         const std::string &file = files.at(i);
-        const std::string filename = std::filesystem::path(file).stem().string();
         const ShaderAsset::ShaderType kind = types.at(i);
         ShaderAsset shader;
         Error::ErrorCode e = shader.Import(file);
@@ -128,15 +166,30 @@ Error::ErrorCode ShdeditWindow::Execute(std::string &errorLog)
                 suffix = "g";
                 break;
         }
-        e = shader.SaveToAssetEx(std::format("{}/{}_{}.{}",
+
+        const std::string filename = std::filesystem::path(file).stem().string();
+        std::string outputPath = std::format("{}/{}_{}.{}",
                                              outputFolder,
                                              filename,
                                              suffix,
-                                             ShaderAsset::SHADER_ASSET_EXTENSION),
-                                 enableOptimization,
-                                 &errorLog,
-                                 file,
-                                 dumpBinaries);
+                                             ShaderAsset::SHADER_ASSET_EXTENSION);
+        if (replicateFolderStructure)
+        {
+            if (!sourcesBaseFolder.empty() && file.starts_with(sourcesBaseFolder))
+            {
+                std::string relativePath = file.substr(sourcesBaseFolder.length());
+                outputPath = std::format("{}/{}_{}.{}",
+                                         outputFolder,
+                                         relativePath,
+                                         suffix,
+                                         ShaderAsset::SHADER_ASSET_EXTENSION);
+                auto a = outputFolder + "/" + std::filesystem::path(relativePath).parent_path().string();
+                std::filesystem::create_directories(std::filesystem::path(a));
+                asm("nop");
+            }
+        }
+
+        e = shader.SaveToAssetEx(outputPath, enableOptimization, &errorLog, file, dumpBinaries);
         if (e != Error::ErrorCode::OK)
         {
             return e;
@@ -162,7 +215,7 @@ void ShdeditWindow::Render()
         ImGui::EndMainMenuBar();
     }
 
-    ImGui::Text("Output Folder");
+    ImGui::Text("Output folder");
     ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
     ImGui::InputText("##outFolder", &outputFolder);
     ImGui::SameLine();
@@ -171,21 +224,43 @@ void ShdeditWindow::Render()
         OpenFolderDialog(FILE_DIALOG_CALLBACK(OutPathCallback));
     }
 
-    (void)ImGui::Checkbox("Enable Optimization", &enableOptimization);
+    ImGui::Checkbox("Replicate source code folder structure", &replicateFolderStructure);
+    ImGui::BeginDisabled(!replicateFolderStructure);
+    ImGui::PushItemWidth(-ImGui::GetStyle().WindowPadding.x - 40);
+    ImGui::InputTextWithHint("##sourcesBaseFolder", "Source code folder", &sourcesBaseFolder);
+    ImGui::SameLine();
+    if (ImGui::Button("...##2", ImVec2(40, 0)))
+    {
+        OpenFolderDialog(FILE_DIALOG_CALLBACK(BasePathCallback));
+    }
+    ImGui::EndDisabled();
+
+    ImGui::Dummy({1, 3});
+    ImGui::Separator();
+    ImGui::Dummy({1, 3});
+
+    (void)ImGui::Checkbox("Enable optimization", &enableOptimization);
     ImGui::SameLine();
     (void)ImGui::Checkbox("Dump SPIR-V binaries", &dumpBinaries);
 
+    ImGui::Dummy({1, 3});
     ImGui::Separator();
+    ImGui::Dummy({1, 3});
 
-    ImGui::Text("Source Files");
+    ImGui::Text("Source files");
     ImGui::SameLine();
-    ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - 60 - ImGui::GetStyle().WindowPadding.x, 0));
+    ImGui::Dummy(ImVec2(ImGui::GetContentRegionAvail().x - 80 - 80 - ImGui::GetStyle().WindowPadding.x * 2, 0));
     ImGui::SameLine();
-    if (ImGui::Button("Add##src", ImVec2(60, 0)))
+    if (ImGui::Button("Add##src", ImVec2(80, 0)))
     {
         OpenMultiFileDialog(MULTI_FILE_DIALOG_CALLBACK(SelectCallback), DialogFilters::GLSL_FILTERS);
     }
-    if (ImGui::BeginChild("##picker", ImVec2(-1, -32), ImGuiChildFlags_Borders, 0))
+    ImGui::SameLine();
+    if (ImGui::Button("Add Folder##src", ImVec2(80, 0)))
+    {
+        OpenFolderDialog(FILE_DIALOG_CALLBACK(AddFolderCallback));
+    }
+    if (ImGui::BeginChild("##picker", ImVec2(-1, -40), ImGuiChildFlags_Borders, 0))
     {
         const ImVec2 availSize = ImGui::GetContentRegionAvail();
         if (ImGui::BeginTable("fileTable", 3, ImGuiTableFlags_ScrollY, availSize))
@@ -201,7 +276,30 @@ void ShdeditWindow::Render()
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
                 ImGui::PushItemWidth(-1);
-                ImGui::InputText(std::format("##path_{}", i).c_str(), &files.at(i));
+
+                std::string filename = files.at(i);
+                if (replicateFolderStructure)
+                {
+                    if (filename.starts_with(sourcesBaseFolder) && sourcesBaseFolder.length() != 0)
+                    {
+                        filename = filename.substr(sourcesBaseFolder.length());
+                    } else
+                    {
+                        ImGui::TextColored({1, 0, 0, 1}, "(outside of source tree)");
+                        ImGui::SameLine();
+                    }
+                } else
+                {
+                    filename = std::filesystem::path(filename).filename().string();
+                }
+
+                ImGui::PushFont(GetMonospaceFont(), 0.0f);
+                ImGui::Text("%s", filename.c_str());
+                ImGui::PopFont();
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::SetTooltip("%s", files.at(i).c_str());
+                }
                 ImGui::TableNextColumn();
                 const std::map<ShaderAsset::ShaderType, std::string> typeNames = {
                     {ShaderAsset::ShaderType::SHADER_KIND_FRAGMENT, "Fragment"},
@@ -235,7 +333,7 @@ void ShdeditWindow::Render()
         ImGui::EndChild();
     }
 
-    ImGui::Separator();
+    ImGui::Dummy({1, 8});
 
     if (ImGui::Button("Compile", ImVec2(-1, 0)))
     {

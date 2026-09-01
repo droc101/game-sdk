@@ -183,6 +183,11 @@ glm::vec2 Viewport::WorldToScreenPos(const glm::vec3 worldPos) const
     return {screenX, screenY};
 }
 
+float Viewport::PixelsToWorldDistance(const float pixels) const
+{
+    return (1.0f / (windowSize.y / zoom)) * pixels;
+}
+
 glm::mat4 Viewport::GetMatrix() const
 {
     return worldScreenMatrix;

@@ -8,6 +8,7 @@
 #include <game_sdk/Window.h>
 #include <libassets/util/ArgumentParser.h>
 #include <memory>
+#include <ranges>
 #include <SDL3/SDL_messagebox.h>
 #include <SDL3/SDL_video.h>
 #include <string>
@@ -71,6 +72,29 @@ class WindowManager
         template<DerivedWindow T, typename... Args> void AddWindow(Args &&...args)
         {
             windowsToAdd.emplace_back(nullptr, std::make_shared<T>(std::forward<Args>(args)...));
+        }
+
+        /**
+         * Focus a given window class, or add a new one if there isn't one already
+         */
+        template<DerivedWindow T, typename... Args> void AddOrFocusWindow(Args &&...args)
+        {
+            for (const std::shared_ptr<Window> &window: windows)
+            {
+                if (dynamic_cast<T *>(window.get()) != nullptr)
+                {
+                    (void)SDL_RaiseWindow(window.get()->GetWindow());
+                    return;
+                }
+            }
+            for (const std::shared_ptr<Window> &val: windowsToAdd | std::views::values)
+            {
+                if (dynamic_cast<T *>(val.get()) != nullptr)
+                {
+                    return;
+                }
+            }
+            AddWindow<T>(std::forward<Args>(args)...);
         }
 
         /**

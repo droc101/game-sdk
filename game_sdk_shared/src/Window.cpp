@@ -163,8 +163,8 @@ void Window::BaseDestroy()
     if (parent != nullptr)
     {
         parent.get()->ModalUnblock();
-        MakeCurrent();
     }
+    MakeCurrent();
     this->Destroy();
     ImGui_ImplSDL3_Shutdown();
     ImGui_ImplOpenGL3_Shutdown();

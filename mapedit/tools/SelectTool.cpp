@@ -7,16 +7,17 @@
 #include <array>
 #include <cassert>
 #include <cfloat>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <format>
 #include <game_sdk/WindowManager.h>
+#include <glm/gtc/round.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
-#include <memory>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
 #include <tuple>
@@ -28,175 +29,232 @@
 #include "../ViewportRenderer.h"
 #include "EditorTool.h"
 
+float SelectTool::WrapAndSnapAngle(float angle)
+{
+    while (angle < 0.0f)
+    {
+        angle += 360.0f;
+    }
+    while (angle > 360.0f)
+    {
+        angle -= 360.0f;
+    }
+    angle = std::round(angle / 22.5f) * 22.5f;
+    return angle;
+}
+
 void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {
     if (!isHovered)
     {
         return;
     }
+
+    if (!dragging)
+    {
+        if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+        {
+            dragging = true;
+            if (selectionType == ItemType::ACTOR)
+            {
+                const ImVec2 lmp = vp.GetLocalMousePos();
+                const Actor &actor = MapEditor::map.actors.at(selectionIndex);
+                const float dist = glm::distance({lmp.x, lmp.y}, vp.WorldToScreenPos(actor.position));
+                if (dist > 40)
+                {
+                    actorDraggingRotationGizmo = true;
+
+                    const glm::vec2 actorScreenPos = vp.WorldToScreenPos(actor.position);
+                    const glm::vec2 mousePos = {vp.GetLocalMousePos().x, vp.GetLocalMousePos().y};
+                    const glm::vec2 mousePosDifference = mousePos - actorScreenPos;
+                    rotationGizmoLastAngle = atanf(mousePosDifference.x / mousePosDifference.y);
+                    if (mousePosDifference.y > 0)
+                    {
+                        rotationGizmoLastAngle += std::numbers::pi_v<float>;
+                    }
+                    switch (vp.GetType())
+                    {
+                        case Viewport::ViewportType::TOP_DOWN_XZ:
+                            rotationGizmoActorAngle = actor.rotation.y;
+                            break;
+                        case Viewport::ViewportType::FRONT_XY:
+                            rotationGizmoActorAngle = actor.rotation.z;
+                            break;
+                        case Viewport::ViewportType::SIDE_YZ:
+                            rotationGizmoActorAngle = actor.rotation.x;
+                            break;
+                    }
+                } else
+                {
+                    actorDraggingRotationGizmo = false;
+                }
+            }
+        }
+        return;
+    }
+
+    ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+    if (!ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+    {
+        dragging = false;
+        if (selectionType == ItemType::LINE)
+        {
+            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
+            if (!sector.IsValid())
+            {
+                sector.points.at(selectionVertexIndex) = vertexDragOriginalPoint;
+                sector.points.at((selectionVertexIndex + 1) % sector.points.size()) = vertexDragOriginalPoint -
+                                                                                      lineDragModeSecondVertexOffset;
+            }
+        } else if (selectionType == ItemType::VERTEX)
+        {
+            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
+            if (!sector.IsValid())
+            {
+                sector.points.at(selectionVertexIndex) = vertexDragOriginalPoint;
+            }
+        } else if (selectionType == ItemType::SECTOR)
+        {
+            sectorDragVertexOffsets.clear();
+        } else if (selectionType == ItemType::CEILING)
+        {
+            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
+            if (!sector.IsValid())
+            {
+                sector.ceilingHeight = vertexDragOriginalPoint.x;
+            }
+        } else if (selectionType == ItemType::FLOOR)
+        {
+            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
+            if (!sector.IsValid())
+            {
+                sector.floorHeight = vertexDragOriginalPoint.y;
+            }
+        }
+    }
+
+    if (selectionType == ItemType::ACTOR)
+    {
+        if (actorDraggingRotationGizmo)
+        {
+            Actor &actor = MapEditor::map.actors.at(selectionIndex);
+            const glm::vec2 actorScreenPos = vp.WorldToScreenPos(actor.position);
+            const glm::vec2 mousePos = {vp.GetLocalMousePos().x, vp.GetLocalMousePos().y};
+            const glm::vec2 mousePosDifference = mousePos - actorScreenPos;
+            float newAngle = atanf(mousePosDifference.x / mousePosDifference.y);
+            if (mousePosDifference.y > 0)
+            {
+                newAngle += std::numbers::pi_v<float>;
+            }
+            const float angleDiff = glm::degrees(newAngle - rotationGizmoLastAngle);
+            rotationGizmoLastAngle = newAngle;
+            rotationGizmoActorAngle += angleDiff;
+
+            switch (vp.GetType())
+            {
+                case Viewport::ViewportType::TOP_DOWN_XZ:
+                    actor.rotation.y = WrapAndSnapAngle(rotationGizmoActorAngle);
+                    break;
+                case Viewport::ViewportType::FRONT_XY:
+                    actor.rotation.z = WrapAndSnapAngle(rotationGizmoActorAngle);
+                    break;
+                case Viewport::ViewportType::SIDE_YZ:
+                    actor.rotation.x = WrapAndSnapAngle(rotationGizmoActorAngle);
+                    break;
+            }
+            return;
+        }
+    }
+
+
     if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
     {
-        if (selectionType == ItemType::ACTOR &&
-            ((hoverType == ItemType::ACTOR && hoverIndex == selectionIndex) || dragging))
+        if (selectionType == ItemType::ACTOR)
         {
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
-            {
-                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                Actor &actor = MapEditor::map.actors.at(selectionIndex);
-                const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
-                actor.position.x = snapped.x;
-                actor.position.z = snapped.z;
-                dragging = true;
-            } else
-            {
-                dragging = false;
-            }
-        } else if (selectionType == ItemType::VERTEX &&
-                   ((hoverType == ItemType::VERTEX && hoverIndex == selectionVertexIndex) || dragging))
+            Actor &actor = MapEditor::map.actors.at(selectionIndex);
+            const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
+            actor.position.x = snapped.x;
+            actor.position.z = snapped.z;
+        } else if (selectionType == ItemType::VERTEX)
         {
             Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
-            {
-                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
-                sector.points.at(selectionVertexIndex).x = snapped.x;
-                sector.points.at(selectionVertexIndex).y = snapped.z;
-                dragging = true;
-            } else
-            {
-                if (!sector.IsValid())
-                {
-                    sector.points.at(selectionVertexIndex) = vertexDragOriginalPoint;
-                }
-                dragging = false;
-            }
-        } else if (selectionType == ItemType::LINE &&
-                   ((hoverType == ItemType::LINE && hoverIndex == selectionVertexIndex) || dragging))
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
+            sector.points.at(selectionVertexIndex).x = snapped.x;
+            sector.points.at(selectionVertexIndex).y = snapped.z;
+        } else if (selectionType == ItemType::LINE)
         {
             Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
-            {
-                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
-                const glm::vec2 startPos = worldHover2D - lineDragModeMouseOffset;
-                const glm::vec2 endPos = startPos - lineDragModeSecondVertexOffset;
-                const glm::vec3 startSnapped = MapEditor::SnapToGrid(glm::vec3(startPos.x, 0, startPos.y));
-                const glm::vec3 endSnapped = MapEditor::SnapToGrid(glm::vec3(endPos.x, 0, endPos.y));
-                sector.points.at(selectionVertexIndex).x = startSnapped.x;
-                sector.points.at(selectionVertexIndex).y = startSnapped.z;
-                sector.points.at((selectionVertexIndex + 1) % sector.points.size()).x = endSnapped.x;
-                sector.points.at((selectionVertexIndex + 1) % sector.points.size()).y = endSnapped.z;
-                dragging = true;
-            } else
-            {
-                if (!sector.IsValid())
-                {
-                    sector.points.at(selectionVertexIndex) = vertexDragOriginalPoint;
-                    sector.points.at((selectionVertexIndex + 1) %
-                                     sector.points.size()) = vertexDragOriginalPoint - lineDragModeSecondVertexOffset;
-                }
-                dragging = false;
-            }
-        } else if (selectionType == ItemType::SECTOR &&
-                   ((hoverType == ItemType::SECTOR && hoverIndex == selectionIndex) || dragging))
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
+            const glm::vec2 startPos = worldHover2D - lineDragModeMouseOffset;
+            const glm::vec2 endPos = startPos - lineDragModeSecondVertexOffset;
+            const glm::vec3 startSnapped = MapEditor::SnapToGrid(glm::vec3(startPos.x, 0, startPos.y));
+            const glm::vec3 endSnapped = MapEditor::SnapToGrid(glm::vec3(endPos.x, 0, endPos.y));
+            sector.points.at(selectionVertexIndex).x = startSnapped.x;
+            sector.points.at(selectionVertexIndex).y = startSnapped.z;
+            sector.points.at((selectionVertexIndex + 1) % sector.points.size()).x = endSnapped.x;
+            sector.points.at((selectionVertexIndex + 1) % sector.points.size()).y = endSnapped.z;
+        } else if (selectionType == ItemType::SECTOR)
         {
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            Sector &sector = MapEditor::map.sectors.at(selectionIndex);
+            if (sectorDragVertexOffsets.empty())
             {
-                Sector &sector = MapEditor::map.sectors.at(selectionIndex);
-                if (sectorDragVertexOffsets.empty())
-                {
-                    const glm::vec2 worldHover2D{worldSpaceHover.x, worldSpaceHover.z};
-                    const glm::vec2 firstVertex = {
-                        sector.points.at(0).x,
-                        sector.points.at(0).y,
-                    };
-                    sectorDragMouseOffset = {
-                        worldHover2D.x - firstVertex.x,
-                        worldHover2D.y - firstVertex.y,
-                    };
+                const glm::vec2 worldHover2D{worldSpaceHover.x, worldSpaceHover.z};
+                const glm::vec2 firstVertex = {
+                    sector.points.at(0).x,
+                    sector.points.at(0).y,
+                };
+                sectorDragMouseOffset = {
+                    worldHover2D.x - firstVertex.x,
+                    worldHover2D.y - firstVertex.y,
+                };
 
-                    sectorDragVertexOffsets.clear();
-
-                    for (const glm::vec2 &point: MapEditor::map.sectors.at(selectionIndex).points)
-                    {
-                        sectorDragVertexOffsets.push_back(firstVertex - point);
-                    }
-                }
-                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
-                const glm::vec2 startPos = worldHover2D - sectorDragMouseOffset;
-                for (size_t i = 0; i < sector.points.size(); i++)
-                {
-                    const glm::vec2 glmPoint = startPos - sectorDragVertexOffsets.at(i);
-                    const glm::vec3 snapped = MapEditor::SnapToGrid(glm::vec3(glmPoint.x, 0, glmPoint.y));
-                    sector.points.at(i) = {snapped.x, snapped.z};
-                }
-
-                dragging = true;
-            } else
-            {
                 sectorDragVertexOffsets.clear();
-                dragging = false;
+
+                for (const glm::vec2 &point: MapEditor::map.sectors.at(selectionIndex).points)
+                {
+                    sectorDragVertexOffsets.push_back(firstVertex - point);
+                }
+            }
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
+            const glm::vec2 startPos = worldHover2D - sectorDragMouseOffset;
+            for (size_t i = 0; i < sector.points.size(); i++)
+            {
+                const glm::vec2 glmPoint = startPos - sectorDragVertexOffsets.at(i);
+                const glm::vec3 snapped = MapEditor::SnapToGrid(glm::vec3(glmPoint.x, 0, glmPoint.y));
+                sector.points.at(i) = {snapped.x, snapped.z};
             }
         }
     } else
     {
-        if (selectionType == ItemType::ACTOR &&
-            ((hoverType == ItemType::ACTOR && hoverIndex == selectionIndex) || dragging))
+        if (selectionType == ItemType::ACTOR)
         {
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            Actor &actor = MapEditor::map.actors.at(selectionIndex);
+            const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
+            if (vp.GetType() == Viewport::ViewportType::SIDE_YZ)
             {
-                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                Actor &actor = MapEditor::map.actors.at(selectionIndex);
-                const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
-                if (vp.GetType() == Viewport::ViewportType::SIDE_YZ)
-                {
-                    actor.position.y = snapped.y;
-                    actor.position.z = snapped.z;
-                } else
-                {
-                    actor.position.x = snapped.x;
-                    actor.position.y = snapped.y;
-                }
-                dragging = true;
+                actor.position.y = snapped.y;
+                actor.position.z = snapped.z;
             } else
             {
-                dragging = false;
+                actor.position.x = snapped.x;
+                actor.position.y = snapped.y;
             }
-        } else if (selectionType == ItemType::CEILING && (hoverType == ItemType::CEILING || dragging))
+        } else if (selectionType == ItemType::CEILING)
         {
             Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
-            {
-                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-                const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
-                sector.ceilingHeight = snapped.y;
-                dragging = true;
-            } else
-            {
-                if (!sector.IsValid())
-                {
-                    sector.ceilingHeight = vertexDragOriginalPoint.x;
-                }
-                dragging = false;
-            }
-        } else if (selectionType == ItemType::FLOOR && (hoverType == ItemType::FLOOR || dragging))
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+            const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
+            sector.ceilingHeight = snapped.y;
+        } else if (selectionType == ItemType::FLOOR)
         {
             Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
-            {
-                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-                const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
-                sector.floorHeight = snapped.y;
-                dragging = true;
-            } else
-            {
-                if (!sector.IsValid())
-                {
-                    sector.floorHeight = vertexDragOriginalPoint.y;
-                }
-                dragging = false;
-            }
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+            const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
+            sector.floorHeight = snapped.y;
         }
     }
 }
@@ -450,10 +508,30 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
     }
 
     std::vector<std::tuple<ItemType, size_t, float>> hoverStack{};
+
+    if (dragging)
+    {
+        hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);
+        return hoverStack;
+    }
+
+
     hoverStack.reserve(actorHoverStack.size() + sectorHoverStack.size() + 1);
     if (selectionHovered)
     {
         hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);
+    }
+
+
+    if (selectionType == ItemType::ACTOR)
+    {
+        const ImVec2 lmp = vp.GetLocalMousePos();
+        const Actor &actor = MapEditor::map.actors.at(selectionIndex);
+        const float dist = glm::distance({lmp.x, lmp.y}, vp.WorldToScreenPos(actor.position));
+        if (dist >= 44 && dist <= 52)
+        {
+            hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);
+        }
     }
 
     hoverStack.insert(hoverStack.end(), actorHoverStack.begin(), actorHoverStack.end());
@@ -737,6 +815,15 @@ void SelectTool::RenderViewport(Viewport &vp)
         ProcessViewportSelectMode(vp, isHovered, worldSpaceHover);
     }
 
+    ViewportRenderer::ViewportRenderGizmo gizmo = {
+        .position = glm::vec3(0),
+        .radiusInPx = 48,
+    };
+    if (selectionType == ItemType::ACTOR)
+    {
+        gizmo.position = MapEditor::map.actors.at(selectionIndex).position;
+    }
+
     const ViewportRenderer::ViewportRenderSettings vps = {
         .sectorFocusMode = sectorFocusMode,
         .focusedSectorIndex = focusedSectorIndex,
@@ -748,6 +835,7 @@ void SelectTool::RenderViewport(Viewport &vp)
         .point = nullptr,
         .newPrimitive = nullptr,
         .newActor = nullptr,
+        .gizmo = selectionType == ItemType::ACTOR ? &gizmo : nullptr,
     };
     ViewportRenderer::RenderViewport(vp, vps);
 }

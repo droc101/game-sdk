@@ -87,9 +87,10 @@ std::vector<std::string> SearchPathManager::ScanFolder(const std::string &direct
     }
     if (isRoot)
     {
+        const bool endsWithPathSep = directoryPath.ends_with('/') || directoryPath.ends_with('\\');
         for (std::string &file: files)
         {
-            file = file.substr(directoryPath.length() + 1);
+            file = file.substr(directoryPath.length() + (endsWithPathSep ? 0 : 1));
         }
         std::ranges::sort(files, [](const std::string &a, const std::string &b) {
             return std::filesystem::path(a).filename().string() < std::filesystem::path(b).filename().string();

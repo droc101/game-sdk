@@ -75,6 +75,12 @@ class ViewportRenderer
                 float size;
         };
 
+        struct ViewportRenderGizmo
+        {
+                glm::vec3 position;
+                float radiusInPx;
+        };
+
         struct ViewportRenderSettings
         {
                 /// Whether a sector is focused for editing
@@ -98,6 +104,7 @@ class ViewportRenderer
                 ViewportRenderNewPrimitive *newPrimitive = nullptr;
                 ViewportRenderNewActor *newActor = nullptr;
                 ViewportRenderNewPolygon *newPolygon = nullptr;
+                ViewportRenderGizmo *gizmo = nullptr;
         };
 
         ViewportRenderer() = delete;
@@ -118,6 +125,7 @@ class ViewportRenderer
         static void RenderNewPrimitive(Viewport &vp, const ViewportRenderNewPrimitive *prim, glm::mat4 &matrix);
         static void RenderNewActor(const Viewport &vp, const ViewportRenderNewActor *actor, const glm::mat4 &matrix);
         static void RenderNewPolygon(const Viewport &vp, const ViewportRenderNewPolygon *poly, const glm::mat4 &matrix);
+        static void RenderGizmo(const Viewport &vp, const ViewportRenderGizmo *gizmo, const glm::mat4 &matrix);
 
         static bool SectorIsCulled(const Sector &sector, const Viewport &vp);
 
