@@ -49,8 +49,24 @@ Error::ErrorCode ShaderAsset::SaveToBufferEx(DataWriter &writer,
 {
     writer.Write<uint8_t>(static_cast<uint8_t>(kind));
     std::vector<uint32_t> spirv;
-    const shaderc_shader_kind shaderKind = kind == ShaderKind::SHADER_KIND_VERTEX ? shaderc_vertex_shader
-                                                                                  : shaderc_fragment_shader;
+
+    shaderc_shader_kind shaderKind{};
+    switch (kind)
+    {
+        case ShaderKind::SHADER_KIND_FRAGMENT:
+            shaderKind = shaderc_fragment_shader;
+            break;
+        case ShaderKind::SHADER_KIND_VERTEX:
+            shaderKind = shaderc_vertex_shader;
+            break;
+        case ShaderKind::SHADER_KIND_COMPUTE:
+            shaderKind = shaderc_compute_shader;
+            break;
+        case ShaderKind::SHADER_KIND_GEOMETRY:
+            shaderKind = shaderc_geometry_shader;
+            break;
+    }
+
     ShaderCompiler compiler = ShaderCompiler(glsl, shaderKind, shaderFilename, enableOptimization);
     const Error::ErrorCode error = compiler.Compile(spirv);
     if (error != Error::ErrorCode::OK)

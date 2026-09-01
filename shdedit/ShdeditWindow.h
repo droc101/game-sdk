@@ -20,7 +20,7 @@ class ShdeditWindow final: public Window
     private:
         WindowProperties properties = {
             .title = "GAME SDK Shader Editor",
-            .defaultSize = glm::ivec2(800, 600),
+            .defaultSize = glm::ivec2(600, 600),
             .icon = "shdedit",
             .defaultFlags = SDL_WINDOW_RESIZABLE,
             .defaultImguiWindow = true,
@@ -30,10 +30,14 @@ class ShdeditWindow final: public Window
         std::vector<ShaderAsset::ShaderKind> types{};
 
         std::string outputFolder{};
+        bool replicateFolderStructure = false;
+        std::string sourcesBaseFolder{};
         bool enableOptimization = false;
         bool dumpBinaries = false;
 
         void SelectCallback(const std::vector<std::string> &paths);
         void OutPathCallback(const std::string &path);
+        void BasePathCallback(const std::string &path);
+        void AddFolderCallback(const std::string &folder);
         Error::ErrorCode Execute(std::string &errorLog);
 };
