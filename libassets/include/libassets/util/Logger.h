@@ -77,7 +77,7 @@ class Logger
                                                            Args &&...args)
         {
             const std::string formatted = std::format(fmt, std::forward<Args>(args)...);
-            std::cout << (ansi ? level.ansiPrefix : level.prefix) << formatted << std::endl;
+            std::cout << (ansi ? level.ansiPrefix : level.prefix) << formatted << (ansi ? "\x1b[0m" : "") << std::endl;
         }
 };
 
