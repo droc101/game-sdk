@@ -13,7 +13,6 @@
 #include <libassets/util/Error.h>
 #include <libassets/util/FileIo.h>
 #include <libassets/util/ShaderCompiler.h>
-#include <shaderc/shaderc.h>
 #include <vector>
 
 ShaderAsset::ShaderAsset()
@@ -33,7 +32,7 @@ uint8_t ShaderAsset::GetAssetTypeVersion() const
 
 void ShaderAsset::Reset()
 {
-    kind = ShaderKind::SHADER_KIND_FRAGMENT;
+    type = ShaderType::SHADER_KIND_FRAGMENT;
     glsl = "";
 }
 
@@ -47,27 +46,25 @@ Error::ErrorCode ShaderAsset::SaveToBufferEx(DataWriter &writer,
                                              std::string *errorLog,
                                              const std::string &shaderFilename) const
 {
-    writer.Write<uint8_t>(static_cast<uint8_t>(kind));
+    writer.Write<uint8_t>(static_cast<uint8_t>(type));
     std::vector<uint32_t> spirv;
-
-    shaderc_shader_kind shaderKind{};
-    switch (kind)
+    EShLanguage shaderType{};
+    switch (type)
     {
-        case ShaderKind::SHADER_KIND_FRAGMENT:
-            shaderKind = shaderc_fragment_shader;
+        case ShaderType::SHADER_KIND_FRAGMENT:
+            shaderType = EShLangFragment;
             break;
-        case ShaderKind::SHADER_KIND_VERTEX:
-            shaderKind = shaderc_vertex_shader;
+        case ShaderType::SHADER_KIND_VERTEX:
+            shaderType = EShLangVertex;
             break;
-        case ShaderKind::SHADER_KIND_COMPUTE:
-            shaderKind = shaderc_compute_shader;
+        case ShaderType::SHADER_KIND_COMPUTE:
+            shaderType = EShLangCompute;
             break;
-        case ShaderKind::SHADER_KIND_GEOMETRY:
-            shaderKind = shaderc_geometry_shader;
+        case ShaderType::SHADER_KIND_GEOMETRY:
+            shaderType = EShLangGeometry;
             break;
     }
-
-    ShaderCompiler compiler = ShaderCompiler(glsl, shaderKind, shaderFilename, enableOptimization);
+    ShaderCompiler compiler = ShaderCompiler(glsl, shaderType, shaderFilename, enableOptimization);
     const Error::ErrorCode error = compiler.Compile(spirv);
     if (error != Error::ErrorCode::OK)
     {

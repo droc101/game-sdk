@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include <glslang/Public/ShaderLang.h>
 #include <libassets/util/Logger.h>
 #include <luna/lunaTypes.h>
-#include <shaderc/shaderc.h>
 #include <string>
 #include <vector>
 #include <vulkan/vulkan_core.h>
@@ -50,7 +50,7 @@ class LightBakerGpu
         }
 
         [[nodiscard]] VkShaderModule GenerateShaderModule(const std::filesystem::path &path,
-                                                          shaderc_shader_kind shaderKind) const;
+                                                          EShLanguage shaderType) const;
 
         bool CreateVertexAndIndexBuffers(const std::vector<LevelMeshBuilder> &meshBuilders,
                                          uint32_t &vertexCount,

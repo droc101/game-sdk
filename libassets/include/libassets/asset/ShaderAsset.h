@@ -14,7 +14,7 @@ class ShaderAsset final: public Asset
 {
     public:
 
-        enum class ShaderKind : uint8_t
+        enum class ShaderType : uint8_t
         {
             SHADER_KIND_FRAGMENT,
             SHADER_KIND_VERTEX,
@@ -24,7 +24,7 @@ class ShaderAsset final: public Asset
 
         ShaderAsset();
 
-        ShaderKind kind;
+        ShaderType type;
 
         static constexpr std::string SHADER_ASSET_EXTENSION = "gshd";
 

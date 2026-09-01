@@ -6,24 +6,27 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <glslang/Public/ResourceLimits.h>
+#include <glslang/SPIRV/GlslangToSpv.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
 #include <libassets/util/ShaderCompiler.h>
 #include <list>
 #include <memory>
-#include <shaderc/env.h>
-#include <shaderc/shaderc.h>
-#include <shaderc/shaderc.hpp>
-#include <shaderc/status.h>
 #include <string>
 #include <utility>
 #include <vector>
 
-shaderc_include_result *ShaderCompiler::SDKIncluder::GetInclude(const char *requestedSource,
-                                                                shaderc_include_type /*type*/,
-                                                                const char *requestingSource,
-                                                                size_t /*includeDepth*/)
+ShaderCompiler::SDKIncluder &ShaderCompiler::SDKIncluder::Get()
+{
+    static SDKIncluder includer{};
+    return includer;
+}
+
+ShaderCompiler::SDKIncluder::IncludeResult *ShaderCompiler::SDKIncluder::includeLocal(const char *requestedSource,
+                                                                                      const char *requestingSource,
+                                                                                      size_t /*includeDepth*/)
 {
     std::filesystem::path requestingSourcePath{requestingSource};
     const std::filesystem::path requestedSourcePath = requestingSourcePath.remove_filename().append(requestedSource);
@@ -34,24 +37,18 @@ shaderc_include_result *ShaderCompiler::SDKIncluder::GetInclude(const char *requ
         Logger::Error("Failed to read include file \"{}\": {}", requestedSource, readError);
         glslString = "";
     }
-    includeResults.emplace_back(strdup(requestedSourcePath.string().c_str()),
-                                requestedSourcePath.string().length(),
-                                strdup(glslString.c_str()),
-                                glslString.length(),
-                                nullptr);
+    includeResults.emplace_back(requestedSourcePath, strdup(glslString.c_str()), glslString.length(), nullptr);
     return &includeResults.back();
 }
 
-void ShaderCompiler::SDKIncluder::ReleaseInclude(shaderc_include_result *data)
+void ShaderCompiler::SDKIncluder::releaseInclude(IncludeResult *data)
 {
-    for (std::list<shaderc_include_result>::iterator iterator = includeResults.begin();
-         iterator != includeResults.end();
+    for (std::list<IncludeResult>::iterator iterator = includeResults.begin(); iterator != includeResults.end();
          ++iterator)
     {
         if (&*iterator == data)
         {
-            free((void *)(iterator->source_name));
-            free((void *)(iterator->content));
+            free(const_cast<char *>(iterator->headerData));
             includeResults.erase(iterator);
             break;
         }
@@ -59,29 +56,17 @@ void ShaderCompiler::SDKIncluder::ReleaseInclude(shaderc_include_result *data)
 }
 
 ShaderCompiler::ShaderCompiler(std::string glslSource,
-                               const shaderc_shader_kind shaderKind,
+                               const EShLanguage shaderType,
                                std::string shaderName,
                                const bool optimize):
-    shaderKind(shaderKind),
+    shaderType(shaderType),
     glslSource(std::move(glslSource)),
-    shaderPath(std::move(shaderName))
-{
-    options.SetSourceLanguage(shaderc_source_language_glsl);
-    options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2);
-    if (optimize)
-    {
-        options.SetOptimizationLevel(shaderc_optimization_level_performance);
-    } else
-    {
-        options.SetGenerateDebugInfo();
-    }
-    options.SetIncluder(std::make_unique<SDKIncluder>());
-}
+    shaderPath(std::move(shaderName)),
+    optimize(optimize)
+{}
 
-ShaderCompiler::ShaderCompiler(const std::filesystem::path &path,
-                               const shaderc_shader_kind shaderKind,
-                               const bool optimize):
-    ShaderCompiler("", shaderKind, path.string(), optimize)
+ShaderCompiler::ShaderCompiler(const std::filesystem::path &path, const EShLanguage shaderType, const bool optimize):
+    ShaderCompiler("", shaderType, path.string(), optimize)
 {
     FileIo::ReadFileToString(path.string(), this->glslSource);
 }
@@ -90,30 +75,60 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
 {
     if (!outputSpirv.empty())
     {
-        errorMessage = "";
+        compileLog = "";
         return Error::ErrorCode::INVALID_ARGUMENT;
     }
-
-    const shaderc::Compiler compiler{};
-    const shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(glslSource,
-                                                                           shaderKind,
-                                                                           shaderPath.c_str(),
-                                                                           "main",
-                                                                           options);
-    if (result.GetCompilationStatus() != shaderc_compilation_status_success)
+    if (!glslang::InitializeProcess())
     {
-        errorMessage = result.GetErrorMessage();
-        return result.GetCompilationStatus() == shaderc_compilation_status_compilation_error
-                       ? Error::ErrorCode::SHADER_COMPILE_ERROR
-                       : Error::ErrorCode::UNKNOWN;
+        compileLog = "Failed to initialize glslang!";
+        return Error::ErrorCode::UNKNOWN;
     }
 
-    outputSpirv.insert(outputSpirv.begin(), result.begin(), result.end());
+    glslang::TShader shader(shaderType);
+    const char *glsl = glslSource.c_str();
+    const int glslLength = static_cast<int>(glslSource.length());
+    const char *glslPath = shaderPath.c_str();
+    shader.setStringsWithLengthsAndNames(&glsl, &glslLength, &glslPath, 1);
+    shader.setEnvInput(glslang::EShSourceGlsl, shaderType, glslang::EShClientVulkan, 100);
+    shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_2);
+    shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
+    shader.setEnhancedMsgs();
+    shader.setPreamble("#extension GL_GOOGLE_include_directive : require\n");
+
+    constexpr EShMessages MESSAGES = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
+
+    if (!shader.parse(GetDefaultResources(), 100, ECoreProfile, false, false, MESSAGES, SDKIncluder::Get()))
+    {
+        compileLog = shader.getInfoLog();
+        Logger::Error("GLSL Parsing Failed:\n {}", shader.getInfoLog());
+        return Error::ErrorCode::SHADER_PARSE_ERROR;
+    }
+
+    glslang::TProgram program;
+    program.addShader(&shader);
+
+    if (!program.link(MESSAGES))
+    {
+        compileLog = program.getInfoLog();
+        Logger::Error("GLSL Linking Failed:\n {}", program.getInfoLog());
+        return Error::ErrorCode::SHADER_LINK_ERROR;
+    }
+
+    glslang::SpvOptions options = {
+        .generateDebugInfo = true,
+        .disableOptimizer = !optimize,
+        .validate = true,
+        .emitNonSemanticShaderDebugInfo = true,
+        .emitNonSemanticShaderDebugSource = true,
+    };
+
+    glslang::GlslangToSpv(*program.getIntermediate(shaderType), outputSpirv, &options);
+    glslang::FinalizeProcess();
 
     return Error::ErrorCode::OK;
 }
 
 const std::string &ShaderCompiler::GetErrorMessage() const
 {
-    return errorMessage;
+    return compileLog;
 }

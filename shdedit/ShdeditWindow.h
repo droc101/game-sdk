@@ -27,7 +27,7 @@ class ShdeditWindow final: public Window
         };
 
         std::vector<std::string> files{};
-        std::vector<ShaderAsset::ShaderKind> types{};
+        std::vector<ShaderAsset::ShaderType> types{};
 
         std::string outputFolder{};
         bool replicateFolderStructure = false;
