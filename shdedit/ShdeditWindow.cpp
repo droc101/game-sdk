@@ -177,15 +177,16 @@ Error::ErrorCode ShdeditWindow::Execute(std::string &errorLog)
         {
             if (!sourcesBaseFolder.empty() && file.starts_with(sourcesBaseFolder))
             {
-                std::string relativePath = file.substr(sourcesBaseFolder.length());
+                const std::string relativePath = std::filesystem::path(file.substr(sourcesBaseFolder.length()))
+                                                         .parent_path()
+                                                         .string();
+                const std::filesystem::path finalOutputDirectory{outputFolder + "/" + relativePath};
+                std::filesystem::create_directories(finalOutputDirectory);
                 outputPath = std::format("{}/{}_{}.{}",
-                                         outputFolder,
-                                         relativePath,
+                                         finalOutputDirectory.string(),
+                                         filename,
                                          suffix,
                                          ShaderAsset::SHADER_ASSET_EXTENSION);
-                auto a = outputFolder + "/" + std::filesystem::path(relativePath).parent_path().string();
-                std::filesystem::create_directories(std::filesystem::path(a));
-                asm("nop");
             }
         }
 
