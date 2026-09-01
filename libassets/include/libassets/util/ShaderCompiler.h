@@ -7,53 +7,53 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <glslang/Public/ShaderLang.h>
 #include <libassets/util/Error.h>
 #include <list>
-#include <shaderc/shaderc.h>
-#include <shaderc/shaderc.hpp>
 #include <string>
 #include <vector>
 
 class ShaderCompiler
 {
         /**
-         * An implementation of shaderc's IncluderInterface that is used to include source glsl files.
+         * An implementation of glslang's Includer interface that is used to include source glsl files.
          * All include types are treated as being relative, and there is no cap on include depth.
          * Does not handle reading from shader assets, only from source files.
          */
-        class SDKIncluder: public shaderc::CompileOptions::IncluderInterface
+        class SDKIncluder: public glslang::TShader::Includer
         {
             public:
-                shaderc_include_result *GetInclude(const char *requestedSource,
-                                                   shaderc_include_type type,
-                                                   const char *requestingSource,
-                                                   size_t includeDepth) override;
+                static SDKIncluder &Get();
 
-                void ReleaseInclude(shaderc_include_result *data) override;
+                IncludeResult *includeLocal(const char *requestedSource,
+                                            const char *requestingSource,
+                                            size_t includeDepth) override;
+
+                void releaseInclude(IncludeResult *data) override;
 
             private:
-                std::list<shaderc_include_result> includeResults{};
+                std::list<IncludeResult> includeResults{};
         };
 
     public:
         ShaderCompiler() = delete;
 
-        ShaderCompiler(std::string glslSource, shaderc_shader_kind shaderKind, std::string shaderName, bool optimize);
+        ShaderCompiler(std::string glslSource, EShLanguage shaderType, std::string shaderName, bool optimize);
 
-        ShaderCompiler(const std::filesystem::path &path, shaderc_shader_kind shaderKind, bool optimize);
+        ShaderCompiler(const std::filesystem::path &path, EShLanguage shaderKind, bool optimize);
 
         [[nodiscard]] Error::ErrorCode Compile(std::vector<uint32_t> &outputSpirv);
 
         [[nodiscard]] const std::string &GetErrorMessage() const;
 
     private:
-        shaderc::CompileOptions options{};
-
-        shaderc_shader_kind shaderKind;
+        EShLanguage shaderType;
 
         std::string glslSource;
 
         std::string shaderPath;
 
-        std::string errorMessage;
+        bool optimize;
+
+        std::string compileLog;
 };

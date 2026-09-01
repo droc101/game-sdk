@@ -69,19 +69,19 @@ void ShdeditWindow::SelectCallback(const std::vector<std::string> &paths)
             }
 
             files.emplace_back(file);
-            ShaderAsset::ShaderKind kind = ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT;
+            ShaderAsset::ShaderType kind = ShaderAsset::ShaderType::SHADER_KIND_FRAGMENT;
             if (file.ends_with(".frag") || file.ends_with("_f.glsl"))
             {
-                kind = ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT;
+                kind = ShaderAsset::ShaderType::SHADER_KIND_FRAGMENT;
             } else if (file.ends_with(".vert") || file.ends_with("_v.glsl"))
             {
-                kind = ShaderAsset::ShaderKind::SHADER_KIND_VERTEX;
+                kind = ShaderAsset::ShaderType::SHADER_KIND_VERTEX;
             } else if (file.ends_with(".comp") || file.ends_with("_c.glsl"))
             {
-                kind = ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE;
+                kind = ShaderAsset::ShaderType::SHADER_KIND_COMPUTE;
             } else if (file.ends_with(".geom") || file.ends_with("_g.glsl"))
             {
-                kind = ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY;
+                kind = ShaderAsset::ShaderType::SHADER_KIND_GEOMETRY;
             }
             types.emplace_back(kind);
         }
@@ -104,27 +104,27 @@ Error::ErrorCode ShdeditWindow::Execute(std::string &errorLog)
     {
         const std::string &file = files.at(i);
         const std::string filename = std::filesystem::path(file).stem().string();
-        const ShaderAsset::ShaderKind kind = types.at(i);
+        const ShaderAsset::ShaderType kind = types.at(i);
         ShaderAsset shader;
         Error::ErrorCode e = shader.Import(file);
         if (e != Error::ErrorCode::OK)
         {
             return e;
         }
-        shader.kind = kind;
+        shader.type = kind;
         std::string suffix;
-        switch (shader.kind)
+        switch (shader.type)
         {
-            case ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT:
+            case ShaderAsset::ShaderType::SHADER_KIND_FRAGMENT:
                 suffix = "f";
                 break;
-            case ShaderAsset::ShaderKind::SHADER_KIND_VERTEX:
+            case ShaderAsset::ShaderType::SHADER_KIND_VERTEX:
                 suffix = "v";
                 break;
-            case ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE:
+            case ShaderAsset::ShaderType::SHADER_KIND_COMPUTE:
                 suffix = "c";
                 break;
-            case ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY:
+            case ShaderAsset::ShaderType::SHADER_KIND_GEOMETRY:
                 suffix = "g";
                 break;
         }
@@ -203,17 +203,17 @@ void ShdeditWindow::Render()
                 ImGui::PushItemWidth(-1);
                 ImGui::InputText(std::format("##path_{}", i).c_str(), &files.at(i));
                 ImGui::TableNextColumn();
-                const std::map<ShaderAsset::ShaderKind, std::string> typeNames = {
-                    {ShaderAsset::ShaderKind::SHADER_KIND_FRAGMENT, "Fragment"},
-                    {ShaderAsset::ShaderKind::SHADER_KIND_VERTEX, "Vertex"},
-                    {ShaderAsset::ShaderKind::SHADER_KIND_COMPUTE, "Compute"},
-                    {ShaderAsset::ShaderKind::SHADER_KIND_GEOMETRY, "Geometry"},
+                const std::map<ShaderAsset::ShaderType, std::string> typeNames = {
+                    {ShaderAsset::ShaderType::SHADER_KIND_FRAGMENT, "Fragment"},
+                    {ShaderAsset::ShaderType::SHADER_KIND_VERTEX, "Vertex"},
+                    {ShaderAsset::ShaderType::SHADER_KIND_COMPUTE, "Compute"},
+                    {ShaderAsset::ShaderType::SHADER_KIND_GEOMETRY, "Geometry"},
                 };
 
                 ImGui::PushItemWidth(150);
                 if (ImGui::BeginCombo(std::format("##type{}", i).c_str(), typeNames.at(types.at(i)).c_str()))
                 {
-                    for (const std::pair<const ShaderAsset::ShaderKind, std::string> &typePair: typeNames)
+                    for (const std::pair<const ShaderAsset::ShaderType, std::string> &typePair: typeNames)
                     {
                         if (ImGui::Selectable(typePair.second.c_str(), types.at(i) == typePair.first))
                         {

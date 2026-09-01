@@ -24,7 +24,8 @@ class Error
             CANT_OPEN_FILE,
             UNKNOWN,
             INCORRECT_FORMAT,
-            SHADER_COMPILE_ERROR,
+            SHADER_PARSE_ERROR,
+            SHADER_LINK_ERROR,
             INCORRECT_VERSION,
             INVALID_DIRECTORY,
             NOT_FOUND,
@@ -59,8 +60,10 @@ class Error
                     return "Can't open file";
                 case ErrorCode::INCORRECT_FORMAT:
                     return "Incorrect File Format";
-                case ErrorCode::SHADER_COMPILE_ERROR:
-                    return "Shader Compile Error";
+                case ErrorCode::SHADER_PARSE_ERROR:
+                    return "Shader Parse Error";
+                case ErrorCode::SHADER_LINK_ERROR:
+                    return "Shader Link Error";
                 case ErrorCode::INCORRECT_VERSION:
                     return "Incorrect Version";
                 case ErrorCode::INVALID_DIRECTORY:

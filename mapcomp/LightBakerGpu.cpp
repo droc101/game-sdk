@@ -9,7 +9,6 @@
 #include <chrono>
 #include <concepts>
 #include <cstddef>
-#include <cstdint>
 #include <filesystem>
 #include <glm/glm.hpp>
 #include <libassets/asset/LevelMaterialAsset.h>
@@ -27,7 +26,6 @@
 #include <luna/lunaInstance.h>
 #include <luna/lunaSynchronization.h>
 #include <luna/lunaTypes.h>
-#include <shaderc/shaderc.h>
 #include <string>
 #include <utility>
 #include <vector>
@@ -936,11 +934,11 @@ bool LightBakerGpu::Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
 }
 
 VkShaderModule LightBakerGpu::GenerateShaderModule(const std::filesystem::path &path,
-                                                   const shaderc_shader_kind shaderKind) const
+                                                   const EShLanguage shaderType) const
 {
     spirv.clear();
 
-    ShaderCompiler shaderCompiler(path, shaderKind, true);
+    ShaderCompiler shaderCompiler(path, shaderType, true);
     if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
     {
         Logger::Error("Error compiling shader {}!", path.string());
@@ -1190,14 +1188,14 @@ bool LightBakerGpu::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, c
 
     const VkShaderModule vertexShaderModule = GenerateShaderModule("assets/shaders/lightmap/"
                                                                    "precompute_luxel_information.vert",
-                                                                   shaderc_vertex_shader);
+                                                                   EShLangVertex);
     if (vertexShaderModule == VK_NULL_HANDLE)
     {
         return false;
     }
     const VkShaderModule fragmentShaderModule = GenerateShaderModule("assets/shaders/lightmap/"
                                                                      "precompute_luxel_information.frag",
-                                                                     shaderc_fragment_shader);
+                                                                     EShLangFragment);
     if (fragmentShaderModule == VK_NULL_HANDLE)
     {
         return false;
@@ -1379,7 +1377,7 @@ bool LightBakerGpu::CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize)
 {
     spirv.clear();
     static constexpr const char *PATH_STRING = "assets/shaders/lightmap/cache_emissive_luxel_indices.comp";
-    ShaderCompiler shaderCompiler(PATH_STRING, shaderc_compute_shader, true);
+    ShaderCompiler shaderCompiler(PATH_STRING, EShLangCompute, true);
     if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
     {
         Logger::Error("Error compiling shader {}!", PATH_STRING);
@@ -1819,13 +1817,12 @@ bool LightBakerGpu::CreateDirectLightingPipeline(const glm::uvec2 &lightmapSize,
 {
     const VkShaderModule raygenShaderModule = GenerateShaderModule("assets/shaders/lightmap/"
                                                                    "direct_lighting.rgen",
-                                                                   shaderc_raygen_shader);
+                                                                   EShLangRayGen);
     if (raygenShaderModule == VK_NULL_HANDLE)
     {
         return false;
     }
-    const VkShaderModule missShaderModule = GenerateShaderModule("assets/shaders/lightmap/miss.rmiss",
-                                                                 shaderc_miss_shader);
+    const VkShaderModule missShaderModule = GenerateShaderModule("assets/shaders/lightmap/miss.rmiss", EShLangMiss);
     if (missShaderModule == VK_NULL_HANDLE)
     {
         return false;
@@ -1925,13 +1922,13 @@ bool LightBakerGpu::CreateGlobalIlluminationPipeline(const glm::uvec2 &lightmapS
 {
     const VkShaderModule raygenShaderModule = GenerateShaderModule("assets/shaders/lightmap/"
                                                                    "global_illumination.rgen",
-                                                                   shaderc_raygen_shader);
+                                                                   EShLangRayGen);
     if (raygenShaderModule == VK_NULL_HANDLE)
     {
         return false;
     }
     const VkShaderModule closestHitShaderModule = GenerateShaderModule("assets/shaders/lightmap/closesthit.rchit",
-                                                                       shaderc_closesthit_shader);
+                                                                       EShLangClosestHit);
     if (closestHitShaderModule == VK_NULL_HANDLE)
     {
         return false;
