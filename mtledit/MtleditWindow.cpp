@@ -128,6 +128,7 @@ void MtleditWindow::Render()
     }
     ImGui::Checkbox("Invisible", &material.compileInvisible);
     ImGui::Checkbox("No Collision", &material.compileNoClip);
+    ImGui::Checkbox("Casts Shadows", &material.castsShadows);
     ImGui::Separator();
     ImGui::SetNextItemWidth(-1);
     ImGui::Text("Emissive Strength");

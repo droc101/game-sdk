@@ -131,7 +131,10 @@ void MaterialsTab::Render()
         }
         ImGui::EndCombo();
     }
-    ImGui::Dummy({0, 8});
+
+    (void)ImGui::Checkbox("Casts Shadows", &mat.castsShadows);
+
+    ImGui::Dummy({0, 16});
     if (ModelEditor::modelViewer.GetModel().GetMaterialCount() != 1)
     {
         if (ImGui::Button("Delete Material", ImVec2(-1, 0)))

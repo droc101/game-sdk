@@ -33,8 +33,10 @@ class LevelMaterialAsset final: public Asset
         SoundClass soundClass;
         /// Whether to skip generating visual geometry for faces with this material
         bool compileInvisible;
-        // Whether to skip generating collision geometry for faces with this material
+        /// Whether to skip generating collision geometry for faces with this material
         bool compileNoClip;
+        /// Whether this material should cast shadows or not
+        bool castsShadows;
         /// The strength of emission by this material
         /// The color of each luxel this surface maps to will be multipled by this value to determine how much light is emitted
         float emissive;

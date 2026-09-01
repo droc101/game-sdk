@@ -33,6 +33,7 @@ void LevelMaterialAsset::Reset()
     soundClass = SoundClass::DEFAULT;
     compileInvisible = false;
     compileNoClip = false;
+    castsShadows = true;
     emissive = 0;
 }
 
@@ -46,6 +47,7 @@ Error::ErrorCode LevelMaterialAsset::LoadFromBuffer(DataReader &reader)
     compileInvisible = reader.Read<uint8_t>() == 1;
     compileNoClip = reader.Read<uint8_t>() == 1;
     emissive = reader.Read<float>();
+    castsShadows = reader.Read<bool>();
     return Error::ErrorCode::OK;
 }
 
@@ -58,5 +60,6 @@ Error::ErrorCode LevelMaterialAsset::SaveToBuffer(DataWriter &writer) const
     writer.Write<uint8_t>(compileInvisible ? 1 : 0);
     writer.Write<uint8_t>(compileNoClip ? 1 : 0);
     writer.Write<float>(emissive);
+    writer.Write<bool>(castsShadows);
     return Error::ErrorCode::OK;
 }
