@@ -31,12 +31,12 @@ class LevelMaterialAsset final: public Asset
         Material::MaterialShader shader;
         /// The sound class this material uses
         SoundClass soundClass;
+        /// Whether this material should cast shadows or not
+        bool castsShadows;
         /// Whether to skip generating visual geometry for faces with this material
         bool compileInvisible;
         /// Whether to skip generating collision geometry for faces with this material
         bool compileNoClip;
-        /// Whether this material should cast shadows or not
-        bool castsShadows;
         /// The strength of emission by this material
         /// The color of each luxel this surface maps to will be multipled by this value to determine how much light is emitted
         float emissive;

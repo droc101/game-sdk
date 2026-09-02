@@ -31,9 +31,9 @@ void LevelMaterialAsset::Reset()
     baseScale = {1, 1};
     shader = Material::MaterialShader::SHADER_SHADED;
     soundClass = SoundClass::DEFAULT;
+    castsShadows = true;
     compileInvisible = false;
     compileNoClip = false;
-    castsShadows = true;
     emissive = 0;
 }
 
@@ -57,9 +57,9 @@ Error::ErrorCode LevelMaterialAsset::SaveToBuffer(DataWriter &writer) const
     writer.WriteVec2(baseScale);
     writer.Write<uint8_t>(static_cast<uint8_t>(shader));
     writer.Write<uint8_t>(static_cast<uint8_t>(soundClass));
+    writer.Write<bool>(castsShadows);
     writer.Write<uint8_t>(compileInvisible ? 1 : 0);
     writer.Write<uint8_t>(compileNoClip ? 1 : 0);
     writer.Write<float>(emissive);
-    writer.Write<bool>(castsShadows);
     return Error::ErrorCode::OK;
 }
