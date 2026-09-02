@@ -44,10 +44,10 @@ Error::ErrorCode LevelMaterialAsset::LoadFromBuffer(DataReader &reader)
     baseScale = reader.ReadVec2();
     shader = static_cast<Material::MaterialShader>(reader.Read<uint8_t>());
     soundClass = static_cast<SoundClass>(reader.Read<uint8_t>());
+    castsShadows = reader.Read<bool>();
     compileInvisible = reader.Read<uint8_t>() == 1;
     compileNoClip = reader.Read<uint8_t>() == 1;
     emissive = reader.Read<float>();
-    castsShadows = reader.Read<bool>();
     return Error::ErrorCode::OK;
 }
 
