@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <game_sdk/WindowManager.h>
 #include <imgui.h>
+#include <libassets/type/Axis.h>
 #include <libassets/type/Brush.h>
 #include <memory>
 #include <numbers>
@@ -22,7 +23,7 @@
 
 void AddPrimitiveTool::AddBrush()
 {
-    if (shapeStart == shapeEnd)
+    if (shapeStart == shapeEnd || startDepth == endDepth)
     {
         return;
     }
@@ -70,7 +71,7 @@ void AddPrimitiveTool::AddBrush()
         MapEditor::map.brushes.push_back(b);
     }
     hasDrawnShape = false;
-    isDragging = false;
+    dragMode = DragMode::NOT_DRAGGING;
 }
 
 void AddPrimitiveTool::RenderViewport(Viewport &vp)
@@ -84,23 +85,82 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             worldSpaceHover = vp.GetWorldSpaceMousePos();
         }
 
-        if (!isDragging && ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        if (dragMode == DragMode::NOT_DRAGGING && ImGui::IsMouseDown(ImGuiMouseButton_Left))
         {
-            shapeStart = vp.Make2D(MapEditor::SnapToGrid(worldSpaceHover));
-            shapeEnd = vp.Make2D(MapEditor::SnapToGrid(worldSpaceHover));
-            isDragging = true;
-            hasDrawnShape = true;
-            axis = vp.GetAxis();
+            if (hasDrawnShape && vp.GetAxis() != axis)
+            {
+                const glm::vec2 twoDimHover = vp.Make2D(worldSpaceHover);
+
+                const glm::vec2 startDepthA = vp.Make2D(MapEditor::Make3D(axis, shapeStart, startDepth));
+                const glm::vec2 startDepthB = vp.Make2D(MapEditor::Make3D(axis, shapeEnd, startDepth));
+                if (MapEditor::VecDistanceToLine2D(startDepthA, startDepthB, twoDimHover) <=
+                    MapEditor::HOVER_DISTANCE_PIXELS)
+                {
+                    dragMode = DragMode::DRAGGING_START_DEPTH;
+                }
+
+                const glm::vec2 endDepthA = vp.Make2D(MapEditor::Make3D(axis, shapeStart, endDepth));
+                const glm::vec2 endDepthB = vp.Make2D(MapEditor::Make3D(axis, shapeEnd, endDepth));
+                if (MapEditor::VecDistanceToLine2D(endDepthA, endDepthB, twoDimHover) <=
+                    MapEditor::HOVER_DISTANCE_PIXELS)
+                {
+                    dragMode = DragMode::DRAGGING_END_DEPTH;
+                }
+            }
+            if (dragMode == DragMode::NOT_DRAGGING)
+            {
+                shapeStart = vp.Make2D(MapEditor::SnapToGrid(worldSpaceHover));
+                shapeEnd = vp.Make2D(MapEditor::SnapToGrid(worldSpaceHover));
+                dragMode = DragMode::DRAGGING_PRIMARY_BOX;
+                hasDrawnShape = true;
+                axis = vp.GetAxis();
+            }
         } else if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
         {
-            shapeEnd = vp.Make2D(MapEditor::SnapToGrid(worldSpaceHover));
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            switch (dragMode)
+            {
+                case DragMode::DRAGGING_PRIMARY_BOX:
+                    shapeEnd = vp.Make2D(MapEditor::SnapToGrid(worldSpaceHover));
+                    break;
+                case DragMode::DRAGGING_START_DEPTH:
+                    switch (axis)
+                    {
+                        case Axis::X:
+                            startDepth = MapEditor::SnapToGrid(worldSpaceHover.x);
+                            break;
+                        case Axis::Y:
+                            startDepth = MapEditor::SnapToGrid(worldSpaceHover.y);
+                            break;
+                        case Axis::Z:
+                            startDepth = MapEditor::SnapToGrid(worldSpaceHover.z);
+                            break;
+                    }
+                    break;
+                case DragMode::DRAGGING_END_DEPTH:
+                    switch (axis)
+                    {
+                        case Axis::X:
+                            endDepth = MapEditor::SnapToGrid(worldSpaceHover.x);
+                            break;
+                        case Axis::Y:
+                            endDepth = MapEditor::SnapToGrid(worldSpaceHover.y);
+                            break;
+                        case Axis::Z:
+                            endDepth = MapEditor::SnapToGrid(worldSpaceHover.z);
+                            break;
+                    }
+                    break;
+                default:
+                    break;
+            }
         } else
         {
-            if (shapeStart == shapeEnd)
+            if (shapeStart == shapeEnd || startDepth == endDepth)
             {
                 hasDrawnShape = false;
             }
-            isDragging = false;
+            dragMode = DragMode::NOT_DRAGGING;
         }
     }
 
@@ -117,7 +177,7 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
     } else if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
     {
         MapEditor::toolType = MapEditor::EditorToolType::SELECT;
-        MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+        MapEditor::tool = std::make_unique<SelectTool>();
     }
 
     ViewportRenderer::ViewportRenderNewPrimitive newPrim = {
@@ -131,7 +191,7 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
 
     ViewportRenderer::ViewportRenderPoint vpt{};
     bool showPoint = false;
-    if (!vp.Is3D() && ImGui::IsWindowFocused())
+    if (!vp.Is3D() && ImGui::IsWindowFocused() && dragMode == DragMode::NOT_DRAGGING)
     {
         const glm::vec3 pt = MapEditor::SnapToGrid(worldSpaceHover) + vp.Make3D(glm::vec2(0), 0.1);
         vpt = {

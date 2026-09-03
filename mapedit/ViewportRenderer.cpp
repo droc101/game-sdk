@@ -208,7 +208,7 @@ void ViewportRenderer::RenderNewPrimitive(Viewport &vp, const ViewportRenderNewP
         if (vp.Is3D() || vp.GetAxis() != prim->axis)
         {
             MapRenderer::RenderLine(startPointBack, endPointBack, Color(1, 1, 1, 1), matrix, 4);
-            MapRenderer::RenderLine(startPointFront, startPointBack, Color(.6, .6, .6, 1), matrix, 2);
+            MapRenderer::RenderLine(startPointFront, startPointBack, Color(1, 1, 1, 1), matrix, 4);
         }
     }
 }

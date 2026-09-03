@@ -5,10 +5,9 @@
 #pragma once
 
 #include <array>
-#include <cmath>
 #include <cstdint>
+#include <libassets/type/Axis.h>
 #include <vector>
-#include "../MapEditor.h"
 #include "../Viewport.h"
 #include "EditorTool.h"
 
@@ -27,7 +26,7 @@ class AddPrimitiveTool final: public EditorTool
         {
             RECTANGLE,
             TRIANGLE,
-            NGON
+            NGON,
         };
 
         static constexpr std::array<const char *, 3> PRIMITIVE_NAMES = {
@@ -36,13 +35,21 @@ class AddPrimitiveTool final: public EditorTool
             "Ngon",
         };
 
-        bool hasDrawnShape = false;
-        bool isDragging = false;
-        glm::vec2 shapeStart{};
-        glm::vec2 shapeEnd{};
-        float startDepth = 16;
-        float endDepth = -16;
-        Axis axis = Axis::Y;
+        enum class DragMode : uint8_t
+        {
+            NOT_DRAGGING,
+            DRAGGING_PRIMARY_BOX,
+            DRAGGING_START_DEPTH,
+            DRAGGING_END_DEPTH,
+        };
+
+        static inline bool hasDrawnShape = false;
+        DragMode dragMode = DragMode::NOT_DRAGGING;
+        static inline glm::vec2 shapeStart{};
+        static inline glm::vec2 shapeEnd{};
+        static inline float startDepth = 16;
+        static inline float endDepth = -16;
+        static inline Axis axis = Axis::Y;
 
         static inline int32_t ngonSides = 16;
         static inline float ngonStartAngle = 0;

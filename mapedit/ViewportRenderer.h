@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <glm/vec3.hpp>
 #include <libassets/type/Actor.h>
+#include <libassets/type/Brush.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/renderDefs/BoxRenderDefinition.h>
 #include <libassets/type/renderDefs/CircleRenderDefinition.h>
@@ -18,8 +19,6 @@
 #include <libassets/type/renderDefs/WallRenderDefinition.h>
 #include <string>
 #include <vector>
-
-#include "MapEditor.h"
 #include "tools/EditorTool.h"
 #include "Viewport.h"
 
