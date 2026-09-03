@@ -6,10 +6,11 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <game_sdk/WindowManager.h>
 #include <imgui.h>
-#include <libassets/type/Sector.h>
-#include <libassets/type/WallMaterial.h>
+#include <libassets/type/Brush.h>
 #include <memory>
 #include <numbers>
 #include <vector>
@@ -19,66 +20,87 @@
 #include "EditorTool.h"
 #include "SelectTool.h"
 
+void AddPrimitiveTool::AddBrush()
+{
+    if (shapeStart == shapeEnd)
+    {
+        return;
+    }
+
+    Brush b = Brush();
+    const std::vector<glm::vec2> points = GetPoints();
+    for (const glm::vec2 &glmPoint: points)
+    {
+        b.vertices.push_back(MapEditor::Make3D(axis, glmPoint, startDepth));
+    }
+    for (const glm::vec2 &glmPoint: points)
+    {
+        b.vertices.push_back(MapEditor::Make3D(axis, glmPoint, endDepth));
+    }
+
+    for (size_t i = 0; i < points.size(); i++)
+    {
+        Brush::Face face{};
+        face.material = MapEditor::material;
+        size_t nextIndex = (i + 1) % points.size();
+        face.indices.push_back(i);
+        face.indices.push_back(nextIndex);
+        face.indices.push_back(nextIndex + points.size());
+        face.indices.push_back(i + points.size());
+        b.faces.push_back(face);
+    }
+
+    for (uint8_t whichCap = 0; whichCap < 2; whichCap++)
+    {
+        Brush::Face face{};
+        face.material = MapEditor::material;
+        for (size_t i = 0; i < points.size(); i++)
+        {
+            face.indices.push_back(i + (whichCap == 1 ? points.size() : 0));
+        }
+        b.faces.push_back(face);
+    }
+
+    if (!b.IsValid())
+    {
+        WindowManager::Get().GetCurrentWindow()->ErrorMessage("Brush has invalid shape and will not "
+                                                              "be added");
+    } else
+    {
+        MapEditor::map.brushes.push_back(b);
+    }
+    hasDrawnShape = false;
+    isDragging = false;
+}
+
 void AddPrimitiveTool::RenderViewport(Viewport &vp)
 {
     glm::vec3 worldSpaceHover{};
 
-    if (ImGui::IsWindowFocused())
+    if (ImGui::IsWindowFocused() && !vp.Is3D())
     {
         if (ImGui::IsWindowHovered())
         {
             worldSpaceHover = vp.GetWorldSpaceMousePos();
         }
 
-        if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+        if (!isDragging && ImGui::IsMouseDown(ImGuiMouseButton_Left))
         {
-            if (!isDragging && ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            shapeStart = vp.Make2D(MapEditor::SnapToGrid(worldSpaceHover));
+            shapeEnd = vp.Make2D(MapEditor::SnapToGrid(worldSpaceHover));
+            isDragging = true;
+            hasDrawnShape = true;
+            axis = vp.GetAxis();
+        } else if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        {
+            shapeEnd = vp.Make2D(MapEditor::SnapToGrid(worldSpaceHover));
+        } else
+        {
+            if (shapeStart == shapeEnd)
             {
-                shapeStart = MapEditor::SnapToGrid(worldSpaceHover);
-                shapeStart.y = ceiling;
-                shapeEnd = MapEditor::SnapToGrid(worldSpaceHover);
-                shapeEnd.y = ceiling;
-                isDragging = true;
-                hasDrawnShape = true;
-            } else if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
-            {
-                shapeEnd = MapEditor::SnapToGrid(worldSpaceHover);
-                shapeEnd.y = ceiling;
-            } else if (hasDrawnShape && isDragging && !ImGui::IsMouseDown(ImGuiMouseButton_Left))
-            {
-                if (shapeStart == shapeEnd)
-                {
-                    hasDrawnShape = false;
-                    isDragging = false;
-                } else
-                {
-                    Sector s = Sector();
-                    const WallMaterial mat = MapEditor::mat;
-                    s.ceilingMaterial = mat;
-                    s.floorMaterial = mat;
-                    s.floorHeight = floor;
-                    s.ceilingHeight = ceiling;
-                    const std::vector<glm::vec2> points = GetPoints();
-                    for (const glm::vec2 &glmPoint: points)
-                    {
-                        s.points.push_back(glmPoint);
-                        s.wallMaterials.push_back(mat);
-                    }
-                    if (!s.IsValid())
-                    {
-                        WindowManager::Get().GetCurrentWindow()->ErrorMessage("Sector has invalid shape and will not "
-                                                                              "be added");
-                    } else
-                    {
-                        MapEditor::map.sectors.push_back(s);
-                    }
-                    hasDrawnShape = false;
-                    isDragging = false;
-                }
-            } else
-            {
-                isDragging = false;
+                hasDrawnShape = false;
             }
+            isDragging = false;
         }
     }
 
@@ -88,35 +110,48 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
         {
             hasDrawnShape = false;
         }
+        if (ImGui::Shortcut(ImGuiKey_Enter, ImGuiInputFlags_RouteGlobal))
+        {
+            AddBrush();
+        }
     } else if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
     {
         MapEditor::toolType = MapEditor::EditorToolType::SELECT;
         MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
     }
 
-    ViewportRenderer::ViewportRenderNewPrimitive sect = {
+    ViewportRenderer::ViewportRenderNewPrimitive newPrim = {
         .points = GetPoints(),
-        .floor = floor,
-        .ceiling = ceiling,
+        .startDepth = startDepth,
+        .endDepth = endDepth,
         .aabbStart = shapeStart,
         .aabbEnd = shapeEnd,
+        .axis = axis,
     };
-    const glm::vec2 pt = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
-    ViewportRenderer::ViewportRenderPoint vpt = {
-        .pos = glm::vec3(pt.x, 0.1, pt.y),
-        .color = Color(1, 0.7, 0.7, 1),
-        .size = 10,
-    };
+
+    ViewportRenderer::ViewportRenderPoint vpt{};
+    bool showPoint = false;
+    if (!vp.Is3D() && ImGui::IsWindowFocused())
+    {
+        const glm::vec3 pt = MapEditor::SnapToGrid(worldSpaceHover) + vp.Make3D(glm::vec2(0), 0.1);
+        vpt = {
+            .pos = pt,
+            .color = Color(1, 0.7, 0.7, 1),
+            .size = 10,
+        };
+        showPoint = true;
+    }
+
     const ViewportRenderer::ViewportRenderSettings vps = {
-        .sectorFocusMode = false,
-        .focusedSectorIndex = 0,
+        .brushFocusMode = false,
+        .focusedBrushIndex = 0,
         .hoverType = ItemType::NONE,
         .hoverIndex = 0,
         .selectionType = ItemType::NONE,
         .selectionIndex = 0,
         .selectionVertexIndex = 0,
-        .point = vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ ? &vpt : nullptr,
-        .newPrimitive = hasDrawnShape ? &sect : nullptr,
+        .point = showPoint ? &vpt : nullptr,
+        .newPrimitive = hasDrawnShape ? &newPrim : nullptr,
         .newActor = nullptr,
     };
     ViewportRenderer::RenderViewport(vp, vps);
@@ -128,16 +163,13 @@ std::vector<glm::vec2> AddPrimitiveTool::GetPoints() const
 
     if (primitive == PrimitiveType::NGON)
     {
-        points = BuildNgon(ngonSides,
-                           glm::vec2(shapeStart.x, shapeStart.z),
-                           glm::vec2(shapeEnd.x, shapeEnd.z),
-                           ngonStartAngle);
+        points = BuildNgon(ngonSides, shapeStart, shapeEnd, ngonStartAngle);
     } else if (primitive == PrimitiveType::TRIANGLE)
     {
-        points = BuildTriangle(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
+        points = BuildTriangle(shapeStart, shapeEnd);
     } else if (primitive == PrimitiveType::RECTANGLE)
     {
-        points = BuildRect(glm::vec2(shapeStart.x, shapeStart.z), glm::vec2(shapeEnd.x, shapeEnd.z));
+        points = BuildRect(shapeStart, shapeEnd);
     }
     return points;
 }
@@ -149,7 +181,7 @@ void AddPrimitiveTool::RenderToolWindow()
         return;
     }
     ImGui::PushItemWidth(-1);
-    MapEditor::MaterialToolWindow(MapEditor::mat);
+    MapEditor::MaterialSelectionTool(MapEditor::material);
     ImGui::Separator();
 
     ImGui::Text("Primitive Type");
@@ -190,12 +222,6 @@ void AddPrimitiveTool::RenderToolWindow()
             ngonSides = 16;
         }
     }
-
-    ImGui::Separator();
-    ImGui::Text("Ceiling Height");
-    ImGui::InputFloat("##ceilHeight", &ceiling, 1, 1, "%.0f");
-    ImGui::Text("Floor Height");
-    ImGui::InputFloat("##floorHeight", &floor, 1, 1, "%.0f");
 }
 
 std::vector<glm::vec2> AddPrimitiveTool::BuildNgon(const int n,

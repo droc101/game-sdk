@@ -4,11 +4,8 @@
 
 #include "AddPolygonTool.h"
 #include <algorithm>
-#include <game_sdk/WindowManager.h>
 #include <imgui.h>
 #include <libassets/type/Color.h>
-#include <libassets/type/Sector.h>
-#include <libassets/type/WallMaterial.h>
 #include <memory>
 #include "../MapEditor.h"
 #include "../Viewport.h"
@@ -23,12 +20,7 @@ void AddPolygonTool::RenderToolWindow()
         return;
     }
     ImGui::PushItemWidth(-1);
-    MapEditor::MaterialToolWindow(MapEditor::mat);
-    ImGui::Separator();
-    ImGui::Text("Ceiling Height");
-    ImGui::InputFloat("##ceilHeight", &ceiling, 1, 1, "%.0f");
-    ImGui::Text("Floor Height");
-    ImGui::InputFloat("##floorHeight", &floor, 1, 1, "%.0f");
+    MapEditor::MaterialSelectionTool(MapEditor::material);
 }
 
 void AddPolygonTool::RenderViewport(Viewport &vp)
@@ -56,15 +48,13 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
                 points = {pt};
-                ceiling = 16;
-                floor = -16;
                 isDrawing = true;
             }
 
             if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
             {
                 MapEditor::toolType = MapEditor::EditorToolType::SELECT;
-                MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+                MapEditor::tool = std::make_unique<SelectTool>();
                 return;
             }
         } else
@@ -97,25 +87,7 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                         if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                         {
                             isDrawing = false;
-                            Sector s = Sector();
-                            const WallMaterial mat = MapEditor::mat;
-                            s.ceilingMaterial = mat;
-                            s.floorMaterial = mat;
-                            s.floorHeight = floor;
-                            s.ceilingHeight = ceiling;
-                            for (const glm::vec2 &glmPoint: points)
-                            {
-                                s.points.push_back(glmPoint);
-                                s.wallMaterials.push_back(mat);
-                            }
-                            if (!s.IsValid())
-                            {
-                                WindowManager::Get().GetCurrentWindow()->ErrorMessage("Sector has invalid shape and "
-                                                                                      "will not be added");
-                            } else
-                            {
-                                MapEditor::map.sectors.push_back(s);
-                            }
+                            // TODO add brush
                         }
                     }
                 } else
@@ -134,11 +106,6 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
         }
     }
 
-    ViewportRenderer::ViewportRenderNewPolygon sect = {
-        .points = points,
-        .floor = floor,
-        .ceiling = ceiling,
-    };
     const glm::vec2 pt = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
     ViewportRenderer::ViewportRenderPoint vpt = {
         .pos = glm::vec3(pt.x, 0.1, pt.y),
@@ -146,17 +113,15 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
         .size = 10,
     };
     const ViewportRenderer::ViewportRenderSettings vps = {
-        .sectorFocusMode = false,
-        .focusedSectorIndex = 0,
+        .brushFocusMode = false,
+        .focusedBrushIndex = 0,
         .hoverType = ItemType::NONE,
         .hoverIndex = 0,
         .selectionType = ItemType::NONE,
         .selectionIndex = 0,
         .selectionVertexIndex = 0,
         .point = vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ ? &vpt : nullptr,
-        .newPrimitive = nullptr,
         .newActor = nullptr,
-        .newPolygon = isDrawing ? &sect : nullptr,
     };
     ViewportRenderer::RenderViewport(vp, vps);
 }

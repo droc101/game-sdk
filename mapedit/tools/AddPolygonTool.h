@@ -21,6 +21,4 @@ class AddPolygonTool final: public EditorTool
     private:
         bool isDrawing = false;
         std::vector<glm::vec2> points{};
-        float floor = 16.0f;
-        float ceiling = -16.0f;
 };

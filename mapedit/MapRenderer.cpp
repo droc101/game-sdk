@@ -145,7 +145,7 @@ void MapRenderer::RenderViewportGrid(const Viewport &vp)
 
     glDisable(GL_DEPTH_TEST);
 
-    if (MapEditor::drawGrid)
+    if (MapEditor::drawGrid && vp.GetType() != Viewport::ViewportType::PERSPECTIVE)
     {
         const float gridSpacing = MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex);
         const int numInstances = static_cast<int>(MapEditor::MAP_SIZE * 2 / gridSpacing);

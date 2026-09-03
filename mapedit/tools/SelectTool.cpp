@@ -17,7 +17,6 @@
 #include <imgui.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Color.h>
-#include <libassets/type/Sector.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
 #include <tuple>
@@ -99,37 +98,26 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
         dragging = false;
         if (selectionType == ItemType::LINE)
         {
-            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
-            if (!sector.IsValid())
-            {
-                sector.points.at(selectionVertexIndex) = vertexDragOriginalPoint;
-                sector.points.at((selectionVertexIndex + 1) % sector.points.size()) = vertexDragOriginalPoint -
-                                                                                      lineDragModeSecondVertexOffset;
-            }
+            Brush &brush = MapEditor::map.brushes.at(focusedBrushIndex);
+            // TODO
+            // if (!sector.IsValid())
+            // {
+            //     sector.points.at(selectionVertexIndex) = vertexDragOriginalPoint;
+            //     sector.points.at((selectionVertexIndex + 1) % sector.points.size()) = vertexDragOriginalPoint -
+            //                                                                           lineDragModeSecondVertexOffset;
+            // }
         } else if (selectionType == ItemType::VERTEX)
         {
-            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
-            if (!sector.IsValid())
-            {
-                sector.points.at(selectionVertexIndex) = vertexDragOriginalPoint;
-            }
-        } else if (selectionType == ItemType::SECTOR)
+            Brush &brush = MapEditor::map.brushes.at(focusedBrushIndex);
+            // TODO
+            // if (!sector.IsValid())
+            // {
+            //     sector.points.at(selectionVertexIndex) = vertexDragOriginalPoint;
+            // }
+        } else if (selectionType == ItemType::BRUSH)
         {
-            sectorDragVertexOffsets.clear();
-        } else if (selectionType == ItemType::CEILING)
-        {
-            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
-            if (!sector.IsValid())
-            {
-                sector.ceilingHeight = vertexDragOriginalPoint.x;
-            }
-        } else if (selectionType == ItemType::FLOOR)
-        {
-            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
-            if (!sector.IsValid())
-            {
-                sector.floorHeight = vertexDragOriginalPoint.y;
-            }
+            // TODO should drag brush.origin instead
+            // sectorDragVertexOffsets.clear();
         }
     }
 
@@ -177,55 +165,58 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             actor.position.z = snapped.z;
         } else if (selectionType == ItemType::VERTEX)
         {
-            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
+            Brush &brush = MapEditor::map.brushes.at(focusedBrushIndex);
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
             const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
-            sector.points.at(selectionVertexIndex).x = snapped.x;
-            sector.points.at(selectionVertexIndex).y = snapped.z;
+            // TODO
+            // sector.points.at(selectionVertexIndex).x = snapped.x;
+            // sector.points.at(selectionVertexIndex).y = snapped.z;
         } else if (selectionType == ItemType::LINE)
         {
-            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
+            Brush &brush = MapEditor::map.brushes.at(focusedBrushIndex);
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
             const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
             const glm::vec2 startPos = worldHover2D - lineDragModeMouseOffset;
             const glm::vec2 endPos = startPos - lineDragModeSecondVertexOffset;
             const glm::vec3 startSnapped = MapEditor::SnapToGrid(glm::vec3(startPos.x, 0, startPos.y));
             const glm::vec3 endSnapped = MapEditor::SnapToGrid(glm::vec3(endPos.x, 0, endPos.y));
-            sector.points.at(selectionVertexIndex).x = startSnapped.x;
-            sector.points.at(selectionVertexIndex).y = startSnapped.z;
-            sector.points.at((selectionVertexIndex + 1) % sector.points.size()).x = endSnapped.x;
-            sector.points.at((selectionVertexIndex + 1) % sector.points.size()).y = endSnapped.z;
-        } else if (selectionType == ItemType::SECTOR)
+            // TODO
+            // sector.points.at(selectionVertexIndex).x = startSnapped.x;
+            // sector.points.at(selectionVertexIndex).y = startSnapped.z;
+            // sector.points.at((selectionVertexIndex + 1) % sector.points.size()).x = endSnapped.x;
+            // sector.points.at((selectionVertexIndex + 1) % sector.points.size()).y = endSnapped.z;
+        } else if (selectionType == ItemType::BRUSH)
         {
-            Sector &sector = MapEditor::map.sectors.at(selectionIndex);
-            if (sectorDragVertexOffsets.empty())
-            {
-                const glm::vec2 worldHover2D{worldSpaceHover.x, worldSpaceHover.z};
-                const glm::vec2 firstVertex = {
-                    sector.points.at(0).x,
-                    sector.points.at(0).y,
-                };
-                sectorDragMouseOffset = {
-                    worldHover2D.x - firstVertex.x,
-                    worldHover2D.y - firstVertex.y,
-                };
-
-                sectorDragVertexOffsets.clear();
-
-                for (const glm::vec2 &point: MapEditor::map.sectors.at(selectionIndex).points)
-                {
-                    sectorDragVertexOffsets.push_back(firstVertex - point);
-                }
-            }
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-            const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
-            const glm::vec2 startPos = worldHover2D - sectorDragMouseOffset;
-            for (size_t i = 0; i < sector.points.size(); i++)
-            {
-                const glm::vec2 glmPoint = startPos - sectorDragVertexOffsets.at(i);
-                const glm::vec3 snapped = MapEditor::SnapToGrid(glm::vec3(glmPoint.x, 0, glmPoint.y));
-                sector.points.at(i) = {snapped.x, snapped.z};
-            }
+            Brush &brush = MapEditor::map.brushes.at(focusedBrushIndex);
+            // TODO drag sector origin instead
+            // if (sectorDragVertexOffsets.empty())
+            // {
+            //     const glm::vec2 worldHover2D{worldSpaceHover.x, worldSpaceHover.z};
+            //     const glm::vec2 firstVertex = {
+            //         sector.points.at(0).x,
+            //         sector.points.at(0).y,
+            //     };
+            //     sectorDragMouseOffset = {
+            //         worldHover2D.x - firstVertex.x,
+            //         worldHover2D.y - firstVertex.y,
+            //     };
+            //
+            //     sectorDragVertexOffsets.clear();
+            //
+            //     for (const glm::vec2 &point: MapEditor::map.sectors.at(selectionIndex).points)
+            //     {
+            //         sectorDragVertexOffsets.push_back(firstVertex - point);
+            //     }
+            // }
+            // ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            // const glm::vec2 worldHover2D = glm::vec2(worldSpaceHover.x, worldSpaceHover.z);
+            // const glm::vec2 startPos = worldHover2D - sectorDragMouseOffset;
+            // for (size_t i = 0; i < sector.points.size(); i++)
+            // {
+            //     const glm::vec2 glmPoint = startPos - sectorDragVertexOffsets.at(i);
+            //     const glm::vec3 snapped = MapEditor::SnapToGrid(glm::vec3(glmPoint.x, 0, glmPoint.y));
+            //     sector.points.at(i) = {snapped.x, snapped.z};
+            // }
         }
     } else
     {
@@ -243,193 +234,119 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
                 actor.position.x = snapped.x;
                 actor.position.y = snapped.y;
             }
-        } else if (selectionType == ItemType::CEILING)
-        {
-            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-            const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
-            sector.ceilingHeight = snapped.y;
-        } else if (selectionType == ItemType::FLOOR)
-        {
-            Sector &sector = MapEditor::map.sectors.at(focusedSectorIndex);
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-            const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
-            sector.floorHeight = snapped.y;
         }
     }
 }
 
-void SelectTool::ProcessSectorHover(const Viewport &vp,
-                                    const Sector &sector,
-                                    const bool isHovered,
-                                    const glm::vec2 screenSpaceHover,
-                                    const size_t sectorIndex)
+void SelectTool::ProcessBrushHover(const Viewport &vp,
+                                   const Brush &brush,
+                                   const bool isHovered,
+                                   const glm::vec2 screenSpaceHover,
+                                   const size_t sectorIndex)
 {
-    if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
-    {
-        const std::array<float, 4> sectorBB = MapEditor::CalculateBBox(sector.points);
-        float ceilingDistance = FLT_MAX;
-        float floorDistance = FLT_MAX;
-        if (vp.GetType() == Viewport::ViewportType::FRONT_XY)
-        {
-            const glm::vec3 ceilingA = glm::vec3(sectorBB.at(0), sector.ceilingHeight, 0);
-            const glm::vec3 ceilingB = glm::vec3(sectorBB.at(2), sector.ceilingHeight, 0);
-            ceilingDistance = MapEditor::VecDistanceToLine2D(vp.WorldToScreenPos(ceilingA),
-                                                             vp.WorldToScreenPos(ceilingB),
-                                                             screenSpaceHover);
-            const glm::vec3 floorA = glm::vec3(sectorBB.at(0), sector.floorHeight, 0);
-            const glm::vec3 floorB = glm::vec3(sectorBB.at(2), sector.floorHeight, 0);
-            floorDistance = MapEditor::VecDistanceToLine2D(vp.WorldToScreenPos(floorA),
-                                                           vp.WorldToScreenPos(floorB),
-                                                           screenSpaceHover);
-        } else if (vp.GetType() == Viewport::ViewportType::SIDE_YZ)
-        {
-            const glm::vec3 ceilingA = glm::vec3(0, sector.ceilingHeight, sectorBB.at(1));
-            const glm::vec3 ceilingB = glm::vec3(0, sector.ceilingHeight, sectorBB.at(3));
-            ceilingDistance = MapEditor::VecDistanceToLine2D(vp.WorldToScreenPos(ceilingA),
-                                                             vp.WorldToScreenPos(ceilingB),
-                                                             screenSpaceHover);
-            const glm::vec3 floorA = glm::vec3(0, sector.floorHeight, sectorBB.at(1));
-            const glm::vec3 floorB = glm::vec3(0, sector.floorHeight, sectorBB.at(3));
-            floorDistance = MapEditor::VecDistanceToLine2D(vp.WorldToScreenPos(floorA),
-                                                           vp.WorldToScreenPos(floorB),
-                                                           screenSpaceHover);
-        }
-
-        if (ceilingDistance <= 5)
-        {
-            hoverType = ItemType::CEILING;
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-            if (ImGui::BeginTooltip())
-            {
-                ImGui::Text("Sector %lu ceiling: %.2f units", sectorIndex + 1, sector.ceilingHeight);
-                ImGui::EndTooltip();
-            }
-            if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-            {
-                selectionType = ItemType::CEILING;
-                vertexDragOriginalPoint = {sector.ceilingHeight, sector.floorHeight};
-            }
-        } else if (floorDistance <= 5)
-        {
-            hoverType = ItemType::FLOOR;
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-            if (ImGui::BeginTooltip())
-            {
-                ImGui::Text("Sector %lu floor: %.2f units", sectorIndex + 1, sector.floorHeight);
-                ImGui::EndTooltip();
-            }
-            if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-            {
-                selectionType = ItemType::FLOOR;
-                vertexDragOriginalPoint = {sector.ceilingHeight, sector.floorHeight};
-            }
-        }
-    }
+    // TODO was previously only used for side viewports? (ceiling and floor)
 }
 
-void SelectTool::ProcessVertexHover(const Viewport &viewport,
-                                    const glm::vec2 vertexScreenSpace,
-                                    const glm::vec2 screenSpaceHover,
-                                    bool isHovered,
-                                    Sector &sector,
-                                    const glm::vec2 endVertexScreenSpace,
-                                    const glm::vec3 worldSpaceHover,
-                                    const size_t vertexIndex,
-                                    const size_t sectorIndex,
-                                    Color &vertexColor,
-                                    const glm::vec3 startCeiling,
-                                    Color &lineColor,
-                                    bool &haveAddedNewVertex)
+void ProcessVertexHover(const Viewport &viewport,
+                                glm::vec2 vertexScreenSpace,
+                                glm::vec2 screenSpaceHover,
+                                bool isHovered,
+                                Brush &brush,
+                                glm::vec2 endVertexScreenSpace,
+                                glm::vec3 worldSpaceHover,
+                                size_t vertexIndex,
+                                size_t brushIndex,
+                                Color &vertexColor,
+                                glm::vec3 startCeiling,
+                                Color &lineColor,
+                                bool &haveAddedNewVertex)
 {
-    if (viewport.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
-    {
-        if (glm::distance(vertexScreenSpace, screenSpaceHover) <= MapEditor::HOVER_DISTANCE_PIXELS)
-        {
-            hoverType = ItemType::VERTEX;
-            hoverIndex = vertexIndex;
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-            vertexColor = Color(1, 0.5, .5, 1);
-            if (ImGui::BeginTooltip())
-            {
-                ImGui::Text("Sector %ld vertex %ld\n%.2f, %.2f",
-                            sectorIndex + 1,
-                            vertexIndex + 1,
-                            startCeiling.x,
-                            startCeiling.z);
-                ImGui::EndTooltip();
-            }
-            if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-            {
-                selectionVertexIndex = vertexIndex;
-                selectionType = ItemType::VERTEX;
-                vertexDragOriginalPoint = sector.points.at(vertexIndex);
-            } else if (isHovered && (ImGui::IsMouseClicked(ImGuiMouseButton_Right) ||
-                                     ImGui::Shortcut(ImGuiKey_Delete, ImGuiInputFlags_RouteGlobal)))
-            {
-                if (sector.points.size() > 3)
-                {
-                    sector.points.erase(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex));
-                    selectionType = ItemType::SECTOR;
-                } else
-                {
-                    MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + static_cast<int64_t>(sectorIndex));
-                    if (hoverType == ItemType::SECTOR && hoverIndex == selectionIndex)
-                    {
-                        hoverType = ItemType::NONE;
-                    }
-                    selectionType = ItemType::NONE;
-                    sectorFocusMode = false;
-                }
-            }
-            return;
-        }
-        const float distanceToLine = MapEditor::VecDistanceToLine2D(vertexScreenSpace,
-                                                                    endVertexScreenSpace,
-                                                                    screenSpaceHover);
-        if (distanceToLine <= MapEditor::HOVER_DISTANCE_PIXELS &&
-            glm::distance(endVertexScreenSpace, screenSpaceHover) > MapEditor::HOVER_DISTANCE_PIXELS)
-        {
-            hoverType = ItemType::LINE;
-            hoverIndex = vertexIndex;
-            lineColor = Color(1, .8, .8, 1);
-            const bool addPointMode = !haveAddedNewVertex && (ImGui::IsKeyDown(ImGuiKey_LeftShift) ||
-                                                              ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left));
-            ImGui::SetMouseCursor(addPointMode ? ImGuiMouseCursor_Hand : ImGuiMouseCursor_ResizeAll);
-            if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-            {
-                if (addPointMode)
-                {
-                    const glm::vec3 newVertexPos = MapEditor::SnapToGrid(worldSpaceHover);
-                    sector.points.insert(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex) + 1,
-                                         {newVertexPos.x, newVertexPos.z});
-                    sector.wallMaterials.insert(sector.wallMaterials.begin() + static_cast<ptrdiff_t>(vertexIndex) + 1,
-                                                sector.wallMaterials.at(vertexIndex));
-                    selectionVertexIndex = vertexIndex + 1;
-                    selectionType = ItemType::VERTEX;
-                    hoverType = ItemType::NONE;
-                    vertexDragOriginalPoint = sector.points.at(selectionVertexIndex);
-                    haveAddedNewVertex = true;
-                } else
-                {
-                    selectionVertexIndex = vertexIndex;
-                    const glm::vec2 startPoint{
-                        sector.points.at(vertexIndex).x,
-                        sector.points.at(vertexIndex).y,
-                    };
-                    const glm::vec2 endPoint{
-                        sector.points.at((vertexIndex + 1) % sector.points.size()).x,
-                        sector.points.at((vertexIndex + 1) % sector.points.size()).y,
-                    };
-                    const glm::vec2 worldHover2D{worldSpaceHover.x, worldSpaceHover.z};
-                    lineDragModeSecondVertexOffset = startPoint - endPoint;
-                    lineDragModeMouseOffset = worldHover2D - startPoint;
-                    vertexDragOriginalPoint = sector.points.at(selectionVertexIndex);
-                    selectionType = ItemType::LINE;
-                }
-            }
-        }
-    }
+    // TODO implement and make work with all 2d viewports
+    // if (glm::distance(vertexScreenSpace, screenSpaceHover) <= MapEditor::HOVER_DISTANCE_PIXELS)
+    // {
+    //     hoverType = ItemType::VERTEX;
+    //     hoverIndex = vertexIndex;
+    //     ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+    //     vertexColor = Color(1, 0.5, .5, 1);
+    //     if (ImGui::BeginTooltip())
+    //     {
+    //         ImGui::Text("Sector %ld vertex %ld\n%.2f, %.2f",
+    //                     sectorIndex + 1,
+    //                     vertexIndex + 1,
+    //                     startCeiling.x,
+    //                     startCeiling.z);
+    //         ImGui::EndTooltip();
+    //     }
+    //     if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    //     {
+    //         selectionVertexIndex = vertexIndex;
+    //         selectionType = ItemType::VERTEX;
+    //         vertexDragOriginalPoint = sector.points.at(vertexIndex);
+    //     } else if (isHovered && (ImGui::IsMouseClicked(ImGuiMouseButton_Right) ||
+    //                              ImGui::Shortcut(ImGuiKey_Delete, ImGuiInputFlags_RouteGlobal)))
+    //     {
+    //         if (sector.points.size() > 3)
+    //         {
+    //             sector.points.erase(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex));
+    //             selectionType = ItemType::SECTOR;
+    //         } else
+    //         {
+    //             MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + static_cast<int64_t>(sectorIndex));
+    //             if (hoverType == ItemType::SECTOR && hoverIndex == selectionIndex)
+    //             {
+    //                 hoverType = ItemType::NONE;
+    //             }
+    //             selectionType = ItemType::NONE;
+    //             sectorFocusMode = false;
+    //         }
+    //     }
+    //     return;
+    // }
+    // const float distanceToLine = MapEditor::VecDistanceToLine2D(vertexScreenSpace,
+    //                                                             endVertexScreenSpace,
+    //                                                             screenSpaceHover);
+    // if (distanceToLine <= MapEditor::HOVER_DISTANCE_PIXELS &&
+    //     glm::distance(endVertexScreenSpace, screenSpaceHover) > MapEditor::HOVER_DISTANCE_PIXELS)
+    // {
+    //     hoverType = ItemType::LINE;
+    //     hoverIndex = vertexIndex;
+    //     lineColor = Color(1, .8, .8, 1);
+    //     const bool addPointMode = !haveAddedNewVertex && (ImGui::IsKeyDown(ImGuiKey_LeftShift) ||
+    //                                                       ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left));
+    //     ImGui::SetMouseCursor(addPointMode ? ImGuiMouseCursor_Hand : ImGuiMouseCursor_ResizeAll);
+    //     if (isHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    //     {
+    //         if (addPointMode)
+    //         {
+    //             const glm::vec3 newVertexPos = MapEditor::SnapToGrid(worldSpaceHover);
+    //             sector.points.insert(sector.points.begin() + static_cast<ptrdiff_t>(vertexIndex) + 1,
+    //                                  {newVertexPos.x, newVertexPos.z});
+    //             sector.wallMaterials.insert(sector.wallMaterials.begin() + static_cast<ptrdiff_t>(vertexIndex) + 1,
+    //                                         sector.wallMaterials.at(vertexIndex));
+    //             selectionVertexIndex = vertexIndex + 1;
+    //             selectionType = ItemType::VERTEX;
+    //             hoverType = ItemType::NONE;
+    //             vertexDragOriginalPoint = sector.points.at(selectionVertexIndex);
+    //             haveAddedNewVertex = true;
+    //         } else
+    //         {
+    //             selectionVertexIndex = vertexIndex;
+    //             const glm::vec2 startPoint{
+    //                 sector.points.at(vertexIndex).x,
+    //                 sector.points.at(vertexIndex).y,
+    //             };
+    //             const glm::vec2 endPoint{
+    //                 sector.points.at((vertexIndex + 1) % sector.points.size()).x,
+    //                 sector.points.at((vertexIndex + 1) % sector.points.size()).y,
+    //             };
+    //             const glm::vec2 worldHover2D{worldSpaceHover.x, worldSpaceHover.z};
+    //             lineDragModeSecondVertexOffset = startPoint - endPoint;
+    //             lineDragModeMouseOffset = worldHover2D - startPoint;
+    //             vertexDragOriginalPoint = sector.points.at(selectionVertexIndex);
+    //             selectionType = ItemType::LINE;
+    //         }
+    //     }
+    // }
 }
 
 std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::DetermineHoveredItem(const Viewport &vp,
@@ -480,31 +397,29 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
                           });
     }
 
-    if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+    // TODO make work in all viewports
+    for (size_t brushIndex = 0; brushIndex < MapEditor::map.brushes.size(); brushIndex++)
     {
-        for (size_t sectorIndex = 0; sectorIndex < MapEditor::map.sectors.size(); sectorIndex++)
-        {
-            const Sector &sector = MapEditor::map.sectors.at(sectorIndex);
-            if (sector.ContainsPoint({worldSpaceHover.x, worldSpaceHover.z}) && isHovered)
-            {
-                if (selectionType == ItemType::SECTOR && selectionIndex == sectorIndex)
-                {
-                    selectionHovered = true;
-                } else
-                {
-                    sectorHoverStack.emplace_back(ItemType::SECTOR, sectorIndex, sector.ceilingHeight);
-                }
-            }
-        }
+        const Brush &brush = MapEditor::map.brushes.at(brushIndex);
+        // if (sector.ContainsPoint({worldSpaceHover.x, worldSpaceHover.z}) && isHovered)
+        // {
+        //     if (selectionType == ItemType::BRUSH && selectionIndex == brushIndex)
+        //     {
+        //         selectionHovered = true;
+        //     } else
+        //     {
+        //         sectorHoverStack.emplace_back(ItemType::BRUSH, brushIndex, sector.ceilingHeight);
+        //     }
+        // }
+    }
 
-        if (!sectorHoverStack.empty())
-        {
-            std::ranges::sort(sectorHoverStack,
-                              [](const std::tuple<ItemType, size_t, float> &a,
-                                 const std::tuple<ItemType, size_t, float> &b) {
-                                  return std::get<float>(a) > std::get<float>(b);
-                              });
-        }
+    if (!sectorHoverStack.empty())
+    {
+        std::ranges::sort(sectorHoverStack,
+                          [](const std::tuple<ItemType, size_t, float> &a,
+                             const std::tuple<ItemType, size_t, float> &b) {
+                              return std::get<float>(a) > std::get<float>(b);
+                          });
     }
 
     std::vector<std::tuple<ItemType, size_t, float>> hoverStack{};
@@ -575,15 +490,15 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
                 {
                     text = std::format("{}##{}", a.className, index);
                 }
-            } else if (type == ItemType::SECTOR)
+            } else if (type == ItemType::BRUSH)
             {
-                const Sector &s = MapEditor::map.sectors.at(index);
-                if (s.name.empty())
+                const Brush &b = MapEditor::map.brushes.at(index);
+                if (b.editorName.empty())
                 {
-                    text = std::format("Sector {}", index);
+                    text = std::format("Brush {}", index);
                 } else
                 {
-                    text = std::format("Sector {}: {}", index, s.name);
+                    text = std::format("Brush {}: {}", index, b.editorName);
                 }
             } else
             {
@@ -628,20 +543,20 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
         }
     }
 
-    for (size_t sectorIndex = 0; sectorIndex < MapEditor::map.sectors.size(); sectorIndex++)
+    for (size_t brushIndex = 0; brushIndex < MapEditor::map.brushes.size(); brushIndex++)
     {
-        const Sector &sector = MapEditor::map.sectors.at(sectorIndex);
-        if (hoverType == ItemType::SECTOR && hoverIndex == sectorIndex)
+        const Brush &brush = MapEditor::map.brushes.at(brushIndex);
+        if (hoverType == ItemType::BRUSH && hoverIndex == brushIndex)
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
             if (ImGui::BeginTooltip())
             {
-                if (!sector.name.empty())
+                if (!brush.editorName.empty())
                 {
-                    ImGui::Text("Sector %zu: %s", sectorIndex, sector.name.c_str());
+                    ImGui::Text("Brush %zu: %s", brushIndex, brush.editorName.c_str());
                 } else
                 {
-                    ImGui::Text("Sector %zu", sectorIndex);
+                    ImGui::Text("Brush %zu", brushIndex);
                 }
                 ImGui::EndTooltip();
             }
@@ -656,14 +571,14 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
                 ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
             {
                 selectionType = ItemType::NONE;
-            } else if (hoverType == ItemType::SECTOR && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            } else if (hoverType == ItemType::BRUSH && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
                 selectionIndex = hoverIndex;
-                selectionType = ItemType::SECTOR;
+                selectionType = ItemType::BRUSH;
                 if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                 {
-                    focusedSectorIndex = selectionIndex;
-                    sectorFocusMode = true;
+                    focusedBrushIndex = selectionIndex;
+                    brushFocusMode = true;
                 }
             }
         }
@@ -673,11 +588,11 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
             selectionType = ItemType::ACTOR;
         }
 
-        if (selectionType == ItemType::SECTOR && (ImGui::Shortcut(ImGuiKey_Enter, ImGuiInputFlags_RouteGlobal) ||
+        if (selectionType == ItemType::BRUSH && (ImGui::Shortcut(ImGuiKey_Enter, ImGuiInputFlags_RouteGlobal) ||
                                                   ImGui::Shortcut(ImGuiKey_KeypadEnter, ImGuiInputFlags_RouteGlobal)))
         {
-            focusedSectorIndex = selectionIndex;
-            sectorFocusMode = true;
+            focusedBrushIndex = selectionIndex;
+            brushFocusMode = true;
         } else if (selectionType == ItemType::ACTOR)
         {
             if (ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_Enter))
@@ -700,10 +615,10 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
                 hoverType = ItemType::NONE;
             }
             selectionType = ItemType::NONE;
-        } else if (selectionType == ItemType::SECTOR)
+        } else if (selectionType == ItemType::BRUSH)
         {
-            MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + selectionIndex);
-            if (hoverType == ItemType::SECTOR && hoverIndex == selectionIndex)
+            MapEditor::map.brushes.erase(MapEditor::map.brushes.begin() + selectionIndex);
+            if (hoverType == ItemType::BRUSH && hoverIndex == selectionIndex)
             {
                 hoverType = ItemType::NONE;
             }
@@ -722,69 +637,71 @@ void SelectTool::ProcessViewportVertexMode(Viewport &vp,
 
     if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
     {
-        selectionType = ItemType::SECTOR;
-        selectionIndex = focusedSectorIndex;
-        sectorFocusMode = false;
+        selectionType = ItemType::BRUSH;
+        selectionIndex = focusedBrushIndex;
+        brushFocusMode = false;
     }
 
     bool haveAddedNewVertex = false;
 
-    for (size_t sectorIndex = 0; sectorIndex < MapEditor::map.sectors.size(); sectorIndex++)
+    for (size_t brushIndex = 0; brushIndex < MapEditor::map.brushes.size(); brushIndex++)
     {
-        Sector &sector = MapEditor::map.sectors.at(sectorIndex);
-        if (focusedSectorIndex == sectorIndex)
+        Brush &brush = MapEditor::map.brushes.at(brushIndex);
+        if (focusedBrushIndex == brushIndex)
         {
-            ProcessSectorHover(vp, sector, isHovered, screenSpaceHover, sectorIndex);
+            ProcessBrushHover(vp, brush, isHovered, screenSpaceHover, brushIndex);
         } else
         {
             continue;
         }
 
-        for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
+        // TODO update to handle verticies not linerally forming an edge loop
+        for (size_t vertexIndex = 0; vertexIndex < brush.vertices.size(); vertexIndex++)
         {
-            const glm::vec2 &start2 = sector.points.at(vertexIndex);
-            const glm::vec2 &end2 = sector.points.at((vertexIndex + 1) % sector.points.size());
-            const glm::vec3 startCeiling = glm::vec3(start2.x, sector.ceilingHeight, start2.y);
-            const glm::vec3 endCeiling = glm::vec3(end2.x, sector.ceilingHeight, end2.y);
-
-            const glm::vec2 vertexScreenSpace = vp.WorldToScreenPos(startCeiling);
-            const glm::vec2 endVertexScreenSpace = vp.WorldToScreenPos(endCeiling);
-            Color vertexColor = Color(0.8, 0, 0, 1);
-            Color lineColor = Color(1, 1, 1, 1);
-            ProcessVertexHover(vp,
-                               vertexScreenSpace,
-                               screenSpaceHover,
-                               isHovered,
-                               sector,
-                               endVertexScreenSpace,
-                               worldSpaceHover,
-                               vertexIndex,
-                               sectorIndex,
-                               vertexColor,
-                               startCeiling,
-                               lineColor,
-                               haveAddedNewVertex);
+            // const glm::vec2 &start2 = sector.points.at(vertexIndex);
+            // const glm::vec2 &end2 = sector.points.at((vertexIndex + 1) % sector.points.size());
+            // const glm::vec3 startCeiling = glm::vec3(start2.x, sector.ceilingHeight, start2.y);
+            // const glm::vec3 endCeiling = glm::vec3(end2.x, sector.ceilingHeight, end2.y);
+            //
+            // const glm::vec2 vertexScreenSpace = vp.WorldToScreenPos(startCeiling);
+            // const glm::vec2 endVertexScreenSpace = vp.WorldToScreenPos(endCeiling);
+            // Color vertexColor = Color(0.8, 0, 0, 1);
+            // Color lineColor = Color(1, 1, 1, 1);
+            // ProcessVertexHover(vp,
+            //                    vertexScreenSpace,
+            //                    screenSpaceHover,
+            //                    isHovered,
+            //                    sector,
+            //                    endVertexScreenSpace,
+            //                    worldSpaceHover,
+            //                    vertexIndex,
+            //                    sectorIndex,
+            //                    vertexColor,
+            //                    startCeiling,
+            //                    lineColor,
+            //                    haveAddedNewVertex);
         }
     }
 
     HandleDrag(vp, isHovered, worldSpaceHover);
 
-    if (ImGui::Shortcut(ImGuiKey_Delete))
-    {
-        if (selectionType == ItemType::VERTEX || selectionType == ItemType::LINE)
-        {
-            Sector &s = MapEditor::map.sectors.at(selectionIndex);
-            if (s.points.size() > 3)
-            {
-                s.points.erase(s.points.begin() + selectionVertexIndex);
-                selectionType = ItemType::NONE;
-            } else
-            {
-                MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + selectionIndex);
-                selectionType = ItemType::NONE;
-            }
-        }
-    }
+    // TODO maybe remove single vertex add/delete
+    // if (ImGui::Shortcut(ImGuiKey_Delete))
+    // {
+    //     if (selectionType == ItemType::VERTEX || selectionType == ItemType::LINE)
+    //     {
+    //         Sector &s = MapEditor::map.brushes.at(selectionIndex);
+    //         if (s.points.size() > 3)
+    //         {
+    //             s.points.erase(s.points.begin() + selectionVertexIndex);
+    //             selectionType = ItemType::NONE;
+    //         } else
+    //         {
+    //             MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + selectionIndex);
+    //             selectionType = ItemType::NONE;
+    //         }
+    //     }
+    // }
 }
 
 
@@ -807,7 +724,7 @@ void SelectTool::RenderViewport(Viewport &vp)
         }
     }
 
-    if (sectorFocusMode)
+    if (brushFocusMode)
     {
         ProcessViewportVertexMode(vp, matrix, isHovered, worldSpaceHover, screenSpaceHover);
     } else
@@ -825,15 +742,14 @@ void SelectTool::RenderViewport(Viewport &vp)
     }
 
     const ViewportRenderer::ViewportRenderSettings vps = {
-        .sectorFocusMode = sectorFocusMode,
-        .focusedSectorIndex = focusedSectorIndex,
+        .brushFocusMode = brushFocusMode,
+        .focusedBrushIndex = focusedBrushIndex,
         .hoverType = hoverType,
         .hoverIndex = hoverIndex,
         .selectionType = selectionType,
         .selectionIndex = selectionIndex,
         .selectionVertexIndex = selectionVertexIndex,
         .point = nullptr,
-        .newPrimitive = nullptr,
         .newActor = nullptr,
         .gizmo = selectionType == ItemType::ACTOR ? &gizmo : nullptr,
     };
@@ -855,38 +771,14 @@ void SelectTool::RenderToolWindow()
             ImGui::Text("No Selection");
             break;
         case ItemType::VERTEX:
-            ImGui::InputFloat2("##vertexPosition",
-                               glm::value_ptr(MapEditor::map.sectors.at(focusedSectorIndex)
-                                                      .points.at(selectionVertexIndex)));
+            ImGui::InputFloat3("##vertexPosition",
+                               glm::value_ptr(MapEditor::map.brushes.at(focusedBrushIndex)
+                                                      .vertices.at(selectionVertexIndex)));
             break;
-        case ItemType::LINE:
-            MapEditor::MaterialToolWindow(MapEditor::map.sectors.at(focusedSectorIndex)
-                                                  .wallMaterials.at(selectionVertexIndex));
-            break;
-        case ItemType::CEILING:
-            MapEditor::MaterialToolWindow(MapEditor::map.sectors.at(focusedSectorIndex).ceilingMaterial);
-            ImGui::Separator();
-            ImGui::Text("Height");
-            ImGui::InputFloat("##ceilHeight",
-                              &MapEditor::map.sectors.at(focusedSectorIndex).ceilingHeight,
-                              1,
-                              1,
-                              "%.0f");
-            break;
-        case ItemType::FLOOR:
-            MapEditor::MaterialToolWindow(MapEditor::map.sectors.at(focusedSectorIndex).floorMaterial);
-            ImGui::Separator();
-            ImGui::Text("Height");
-            ImGui::InputFloat("##floorHeight",
-                              &MapEditor::map.sectors.at(focusedSectorIndex).floorHeight,
-                              1,
-                              1,
-                              "%.0f");
-            break;
-        case ItemType::SECTOR:
-            if (sectorFocusMode)
+        case ItemType::BRUSH:
+            if (brushFocusMode)
             {
-                sectIndex = focusedSectorIndex;
+                sectIndex = focusedBrushIndex;
             } else
             {
                 sectIndex = selectionIndex;
@@ -895,7 +787,7 @@ void SelectTool::RenderToolWindow()
             ImGui::Text("Name");
             ImGui::SameLine();
             ImGui::TextDisabled("(editor only)");
-            ImGui::InputText("##sectorName", &MapEditor::map.sectors.at(sectIndex).name);
+            ImGui::InputText("##brushName", &MapEditor::map.brushes.at(sectIndex).editorName);
             break;
         case ItemType::ACTOR:
             ImGui::Text("Position");
@@ -916,7 +808,7 @@ void SelectTool::RenderToolWindow()
 
 bool SelectTool::IsCopyableSelected() const
 {
-    return selectionType == ItemType::ACTOR || selectionType == ItemType::SECTOR;
+    return selectionType == ItemType::ACTOR || selectionType == ItemType::BRUSH;
 }
 
 void SelectTool::Copy() const
@@ -924,9 +816,9 @@ void SelectTool::Copy() const
     if (selectionType == ItemType::ACTOR)
     {
         MapEditor::clipboard = MapEditor::map.actors.at(selectionIndex);
-    } else if (selectionType == ItemType::SECTOR)
+    } else if (selectionType == ItemType::BRUSH)
     {
-        MapEditor::clipboard = MapEditor::map.sectors.at(selectionIndex);
+        MapEditor::clipboard = MapEditor::map.brushes.at(selectionIndex);
     }
 }
 
@@ -936,9 +828,9 @@ void SelectTool::Cut()
     if (selectionType == ItemType::ACTOR)
     {
         MapEditor::map.actors.erase(MapEditor::map.actors.begin() + selectionIndex);
-    } else if (selectionType == ItemType::SECTOR)
+    } else if (selectionType == ItemType::BRUSH)
     {
-        MapEditor::map.sectors.erase(MapEditor::map.sectors.begin() + selectionIndex);
+        MapEditor::map.brushes.erase(MapEditor::map.brushes.begin() + selectionIndex);
     }
     selectionType = ItemType::NONE;
 }
@@ -950,17 +842,17 @@ void SelectTool::Paste()
     {
         return;
     }
-    const std::variant<Sector, Actor> &clipboard = MapEditor::clipboard.value();
+    const std::variant<Brush, Actor> &clipboard = MapEditor::clipboard.value();
     if (std::holds_alternative<Actor>(clipboard))
     {
         MapEditor::map.actors.push_back(std::get<Actor>(clipboard));
         selectionIndex = MapEditor::map.actors.size() - 1;
         selectionType = ItemType::ACTOR;
-    } else if (std::holds_alternative<Sector>(clipboard))
+    } else if (std::holds_alternative<Brush>(clipboard))
     {
-        MapEditor::map.sectors.push_back(std::get<Sector>(clipboard));
-        selectionIndex = MapEditor::map.sectors.size() - 1;
-        selectionType = ItemType::SECTOR;
+        MapEditor::map.brushes.push_back(std::get<Brush>(clipboard));
+        selectionIndex = MapEditor::map.brushes.size() - 1;
+        selectionType = ItemType::BRUSH;
     }
 }
 
@@ -976,25 +868,15 @@ glm::vec3 SelectTool::SelectionCenter() const
         const Actor &a = MapEditor::map.actors.at(selectionIndex);
         return a.position;
     }
-    if (selectionType == ItemType::SECTOR)
+    if (selectionType == ItemType::BRUSH)
     {
-        const Sector &s = MapEditor::map.sectors.at(selectionIndex);
-        return s.GetCenter();
+        const Brush &b = MapEditor::map.brushes.at(selectionIndex);
+        return b.origin;
     }
     if (selectionType == ItemType::LINE || selectionType == ItemType::VERTEX)
     {
-        const Sector &s = MapEditor::map.sectors.at(focusedSectorIndex);
-        return s.GetCenter();
-    }
-    if (selectionType == ItemType::CEILING)
-    {
-        const Sector &s = MapEditor::map.sectors.at(focusedSectorIndex);
-        return s.GetCenter();
-    }
-    if (selectionType == ItemType::FLOOR)
-    {
-        const Sector &s = MapEditor::map.sectors.at(focusedSectorIndex);
-        return s.GetCenter();
+        const Brush &b = MapEditor::map.brushes.at(focusedBrushIndex);
+        return b.origin;
     }
     assert(false);
 }

@@ -25,7 +25,7 @@ bool LightBaker::Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
                   std::is_trivially_default_constructible_v<Light> &&
                   std::is_trivially_copyable_v<Light>);
 
-    static constexpr uint32_t BOUNCE_COUNT = 1;
+    static constexpr uint32_t BOUNCE_COUNT = 3;
     static constexpr uint32_t SAMPLE_COUNT = 8192;
 
     return LightBakerGpu::Get().Bake(meshBuilders, lights, lightmapSize, BOUNCE_COUNT, SAMPLE_COUNT, pixelData);

@@ -5,8 +5,8 @@
 #pragma once
 
 #include <cstddef>
+#include <libassets/type/Brush.h>
 #include <libassets/type/Color.h>
-#include <libassets/type/Sector.h>
 #include <tuple>
 #include <vector>
 #include "../Viewport.h"
@@ -20,21 +20,21 @@ class SelectTool final: public EditorTool
 
         void HandleDrag(const Viewport &vp, bool isHovered, glm::vec3 worldSpaceHover);
 
-        void ProcessSectorHover(const Viewport &vp,
-                                const Sector &sector,
-                                bool isHovered,
-                                glm::vec2 screenSpaceHover,
-                                size_t sectorIndex);
+        void ProcessBrushHover(const Viewport &vp,
+                               const Brush &brush,
+                               bool isHovered,
+                               glm::vec2 screenSpaceHover,
+                               size_t sectorIndex);
 
         void ProcessVertexHover(const Viewport &viewport,
                                 glm::vec2 vertexScreenSpace,
                                 glm::vec2 screenSpaceHover,
                                 bool isHovered,
-                                Sector &sector,
+                                Brush &brush,
                                 glm::vec2 endVertexScreenSpace,
                                 glm::vec3 worldSpaceHover,
                                 size_t vertexIndex,
-                                size_t sectorIndex,
+                                size_t brushIndex,
                                 Color &vertexColor,
                                 glm::vec3 startCeiling,
                                 Color &lineColor,
@@ -69,8 +69,8 @@ class SelectTool final: public EditorTool
         [[nodiscard]] glm::vec3 SelectionCenter() const;
 
     private:
-        bool sectorFocusMode = false;
-        size_t focusedSectorIndex = 0;
+        bool brushFocusMode = false;
+        size_t focusedBrushIndex = 0;
 
         ItemType hoverType = ItemType::NONE;
         size_t hoverIndex = 0;

@@ -11,6 +11,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <imgui.h>
+#include <libassets/type/Axis.h>
 
 class Viewport
 {
@@ -19,7 +20,8 @@ class Viewport
         {
             TOP_DOWN_XZ,
             FRONT_XY,
-            SIDE_YZ
+            SIDE_YZ,
+            PERSPECTIVE,
         };
 
         Viewport() = delete;
@@ -102,6 +104,14 @@ class Viewport
          */
         [[nodiscard]] glm::vec3 GetCameraPos() const;
 
+        [[nodiscard]] glm::vec3 Make3D(glm::vec2 twoDimensionalComponent, float otherAxis) const;
+
+        [[nodiscard]] glm::vec2 Make2D(glm::vec3 point) const;
+
+        Axis GetAxis() const;
+
+        bool Is3D() const;
+
         static constexpr float ZOOM_STEP = 20.0f;
 
     private:
@@ -126,6 +136,10 @@ class Viewport
         ImVec2 scrollCenterPos{};
         /// The number of units visible along the vertical axis of the viewport
         float zoom = 160.0f;
+
+        glm::vec3 perspectiveCameraPos{};
+        glm::vec3 perspectiveCameraRotation{};
+        float perspectiveCameraSpeed = 4.0f;
 
         void RecalculateMatrices();
 };

@@ -4,9 +4,14 @@
 
 #include "Viewport.h"
 #include <game_sdk/gl/GLHelper.h>
+#include <glm/detail/type_quat.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/fwd.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <string>
 #include "MapEditor.h"
 
@@ -38,6 +43,9 @@ void Viewport::Render()
     } else if (type == ViewportType::SIDE_YZ)
     {
         title = "Side (YZ)";
+    } else if (type == ViewportType::PERSPECTIVE)
+    {
+        title = "3D";
     }
     ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetColorU32(ImGuiCol_WindowBg));
     ImGui::PushStyleColor(ImGuiCol_WindowBg, 0);
@@ -52,13 +60,28 @@ void Viewport::Render()
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();
 
+    if (ImGui::IsWindowDocked())
+    {
+        const ImGuiWindow *w = ImGui::FindWindowByName(title.c_str());
+        if (w->DockNode->IsHiddenTabBar())
+        {
+            w->DockNode->WantHiddenTabBarToggle = true;
+        }
+    }
+
     const ImVec2 wPos = ImGui::GetWindowPos();
     const ImVec2 mPos = ImGui::GetMousePos();
     lastLocalMousePos = {mPos.x - wPos.x, mPos.y - wPos.y};
 
     windowPos = ImGui::GetWindowPos();
-    const float windowSizeX = ImGui::GetContentRegionAvail().x + ImGui::GetCursorScreenPos().x - ImGui::GetWindowPos().x + 8;
-    const float windowSizeY = ImGui::GetContentRegionAvail().y + ImGui::GetCursorScreenPos().y - ImGui::GetWindowPos().y + 8;
+    const float windowSizeX = ImGui::GetContentRegionAvail().x +
+                              ImGui::GetCursorScreenPos().x -
+                              ImGui::GetWindowPos().x +
+                              8;
+    const float windowSizeY = ImGui::GetContentRegionAvail().y +
+                              ImGui::GetCursorScreenPos().y -
+                              ImGui::GetWindowPos().y +
+                              8;
     windowSize = {windowSizeX, windowSizeY};
 
     if (!framebuffer.created)
@@ -90,11 +113,23 @@ void Viewport::Render()
                                             ImGuiChildFlags_Borders;
     if (MapEditor::drawViewportInfo && ImGui::BeginChild("_vp_stats", ImVec2(0, 0), CHILD_FLAGS))
     {
-        ImGui::Text("Pos: %.2f, %.2f\nZoom: %.2f units/screen\nGrid: %.3f units",
-                    scrollCenterPos.x,
-                    scrollCenterPos.y,
-                    zoom,
-                    MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex));
+        if (type != ViewportType::PERSPECTIVE)
+        {
+            ImGui::Text("Pos: %.2f, %.2f\nZoom: %.2f units/screen\nGrid: %.3f units",
+                        scrollCenterPos.x,
+                        scrollCenterPos.y,
+                        zoom,
+                        MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex));
+        } else
+        {
+            ImGui::Text("Pos: %.2f, %.2f, %.2f\nRotation: %.2f, %.2f\nSpeed: %.2f",
+                        perspectiveCameraPos.x,
+                        perspectiveCameraPos.y,
+                        perspectiveCameraPos.z,
+                        glm::degrees(perspectiveCameraRotation.x),
+                        glm::degrees(perspectiveCameraRotation.y),
+                        perspectiveCameraSpeed);
+        }
         ImGui::EndChild();
     }
     ImGui::PopStyleColor();
@@ -109,32 +144,68 @@ void Viewport::Render()
 
     if (ImGui::IsWindowFocused() && ImGui::IsWindowHovered())
     {
-        if (ImGui::IsMouseDown(ImGuiMouseButton_Right) || ImGui::IsMouseDown(ImGuiMouseButton_Middle))
+        if (type != ViewportType::PERSPECTIVE)
         {
-            const ImVec2 mouseDelta = ImGui::GetIO().MouseDelta;
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Right) || ImGui::IsMouseDown(ImGuiMouseButton_Middle))
+            {
+                const ImVec2 mouseDelta = ImGui::GetIO().MouseDelta;
 
-            const float unitsPerPixel = zoom / windowSize.y;
-            scrollCenterPos = ImVec2(scrollCenterPos.x + (mouseDelta.x * -unitsPerPixel),
-                                     scrollCenterPos.y + (mouseDelta.y * unitsPerPixel));
-            if (scrollCenterPos.x > MapEditor::MAP_HALF_SIZE + 50)
-            {
-                scrollCenterPos.x = MapEditor::MAP_HALF_SIZE + 50;
+                const float unitsPerPixel = zoom / windowSize.y;
+                scrollCenterPos = ImVec2(scrollCenterPos.x + (mouseDelta.x * -unitsPerPixel),
+                                         scrollCenterPos.y + (mouseDelta.y * unitsPerPixel));
+                if (scrollCenterPos.x > MapEditor::MAP_HALF_SIZE + 50)
+                {
+                    scrollCenterPos.x = MapEditor::MAP_HALF_SIZE + 50;
+                }
+                if (scrollCenterPos.y > MapEditor::MAP_HALF_SIZE + 50)
+                {
+                    scrollCenterPos.y = MapEditor::MAP_HALF_SIZE + 50;
+                }
+                if (scrollCenterPos.x < -(MapEditor::MAP_HALF_SIZE + 50))
+                {
+                    scrollCenterPos.x = -(MapEditor::MAP_HALF_SIZE + 50);
+                }
+                if (scrollCenterPos.y < -(MapEditor::MAP_HALF_SIZE + 50))
+                {
+                    scrollCenterPos.y = -(MapEditor::MAP_HALF_SIZE + 50);
+                }
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
             }
-            if (scrollCenterPos.y > MapEditor::MAP_HALF_SIZE + 50)
+            ChangeZoom(ImGui::GetIO().MouseWheel * -ZOOM_STEP);
+        } else
+        {
+            ImGuiIO &io = ImGui::GetIO();
+            if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
             {
-                scrollCenterPos.y = MapEditor::MAP_HALF_SIZE + 50;
+                io.WantCaptureMouse = false;
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+                const ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+                perspectiveCameraRotation.x += glm::radians(dragDelta.y / -5.0f);
+                perspectiveCameraRotation.y += glm::radians(dragDelta.x / 5.0f);
+                ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
             }
-            if (scrollCenterPos.x < -(MapEditor::MAP_HALF_SIZE + 50))
+            glm::vec3 moveDir{};
+            if (ImGui::IsKeyDown(ImGuiKey_W))
             {
-                scrollCenterPos.x = -(MapEditor::MAP_HALF_SIZE + 50);
-            }
-            if (scrollCenterPos.y < -(MapEditor::MAP_HALF_SIZE + 50))
+                moveDir.z = 1;
+            } else if (ImGui::IsKeyDown(ImGuiKey_S))
             {
-                scrollCenterPos.y = -(MapEditor::MAP_HALF_SIZE + 50);
+                moveDir.z = -1;
             }
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            if (ImGui::IsKeyDown(ImGuiKey_A))
+            {
+                moveDir.x = -1;
+            } else if (ImGui::IsKeyDown(ImGuiKey_D))
+            {
+                moveDir.x = 1;
+            }
+
+            perspectiveCameraSpeed += ImGui::GetIO().MouseWheel;
+            perspectiveCameraSpeed = glm::clamp(perspectiveCameraSpeed, 1.0f, 128.0f);
+
+            moveDir *= perspectiveCameraSpeed;
+            perspectiveCameraPos += glm::quat(perspectiveCameraRotation) * moveDir;
         }
-        ChangeZoom(ImGui::GetIO().MouseWheel * -ZOOM_STEP);
     }
 
     ImGui::End();
@@ -253,34 +324,82 @@ void Viewport::RecalculateMatrices()
     const float halfHeight = zoom / 2.0f;
     const float halfWidth = aspect * halfHeight;
 
-    const float left = scrollCenterPos.x - halfWidth;
-    const float right = scrollCenterPos.x + halfWidth;
-    const float top = scrollCenterPos.y + halfHeight;
-    const float bottom = scrollCenterPos.y - halfHeight;
-    const glm::mat4 ortho = glm::ortho(left, right, bottom, top, 0.01f, MapEditor::MAP_SIZE + 100);
+    if (type != ViewportType::PERSPECTIVE)
+    {
+        const float left = scrollCenterPos.x - halfWidth;
+        const float right = scrollCenterPos.x + halfWidth;
+        const float top = scrollCenterPos.y + halfHeight;
+        const float bottom = scrollCenterPos.y - halfHeight;
+        const glm::mat4 ortho = glm::ortho(left, right, bottom, top, 0.01f, MapEditor::MAP_SIZE + 100);
 
-    glm::vec3 up;
-    glm::vec3 eye;
-    glm::vec3 target;
-    if (type == ViewportType::TOP_DOWN_XZ)
-    {
-        target = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 8, 0);
-        eye = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 18, 0);
-        up = glm::vec3(0, 0, -1);
-    } else if (type == ViewportType::SIDE_YZ)
-    {
-        target = glm::vec3(MapEditor::MAP_HALF_SIZE + 8, 0, 0);
-        eye = glm::vec3(MapEditor::MAP_HALF_SIZE + 18, 0, 0);
-        up = glm::vec3(0, 1, 0);
+        glm::vec3 up;
+        glm::vec3 eye;
+        glm::vec3 target;
+        if (type == ViewportType::TOP_DOWN_XZ)
+        {
+            target = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 8, 0);
+            eye = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 18, 0);
+            up = glm::vec3(0, 0, -1);
+        } else if (type == ViewportType::SIDE_YZ)
+        {
+            target = glm::vec3(MapEditor::MAP_HALF_SIZE + 8, 0, 0);
+            eye = glm::vec3(MapEditor::MAP_HALF_SIZE + 18, 0, 0);
+            up = glm::vec3(0, 1, 0);
+        } else
+        {
+            target = glm::vec3(0, 0, MapEditor::MAP_HALF_SIZE + 8);
+            eye = glm::vec3(0, 0, MapEditor::MAP_HALF_SIZE + 18);
+            up = glm::vec3(0, 1, 0);
+        }
+
+        const glm::mat4 view = glm::lookAt(eye, target, up);
+        worldScreenMatrix = ortho * view;
     } else
     {
-        target = glm::vec3(0, 0, MapEditor::MAP_HALF_SIZE + 8);
-        eye = glm::vec3(0, 0, MapEditor::MAP_HALF_SIZE + 18);
-        up = glm::vec3(0, 1, 0);
+        perspectiveCameraRotation.z = glm::radians(180.0f);
+        glm::mat4 perspectiveMatrix;
+        perspectiveMatrix = glm::perspective(glm::radians(90.0f), aspect, 0.01f, MapAsset::MAP_MAX_HALF_EXTENTS * 3.0f);
+
+        glm::quat rotationQuat = glm::quat(perspectiveCameraRotation);
+        glm::quat rotationOffset;
+        glm::quat(glm::pi<float>(), {1, 0, 0});
+        rotationQuat *= rotationOffset;
+
+        glm::mat4 view = glm::mat4_cast(glm::conjugate(rotationQuat)) *
+                         glm::translate(glm::mat4(1.0f), -perspectiveCameraPos);
+
+        worldScreenMatrix = perspectiveMatrix * view;
     }
 
-    const glm::mat4 view = glm::lookAt(eye, target, up);
-
-    worldScreenMatrix = ortho * view;
     inverseWorldScreenMatrix = glm::inverse(worldScreenMatrix);
+}
+
+glm::vec3 Viewport::Make3D(const glm::vec2 twoDimensionalComponent, const float otherAxis) const
+{
+    return MapEditor::Make3D(GetAxis(), twoDimensionalComponent, otherAxis);
+}
+
+glm::vec2 Viewport::Make2D(const glm::vec3 point) const
+{
+    return MapEditor::Make2D(GetAxis(), point);
+}
+
+Axis Viewport::GetAxis() const
+{
+    assert(type != ViewportType::PERSPECTIVE);
+    switch (type)
+    {
+        case ViewportType::TOP_DOWN_XZ:
+            return Axis::Y;
+        case ViewportType::FRONT_XY:
+            return Axis::Z;
+        case ViewportType::SIDE_YZ:
+            return Axis::X;
+    }
+    return Axis::Y;
+}
+
+bool Viewport::Is3D() const
+{
+    return type == ViewportType::PERSPECTIVE;
 }

@@ -7,8 +7,8 @@
 #include <libassets/asset/Asset.h>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
+#include <libassets/type/Brush.h>
 #include <libassets/type/Param.h>
-#include <libassets/type/Sector.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/FileIo.h>
 #include <string>
@@ -32,7 +32,7 @@ uint8_t MapAsset::GetAssetTypeVersion() const
 
 void MapAsset::Reset()
 {
-    sectors = {};
+    brushes = {};
     actors = {};
     discordRpcIconId = "logo";
     discordRpcMapName = "Unnamed Map";
@@ -69,10 +69,10 @@ Error::ErrorCode MapAsset::Import(const std::string &filePath)
 
     lightCubeLuxelsPerUnit = json.value("light_cube_luxels_per_unit", 4);
 
-    const nlohmann::ordered_json &jsonSectors = json.at("sectors");
-    for (const nlohmann::ordered_json &sect: jsonSectors)
+    const nlohmann::ordered_json &jsonBrushes = json.value("brushes", nlohmann::ordered_json());
+    for (const nlohmann::ordered_json &brush: jsonBrushes)
     {
-        sectors.emplace_back(sect);
+        brushes.emplace_back(brush);
     }
 
     const nlohmann::ordered_json &jsonActors = json.at("actors");
@@ -92,11 +92,11 @@ Error::ErrorCode MapAsset::Export(const std::string &filePath) const
     src["has_sky"] = hasSky;
     src["sky_texture"] = skyTexture;
     src["light_cube_luxels_per_unit"] = lightCubeLuxelsPerUnit;
-    src["sectors"] = nlohmann::ordered_json::array();
+    src["brushes"] = nlohmann::ordered_json::array();
     src["actors"] = nlohmann::ordered_json::array();
-    for (const Sector &sector: sectors)
+    for (const Brush &brush: brushes)
     {
-        src["sectors"].push_back(sector.GenerateJson());
+        src["brushes"].push_back(brush.GenerateJson());
     }
     for (const Actor &actor: actors)
     {

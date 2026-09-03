@@ -33,7 +33,9 @@ add_executable(mapedit mapedit.cpp
         MapeditWindow.h
         CompileProgressWindow.cpp
         CompileProgressWindow.h
+        tools/CutTool.cpp
+        tools/CutTool.h
 )
 
 configure_sdk_gui_program(mapedit)
-add_dependencies(mapedit mapcomp)
+#add_dependencies(mapedit mapcomp)

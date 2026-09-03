@@ -107,15 +107,14 @@ void AddActorTool::RenderViewport(Viewport &vp)
         .size = 10,
     };
     const ViewportRenderer::ViewportRenderSettings vps = {
-        .sectorFocusMode = false,
-        .focusedSectorIndex = 0,
+        .brushFocusMode = false,
+        .focusedBrushIndex = 0,
         .hoverType = ItemType::NONE,
         .hoverIndex = 0,
         .selectionType = ItemType::NONE,
         .selectionIndex = 0,
         .selectionVertexIndex = 0,
         .point = !hasPlacedActor && vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ ? &vpt : nullptr,
-        .newPrimitive = nullptr,
         .newActor = hasPlacedActor ? &vpa : nullptr,
     };
     ViewportRenderer::RenderViewport(vp, vps);

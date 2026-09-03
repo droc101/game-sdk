@@ -9,8 +9,7 @@
 #include <cstdint>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
-#include <libassets/type/Sector.h>
-#include <libassets/type/WallMaterial.h>
+#include <libassets/type/Axis.h>
 #include <libassets/util/ActorDefinitionManager.h>
 #include <memory>
 #include <optional>
@@ -31,6 +30,7 @@ class MapEditor
             ADD_ACTOR,
             ADD_PRIMITIVE,
             ADD_POLYGON,
+            CUT,
         };
 
         static inline EditorToolType toolType = EditorToolType::SELECT;
@@ -54,7 +54,8 @@ class MapEditor
         static constexpr size_t SIDEBAR_WIDTH = 300;
         static constexpr size_t DEFAULT_GRID_SPACING_INDEX = 3;
         static constexpr size_t DEFAULT_ZOOM = 160.0f;
-        static constexpr std::array<float, 9> GRID_SPACING_VALUES = {1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0};
+        static constexpr std::array<float, 9> GRID_SPACING_VALUES =
+                {1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0};
         static constexpr float MAP_HALF_SIZE = MapAsset::MAP_MAX_HALF_EXTENTS;
         static constexpr float MAP_SIZE = MAP_HALF_SIZE * 2;
         static constexpr std::array<float, 7> luxelScaleValues = {0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0};
@@ -63,12 +64,13 @@ class MapEditor
         static constexpr const char *ACTOR_ICON_NAME = "editor/icon_actor";
         static constexpr const char *PRIMITIVE_ICON_NAME = "editor/icon_primitive";
         static constexpr const char *POLYGON_ICON_NAME = "editor/icon_polygon";
+        static constexpr const char *CUT_ICON_NAME = "editor/icon_cut";
 
         static inline std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new SelectTool());
 
-        static inline WallMaterial mat{};
+        static inline std::string material{};
 
-        static inline std::optional<std::variant<Sector, Actor>> clipboard{};
+        static inline std::optional<std::variant<Brush, Actor>> clipboard{};
 
         static inline ActorDefinitionManager adm{};
 
@@ -86,5 +88,11 @@ class MapEditor
 
         static std::array<float, 4> CalculateBBox(const std::vector<std::array<float, 2>> &points);
 
-        static void MaterialToolWindow(WallMaterial &wallMat);
+        static void BrushFaceToolWindow(Brush::Face &face);
+
+        static void MaterialSelectionTool(std::string &material);
+
+        [[nodiscard]] static glm::vec3 Make3D(Axis axis, glm::vec2 twoDimensionalComponent, float otherAxis);
+
+        [[nodiscard]] static glm::vec2 Make2D(Axis axis, glm::vec3 point);
 };

@@ -22,9 +22,8 @@ class EditorTool
             NONE,
             VERTEX,
             LINE,
-            CEILING,
-            FLOOR,
-            SECTOR,
-            ACTOR
+            BRUSH,
+            ACTOR,
+            FACE
         };
 };

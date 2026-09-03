@@ -7,8 +7,8 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
-#include <libassets/type/WallMaterial.h>
 #include <vector>
+#include "../MapEditor.h"
 #include "../Viewport.h"
 #include "EditorTool.h"
 
@@ -38,10 +38,11 @@ class AddPrimitiveTool final: public EditorTool
 
         bool hasDrawnShape = false;
         bool isDragging = false;
-        glm::vec3 shapeStart{};
-        glm::vec3 shapeEnd{};
-        float ceiling = 16;
-        float floor = -16;
+        glm::vec2 shapeStart{};
+        glm::vec2 shapeEnd{};
+        float startDepth = 16;
+        float endDepth = -16;
+        Axis axis = Axis::Y;
 
         static inline int32_t ngonSides = 16;
         static inline float ngonStartAngle = 0;
@@ -57,4 +58,6 @@ class AddPrimitiveTool final: public EditorTool
         static std::vector<glm::vec2> BuildRect(const glm::vec2 &p0, const glm::vec2 &p1);
 
         static std::vector<glm::vec2> BuildTriangle(const glm::vec2 &p0, const glm::vec2 &p1);
+
+        void AddBrush();
 };

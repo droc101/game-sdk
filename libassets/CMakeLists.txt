@@ -90,10 +90,6 @@ add_library(assets SHARED
         include/libassets/type/ConvexHull.h
         src/type/StaticCollisionMesh.cpp
         include/libassets/type/StaticCollisionMesh.h
-        src/type/Sector.cpp
-        include/libassets/type/Sector.h
-        src/type/WallMaterial.cpp
-        include/libassets/type/WallMaterial.h
         src/type/Param.cpp
         include/libassets/type/Param.h
         src/type/Actor.cpp
@@ -167,6 +163,9 @@ add_library(assets SHARED
         src/asset/Asset.cpp
         src/util/FileIo.cpp
         include/libassets/util/FileIo.h
+        src/type/Brush.cpp
+        include/libassets/type/Brush.h
+        include/libassets/type/Axis.h
 )
 
 set_target_properties(assets PROPERTIES

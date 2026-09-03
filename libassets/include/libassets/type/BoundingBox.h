@@ -127,4 +127,7 @@ class BoundingBox
          * @param writer The DataWriter to write to
          */
         void Write(DataWriter &writer) const;
+
+        [[nodiscard]] glm::vec3 StartPosition() const;
+        [[nodiscard]] glm::vec3 EndPosition() const;
 };

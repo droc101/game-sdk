@@ -22,6 +22,7 @@
 #include "tools/AddActorTool.h"
 #include "tools/AddPolygonTool.h"
 #include "tools/AddPrimitiveTool.h"
+#include "tools/CutTool.h"
 
 const Window::WindowProperties &MapeditWindow::GetProperties() const
 {
@@ -55,7 +56,7 @@ bool MapeditWindow::Init()
         return false;
     }
 
-    MapEditor::mat = WallMaterial(Options::Get().defaultMaterial);
+    MapEditor::material = Options::Get().defaultMaterial;
     if (!MapRenderer::Init())
     {
         Logger::Error("Failed to start renderer!");
@@ -67,6 +68,7 @@ bool MapeditWindow::Init()
     (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/actors.png", MapEditor::ACTOR_ICON_NAME);
     (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/primitives.png", MapEditor::PRIMITIVE_ICON_NAME);
     (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/polygon.png", MapEditor::POLYGON_ICON_NAME);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/cut.png", MapEditor::CUT_ICON_NAME);
 
     vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
     vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;
@@ -127,23 +129,32 @@ void MapeditWindow::SetupDockspace()
     {
         return;
     }
+
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    const float sidebarSize = MapEditor::showSidebar ? MapEditor::SIDEBAR_WIDTH : 0;
+    const ImVec2 vpAreaSize = ImVec2((viewport->WorkSize.x - sidebarSize),
+                                     (viewport->WorkSize.y - MapEditor::TOOLBAR_HEIGHT));
+
     dockspaceSetup = true;
     dockspaceId = ImGui::GetID("dockspace");
     rootDockspaceID = dockspaceId;
     ImGui::DockBuilderRemoveNode(dockspaceId);
     ImGui::DockBuilderAddNode(dockspaceId, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_NoCloseButton);
-    ImGui::DockBuilderSetNodeSize(dockspaceId, ImGui::GetMainViewport()->Size);
+    ImGui::DockBuilderSetNodeSize(dockspaceId, vpAreaSize);
 
-    ImGuiID lowerLeftDock = ImGui::DockBuilderSplitNode(dockspaceId, ImGuiDir_Down, 0.35f, nullptr, &dockspaceId);
-    const ImGuiID lowerRightDock = ImGui::DockBuilderSplitNode(lowerLeftDock,
-                                                               ImGuiDir_Right,
-                                                               0.5f,
-                                                               nullptr,
-                                                               &lowerLeftDock);
+    ImGuiID topLeftDock;
+    ImGuiID topRightDock;
+    ImGuiID bottomLeftDock;
+    ImGuiID bottomRightDock;
 
-    ImGui::DockBuilderDockWindow("Top down (XZ)", dockspaceId);
-    ImGui::DockBuilderDockWindow("Front (XY)", lowerLeftDock);
-    ImGui::DockBuilderDockWindow("Side (YZ)", lowerRightDock);
+    ImGui::DockBuilderSplitNode(dockspaceId, ImGuiDir_Down, 0.5f, &bottomLeftDock, &topLeftDock);
+    ImGui::DockBuilderSplitNode(topLeftDock, ImGuiDir_Right, 0.5f, &topRightDock, &topLeftDock);
+    ImGui::DockBuilderSplitNode(bottomLeftDock, ImGuiDir_Right, 0.5f, &bottomRightDock, &bottomLeftDock);
+
+    ImGui::DockBuilderDockWindow("3D", topLeftDock);
+    ImGui::DockBuilderDockWindow("Top down (XZ)", topRightDock);
+    ImGui::DockBuilderDockWindow("Front (XY)", bottomLeftDock);
+    ImGui::DockBuilderDockWindow("Side (YZ)", bottomRightDock);
 
     ImGui::DockBuilderFinish(rootDockspaceID);
 }
@@ -545,6 +556,18 @@ void MapeditWindow::Render()
         MapEditor::tool = std::make_unique<AddPolygonTool>();
     }
 
+    if (ToolbarToolButton("##cutTool",
+                         "Cut Brushes",
+                         MapEditor::CUT_ICON_NAME,
+                         MapEditor::toolType == MapEditor::EditorToolType::CUT,
+                         2,
+                         "Ctrl+5",
+                         ImGuiMod_Ctrl | ImGuiKey_5))
+    {
+        MapEditor::toolType = MapEditor::EditorToolType::CUT;
+        MapEditor::tool = std::make_unique<CutTool>();
+    }
+
     ImGui::Dummy({1, 1});
     ImGui::End();
 
@@ -586,6 +609,7 @@ void MapeditWindow::Render()
     ImGui::PopStyleVar();
     ImGui::PopStyleVar();
 
+    vpPerspective.Render();
     vpTopDown.Render();
     vpFront.Render();
     vpSide.Render();

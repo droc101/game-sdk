@@ -16,9 +16,10 @@
 #include <libassets/type/renderDefs/PointRenderDefinition.h>
 #include <libassets/type/renderDefs/SpriteRenderDefinition.h>
 #include <libassets/type/renderDefs/WallRenderDefinition.h>
-#include <libassets/type/Sector.h>
 #include <string>
 #include <vector>
+
+#include "MapEditor.h"
 #include "tools/EditorTool.h"
 #include "Viewport.h"
 
@@ -31,14 +32,13 @@ class ViewportRenderer
         {
                 /// The points in the new primitive
                 std::vector<glm::vec2> points;
-                /// The floor height of the new primitive
-                float floor;
-                /// The ceiling height of the new primitive
-                float ceiling;
+                float startDepth;
+                float endDepth;
                 /// The AABB start of the new primitive
-                glm::vec3 aabbStart;
+                glm::vec2 aabbStart;
                 /// The AABB end of the new primitive
-                glm::vec3 aabbEnd;
+                glm::vec2 aabbEnd;
+                Axis axis;
         };
 
         /// A new polygon, rendered without the final line connecting the first and last points.
@@ -47,10 +47,9 @@ class ViewportRenderer
         {
                 /// The points in the polygon
                 std::vector<glm::vec2> points;
-                /// The floor height of the new polygon
-                float floor;
-                /// The ceiling height of the new polygon
-                float ceiling;
+                float startDepth;
+                float endDepth;
+                Axis axis;
         };
 
         /// A new actor, rendered according to the class's definition with default params
@@ -83,10 +82,10 @@ class ViewportRenderer
 
         struct ViewportRenderSettings
         {
-                /// Whether a sector is focused for editing
-                bool sectorFocusMode = false;
-                /// The index of the sector that is focused
-                size_t focusedSectorIndex = 0;
+                /// Whether a brush is focused for editing
+                bool brushFocusMode = false;
+                /// The index of the brush that is focused
+                size_t focusedBrushIndex = 0;
 
                 /// The type of element that is hovered
                 EditorTool::ItemType hoverType = EditorTool::ItemType::NONE;
@@ -95,7 +94,7 @@ class ViewportRenderer
 
                 /// The type of element that is selected
                 EditorTool::ItemType selectionType = EditorTool::ItemType::NONE;
-                /// The index of the selected element, or the sector index for LINE and VERTEX
+                /// The index of the selected element, or the brush index for LINE and VERTEX
                 size_t selectionIndex = 0;
                 /// The index of the selected vertex/line
                 size_t selectionVertexIndex = 0;
@@ -117,17 +116,17 @@ class ViewportRenderer
         static void RenderViewport(Viewport &vp, const ViewportRenderSettings &settings);
 
     private:
-        static void RenderSector(const Viewport &vp,
-                                 const ViewportRenderSettings &settings,
-                                 size_t sectorIndex,
-                                 const glm::mat4 &matrix);
+        static void RenderBrush(const Viewport &vp,
+                                const ViewportRenderSettings &settings,
+                                size_t brushIndex,
+                                const glm::mat4 &matrix);
         static void RenderPoint(const ViewportRenderPoint *point, const glm::mat4 &matrix);
         static void RenderNewPrimitive(Viewport &vp, const ViewportRenderNewPrimitive *prim, glm::mat4 &matrix);
         static void RenderNewActor(const Viewport &vp, const ViewportRenderNewActor *actor, const glm::mat4 &matrix);
         static void RenderNewPolygon(const Viewport &vp, const ViewportRenderNewPolygon *poly, const glm::mat4 &matrix);
         static void RenderGizmo(const Viewport &vp, const ViewportRenderGizmo *gizmo, const glm::mat4 &matrix);
 
-        static bool SectorIsCulled(const Sector &sector, const Viewport &vp);
+        static bool BrushIsCulled(const Brush &brush, const Viewport &vp);
 
         static void RenderActor(const Actor &a, const glm::mat4 &matrix, const Viewport &vp);
 

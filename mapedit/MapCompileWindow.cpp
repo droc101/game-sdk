@@ -28,6 +28,8 @@ const Window::WindowProperties &MapCompileWindow::GetProperties() const
 
 void MapCompileWindow::Render()
 {
+    ImGui::Text("don't.");
+    return;
     ImGui::SeparatorText("Compile Mode");
     if (ImGui::RadioButton("Full Compile", !opts.fastCompile))
     {

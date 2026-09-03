@@ -31,6 +31,7 @@ class MapeditWindow final: public Window
             .defaultImguiWindow = false,
         };
 
+        Viewport vpPerspective = Viewport(Viewport::ViewportType::PERSPECTIVE);
         Viewport vpTopDown = Viewport(Viewport::ViewportType::TOP_DOWN_XZ);
         Viewport vpFront = Viewport(Viewport::ViewportType::FRONT_XY);
         Viewport vpSide = Viewport(Viewport::ViewportType::SIDE_YZ);

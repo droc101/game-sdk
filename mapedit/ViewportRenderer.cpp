@@ -15,6 +15,7 @@
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/BoundingBox.h>
+#include <libassets/type/Brush.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/renderDefs/BoxRenderDefinition.h>
 #include <libassets/type/renderDefs/CircleRenderDefinition.h>
@@ -25,9 +26,10 @@
 #include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/renderDefs/SpriteRenderDefinition.h>
 #include <libassets/type/renderDefs/WallRenderDefinition.h>
-#include <libassets/type/Sector.h>
 #include <memory>
 #include <numbers>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 #include "MapEditor.h"
 #include "MapRenderer.h"
@@ -53,21 +55,21 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
         RenderActor(MapEditor::map.actors.at(actorIndex), matrix, vp);
     }
 
-    for (size_t sectorIndex = 0; sectorIndex < MapEditor::map.sectors.size(); sectorIndex++)
+    for (size_t brushIndex = 0; brushIndex < MapEditor::map.brushes.size(); brushIndex++)
     {
-        if (settings.sectorFocusMode && sectorIndex == settings.focusedSectorIndex)
+        if (settings.brushFocusMode && brushIndex == settings.focusedBrushIndex)
         {
             continue;
         }
-        if (settings.selectionType == EditorTool::ItemType::SECTOR && settings.selectionIndex == sectorIndex)
+        if (settings.selectionType == EditorTool::ItemType::BRUSH && settings.selectionIndex == brushIndex)
         {
             continue;
         }
-        if (settings.hoverType == EditorTool::ItemType::SECTOR && settings.hoverIndex == sectorIndex)
+        if (settings.hoverType == EditorTool::ItemType::BRUSH && settings.hoverIndex == brushIndex)
         {
             continue;
         }
-        RenderSector(vp, settings, sectorIndex, matrix);
+        RenderBrush(vp, settings, brushIndex, matrix);
     }
 
     if (settings.point != nullptr)
@@ -90,30 +92,30 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
         RenderNewPolygon(vp, settings.newPolygon, matrix);
     }
 
-    if (settings.hoverType == EditorTool::ItemType::SECTOR)
+    if (settings.hoverType == EditorTool::ItemType::BRUSH)
     {
         GLHelper::ClearDepth();
-        RenderSector(vp, settings, settings.hoverIndex, matrix);
+        RenderBrush(vp, settings, settings.hoverIndex, matrix);
     } else if (settings.hoverType == EditorTool::ItemType::ACTOR)
     {
         GLHelper::ClearDepth();
         RenderActor(MapEditor::map.actors.at(settings.hoverIndex), matrix, vp);
     }
 
-    if (settings.selectionType == EditorTool::ItemType::SECTOR)
+    if (settings.selectionType == EditorTool::ItemType::BRUSH)
     {
         GLHelper::ClearDepth();
-        RenderSector(vp, settings, settings.selectionIndex, matrix);
+        RenderBrush(vp, settings, settings.selectionIndex, matrix);
     } else if (settings.selectionType == EditorTool::ItemType::ACTOR)
     {
         GLHelper::ClearDepth();
         RenderActor(MapEditor::map.actors.at(settings.selectionIndex), matrix, vp);
     }
 
-    if (settings.sectorFocusMode)
+    if (settings.brushFocusMode)
     {
         GLHelper::ClearDepth();
-        RenderSector(vp, settings, settings.focusedSectorIndex, matrix);
+        RenderBrush(vp, settings, settings.focusedBrushIndex, matrix);
     }
 
     if (settings.gizmo != nullptr)
@@ -123,87 +125,40 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
     }
 }
 
-void ViewportRenderer::RenderSector(const Viewport &vp,
-                                    const ViewportRenderSettings &settings,
-                                    const size_t sectorIndex,
-                                    const glm::mat4 &matrix)
+void ViewportRenderer::RenderBrush(const Viewport &vp,
+                                   const ViewportRenderSettings &settings,
+                                   const size_t brushIndex,
+                                   const glm::mat4 &matrix)
 {
-    const Sector &sector = MapEditor::map.sectors.at(sectorIndex);
+    const Brush &brush = MapEditor::map.brushes.at(brushIndex);
 
-    if (MapEditor::culling && SectorIsCulled(sector, vp))
+    if (MapEditor::culling && BrushIsCulled(brush, vp))
     {
         return;
     }
 
-    const bool isFocusedSector = settings.sectorFocusMode && settings.focusedSectorIndex == sectorIndex;
+    const glm::mat4 brushMatrix = brush.GetTransformMatrix();
+
+    const bool isFocusedBrush = settings.brushFocusMode && settings.focusedBrushIndex == brushIndex;
 
     Color c = Color(0.6, 0.6, 0.6, 1);
-    if ((settings.selectionType == EditorTool::ItemType::SECTOR && settings.selectionIndex == sectorIndex) ||
-        isFocusedSector)
+    if ((settings.selectionType == EditorTool::ItemType::BRUSH && settings.selectionIndex == brushIndex) ||
+        isFocusedBrush)
     {
         c = Color(1, 1, 1, 1);
-    } else if (settings.hoverType == EditorTool::ItemType::SECTOR && settings.hoverIndex == sectorIndex)
+    } else if (settings.hoverType == EditorTool::ItemType::BRUSH && settings.hoverIndex == brushIndex)
     {
         c = Color(.8, .8, .8, 1);
     }
-    for (size_t vertexIndex = 0; vertexIndex < sector.points.size(); vertexIndex++)
+
+    const std::unordered_set<std::pair<glm::vec3, glm::vec3>> edges = brush.GetUniqueEdges();
+
+    for (const std::pair<glm::vec3, glm::vec3> &edge: edges)
     {
-        const glm::vec2 &start2 = sector.points.at(vertexIndex);
-        const glm::vec2 &end2 = sector.points.at((vertexIndex + 1) % sector.points.size());
-        const glm::vec3 startCeiling = glm::vec3(start2.x, sector.ceilingHeight, start2.y);
-        const glm::vec3 endCeiling = glm::vec3(end2.x, sector.ceilingHeight, end2.y);
-        const glm::vec3 startFloor = glm::vec3(start2.x, sector.floorHeight, start2.y);
-        const glm::vec3 endFloor = glm::vec3(end2.x, sector.floorHeight, end2.y);
+        const glm::vec3 startPos = brushMatrix * glm::vec4(edge.first, 0.0f);
+        const glm::vec3 endPos = brushMatrix * glm::vec4(edge.second, 0.0f);
 
-        if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
-        {
-            float pointSize = 6;
-            Color pointColor = Color(1, 0.7, 0.7, 1);
-            if (isFocusedSector)
-            {
-                pointSize = 10;
-                pointColor = Color(1, 0, 0, 1);
-            }
-            MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), pointSize, pointColor, matrix);
-            if (settings.selectionType == EditorTool::ItemType::VERTEX &&
-                settings.selectionVertexIndex == vertexIndex &&
-                settings.selectionIndex == sectorIndex &&
-                isFocusedSector)
-            {
-                MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.05, 0), 12, Color(0, 1, 1, 1), matrix);
-            }
-        } else
-        {
-            MapRenderer::RenderLine(startFloor, endFloor, c, matrix, 4);
-            MapRenderer::RenderLine(startCeiling, startFloor, c, matrix, 4);
-
-            if (isFocusedSector &&
-                (settings.selectionType == EditorTool::ItemType::LINE && settings.selectionVertexIndex == vertexIndex))
-            {
-                MapRenderer::RenderLine(endCeiling, endFloor, c, matrix, 4);
-                MapRenderer::RenderLine(startFloor, startCeiling, Color(1, 0, 1, 1), matrix, 8);
-                MapRenderer::RenderLine(endFloor, endCeiling, Color(1, 0, 1, 1), matrix, 8);
-            }
-        }
-
-        if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ ||
-            settings.selectionType == EditorTool::ItemType::FLOOR)
-        {
-            if (isFocusedSector && ((settings.selectionType == EditorTool::ItemType::LINE &&
-                                     settings.selectionVertexIndex == vertexIndex) ||
-                                    settings.selectionType == EditorTool::ItemType::FLOOR))
-            {
-                MapRenderer::RenderLine(startFloor, endFloor, Color(1, 0, 1, 1), matrix, 8);
-            }
-        }
-
-        MapRenderer::RenderLine(startCeiling, endCeiling, c, matrix, 4);
-        if (isFocusedSector &&
-            ((settings.selectionType == EditorTool::ItemType::LINE && settings.selectionVertexIndex == vertexIndex) ||
-             settings.selectionType == EditorTool::ItemType::CEILING))
-        {
-            MapRenderer::RenderLine(startCeiling, endCeiling, Color(1, 0, 1, 1), matrix, 8);
-        }
+        MapRenderer::RenderLine(startPos, endPos, c, matrix, 4);
     }
 }
 
@@ -214,47 +169,46 @@ void ViewportRenderer::RenderPoint(const ViewportRenderPoint *point, const glm::
 
 void ViewportRenderer::RenderNewPrimitive(Viewport &vp, const ViewportRenderNewPrimitive *prim, glm::mat4 &matrix)
 {
-    const std::array<glm::vec3, 4> boxPoints = {
+    const std::array<glm::vec2, 4> boxPoints = {
         prim->aabbStart,
-        glm::vec3(prim->aabbStart.x, 0, prim->aabbEnd.z),
+        glm::vec2(prim->aabbStart.x, prim->aabbEnd.y),
         prim->aabbEnd,
-        glm::vec3(prim->aabbEnd.x, 0, prim->aabbStart.z),
+        glm::vec2(prim->aabbEnd.x, prim->aabbStart.y),
     };
     for (size_t i = 0; i < boxPoints.size(); i++)
     {
         const size_t nextIndex = (i + 1) % boxPoints.size();
-        const glm::vec3 startPointCeil = glm::vec3(boxPoints.at(i).x, prim->ceiling, boxPoints.at(i).z);
-        const glm::vec3 startPointFloor = glm::vec3(boxPoints.at(i).x, prim->floor, boxPoints.at(i).z);
-        const glm::vec3 endPointCeil = glm::vec3(boxPoints.at(nextIndex).x, prim->ceiling, boxPoints.at(nextIndex).z);
-        const glm::vec3 endPointFloor = glm::vec3(boxPoints.at(nextIndex).x, prim->floor, boxPoints.at(nextIndex).z);
-        MapRenderer::RenderLine(startPointCeil, endPointCeil, Color(.6, 6, 0, 1), matrix, 2);
-        if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
+        const glm::vec3 startPointFront = MapEditor::Make3D(prim->axis, boxPoints.at(i), prim->startDepth);
+        const glm::vec3 startPointBack = MapEditor::Make3D(prim->axis, boxPoints.at(i), prim->endDepth);
+        const glm::vec3 endPointFront = MapEditor::Make3D(prim->axis, boxPoints.at(nextIndex), prim->startDepth);
+        const glm::vec3 endPointBack = MapEditor::Make3D(prim->axis, boxPoints.at(nextIndex), prim->endDepth);
+        MapRenderer::RenderLine(startPointFront, endPointFront, Color(.6, 6, 0, 1), matrix, 2);
+        if (vp.Is3D() || vp.GetAxis() != prim->axis)
         {
-            MapRenderer::RenderLine(startPointFloor, endPointFloor, Color(.6, .6, 0, 1), matrix, 2);
-            MapRenderer::RenderLine(startPointCeil, startPointFloor, Color(.3, .3, 0, 1), matrix, 1);
+            MapRenderer::RenderLine(startPointBack, endPointBack, Color(.6, .6, 0, 1), matrix, 2);
+            MapRenderer::RenderLine(startPointFront, startPointBack, Color(.3, .3, 0, 1), matrix, 1);
         }
     }
 
     for (size_t i = 0; i < prim->points.size(); i++)
     {
         const size_t nextIndex = (i + 1) % prim->points.size();
-        const glm::vec3 startPointCeil = glm::vec3(prim->points.at(i).x, prim->ceiling, prim->points.at(i).y);
-        const glm::vec3 startPointFloor = glm::vec3(prim->points.at(i).x, prim->floor, prim->points.at(i).y);
-        const glm::vec3 endPointCeil = glm::vec3(prim->points.at(nextIndex).x,
-                                                 prim->ceiling,
-                                                 prim->points.at(nextIndex).y);
-        const glm::vec3 endPointFloor = glm::vec3(prim->points.at(nextIndex).x,
-                                                  prim->floor,
-                                                  prim->points.at(nextIndex).y);
-        if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+        const glm::vec3 startPointFront = MapEditor::Make3D(prim->axis, prim->points.at(i), prim->startDepth);
+        const glm::vec3 startPointBack = MapEditor::Make3D(prim->axis, prim->points.at(i), prim->endDepth);
+        const glm::vec3 endPointFront = MapEditor::Make3D(prim->axis, prim->points.at(nextIndex), prim->startDepth);
+        const glm::vec3 endPointBack = MapEditor::Make3D(prim->axis, prim->points.at(nextIndex), prim->endDepth);
+        if (!vp.Is3D() && vp.GetAxis() == prim->axis)
         {
-            MapRenderer::RenderBillboardPoint(startPointCeil + glm::vec3(0, 0.1, 0), 10, Color(1, 0, 0, 1), matrix);
+            MapRenderer::RenderBillboardPoint(startPointFront + MapEditor::Make3D(prim->axis, glm::vec2(0), 0.1),
+                                              10,
+                                              Color(1, 0, 0, 1),
+                                              matrix);
         }
-        MapRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 1, 1), matrix, 4);
-        if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
+        MapRenderer::RenderLine(startPointFront, endPointFront, Color(1, 1, 1, 1), matrix, 4);
+        if (vp.Is3D() || vp.GetAxis() != prim->axis)
         {
-            MapRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 1, 1), matrix, 4);
-            MapRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, .6, 1), matrix, 2);
+            MapRenderer::RenderLine(startPointBack, endPointBack, Color(1, 1, 1, 1), matrix, 4);
+            MapRenderer::RenderLine(startPointFront, startPointBack, Color(.6, .6, .6, 1), matrix, 2);
         }
     }
 }
@@ -283,22 +237,25 @@ void ViewportRenderer::RenderNewPolygon(const Viewport &vp,
             const glm::vec3 worldSpaceHover = vp.GetWorldSpaceMousePos();
             end2 = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
         }
-        const glm::vec3 startCeiling = glm::vec3(start2.x, poly->ceiling, start2.y);
-        const glm::vec3 endCeiling = glm::vec3(end2.x, poly->ceiling, end2.y);
-        const glm::vec3 startFloor = glm::vec3(start2.x, poly->floor, start2.y);
-        const glm::vec3 endFloor = glm::vec3(end2.x, poly->floor, end2.y);
+        const glm::vec3 startFront = MapEditor::Make3D(poly->axis, start2, poly->startDepth);
+        const glm::vec3 endFront = MapEditor::Make3D(poly->axis, end2, poly->startDepth);
+        const glm::vec3 startBack = MapEditor::Make3D(poly->axis, start2, poly->endDepth);
+        const glm::vec3 endBack = MapEditor::Make3D(poly->axis, end2, poly->endDepth);
 
-        if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+        if (!vp.Is3D() && vp.GetAxis() == poly->axis)
         {
-            MapRenderer::RenderBillboardPoint(startCeiling + glm::vec3(0, 0.1, 0), 10, Color(1, 0, 0, 1), matrix);
+            MapRenderer::RenderBillboardPoint(startFront + MapEditor::Make3D(poly->axis, glm::vec2(0), 0.1),
+                                              10,
+                                              Color(1, 0, 0, 1),
+                                              matrix);
         }
-        if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
+        if (vp.Is3D() || vp.GetAxis() != poly->axis)
         {
-            MapRenderer::RenderLine(startFloor, endFloor, Color(1, 1, 1, 1), matrix, 4);
-            MapRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
+            MapRenderer::RenderLine(startBack, endBack, Color(1, 1, 1, 1), matrix, 4);
+            MapRenderer::RenderLine(startFront, startBack, Color(.6, .6, .6, 1), matrix, 4);
         }
 
-        MapRenderer::RenderLine(startCeiling, endCeiling, Color(1, 1, 1, 1), matrix, 4);
+        MapRenderer::RenderLine(startFront, endFront, Color(1, 1, 1, 1), matrix, 4);
     }
 }
 
@@ -362,56 +319,33 @@ void ViewportRenderer::RenderGizmo(const Viewport &vp, const ViewportRenderGizmo
     }
 }
 
-bool ViewportRenderer::SectorIsCulled(const Sector &sector, const Viewport &vp)
+bool ViewportRenderer::BrushIsCulled(const Brush &brush, const Viewport &vp)
 {
-    const glm::vec4 aabb = sector.GetAABB();
+    if (vp.Is3D())
+    {
+        return false;
+    }
+
+    const BoundingBox bbox = brush.GetAABB();
 
     const glm::vec2 cameraViewSize = vp.GetWorldSpaceSize();
     const glm::vec3 cameraPos = vp.GetCameraPos();
 
-    if (vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ)
+    const glm::vec3 cornerA = bbox.StartPosition();
+    const glm::vec3 cornerB = bbox.EndPosition();
+
+    const glm::vec2 aabbTopLeft = vp.Make2D(cornerA);
+    const glm::vec2 aabbBottomRight = vp.Make2D(cornerB);
+    const glm::vec2 cameraTopLeft = vp.Make2D(cameraPos) - (cameraViewSize / glm::vec2(2));
+    const glm::vec2 cameraBottomRight = vp.Make2D(cameraPos) + (cameraViewSize / glm::vec2(2));
+    if (aabbBottomRight.x < cameraTopLeft.x ||
+        aabbTopLeft.x > cameraBottomRight.x ||
+        aabbBottomRight.y < cameraTopLeft.y ||
+        aabbTopLeft.y > cameraBottomRight.y)
     {
-        const glm::vec2 aabbTopLeft = {aabb.x - aabb.z, aabb.y - aabb.w};
-        const glm::vec2 aabbBottomRight = {aabb.x + aabb.z, aabb.y + aabb.w};
-        const glm::vec2 cameraTopLeft = {cameraPos.x - (cameraViewSize.x / 2), cameraPos.z - (cameraViewSize.y / 2)};
-        const glm::vec2 cameraBottomRight = {cameraPos.x + (cameraViewSize.x / 2),
-                                             cameraPos.z + (cameraViewSize.y / 2)};
-        if (aabbBottomRight.x < cameraTopLeft.x ||
-            aabbTopLeft.x > cameraBottomRight.x ||
-            aabbBottomRight.y < cameraTopLeft.y ||
-            aabbTopLeft.y > cameraBottomRight.y)
-        {
-            return true;
-        }
-    } else if (vp.GetType() == Viewport::ViewportType::FRONT_XY)
-    {
-        const glm::vec2 aabbTopLeft = {aabb.x - aabb.z, sector.floorHeight};
-        const glm::vec2 aabbBottomRight = {aabb.x + aabb.z, sector.ceilingHeight};
-        const glm::vec2 cameraTopLeft = {cameraPos.x - (cameraViewSize.x / 2), cameraPos.y - (cameraViewSize.y / 2)};
-        const glm::vec2 cameraBottomRight = {cameraPos.x + (cameraViewSize.x / 2),
-                                             cameraPos.y + (cameraViewSize.y / 2)};
-        if (aabbBottomRight.x < cameraTopLeft.x ||
-            aabbTopLeft.x > cameraBottomRight.x ||
-            aabbBottomRight.y < cameraTopLeft.y ||
-            aabbTopLeft.y > cameraBottomRight.y)
-        {
-            return true;
-        }
-    } else if (vp.GetType() == Viewport::ViewportType::SIDE_YZ)
-    {
-        const glm::vec2 aabbTopLeft = {sector.floorHeight, aabb.y - aabb.w};
-        const glm::vec2 aabbBottomRight = {sector.ceilingHeight, aabb.y + aabb.w};
-        const glm::vec2 cameraTopLeft = {cameraPos.y - (cameraViewSize.y / 2), cameraPos.z - (cameraViewSize.x / 2)};
-        const glm::vec2 cameraBottomRight = {cameraPos.y + (cameraViewSize.y / 2),
-                                             cameraPos.z + (cameraViewSize.x / 2)};
-        if (aabbBottomRight.x < cameraTopLeft.x ||
-            aabbTopLeft.x > cameraBottomRight.x ||
-            aabbBottomRight.y < cameraTopLeft.y ||
-            aabbTopLeft.y > cameraBottomRight.y)
-        {
-            return true;
-        }
+        return true;
     }
+
     return false;
 }
 
@@ -472,6 +406,11 @@ void ViewportRenderer::RenderActor(const Actor &a, const glm::mat4 &matrix, cons
 
 bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
 {
+    if (vp.Is3D())
+    {
+        return false;
+    }
+
     const ActorDefinition &definition = MapEditor::adm.GetActorDefinition(actor.className);
 
     glm::mat4 worldMatrix = glm::identity<glm::mat4>();

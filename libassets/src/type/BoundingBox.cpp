@@ -63,3 +63,14 @@ std::array<float, 24> BoundingBox::GetPointsFlat() const
     }
     return flatPoints;
 }
+
+glm::vec3 BoundingBox::StartPosition() const
+{
+    return origin - extents;
+}
+
+glm::vec3 BoundingBox::EndPosition() const
+{
+
+    return origin + extents;
+}

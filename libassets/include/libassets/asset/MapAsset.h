@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <libassets/asset/Asset.h>
 #include <libassets/type/Actor.h>
-#include <libassets/type/Sector.h>
+#include <libassets/type/Brush.h>
 #include <libassets/util/Error.h>
 #include <string>
 #include <vector>
@@ -17,8 +17,8 @@ class MapAsset final: public Asset
     public:
         MapAsset();
 
-        /// The sectors in this map
-        std::vector<Sector> sectors;
+        /// The brushes in this map
+        std::vector<Brush> brushes;
         /// The actors in this map
         std::vector<Actor> actors;
 
