@@ -234,8 +234,12 @@ void ViewportRenderer::RenderNewPolygon(const Viewport &vp,
         glm::vec2 end2 = poly->points.at((vertexIndex + 1) % poly->points.size());
         if (vertexIndex == poly->points.size() - 1)
         {
+            if (vp.Is3D())
+            {
+                continue;
+            }
             const glm::vec3 worldSpaceHover = vp.GetWorldSpaceMousePos();
-            end2 = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
+            end2 = MapEditor::SnapToGrid(MapEditor::Make2D(poly->axis, worldSpaceHover));
         }
         const glm::vec3 startFront = MapEditor::Make3D(poly->axis, start2, poly->startDepth);
         const glm::vec3 endFront = MapEditor::Make3D(poly->axis, end2, poly->startDepth);
