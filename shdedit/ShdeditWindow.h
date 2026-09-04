@@ -33,6 +33,7 @@ class ShdeditWindow final: public Window
         bool replicateFolderStructure = false;
         std::string sourcesBaseFolder{};
         bool enableOptimization = false;
+        bool debugInfo = false;
         bool dumpBinaries = false;
 
         void SelectCallback(const std::vector<std::string> &paths);

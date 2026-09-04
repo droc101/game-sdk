@@ -38,6 +38,11 @@ namespace
 {
 using float16_t = _Float16; // NOLINT(*-identifier-naming)
 
+#ifdef NDEBUG
+constexpr bool SHADER_DEBUG_INFO = false;
+#else
+constexpr bool SHADER_DEBUG_INFO = true;
+#endif
 constexpr uint32_t MAX_DISPATCH_DIMENSION = 1u << 8u;
 constexpr VkPipelineStageFlagBits2 WAIT_STAGE = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT |
                                                 VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
@@ -938,7 +943,7 @@ VkShaderModule LightBakerGpu::GenerateShaderModule(const std::filesystem::path &
 {
     spirv.clear();
 
-    ShaderCompiler shaderCompiler(path, shaderType, true);
+    ShaderCompiler shaderCompiler(path, shaderType, true, SHADER_DEBUG_INFO);
     if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
     {
         Logger::Error("Error compiling shader {}!", path.string());
@@ -1377,7 +1382,7 @@ bool LightBakerGpu::CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize)
 {
     spirv.clear();
     static constexpr const char *PATH_STRING = "assets/shaders/lightmap/cache_emissive_luxel_indices.comp";
-    ShaderCompiler shaderCompiler(PATH_STRING, EShLangCompute, true);
+    ShaderCompiler shaderCompiler(PATH_STRING, EShLangCompute, true, SHADER_DEBUG_INFO);
     if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
     {
         Logger::Error("Error compiling shader {}!", PATH_STRING);

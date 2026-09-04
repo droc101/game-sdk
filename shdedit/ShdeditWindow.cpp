@@ -190,7 +190,7 @@ Error::ErrorCode ShdeditWindow::Execute(std::string &errorLog)
             }
         }
 
-        e = shader.SaveToAssetEx(outputPath, enableOptimization, &errorLog, file, dumpBinaries);
+        e = shader.SaveToAssetEx(outputPath, enableOptimization, debugInfo, &errorLog, file, dumpBinaries);
         if (e != Error::ErrorCode::OK)
         {
             return e;
@@ -240,9 +240,11 @@ void ShdeditWindow::Render()
     ImGui::Separator();
     ImGui::Dummy({1, 3});
 
-    (void)ImGui::Checkbox("Enable optimization", &enableOptimization);
+    (void)ImGui::Checkbox("Enable Optimization", &enableOptimization);
     ImGui::SameLine();
-    (void)ImGui::Checkbox("Dump SPIR-V binaries", &dumpBinaries);
+    (void)ImGui::Checkbox("Enable Debug Info", &debugInfo);
+    ImGui::SameLine();
+    (void)ImGui::Checkbox("Dump SPIR-V Binaries", &dumpBinaries);
 
     ImGui::Dummy({1, 3});
     ImGui::Separator();

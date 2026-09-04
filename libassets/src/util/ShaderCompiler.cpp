@@ -7,13 +7,13 @@
 #include <cstring>
 #include <filesystem>
 #include <glslang/Public/ResourceLimits.h>
+#include <glslang/Public/ShaderLang.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
 #include <libassets/util/ShaderCompiler.h>
 #include <list>
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -58,15 +58,20 @@ void ShaderCompiler::SDKIncluder::releaseInclude(IncludeResult *data)
 ShaderCompiler::ShaderCompiler(std::string glslSource,
                                const EShLanguage shaderType,
                                std::string shaderName,
-                               const bool optimize):
+                               const bool optimize,
+                               const bool debugInfo):
     shaderType(shaderType),
     glslSource(std::move(glslSource)),
     shaderPath(std::move(shaderName)),
-    optimize(optimize)
+    optimize(optimize),
+    debugInfo(debugInfo)
 {}
 
-ShaderCompiler::ShaderCompiler(const std::filesystem::path &path, const EShLanguage shaderType, const bool optimize):
-    ShaderCompiler("", shaderType, path.string(), optimize)
+ShaderCompiler::ShaderCompiler(const std::filesystem::path &path,
+                               const EShLanguage shaderType,
+                               const bool optimize,
+                               const bool debugInfo):
+    ShaderCompiler("", shaderType, path.string(), optimize, debugInfo)
 {
     FileIo::ReadFileToString(path.string(), this->glslSource);
 }
@@ -115,11 +120,12 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
     }
 
     glslang::SpvOptions options = {
-        .generateDebugInfo = true,
+        .generateDebugInfo = debugInfo,
+        .stripDebugInfo = !debugInfo,
         .disableOptimizer = !optimize,
         .validate = true,
-        .emitNonSemanticShaderDebugInfo = true,
-        .emitNonSemanticShaderDebugSource = true,
+        .emitNonSemanticShaderDebugInfo = debugInfo,
+        .emitNonSemanticShaderDebugSource = debugInfo,
     };
 
     glslang::GlslangToSpv(*program.getIntermediate(shaderType), outputSpirv, &options);

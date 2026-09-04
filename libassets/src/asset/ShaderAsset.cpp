@@ -38,11 +38,12 @@ void ShaderAsset::Reset()
 
 Error::ErrorCode ShaderAsset::SaveToBuffer(DataWriter &writer) const
 {
-    return SaveToBufferEx(writer, false);
+    return SaveToBufferEx(writer, false, false);
 }
 
 Error::ErrorCode ShaderAsset::SaveToBufferEx(DataWriter &writer,
                                              const bool enableOptimization,
+                                             const bool debugInfo,
                                              std::string *errorLog,
                                              const std::string &shaderFilename) const
 {
@@ -64,7 +65,7 @@ Error::ErrorCode ShaderAsset::SaveToBufferEx(DataWriter &writer,
             shaderType = EShLangGeometry;
             break;
     }
-    ShaderCompiler compiler = ShaderCompiler(glsl, shaderType, shaderFilename, enableOptimization);
+    ShaderCompiler compiler = ShaderCompiler(glsl, shaderType, shaderFilename, enableOptimization, debugInfo);
     const Error::ErrorCode error = compiler.Compile(spirv);
     if (error != Error::ErrorCode::OK)
     {
@@ -88,12 +89,13 @@ Error::ErrorCode ShaderAsset::Import(const std::string &filePath)
 
 Error::ErrorCode ShaderAsset::SaveToAssetEx(const std::string &filePath,
                                             const bool enableOptimization,
+                                            const bool debugInfo,
                                             std::string *errorLog,
                                             const std::string &shaderFilename,
                                             const bool dumpSpvBinary) const
 {
     DataWriter writer{};
-    const Error::ErrorCode writeError = SaveToBufferEx(writer, enableOptimization, errorLog, shaderFilename);
+    const Error::ErrorCode writeError = SaveToBufferEx(writer, enableOptimization, debugInfo, errorLog, shaderFilename);
     if (writeError != Error::ErrorCode::OK)
     {
         return writeError;
