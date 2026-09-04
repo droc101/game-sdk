@@ -20,37 +20,11 @@ class SelectTool final: public EditorTool
 
         void HandleDrag(const Viewport &vp, bool isHovered, glm::vec3 worldSpaceHover);
 
-        void ProcessBrushHover(const Viewport &vp,
-                               const Brush &brush,
-                               bool isHovered,
-                               glm::vec2 screenSpaceHover,
-                               size_t sectorIndex);
-
-        void ProcessVertexHover(const Viewport &viewport,
-                                glm::vec2 vertexScreenSpace,
-                                glm::vec2 screenSpaceHover,
-                                bool isHovered,
-                                Brush &brush,
-                                glm::vec2 endVertexScreenSpace,
-                                glm::vec3 worldSpaceHover,
-                                size_t vertexIndex,
-                                size_t brushIndex,
-                                Color &vertexColor,
-                                glm::vec3 startCeiling,
-                                Color &lineColor,
-                                bool &haveAddedNewVertex);
-
         std::vector<std::tuple<ItemType, size_t, float>> DetermineHoveredItem(const Viewport &vp,
                                                                               bool isHovered,
                                                                               const glm::vec3 &worldSpaceHover);
 
         void ProcessViewportSelectMode(const Viewport &vp, bool isHovered, const glm::vec3 &worldSpaceHover);
-
-        void ProcessViewportVertexMode(Viewport &vp,
-                                       glm::mat4 &matrix,
-                                       bool isHovered,
-                                       const glm::vec3 &worldSpaceHover,
-                                       const glm::vec2 &screenSpaceHover);
 
         void RenderViewport(Viewport &vp) override;
 
@@ -69,23 +43,13 @@ class SelectTool final: public EditorTool
         [[nodiscard]] glm::vec3 SelectionCenter() const;
 
     private:
-        bool brushFocusMode = false;
-        size_t focusedBrushIndex = 0;
-
         ItemType hoverType = ItemType::NONE;
         size_t hoverIndex = 0;
 
         ItemType selectionType = ItemType::NONE;
         size_t selectionIndex = 0;
-        size_t selectionVertexIndex = 0;
-
-        /// The difference from the first vertex to the 2nd vertex (firstVertex + lineDragModeSecondVertexOffset = secondVertex)
-        glm::vec2 lineDragModeSecondVertexOffset{};
-        /// The difference from the mouse to the 1st vertex (worldSpaceMouse - lineDragModeMouseOffset = firstVertex)
-        glm::vec2 lineDragModeMouseOffset{};
 
         glm::vec2 sectorDragMouseOffset{};
-        std::vector<glm::vec2> sectorDragVertexOffsets{};
 
         glm::vec2 vertexDragOriginalPoint{};
 

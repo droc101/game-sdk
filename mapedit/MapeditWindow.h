@@ -53,6 +53,8 @@ class MapeditWindow final: public Window
                                const char *shortcutText = nullptr,
                                ImGuiKeyChord shortcut = 0);
 
+        static void ToolbarSeparator();
+
         void SaveJson(const std::string &path) const;
 
         void OpenJson(const std::string &path) const;

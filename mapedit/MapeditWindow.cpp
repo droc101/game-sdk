@@ -23,6 +23,7 @@
 #include "tools/AddPolygonTool.h"
 #include "tools/AddPrimitiveTool.h"
 #include "tools/CutTool.h"
+#include "tools/VertexTool.h"
 
 const Window::WindowProperties &MapeditWindow::GetProperties() const
 {
@@ -69,6 +70,7 @@ bool MapeditWindow::Init()
     (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/primitives.png", MapEditor::PRIMITIVE_ICON_NAME);
     (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/polygon.png", MapEditor::POLYGON_ICON_NAME);
     (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/cut.png", MapEditor::CUT_ICON_NAME);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/vertex.png", MapEditor::VERTEX_ICON_NAME);
 
     vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
     vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;
@@ -121,6 +123,12 @@ bool MapeditWindow::ToolbarToolButton(const char *id,
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + static_cast<float>(spacing));
     return r;
+}
+
+void MapeditWindow::ToolbarSeparator()
+{
+    ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical, 1);
+    ImGui::SameLine();
 }
 
 void MapeditWindow::SetupDockspace()
@@ -520,6 +528,8 @@ void MapeditWindow::Render()
         MapEditor::tool = std::make_unique<SelectTool>();
     }
 
+    ToolbarSeparator();
+
     if (ToolbarToolButton("##actorTool",
                           "Add Actor",
                           MapEditor::ACTOR_ICON_NAME,
@@ -531,6 +541,8 @@ void MapeditWindow::Render()
         MapEditor::toolType = MapEditor::EditorToolType::ADD_ACTOR;
         MapEditor::tool = std::make_unique<AddActorTool>();
     }
+
+    ToolbarSeparator();
 
     if (ToolbarToolButton("##primTool",
                           "Add Primitive",
@@ -557,15 +569,27 @@ void MapeditWindow::Render()
     }
 
     if (ToolbarToolButton("##cutTool",
-                         "Cut Brushes",
-                         MapEditor::CUT_ICON_NAME,
-                         MapEditor::toolType == MapEditor::EditorToolType::CUT,
-                         2,
-                         "Ctrl+5",
-                         ImGuiMod_Ctrl | ImGuiKey_5))
+                          "Cut Brushes",
+                          MapEditor::CUT_ICON_NAME,
+                          MapEditor::toolType == MapEditor::EditorToolType::CUT,
+                          2,
+                          "Ctrl+5",
+                          ImGuiMod_Ctrl | ImGuiKey_5))
     {
         MapEditor::toolType = MapEditor::EditorToolType::CUT;
         MapEditor::tool = std::make_unique<CutTool>();
+    }
+
+    if (ToolbarToolButton("##vertexTool",
+                          "Vertex Tool",
+                          MapEditor::CUT_ICON_NAME,
+                          MapEditor::toolType == MapEditor::EditorToolType::VERTEX,
+                          2,
+                          "Ctrl+6",
+                          ImGuiMod_Ctrl | ImGuiKey_6))
+    {
+        MapEditor::toolType = MapEditor::EditorToolType::VERTEX;
+        MapEditor::tool = std::make_unique<VertexTool>();
     }
 
     ImGui::Dummy({1, 1});

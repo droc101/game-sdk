@@ -31,6 +31,7 @@ class MapEditor
             ADD_PRIMITIVE,
             ADD_POLYGON,
             CUT,
+            VERTEX,
         };
 
         static inline EditorToolType toolType = EditorToolType::SELECT;
@@ -65,6 +66,7 @@ class MapEditor
         static constexpr const char *PRIMITIVE_ICON_NAME = "editor/icon_primitive";
         static constexpr const char *POLYGON_ICON_NAME = "editor/icon_polygon";
         static constexpr const char *CUT_ICON_NAME = "editor/icon_cut";
+        static constexpr const char *VERTEX_ICON_NAME = "editor/icon_vertex";
 
         static inline std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new SelectTool());
 
@@ -91,8 +93,4 @@ class MapEditor
         static void BrushFaceToolWindow(Brush::Face &face);
 
         static void MaterialSelectionTool(std::string &material);
-
-        [[nodiscard]] static glm::vec3 Make3D(Axis axis, glm::vec2 twoDimensionalComponent, float otherAxis);
-
-        [[nodiscard]] static glm::vec2 Make2D(Axis axis, glm::vec3 point);
 };

@@ -10,6 +10,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include "libassets/type/Axis.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
@@ -153,4 +154,34 @@ std::unordered_set<std::pair<glm::vec3, glm::vec3>> Brush::GetUniqueEdges() cons
     }
 
     return edges;
+}
+
+bool Brush::ContainsPoint(Axis axis, glm::vec2 point) const
+{
+    for (const Face &face : faces)
+    {
+        bool inside = false;
+        const size_t n = face.indices.size();
+        for (size_t i = 0; i < n; i++)
+        {
+            const size_t j = (i + n - 1) % n;
+            const glm::vec2 &pointI = AxisHelper::Make2D(axis, vertices.at(face.indices.at(i)));
+            const glm::vec2 &pointJ = AxisHelper::Make2D(axis, vertices.at(face.indices.at(j)));
+
+            const bool intersect = ((pointI.y > point.y) != (pointJ.y > point.y)) &&
+                                   (point.x <
+                                    (pointJ.x - pointI.x) * (point.y - pointI.y) / (pointJ.y - pointI.y) + pointI.x);
+
+            if (intersect)
+            {
+                inside = !inside;
+            }
+        }
+        if (inside)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }

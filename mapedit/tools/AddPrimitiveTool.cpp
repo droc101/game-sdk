@@ -32,11 +32,11 @@ void AddPrimitiveTool::AddBrush()
     const std::vector<glm::vec2> points = GetPoints();
     for (const glm::vec2 &glmPoint: points)
     {
-        b.vertices.push_back(MapEditor::Make3D(axis, glmPoint, startDepth));
+        b.vertices.push_back(AxisHelper::Make3D(axis, glmPoint, startDepth));
     }
     for (const glm::vec2 &glmPoint: points)
     {
-        b.vertices.push_back(MapEditor::Make3D(axis, glmPoint, endDepth));
+        b.vertices.push_back(AxisHelper::Make3D(axis, glmPoint, endDepth));
     }
 
     for (size_t i = 0; i < points.size(); i++)
@@ -91,16 +91,16 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
             {
                 const glm::vec2 twoDimHover = vp.Make2D(worldSpaceHover);
 
-                const glm::vec2 startDepthA = vp.Make2D(MapEditor::Make3D(axis, shapeStart, startDepth));
-                const glm::vec2 startDepthB = vp.Make2D(MapEditor::Make3D(axis, shapeEnd, startDepth));
+                const glm::vec2 startDepthA = vp.Make2D(AxisHelper::Make3D(axis, shapeStart, startDepth));
+                const glm::vec2 startDepthB = vp.Make2D(AxisHelper::Make3D(axis, shapeEnd, startDepth));
                 if (MapEditor::VecDistanceToLine2D(startDepthA, startDepthB, twoDimHover) <=
                     MapEditor::HOVER_DISTANCE_PIXELS)
                 {
                     dragMode = DragMode::DRAGGING_START_DEPTH;
                 }
 
-                const glm::vec2 endDepthA = vp.Make2D(MapEditor::Make3D(axis, shapeStart, endDepth));
-                const glm::vec2 endDepthB = vp.Make2D(MapEditor::Make3D(axis, shapeEnd, endDepth));
+                const glm::vec2 endDepthA = vp.Make2D(AxisHelper::Make3D(axis, shapeStart, endDepth));
+                const glm::vec2 endDepthB = vp.Make2D(AxisHelper::Make3D(axis, shapeEnd, endDepth));
                 if (MapEditor::VecDistanceToLine2D(endDepthA, endDepthB, twoDimHover) <=
                     MapEditor::HOVER_DISTANCE_PIXELS)
                 {

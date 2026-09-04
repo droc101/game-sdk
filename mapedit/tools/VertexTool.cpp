@@ -1,13 +1,13 @@
 //
-// Created by droc101 on 9/2/26.
+// Created by droc101 on 9/3/26.
 //
 
-#include "CutTool.h"
+#include "VertexTool.h"
 #include "../ViewportRenderer.h"
 
-void CutTool::RenderToolWindow() {}
+void VertexTool::RenderToolWindow() {}
 
-void CutTool::RenderViewport(Viewport &vp)
+void VertexTool::RenderViewport(Viewport &vp)
 {
     const ViewportRenderer::ViewportRenderSettings vps = {
         .brushFocusMode = false,

@@ -166,6 +166,7 @@ add_library(assets SHARED
         src/type/Brush.cpp
         include/libassets/type/Brush.h
         include/libassets/type/Axis.h
+        src/type/Axis.cpp
 )
 
 set_target_properties(assets PROPERTIES

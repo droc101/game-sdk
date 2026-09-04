@@ -175,14 +175,14 @@ void Viewport::Render()
         } else
         {
             ImGuiIO &io = ImGui::GetIO();
-            if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+            if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
             {
                 io.WantCaptureMouse = false;
                 ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                const ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+                const ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
                 perspectiveCameraRotation.x += glm::radians(dragDelta.y / -5.0f);
                 perspectiveCameraRotation.y += glm::radians(dragDelta.x / 5.0f);
-                ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
+                ImGui::ResetMouseDragDelta(ImGuiMouseButton_Right);
             }
             glm::vec3 moveDir{};
             if (ImGui::IsKeyDown(ImGuiKey_W))
@@ -376,12 +376,12 @@ void Viewport::RecalculateMatrices()
 
 glm::vec3 Viewport::Make3D(const glm::vec2 twoDimensionalComponent, const float otherAxis) const
 {
-    return MapEditor::Make3D(GetAxis(), twoDimensionalComponent, otherAxis);
+    return AxisHelper::Make3D(GetAxis(), twoDimensionalComponent, otherAxis);
 }
 
 glm::vec2 Viewport::Make2D(const glm::vec3 point) const
 {
-    return MapEditor::Make2D(GetAxis(), point);
+    return AxisHelper::Make2D(GetAxis(), point);
 }
 
 Axis Viewport::GetAxis() const

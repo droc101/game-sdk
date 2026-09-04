@@ -30,11 +30,11 @@ void AddPolygonTool::AddBrush()
     Brush b = Brush();
     for (const glm::vec2 &glmPoint: points)
     {
-        b.vertices.push_back(MapEditor::Make3D(axis, glmPoint, startDepth));
+        b.vertices.push_back(AxisHelper::Make3D(axis, glmPoint, startDepth));
     }
     for (const glm::vec2 &glmPoint: points)
     {
-        b.vertices.push_back(MapEditor::Make3D(axis, glmPoint, endDepth));
+        b.vertices.push_back(AxisHelper::Make3D(axis, glmPoint, endDepth));
     }
 
     for (size_t i = 0; i < points.size(); i++)
@@ -125,11 +125,11 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
 
             if (vp.GetAxis() == axis)
             {
-                const glm::vec2 screenSpaceFirstPoint = vp.WorldToScreenPos(MapEditor::Make3D(axis,
+                const glm::vec2 screenSpaceFirstPoint = vp.WorldToScreenPos(AxisHelper::Make3D(axis,
                                                                                               points.at(0),
                                                                                               startDepth));
                 if (distance(screenSpaceHover, screenSpaceFirstPoint) < 5 ||
-                    MapEditor::Make2D(axis, worldSpaceHover) == points.at(0))
+                    AxisHelper::Make2D(axis, worldSpaceHover) == points.at(0))
                 {
                     if (points.size() < 3)
                     {
@@ -150,18 +150,18 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                             std::vector<glm::vec3> points3d{};
                             for (const glm::vec2 &point: points)
                             {
-                                points3d.push_back(MapEditor::Make3D(axis, point, startDepth));
-                                points3d.push_back(MapEditor::Make3D(axis, point, endDepth));
+                                points3d.push_back(AxisHelper::Make3D(axis, point, startDepth));
+                                points3d.push_back(AxisHelper::Make3D(axis, point, endDepth));
                             }
                             const BoundingBox bb = BoundingBox(points3d);
-                            shapeStart = MapEditor::Make2D(axis, bb.StartPosition());
-                            shapeEnd = MapEditor::Make2D(axis, bb.EndPosition());
+                            shapeStart = AxisHelper::Make2D(axis, bb.StartPosition());
+                            shapeEnd = AxisHelper::Make2D(axis, bb.EndPosition());
                             state = PolygonToolState::WAITING_TO_PLACE;
                         }
                     }
                 } else
                 {
-                    const glm::vec2 worldSpacePoint = MapEditor::Make2D(axis, worldSpaceHover);
+                    const glm::vec2 worldSpacePoint = AxisHelper::Make2D(axis, worldSpaceHover);
                     if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
                     {
                         const glm::vec2 point = MapEditor::SnapToGrid(worldSpacePoint);
@@ -186,16 +186,16 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
             {
                 const glm::vec2 twoDimHover = vp.Make2D(worldSpaceHover);
 
-                const glm::vec2 startDepthA = vp.Make2D(MapEditor::Make3D(axis, shapeStart, startDepth));
-                const glm::vec2 startDepthB = vp.Make2D(MapEditor::Make3D(axis, shapeEnd, startDepth));
+                const glm::vec2 startDepthA = vp.Make2D(AxisHelper::Make3D(axis, shapeStart, startDepth));
+                const glm::vec2 startDepthB = vp.Make2D(AxisHelper::Make3D(axis, shapeEnd, startDepth));
                 if (MapEditor::VecDistanceToLine2D(startDepthA, startDepthB, twoDimHover) <=
                     MapEditor::HOVER_DISTANCE_PIXELS)
                 {
                     state = PolygonToolState::DRAGGING_START_DEPTH;
                 }
 
-                const glm::vec2 endDepthA = vp.Make2D(MapEditor::Make3D(axis, shapeStart, endDepth));
-                const glm::vec2 endDepthB = vp.Make2D(MapEditor::Make3D(axis, shapeEnd, endDepth));
+                const glm::vec2 endDepthA = vp.Make2D(AxisHelper::Make3D(axis, shapeStart, endDepth));
+                const glm::vec2 endDepthB = vp.Make2D(AxisHelper::Make3D(axis, shapeEnd, endDepth));
                 if (MapEditor::VecDistanceToLine2D(endDepthA, endDepthB, twoDimHover) <=
                     MapEditor::HOVER_DISTANCE_PIXELS)
                 {

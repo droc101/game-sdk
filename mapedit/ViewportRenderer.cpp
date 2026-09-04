@@ -33,6 +33,7 @@
 #include <vector>
 #include "MapEditor.h"
 #include "MapRenderer.h"
+#include "libassets/type/Axis.h"
 #include "tools/EditorTool.h"
 #include "Viewport.h"
 
@@ -178,10 +179,10 @@ void ViewportRenderer::RenderNewPrimitive(Viewport &vp, const ViewportRenderNewP
     for (size_t i = 0; i < boxPoints.size(); i++)
     {
         const size_t nextIndex = (i + 1) % boxPoints.size();
-        const glm::vec3 startPointFront = MapEditor::Make3D(prim->axis, boxPoints.at(i), prim->startDepth);
-        const glm::vec3 startPointBack = MapEditor::Make3D(prim->axis, boxPoints.at(i), prim->endDepth);
-        const glm::vec3 endPointFront = MapEditor::Make3D(prim->axis, boxPoints.at(nextIndex), prim->startDepth);
-        const glm::vec3 endPointBack = MapEditor::Make3D(prim->axis, boxPoints.at(nextIndex), prim->endDepth);
+        const glm::vec3 startPointFront = AxisHelper::Make3D(prim->axis, boxPoints.at(i), prim->startDepth);
+        const glm::vec3 startPointBack = AxisHelper::Make3D(prim->axis, boxPoints.at(i), prim->endDepth);
+        const glm::vec3 endPointFront = AxisHelper::Make3D(prim->axis, boxPoints.at(nextIndex), prim->startDepth);
+        const glm::vec3 endPointBack = AxisHelper::Make3D(prim->axis, boxPoints.at(nextIndex), prim->endDepth);
         MapRenderer::RenderLine(startPointFront, endPointFront, Color(.6, 6, 0, 1), matrix, 2);
         if (vp.Is3D() || vp.GetAxis() != prim->axis)
         {
@@ -193,13 +194,13 @@ void ViewportRenderer::RenderNewPrimitive(Viewport &vp, const ViewportRenderNewP
     for (size_t i = 0; i < prim->points.size(); i++)
     {
         const size_t nextIndex = (i + 1) % prim->points.size();
-        const glm::vec3 startPointFront = MapEditor::Make3D(prim->axis, prim->points.at(i), prim->startDepth);
-        const glm::vec3 startPointBack = MapEditor::Make3D(prim->axis, prim->points.at(i), prim->endDepth);
-        const glm::vec3 endPointFront = MapEditor::Make3D(prim->axis, prim->points.at(nextIndex), prim->startDepth);
-        const glm::vec3 endPointBack = MapEditor::Make3D(prim->axis, prim->points.at(nextIndex), prim->endDepth);
+        const glm::vec3 startPointFront = AxisHelper::Make3D(prim->axis, prim->points.at(i), prim->startDepth);
+        const glm::vec3 startPointBack = AxisHelper::Make3D(prim->axis, prim->points.at(i), prim->endDepth);
+        const glm::vec3 endPointFront = AxisHelper::Make3D(prim->axis, prim->points.at(nextIndex), prim->startDepth);
+        const glm::vec3 endPointBack = AxisHelper::Make3D(prim->axis, prim->points.at(nextIndex), prim->endDepth);
         if (!vp.Is3D() && vp.GetAxis() == prim->axis)
         {
-            MapRenderer::RenderBillboardPoint(startPointFront + MapEditor::Make3D(prim->axis, glm::vec2(0), 0.1),
+            MapRenderer::RenderBillboardPoint(startPointFront + AxisHelper::Make3D(prim->axis, glm::vec2(0), 0.1),
                                               10,
                                               Color(1, 0, 0, 1),
                                               matrix);
@@ -239,16 +240,16 @@ void ViewportRenderer::RenderNewPolygon(const Viewport &vp,
                 continue;
             }
             const glm::vec3 worldSpaceHover = vp.GetWorldSpaceMousePos();
-            end2 = MapEditor::SnapToGrid(MapEditor::Make2D(poly->axis, worldSpaceHover));
+            end2 = MapEditor::SnapToGrid(AxisHelper::Make2D(poly->axis, worldSpaceHover));
         }
-        const glm::vec3 startFront = MapEditor::Make3D(poly->axis, start2, poly->startDepth);
-        const glm::vec3 endFront = MapEditor::Make3D(poly->axis, end2, poly->startDepth);
-        const glm::vec3 startBack = MapEditor::Make3D(poly->axis, start2, poly->endDepth);
-        const glm::vec3 endBack = MapEditor::Make3D(poly->axis, end2, poly->endDepth);
+        const glm::vec3 startFront = AxisHelper::Make3D(poly->axis, start2, poly->startDepth);
+        const glm::vec3 endFront = AxisHelper::Make3D(poly->axis, end2, poly->startDepth);
+        const glm::vec3 startBack = AxisHelper::Make3D(poly->axis, start2, poly->endDepth);
+        const glm::vec3 endBack = AxisHelper::Make3D(poly->axis, end2, poly->endDepth);
 
         if (!vp.Is3D() && vp.GetAxis() == poly->axis)
         {
-            MapRenderer::RenderBillboardPoint(startFront + MapEditor::Make3D(poly->axis, glm::vec2(0), 0.1),
+            MapRenderer::RenderBillboardPoint(startFront + AxisHelper::Make3D(poly->axis, glm::vec2(0), 0.1),
                                               10,
                                               Color(1, 0, 0, 1),
                                               matrix);

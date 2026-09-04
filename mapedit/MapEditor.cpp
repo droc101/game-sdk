@@ -228,31 +228,3 @@ void MapEditor::MaterialSelectionTool(std::string &material)
     }
     MaterialBrowserWindow::InputMaterial("##Texture", material);
 }
-
-glm::vec3 MapEditor::Make3D(const Axis axis, glm::vec2 twoDimensionalComponent, float otherAxis)
-{
-    switch (axis)
-    {
-        case Axis::Y:
-            return {twoDimensionalComponent.x, otherAxis, twoDimensionalComponent.y};
-        case Axis::Z:
-            return {twoDimensionalComponent.x, twoDimensionalComponent.y, otherAxis};
-        case Axis::X:
-            return {otherAxis, twoDimensionalComponent.y, twoDimensionalComponent.x};
-    }
-    return glm::vec3(0);
-}
-
-glm::vec2 MapEditor::Make2D(const Axis axis, glm::vec3 point)
-{
-    switch (axis)
-    {
-        case Axis::Y:
-            return {point.x, point.z};
-        case Axis::Z:
-            return {point.x, point.y};
-        case Axis::X:
-            return {point.z, point.y};
-    }
-    return glm::vec3(0);
-}

@@ -10,6 +10,7 @@
 #include <glm/fwd.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <libassets/type/Axis.h>
 #include <libassets/type/BoundingBox.h>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -52,6 +53,8 @@ class Brush
 
         [[nodiscard]] std::unordered_set<std::pair<glm::vec3, glm::vec3>> GetUniqueEdges() const;
 
+        [[nodiscard]] bool ContainsPoint(Axis axis, glm::vec2 point) const;
+
         std::string editorName{};
 
         glm::vec3 origin{};
@@ -63,19 +66,19 @@ class Brush
 
 template<> struct std::hash<std::pair<glm::vec3, glm::vec3>>
 {
-    size_t operator()(const std::pair<glm::vec3, glm::vec3> &pair) const noexcept
-    {
-        constexpr size_t GOLDEN_RATIO = 0x9e3779b9;
-        size_t hashValue = 0;
+        size_t operator()(const std::pair<glm::vec3, glm::vec3> &pair) const noexcept
+        {
+            constexpr size_t GOLDEN_RATIO = 0x9e3779b9;
+            size_t hashValue = 0;
 
-        hashValue ^= std::hash<float>()(pair.first.x) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
-        hashValue ^= std::hash<float>()(pair.first.y) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
-        hashValue ^= std::hash<float>()(pair.first.z) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(pair.first.x) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(pair.first.y) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(pair.first.z) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
 
-        hashValue ^= std::hash<float>()(pair.second.x) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
-        hashValue ^= std::hash<float>()(pair.second.y) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
-        hashValue ^= std::hash<float>()(pair.second.z) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(pair.second.x) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(pair.second.y) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(pair.second.z) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
 
-        return hashValue;
-    }
+            return hashValue;
+        }
 };

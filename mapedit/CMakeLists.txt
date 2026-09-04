@@ -35,6 +35,8 @@ add_executable(mapedit mapedit.cpp
         CompileProgressWindow.h
         tools/CutTool.cpp
         tools/CutTool.h
+        tools/VertexTool.cpp
+        tools/VertexTool.h
 )
 
 configure_sdk_gui_program(mapedit)
