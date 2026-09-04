@@ -5,8 +5,6 @@
 #pragma once
 
 #include <cstddef>
-#include <libassets/type/Brush.h>
-#include <libassets/type/Color.h>
 #include <tuple>
 #include <vector>
 #include "../Viewport.h"

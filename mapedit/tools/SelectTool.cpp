@@ -178,6 +178,8 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
                                                                                               const glm::vec3
                                                                                                       &worldSpaceHover)
 {
+    const ImVec2 localMousePos = vp.GetLocalMousePos();
+
     hoverType = ItemType::NONE;
     bool selectionHovered = false;
     std::vector<std::tuple<ItemType, size_t, float>> actorHoverStack{};
@@ -187,8 +189,8 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
     {
         const Actor &a = MapEditor::map.actors.at(actorIndex);
         const glm::vec2 posScreenSpace = vp.WorldToScreenPos(a.position);
-        const ImVec2 hoverScreenSpaceIV = vp.GetLocalMousePos();
-        const glm::vec2 hoverScreenSpace = glm::vec2(hoverScreenSpaceIV.x, hoverScreenSpaceIV.y);
+
+        const glm::vec2 hoverScreenSpace = glm::vec2(localMousePos.x, localMousePos.y);
 
         if (distance(posScreenSpace, hoverScreenSpace) <= MapEditor::HOVER_DISTANCE_PIXELS && isHovered)
         {
@@ -262,18 +264,16 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
 
     if (selectionType == ItemType::ACTOR)
     {
-        const ImVec2 lmp = vp.GetLocalMousePos();
         const Actor &actor = MapEditor::map.actors.at(selectionIndex);
-        const float dist = glm::distance({lmp.x, lmp.y}, vp.WorldToScreenPos(actor.position));
+        const float dist = glm::distance({localMousePos.x, localMousePos.y}, vp.WorldToScreenPos(actor.position));
         if (dist >= 44 && dist <= 52)
         {
             hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);
         }
     } else if (selectionType == ItemType::BRUSH)
     {
-        const ImVec2 lmp = vp.GetLocalMousePos();
         const Brush &brush = MapEditor::map.brushes.at(selectionIndex);
-        const float dist = glm::distance({lmp.x, lmp.y}, vp.WorldToScreenPos(brush.origin));
+        const float dist = glm::distance({localMousePos.x, localMousePos.y}, vp.WorldToScreenPos(brush.origin));
         if (dist >= 44 && dist <= 52)
         {
             hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);

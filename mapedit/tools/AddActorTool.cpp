@@ -6,6 +6,7 @@
 #include <imgui.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
+#include <libassets/type/Axis.h>
 #include <libassets/type/Color.h>
 #include <memory>
 #include "../MapEditor.h"
@@ -42,7 +43,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
         }
     }
 
-    if (isHovered)
+    if (!vp.Is3D() && isHovered)
     {
         if (!hasPlacedActor)
         {
@@ -59,7 +60,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
             if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
             {
                 MapEditor::toolType = MapEditor::EditorToolType::SELECT;
-                MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+                MapEditor::tool = std::make_unique<SelectTool>();
                 return;
             }
         } else
@@ -75,21 +76,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
                 if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
                 {
                     const glm::vec3 snappedHover = MapEditor::SnapToGrid(worldSpaceHover);
-                    switch (vp.GetType())
-                    {
-                        case Viewport::ViewportType::TOP_DOWN_XZ:
-                            newActorPosition.x = snappedHover.x;
-                            newActorPosition.z = snappedHover.z;
-                            break;
-                        case Viewport::ViewportType::FRONT_XY:
-                            newActorPosition.x = snappedHover.x;
-                            newActorPosition.y = snappedHover.y;
-                            break;
-                        case Viewport::ViewportType::SIDE_YZ:
-                            newActorPosition.y = snappedHover.y;
-                            newActorPosition.z = snappedHover.z;
-                            break;
-                    }
+                    AxisHelper::Set2DComponents(vp.GetAxis(), newActorPosition, vp.Make2D(snappedHover));
                 }
             }
         }
@@ -100,9 +87,13 @@ void AddActorTool::RenderViewport(Viewport &vp)
         .position = newActorPosition,
         .rotation = {0, 0, 0},
     };
-    const glm::vec2 pt = MapEditor::SnapToGrid(glm::vec2(worldSpaceHover.x, worldSpaceHover.z));
+    glm::vec3 pt = MapEditor::SnapToGrid(worldSpaceHover);
+    if (!vp.Is3D())
+    {
+        pt += AxisHelper::Make3D(vp.GetAxis(), {0, 0}, 0.1);
+    }
     ViewportRenderer::ViewportRenderPoint vpt = {
-        .pos = glm::vec3(pt.x, 0.1, pt.y),
+        .pos = pt,
         .color = Color(0.7, 1, 0.7, 1),
         .size = 10,
     };

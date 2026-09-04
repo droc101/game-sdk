@@ -128,8 +128,8 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
             if (vp.GetAxis() == axis)
             {
                 const glm::vec2 screenSpaceFirstPoint = vp.WorldToScreenPos(AxisHelper::Make3D(axis,
-                                                                                              points.at(0),
-                                                                                              startDepth));
+                                                                                               points.at(0),
+                                                                                               startDepth));
                 if (distance(screenSpaceHover, screenSpaceFirstPoint) < 5 ||
                     AxisHelper::Make2D(axis, worldSpaceHover) == points.at(0))
                 {
@@ -210,36 +210,14 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
             {
                 state = PolygonToolState::WAITING_TO_PLACE;
             }
-            switch (axis)
-            {
-                case Axis::X:
-                    startDepth = MapEditor::SnapToGrid(worldSpaceHover.x);
-                    break;
-                case Axis::Y:
-                    startDepth = MapEditor::SnapToGrid(worldSpaceHover.y);
-                    break;
-                case Axis::Z:
-                    startDepth = MapEditor::SnapToGrid(worldSpaceHover.z);
-                    break;
-            }
+            startDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(vp.GetAxis(), worldSpaceHover));
         } else if (state == PolygonToolState::DRAGGING_END_DEPTH)
         {
             if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 state = PolygonToolState::WAITING_TO_PLACE;
             }
-            switch (axis)
-            {
-                case Axis::X:
-                    endDepth = MapEditor::SnapToGrid(worldSpaceHover.x);
-                    break;
-                case Axis::Y:
-                    endDepth = MapEditor::SnapToGrid(worldSpaceHover.y);
-                    break;
-                case Axis::Z:
-                    endDepth = MapEditor::SnapToGrid(worldSpaceHover.z);
-                    break;
-            }
+            endDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(vp.GetAxis(), worldSpaceHover));
         }
     }
 

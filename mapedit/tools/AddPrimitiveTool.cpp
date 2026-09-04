@@ -126,32 +126,10 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
                     shapeEnd = vp.Make2D(MapEditor::SnapToGrid(worldSpaceHover));
                     break;
                 case DragMode::DRAGGING_START_DEPTH:
-                    switch (axis)
-                    {
-                        case Axis::X:
-                            startDepth = MapEditor::SnapToGrid(worldSpaceHover.x);
-                            break;
-                        case Axis::Y:
-                            startDepth = MapEditor::SnapToGrid(worldSpaceHover.y);
-                            break;
-                        case Axis::Z:
-                            startDepth = MapEditor::SnapToGrid(worldSpaceHover.z);
-                            break;
-                    }
+                    startDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(vp.GetAxis(), worldSpaceHover));
                     break;
                 case DragMode::DRAGGING_END_DEPTH:
-                    switch (axis)
-                    {
-                        case Axis::X:
-                            endDepth = MapEditor::SnapToGrid(worldSpaceHover.x);
-                            break;
-                        case Axis::Y:
-                            endDepth = MapEditor::SnapToGrid(worldSpaceHover.y);
-                            break;
-                        case Axis::Z:
-                            endDepth = MapEditor::SnapToGrid(worldSpaceHover.z);
-                            break;
-                    }
+                    startDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(vp.GetAxis(), worldSpaceHover));
                     break;
                 default:
                     break;
