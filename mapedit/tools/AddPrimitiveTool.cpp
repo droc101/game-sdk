@@ -62,6 +62,8 @@ void AddPrimitiveTool::AddBrush()
         b.faces.push_back(face);
     }
 
+    b.CenterOrigin(MapEditor::GRID_SPACING_VALUES[MapEditor::gridSpacingIndex]);
+
     if (!b.IsValid())
     {
         WindowManager::Get().GetCurrentWindow()->ErrorMessage("Brush has invalid shape and will not "

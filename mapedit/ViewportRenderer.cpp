@@ -14,6 +14,7 @@
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
+#include <libassets/type/Axis.h>
 #include <libassets/type/BoundingBox.h>
 #include <libassets/type/Brush.h>
 #include <libassets/type/Color.h>
@@ -33,7 +34,6 @@
 #include <vector>
 #include "MapEditor.h"
 #include "MapRenderer.h"
-#include "libassets/type/Axis.h"
 #include "tools/EditorTool.h"
 #include "Viewport.h"
 
@@ -151,6 +151,8 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
     {
         c = Color(.8, .8, .8, 1);
     }
+
+    MapRenderer::RenderBillboardPoint(brush.origin, 10.0f, c, matrix);
 
     const std::unordered_set<std::pair<glm::vec3, glm::vec3>> edges = brush.GetUniqueEdges();
 

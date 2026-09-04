@@ -2,6 +2,7 @@
 // Created by droc101 on 9/2/26.
 //
 
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <glm/ext/matrix_transform.hpp>
@@ -10,7 +11,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include "libassets/type/Axis.h"
+#include <libassets/type/Axis.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
@@ -156,9 +157,9 @@ std::unordered_set<std::pair<glm::vec3, glm::vec3>> Brush::GetUniqueEdges() cons
     return edges;
 }
 
-bool Brush::ContainsPoint(Axis axis, glm::vec2 point) const
+bool Brush::ContainsPoint(const Axis axis, const glm::vec2 point) const
 {
-    for (const Face &face : faces)
+    for (const Face &face: faces)
     {
         bool inside = false;
         const size_t n = face.indices.size();
@@ -184,4 +185,27 @@ bool Brush::ContainsPoint(Axis axis, glm::vec2 point) const
     }
 
     return false;
+}
+
+void Brush::CenterOrigin(const float gridSnap)
+{
+    const BoundingBox bb = BoundingBox(vertices);
+    glm::vec3 newOrigin = bb.origin;
+
+    float nf = newOrigin.x / gridSnap;
+    float fs = std::round(nf);
+    newOrigin.x = fs * gridSnap;
+    nf = newOrigin.y / gridSnap;
+    fs = std::round(nf);
+    newOrigin.y = fs * gridSnap;
+    nf = newOrigin.z / gridSnap;
+    fs = std::round(nf);
+    newOrigin.z = fs * gridSnap;
+
+    for (glm::vec3 &vertex: vertices)
+    {
+        vertex = vertex - origin;
+    }
+
+    origin = newOrigin;
 }

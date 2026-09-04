@@ -12,11 +12,11 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/asset/LevelMaterialAsset.h>
+#include <libassets/type/Brush.h>
 #include <libassets/util/Error.h>
 #include <limits>
 #include <string>
 #include <vector>
-#include "libassets/type/Brush.h"
 
 float MapEditor::SnapToGrid(const float f)
 {

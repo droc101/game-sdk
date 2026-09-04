@@ -55,6 +55,8 @@ class Brush
 
         [[nodiscard]] bool ContainsPoint(Axis axis, glm::vec2 point) const;
 
+        void CenterOrigin(float gridSnap);
+
         std::string editorName{};
 
         glm::vec3 origin{};

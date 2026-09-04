@@ -16,19 +16,17 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
-#include <libassets/type/Color.h>
+#include <libassets/type/Axis.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
 #include <tuple>
 #include <variant>
 #include <vector>
-#include "../../cmake-build-release/_deps/openexr-src/src/lib/OpenEXR/ImfCRgbaFile.h"
 #include "../EditActorWindow.h"
 #include "../MapEditor.h"
 #include "../Viewport.h"
 #include "../ViewportRenderer.h"
 #include "EditorTool.h"
-#include "libassets/type/Axis.h"
 
 float SelectTool::WrapAndSnapAngle(float angle)
 {
