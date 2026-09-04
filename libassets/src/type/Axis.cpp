@@ -61,3 +61,22 @@ void AxisHelper::SetComponent(const Axis axis, glm::vec3 &vec, const float compo
             break;
     }
 }
+
+void AxisHelper::Set2DComponents(const Axis ignoredAxis, glm::vec3 &dest, const glm::vec2 twoDimensionalComponents)
+{
+    switch (ignoredAxis)
+    {
+        case Axis::X:
+            dest.z = twoDimensionalComponents.x;
+            dest.y = twoDimensionalComponents.y;
+            break;
+        case Axis::Y:
+            dest.x = twoDimensionalComponents.x;
+            dest.z = twoDimensionalComponents.y;
+            break;
+        case Axis::Z:
+            dest.x = twoDimensionalComponents.x;
+            dest.y = twoDimensionalComponents.y;
+            break;
+    }
+}

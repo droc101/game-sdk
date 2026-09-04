@@ -158,8 +158,8 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
 
     for (const std::pair<glm::vec3, glm::vec3> &edge: edges)
     {
-        const glm::vec3 startPos = brushMatrix * glm::vec4(edge.first, 0.0f);
-        const glm::vec3 endPos = brushMatrix * glm::vec4(edge.second, 0.0f);
+        const glm::vec3 startPos = brushMatrix * glm::vec4(edge.first, 1.0f);
+        const glm::vec3 endPos = brushMatrix * glm::vec4(edge.second, 1.0f);
 
         MapRenderer::RenderLine(startPos, endPos, c, matrix, 4);
     }

@@ -49,13 +49,11 @@ class SelectTool final: public EditorTool
         ItemType selectionType = ItemType::NONE;
         size_t selectionIndex = 0;
 
-        glm::vec2 sectorDragMouseOffset{};
+        glm::vec2 brushDragMouseOffset{};
 
-        glm::vec2 vertexDragOriginalPoint{};
-
-        bool actorDraggingRotationGizmo = false;
+        bool draggingRotationGizmo = false;
         float rotationGizmoLastAngle = 0.0f;
-        float rotationGizmoActorAngle = 0.0f;
+        float rotationGizmoSelectionAngle = 0.0f;
 
         std::vector<std::tuple<ItemType, size_t, float>> menuHoveredItems{};
 

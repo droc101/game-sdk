@@ -204,7 +204,7 @@ void Brush::CenterOrigin(const float gridSnap)
 
     for (glm::vec3 &vertex: vertices)
     {
-        vertex = vertex - origin;
+        vertex = vertex - newOrigin;
     }
 
     origin = newOrigin;

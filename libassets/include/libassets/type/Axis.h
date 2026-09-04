@@ -26,6 +26,8 @@ class AxisHelper
         [[nodiscard]] static float GetComponent(Axis axis, glm::vec3 vector);
 
         static void SetComponent(Axis axis, glm::vec3 &vec, float component);
+
+        static void Set2DComponents(Axis ignoredAxis, glm::vec3 &dest, glm::vec2 twoDimensionalComponents);
 };
 
 #endif //GAME_SDK_AXIS_H
