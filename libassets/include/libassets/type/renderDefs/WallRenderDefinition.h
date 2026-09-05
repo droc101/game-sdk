@@ -10,6 +10,8 @@
 #include <libassets/type/renderDefs/values/BoolDefinitionValue.h>
 #include <libassets/type/renderDefs/values/ColorDefinitionValue.h>
 #include <libassets/type/renderDefs/values/NumericDefinitionValue.h>
+#include <libassets/type/renderDefs/values/StringDefinitionValue.h>
+#include <string>
 
 class WallRenderDefinition: public RenderDefinition
 {
@@ -27,6 +29,19 @@ class WallRenderDefinition: public RenderDefinition
         [[nodiscard]] float GetHeight(const Actor &actor);
         [[nodiscard]] glm::vec2 GetSize(const Actor &actor);
 
+        [[nodiscard]] std::string GetTexture(const Actor &actor);
+        [[nodiscard]] Color GetTintColor(const Actor &actor);
+
+        [[nodiscard]] float GetUvScaleX(const Actor &actor);
+        [[nodiscard]] float GetUvScaleY(const Actor &actor);
+        [[nodiscard]] glm::vec2 GetUvScale(const Actor &actor);
+
+        [[nodiscard]] float GetUvOffsetX(const Actor &actor);
+        [[nodiscard]] float GetUvOffsetY(const Actor &actor);
+        [[nodiscard]] glm::vec2 GetUvOffset(const Actor &actor);
+
+        [[nodiscard]] bool IsUnshaded(const Actor &actor);
+
     private:
         ColorDefinitionValue color;
         BoolDefinitionValue zAxisOrientation;
@@ -36,4 +51,12 @@ class WallRenderDefinition: public RenderDefinition
 
         NumericDefinitionValue<float> width;
         NumericDefinitionValue<float> height;
+
+        StringDefinitionValue texture;
+        ColorDefinitionValue tintColor;
+        NumericDefinitionValue<float> uvOffsetX;
+        NumericDefinitionValue<float> uvOffsetY;
+        NumericDefinitionValue<float> uvScaleX;
+        NumericDefinitionValue<float> uvScaleY;
+        BoolDefinitionValue unshaded;
 };

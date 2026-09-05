@@ -123,7 +123,7 @@ template<typename T> class NumericDefinitionValue: public BasicDefinitionValue<T
 
         static T ProcessExpressionVariable(const ExpressionVariable &var, const KvList &params)
         {
-            constexpr float DEFAULT_VALUE = 0;
+            constexpr T DEFAULT_VALUE = 0;
             if (!params.contains(var.paramName))
             {
                 return DEFAULT_VALUE;

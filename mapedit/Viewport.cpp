@@ -403,3 +403,8 @@ bool Viewport::Is3D() const
 {
     return type == ViewportType::PERSPECTIVE;
 }
+
+glm::vec3 Viewport::GetPerspectiveCameraPosition() const
+{
+    return perspectiveCameraPos;
+}

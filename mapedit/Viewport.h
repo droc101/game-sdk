@@ -112,6 +112,8 @@ class Viewport
 
         bool Is3D() const;
 
+        glm::vec3 GetPerspectiveCameraPosition() const;
+
         static constexpr float ZOOM_STEP = 20.0f;
 
     private:

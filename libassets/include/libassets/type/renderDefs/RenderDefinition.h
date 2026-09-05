@@ -11,6 +11,8 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
+#include "values/StringDefinitionValue.h"
+
 class Actor;
 
 class RenderDefinition
@@ -29,6 +31,13 @@ class RenderDefinition
             RD_TYPE_CONE,
         };
 
+        enum class RenderDefinitionViewportMode: uint8_t
+        {
+            ALL_VIEWPORTS,
+            ONLY_2D,
+            ONLY_3D,
+        };
+
         RenderDefinition();
         explicit RenderDefinition(const nlohmann::json &json);
 
@@ -40,9 +49,13 @@ class RenderDefinition
 
         [[nodiscard]] bool IsGizmo(const Actor &actor);
 
+        [[nodiscard]] RenderDefinitionViewportMode GetViewportMode(const Actor &actor);
+
     protected:
         RenderDefinitionType type = RenderDefinitionType::RD_TYPE_UNKNOWN;
         BoolDefinitionValue gizmo;
+        StringDefinitionValue viewportMode;
+
 
     private:
         static RenderDefinitionType ParseType(const std::string &type);

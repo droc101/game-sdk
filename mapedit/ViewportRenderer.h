@@ -139,7 +139,8 @@ class ViewportRenderer
         static void RenderModelRdef(ModelRenderDefinition *rdef,
                                     const Actor &actor,
                                     const glm::mat4 &worldMatrix,
-                                    const glm::mat4 &matrix);
+                                    const glm::mat4 &matrix,
+                                    bool textured);
 
         static void RenderOrientationRdef(OrientationRenderDefinition *rdef,
                                           const Actor &actor,
@@ -153,7 +154,8 @@ class ViewportRenderer
         static void RenderWallRdef(WallRenderDefinition *rdef,
                                    const Actor &actor,
                                    const glm::mat4 &worldMatrix,
-                                   const glm::mat4 &matrix);
+                                   const glm::mat4 &matrix,
+                                   bool textured);
 
         static void RenderCircleRdef(CircleRenderDefinition *rdef,
                                      const Actor &actor,

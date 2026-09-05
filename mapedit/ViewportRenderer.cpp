@@ -39,9 +39,18 @@
 
 void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings &settings)
 {
-    MapRenderer::RenderViewportGrid(vp);
+    GLHelper::Clear();
 
     glm::mat4 matrix = vp.GetMatrix();
+
+    if (vp.Is3D() && MapEditor::map.hasSky)
+    {
+        glm::mat4 skyWorldMatrix = glm::mat4(1.0);
+        skyWorldMatrix = glm::translate(skyWorldMatrix, vp.GetPerspectiveCameraPosition());
+        MapRenderer::RenderModelTextured("model/sky.gmdl", matrix, skyWorldMatrix, 0, Color(-1));
+        GLHelper::ClearDepth();
+    }
+    MapRenderer::RenderViewportGrid(vp);
 
     for (size_t actorIndex = 0; actorIndex < MapEditor::map.actors.size(); actorIndex++)
     {
@@ -268,6 +277,11 @@ void ViewportRenderer::RenderNewPolygon(const Viewport &vp,
 
 void ViewportRenderer::RenderGizmo(const Viewport &vp, const ViewportRenderGizmo *gizmo, const glm::mat4 &matrix)
 {
+    if (vp.Is3D())
+    {
+        return;
+    }
+
     const float radius = vp.PixelsToWorldDistance(gizmo->radiusInPx);
 
     constexpr uint32_t NUM_VERTS = 32;
@@ -377,13 +391,22 @@ void ViewportRenderer::RenderActor(const Actor &a, const glm::mat4 &matrix, cons
         {
             continue;
         }
+        const RenderDefinition::RenderDefinitionViewportMode vpMode = rdef.get()->GetViewportMode(a);
+        if (vpMode == RenderDefinition::RenderDefinitionViewportMode::ONLY_3D && !vp.Is3D())
+        {
+            continue;
+        }
+        if (vpMode == RenderDefinition::RenderDefinitionViewportMode::ONLY_2D && vp.Is3D())
+        {
+            continue;
+        }
         switch (rdef.get()->GetType())
         {
             case RenderDefinition::RenderDefinitionType::RD_TYPE_BOX:
                 RenderBoxRdef(dynamic_cast<BoxRenderDefinition *>(rdef.get()), a, worldMatrix, matrix);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_MODEL:
-                RenderModelRdef(dynamic_cast<ModelRenderDefinition *>(rdef.get()), a, worldMatrix, matrix);
+                RenderModelRdef(dynamic_cast<ModelRenderDefinition *>(rdef.get()), a, worldMatrix, matrix, vp.Is3D());
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_ORIENTATION:
                 RenderOrientationRdef(dynamic_cast<OrientationRenderDefinition *>(rdef.get()), a, matrix, vp);
@@ -395,7 +418,7 @@ void ViewportRenderer::RenderActor(const Actor &a, const glm::mat4 &matrix, cons
                 RenderSpriteRdef(dynamic_cast<SpriteRenderDefinition *>(rdef.get()), a, matrix);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_WALL:
-                RenderWallRdef(dynamic_cast<WallRenderDefinition *>(rdef.get()), a, worldMatrix, matrix);
+                RenderWallRdef(dynamic_cast<WallRenderDefinition *>(rdef.get()), a, worldMatrix, matrix, vp.Is3D());
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_CIRCLE:
                 RenderCircleRdef(dynamic_cast<CircleRenderDefinition *>(rdef.get()), a, matrix, vp.GetType());
@@ -602,9 +625,17 @@ void ViewportRenderer::RenderBoxRdef(BoxRenderDefinition *rdef,
 void ViewportRenderer::RenderModelRdef(ModelRenderDefinition *rdef,
                                        const Actor &actor,
                                        const glm::mat4 &worldMatrix,
-                                       const glm::mat4 &matrix)
+                                       const glm::mat4 &matrix,
+                                       const bool textured)
 {
-    if (MapEditor::drawModels)
+    if (textured)
+    {
+        MapRenderer::RenderModelTextured(rdef->GetModel(actor),
+                                         matrix,
+                                         worldMatrix,
+                                         rdef->GetSkin(actor),
+                                         rdef->GetModColor(actor));
+    } else if (MapEditor::drawModels)
     {
         MapRenderer::RenderModel(rdef->GetModel(actor), matrix, worldMatrix, rdef->GetColor(actor));
     }
@@ -635,27 +666,44 @@ void ViewportRenderer::RenderSpriteRdef(SpriteRenderDefinition *rdef, const Acto
 void ViewportRenderer::RenderWallRdef(WallRenderDefinition *rdef,
                                       const Actor &actor,
                                       const glm::mat4 &worldMatrix,
-                                      const glm::mat4 &matrix)
+                                      const glm::mat4 &matrix,
+                                      const bool textured)
 {
-    const glm::vec2 size = rdef->GetSize(actor);
-    const glm::vec2 localOrigin = rdef->GetLocalCenter(actor);
-    const float bottom = localOrigin.y - (size.y / 2.0f);
-    const float top = localOrigin.y + (size.y / 2.0f);
-    const glm::vec2 startPoint = rdef->GetZAxisOrientation(actor) ? glm::vec2(0, localOrigin.x - size.x / 2.0f)
-                                                                  : glm::vec2(localOrigin.x - size.x / 2.0f, 0);
-    const glm::vec2 endPoint = rdef->GetZAxisOrientation(actor) ? glm::vec2(0, localOrigin.x + size.x / 2.0f)
-                                                                : glm::vec2(localOrigin.x + size.x / 2.0f, 0);
+    if (textured)
+    {
+        const MapRenderer::Wall wall = {
+            .color = rdef->GetTintColor(actor),
+            .zAxisOrientation = rdef->GetZAxisOrientation(actor),
+            .localCenter = rdef->GetLocalCenter(actor),
+            .size = rdef->GetSize(actor),
+            .texture = rdef->GetTexture(actor),
+            .uvOffset = rdef->GetUvOffset(actor),
+            .uvScale = rdef->GetUvScale(actor),
+            .unshaded = rdef->IsUnshaded(actor),
+        };
+        MapRenderer::RenderWall(matrix, worldMatrix, wall);
+    } else
+    {
+        const glm::vec2 size = rdef->GetSize(actor);
+        const glm::vec2 localOrigin = rdef->GetLocalCenter(actor);
+        const float bottom = localOrigin.y - (size.y / 2.0f);
+        const float top = localOrigin.y + (size.y / 2.0f);
+        const glm::vec2 startPoint = rdef->GetZAxisOrientation(actor) ? glm::vec2(0, localOrigin.x - size.x / 2.0f)
+                                                                      : glm::vec2(localOrigin.x - size.x / 2.0f, 0);
+        const glm::vec2 endPoint = rdef->GetZAxisOrientation(actor) ? glm::vec2(0, localOrigin.x + size.x / 2.0f)
+                                                                    : glm::vec2(localOrigin.x + size.x / 2.0f, 0);
 
-    const glm::vec3 startCeiling = worldMatrix * glm::vec4(startPoint.x, top, startPoint.y, 1.0f);
-    const glm::vec3 endCeiling = worldMatrix * glm::vec4(endPoint.x, top, endPoint.y, 1.0f);
-    const glm::vec3 startFloor = worldMatrix * glm::vec4(startPoint.x, bottom, startPoint.y, 1.0f);
-    const glm::vec3 endFloor = worldMatrix * glm::vec4(endPoint.x, bottom, endPoint.y, 1.0f);
+        const glm::vec3 startCeiling = worldMatrix * glm::vec4(startPoint.x, top, startPoint.y, 1.0f);
+        const glm::vec3 endCeiling = worldMatrix * glm::vec4(endPoint.x, top, endPoint.y, 1.0f);
+        const glm::vec3 startFloor = worldMatrix * glm::vec4(startPoint.x, bottom, startPoint.y, 1.0f);
+        const glm::vec3 endFloor = worldMatrix * glm::vec4(endPoint.x, bottom, endPoint.y, 1.0f);
 
-    const Color c = rdef->GetColor(actor);
-    MapRenderer::RenderLine(startCeiling, endCeiling, c, matrix, 2.0f);
-    MapRenderer::RenderLine(startFloor, endFloor, c, matrix, 2.0f);
-    MapRenderer::RenderLine(startCeiling, startFloor, c, matrix, 2.0f);
-    MapRenderer::RenderLine(endCeiling, endFloor, c, matrix, 2.0f);
+        const Color c = rdef->GetColor(actor);
+        MapRenderer::RenderLine(startCeiling, endCeiling, c, matrix, 2.0f);
+        MapRenderer::RenderLine(startFloor, endFloor, c, matrix, 2.0f);
+        MapRenderer::RenderLine(startCeiling, startFloor, c, matrix, 2.0f);
+        MapRenderer::RenderLine(endCeiling, endFloor, c, matrix, 2.0f);
+    }
 }
 
 void ViewportRenderer::RenderCircleRdef(CircleRenderDefinition *rdef,

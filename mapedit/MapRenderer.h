@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
 #include <GL/glew.h>
 #include <glm/ext/matrix_transform.hpp>
@@ -18,6 +19,22 @@
 class MapRenderer
 {
     public:
+        struct Wall
+        {
+                Color color;
+                bool zAxisOrientation;
+
+                glm::vec2 localCenter;
+                glm::vec2 size;
+
+                std::string texture;
+
+                glm::vec2 uvOffset;
+                glm::vec2 uvScale;
+
+                bool unshaded;
+        };
+
         MapRenderer() = delete;
 
         static bool Init();
@@ -47,7 +64,15 @@ class MapRenderer
                                 const glm::mat4 &worldMatrix,
                                 const Color &c);
 
+        static void RenderModelTextured(std::string model,
+                                        const glm::mat4 &viewMatrix,
+                                        const glm::mat4 &worldMatrix,
+                                        uint32_t skin,
+                                        const Color &modColor);
+
         static const ModelAsset &GetModel(std::string model);
+
+        static void RenderWall(const glm::mat4 &viewMatrix, const glm::mat4 &worldMatrix, const Wall &wall);
 
     private:
         struct ModelBuffer
@@ -62,6 +87,7 @@ class MapRenderer
         static inline GLuint lineProgram = 0;
         static inline GLuint gridProgram = 0;
         static inline GLuint spriteProgram = 0;
+        static inline GLuint shadedModelProgram = 0;
 
         static inline GLHelper::GL_Buffer axisHelperBuffer{};
         static inline GLHelper::GL_Buffer worldBorderBuffer{};
@@ -79,4 +105,10 @@ class MapRenderer
                                 const glm::mat4 &viewMatrix,
                                 const glm::mat4 &worldMatrix,
                                 const Color &c);
+
+        static void RenderModelTextured(ModelBuffer &buffer,
+                                        const glm::mat4 &viewMatrix,
+                                        const glm::mat4 &worldMatrix,
+                                        uint32_t skinIndex,
+                                        const Color &modColor);
 };

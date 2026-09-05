@@ -265,6 +265,12 @@ glm::vec2 GLHelper::ScreenToNDC(const glm::vec2 screenPos, const glm::vec2 scree
     return {screenPos.x / screenSize.x * 2.0f - 1.0f, 1.0f - screenPos.y / screenSize.y * 2.0f};
 }
 
+void GLHelper::Clear()
+{
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
 void GLHelper::ClearDepth()
 {
     glClear(GL_DEPTH_BUFFER_BIT);

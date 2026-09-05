@@ -388,7 +388,7 @@ void MapeditWindow::Render()
             {
                 MapEditor::drawWorldBorder = !MapEditor::drawWorldBorder;
             }
-            if (ImGui::MenuItem("Show 3D Models", "", MapEditor::drawModels))
+            if (ImGui::MenuItem("Show 3D Models in 2D viewports", "", MapEditor::drawModels))
             {
                 MapEditor::drawModels = !MapEditor::drawModels;
             }

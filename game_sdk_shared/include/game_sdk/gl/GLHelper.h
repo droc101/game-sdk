@@ -124,5 +124,7 @@ class GLHelper
          */
         [[nodiscard]] static glm::vec2 ScreenToNDC(glm::vec2 screenPos, glm::vec2 screenSize);
 
+        static void Clear();
+
         static void ClearDepth();
 };

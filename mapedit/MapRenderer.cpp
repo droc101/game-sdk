@@ -21,6 +21,7 @@
 #include <ranges>
 #include <string>
 #include <vector>
+#include "libassets/type/Material.h"
 #include "MapEditor.h"
 #include "Viewport.h"
 
@@ -42,10 +43,15 @@ bool MapRenderer::Init()
                                                                             "assets/shaders/sprite.vert",
                                                                             spriteProgram);
 
+    const Error::ErrorCode shadedModelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/model_shaded.frag",
+                                                                                 "assets/shaders/model_shaded.vert",
+                                                                                 shadedModelProgram);
+
     if (cubeProgramErrorCode != Error::ErrorCode::OK ||
         linesProgramErrorCode != Error::ErrorCode::OK ||
         gridProgramErrorCode != Error::ErrorCode::OK ||
-        spriteProgramErrorCode != Error::ErrorCode::OK)
+        spriteProgramErrorCode != Error::ErrorCode::OK ||
+        shadedModelProgramErrorCode != Error::ErrorCode::OK)
     {
         return false;
     }
@@ -136,9 +142,6 @@ void MapRenderer::Destroy()
 
 void MapRenderer::RenderViewportGrid(const Viewport &vp)
 {
-    glClearColor(0, 0, 0, 1);
-    // glDisable(GL_SCISSOR_TEST);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLineWidth(1);
 
     glm::mat4 view = vp.GetMatrix();
@@ -338,6 +341,30 @@ void MapRenderer::RenderModel(std::string model,
     }
 }
 
+void MapRenderer::RenderModelTextured(std::string model,
+                                      const glm::mat4 &viewMatrix,
+                                      const glm::mat4 &worldMatrix,
+                                      const uint32_t skin,
+                                      const Color &modColor)
+{
+    if (!model.empty())
+    {
+        if (!modelBuffers.contains(model))
+        {
+            const std::string absolutePath = SharedMgr::Get().pathManager.GetAssetPath(model);
+            if (absolutePath.empty())
+            {
+                model = "model/error.gmdl";
+            } else
+            {
+                const ModelBuffer buf = LoadModel(absolutePath);
+                modelBuffers[model] = buf;
+            }
+        }
+        RenderModelTextured(modelBuffers.at(model), viewMatrix, worldMatrix, skin, modColor);
+    }
+}
+
 const ModelAsset &MapRenderer::GetModel(std::string model)
 {
     if (!model.empty())
@@ -425,4 +452,291 @@ void MapRenderer::RenderModel(ModelBuffer &buffer,
     }
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+void MapRenderer::RenderModelTextured(ModelBuffer &buffer,
+                                      const glm::mat4 &viewMatrix,
+                                      const glm::mat4 &worldMatrix,
+                                      const uint32_t skinIndex,
+                                      const Color &modColor)
+{
+    const uint32_t lodIndex = 0;
+
+    glEnable(GL_CULL_FACE);
+
+    glUseProgram(shadedModelProgram);
+    glBindVertexArray(buffer.vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffer.vbo);
+    const GLint posAttrib = glGetAttribLocation(shadedModelProgram, "VERTEX");
+    const GLint uvAttrib = glGetAttribLocation(shadedModelProgram, "VERTEX_UV");
+    const GLint colorAttrib = glGetAttribLocation(shadedModelProgram, "VERTEX_COLOR");
+    const GLint normAttrib = glGetAttribLocation(shadedModelProgram, "VERTEX_NORMAL");
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), nullptr);
+    glVertexAttribPointer(uvAttrib,
+                          2,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          12 * sizeof(float),
+                          reinterpret_cast<void *>(3 * sizeof(float)));
+    glVertexAttribPointer(colorAttrib,
+                          4,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          12 * sizeof(float),
+                          reinterpret_cast<void *>(5 * sizeof(float)));
+    glVertexAttribPointer(normAttrib,
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          12 * sizeof(float),
+                          reinterpret_cast<void *>(9 * sizeof(float)));
+    glEnableVertexAttribArray(posAttrib);
+    glEnableVertexAttribArray(uvAttrib);
+    glEnableVertexAttribArray(colorAttrib);
+    glEnableVertexAttribArray(normAttrib);
+
+    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+    glUniform4fv(glGetUniformLocation(shadedModelProgram, "MOD_COLOR"), 1, modColor.GetDataPointer());
+
+    for (size_t i = 0; i < buffer.model.GetMaterialsPerSkin(); i++)
+    {
+        const size_t matIndex = buffer.model.GetSkin(skinIndex).at(i);
+        Material &mat = buffer.model.GetMaterial(matIndex);
+        glUniform4fv(glGetUniformLocation(shadedModelProgram, "MATERIAL_COLOR"), 1, mat.color.GetDataPointer());
+        glUniform1i(glGetUniformLocation(shadedModelProgram, "SHADED"),
+                    mat.shader == Material::MaterialShader::SHADER_SHADED);
+
+        std::string textureName;
+        if (mat.shader == Material::MaterialShader::SHADER_SKY)
+        {
+            textureName = MapEditor::map.skyTexture;
+        } else
+        {
+            textureName = mat.texture;
+        }
+
+        GLuint texture = 0;
+        const Error::ErrorCode code = SharedMgr::Get().textureCache.GetTextureGLuint(textureName, texture);
+        if (code != Error::ErrorCode::OK)
+        {
+            texture = SharedMgr::Get().textureCache.GetMissingTextureGLuint();
+        }
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glUniform1i(glGetUniformLocation(shadedModelProgram, "TEXTURE"), 0);
+
+        const GLuint ebo = buffer.ebos.at(i);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glDrawElements(GL_TRIANGLES,
+                       static_cast<GLsizei>(buffer.model.GetLod(lodIndex).indexCounts.at(i)),
+                       GL_UNSIGNED_INT,
+                       nullptr);
+    }
+
+    glDisable(GL_CULL_FACE);
+}
+
+void MapRenderer::RenderWall(const glm::mat4 &viewMatrix, const glm::mat4 &worldMatrix, const Wall &wall)
+{
+    const float bottom = wall.localCenter.y - (wall.size.y / 2.0f);
+    const float top = wall.localCenter.y + (wall.size.y / 2.0f);
+    const glm::vec2 startPoint = wall.zAxisOrientation ? glm::vec2(0, wall.localCenter.x - wall.size.x / 2.0f)
+                                                       : glm::vec2(wall.localCenter.x - wall.size.x / 2.0f, 0);
+    const glm::vec2 endPoint = wall.zAxisOrientation ? glm::vec2(0, wall.localCenter.x + wall.size.x / 2.0f)
+                                                     : glm::vec2(wall.localCenter.x + wall.size.x / 2.0f, 0);
+
+    glm::vec3 normal{};
+    glm::vec3 backfaceNormal{};
+    if (!wall.zAxisOrientation)
+    {
+        normal.z = 1;
+        backfaceNormal.z = -1;
+    } else
+    {
+        normal.x = -1;
+        backfaceNormal.x = 1;
+    }
+    const glm::vec2 startUV = glm::vec2(wall.uvOffset.x, wall.uvOffset.y);
+    const glm::vec2 endUV = glm::vec2((wall.uvScale.x / 16.0f) * wall.size.x + wall.uvOffset.x,
+                                      (wall.uvScale.y / 16.0f) * wall.size.y + wall.uvOffset.y);
+
+    const float vertices[8][12] = {
+        // X Y Z U V A
+        {
+            startPoint.x,
+            top,
+            startPoint.y,
+            startUV.x,
+            startUV.y,
+            1,
+            1,
+            1,
+            1,
+            normal.x,
+            normal.y,
+            normal.z,
+        },
+        {
+            endPoint.x,
+            top,
+            endPoint.y,
+            endUV.x,
+            startUV.y,
+            1,
+            1,
+            1,
+            1,
+            normal.x,
+            normal.y,
+            normal.z,
+        },
+        {
+            endPoint.x,
+            bottom,
+            endPoint.y,
+            endUV.x,
+            endUV.y,
+            1,
+            1,
+            1,
+            1,
+            normal.x,
+            normal.y,
+            normal.z,
+        },
+        {
+            startPoint.x,
+            bottom,
+            startPoint.y,
+            startUV.x,
+            endUV.y,
+            1,
+            1,
+            1,
+            1,
+            normal.x,
+            normal.y,
+            normal.z,
+        },
+
+        // backface
+        {
+            startPoint.x,
+            top,
+            startPoint.y,
+            endUV.x,
+            startUV.y,
+            1,
+            1,
+            1,
+            1,
+            backfaceNormal.x,
+            backfaceNormal.y,
+            backfaceNormal.z,
+        },
+        {
+            endPoint.x,
+            top,
+            endPoint.y,
+            startUV.x,
+            startUV.y,
+            1,
+            1,
+            1,
+            1,
+            backfaceNormal.x,
+            backfaceNormal.y,
+            backfaceNormal.z,
+        },
+        {
+            endPoint.x,
+            bottom,
+            endPoint.y,
+            startUV.x,
+            endUV.y,
+            1,
+            1,
+            1,
+            1,
+            backfaceNormal.x,
+            backfaceNormal.y,
+            backfaceNormal.z,
+        },
+        {
+            startPoint.x,
+            bottom,
+            startPoint.y,
+            endUV.x,
+            endUV.y,
+            1,
+            1,
+            1,
+            1,
+            backfaceNormal.x,
+            backfaceNormal.y,
+            backfaceNormal.z,
+        },
+    };
+
+    const uint32_t indices[] = {2, 1, 0, 3, 2, 0, 4, 5, 6, 4, 6, 7};
+
+    glEnable(GL_CULL_FACE);
+
+    glUseProgram(shadedModelProgram);
+    glBindVertexArray(workBuffer.vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, workBuffer.vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+
+    const GLint posAttrib = glGetAttribLocation(shadedModelProgram, "VERTEX");
+    const GLint uvAttrib = glGetAttribLocation(shadedModelProgram, "VERTEX_UV");
+    const GLint colorAttrib = glGetAttribLocation(shadedModelProgram, "VERTEX_COLOR");
+    const GLint normAttrib = glGetAttribLocation(shadedModelProgram, "VERTEX_NORMAL");
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), nullptr);
+    glVertexAttribPointer(uvAttrib,
+                          2,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          12 * sizeof(float),
+                          reinterpret_cast<void *>(3 * sizeof(float)));
+    glVertexAttribPointer(colorAttrib,
+                          4,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          12 * sizeof(float),
+                          reinterpret_cast<void *>(5 * sizeof(float)));
+    glVertexAttribPointer(normAttrib,
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          12 * sizeof(float),
+                          reinterpret_cast<void *>(9 * sizeof(float)));
+    glEnableVertexAttribArray(posAttrib);
+    glEnableVertexAttribArray(uvAttrib);
+    glEnableVertexAttribArray(colorAttrib);
+    glEnableVertexAttribArray(normAttrib);
+
+    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+    glUniform4fv(glGetUniformLocation(shadedModelProgram, "MOD_COLOR"), 1, wall.color.GetDataPointer());
+
+    glUniform4fv(glGetUniformLocation(shadedModelProgram, "MATERIAL_COLOR"), 1, Color(-1).GetDataPointer());
+    glUniform1i(glGetUniformLocation(shadedModelProgram, "SHADED"), !wall.unshaded);
+
+    GLuint texture = 0;
+    const Error::ErrorCode code = SharedMgr::Get().textureCache.GetTextureGLuint(wall.texture, texture);
+    if (code != Error::ErrorCode::OK)
+    {
+        texture = SharedMgr::Get().textureCache.GetMissingTextureGLuint();
+    }
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glUniform1i(glGetUniformLocation(shadedModelProgram, "TEXTURE"), 0);
+
+    const GLuint ebo = workBuffer.ebo;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STREAM_DRAW);
+    glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(uint32_t), GL_UNSIGNED_INT, nullptr);
+
+    glDisable(GL_CULL_FACE);
 }
