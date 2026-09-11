@@ -5,6 +5,7 @@
 const uint RAY_FLAGS = gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT;
 
 layout (constant_id = 2) const uint LIGHT_COUNT = 0;
+layout (constant_id = 3) const bool STORE_DIRECT = false;
 
 layout (location = 0) rayPayloadEXT bool isLightVisible;
 
@@ -111,8 +112,13 @@ void main() {
     }
     if (hitCount > 0) {
         accumulatedColor += areaLightColor / hitCount;
-        imageStore(outputLightmap, luxelIndex, vec4(vec3(luxelNormal.w, luxelNormal.w, luxelNormal.w) + areaLightColor / hitCount, 1));
+        if (!STORE_DIRECT) {
+            imageStore(outputLightmap, luxelIndex, vec4(vec3(luxelNormal.w, luxelNormal.w, luxelNormal.w) + areaLightColor / hitCount, 1));
+        }
     }
 
+    if (STORE_DIRECT) {
+        imageStore(outputLightmap, luxelIndex, vec4(imageLoad(outputLightmap, luxelIndex).rgb + accumulatedColor, 1));
+    }
     imageStore(currentBounceLightmap, luxelIndex, vec4(accumulatedColor, 1));
 }

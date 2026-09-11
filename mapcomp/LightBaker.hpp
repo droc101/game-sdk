@@ -15,5 +15,6 @@ class LightBaker
         static bool Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
                          const std::vector<Light> &lights,
                          const glm::uvec2 &lightmapSize,
-                         std::vector<uint16_t> &pixelData);
+                         std::vector<uint16_t> &pixelData,
+                         std::vector<uint16_t> &indirectLightingPixelData);
 };

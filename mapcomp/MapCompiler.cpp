@@ -198,9 +198,9 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         for (Sector &sector: map.sectors)
         {
             sector.ceilingMaterial.unitsPerLuxel = std::max<float>(sector.ceilingMaterial.unitsPerLuxel,
-                                                                     FAST_COMPILE_MIN_UNITS_PER_LUXEL);
-            sector.floorMaterial.unitsPerLuxel = std::max<float>(sector.floorMaterial.unitsPerLuxel,
                                                                    FAST_COMPILE_MIN_UNITS_PER_LUXEL);
+            sector.floorMaterial.unitsPerLuxel = std::max<float>(sector.floorMaterial.unitsPerLuxel,
+                                                                 FAST_COMPILE_MIN_UNITS_PER_LUXEL);
             for (WallMaterial &mat: sector.wallMaterials)
             {
                 mat.unitsPerLuxel = std::max<float>(mat.unitsPerLuxel, FAST_COMPILE_MIN_UNITS_PER_LUXEL);
@@ -331,7 +331,8 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         {
             if (!sectorMeshBuilders.contains(sector.ceilingMaterial.material))
             {
-                sectorMeshBuilders.emplace(sector.ceilingMaterial.material, LevelMeshBuilder(pathManager, sector.ceilingMaterial.material));
+                sectorMeshBuilders.emplace(sector.ceilingMaterial.material,
+                                           LevelMeshBuilder(pathManager, sector.ceilingMaterial.material));
             }
             sectorMeshBuilders.at(sector.ceilingMaterial.material).AddCeiling(sector, overlappingFloors);
         }
@@ -345,7 +346,8 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         {
             if (!sectorMeshBuilders.contains(sector.floorMaterial.material))
             {
-                sectorMeshBuilders.emplace(sector.floorMaterial.material, LevelMeshBuilder(pathManager, sector.floorMaterial.material));
+                sectorMeshBuilders.emplace(sector.floorMaterial.material,
+                                           LevelMeshBuilder(pathManager, sector.floorMaterial.material));
             }
             sectorMeshBuilders.at(sector.floorMaterial.material).AddFloor(sector, overlappingCeilings);
         }
@@ -356,14 +358,13 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         }
 
         collisionBuilders.push_back(builder);
-        for (const LevelMeshBuilder &b : sectorMeshBuilders | std::views::values)
+        for (const LevelMeshBuilder &b: sectorMeshBuilders | std::views::values)
         {
             mapMeshBuilders.push_back(b);
         }
     }
 
-    std::erase_if(mapMeshBuilders,
-                  [](const LevelMeshBuilder &item) -> bool { return item.IsEmpty(); });
+    std::erase_if(mapMeshBuilders, [](const LevelMeshBuilder &item) -> bool { return item.IsEmpty(); });
 
     Logger::Info("Level has {} visual meshes", mapMeshBuilders.size());
     Logger::Info("Level has {} physics meshes", collisionBuilders.size());
@@ -389,11 +390,12 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         builder.Write(writer);
     }
 
-    std::vector<uint16_t> pixels = {0x3c00, 0x3c00, 0x3c00, 0x3c00}; // float16 1.0
+    std::vector<uint16_t> lightmapPixels = {0x3c00, 0x3c00, 0x3c00, 0x3c00}; // float16 1.0
+    std::vector<uint16_t> indirectLightingLightmapPixels = {0x3c00, 0x3c00, 0x3c00, 0x3c00}; // float16 1.0
     if (!skipLighting)
     {
         Logger::Info("Baking lightmap...");
-        if (!LightBaker::Bake(mapMeshBuilders, lights, lightmapSize, pixels))
+        if (!LightBaker::Bake(mapMeshBuilders, lights, lightmapSize, lightmapPixels, indirectLightingLightmapPixels))
         {
             return Error::ErrorCode::UNKNOWN;
         }
@@ -405,7 +407,8 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     Logger::Info("Finalizing Map...");
     writer.Write<size_t>(lightmapSize.x);
     writer.Write<size_t>(lightmapSize.y);
-    writer.WriteBuffer(pixels);
+    writer.WriteBuffer(lightmapPixels);
+    writer.WriteBuffer(indirectLightingLightmapPixels);
     writer.Write<uint32_t>(lights.size());
     for (const Light &light: lights)
     {
