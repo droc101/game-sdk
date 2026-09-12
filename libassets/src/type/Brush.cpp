@@ -2,16 +2,17 @@
 // Created by droc101 on 9/2/26.
 //
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <glm/ext/matrix_transform.hpp>
+#include <libassets/type/Axis.h>
 #include <libassets/type/BoundingBox.h>
 #include <libassets/type/Brush.h>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <libassets/type/Axis.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
@@ -41,6 +42,72 @@ Brush::Brush(nlohmann::ordered_json json)
     {
         faces.emplace_back(item.value());
     }
+}
+
+Brush::Brush(const std::vector<glm::vec2> &points,
+             const float startDepth,
+             const float endDepth,
+             const Axis axis,
+             const std::string &material,
+             const float gridSnap)
+{
+    for (const glm::vec2 &glmPoint: points)
+    {
+        vertices.push_back(AxisHelper::Make3D(axis, glmPoint, startDepth));
+    }
+    for (const glm::vec2 &glmPoint: points)
+    {
+        vertices.push_back(AxisHelper::Make3D(axis, glmPoint, endDepth));
+    }
+
+    const bool reverse = glm::cross(glm::vec3{points.at(1) - points.at(0), 0},
+                                    glm::vec3{points.at(2) - points.at(0), 0})
+                                 .z < 0;
+
+    for (size_t i = 0; i < points.size(); i++)
+    {
+        Face face{};
+        face.material = material;
+        size_t nextIndex = (i + 1) % points.size();
+        face.indices.push_back(i);
+        if (reverse)
+        {
+            face.indices.push_back(i + points.size());
+            face.indices.push_back(nextIndex + points.size());
+            face.indices.push_back(nextIndex);
+        } else
+        {
+            face.indices.push_back(nextIndex);
+            face.indices.push_back(nextIndex + points.size());
+            face.indices.push_back(i + points.size());
+        }
+        faces.push_back(face);
+    }
+
+    for (uint8_t whichCap = 0; whichCap < 2; whichCap++)
+    {
+        const size_t indexOffset = whichCap == 1 ? points.size() : 0;
+
+        Face face{};
+        face.material = material;
+        if ((reverse && whichCap == 1) || (!reverse && whichCap == 0))
+        {
+            face.indices.push_back(indexOffset);
+            for (size_t i = points.size() - 1; i > 0; i--)
+            {
+                face.indices.push_back(i + indexOffset);
+            }
+        } else
+        {
+            for (size_t i = 0; i < points.size(); i++)
+            {
+                face.indices.push_back(i + indexOffset);
+            }
+        }
+        faces.push_back(face);
+    }
+
+    CenterOrigin(gridSnap);
 }
 
 nlohmann::ordered_json Brush::GenerateJson() const
@@ -185,6 +252,23 @@ bool Brush::ContainsPoint(const Axis axis, const glm::vec2 point) const
     }
 
     return false;
+}
+
+std::vector<uint32_t> Brush::GetTriangulatedMesh() const
+{
+    std::vector<uint32_t> indices;
+    for (const Face &face: faces)
+    {
+        const uint32_t sharedIndex = face.indices.at(0);
+
+        for (uint32_t i = 1; i < face.indices.size() - 1; i++)
+        {
+            indices.emplace_back(sharedIndex);
+            indices.emplace_back(face.indices.at(i));
+            indices.emplace_back(face.indices.at(i + 1));
+        }
+    }
+    return indices;
 }
 
 void Brush::CenterOrigin(const float gridSnap)

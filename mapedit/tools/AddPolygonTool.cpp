@@ -4,8 +4,6 @@
 
 #include "AddPolygonTool.h"
 #include <algorithm>
-#include <cstddef>
-#include <cstdint>
 #include <game_sdk/WindowManager.h>
 #include <imgui.h>
 #include <libassets/type/Axis.h>
@@ -13,6 +11,7 @@
 #include <libassets/type/Brush.h>
 #include <libassets/type/Color.h>
 #include <memory>
+#include <utility>
 #include <vector>
 #include "../MapEditor.h"
 #include "../Viewport.h"
@@ -27,48 +26,20 @@ void AddPolygonTool::AddBrush()
         return;
     }
 
-    Brush b = Brush();
-    for (const glm::vec2 &glmPoint: points)
-    {
-        b.vertices.push_back(AxisHelper::Make3D(axis, glmPoint, startDepth));
-    }
-    for (const glm::vec2 &glmPoint: points)
-    {
-        b.vertices.push_back(AxisHelper::Make3D(axis, glmPoint, endDepth));
-    }
+    Brush brush = Brush(points,
+                        startDepth,
+                        endDepth,
+                        axis,
+                        MapEditor::material,
+                        MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex));
 
-    for (size_t i = 0; i < points.size(); i++)
-    {
-        Brush::Face face{};
-        face.material = MapEditor::material;
-        size_t nextIndex = (i + 1) % points.size();
-        face.indices.push_back(i);
-        face.indices.push_back(nextIndex);
-        face.indices.push_back(nextIndex + points.size());
-        face.indices.push_back(i + points.size());
-        b.faces.push_back(face);
-    }
-
-    for (uint8_t whichCap = 0; whichCap < 2; whichCap++)
-    {
-        Brush::Face face{};
-        face.material = MapEditor::material;
-        for (size_t i = 0; i < points.size(); i++)
-        {
-            face.indices.push_back(i + (whichCap == 1 ? points.size() : 0));
-        }
-        b.faces.push_back(face);
-    }
-
-    b.CenterOrigin(MapEditor::GRID_SPACING_VALUES[MapEditor::gridSpacingIndex]);
-
-    if (!b.IsValid())
+    if (!brush.IsValid())
     {
         WindowManager::Get().GetCurrentWindow()->ErrorMessage("Brush has invalid shape and will not "
                                                               "be added");
     } else
     {
-        MapEditor::map.brushes.push_back(b);
+        MapEditor::map.brushes.emplace_back(std::move(brush));
     }
     state = PolygonToolState::IDLE;
 }

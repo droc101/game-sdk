@@ -47,11 +47,16 @@ bool MapRenderer::Init()
                                                                                  "assets/shaders/model_shaded.vert",
                                                                                  shadedModelProgram);
 
+    const Error::ErrorCode brushProgramErrorCode = GLHelper::CreateProgram("assets/shaders/brush.frag",
+                                                                           "assets/shaders/brush.vert",
+                                                                           brushProgram);
+
     if (cubeProgramErrorCode != Error::ErrorCode::OK ||
         linesProgramErrorCode != Error::ErrorCode::OK ||
         gridProgramErrorCode != Error::ErrorCode::OK ||
         spriteProgramErrorCode != Error::ErrorCode::OK ||
-        shadedModelProgramErrorCode != Error::ErrorCode::OK)
+        shadedModelProgramErrorCode != Error::ErrorCode::OK ||
+        brushProgramErrorCode != Error::ErrorCode::OK)
     {
         return false;
     }
@@ -363,6 +368,34 @@ void MapRenderer::RenderModelTextured(std::string model,
         }
         RenderModelTextured(modelBuffers.at(model), viewMatrix, worldMatrix, skin, modColor);
     }
+}
+
+void MapRenderer::RenderBrush(const std::vector<glm::vec3> &vertices,
+                              const std::vector<uint32_t> &indices,
+                              const glm::mat4 &viewMatrix,
+                              const glm::mat4 &worldMatrix)
+{
+    glEnable(GL_CULL_FACE);
+
+    glUseProgram(brushProgram);
+    glBindVertexArray(workBuffer.vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, workBuffer.vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STREAM_DRAW);
+
+    const GLint posAttrib = glGetAttribLocation(brushProgram, "VERTEX");
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), nullptr);
+    glEnableVertexAttribArray(posAttrib);
+
+    glUniformMatrix4fv(glGetUniformLocation(brushProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(brushProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+
+    const GLuint ebo = workBuffer.ebo;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), indices.data(), GL_STREAM_DRAW);
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
+
+    glDisable(GL_CULL_FACE);
 }
 
 const ModelAsset &MapRenderer::GetModel(std::string model)

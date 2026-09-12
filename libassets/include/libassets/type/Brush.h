@@ -43,6 +43,13 @@ class Brush
         Brush() = default;
         explicit Brush(nlohmann::ordered_json json);
 
+        Brush(const std::vector<glm::vec2> &points,
+              float startDepth,
+              float endDepth,
+              Axis axis,
+              const std::string &material,
+              float gridSnap);
+
         [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 
         [[nodiscard]] bool IsValid() const;
@@ -54,6 +61,8 @@ class Brush
         [[nodiscard]] std::unordered_set<std::pair<glm::vec3, glm::vec3>> GetUniqueEdges() const;
 
         [[nodiscard]] bool ContainsPoint(Axis axis, glm::vec2 point) const;
+
+        [[nodiscard]] std::vector<uint32_t> GetTriangulatedMesh() const;
 
         void CenterOrigin(float gridSnap);
 

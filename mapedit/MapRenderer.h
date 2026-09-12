@@ -70,6 +70,11 @@ class MapRenderer
                                         uint32_t skin,
                                         const Color &modColor);
 
+        static void RenderBrush(const std::vector<glm::vec3> &vertices,
+                                const std::vector<uint32_t> &indices,
+                                const glm::mat4 &viewMatrix,
+                                const glm::mat4 &worldMatrix);
+
         static const ModelAsset &GetModel(std::string model);
 
         static void RenderWall(const glm::mat4 &viewMatrix, const glm::mat4 &worldMatrix, const Wall &wall);
@@ -88,6 +93,7 @@ class MapRenderer
         static inline GLuint gridProgram = 0;
         static inline GLuint spriteProgram = 0;
         static inline GLuint shadedModelProgram = 0;
+        static inline GLuint brushProgram = 0;
 
         static inline GLHelper::GL_Buffer axisHelperBuffer{};
         static inline GLHelper::GL_Buffer worldBorderBuffer{};

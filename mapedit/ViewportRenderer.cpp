@@ -149,6 +149,12 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
 
     const glm::mat4 brushMatrix = brush.GetTransformMatrix();
 
+    if (vp.Is3D())
+    {
+        MapRenderer::RenderBrush(brush.vertices, brush.GetTriangulatedMesh(), matrix, brushMatrix);
+    }
+
+    return;
     const bool isFocusedBrush = settings.brushFocusMode && settings.focusedBrushIndex == brushIndex;
 
     Color c = Color(0.6, 0.6, 0.6, 1);
