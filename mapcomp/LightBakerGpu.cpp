@@ -631,18 +631,18 @@ static constexpr VmaAllocationCreateInfo MAPPED_ALLOCATION_CREATE_INFO = {
     .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
 };
 
-bool LightBakerGpu::GetTextureIndex(const std::string &textureName,
+bool LightBakerGpu::GetTextureIndex(const std::string &materialName,
                                     uint32_t &index,
                                     const SearchPathManager &pathManager)
 {
     for (index = 0; index < loadedTextures.size(); index++)
     {
-        if (loadedTextures.at(index).first == textureName)
+        if (loadedTextures.at(index).first == materialName)
         {
             return true;
         }
     }
-    const std::string materialPath = pathManager.GetAssetPath(textureName);
+    const std::string materialPath = pathManager.GetAssetPath(materialName);
     LevelMaterialAsset material{};
     Error::ErrorCode error = material.LoadFromAsset(materialPath);
     if (error != Error::ErrorCode::OK)
@@ -711,7 +711,7 @@ bool LightBakerGpu::GetTextureIndex(const std::string &textureName,
     };
     vkUpdateDescriptorSets(lunaGetVkDevice(device), 1, &writeDescriptor, 0, nullptr);
 
-    loadedTextures.emplace_back(textureName, lunaImage);
+    loadedTextures.emplace_back(materialName, lunaImage);
     return true;
 }
 

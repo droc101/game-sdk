@@ -1,8 +1,11 @@
 #version 460
 
+in vec2 UV;
+
 out vec4 COLOR;
 
+uniform sampler2D TEXTURE;
+
 void main() {
-    const float a = float(gl_PrimitiveID) / 15.0;
-    COLOR = vec4(a, a, a, 1);
+    COLOR = texture(TEXTURE, UV);
 }

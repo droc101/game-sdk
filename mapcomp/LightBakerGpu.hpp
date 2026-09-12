@@ -25,7 +25,7 @@ class LightBakerGpu
                   uint32_t sampleCount,
                   std::vector<uint16_t> &pixelData);
 
-        bool GetTextureIndex(const std::string &textureName, uint32_t &index, const SearchPathManager &pathManager);
+        bool GetTextureIndex(const std::string &materialName, uint32_t &index, const SearchPathManager &pathManager);
 
     private:
         LightBakerGpu();

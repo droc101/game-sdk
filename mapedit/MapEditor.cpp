@@ -96,23 +96,8 @@ std::array<float, 4> MapEditor::CalculateBBox(const std::vector<glm::vec2> &poin
 
     for (const glm::vec2 &vert: points)
     {
-        if (vert.x < minPoint.x)
-        {
-            minPoint.x = vert.x;
-        }
-        if (vert.x > maxPoint.x)
-        {
-            maxPoint.x = vert.x;
-        }
-
-        if (vert.y < minPoint.y)
-        {
-            minPoint.y = vert.y;
-        }
-        if (vert.y > maxPoint.y)
-        {
-            maxPoint.y = vert.y;
-        }
+        minPoint = glm::min(minPoint, vert);
+        maxPoint = glm::max(maxPoint, vert);
     }
     return {minPoint.x, minPoint.y, maxPoint.x, maxPoint.y};
 }

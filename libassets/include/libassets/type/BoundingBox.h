@@ -6,6 +6,7 @@
 
 #include <array>
 #include <concepts>
+#include <glm/glm.hpp>
 #include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
@@ -62,40 +63,14 @@ class BoundingBox
 
             for (const T &vert: verts)
             {
-                glm::vec3 point;
                 if constexpr (std::same_as<T, ModelVertex>)
                 {
-                    point = vert.position;
+                    minPoint = glm::min(minPoint, vert.position);
+                    maxPoint = glm::max(maxPoint, vert.position);
                 } else
                 {
-                    point = vert;
-                }
-
-                if (point.x < minPoint.x)
-                {
-                    minPoint.x = point.x;
-                }
-                if (point.x > maxPoint.x)
-                {
-                    maxPoint.x = point.x;
-                }
-
-                if (point.y < minPoint.y)
-                {
-                    minPoint.y = point.y;
-                }
-                if (point.y > maxPoint.y)
-                {
-                    maxPoint.y = point.y;
-                }
-
-                if (point.z < minPoint.z)
-                {
-                    minPoint.z = point.z;
-                }
-                if (point.z > maxPoint.z)
-                {
-                    maxPoint.z = point.z;
+                    minPoint = glm::min(minPoint, vert);
+                    maxPoint = glm::max(maxPoint, vert);
                 }
             }
 

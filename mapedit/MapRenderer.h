@@ -4,16 +4,18 @@
 
 #pragma once
 
-#include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
 #include <GL/glew.h>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/type/Color.h>
+#include <libassets/type/MapVertex.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "libassets/type/Brush.h"
+#include "tools/AddActorTool.h"
 #include "Viewport.h"
 
 class MapRenderer
@@ -70,10 +72,9 @@ class MapRenderer
                                         uint32_t skin,
                                         const Color &modColor);
 
-        static void RenderBrush(const std::vector<glm::vec3> &vertices,
-                                const std::vector<uint32_t> &indices,
-                                const glm::mat4 &viewMatrix,
-                                const glm::mat4 &worldMatrix);
+        static void RenderBrushFace(const Brush::TriangulatedFace &face,
+                                    const glm::mat4 &viewMatrix,
+                                    const glm::mat4 &worldMatrix);
 
         static const ModelAsset &GetModel(std::string model);
 

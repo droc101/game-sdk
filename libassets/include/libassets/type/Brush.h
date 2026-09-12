@@ -18,6 +18,8 @@
 #include <utility>
 #include <vector>
 
+#include "MapVertex.h"
+
 class Brush
 {
     public:
@@ -33,11 +35,19 @@ class Brush
 
                 std::string material;
 
-                glm::vec2 textureScale = {1.0f, 1.0f};
+                /// Number of units per texture repetition
+                glm::vec2 textureScale = {16.0f, 16.0f};
                 glm::vec2 textureOffset = {0.0f, 0.0f};
                 float textureRotation = 0;
 
                 float unitsPerLuxel = 1.0f;
+        };
+
+        struct TriangulatedFace
+        {
+                std::string material;
+                std::vector<uint32_t> indices{};
+                std::vector<MapVertex> vertices{};
         };
 
         Brush() = default;
@@ -62,7 +72,7 @@ class Brush
 
         [[nodiscard]] bool ContainsPoint(Axis axis, glm::vec2 point) const;
 
-        [[nodiscard]] std::vector<uint32_t> GetTriangulatedMesh() const;
+        [[nodiscard]] const std::vector<TriangulatedFace> &GetTriangulatedMesh();
 
         void CenterOrigin(float gridSnap);
 
@@ -71,8 +81,12 @@ class Brush
         glm::vec3 origin{};
         glm::vec3 rotation{};
 
+        bool facesNeedRetriangulation = true;
         std::vector<glm::vec3> vertices{};
         std::vector<Face> faces{};
+
+    private:
+        std::vector<TriangulatedFace> triangulatedFaces{};
 };
 
 template<> struct std::hash<std::pair<glm::vec3, glm::vec3>>

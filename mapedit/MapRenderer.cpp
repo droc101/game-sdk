@@ -6,13 +6,14 @@
 #include <array>
 #include <cassert>
 #include <cstddef>
-#include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
 #include <game_sdk/SharedMgr.h>
 #include <glm/ext.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/type/Color.h>
+#include <libassets/type/MapVertex.h>
+#include <libassets/type/Material.h>
 #include <libassets/type/ModelLod.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
@@ -21,7 +22,7 @@
 #include <ranges>
 #include <string>
 #include <vector>
-#include "libassets/type/Material.h"
+#include "libassets/asset/LevelMaterialAsset.h"
 #include "MapEditor.h"
 #include "Viewport.h"
 
@@ -370,10 +371,9 @@ void MapRenderer::RenderModelTextured(std::string model,
     }
 }
 
-void MapRenderer::RenderBrush(const std::vector<glm::vec3> &vertices,
-                              const std::vector<uint32_t> &indices,
-                              const glm::mat4 &viewMatrix,
-                              const glm::mat4 &worldMatrix)
+void MapRenderer::RenderBrushFace(const Brush::TriangulatedFace &face,
+                                  const glm::mat4 &viewMatrix,
+                                  const glm::mat4 &worldMatrix)
 {
     glEnable(GL_CULL_FACE);
 
@@ -381,19 +381,45 @@ void MapRenderer::RenderBrush(const std::vector<glm::vec3> &vertices,
     glBindVertexArray(workBuffer.vao);
 
     glBindBuffer(GL_ARRAY_BUFFER, workBuffer.vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, face.vertices.size() * sizeof(MapVertex), face.vertices.data(), GL_STREAM_DRAW);
 
     const GLint posAttrib = glGetAttribLocation(brushProgram, "VERTEX");
-    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), nullptr);
+    const GLint uvAttrib = glGetAttribLocation(brushProgram, "VERTEX_UV");
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(MapVertex), nullptr);
+    glVertexAttribPointer(uvAttrib,
+                          2,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(MapVertex),
+                          reinterpret_cast<const void *>(offsetof(MapVertex, uv)));
     glEnableVertexAttribArray(posAttrib);
+    glEnableVertexAttribArray(uvAttrib);
 
     glUniformMatrix4fv(glGetUniformLocation(brushProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(glGetUniformLocation(brushProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
 
+    const std::string materialPath = SharedMgr::Get().pathManager.GetAssetPath(face.material);
+    LevelMaterialAsset material{};
+    Error::ErrorCode error = material.LoadFromAsset(materialPath);
+    if (error != Error::ErrorCode::OK)
+    {
+        Logger::Error("Creating material asset \"{}\" failed with error: {}", materialPath, error);
+        return; // TODO: Use missing texture
+    }
+
+    GLuint texture = 0;
+    const Error::ErrorCode code = SharedMgr::Get().textureCache.GetTextureGLuint(material.texture, texture);
+    if (code != Error::ErrorCode::OK)
+    {
+        texture = SharedMgr::Get().textureCache.GetMissingTextureGLuint();
+    }
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glUniform1i(glGetUniformLocation(shadedModelProgram, "TEXTURE"), 0);
+
     const GLuint ebo = workBuffer.ebo;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), indices.data(), GL_STREAM_DRAW);
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, face.indices.size() * sizeof(uint32_t), face.indices.data(), GL_STREAM_DRAW);
+    glDrawElements(GL_TRIANGLES, face.indices.size(), GL_UNSIGNED_INT, nullptr);
 
     glDisable(GL_CULL_FACE);
 }

@@ -140,7 +140,7 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
                                    const size_t brushIndex,
                                    const glm::mat4 &matrix)
 {
-    const Brush &brush = MapEditor::map.brushes.at(brushIndex);
+    Brush &brush = MapEditor::map.brushes.at(brushIndex);
 
     if (MapEditor::culling && BrushIsCulled(brush, vp))
     {
@@ -151,7 +151,11 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
 
     if (vp.Is3D())
     {
-        MapRenderer::RenderBrush(brush.vertices, brush.GetTriangulatedMesh(), matrix, brushMatrix);
+        const std::vector<Brush::TriangulatedFace> &triangulatedFaces = brush.GetTriangulatedMesh();
+        for (const Brush::TriangulatedFace &face: triangulatedFaces)
+        {
+            MapRenderer::RenderBrushFace(face, matrix, brushMatrix);
+        }
         return;
     }
 
