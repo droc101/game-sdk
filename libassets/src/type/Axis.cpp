@@ -11,7 +11,7 @@ glm::vec3 AxisHelper::Make3D(const Axis axis, glm::vec2 twoDimensionalComponent,
         case Axis::Y:
             return {twoDimensionalComponent.x, otherAxis, twoDimensionalComponent.y};
         case Axis::Z:
-            return {twoDimensionalComponent.x, twoDimensionalComponent.y, otherAxis};
+            return {twoDimensionalComponent.x, twoDimensionalComponent.y, -otherAxis};
         case Axis::X:
             return {otherAxis, twoDimensionalComponent.y, twoDimensionalComponent.x};
     }

@@ -2,10 +2,9 @@
 // Created by droc101 on 9/2/26.
 //
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <cstddef>
-#include <cstdint>
 #include <glm/ext/matrix_transform.hpp>
 #include <libassets/type/Axis.h>
 #include <libassets/type/BoundingBox.h>
@@ -178,7 +177,11 @@ nlohmann::ordered_json Brush::Face::GenerateJson() const
 
 bool Brush::IsValid() const
 {
-    return true; // TODO
+    return std::ranges::all_of(faces, [this](const Face &face) -> bool {
+        const glm::vec3 &corner = vertices.at(face.indices.at(0));
+        return glm::dot(glm::cross(vertices.at(face.indices.at(1)) - corner, vertices.at(face.indices.at(2)) - corner),
+                        corner) < 0;
+    });
 }
 
 BoundingBox Brush::GetAABB() const
