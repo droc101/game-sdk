@@ -13,7 +13,7 @@
 class SoundBrowserWindow final: public Window
 {
     public:
-        SoundBrowserWindow(std::string *sound);
+        explicit SoundBrowserWindow(std::string *sound);
 
         static void Show(std::string *sound);
 
@@ -39,7 +39,7 @@ class SoundBrowserWindow final: public Window
 
         std::vector<std::string> sounds;
 
-        std::string filter;
+        static inline std::string filter;
         SoundAsset previewSoundAsset{};
         SoundSystem::Sound previewSound{};
 };

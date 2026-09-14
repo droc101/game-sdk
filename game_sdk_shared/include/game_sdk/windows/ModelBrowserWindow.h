@@ -13,7 +13,7 @@
 class ModelBrowserWindow final: public Window
 {
     public:
-        ModelBrowserWindow(std::string *model);
+        explicit ModelBrowserWindow(std::string *model);
 
         static void InputModel(const char *label, std::string &model);
 
@@ -45,7 +45,7 @@ class ModelBrowserWindow final: public Window
         std::vector<std::string> modelAbsPaths{};
         ModelViewer viewer{};
 
-        std::string filter;
+        static inline std::string filter;
 };
 
 

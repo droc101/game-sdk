@@ -13,7 +13,7 @@
 class MaterialBrowserWindow final: public Window
 {
     public:
-        MaterialBrowserWindow(std::string *material);
+        explicit MaterialBrowserWindow(std::string *material);
 
         static void InputMaterial(const char *label, std::string &material);
 
@@ -42,7 +42,7 @@ class MaterialBrowserWindow final: public Window
         std::vector<std::string> materialPaths{};
         std::vector<LevelMaterialAsset> materials{};
 
-        std::string filter;
+        static inline std::string filter;
 
         static constexpr int TILE_SIZE = 128;
 };
