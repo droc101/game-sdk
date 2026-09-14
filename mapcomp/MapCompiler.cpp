@@ -8,11 +8,13 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <glm/vec2.hpp>
+#include <libassets/asset/Asset.h>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
+#include <libassets/type/BoundingBox.h>
+#include <libassets/type/MapVertex.h>
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/AssetContainer.h>
@@ -22,7 +24,6 @@
 #include <ranges>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 #include "LevelMeshBuilder.h"
 #include "Light.h"
@@ -60,7 +61,7 @@ Error::ErrorCode MapCompiler::Compile()
 
     const std::string outPath = settings.assetsDirectory + "/map/" + mapBasename + ".gmap";
     Logger::Info("Saving map to \"{}\"", outPath.c_str());
-    return AssetContainer::SaveToFile(outPath.c_str(),
+    return AssetContainer::SaveToFile(outPath,
                                       buffer,
                                       Asset::AssetType::ASSET_TYPE_LEVEL,
                                       MapAsset::MAP_ASSET_VERSION,
@@ -389,6 +390,13 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     {
         builder.Write(writer);
     }
+
+    std::vector<MapVertex> vertices{};
+    for (const LevelMeshBuilder &builder: mapMeshBuilders)
+    {
+        vertices.insert(vertices.end(), builder.GetVertices().begin(), builder.GetVertices().end());
+    }
+    writer.Write<float>(2 * glm::length(BoundingBox(vertices).extents));
 
     std::vector<uint16_t> lightmapPixels = {0x3c00, 0x3c00, 0x3c00, 0x3c00}; // float16 1.0
     std::vector<uint16_t> indirectLightingLightmapPixels = {0x3c00, 0x3c00, 0x3c00, 0x3c00}; // float16 1.0
