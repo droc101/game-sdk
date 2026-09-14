@@ -14,6 +14,7 @@
 #include "tabs/MaterialsTab.h"
 #include "tabs/PreviewOptionsTab.h"
 #include "tabs/SkinsTab.h"
+#include "TransformWindow.h"
 
 const Window::WindowProperties &MdleditWindow::GetProperties() const
 {
@@ -106,6 +107,14 @@ void MdleditWindow::HandleMenuAndShortcuts()
             if (ImGui::MenuItem("Quit", "Alt+F4"))
             {
                 RequestClose();
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Edit", ModelEditor::modelLoaded))
+        {
+            if (ImGui::MenuItem("Scale Model", "", false, ModelEditor::modelLoaded))
+            {
+                WindowManager::Get().AddModalWindow<TransformWindow>();
             }
             ImGui::EndMenu();
         }

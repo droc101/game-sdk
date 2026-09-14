@@ -18,6 +18,8 @@ add_executable(mdledit mdledit.cpp
         ModelEditor.h
         MdleditWindow.cpp
         MdleditWindow.h
+        TransformWindow.cpp
+        TransformWindow.h
 )
 
 configure_sdk_gui_program(mdledit)
