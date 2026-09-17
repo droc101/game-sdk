@@ -155,6 +155,8 @@ int main(const int argc, const char **argv)
 
     Logger::Info("{} collision model(s)", numCollisionModels);
 
+    asset.reader.Skip<float>(); // We don't need to know the inbounds diagonal length
+
     const size_t lightmapWidth = asset.reader.Read<size_t>();
     const size_t lightmapHeight = asset.reader.Read<size_t>();
     std::vector<uint16_t> pixels{};
