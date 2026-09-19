@@ -51,6 +51,8 @@ struct Light {
     float attenuationMultiplier;
     float brightAngle; // 0-90 degrees
     float fadingAngle;
+
+    float _cookieTexture[8]; // `sizeof(std::string) == 32` is asserted
 };
 
 #pragma endregion Types

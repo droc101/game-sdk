@@ -6,8 +6,11 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
+#include <cstring>
 #include <glm/glm.hpp>
 #include <libassets/type/Actor.h>
+#include <string>
 #include <type_traits>
 
 class Light // NOLINT(*-pro-type-member-init)
@@ -55,6 +58,7 @@ class Light // NOLINT(*-pro-type-member-init)
                     type = Type::SPOT;
                     brightAngle = actor.params.at("bright_angle").Get<float>(30.0f);
                     fadingAngle = actor.params.at("fading_angle").Get<float>(45.0f);
+                    cookie = actor.params.at("cookie").Get<std::string>("");
                 }
             }
         }
@@ -73,8 +77,8 @@ class Light // NOLINT(*-pro-type-member-init)
         float attenuationMultiplier;
         float brightAngle;
         float fadingAngle;
+        std::string cookie;
 };
 
-// This is a requirement for Light to be considered a trivial type, and this is not true if the members have a
-//  default initialization
-static_assert(std::is_trivially_default_constructible_v<Light>);
+// This is a requirement for Light to be used with the shaders
+static_assert(std::is_standard_layout_v<Light> && sizeof(std::string) == 32);

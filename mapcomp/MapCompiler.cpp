@@ -371,7 +371,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     Logger::Info("Level has {} physics meshes", collisionBuilders.size());
     Logger::Info("Level has {} lights", lights.size());
 
-    const bool skipLighting = lights.empty() || settings.skipLighting;
+    const bool skipLighting = lights.empty() || settings.skipLighting || true;
 
     glm::uvec2 lightmapSize{1};
     if (!skipLighting && !LevelMeshBuilder::CalculateLightmapUvs(lightmapSize, mapMeshBuilders, pathManager))
@@ -400,7 +400,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     writer.Write<float>(2 * glm::length(BoundingBox(vertices).extents));
 
     std::vector<uint16_t> lightmapPixels = {0x3c00, 0x3c00, 0x3c00, 0x3c00}; // float16 1.0
-    std::vector<uint16_t> indirectLightingLightmapPixels = {0x3c00, 0x3c00, 0x3c00, 0x3c00}; // float16 1.0
+    std::vector<uint16_t> indirectLightingLightmapPixels = {0, 0, 0, 0};
     if (!skipLighting)
     {
         Logger::Info("Baking lightmap...");
@@ -424,7 +424,6 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         writer.Write<uint32_t>(static_cast<uint32_t>(light.type));
         writer.WriteVec3(light.position);
         writer.WriteVec3(light.rotation);
-        writer.WriteVec3(light.negativeForwardDirection);
         writer.WriteVec3(light.color);
         writer.Write<float>(light.brightness);
         writer.Write<float>(light.constantAttenuation);
@@ -433,6 +432,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         writer.Write<float>(light.attenuationMultiplier);
         writer.Write<float>(light.brightAngle);
         writer.Write<float>(light.fadingAngle);
+        writer.WriteString(light.cookie);
     }
     writer.CopyToVector(buffer);
     return Error::ErrorCode::OK;
