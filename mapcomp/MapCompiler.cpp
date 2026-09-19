@@ -371,7 +371,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     Logger::Info("Level has {} physics meshes", collisionBuilders.size());
     Logger::Info("Level has {} lights", lights.size());
 
-    const bool skipLighting = lights.empty() || settings.skipLighting || true;
+    const bool skipLighting = lights.empty() || settings.skipLighting;
 
     glm::uvec2 lightmapSize{1};
     if (!skipLighting && !LevelMeshBuilder::CalculateLightmapUvs(lightmapSize, mapMeshBuilders, pathManager))
