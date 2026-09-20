@@ -28,41 +28,43 @@ class Light // NOLINT(*-pro-type-member-init)
         // ReSharper disable CppPossiblyUninitializedMember
         // NOLINTBEGIN(*-pro-type-member-init)
         Light() = default;
+
+        // NOLINTEND(*-pro-type-member-init)
         explicit Light(const Actor &actor)
         {
             position = actor.position;
             rotation = actor.rotation;
             negativeForwardDirection = glm::normalize(glm::vec3{
-                sin(glm::radians(actor.rotation.y)) * cos(glm::radians(actor.rotation.x)),
-                -sin(glm::radians(actor.rotation.x)),
-                cos(glm::radians(actor.rotation.y)) * cos(glm::radians(actor.rotation.x)),
+                    sin(glm::radians(actor.rotation.y)) * cos(glm::radians(actor.rotation.x)),
+                    -sin(glm::radians(actor.rotation.x)),
+                    cos(glm::radians(actor.rotation.y)) * cos(glm::radians(actor.rotation.x)),
             });
-            const float *colorPtr = actor.params.at("color").Get<Color>(Color(-1u)).GetDataPointer();
-            color = glm::vec3{colorPtr[0], colorPtr[1], colorPtr[2]};
-            brightness = actor.params.at("brightness").Get<float>(1.0f);
+            const Color c = Param::KvListGet(actor.params, "color", Color(-1));
+            color = glm::vec3{c.R(), c.G(), c.B()};
+            brightness = Param::KvListGet(actor.params, "brightness", 1.0f);
 
             if (actor.className == "light_directional")
             {
                 type = Type::DIRECTIONAL;
             } else
             {
-                constantAttenuation = actor.params.at("constant_attenuation").Get<float>(0.0f);
-                linearAttenuation = actor.params.at("linear_attenuation").Get<float>(0.0f);
-                quadraticAttenuation = actor.params.at("quadratic_attenuation").Get<float>(1.0f);
-                attenuationMultiplier = actor.params.at("attenuation_multiplier").Get<float>(2.0f);
+                constantAttenuation = Param::KvListGet(actor.params, "constant_attenuation", 0.0f);
+                linearAttenuation = Param::KvListGet(actor.params, "linear_attenuation", 0.0f);
+                quadraticAttenuation = Param::KvListGet(actor.params, "quadratic_attenuation", 1.0f);
+                attenuationMultiplier = Param::KvListGet(actor.params, "attenuation_multiplier", 2.0f);
                 if (actor.className == "light_point")
                 {
                     type = Type::POINT;
                 } else if (actor.className == "light_spot")
                 {
                     type = Type::SPOT;
-                    brightAngle = actor.params.at("bright_angle").Get<float>(30.0f);
-                    fadingAngle = actor.params.at("fading_angle").Get<float>(45.0f);
-                    cookie = actor.params.at("cookie").Get<std::string>("");
+                    brightAngle = Param::KvListGet(actor.params, "bright_angle", 30.0f);
+                    fadingAngle = Param::KvListGet(actor.params, "fading_angle", 45.0f);
+                    cookie = Param::KvListGet(actor.params, "cookie", std::string(""));
                 }
             }
         }
-        // NOLINTEND(*-pro-type-member-init)
+
         // ReSharper restore CppPossiblyUninitializedMember
 
         Type type;

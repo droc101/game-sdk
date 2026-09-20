@@ -108,6 +108,15 @@ class Param
          */
         [[nodiscard]] std::string GetTypeName() const;
 
+        template <ParamTypeTemplate T> [[nodiscard]] static T KvListGet(const KvList &list, const std::string &key, T defaultValue)
+        {
+            if (list.contains(key))
+            {
+                return list.at(key).Get<T>(defaultValue);
+            }
+            return defaultValue;
+        }
+
         /**
          * Get the value of this param
          * @tparam T The type you wish to get
