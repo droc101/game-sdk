@@ -418,10 +418,16 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     writer.Write<size_t>(lightmapSize.y);
     writer.WriteBuffer(lightmapPixels);
     writer.WriteBuffer(indirectLightingLightmapPixels);
-    writer.Write<uint32_t>(lights.size());
-    for (const Light &light: lights)
+    if (settings.skipLighting)
     {
-        light.Write(writer);
+        writer.Write<uint32_t>(0); // number of lights
+    } else
+    {
+        writer.Write<uint32_t>(lights.size());
+        for (const Light &light: lights)
+        {
+            light.Write(writer);
+        }
     }
     writer.CopyToVector(buffer);
     return Error::ErrorCode::OK;
