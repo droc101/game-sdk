@@ -421,18 +421,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     writer.Write<uint32_t>(lights.size());
     for (const Light &light: lights)
     {
-        writer.Write<uint32_t>(static_cast<uint32_t>(light.type));
-        writer.WriteVec3(light.position);
-        writer.WriteVec3(light.rotation);
-        writer.WriteVec3(light.color);
-        writer.Write<float>(light.brightness);
-        writer.Write<float>(light.constantAttenuation);
-        writer.Write<float>(light.linearAttenuation);
-        writer.Write<float>(light.quadraticAttenuation);
-        writer.Write<float>(light.attenuationMultiplier);
-        writer.Write<float>(light.brightAngle);
-        writer.Write<float>(light.fadingAngle);
-        writer.WriteString(light.cookie);
+        light.Write(writer);
     }
     writer.CopyToVector(buffer);
     return Error::ErrorCode::OK;

@@ -85,6 +85,7 @@ int main(const int argc, const char **argv)
                                                                             true);
         for (const std::string &map: maps)
         {
+            Logger::Info("Compiling map \"{}\"...", map);
             const Error::ErrorCode mapLoadResult = compiler.LoadMapSource(args.GetFlagValue("--map-sources-dir") +
                                                                           "/" +
                                                                           map);
