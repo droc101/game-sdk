@@ -11,10 +11,12 @@
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <imgui.h>
 #include <iterator>
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <map>
 #include <misc/cpp/imgui_stdlib.h>
@@ -23,6 +25,70 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+bool ShdeditWindow::Init()
+{
+    const bool hasOutputDirectory = WindowManager::Get().GetArgumentParser().HasFlagWithValue("--output-directory");
+    if (hasOutputDirectory)
+    {
+        OutPathCallback(WindowManager::Get().GetArgumentParser().GetFlagValue("--output-directory"));
+    }
+
+    replicateFolderStructure = WindowManager::Get().GetArgumentParser().HasFlagWithValue("--base-directory");
+    if (replicateFolderStructure)
+    {
+        BasePathCallback(WindowManager::Get().GetArgumentParser().GetFlagValue("--base-directory"));
+    }
+
+    bool hasSourcePath = false;
+    if (WindowManager::Get().GetArgumentParser().HasFlagWithValue("--source-file"))
+    {
+        hasSourcePath = true;
+        SelectCallback({WindowManager::Get().GetArgumentParser().GetFlagValue("--source-file")});
+    } else if (WindowManager::Get().GetArgumentParser().HasFlagWithValue("--source-directory"))
+    {
+        hasSourcePath = true;
+        const std::string &dir = WindowManager::Get().GetArgumentParser().GetFlagValue("--source-directory");
+        if (!replicateFolderStructure) {
+            replicateFolderStructure = true;
+            BasePathCallback(dir);
+        }
+        AddFolderCallback(dir);
+    }
+
+    enableOptimization = WindowManager::Get().GetArgumentParser().HasFlag("-O");
+    debugInfo = WindowManager::Get().GetArgumentParser().HasFlag("-g");
+
+    if (WindowManager::Get().GetArgumentParser().HasFlag("--headless"))
+    {
+        if (!hasOutputDirectory)
+        {
+            Logger::Error("The --headless flag requires --output-directory to be set!");
+            return false;
+        }
+        if (!hasSourcePath)
+        {
+            Logger::Error("The --headless flag requires either --source-file or --source-directory to be set!");
+            return false;
+        }
+        Logger::Info("Found --headless flag. Compiling shaders...");
+        std::string log;
+        const Error::ErrorCode e = Execute(log);
+        if (e == Error::ErrorCode::OK)
+        {
+            Logger::Info("Successfully compiled. Exiting...");
+            RequestClose();
+            return true;
+        }
+        Logger::Error("Failed to compile shaders: {}\n\nCompiler log:\n{}\n\nCompilation terminated.",
+                      e,
+                      log.empty() ? "(empty)" : log);
+
+        return false;
+    }
+
+    return true;
+}
 
 const Window::WindowProperties &ShdeditWindow::GetProperties() const
 {

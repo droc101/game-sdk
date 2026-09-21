@@ -14,6 +14,7 @@
 class ShdeditWindow final: public Window
 {
     protected:
+        bool Init() override;
         void Render() override;
         [[nodiscard]] const WindowProperties &GetProperties() const override;
 
