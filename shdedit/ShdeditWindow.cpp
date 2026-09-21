@@ -59,34 +59,6 @@ bool ShdeditWindow::Init()
     enableOptimization = WindowManager::Get().GetArgumentParser().HasFlag("-O");
     debugInfo = WindowManager::Get().GetArgumentParser().HasFlag("-g");
 
-    if (WindowManager::Get().GetArgumentParser().HasFlag("--headless"))
-    {
-        if (!hasOutputDirectory)
-        {
-            Logger::Error("The --headless flag requires --output-directory to be set!");
-            return false;
-        }
-        if (!hasSourcePath)
-        {
-            Logger::Error("The --headless flag requires either --source-file or --source-directory to be set!");
-            return false;
-        }
-        Logger::Info("Found --headless flag. Compiling shaders...");
-        std::string log;
-        const Error::ErrorCode e = Execute(log);
-        if (e == Error::ErrorCode::OK)
-        {
-            Logger::Info("Successfully compiled. Exiting...");
-            RequestClose();
-            return true;
-        }
-        Logger::Error("Failed to compile shaders: {}\n\nCompiler log:\n{}\n\nCompilation terminated.",
-                      e,
-                      log.empty() ? "(empty)" : log);
-
-        return false;
-    }
-
     return true;
 }
 

@@ -5,6 +5,6 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(mapdump mapdump.cpp)
 
-configure_sdk_program(mapdump)
+configure_sdk_cli_program(mapdump)
 
 target_link_libraries(mapdump PRIVATE glm::glm)

@@ -10,8 +10,8 @@ macro(disable_options)
     endforeach ()
 endmacro()
 
-macro(configure_sdk_program target)
-    set_target_properties(${target} PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" FOLDER "game__sdk__tools")
+macro(configure_sdk_program_internal target)
+    set_target_properties(${target} PROPERTIES LINKER_LANGUAGE CXX LINK_FLAGS "-Wl,-rpath='$ORIGIN'" PREFIX "" )
 
     target_link_libraries(${target} PRIVATE assets)
 
@@ -21,7 +21,13 @@ macro(configure_sdk_program target)
     endif()
 endmacro()
 
+macro(configure_sdk_cli_program target)
+    configure_sdk_program_internal(${target})
+    set_target_properties(${target} PROPERTIES FOLDER "game__sdk__cli__tools")
+endmacro()
+
 macro(configure_sdk_gui_program target)
-    configure_sdk_program(${target})
+    configure_sdk_program_internal(${target})
+    set_target_properties(${target} PROPERTIES FOLDER "game__sdk__tools")
     target_link_libraries(${target} PRIVATE game_sdk_shared)
 endmacro()
