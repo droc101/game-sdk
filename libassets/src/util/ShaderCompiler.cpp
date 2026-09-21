@@ -14,6 +14,7 @@
 #include <libassets/util/Logger.h>
 #include <libassets/util/ShaderCompiler.h>
 #include <list>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -37,7 +38,7 @@ ShaderCompiler::SDKIncluder::IncludeResult *ShaderCompiler::SDKIncluder::include
         Logger::Error("Failed to read include file \"{}\": {}", requestedSource, readError);
         glslString = "";
     }
-    includeResults.emplace_back(requestedSourcePath, strdup(glslString.c_str()), glslString.length(), nullptr);
+    includeResults.emplace_back(requestedSourcePath.string(), strdup(glslString.c_str()), glslString.length(), nullptr);
     return &includeResults.back();
 }
 

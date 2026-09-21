@@ -252,3 +252,11 @@ void ModelLod::FlipVerticalUVs()
         v.uv.y = 1.0f - v.uv.y;
     }
 }
+
+void ModelLod::Scale(const glm::vec3 by)
+{
+    for (ModelVertex &vertex: vertices)
+    {
+        vertex.position *= by;
+    }
+}

@@ -100,6 +100,14 @@ std::vector<float> ConvexHull::GetPointsForRender() const
     return buffer;
 }
 
+void ConvexHull::Scale(const glm::vec3 by)
+{
+    for (glm::vec3 &point: points)
+    {
+        point *= by;
+    }
+}
+
 void ConvexHull::CalculateOffset()
 {
     const BoundingBox bb = BoundingBox(points);

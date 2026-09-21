@@ -45,4 +45,6 @@ class ModelLod
          * Flip Y axis UVs in this LOD
          */
         void FlipVerticalUVs();
+
+        void Scale(glm::vec3 by);
 };

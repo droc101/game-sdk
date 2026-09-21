@@ -12,7 +12,7 @@
 class TextureBrowserWindow final: public Window
 {
     public:
-        TextureBrowserWindow(std::string *texture);
+        explicit TextureBrowserWindow(std::string *texture);
 
         static void InputTexture(const char *label, std::string &texture);
 
@@ -38,7 +38,7 @@ class TextureBrowserWindow final: public Window
 
         std::vector<std::string> textures;
 
-        std::string filter;
+        static inline std::string filter;
 
         static constexpr int TILE_SIZE = 128;
 };
