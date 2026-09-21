@@ -975,7 +975,7 @@ VkShaderModule LightBakerGpu::GenerateShaderModule(const std::filesystem::path &
 {
     spirv.clear();
 
-    ShaderCompiler shaderCompiler(path, shaderType, true);
+    ShaderCompiler shaderCompiler(path, shaderType, true, false);
     if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
     {
         Logger::Error("Error compiling shader {}!", path.string());
