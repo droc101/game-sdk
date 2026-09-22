@@ -35,6 +35,8 @@ class ArgumentParser
          */
         [[nodiscard]] std::string GetFileArgument(const std::vector<std::string> &extensions) const;
 
+        std::vector<std::string> GetFileArguments(const std::vector<std::string> &extensions) const;
+
     private:
         std::vector<std::string> arguments{};
 };
