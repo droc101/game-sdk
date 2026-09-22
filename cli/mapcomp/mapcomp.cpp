@@ -22,6 +22,21 @@ int main(const int argc, const char **argv)
 
     Logger::Info("GAME SDK Map Compiler");
 
+    if (args.HasFlag("--help") || args.HasFlag("-h"))
+    {
+        printf("Usage: mapcomp [options]\n");
+        printf("\n-- Compiler Options --\n");
+        printf("--map-source=/path/to/map.json.................Path to the map source to compile\n");
+        printf("--map-sources-dir=/path/to/map/sources/dir.....Path to a directory containing map sources to compile\n");
+        printf("--assets-dir=/path/to/game/assets..............Path to the directory containing game.gkvl\n");
+        printf("--executable-dir=/path/to/game/dir.............Path to the directory containing the game executable\n");
+        printf("--skip-lighting................................Skip light baking\n");
+        printf("--fast.........................................Bake lower quality lighting to decrease compile time\n");
+        printf("--no-ansi......................................Disable ANSI output\n");
+        printf("--verbose......................................Enable verbose output\n");
+        return 0;
+    }
+
     if (!(args.HasFlagWithValue("--map-source") || args.HasFlagWithValue("--map-sources-dir")))
     {
         Logger::Error("--map-source not specified!");
