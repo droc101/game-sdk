@@ -132,14 +132,13 @@ void ModelLod::Export(const char *path) const
     for (const ModelVertex &vertex: vertices)
     {
         std::array<float, 4> color = vertex.color.CopyData();
-        file << std::format("v {} {} {} {} {} {} {}\n",
+        file << std::format("v {} {} {} {} {} {}\n",
                             vertex.position.x,
                             vertex.position.y,
                             vertex.position.z,
                             color.at(0),
                             color.at(1),
-                            color.at(2),
-                            color.at(3));
+                            color.at(2));
         file << std::format("vt {} {}\n", vertex.uv.x, vertex.uv.y);
         file << std::format("vn {} {} {}\n", vertex.normal.x, vertex.normal.y, vertex.normal.z);
     }
