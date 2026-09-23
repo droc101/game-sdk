@@ -8,20 +8,19 @@
 #include <filesystem>
 #include <glslang/Public/ResourceLimits.h>
 #include <glslang/Public/ShaderLang.h>
-#include <SPIRV/GlslangToSpv.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
 #include <libassets/util/ShaderCompiler.h>
 #include <list>
-#include <memory>
+#include <SPIRV/GlslangToSpv.h>
 #include <string>
 #include <utility>
 #include <vector>
 
 ShaderCompiler::SDKIncluder &ShaderCompiler::SDKIncluder::Get()
 {
-    static SDKIncluder includer{};
+    thread_local SDKIncluder includer{};
     return includer;
 }
 

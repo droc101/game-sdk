@@ -3,6 +3,7 @@
 //
 
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <cstdio>
 #include <filesystem>
@@ -15,6 +16,7 @@
 #include <libassets/util/SearchPathManager.h>
 #include <ranges>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -27,6 +29,69 @@ static bool enableOptimization = false;
 static bool debugInfo = false;
 static bool dumpBinaries = false;
 
+static std::atomic_bool successful = true;
+
+static void CompileFile(const std::string &file, const ShaderAsset::ShaderType type)
+{
+    ShaderAsset shader;
+    Error::ErrorCode e = shader.Import(file);
+    if (e != Error::ErrorCode::OK)
+    {
+        Logger::Error("Failed to compile shaders: {}", Error::ErrorString(e));
+        successful = false;
+        return;
+    }
+    shader.type = type;
+    std::string suffix;
+    switch (shader.type)
+    {
+        case ShaderAsset::ShaderType::SHADER_KIND_FRAGMENT:
+            suffix = "f";
+            break;
+        case ShaderAsset::ShaderType::SHADER_KIND_VERTEX:
+            suffix = "v";
+            break;
+        case ShaderAsset::ShaderType::SHADER_KIND_COMPUTE:
+            suffix = "c";
+            break;
+        case ShaderAsset::ShaderType::SHADER_KIND_GEOMETRY:
+            suffix = "g";
+            break;
+    }
+
+    const std::string filename = std::filesystem::path(file).stem().string();
+    std::string outputPath = std::format("{}/{}_{}.{}",
+                                         outputFolder,
+                                         filename,
+                                         suffix,
+                                         ShaderAsset::SHADER_ASSET_EXTENSION);
+    if (replicateFolderStructure)
+    {
+        if (!sourcesBaseFolder.empty() && file.starts_with(sourcesBaseFolder))
+        {
+            const std::string relativePath = std::filesystem::path(file.substr(sourcesBaseFolder.length()))
+                                                     .parent_path()
+                                                     .string();
+            const std::filesystem::path finalOutputDirectory{outputFolder + "/" + relativePath};
+            std::filesystem::create_directories(finalOutputDirectory);
+            outputPath = std::format("{}/{}_{}.{}",
+                                     finalOutputDirectory.string(),
+                                     filename,
+                                     suffix,
+                                     ShaderAsset::SHADER_ASSET_EXTENSION);
+        }
+    }
+
+    Logger::Info("Compiling \"{}\"...", file);
+    std::string errorLog{};
+    e = shader.SaveToAssetEx(outputPath, enableOptimization, debugInfo, &errorLog, file, dumpBinaries);
+    if (!errorLog.empty())
+    {
+        Logger::Info("Log: {}", errorLog);
+        Logger::Error("Failed to compile shaders: {}", Error::ErrorString(e));
+    }
+}
+
 static Error::ErrorCode Compile()
 {
     if (!std::filesystem::is_directory(outputFolder))
@@ -34,68 +99,10 @@ static Error::ErrorCode Compile()
         return Error::ErrorCode::INVALID_DIRECTORY;
     }
 
-    for (const std::pair<std::string, ShaderAsset::ShaderType> &i: files)
+    std::vector<std::jthread> threads;
+    for (const std::pair<std::string, ShaderAsset::ShaderType> &pair: files)
     {
-        const std::string &file = i.first;
-        const ShaderAsset::ShaderType kind = i.second;
-        ShaderAsset shader;
-        Error::ErrorCode e = shader.Import(file);
-        if (e != Error::ErrorCode::OK)
-        {
-            return e;
-        }
-        shader.type = kind;
-        std::string suffix;
-        switch (shader.type)
-        {
-            case ShaderAsset::ShaderType::SHADER_KIND_FRAGMENT:
-                suffix = "f";
-                break;
-            case ShaderAsset::ShaderType::SHADER_KIND_VERTEX:
-                suffix = "v";
-                break;
-            case ShaderAsset::ShaderType::SHADER_KIND_COMPUTE:
-                suffix = "c";
-                break;
-            case ShaderAsset::ShaderType::SHADER_KIND_GEOMETRY:
-                suffix = "g";
-                break;
-        }
-
-        const std::string filename = std::filesystem::path(file).stem().string();
-        std::string outputPath = std::format("{}/{}_{}.{}",
-                                             outputFolder,
-                                             filename,
-                                             suffix,
-                                             ShaderAsset::SHADER_ASSET_EXTENSION);
-        if (replicateFolderStructure)
-        {
-            if (!sourcesBaseFolder.empty() && file.starts_with(sourcesBaseFolder))
-            {
-                const std::string relativePath = std::filesystem::path(file.substr(sourcesBaseFolder.length()))
-                                                         .parent_path()
-                                                         .string();
-                const std::filesystem::path finalOutputDirectory{outputFolder + "/" + relativePath};
-                std::filesystem::create_directories(finalOutputDirectory);
-                outputPath = std::format("{}/{}_{}.{}",
-                                         finalOutputDirectory.string(),
-                                         filename,
-                                         suffix,
-                                         ShaderAsset::SHADER_ASSET_EXTENSION);
-            }
-        }
-
-        Logger::Info("Compiling \"{}\"...", file);
-        std::string errorLog{};
-        e = shader.SaveToAssetEx(outputPath, enableOptimization, debugInfo, &errorLog, file, dumpBinaries);
-        if (!errorLog.empty())
-        {
-            Logger::Info("Log: {}", errorLog);
-        }
-        if (e != Error::ErrorCode::OK)
-        {
-            return e;
-        }
+        threads.emplace_back(CompileFile, pair.first, pair.second);
     }
 
     return Error::ErrorCode::OK;
@@ -249,7 +256,11 @@ int main(const int argc, const char **argv)
         Logger::Error("Failed to compile shaders: {}", Error::ErrorString(e));
         return 1;
     }
-
+    if (!successful)
+    {
+        Logger::Error("Failed to compile shaders!");
+        return 1;
+    }
     Logger::Info("Successfully compiled.");
     return 0;
 }
