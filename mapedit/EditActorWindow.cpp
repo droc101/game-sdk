@@ -497,7 +497,7 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
             {
                 ImGui::TableNextColumn();
                 ImGui::PushItemWidth(-1);
-                std::unordered_set<std::string> myOutputNames{};
+                std::set<std::string> myOutputNames{};
                 definition.GetOutputNames(myOutputNames);
                 ImGui::Text("Source Output");
 
@@ -581,7 +581,7 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                     const Actor *targetActor = MapEditor::map.GetActor(connection.targetName);
                     assert(targetActor);
                     const ActorDefinition &targetDef = MapEditor::adm.GetActorDefinition(targetActor->className);
-                    std::unordered_set<std::string> targetInputNames{};
+                    std::set<std::string> targetInputNames{};
                     targetDef.GetInputNames(targetInputNames);
                     ImGui::Text("Target Input");
                     if (ImGui::BeginCombo("##targetInput", connection.targetInput.c_str()))

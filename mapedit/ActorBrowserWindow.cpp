@@ -100,7 +100,7 @@ void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
         ImGui::TableSetupColumn("Display Name", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableHeadersRow();
-        std::unordered_set<std::string> paramNames{};
+        std::set<std::string> paramNames{};
         def.GetParamNames(paramNames);
         std::vector<std::string> paramNamesV(paramNames.begin(), paramNames.end());
         std::ranges::sort(paramNamesV);
@@ -287,7 +287,7 @@ void ActorBrowserWindow::RenderInputsTab(const ActorDefinition &def)
         ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Description", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableHeadersRow();
-        std::unordered_set<std::string> inputNames{};
+        std::set<std::string> inputNames{};
         def.GetInputNames(inputNames);
         for (const std::string &key: inputNames)
         {
@@ -351,7 +351,7 @@ void ActorBrowserWindow::RenderOutputsTab(const ActorDefinition &def)
         ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Description", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableHeadersRow();
-        std::unordered_set<std::string> outputNames{};
+        std::set<std::string> outputNames{};
         def.GetOutputNames(outputNames);
         for (const std::string &key: outputNames)
         {

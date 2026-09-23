@@ -18,7 +18,7 @@
 class Param;
 
 using ParamVector = std::vector<Param>;
-using KvList = std::unordered_map<std::string, Param>;
+using KvList = std::map<std::string, Param>;
 
 template<typename T> concept ParamTypeTemplate = std::same_as<T, uint8_t> ||
                                                  std::same_as<T, int32_t> ||

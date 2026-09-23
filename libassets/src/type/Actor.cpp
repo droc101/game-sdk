@@ -56,7 +56,7 @@ Actor::Actor(nlohmann::ordered_json j)
 
 void Actor::ApplyDefinition(const ActorDefinition &definition, const bool overwrite)
 {
-    std::unordered_set<std::string> paramNames{};
+    std::set<std::string> paramNames{};
     definition.GetParamNames(paramNames);
 
     if (overwrite)
@@ -187,7 +187,7 @@ void Actor::Write(DataWriter &writer) const
 
 void Actor::RemoveUnknownParams(const ActorDefinition &definition)
 {
-    std::unordered_set<std::string> defParams{};
+    std::set<std::string> defParams{};
     definition.GetParamNames(defParams);
     std::vector<std::string> toErase{};
     for (const std::string &key: std::views::keys(params))

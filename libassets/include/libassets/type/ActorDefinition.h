@@ -8,10 +8,10 @@
 #include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Error.h>
+#include <map>
 #include <memory>
+#include <set>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 class ActorDefinition
@@ -29,9 +29,9 @@ class ActorDefinition
 
         std::vector<std::shared_ptr<RenderDefinition>> renderDefinitions{};
 
-        std::unordered_map<std::string, SignalDefinition> inputs{};
-        std::unordered_map<std::string, SignalDefinition> outputs{};
-        std::unordered_map<std::string, std::shared_ptr<ParamDefinition>> params{};
+        std::map<std::string, SignalDefinition> inputs{};
+        std::map<std::string, SignalDefinition> outputs{};
+        std::map<std::string, std::shared_ptr<ParamDefinition>> params{};
 
         static constexpr const char *VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX = R"/(^[a-z_]+$)/";
 
@@ -51,15 +51,15 @@ class ActorDefinition
         /**
          * Get all input names in this definition and all parents
          */
-        void GetInputNames(std::unordered_set<std::string> &out) const;
+        void GetInputNames(std::set<std::string> &out) const;
         /**
          * Get all output names in this definition and all parents
          */
-        void GetOutputNames(std::unordered_set<std::string> &out) const;
+        void GetOutputNames(std::set<std::string> &out) const;
         /**
          * Get all param names in this definition and all parents
          */
-        void GetParamNames(std::unordered_set<std::string> &out) const;
+        void GetParamNames(std::set<std::string> &out) const;
 
         /**
          * Get an input definition by name

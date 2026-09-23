@@ -16,8 +16,8 @@
 #include <nlohmann/json.hpp>
 #include <ranges>
 #include <regex>
+#include <set>
 #include <string>
-#include <unordered_set>
 #include <utility>
 
 Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinition &definition)
@@ -164,7 +164,7 @@ bool ActorDefinition::Extends(const std::string &baseClass) const
     return false;
 }
 
-void ActorDefinition::GetInputNames(std::unordered_set<std::string> &out) const
+void ActorDefinition::GetInputNames(std::set<std::string> &out) const
 {
     if (parentClass != nullptr)
     {
@@ -176,7 +176,7 @@ void ActorDefinition::GetInputNames(std::unordered_set<std::string> &out) const
     }
 }
 
-void ActorDefinition::GetOutputNames(std::unordered_set<std::string> &out) const
+void ActorDefinition::GetOutputNames(std::set<std::string> &out) const
 {
     if (parentClass != nullptr)
     {
@@ -188,7 +188,7 @@ void ActorDefinition::GetOutputNames(std::unordered_set<std::string> &out) const
     }
 }
 
-void ActorDefinition::GetParamNames(std::unordered_set<std::string> &out) const
+void ActorDefinition::GetParamNames(std::set<std::string> &out) const
 {
     if (parentClass != nullptr)
     {

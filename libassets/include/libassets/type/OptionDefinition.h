@@ -8,9 +8,9 @@
 #include <libassets/type/Color.h>
 #include <libassets/type/Param.h>
 #include <libassets/util/Error.h>
+#include <map>
 #include <nlohmann/json.hpp>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 class OptionDefinition
@@ -49,7 +49,7 @@ class OptionDefinition
     private:
         std::string name;
         Param::ParamType valueType = Param::ParamType::PARAM_TYPE_NONE;
-        std::unordered_map<std::string, Param> options{};
+        std::map<std::string, Param> options{};
 
         template<ParamTypeTemplate T> [[nodiscard]] Error::ErrorCode LoadOptions(const nlohmann::json &definitionJson)
         {
