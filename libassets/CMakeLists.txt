@@ -32,7 +32,7 @@ set(ENABLE_HLSL OFF)
 set(ENABLE_SPIRV ON)
 set(ENABLE_OPT OFF)
 set(ENABLE_RTTI ON)
-fetch_package(https://github.com/KhronosGroup/glslang.git 16.*.* glslang)
+fetch_package(https://github.com/KhronosGroup/glslang.git 16.5.* glslang)
 
 if (Vulkan_INCLUDE_DIRS STREQUAL "Vulkan_INCLUDE_DIR-NOTFOUND")
     fetch_package(https://github.com/KhronosGroup/Vulkan-Headers.git vulkan-sdk-1.4.*.* VulkanHeaders)

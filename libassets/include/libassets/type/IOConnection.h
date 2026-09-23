@@ -22,6 +22,7 @@ class IOConnection
         bool overridesParam = false;
         Param param{};
         size_t numRefires{};
+        uint16_t delayMsec;
 
         /**
          * Read an IOConnection from a DataReader

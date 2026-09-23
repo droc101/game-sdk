@@ -428,13 +428,14 @@ void EditActorWindow::RenderParamsTab(const ActorDefinition &definition)
 void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
 {
     const float boxSize = ImGui::GetContentRegionAvail().y - 200;
-    if (ImGui::BeginTable("charTable", 5, ImGuiTableFlags_ScrollY | ImGuiTableFlags_BordersH, ImVec2(-1, boxSize)))
+    if (ImGui::BeginTable("charTable", 6, ImGuiTableFlags_ScrollY | ImGuiTableFlags_BordersH, ImVec2(-1, boxSize)))
     {
         ImGui::TableSetupColumn("Source Output", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Target Name", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Target Input", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Param Override", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("# Refires", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("Delay", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableHeadersRow();
         size_t i = 0;
         for (const IOConnection &connection: actor.connections)
@@ -468,6 +469,9 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
             {
                 ImGui::Text("%zu", connection.numRefires);
             }
+
+            ImGui::TableNextColumn();
+            ImGui::Text("%d ms", connection.delayMsec);
 
             i++;
         }
@@ -623,6 +627,9 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
 
                 ImGui::Text("Num Refires (0 for infinite)");
                 ImGui::InputScalar("##nRefires", ImGuiDataType_U64, &connection.numRefires);
+
+                ImGui::Text("Delay (approx. milliseconds)");
+                ImGui::InputScalar("##delayMsec", ImGuiDataType_U16, &connection.delayMsec);
 
                 if (hasInputDef)
                 {
