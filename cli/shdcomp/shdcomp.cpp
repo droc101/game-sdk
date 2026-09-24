@@ -89,6 +89,7 @@ static void CompileFile(const std::string &file, const ShaderAsset::ShaderType t
     {
         Logger::Info("Log: {}", errorLog);
         Logger::Error("Failed to compile shaders: {}", Error::ErrorString(e));
+        successful = false;
     }
 }
 
