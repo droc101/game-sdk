@@ -150,10 +150,13 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
                 hasDirectionalLight = true;
             }
             lights.emplace_back(actor);
-            continue;
         }
 
-        actorsToWrite.push_back(actor);
+        if (!def.editorOnly)
+        {
+            actorsToWrite.push_back(actor);
+        }
+
         if (def.Extends("player"))
         {
             Logger::Info("Found player spawnpoint at {} {} {}", actor.position.x, actor.position.y, actor.position.z);

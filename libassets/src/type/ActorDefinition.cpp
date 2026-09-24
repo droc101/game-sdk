@@ -57,6 +57,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
     }
     definition.description = definitionJson.value("description", "");
     definition.isVirtual = definitionJson.value("virtual", false);
+    definition.editorOnly = definitionJson.value("editor_only", false);
 
     if (definitionJson.contains("renderers"))
     {

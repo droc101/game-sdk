@@ -26,6 +26,7 @@ class ActorDefinition
         ActorDefinition *parentClass = nullptr;
 
         bool isVirtual = false;
+        bool editorOnly = false;
 
         std::vector<std::shared_ptr<RenderDefinition>> renderDefinitions{};
 
