@@ -3,11 +3,7 @@ project(game_sdk_shared)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_library(game_sdk_shared SHARED
-        src/WindowManager.cpp
-        include/game_sdk/WindowManager.h
-        src/Window.cpp
-        include/game_sdk/Window.h)
+add_library(game_sdk_shared SHARED)
 target_sources(game_sdk_shared PRIVATE
         src/Options.cpp
         include/game_sdk/Options.h
@@ -39,6 +35,12 @@ target_sources(game_sdk_shared PRIVATE
         include/game_sdk/SoundSystem.h
         src/windows/SoundBrowserWindow.cpp
         include/game_sdk/windows/SoundBrowserWindow.h
+        src/WindowManager.cpp
+        include/game_sdk/WindowManager.h
+        src/Window.cpp
+        include/game_sdk/Window.h
+        src/Flycam.cpp
+        include/game_sdk/Flycam.h
 )
 target_link_libraries(game_sdk_shared PRIVATE glew_s imgui)
 target_link_libraries(game_sdk_shared PUBLIC

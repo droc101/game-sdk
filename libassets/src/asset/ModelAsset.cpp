@@ -154,9 +154,16 @@ Error::ErrorCode ModelAsset::Import(const std::string &filePath)
         return lodCode;
     }
     const ModelLod &lod = lods.back();
+
     const uint32_t materialSlotCount = lod.components.size();
-    skins.emplace_back(materialSlotCount);
-    materials = {Material("", -1u, Material::MaterialShader::SHADER_SHADED)};
+    skins.emplace_back();
+    materials = {};
+    for (uint32_t mat = 0; mat < materialSlotCount; mat++)
+    {
+        materials.emplace_back("", -1u, Material::MaterialShader::SHADER_SHADED);
+        skins.at(0).push_back(mat);
+    }
+
     return Error::ErrorCode::OK;
 }
 

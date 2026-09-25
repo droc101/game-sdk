@@ -61,7 +61,7 @@ bool ModelViewer::Init()
 
     glGenBuffers(1, &staticCollisionVbo);
 
-    UpdateView(0, 0, 16);
+    ResetView();
 
     initDone = true;
 
@@ -128,8 +128,6 @@ void ModelViewer::ReloadModel()
 
     LoadHulls();
     LoadStaticCollision();
-
-    UpdateView(0, 0, 16);
 }
 
 ModelAsset &ModelViewer::GetModel()
@@ -137,22 +135,10 @@ ModelAsset &ModelViewer::GetModel()
     return model;
 }
 
-void ModelViewer::UpdateView(const float pitchDegrees, const float yawDegrees, const float cameraDistance)
+void ModelViewer::ResetView()
 {
-    pitch = glm::radians(pitchDegrees);
-    yaw = glm::radians(yawDegrees);
-    distance = cameraDistance;
-    ClampView();
-    UpdateMatrix();
-}
-
-void ModelViewer::UpdateViewRel(const float pitchDegrees, const float yawDegrees, const float cameraDistance)
-{
-    pitch += glm::radians(pitchDegrees);
-    yaw += glm::radians(yawDegrees);
-    distance += cameraDistance;
-    ClampView();
-    UpdateMatrix();
+    camera.ResetView();
+    camera.cameraPos.z = -32;
 }
 
 void ModelViewer::RenderWindow(const char *title, const ImGuiWindowFlags additionalFlags)
@@ -198,7 +184,6 @@ void ModelViewer::DestroyModel()
 
 void ModelViewer::RenderImGui()
 {
-    ImGuiIO &io = ImGui::GetIO();
     const float windowSizeX = ImGui::GetContentRegionAvail().x + ImGui::GetCursorScreenPos().x - ImGui::GetWindowPos().x + 8;
     const float windowSizeY = ImGui::GetContentRegionAvail().y + ImGui::GetCursorScreenPos().y - ImGui::GetWindowPos().y + 8;
     ResizeWindow(static_cast<GLsizei>(windowSizeX), static_cast<GLsizei>(windowSizeY));
@@ -206,23 +191,13 @@ void ModelViewer::RenderImGui()
     const bool previewFocused = ImGui::IsWindowHovered();
     ImGui::Image(GetFramebufferTexture(), GetFramebufferSize(), {0, 1}, {1, 0});
 
-    if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) && (previewFocused || dragging))
+    if (ImGui::IsMouseDragging(ImGuiMouseButton_Right) && (previewFocused || dragging))
     {
+        camera.ProcessInput();
         dragging = true;
-        io.WantCaptureMouse = false;
-        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-        const ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
-        UpdateViewRel(dragDelta.y / 5.0f, dragDelta.x / -5.0f, 0);
-        ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
     } else
     {
         dragging = false;
-    }
-
-    const float mouseWheel = io.MouseWheel;
-    if (mouseWheel != 0 && previewFocused)
-    {
-        UpdateViewRel(0, 0, mouseWheel / -2.5f);
     }
 }
 
@@ -297,11 +272,11 @@ void ModelViewer::RenderFramebuffer()
     glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().program, "PROJECTION"),
                        1,
                        GL_FALSE,
-                       glm::value_ptr(projection));
+                       glm::value_ptr(camera.GetPerspectiveMatrix()));
     glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().program, "VIEW"),
                        1,
                        GL_FALSE,
-                       glm::value_ptr(view));
+                       glm::value_ptr(camera.GetViewMatrix()));
 
     for (size_t i = 0; i < model.GetMaterialsPerSkin(); i++)
     {
@@ -352,11 +327,11 @@ void ModelViewer::RenderFramebuffer()
         glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "PROJECTION"),
                            1,
                            GL_FALSE,
-                           glm::value_ptr(projection));
+                           glm::value_ptr(camera.GetPerspectiveMatrix()));
         glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW"),
                            1,
                            GL_FALSE,
-                           glm::value_ptr(view));
+                           glm::value_ptr(camera.GetViewMatrix()));
         glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"), 0.2f, 0.2f, 0.2f, 1.0f);
         glDrawArrays(GL_LINES, 0, 24);
     }
@@ -370,11 +345,11 @@ void ModelViewer::RenderFramebuffer()
             glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "PROJECTION"),
                                1,
                                GL_FALSE,
-                               glm::value_ptr(projection));
+                               glm::value_ptr(camera.GetPerspectiveMatrix()));
             glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW"),
                                1,
                                GL_FALSE,
-                               glm::value_ptr(view));
+                               glm::value_ptr(camera.GetViewMatrix()));
             glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"),
                         1.0f,
                         0.5f,
@@ -404,11 +379,11 @@ void ModelViewer::RenderFramebuffer()
             glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "PROJECTION"),
                                1,
                                GL_FALSE,
-                               glm::value_ptr(projection));
+                               glm::value_ptr(camera.GetPerspectiveMatrix()));
             glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW"),
                                1,
                                GL_FALSE,
-                               glm::value_ptr(view));
+                               glm::value_ptr(camera.GetViewMatrix()));
             glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"),
                         1.0f,
                         0.5f,
@@ -441,11 +416,11 @@ void ModelViewer::RenderFramebuffer()
         glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "PROJECTION"),
                            1,
                            GL_FALSE,
-                           glm::value_ptr(projection));
+                           glm::value_ptr(camera.GetPerspectiveMatrix()));
         glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW"),
                            1,
                            GL_FALSE,
-                           glm::value_ptr(view));
+                           glm::value_ptr(camera.GetViewMatrix()));
         glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"), 0.1f, 0.5f, 0.8f, 0.25f);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
@@ -459,18 +434,8 @@ void ModelViewer::RenderFramebuffer()
 
 void ModelViewer::ResizeWindow(GLsizei width, GLsizei height)
 {
-    windowAspect = static_cast<float>(width) / static_cast<float>(height);
     GLHelper::ResizeFramebuffer(framebuffer, {width, height});
-    UpdateMatrix();
-}
-
-void ModelViewer::ClampView()
-{
-    pitch = glm::clamp(pitch, static_cast<float>(-(M_PI_2 - FLT_EPSILON)), static_cast<float>(M_PI_2 - FLT_EPSILON));
-    if (distance < 1)
-    {
-        distance = 1;
-    }
+    camera.SetViewport({width, height}, 0.01f, 2048.0f);
 }
 
 ImTextureID ModelViewer::GetFramebufferTexture() const
@@ -481,20 +446,6 @@ ImTextureID ModelViewer::GetFramebufferTexture() const
 ImVec2 ModelViewer::GetFramebufferSize() const
 {
     return {framebuffer.size.x, framebuffer.size.y};
-}
-
-void ModelViewer::UpdateMatrix()
-{
-    const glm::mat4 &persp = glm::perspective<float>(90.0, windowAspect, 0.01f, 1000.0f);
-
-    const float x = distance * cosf(pitch) * -sinf(yaw);
-    const float y = distance * sinf(pitch);
-    const float z = distance * cosf(pitch) * -cosf(yaw);
-    const glm::vec3 cameraPos{x, y, z};
-    const glm::mat4 &look = glm::lookAt(cameraPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-    projection = persp;
-    view = look;
 }
 
 void ModelViewer::LoadCube()
