@@ -122,7 +122,7 @@ void MdleditWindow::HandleMenuAndShortcuts()
         {
             if (ImGui::MenuItem("Reset View"))
             {
-                ModelEditor::modelViewer.UpdateView(0, 0, 1);
+                ModelEditor::modelViewer.ResetView();
             }
             ImGui::Separator();
             if (ImGui::BeginMenu("Display Mode"))
