@@ -94,25 +94,25 @@ Error::ErrorCode TextureAsset::SaveToBuffer(DataWriter &writer) const
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode TextureAsset::CreateFromPNG(const string &imagePath)
+Error::ErrorCode TextureAsset::CreateFromSdrImage(const string &imagePath)
 {
     if (access(imagePath.c_str(), F_OK | R_OK) != 0)
     {
         CreateMissingTexture();
         return Error::ErrorCode::OK;
     }
-    int pngWidth = 0;
-    int pngHeight = 0;
+    int imageWidth = 0;
+    int imageHeight = 0;
     int channels = 0;
-    uint8_t *data = stbi_load(imagePath.c_str(), &pngWidth, &pngHeight, &channels, STBI_rgb_alpha);
+    uint8_t *data = stbi_load(imagePath.c_str(), &imageWidth, &imageHeight, &channels, STBI_rgb_alpha);
     if (data == nullptr)
     {
         Logger::Error("stbi_load failed: {}", stbi_failure_reason());
         return Error::ErrorCode::UNKNOWN;
     }
     Reset();
-    width = pngWidth;
-    height = pngHeight;
+    width = imageWidth;
+    height = imageHeight;
     pixelFormat = PixelFormat::RGBA8;
     const size_t pixelDataSize = width * height * 4;
     pixelData = std::vector<uint8_t>(pixelDataSize);
@@ -135,7 +135,7 @@ Error::ErrorCode TextureAsset::CreateFromPNG(const string &imagePath)
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode TextureAsset::CreateFromEXR(const string &imagePath)
+Error::ErrorCode TextureAsset::CreateFromHdrImage(const string &imagePath)
 {
     Reset();
     RgbaInputFile file = RgbaInputFile(imagePath.c_str());
@@ -220,13 +220,13 @@ Error::ErrorCode TextureAsset::Import(const std::string &filePath)
 {
     const std::filesystem::path path = filePath;
     const std::string extension = path.extension().string();
-    if (extension == ".png")
+    if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".tga")
     {
-        return CreateFromPNG(filePath.c_str());
+        return CreateFromSdrImage(filePath.c_str());
     }
     if (extension == ".exr")
     {
-        return CreateFromEXR(filePath.c_str());
+        return CreateFromHdrImage(filePath.c_str());
     }
     return Error::ErrorCode::INCORRECT_FORMAT;
 }
