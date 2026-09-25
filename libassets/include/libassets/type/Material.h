@@ -29,7 +29,7 @@ class Material
         std::string texture{};
         Color color{};
         MaterialShader shader{};
-        bool castsShadows{};
+        bool castsShadows = true;
 
         void Write(DataWriter &writer) const;
 };
