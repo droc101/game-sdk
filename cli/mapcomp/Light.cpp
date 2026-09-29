@@ -3,17 +3,24 @@
 //
 
 #include "Light.h"
+#include <cmath>
+#include <cstdint>
+#include <libassets/util/Colors.h>
+#include <libassets/util/DataWriter.h>
+#include <libassets/type/Color.h>
+#include <libassets/type/Param.h>
+#include <libassets/type/Actor.h>
 
-Light::Light(const Actor& actor)
+Light::Light(const Actor &actor)
 {
     position = actor.position;
     rotation = actor.rotation;
     negativeForwardDirection = glm::normalize(glm::vec3{
-            sin(glm::radians(actor.rotation.y)) * cos(glm::radians(actor.rotation.x)),
-            -sin(glm::radians(actor.rotation.x)),
-            cos(glm::radians(actor.rotation.y)) * cos(glm::radians(actor.rotation.x)),
+        sin(glm::radians(actor.rotation.y)) * cos(glm::radians(actor.rotation.x)),
+        -sin(glm::radians(actor.rotation.x)),
+        cos(glm::radians(actor.rotation.y)) * cos(glm::radians(actor.rotation.x)),
     });
-    const Color c = Param::KvListGet(actor.params, "color", Color(-1));
+    const Color c = Param::KvListGet(actor.params, "color", Colors::WHITE);
     color = glm::vec3{c.R(), c.G(), c.B()};
     brightness = Param::KvListGet(actor.params, "brightness", 1.0f);
 
@@ -39,7 +46,7 @@ Light::Light(const Actor& actor)
     }
 }
 
-void Light::Write(DataWriter& writer) const
+void Light::Write(DataWriter &writer) const
 {
     KvList list{};
     list["type"] = Param(static_cast<uint8_t>(type));
