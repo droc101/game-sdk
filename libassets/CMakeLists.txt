@@ -47,7 +47,8 @@ set(OPENEXR_BUILD_EXAMPLES OFF)
 set(OPENEXR_TEST_LIBRARIES OFF)
 set(OPENEXR_FORCE_INTERNAL_IMATH ON)
 set(OPENEXR_FORCE_INTERNAL_OPENJPH ON)
-fetch_package(https://github.com/AcademySoftwareFoundation/openexr.git v3.*.* openexr)
+# TODO: 3.5.x causes compile errors in OpenEXR, should look into if that's an us or them issue
+fetch_package(https://github.com/AcademySoftwareFoundation/openexr.git v3.4.* openexr)
 
 fetch_tinyexpr()
 
@@ -167,6 +168,7 @@ add_library(assets SHARED
         src/asset/Asset.cpp
         src/util/FileIo.cpp
         include/libassets/util/FileIo.h
+        include/libassets/util/Colors.h
 )
 
 set_target_properties(assets PROPERTIES

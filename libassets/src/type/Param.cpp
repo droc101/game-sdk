@@ -7,6 +7,7 @@
 #include <format>
 #include <libassets/type/Color.h>
 #include <libassets/type/Param.h>
+#include <libassets/util/Colors.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <string>
@@ -147,7 +148,7 @@ bool Param::operator==(const Param &param) const
         case ParamType::PARAM_TYPE_STRING:
             return Get<std::string>("") == param.Get<std::string>("");
         case ParamType::PARAM_TYPE_COLOR:
-            return Get<Color>(Color(-1)) == param.Get<Color>(Color(-1));
+            return Get<Color>(Colors::WHITE) == param.Get<Color>(Colors::WHITE);
         case ParamType::PARAM_TYPE_ARRAY:
             return Get<ParamVector>(ParamVector()) == param.Get<ParamVector>(ParamVector());
         case ParamType::PARAM_TYPE_KV_LIST:
@@ -185,7 +186,7 @@ void Param::Write(DataWriter &writer) const
             writer.WriteString(Get<std::string>(""));
             break;
         case ParamType::PARAM_TYPE_COLOR:
-            Get<Color>(Color()).WriteFloats(writer);
+            Get<Color>(Colors::WHITE).WriteFloats(writer);
             break;
         case ParamType::PARAM_TYPE_ARRAY:
             vec = Get<ParamVector>(ParamVector());
@@ -311,7 +312,7 @@ void Param::ClearToType(const ParamType dataType)
             Set<std::string>("");
             break;
         case ParamType::PARAM_TYPE_COLOR:
-            Set<Color>(Color(-1));
+            Set<Color>(Colors::WHITE);
             break;
         case ParamType::PARAM_TYPE_ARRAY:
             Set<ParamVector>(ParamVector());
@@ -369,7 +370,7 @@ nlohmann::ordered_json Param::GetJson() const
             break;
         case ParamType::PARAM_TYPE_COLOR:
             j["type"] = "color";
-            j["value"] = Get<Color>(Color(-1)).GenerateJson();
+            j["value"] = Get<Color>(Colors::WHITE).GenerateJson();
             break;
         case ParamType::PARAM_TYPE_ARRAY:
             array = nlohmann::ordered_json::array();
@@ -480,7 +481,7 @@ std::string Param::ToString() const
         case ParamType::PARAM_TYPE_STRING:
             return std::format("\"{}\"", Get<std::string>(""));
         case ParamType::PARAM_TYPE_COLOR:
-            return std::format("{:#010x}", Get<Color>(Color()).GetUint32());
+            return std::format("{:#010x}", Get<Color>(Colors::WHITE).GetUint32());
         case ParamType::PARAM_TYPE_KV_LIST:
             return std::format("{} k/v pairs", Get<KvList>({}).size());
         case ParamType::PARAM_TYPE_UINT_64:

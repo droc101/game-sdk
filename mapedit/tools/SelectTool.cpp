@@ -18,6 +18,7 @@
 #include <libassets/type/Actor.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/Sector.h>
+#include <libassets/util/Colors.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <string>
 #include <tuple>
@@ -750,7 +751,7 @@ void SelectTool::ProcessViewportVertexMode(Viewport &vp,
             const glm::vec2 vertexScreenSpace = vp.WorldToScreenPos(startCeiling);
             const glm::vec2 endVertexScreenSpace = vp.WorldToScreenPos(endCeiling);
             Color vertexColor = Color(0.8, 0, 0, 1);
-            Color lineColor = Color(1, 1, 1, 1);
+            Color lineColor = Colors::WHITE;
             ProcessVertexHover(vp,
                                vertexScreenSpace,
                                screenSpaceHover,

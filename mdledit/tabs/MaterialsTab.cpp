@@ -13,6 +13,7 @@
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
 #include <libassets/type/Material.h>
+#include <libassets/util/Colors.h>
 #include <libassets/util/Error.h>
 #include <string>
 #include "../ModelEditor.h"
@@ -25,7 +26,7 @@ void MaterialsTab::Render()
     {
         Material mat{};
         mat.texture = Options::Get().defaultTexture;
-        mat.color = Color(1.0f, 1.0f, 1.0f, 1.0f);
+        mat.color = Colors::WHITE;
         mat.shader = Material::MaterialShader::SHADER_SHADED;
         ModelEditor::modelViewer.GetModel().AddMaterial(mat);
     }

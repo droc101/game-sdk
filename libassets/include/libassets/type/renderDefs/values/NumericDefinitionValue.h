@@ -10,6 +10,7 @@
 #include <libassets/type/ExpressionParser.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/renderDefs/values/BasicDefinitionValue.h>
+#include <libassets/util/Colors.h>
 #include <libassets/util/Logger.h>
 #include <regex>
 #include <string>
@@ -161,19 +162,19 @@ template<typename T> class NumericDefinitionValue: public BasicDefinitionValue<T
                 {
                     if (var.vectorComponent == VectorComponent::R)
                     {
-                        return p.Get<Color>(Color(-1)).R();
+                        return p.Get<Color>(Colors::WHITE).R();
                     }
                     if (var.vectorComponent == VectorComponent::G)
                     {
-                        return p.Get<Color>(Color(-1)).G();
+                        return p.Get<Color>(Colors::WHITE).G();
                     }
                     if (var.vectorComponent == VectorComponent::B)
                     {
-                        return p.Get<Color>(Color(-1)).B();
+                        return p.Get<Color>(Colors::WHITE).B();
                     }
                     if (var.vectorComponent == VectorComponent::A)
                     {
-                        return p.Get<Color>(Color(-1)).A();
+                        return p.Get<Color>(Colors::WHITE).A();
                     }
                 }
             }

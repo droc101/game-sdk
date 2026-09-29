@@ -26,6 +26,7 @@
 #include <libassets/type/renderDefs/SpriteRenderDefinition.h>
 #include <libassets/type/renderDefs/WallRenderDefinition.h>
 #include <libassets/type/Sector.h>
+#include <libassets/util/Colors.h>
 #include <memory>
 #include <numbers>
 #include <vector>
@@ -141,7 +142,7 @@ void ViewportRenderer::RenderSector(const Viewport &vp,
     if ((settings.selectionType == EditorTool::ItemType::SECTOR && settings.selectionIndex == sectorIndex) ||
         isFocusedSector)
     {
-        c = Color(1, 1, 1, 1);
+        c = Colors::WHITE;
     } else if (settings.hoverType == EditorTool::ItemType::SECTOR && settings.hoverIndex == sectorIndex)
     {
         c = Color(.8, .8, .8, 1);
@@ -250,10 +251,10 @@ void ViewportRenderer::RenderNewPrimitive(Viewport &vp, const ViewportRenderNewP
         {
             MapRenderer::RenderBillboardPoint(startPointCeil + glm::vec3(0, 0.1, 0), 10, Color(1, 0, 0, 1), matrix);
         }
-        MapRenderer::RenderLine(startPointCeil, endPointCeil, Color(1, 1, 1, 1), matrix, 4);
+        MapRenderer::RenderLine(startPointCeil, endPointCeil, Colors::WHITE, matrix, 4);
         if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
         {
-            MapRenderer::RenderLine(startPointFloor, endPointFloor, Color(1, 1, 1, 1), matrix, 4);
+            MapRenderer::RenderLine(startPointFloor, endPointFloor, Colors::WHITE, matrix, 4);
             MapRenderer::RenderLine(startPointCeil, startPointFloor, Color(.6, .6, .6, 1), matrix, 2);
         }
     }
@@ -294,11 +295,11 @@ void ViewportRenderer::RenderNewPolygon(const Viewport &vp,
         }
         if (vp.GetType() != Viewport::ViewportType::TOP_DOWN_XZ)
         {
-            MapRenderer::RenderLine(startFloor, endFloor, Color(1, 1, 1, 1), matrix, 4);
+            MapRenderer::RenderLine(startFloor, endFloor, Colors::WHITE, matrix, 4);
             MapRenderer::RenderLine(startCeiling, startFloor, Color(.6, .6, .6, 1), matrix, 4);
         }
 
-        MapRenderer::RenderLine(startCeiling, endCeiling, Color(1, 1, 1, 1), matrix, 4);
+        MapRenderer::RenderLine(startCeiling, endCeiling, Colors::WHITE, matrix, 4);
     }
 }
 
