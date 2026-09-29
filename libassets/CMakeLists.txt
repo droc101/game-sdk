@@ -168,6 +168,7 @@ add_library(assets SHARED
         src/asset/Asset.cpp
         src/util/FileIo.cpp
         include/libassets/util/FileIo.h
+        include/libassets/util/Colors.h
 )
 
 set_target_properties(assets PROPERTIES

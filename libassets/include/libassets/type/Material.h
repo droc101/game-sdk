@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <libassets/type/Color.h>
+#include <libassets/util/Colors.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <string>
@@ -27,7 +28,7 @@ class Material
         Material(const std::string &texture, uint32_t color, MaterialShader shader);
 
         std::string texture{};
-        Color color{};
+        Color color = Colors::WHITE;
         MaterialShader shader{};
 
         void Write(DataWriter &writer) const;

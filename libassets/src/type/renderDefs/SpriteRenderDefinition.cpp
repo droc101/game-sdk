@@ -7,12 +7,13 @@
 #include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/renderDefs/SpriteRenderDefinition.h>
 #include <libassets/type/renderDefs/values/NumericDefinitionValue.h>
+#include <libassets/util/Colors.h>
 #include <string>
 
 SpriteRenderDefinition::SpriteRenderDefinition(const nlohmann::json &json): RenderDefinition(json)
 {
     texture = StringDefinitionValue(json, "texture", "");
-    tintColor = ColorDefinitionValue(json, "tint_color", Color(-1));
+    tintColor = ColorDefinitionValue(json, "tint_color", Colors::WHITE);
     pointSize = NumericDefinitionValue<float>(json, "point_size", 20.0f);
 }
 
@@ -23,7 +24,7 @@ std::string SpriteRenderDefinition::GetTexture(const Actor &actor)
 
 Color SpriteRenderDefinition::GetTintColor(const Actor &actor)
 {
-    return tintColor.Get(actor.params, Color(-1));
+    return tintColor.Get(actor.params, Colors::WHITE);
 }
 
 float SpriteRenderDefinition::GetPointSize(const Actor &actor)

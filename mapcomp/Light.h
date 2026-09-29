@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 #include <libassets/type/Actor.h>
+#include <libassets/util/Colors.h>
 #include <type_traits>
 
 class Light // NOLINT(*-pro-type-member-init)
@@ -33,7 +34,7 @@ class Light // NOLINT(*-pro-type-member-init)
                 -sin(glm::radians(actor.rotation.x)),
                 cos(glm::radians(actor.rotation.y)) * cos(glm::radians(actor.rotation.x)),
             });
-            const float *colorPtr = actor.params.at("color").Get<Color>(Color(-1u)).GetDataPointer();
+            const float *colorPtr = actor.params.at("color").Get<Color>(Colors::WHITE).GetDataPointer();
             color = glm::vec3{colorPtr[0], colorPtr[1], colorPtr[2]};
             brightness = actor.params.at("brightness").Get<float>(1.0f);
 

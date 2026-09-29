@@ -34,6 +34,7 @@
 #include <libassets/type/paramDefs/Vec2ParamDefinition.h>
 #include <libassets/type/paramDefs/Vec3ParamDefinition.h>
 #include <libassets/type/SignalDefinition.h>
+#include <libassets/util/Colors.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <misc/cpp/imgui_stdlib.h>
@@ -313,7 +314,7 @@ void EditActorWindow::RenderParamsTab(const ActorDefinition &definition)
                 } else if (paramDef->type == Param::ParamType::PARAM_TYPE_COLOR)
                 {
                     const ColorParamDefinition *colorDef = dynamic_cast<ColorParamDefinition *>(paramDef.get());
-                    Color col = param.Get<Color>(Color(-1));
+                    Color col = param.Get<Color>(Colors::WHITE);
                     std::array<float, 4> colorData = col.CopyData();
                     if (ImGui::ColorEdit4("##color",
                                           colorData.data(),
@@ -388,7 +389,7 @@ void EditActorWindow::RenderParamsTab(const ActorDefinition &definition)
                     }
                 } else if (param.GetType() == Param::ParamType::PARAM_TYPE_COLOR)
                 {
-                    Color col = param.Get<Color>(Color(-1));
+                    Color col = param.Get<Color>(Colors::WHITE);
                     std::array<float, 4> colorData = col.CopyData();
                     if (ImGui::ColorEdit4("##color", colorData.data()))
                     {
@@ -684,7 +685,7 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                             }
                         } else if (param.GetType() == Param::ParamType::PARAM_TYPE_COLOR)
                         {
-                            Color col = param.Get<Color>(Color(-1));
+                            Color col = param.Get<Color>(Colors::WHITE);
                             std::array<float, 4> colorData = col.CopyData();
                             if (ImGui::ColorEdit4("##color", colorData.data()))
                             {
