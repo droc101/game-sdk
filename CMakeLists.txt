@@ -50,7 +50,7 @@ if (WIN32)
     foreach (dll IN LISTS DLLS)
         add_custom_command(TARGET copydlls POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${MINGW_PATH}\\out\\${dll}"
+                "${MINGW_PATH}\\bin\\${dll}"
                 "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${dll}"
         )
     endforeach ()
