@@ -49,7 +49,7 @@ if (WIN32)
     foreach (dll IN LISTS DLLS)
         add_custom_command(TARGET copydlls POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${MINGW_PATH}\\bin\\${dll}"
+                "${MINGW_PATH}\\out\\${dll}"
                 "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${dll}"
         )
     endforeach ()
@@ -125,8 +125,8 @@ target_compile_definitions(imgui INTERFACE
 
 add_custom_target(
         copy_assets
-        COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/bin/assets
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/bin/assets
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/out/assets
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/out/assets
 )
 
 add_subdirectory(libassets)
