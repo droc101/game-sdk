@@ -16,6 +16,7 @@ class FoneditWindow final: public Window
         bool Init() override;
         void Render() override;
         [[nodiscard]] const WindowProperties &GetProperties() const override;
+        void FileDropped(const std::string &filePath) override;
 
     private:
         WindowProperties properties = {

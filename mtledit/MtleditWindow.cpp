@@ -30,6 +30,14 @@ bool MtleditWindow::Init()
     return true;
 }
 
+void MtleditWindow::FileDropped(const std::string &filePath)
+{
+    if (filePath.ends_with(".gmtl"))
+    {
+        OpenGmtl(filePath);
+    }
+}
+
 void MtleditWindow::OpenGmtl(const std::string &path)
 {
     const Error::ErrorCode errorCode = material.LoadFromAsset(path);

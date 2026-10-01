@@ -13,6 +13,7 @@
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
+#include <memory>
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
@@ -21,7 +22,6 @@
 #include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_surface.h>
 #include <SDL3/SDL_video.h>
-#include <memory>
 #include <utility>
 #include <vector>
 
@@ -29,7 +29,10 @@ bool Window::BaseInit(const std::shared_ptr<Window> &modalParent)
 {
     const WindowProperties &props = this->GetProperties();
 
-    const SDL_WindowFlags sdlWindowFlags = SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL | SDL_WINDOW_HIGH_PIXEL_DENSITY | props.defaultFlags;
+    const SDL_WindowFlags sdlWindowFlags = SDL_WINDOW_HIDDEN |
+                                           SDL_WINDOW_OPENGL |
+                                           SDL_WINDOW_HIGH_PIXEL_DENSITY |
+                                           props.defaultFlags;
     window = SDL_CreateWindow(props.title.c_str(), props.defaultSize.x, props.defaultSize.y, sdlWindowFlags);
     if (window == nullptr)
     {
@@ -100,6 +103,9 @@ void Window::BaseProcessEvent(SDL_Event *event)
     if (event->type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
     {
         RequestClose();
+    } else if (event->type == SDL_EVENT_DROP_FILE)
+    {
+        FileDropped(std::string(event->drop.data));
     } else if (!ProcessEvent(event))
     {
         MakeCurrent();
@@ -328,6 +334,8 @@ bool Window::Init()
 
 void Window::Destroy() {}
 
+void Window::FileDropped(const std::string &filePath) {}
+
 #pragma endregion
 
 #pragma region Message Boxes
@@ -423,8 +431,7 @@ void Window::OpenFileDialog(FileDialogCallback &&Callback, const std::vector<SDL
                            false);
 }
 
-void Window::OpenMultiFileDialog(MultiFileDialogCallback &&Callback,
-                                 const std::vector<SDL_DialogFileFilter> &filters)
+void Window::OpenMultiFileDialog(MultiFileDialogCallback &&Callback, const std::vector<SDL_DialogFileFilter> &filters)
 {
     ModalBlock();
     MultiFileDialogCallbackData *data = new MultiFileDialogCallbackData();

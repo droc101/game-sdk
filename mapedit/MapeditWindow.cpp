@@ -81,6 +81,14 @@ bool MapeditWindow::Init()
     return true;
 }
 
+void MapeditWindow::FileDropped(const std::string &filePath)
+{
+    if (filePath.ends_with(".json"))
+    {
+        OpenJson(filePath);
+    }
+}
+
 void MapeditWindow::Destroy()
 {
     SoundSystem::Get().Destroy();

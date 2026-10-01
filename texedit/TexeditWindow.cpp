@@ -45,6 +45,17 @@ bool TexeditWindow::Init()
     return true;
 }
 
+void TexeditWindow::FileDropped(const std::string &filePath)
+{
+    if (filePath.ends_with(".gtex"))
+    {
+        OpenGtex(filePath);
+    } else if (filePath.ends_with(".png") || filePath.ends_with(".exr") || filePath.ends_with(".jpg") || filePath.ends_with(".jpeg") || filePath.ends_with(".tga"))
+    {
+        ImportImage(filePath);
+    }
+}
+
 void TexeditWindow::Destroy()
 {
     DestroyExistingTexture();

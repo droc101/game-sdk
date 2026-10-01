@@ -231,3 +231,11 @@ bool FoneditWindow::Init()
 
     return true;
 }
+
+void FoneditWindow::FileDropped(const std::string &filePath)
+{
+    if (filePath.ends_with(".gfon"))
+    {
+        OpenGfon(filePath);
+    }
+}

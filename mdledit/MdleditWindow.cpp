@@ -48,6 +48,17 @@ bool MdleditWindow::Init()
     return true;
 }
 
+void MdleditWindow::FileDropped(const std::string &filePath)
+{
+    if (filePath.ends_with(".gmdl"))
+    {
+        OpenGmdl(filePath);
+    } else if (filePath.ends_with(".obj") || filePath.ends_with(".fbx") || filePath.ends_with(".gltf") || filePath.ends_with("dae"))
+    {
+        ImportModel(filePath);
+    }
+}
+
 void MdleditWindow::OpenGmdl(const std::string &path) const
 {
     ModelAsset model;

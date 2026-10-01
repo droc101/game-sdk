@@ -479,3 +479,17 @@ bool KvleditWindow::Init()
 
     return true;
 }
+
+void KvleditWindow::FileDropped(const std::string &filePath)
+{
+    if (filePath.ends_with(".gkvl"))
+    {
+        OpenGkvl(filePath);
+    } else if (filePath.ends_with(".kvl"))
+    {
+        OpenKvl(filePath);
+    } else if (filePath.ends_with(".json"))
+    {
+        ImportJson(filePath);
+    }
+}
