@@ -604,9 +604,9 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                     const Error::ErrorCode e = targetDef.GetInput(connection.targetInput, inputDef);
                     if (e == Error::ErrorCode::OK)
                     {
-                        if (connection.param.GetType() != inputDef.GetType())
+                        if (!inputDef.AcceptsType(inputDef.GetPrimaryType()))
                         {
-                            connection.param.ClearToType(inputDef.GetType());
+                            connection.param.ClearToType(inputDef.GetPrimaryType());
                         }
                         hasInputDef = true;
                     }
@@ -634,7 +634,7 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
 
                 if (hasInputDef)
                 {
-                    if (outputDef.GetType() != inputDef.GetType())
+                    if (!inputDef.AcceptsType(outputDef.GetPrimaryType()))
                     {
                         connection.overridesParam = true;
                         ImGui::BeginDisabled();

@@ -302,37 +302,20 @@ void ActorBrowserWindow::RenderInputsTab(const ActorDefinition &def)
             ImGui::Text("%s", key.c_str());
 
             ImGui::TableNextColumn();
-            switch (signal.GetType())
+            std::vector<std::string> typeNames{};
+            for (const Param::ParamType& type : signal.GetTypes())
             {
-                case Param::ParamType::PARAM_TYPE_BYTE:
-                    ImGui::Text("Byte");
-                    break;
-                case Param::ParamType::PARAM_TYPE_INTEGER:
-                    ImGui::Text("Integer");
-                    break;
-                case Param::ParamType::PARAM_TYPE_FLOAT:
-                    ImGui::Text("Float");
-                    break;
-                case Param::ParamType::PARAM_TYPE_BOOL:
-                    ImGui::Text("Boolean");
-                    break;
-                case Param::ParamType::PARAM_TYPE_STRING:
-                    ImGui::Text("String");
-                    break;
-                case Param::ParamType::PARAM_TYPE_COLOR:
-                    ImGui::Text("Color");
-                    break;
-                case Param::ParamType::PARAM_TYPE_UINT_64:
-                    ImGui::Text("Uint64");
-                    break;
-                case Param::ParamType::PARAM_TYPE_VEC2:
-                    ImGui::Text("Vector2");
-                    break;
-                case Param::ParamType::PARAM_TYPE_VEC3:
-                    ImGui::Text("Vector3");
-                    break;
-                default:
-                    ImGui::Text("Unknown");
+                typeNames.push_back(Param::GetTypeName(type));
+            }
+            if (!typeNames.empty())
+            {
+                for (const std::string& type : typeNames)
+                {
+                    ImGui::Text("%s", type.c_str());
+                }
+            } else
+            {
+                ImGui::Text("None");
             }
 
             ImGui::TableNextColumn();
@@ -366,37 +349,20 @@ void ActorBrowserWindow::RenderOutputsTab(const ActorDefinition &def)
             ImGui::Text("%s", key.c_str());
 
             ImGui::TableNextColumn();
-            switch (signal.GetType())
+            std::vector<std::string> typeNames{};
+            for (const Param::ParamType& type : signal.GetTypes())
             {
-                case Param::ParamType::PARAM_TYPE_BYTE:
-                    ImGui::Text("Byte");
-                    break;
-                case Param::ParamType::PARAM_TYPE_INTEGER:
-                    ImGui::Text("Integer");
-                    break;
-                case Param::ParamType::PARAM_TYPE_FLOAT:
-                    ImGui::Text("Float");
-                    break;
-                case Param::ParamType::PARAM_TYPE_BOOL:
-                    ImGui::Text("Boolean");
-                    break;
-                case Param::ParamType::PARAM_TYPE_STRING:
-                    ImGui::Text("String");
-                    break;
-                case Param::ParamType::PARAM_TYPE_COLOR:
-                    ImGui::Text("Color");
-                    break;
-                case Param::ParamType::PARAM_TYPE_UINT_64:
-                    ImGui::Text("Uint64");
-                    break;
-                case Param::ParamType::PARAM_TYPE_VEC2:
-                    ImGui::Text("Vector2");
-                    break;
-                case Param::ParamType::PARAM_TYPE_VEC3:
-                    ImGui::Text("Vector3");
-                    break;
-                default:
-                    ImGui::Text("Unknown");
+                typeNames.push_back(Param::GetTypeName(type));
+            }
+            if (!typeNames.empty())
+            {
+                for (const std::string& type : typeNames)
+                {
+                    ImGui::Text("%s", type.c_str());
+                }
+            } else
+            {
+                ImGui::Text("None");
             }
 
             ImGui::TableNextColumn();

@@ -108,6 +108,8 @@ class Param
          */
         [[nodiscard]] std::string GetTypeName() const;
 
+        static std::string GetTypeName(ParamType type);
+
         template <ParamTypeTemplate T> [[nodiscard]] static T KvListGet(const KvList &list, const std::string &key, T defaultValue)
         {
             if (list.contains(key))

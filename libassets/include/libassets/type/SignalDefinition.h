@@ -6,23 +6,30 @@
 
 #include <libassets/type/Param.h>
 #include <string>
+#include <unordered_set>
 
 class SignalDefinition
 {
-    public:
-        SignalDefinition() = default;
-        SignalDefinition(const std::string &description, Param::ParamType type);
+public:
+    SignalDefinition() = default;
+    SignalDefinition(const std::string& description, const std::vector<Param::ParamType>& types);
+    explicit SignalDefinition(const nlohmann::json& json);
 
-        /**
-         * Get the description of this signal
-         */
-        [[nodiscard]] const std::string &GetDescription() const;
-        /**
-         * Get the type of this signal
-         */
-        [[nodiscard]] Param::ParamType GetType() const;
+    /**
+     * Get the description of this signal
+     */
+    [[nodiscard]] const std::string& GetDescription() const;
 
-    private:
-        std::string description;
-        Param::ParamType paramType = Param::ParamType::PARAM_TYPE_NONE;
+    /**
+     * Get the types of this signal
+     */
+    [[nodiscard]] std::vector<Param::ParamType> GetTypes() const;
+
+    [[nodiscard]] Param::ParamType GetPrimaryType() const;
+
+    [[nodiscard]] bool AcceptsType(Param::ParamType type) const;
+
+private:
+    std::string description;
+    std::vector<Param::ParamType> paramTypes{};
 };
