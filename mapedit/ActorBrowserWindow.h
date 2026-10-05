@@ -12,6 +12,10 @@
 
 class ActorBrowserWindow final: public Window
 {
+    public:
+        ActorBrowserWindow() = default;
+        explicit ActorBrowserWindow(const std::string &classname);
+
     protected:
         void Render() override;
         [[nodiscard]] const WindowProperties &GetProperties() const override;

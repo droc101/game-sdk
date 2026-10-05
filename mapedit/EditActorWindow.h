@@ -13,7 +13,7 @@
 class EditActorWindow final: public Window
 {
     public:
-        EditActorWindow(Actor &actor);
+        explicit EditActorWindow(Actor &actor);
 
     protected:
         void Render() override;

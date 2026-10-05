@@ -19,6 +19,7 @@
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
+#include <libassets/type/InputDefinition.h>
 #include <libassets/type/IOConnection.h>
 #include <libassets/type/OptionDefinition.h>
 #include <libassets/type/Param.h>
@@ -33,13 +34,15 @@
 #include <libassets/type/paramDefs/Uint64ParamDefinition.h>
 #include <libassets/type/paramDefs/Vec2ParamDefinition.h>
 #include <libassets/type/paramDefs/Vec3ParamDefinition.h>
-#include <libassets/type/InputDefinition.h>
 #include <libassets/util/Colors.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <misc/cpp/imgui_stdlib.h>
 #include <ranges>
 #include <vector>
+
+#include "ActorBrowserWindow.h"
+#include "game_sdk/WindowManager.h"
 #include "MapEditor.h"
 
 EditActorWindow::EditActorWindow(Actor &actorToEdit): actor(actorToEdit) {}
@@ -71,7 +74,7 @@ void EditActorWindow::Render()
     {
         ImGui::TableNextColumn();
         ImGui::Text("Class");
-        ImGui::PushItemWidth(-1);
+        ImGui::PushItemWidth(-32);
         if (ImGui::BeginCombo("##class", actor.className.c_str()))
         {
             for (const std::string &key: MapEditor::adm.GetActorClasses())
@@ -93,6 +96,12 @@ void EditActorWindow::Render()
                 }
             }
             ImGui::EndCombo();
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("?", ImVec2(24, 0)))
+        {
+            WindowManager::Get().AddWindow<ActorBrowserWindow>(actor.className);
         }
 
         const ActorDefinition &classDef = MapEditor::adm.GetActorDefinition(actor.className);

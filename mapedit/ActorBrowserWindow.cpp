@@ -27,6 +27,14 @@
 #include <vector>
 #include "MapEditor.h"
 
+ActorBrowserWindow::ActorBrowserWindow(const std::string &classname)
+{
+    if (MapEditor::adm.HasActorClass(classname))
+    {
+        selectedClass = classname;
+    }
+}
+
 const Window::WindowProperties &ActorBrowserWindow::GetProperties() const
 {
     return properties;
