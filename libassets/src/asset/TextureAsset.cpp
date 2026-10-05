@@ -15,13 +15,18 @@
 #include <ImfPixelType.h>
 #include <ImfRgba.h>
 #include <ImfRgbaFile.h>
+#include <libassets/asset/Asset.h>
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/util/AssetContainer.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
+#include <limits>
 #include <OpenEXRConfig.h>
+#include <string>
+#include <unistd.h>
 #include <vector>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -222,11 +227,11 @@ Error::ErrorCode TextureAsset::Import(const std::string &filePath)
     const std::string extension = path.extension().string();
     if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".tga")
     {
-        return CreateFromSdrImage(filePath.c_str());
+        return CreateFromSdrImage(filePath);
     }
     if (extension == ".exr")
     {
-        return CreateFromHdrImage(filePath.c_str());
+        return CreateFromHdrImage(filePath);
     }
     return Error::ErrorCode::INCORRECT_FORMAT;
 }
@@ -236,9 +241,9 @@ Error::ErrorCode TextureAsset::Export(const std::string &filePath) const
     switch (pixelFormat)
     {
         case PixelFormat::RGBA8:
-            return SaveAsPNG(filePath.c_str());
+            return SaveAsPNG(filePath);
         case PixelFormat::RGBAF16:
-            return SaveAsEXR(filePath.c_str());
+            return SaveAsEXR(filePath);
     }
     return Error::ErrorCode::INCORRECT_FORMAT;
 }

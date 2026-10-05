@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <format>
 #include <game_sdk/SharedMgr.h>
+#include <game_sdk/Window.h>
 #include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
 #include <imgui.h>
@@ -59,8 +60,9 @@ void TextureBrowserWindow::Render()
                 tex = SharedMgr::Get().textureCache.GetMissingTextureID();
             } else
             {
-                const Error::ErrorCode sizeError = SharedMgr::Get().textureCache.GetTextureSize("texture/" + textures.at(i),
-                                                                                          texSize);
+                const Error::ErrorCode sizeError = SharedMgr::Get().textureCache.GetTextureSize("texture/" +
+                                                                                                        textures.at(i),
+                                                                                                texSize);
                 assert(sizeError == Error::ErrorCode::OK);
             }
 

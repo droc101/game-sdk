@@ -18,7 +18,7 @@ class Material
         {
             SHADER_SKY,
             SHADER_UNSHADED,
-            SHADER_SHADED
+            SHADER_SHADED,
         };
 
         Material() = default;

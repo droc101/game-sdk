@@ -59,7 +59,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
             if (ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
             {
                 MapEditor::toolType = MapEditor::EditorToolType::SELECT;
-                MapEditor::tool = std::unique_ptr<EditorTool>(new SelectTool());
+                MapEditor::tool = std::make_unique<SelectTool>();
                 return;
             }
         } else

@@ -48,7 +48,7 @@ void KvleditWindow::ImportJson(const std::string &path)
     }
 }
 
-void KvleditWindow::SaveGkvl(const std::string &path)
+void KvleditWindow::SaveGkvl(const std::string &path) const
 {
     const Error::ErrorCode errorCode = dataAsset.SaveToAsset(path);
     if (errorCode != Error::ErrorCode::OK)
@@ -57,7 +57,7 @@ void KvleditWindow::SaveGkvl(const std::string &path)
     }
 }
 
-void KvleditWindow::SaveKvl(const std::string &path)
+void KvleditWindow::SaveKvl(const std::string &path) const
 {
     const Error::ErrorCode errorCode = dataAsset.SaveAsKvlFile(path);
     if (errorCode != Error::ErrorCode::OK)
@@ -66,7 +66,7 @@ void KvleditWindow::SaveKvl(const std::string &path)
     }
 }
 
-void KvleditWindow::ExportJson(const std::string &path)
+void KvleditWindow::ExportJson(const std::string &path) const
 {
     const Error::ErrorCode errorCode = dataAsset.Export(path);
     if (errorCode != Error::ErrorCode::OK)

@@ -3,11 +3,12 @@
 //
 
 #include <libassets/type/ActorDefinition.h>
+#include <libassets/type/InputDefinition.h>
+#include <libassets/type/OutputDefinition.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/type/renderDefs/OrientationRenderDefinition.h>
 #include <libassets/type/renderDefs/PointRenderDefinition.h>
 #include <libassets/type/renderDefs/RenderDefinition.h>
-#include <libassets/type/InputDefinition.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
@@ -19,7 +20,7 @@
 #include <string>
 #include <utility>
 
-Error::ErrorCode ActorDefinition::Create(const std::string& path, ActorDefinition& definition)
+Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinition &definition)
 {
     const std::regex validIdentifierRegex = std::regex(VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX);
     std::smatch match;
@@ -60,8 +61,8 @@ Error::ErrorCode ActorDefinition::Create(const std::string& path, ActorDefinitio
 
     if (definitionJson.contains("renderers"))
     {
-        const nlohmann::json& renderDefs = definitionJson.at("renderers");
-        for (const auto& [key, value] : renderDefs.items())
+        const nlohmann::json &renderDefs = definitionJson.at("renderers");
+        for (const auto &[key, value]: renderDefs.items())
         {
             Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
             std::unique_ptr<RenderDefinition> rdef = RenderDefinition::Create(value, e);
@@ -76,19 +77,18 @@ Error::ErrorCode ActorDefinition::Create(const std::string& path, ActorDefinitio
     {
         definition.renderDefinitions.push_back(std::make_shared<PointRenderDefinition>(PointRenderDefinition()));
         definition.renderDefinitions
-                  .push_back(std::make_shared<OrientationRenderDefinition>(OrientationRenderDefinition()));
+                .push_back(std::make_shared<OrientationRenderDefinition>(OrientationRenderDefinition()));
     }
 
     if (definitionJson.contains("inputs"))
     {
         nlohmann::json inputs = definitionJson.at("inputs");
-        for (const auto& [key, value] : inputs.items())
+        for (const auto &[key, value]: inputs.items())
         {
             if (std::regex_match(key, match, validIdentifierRegex))
             {
                 definition.inputs[key] = InputDefinition(value);
-            }
-            else
+            } else
             {
                 Logger::Error("Invalid actor definition input name \"{}\". Input names may only contain letters and "
                               "underscores.",
@@ -101,13 +101,12 @@ Error::ErrorCode ActorDefinition::Create(const std::string& path, ActorDefinitio
     if (definitionJson.contains("outputs"))
     {
         nlohmann::json outputs = definitionJson.at("outputs");
-        for (const auto& [key, value] : outputs.items())
+        for (const auto &[key, value]: outputs.items())
         {
             if (std::regex_match(key, match, validIdentifierRegex))
             {
                 definition.outputs[key] = OutputDefinition(value);
-            }
-            else
+            } else
             {
                 Logger::Error("Invalid actor definition output name \"{}\". Output names may only contain letters and "
                               "underscores.",
@@ -120,7 +119,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string& path, ActorDefinitio
     if (definitionJson.contains("params"))
     {
         nlohmann::json params = definitionJson.at("params");
-        for (const auto& [key, value] : params.items())
+        for (const auto &[key, value]: params.items())
         {
             if (std::regex_match(key, match, validIdentifierRegex))
             {
@@ -136,8 +135,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string& path, ActorDefinitio
                     return Error::ErrorCode::UNKNOWN;
                 }
                 definition.params[key] = std::move(param);
-            }
-            else
+            } else
             {
                 Logger::Error("Invalid actor definition param name \"{}\". Param names may only contain letters and "
                               "underscores.",
@@ -150,7 +148,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string& path, ActorDefinitio
     return Error::ErrorCode::OK;
 }
 
-bool ActorDefinition::Extends(const std::string& baseClass) const
+bool ActorDefinition::Extends(const std::string &baseClass) const
 {
     if (className == baseClass)
     {
@@ -163,43 +161,43 @@ bool ActorDefinition::Extends(const std::string& baseClass) const
     return false;
 }
 
-void ActorDefinition::GetInputNames(std::set<std::string>& out) const
+void ActorDefinition::GetInputNames(std::set<std::string> &out) const
 {
     if (parentClass != nullptr)
     {
         parentClass->GetInputNames(out);
     }
-    for (const std::pair<std::string, InputDefinition> kv : inputs)
+    for (const std::pair<std::string, InputDefinition> kv: inputs)
     {
         out.insert(kv.first);
     }
 }
 
-void ActorDefinition::GetOutputNames(std::set<std::string>& out) const
+void ActorDefinition::GetOutputNames(std::set<std::string> &out) const
 {
     if (parentClass != nullptr)
     {
         parentClass->GetOutputNames(out);
     }
-    for (const std::pair<std::string, OutputDefinition> kv : outputs)
+    for (const std::pair<std::string, OutputDefinition> kv: outputs)
     {
         out.insert(kv.first);
     }
 }
 
-void ActorDefinition::GetParamNames(std::set<std::string>& out) const
+void ActorDefinition::GetParamNames(std::set<std::string> &out) const
 {
     if (parentClass != nullptr)
     {
         parentClass->GetParamNames(out);
     }
-    for (const std::string& key : params | std::views::keys)
+    for (const std::string &key: params | std::views::keys)
     {
         out.insert(key);
     }
 }
 
-Error::ErrorCode ActorDefinition::GetInput(const std::string& name, InputDefinition& input) const
+Error::ErrorCode ActorDefinition::GetInput(const std::string &name, InputDefinition &input) const
 {
     if (inputs.contains(name))
     {
@@ -213,7 +211,7 @@ Error::ErrorCode ActorDefinition::GetInput(const std::string& name, InputDefinit
     return Error::ErrorCode::NOT_FOUND;
 }
 
-Error::ErrorCode ActorDefinition::GetOutput(const std::string& name, OutputDefinition& output) const
+Error::ErrorCode ActorDefinition::GetOutput(const std::string &name, OutputDefinition &output) const
 {
     if (outputs.contains(name))
     {
@@ -227,7 +225,7 @@ Error::ErrorCode ActorDefinition::GetOutput(const std::string& name, OutputDefin
     return Error::ErrorCode::NOT_FOUND;
 }
 
-Error::ErrorCode ActorDefinition::GetParam(const std::string& name, std::shared_ptr<ParamDefinition>& param) const
+Error::ErrorCode ActorDefinition::GetParam(const std::string &name, std::shared_ptr<ParamDefinition> &param) const
 {
     if (params.contains(name))
     {

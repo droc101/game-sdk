@@ -3,9 +3,11 @@
 //
 
 #include <format>
+#include <game_sdk/Window.h>
 #include <game_sdk/windows/AboutWindow.h>
 #include <imgui.h>
 #include <libassets/libassets.h>
+#include <libassets/util/Error.h>
 #include <libassets/util/FileIo.h>
 #include <libassets/util/SearchPathManager.h>
 #include <misc/cpp/imgui_stdlib.h>

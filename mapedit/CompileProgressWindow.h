@@ -22,7 +22,7 @@ class CompileProgressWindow final: public Window
                 std::string gameDir{};
         };
 
-        CompileProgressWindow(const CompileOptions &opts);
+        explicit CompileProgressWindow(const CompileOptions &opts);
 
     protected:
         bool Init() override;

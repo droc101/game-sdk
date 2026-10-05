@@ -120,15 +120,15 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
 {
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
-    LevelMaterialAsset mat;
-    mat.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(wallMat.material)); // TODO improve
-    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
+    LevelMaterialAsset material;
+    material.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(wallMat.material)); // TODO improve
+    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(material.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e == Error::ErrorCode::OK)
     {
         constexpr int IMAGE_PANEL_HEIGHT = 128;
         ImVec2 imageSize{};
-        SharedMgr::Get().textureCache.GetTextureSize(mat.texture, imageSize);
+        SharedMgr::Get().textureCache.GetTextureSize(material.texture, imageSize);
         const glm::vec2 scales = {(sz.x - 16) / imageSize.x, IMAGE_PANEL_HEIGHT / imageSize.y};
         const float scale = std::ranges::min(scales.x, scales.y);
 

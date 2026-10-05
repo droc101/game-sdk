@@ -19,7 +19,7 @@ class Viewport
         {
             TOP_DOWN_XZ,
             FRONT_XY,
-            SIDE_YZ
+            SIDE_YZ,
         };
 
         Viewport() = delete;

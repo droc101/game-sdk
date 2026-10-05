@@ -2,6 +2,7 @@
 // Created by droc101 on 9/24/26.
 //
 
+#include <cfloat>
 #include <game_sdk/Flycam.h>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/fwd.hpp>
@@ -18,7 +19,7 @@ void Flycam::SetViewport(const glm::vec2 size, const float nearPlane, const floa
     perspectiveMatrix = glm::perspective(glm::radians(90.0f), size.x / size.y, nearPlane, farPlane);
 }
 
-glm::mat4 Flycam::GetViewMatrix()
+glm::mat4 Flycam::GetViewMatrix() const
 {
     const glm::quat rotationQuat = glm::quat(cameraRotation);
 
@@ -27,7 +28,7 @@ glm::mat4 Flycam::GetViewMatrix()
     return view;
 }
 
-glm::mat4 Flycam::GetPerspectiveMatrix()
+glm::mat4 Flycam::GetPerspectiveMatrix() const
 {
     return perspectiveMatrix;
 }

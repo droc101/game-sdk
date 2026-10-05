@@ -25,7 +25,7 @@ class ModelAsset final: public Asset
         {
             NONE,
             STATIC_SINGLE_CONCAVE,
-            DYNAMIC_MULTIPLE_CONVEX
+            DYNAMIC_MULTIPLE_CONVEX,
         };
 
         /**

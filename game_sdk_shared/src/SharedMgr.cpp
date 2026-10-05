@@ -11,7 +11,6 @@
 #include <imgui.h>
 #include <libassets/asset/DataAsset.h>
 #include <libassets/util/Error.h>
-#include <memory>
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_misc.h>
 #include <string>

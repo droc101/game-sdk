@@ -2,9 +2,11 @@
 // Created by droc101 on 10/18/25.
 //
 
+#include <algorithm>
 #include <libassets/type/Param.h>
 #include <libassets/type/InputDefinition.h>
 #include <string>
+#include <vector>
 
 const std::string &InputDefinition::GetDescription() const
 {

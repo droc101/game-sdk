@@ -11,7 +11,6 @@
 #include <game_sdk/WindowManager.h>
 #include <imgui.h>
 #include <libassets/type/ModelLod.h>
-#include <numeric>
 #include <string>
 #include <utility>
 #include "../ModelEditor.h"

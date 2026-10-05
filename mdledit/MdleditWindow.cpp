@@ -3,11 +3,20 @@
 //
 
 #include "MdleditWindow.h"
+#include <cstddef>
+#include <format>
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
+#include <game_sdk/Window.h>
 #include <game_sdk/WindowManager.h>
+#include <imgui.h>
 #include <imgui_internal.h>
+#include <libassets/asset/ModelAsset.h>
+#include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
+#include <memory>
+#include <string>
 #include "ModelEditor.h"
 #include "tabs/CollisionTab.h"
 #include "tabs/LodsTab.h"
@@ -53,7 +62,10 @@ void MdleditWindow::FileDropped(const std::string &filePath)
     if (filePath.ends_with(".gmdl"))
     {
         OpenGmdl(filePath);
-    } else if (filePath.ends_with(".obj") || filePath.ends_with(".fbx") || filePath.ends_with(".gltf") || filePath.ends_with("dae"))
+    } else if (filePath.ends_with(".obj") ||
+               filePath.ends_with(".fbx") ||
+               filePath.ends_with(".gltf") ||
+               filePath.ends_with("dae"))
     {
         ImportModel(filePath);
     }

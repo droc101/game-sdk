@@ -2,6 +2,7 @@
 // Created by NBT22 on 7/27/26.
 //
 
+#include <vector>
 #define STB_RECT_PACK_IMPLEMENTATION
 #include <libassets/util/LightmapHelpers.hpp>
 

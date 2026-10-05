@@ -3,6 +3,7 @@
 //
 
 #include "MtleditWindow.h"
+#include <algorithm>
 #include <format>
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/SharedMgr.h>

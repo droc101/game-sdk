@@ -10,12 +10,12 @@
 
 class AboutWindow final: public Window
 {
-    public:
+    protected:
         bool Init() override;
 
         void Render() override;
 
-        const WindowProperties &GetProperties() const override;
+        [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
         WindowProperties properties = {

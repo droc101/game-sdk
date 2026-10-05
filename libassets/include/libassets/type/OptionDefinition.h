@@ -23,28 +23,28 @@ class OptionDefinition
         /**
          * Get the type this option definition uses
          */
-        Param::ParamType GetValueType() const;
+        [[nodiscard]] Param::ParamType GetValueType() const;
 
         /**
          * Get the value of a key
          */
-        const Param &GetValue(const std::string &key) const;
+        [[nodiscard]] const Param &GetValue(const std::string &key) const;
 
         /**
          * Get all keys in this definition
          */
-        std::vector<std::string> GetOptions() const;
+        [[nodiscard]] std::vector<std::string> GetOptions() const;
 
         /**
          * Get the name of this definition
          */
-        const std::string &GetName() const;
+        [[nodiscard]] const std::string &GetName() const;
 
         /**
          * Find a value's key
          * @param value The value to search for
          */
-        std::string Find(const Param &value) const;
+        [[nodiscard]] std::string Find(const Param &value) const;
 
     private:
         std::string name;

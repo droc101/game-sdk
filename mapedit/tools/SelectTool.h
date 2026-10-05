@@ -46,7 +46,7 @@ class SelectTool final: public EditorTool
 
         void ProcessViewportSelectMode(const Viewport &vp, bool isHovered, const glm::vec3 &worldSpaceHover);
 
-        void ProcessViewportVertexMode(Viewport &vp,
+        void ProcessViewportVertexMode(const Viewport &vp,
                                        glm::mat4 &matrix,
                                        bool isHovered,
                                        const glm::vec3 &worldSpaceHover,

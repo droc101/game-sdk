@@ -16,7 +16,6 @@
 #include <iterator>
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
-#include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <map>
 #include <misc/cpp/imgui_stdlib.h>
@@ -28,8 +27,7 @@
 
 bool ShdeditWindow::Init()
 {
-    const bool hasOutputDirectory = WindowManager::Get().GetArgumentParser().HasFlagWithValue("--output-directory");
-    if (hasOutputDirectory)
+    if (WindowManager::Get().GetArgumentParser().HasFlagWithValue("--output-directory"))
     {
         OutPathCallback(WindowManager::Get().GetArgumentParser().GetFlagValue("--output-directory"));
     }
@@ -40,14 +38,11 @@ bool ShdeditWindow::Init()
         BasePathCallback(WindowManager::Get().GetArgumentParser().GetFlagValue("--base-directory"));
     }
 
-    bool hasSourcePath = false;
     if (WindowManager::Get().GetArgumentParser().HasFlagWithValue("--source-file"))
     {
-        hasSourcePath = true;
         SelectCallback({WindowManager::Get().GetArgumentParser().GetFlagValue("--source-file")});
     } else if (WindowManager::Get().GetArgumentParser().HasFlagWithValue("--source-directory"))
     {
-        hasSourcePath = true;
         const std::string &dir = WindowManager::Get().GetArgumentParser().GetFlagValue("--source-directory");
         if (!replicateFolderStructure) {
             replicateFolderStructure = true;
@@ -321,7 +316,7 @@ void ShdeditWindow::Render()
                 std::string filename = files.at(i);
                 if (replicateFolderStructure)
                 {
-                    if (filename.starts_with(sourcesBaseFolder) && sourcesBaseFolder.length() != 0)
+                    if (filename.starts_with(sourcesBaseFolder) && !sourcesBaseFolder.empty())
                     {
                         filename = filename.substr(sourcesBaseFolder.length());
                     } else

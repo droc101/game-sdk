@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <glslang/Public/ShaderLang.h>
 #include <iterator>
 #include <libassets/asset/Asset.h>
 #include <libassets/asset/ShaderAsset.h>

@@ -48,7 +48,7 @@ class Param
             PARAM_TYPE_ARRAY,
             PARAM_TYPE_UINT_64,
             PARAM_TYPE_VEC2,
-            PARAM_TYPE_VEC3
+            PARAM_TYPE_VEC3,
         };
 
         Param();

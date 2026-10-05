@@ -25,6 +25,6 @@ class EditorTool
             CEILING,
             FLOOR,
             SECTOR,
-            ACTOR
+            ACTOR,
         };
 };

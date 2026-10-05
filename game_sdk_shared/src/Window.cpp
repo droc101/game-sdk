@@ -334,7 +334,7 @@ bool Window::Init()
 
 void Window::Destroy() {}
 
-void Window::FileDropped(const std::string &filePath) {}
+void Window::FileDropped(const std::string &) {}
 
 #pragma endregion
 

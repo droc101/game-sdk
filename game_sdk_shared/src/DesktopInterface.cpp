@@ -3,7 +3,6 @@
 //
 
 #include <cstdint>
-#include <filesystem>
 #include <game_sdk/DesktopInterface.h>
 #include <SDL3/SDL_misc.h>
 #include <SDL3/SDL_process.h>
@@ -49,7 +48,7 @@ SDL_Process *DesktopInterface::StartSDLProcess(const std::string &executable, co
     args.push_back(nullptr);
 
     const SDL_PropertiesID props = SDL_CreateProperties();
-    (void)SDL_SetPointerProperty(props, SDL_PROP_PROCESS_CREATE_ARGS_POINTER, reinterpret_cast<void *>(args.data()));
+    (void)SDL_SetPointerProperty(props, SDL_PROP_PROCESS_CREATE_ARGS_POINTER, args.data());
     (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER, SDL_PROCESS_STDIO_APP);
     (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDIN_NUMBER, SDL_PROCESS_STDIO_NULL);
     (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDERR_NUMBER, SDL_PROCESS_STDIO_APP);

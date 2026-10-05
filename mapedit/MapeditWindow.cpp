@@ -3,17 +3,24 @@
 //
 
 #include "MapeditWindow.h"
-#include <game_sdk/DesktopInterface.h>
+#include <format>
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/SoundSystem.h>
+#include <game_sdk/Window.h>
 #include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
 #include <game_sdk/windows/SoundBrowserWindow.h>
 #include <game_sdk/windows/TextureBrowserWindow.h>
+#include <imgui.h>
 #include <imgui_internal.h>
+#include <libassets/type/Actor.h>
+#include <libassets/type/ActorDefinition.h>
+#include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
+#include <SDL3/SDL_video.h>
 #include "ActorBrowserWindow.h"
 #include "MapCompileWindow.h"
 #include "MapEditor.h"
@@ -37,7 +44,7 @@ bool MapeditWindow::Init()
     if (adms != Error::ErrorCode::OK)
     {
         ErrorMessage("Failed to load actor definitions");
-        return 1;
+        return false;
     }
 
     if (!MapEditor::adm.HasActorClass("player"))

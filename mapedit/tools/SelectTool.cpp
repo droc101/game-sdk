@@ -20,6 +20,7 @@
 #include <libassets/type/Sector.h>
 #include <libassets/util/Colors.h>
 #include <misc/cpp/imgui_stdlib.h>
+#include <numbers>
 #include <string>
 #include <tuple>
 #include <variant>
@@ -713,7 +714,7 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
     }
 }
 
-void SelectTool::ProcessViewportVertexMode(Viewport &vp,
+void SelectTool::ProcessViewportVertexMode(const Viewport &vp,
                                            glm::mat4 &matrix,
                                            const bool isHovered,
                                            const glm::vec3 &worldSpaceHover,

@@ -3,20 +3,21 @@
 //
 
 #include <libassets/type/OutputDefinition.h>
+#include <libassets/type/Param.h>
 
-OutputDefinition::OutputDefinition(const nlohmann::json& json)
+OutputDefinition::OutputDefinition(const nlohmann::json &json)
 {
     description = json.value("description", "");
     paramType = Param::ParseType(json.value("type", "none"));
 }
 
-OutputDefinition::OutputDefinition(const std::string& description, const Param::ParamType& type)
+OutputDefinition::OutputDefinition(const std::string &description, const Param::ParamType &type)
 {
     this->description = description;
     paramType = type;
 }
 
-const std::string& OutputDefinition::GetDescription() const
+const std::string &OutputDefinition::GetDescription() const
 {
     return description;
 }

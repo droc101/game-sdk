@@ -8,6 +8,8 @@
 #include <game_sdk/Window.h>
 #include <imgui.h>
 #include <libassets/type/ActorDefinition.h>
+#include <libassets/type/InputDefinition.h>
+#include <libassets/type/OutputDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/BoolParamDefinition.h>
 #include <libassets/type/paramDefs/ByteParamDefinition.h>
@@ -20,10 +22,10 @@
 #include <libassets/type/paramDefs/Uint64ParamDefinition.h>
 #include <libassets/type/paramDefs/Vec2ParamDefinition.h>
 #include <libassets/type/paramDefs/Vec3ParamDefinition.h>
-#include <libassets/type/InputDefinition.h>
 #include <libassets/util/Error.h>
 #include <memory>
-#include <unordered_set>
+#include <set>
+#include <string>
 #include <vector>
 #include "MapEditor.h"
 
@@ -311,13 +313,13 @@ void ActorBrowserWindow::RenderInputsTab(const ActorDefinition &def)
 
             ImGui::TableNextColumn();
             std::vector<std::string> typeNames{};
-            for (const Param::ParamType& type : signal.GetTypes())
+            for (const Param::ParamType &type: signal.GetTypes())
             {
                 typeNames.push_back(Param::GetTypeName(type));
             }
             if (!typeNames.empty())
             {
-                for (const std::string& type : typeNames)
+                for (const std::string &type: typeNames)
                 {
                     ImGui::Text("%s", type.c_str());
                 }

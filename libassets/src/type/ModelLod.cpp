@@ -2,17 +2,21 @@
 // Created by droc101 on 7/18/25.
 //
 
+#include <algorithm>
 #include <array>
 #include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <cassert>
+#include <cfloat>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <format>
 #include <fstream>
 #include <glm/glm.hpp>
+#include <libassets/type/BoundingBox.h>
 #include <libassets/type/ModelLod.h>
 #include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
@@ -20,13 +24,13 @@
 #include <libassets/util/Error.h>
 #include <libassets/util/LightmapHelpers.hpp>
 #include <libassets/util/Logger.h>
+#include <limits>
 #include <numeric>
 #include <stb_rect_pack.h>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
-
-#include "libassets/type/BoundingBox.h"
 
 ModelLod::ModelLod(DataReader &reader, const uint32_t componentCount)
 {

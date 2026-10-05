@@ -99,7 +99,7 @@ bool CompileProgressWindow::Init()
 
 void CompileProgressWindow::Destroy()
 {
-    if (compilerProcess)
+    if (compilerProcess != nullptr)
     {
         (void)SDL_KillProcess(compilerProcess, false);
     }
@@ -138,7 +138,7 @@ void CompileProgressWindow::FinishIOSteam(SDL_IOStream **stream)
     SDL_IOStatus status = SDL_GetIOStatus(*stream);
     while (status != SDL_IO_STATUS_EOF && status != SDL_IO_STATUS_ERROR)
     {
-        std::array<char, 1024> buffer = {0};
+        std::array<char, 1024> buffer = {};
         (void)SDL_ReadIO(*stream, &buffer, 1000);
         log += std::string(buffer.data());
         status = SDL_GetIOStatus(*stream);

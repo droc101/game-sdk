@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <format>
 #include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
 #include <game_sdk/windows/SoundBrowserWindow.h>
@@ -22,6 +23,7 @@
 #include <libassets/type/InputDefinition.h>
 #include <libassets/type/IOConnection.h>
 #include <libassets/type/OptionDefinition.h>
+#include <libassets/type/OutputDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/BoolParamDefinition.h>
 #include <libassets/type/paramDefs/ByteParamDefinition.h>
@@ -39,12 +41,10 @@
 #include <memory>
 #include <misc/cpp/imgui_stdlib.h>
 #include <ranges>
+#include <set>
 #include <vector>
-
 #include "ActorBrowserWindow.h"
-#include "game_sdk/WindowManager.h"
 #include "MapEditor.h"
-#include "libassets/type/OutputDefinition.h"
 
 EditActorWindow::EditActorWindow(Actor &actorToEdit): actor(actorToEdit) {}
 
@@ -669,7 +669,7 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                         ImGui::SetNextItemWidth(-1);
                         if (ImGui::BeginCombo("##overrideParamType", param.GetTypeName().c_str()))
                         {
-                            for (const Param::ParamType & type : inputDef.GetTypes())
+                            for (const Param::ParamType &type: inputDef.GetTypes())
                             {
                                 if (ImGui::Selectable(Param::GetTypeName(type).c_str(), param.GetType() == type))
                                 {

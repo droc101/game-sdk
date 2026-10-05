@@ -101,7 +101,7 @@ void TexeditWindow::ImportImage(const std::string &path)
     LoadTexture();
 }
 
-void TexeditWindow::SaveGtex(const std::string &path)
+void TexeditWindow::SaveGtex(const std::string &path) const
 {
     const Error::ErrorCode errorCode = texture.SaveToAsset(path);
     if (errorCode != Error::ErrorCode::OK)
@@ -110,7 +110,7 @@ void TexeditWindow::SaveGtex(const std::string &path)
     }
 }
 
-void TexeditWindow::Export(const std::string &path)
+void TexeditWindow::Export(const std::string &path) const
 {
     const Error::ErrorCode errorCode = texture.Export(path);
     if (errorCode != Error::ErrorCode::OK)

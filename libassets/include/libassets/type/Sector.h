@@ -70,7 +70,7 @@ class Sector
         {
             COLINEAR = 0,
             CLOCKWISE = 1,
-            COUNTERCLOCKWISE = 2
+            COUNTERCLOCKWISE = 2,
         };
 
         [[nodiscard]] static SegmentOrientation GetOrientation(const glm::vec2 &pointA,

@@ -18,7 +18,7 @@ class KvleditWindow final: public Window
         void Render() override;
         void FileDropped(const std::string &filePath) override;
 
-        const WindowProperties &GetProperties() const override;
+        [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
         WindowProperties properties = {
@@ -38,9 +38,9 @@ class KvleditWindow final: public Window
         void OpenKvl(const std::string &path);
         void ImportJson(const std::string &path);
 
-        void SaveGkvl(const std::string &path);
-        void SaveKvl(const std::string &path);
-        void ExportJson(const std::string &path);
+        void SaveGkvl(const std::string &path) const;
+        void SaveKvl(const std::string &path) const;
+        void ExportJson(const std::string &path) const;
 
         void RenderParam(Param &param,
                          const std::string &displayName,

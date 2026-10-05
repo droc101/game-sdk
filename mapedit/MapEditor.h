@@ -64,7 +64,7 @@ class MapEditor
         static constexpr const char *PRIMITIVE_ICON_NAME = "editor/icon_primitive";
         static constexpr const char *POLYGON_ICON_NAME = "editor/icon_polygon";
 
-        static inline std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new SelectTool());
+        static inline std::unique_ptr<EditorTool> tool = std::make_unique<SelectTool>();
 
         static inline WallMaterial mat{};
 

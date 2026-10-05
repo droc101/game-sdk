@@ -31,6 +31,6 @@ class FoneditWindow final: public Window
         FontAsset font{};
 
         void OpenGfon(const std::string &path);
-        void SaveGfon(const std::string &path);
+        void SaveGfon(const std::string &path) const;
         static const char* ComboGetter(void* userData, int index);
 };

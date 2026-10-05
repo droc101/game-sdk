@@ -43,7 +43,7 @@ Color::Color(nlohmann::ordered_json j)
 Color::Color(const std::string &hexCode)
 {
     std::string hex = hexCode;
-    if (hex.starts_with("#"))
+    if (hex.starts_with('#'))
     {
         hex = hex.substr(1);
     }

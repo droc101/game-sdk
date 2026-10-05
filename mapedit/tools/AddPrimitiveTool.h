@@ -27,7 +27,7 @@ class AddPrimitiveTool final: public EditorTool
         {
             RECTANGLE,
             TRIANGLE,
-            NGON
+            NGON,
         };
 
         static constexpr std::array<const char *, 3> PRIMITIVE_NAMES = {
