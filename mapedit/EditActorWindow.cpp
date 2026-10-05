@@ -44,6 +44,7 @@
 #include "ActorBrowserWindow.h"
 #include "game_sdk/WindowManager.h"
 #include "MapEditor.h"
+#include "libassets/type/OutputDefinition.h"
 
 EditActorWindow::EditActorWindow(Actor &actorToEdit): actor(actorToEdit) {}
 
@@ -650,11 +651,36 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                         ImGui::EndDisabled();
                     } else
                     {
-                        ImGui::Checkbox("Parameter Override", &connection.overridesParam);
+                        if (ImGui::Checkbox("Parameter Override", &connection.overridesParam))
+                        {
+                            if (connection.overridesParam && !inputDef.AcceptsType(param.GetType()))
+                            {
+                                param.ClearToType(inputDef.GetPrimaryType());
+                            } else if (!connection.overridesParam)
+                            {
+                                param.Clear();
+                            }
+                        }
                     }
 
                     if (connection.overridesParam)
                     {
+                        ImGui::SameLine();
+                        ImGui::SetNextItemWidth(-1);
+                        if (ImGui::BeginCombo("##overrideParamType", param.GetTypeName().c_str()))
+                        {
+                            for (const Param::ParamType & type : inputDef.GetTypes())
+                            {
+                                if (ImGui::Selectable(Param::GetTypeName(type).c_str(), param.GetType() == type))
+                                {
+                                    if (param.GetType() != type)
+                                    {
+                                        param.ClearToType(type);
+                                    }
+                                }
+                            }
+                            ImGui::EndCombo();
+                        }
                         // ImGui::TextWrapped("%s", paramDef->description.empty() ? "No Description" : paramDef->description.c_str());
                         if (param.GetType() == Param::ParamType::PARAM_TYPE_BYTE)
                         {
