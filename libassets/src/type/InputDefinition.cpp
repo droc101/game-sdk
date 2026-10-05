@@ -3,25 +3,25 @@
 //
 
 #include <libassets/type/Param.h>
-#include <libassets/type/SignalDefinition.h>
+#include <libassets/type/InputDefinition.h>
 #include <string>
 
-const std::string &SignalDefinition::GetDescription() const
+const std::string &InputDefinition::GetDescription() const
 {
     return description;
 }
 
-std::vector<Param::ParamType> SignalDefinition::GetTypes() const
+std::vector<Param::ParamType> InputDefinition::GetTypes() const
 {
     return paramTypes;
 }
 
-bool SignalDefinition::AcceptsType(const Param::ParamType type) const
+bool InputDefinition::AcceptsType(const Param::ParamType type) const
 {
-    return std::find(paramTypes.begin(), paramTypes.end(), type) != paramTypes.end();
+    return std::ranges::find(paramTypes, type) != paramTypes.end();
 }
 
-SignalDefinition::SignalDefinition(const std::string& description, const std::vector<Param::ParamType>& types)
+InputDefinition::InputDefinition(const std::string& description, const std::vector<Param::ParamType>& types)
 {
     this->description = description;
     paramTypes = types;
@@ -32,8 +32,9 @@ SignalDefinition::SignalDefinition(const std::string& description, const std::ve
     }
 }
 
-SignalDefinition::SignalDefinition(const nlohmann::json& json)
+InputDefinition::InputDefinition(const nlohmann::json& json)
 {
+    description = json.value("description", "");
     if (json.contains("type"))
     {
         paramTypes.push_back(Param::ParseType(json.value("type", "none")));
@@ -52,7 +53,7 @@ SignalDefinition::SignalDefinition(const nlohmann::json& json)
     }
 }
 
-Param::ParamType SignalDefinition::GetPrimaryType() const
+Param::ParamType InputDefinition::GetPrimaryType() const
 {
     return paramTypes.at(0);
 }

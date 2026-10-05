@@ -20,7 +20,7 @@
 #include <libassets/type/paramDefs/Uint64ParamDefinition.h>
 #include <libassets/type/paramDefs/Vec2ParamDefinition.h>
 #include <libassets/type/paramDefs/Vec3ParamDefinition.h>
-#include <libassets/type/SignalDefinition.h>
+#include <libassets/type/InputDefinition.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <unordered_set>
@@ -291,7 +291,7 @@ void ActorBrowserWindow::RenderInputsTab(const ActorDefinition &def)
         def.GetInputNames(inputNames);
         for (const std::string &key: inputNames)
         {
-            SignalDefinition signal{};
+            InputDefinition signal{};
             const Error::ErrorCode e = def.GetInput(key, signal);
             if (e != Error::ErrorCode::OK)
             {
@@ -338,7 +338,7 @@ void ActorBrowserWindow::RenderOutputsTab(const ActorDefinition &def)
         def.GetOutputNames(outputNames);
         for (const std::string &key: outputNames)
         {
-            SignalDefinition signal{};
+            OutputDefinition signal{};
             const Error::ErrorCode e = def.GetOutput(key, signal);
             if (e != Error::ErrorCode::OK)
             {
@@ -349,21 +349,7 @@ void ActorBrowserWindow::RenderOutputsTab(const ActorDefinition &def)
             ImGui::Text("%s", key.c_str());
 
             ImGui::TableNextColumn();
-            std::vector<std::string> typeNames{};
-            for (const Param::ParamType& type : signal.GetTypes())
-            {
-                typeNames.push_back(Param::GetTypeName(type));
-            }
-            if (!typeNames.empty())
-            {
-                for (const std::string& type : typeNames)
-                {
-                    ImGui::Text("%s", type.c_str());
-                }
-            } else
-            {
-                ImGui::Text("None");
-            }
+            ImGui::Text("%s", Param::GetTypeName(signal.GetType()).c_str());
 
             ImGui::TableNextColumn();
             ImGui::TextWrapped("%s",

@@ -33,13 +33,12 @@
 #include <libassets/type/paramDefs/Uint64ParamDefinition.h>
 #include <libassets/type/paramDefs/Vec2ParamDefinition.h>
 #include <libassets/type/paramDefs/Vec3ParamDefinition.h>
-#include <libassets/type/SignalDefinition.h>
+#include <libassets/type/InputDefinition.h>
 #include <libassets/util/Colors.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <misc/cpp/imgui_stdlib.h>
 #include <ranges>
-#include <unordered_set>
 #include <vector>
 #include "MapEditor.h"
 
@@ -502,7 +501,7 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                 definition.GetOutputNames(myOutputNames);
                 ImGui::Text("Source Output");
 
-                SignalDefinition outputDef{};
+                OutputDefinition outputDef{};
                 if (definition.GetOutput(connection.sourceOutput, outputDef) != Error::ErrorCode::OK)
                 {
                     ImGui::SameLine();
@@ -575,7 +574,7 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                 }
 
                 bool hasInputDef = false;
-                SignalDefinition inputDef;
+                InputDefinition inputDef;
 
                 if (validTargetActor)
                 {
@@ -634,7 +633,7 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
 
                 if (hasInputDef)
                 {
-                    if (!inputDef.AcceptsType(outputDef.GetPrimaryType()))
+                    if (!inputDef.AcceptsType(outputDef.GetType()))
                     {
                         connection.overridesParam = true;
                         ImGui::BeginDisabled();

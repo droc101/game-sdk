@@ -3,12 +3,11 @@
 //
 
 #include <libassets/type/ActorDefinition.h>
-#include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/type/renderDefs/OrientationRenderDefinition.h>
 #include <libassets/type/renderDefs/PointRenderDefinition.h>
 #include <libassets/type/renderDefs/RenderDefinition.h>
-#include <libassets/type/SignalDefinition.h>
+#include <libassets/type/InputDefinition.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
@@ -87,7 +86,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string& path, ActorDefinitio
         {
             if (std::regex_match(key, match, validIdentifierRegex))
             {
-                definition.inputs[key] = SignalDefinition(value);
+                definition.inputs[key] = InputDefinition(value);
             }
             else
             {
@@ -106,9 +105,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string& path, ActorDefinitio
         {
             if (std::regex_match(key, match, validIdentifierRegex))
             {
-                const SignalDefinition signal = SignalDefinition(value.value("description", ""),
-                                                                 {Param::ParseType(value.value("type", "none"))});
-                definition.outputs[key] = signal;
+                definition.outputs[key] = OutputDefinition(value);
             }
             else
             {
@@ -172,7 +169,7 @@ void ActorDefinition::GetInputNames(std::set<std::string>& out) const
     {
         parentClass->GetInputNames(out);
     }
-    for (const std::pair<std::string, SignalDefinition> kv : inputs)
+    for (const std::pair<std::string, InputDefinition> kv : inputs)
     {
         out.insert(kv.first);
     }
@@ -184,7 +181,7 @@ void ActorDefinition::GetOutputNames(std::set<std::string>& out) const
     {
         parentClass->GetOutputNames(out);
     }
-    for (const std::pair<std::string, SignalDefinition> kv : outputs)
+    for (const std::pair<std::string, OutputDefinition> kv : outputs)
     {
         out.insert(kv.first);
     }
@@ -202,7 +199,7 @@ void ActorDefinition::GetParamNames(std::set<std::string>& out) const
     }
 }
 
-Error::ErrorCode ActorDefinition::GetInput(const std::string& name, SignalDefinition& input) const
+Error::ErrorCode ActorDefinition::GetInput(const std::string& name, InputDefinition& input) const
 {
     if (inputs.contains(name))
     {
@@ -216,7 +213,7 @@ Error::ErrorCode ActorDefinition::GetInput(const std::string& name, SignalDefini
     return Error::ErrorCode::NOT_FOUND;
 }
 
-Error::ErrorCode ActorDefinition::GetOutput(const std::string& name, SignalDefinition& output) const
+Error::ErrorCode ActorDefinition::GetOutput(const std::string& name, OutputDefinition& output) const
 {
     if (outputs.contains(name))
     {

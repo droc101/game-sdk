@@ -6,14 +6,13 @@
 
 #include <libassets/type/Param.h>
 #include <string>
-#include <unordered_set>
 
-class SignalDefinition
+class InputDefinition
 {
 public:
-    SignalDefinition() = default;
-    SignalDefinition(const std::string& description, const std::vector<Param::ParamType>& types);
-    explicit SignalDefinition(const nlohmann::json& json);
+    InputDefinition() = default;
+    InputDefinition(const std::string& description, const std::vector<Param::ParamType>& types);
+    explicit InputDefinition(const nlohmann::json& json);
 
     /**
      * Get the description of this signal
