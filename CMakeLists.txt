@@ -3,8 +3,6 @@ project(game-sdk)
 
 include(cmake/utils.cmake)
 
-option(GAME_SDK_BUILD_PLUGINS "Builds GAME SDK plugins" OFF)
-
 set(CMAKE_CXX_STANDARD 20)
 
 get_filename_component(DEPS_ABS_PATH "${FETCHCONTENT_BASE_DIR}" ABSOLUTE)
@@ -145,9 +143,3 @@ add_subdirectory(launcher)
 add_subdirectory(cli/mapdump)
 add_subdirectory(cli/shdcomp)
 add_dependencies(launcher texedit mdledit sndedit mapedit shdedit fonedit mtledit kvledit mapdump shdcomp)
-
-if (GAME_SDK_BUILD_PLUGINS)
-    if (UNIX)
-        add_subdirectory(plugins/gtex_thumbs)
-    endif ()
-endif ()
