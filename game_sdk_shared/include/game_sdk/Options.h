@@ -14,7 +14,7 @@ class Options
         {
             SYSTEM,
             LIGHT,
-            DARK
+            DARK,
         };
 
         static Options &Get();

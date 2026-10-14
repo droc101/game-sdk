@@ -7,6 +7,7 @@
 #include <array>
 #include <concepts>
 #include <glm/glm.hpp>
+#include <libassets/type/MapVertex.h>
 #include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
@@ -42,8 +43,9 @@ class BoundingBox
          * Create a bounding box of the given vertices
          * @param verts The vertices to create a box for
          */
-        template<typename T> requires(std::same_as<T, ModelVertex> || std::same_as<T, glm::vec3>)
-        explicit BoundingBox(const std::vector<T> &verts)
+        template<typename T> requires(std::same_as<T, ModelVertex> ||
+                                      std::same_as<T, glm::vec3> ||
+                                      std::same_as<T, MapVertex>) explicit BoundingBox(const std::vector<T> &verts)
         {
             if (verts.empty())
             {
@@ -63,14 +65,14 @@ class BoundingBox
 
             for (const T &vert: verts)
             {
-                if constexpr (std::same_as<T, ModelVertex>)
-                {
-                    minPoint = glm::min(minPoint, vert.position);
-                    maxPoint = glm::max(maxPoint, vert.position);
-                } else
+                if constexpr (std::same_as<T, glm::vec3>)
                 {
                     minPoint = glm::min(minPoint, vert);
                     maxPoint = glm::max(maxPoint, vert);
+                } else
+                {
+                    minPoint = glm::min(minPoint, vert.position);
+                    maxPoint = glm::max(maxPoint, vert.position);
                 }
             }
 

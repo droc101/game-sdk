@@ -10,6 +10,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <libassets/type/Color.h>
+#include <libassets/util/Colors.h>
 #include <libassets/util/DataReader.h>
 
 class ModelVertex
@@ -25,7 +26,7 @@ class ModelVertex
 
         glm::vec3 position{};
         glm::vec2 uv{};
-        Color color{};
+        Color color = Colors::WHITE;
         glm::vec3 normal{};
         glm::vec2 lightmapUv{};
 

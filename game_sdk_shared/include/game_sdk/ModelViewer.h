@@ -6,9 +6,9 @@
 #define GAME_SDK_MODELVIEWER_H
 
 #include <cstddef>
+#include <game_sdk/Flycam.h>
 #include <game_sdk/gl/GLHelper.h>
 #include <GL/glew.h>
-#include <glm/glm.hpp>
 #include <imgui.h>
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/type/Color.h>
@@ -67,21 +67,7 @@ class ModelViewer
          */
         [[nodiscard]] ModelAsset &GetModel();
 
-        /**
-         * Set the view
-         * @param pitchDegrees Pitch in degrees
-         * @param yawDegrees Yaw in degrees
-         * @param cameraDistance Camera distance
-         */
-        void UpdateView(float pitchDegrees, float yawDegrees, float cameraDistance);
-
-        /**
-         * Update the view
-         * @param pitchDegrees Pitch change in degrees
-         * @param yawDegrees Yaw change in degrees
-         * @param cameraDistance Camera distance change
-         */
-        void UpdateViewRel(float pitchDegrees, float yawDegrees, float cameraDistance);
+        void ResetView();
 
 
         /**
@@ -155,16 +141,10 @@ class ModelViewer
 
         std::vector<GLModelLod> lods{};
 
-        float pitch = 0;
-        float yaw = 0;
-        float distance = 0;
-
-        glm::mat4 projection{};
-        glm::mat4 view{};
+        Flycam camera{};
 
         GLsizei windowWidth = 800;
         GLsizei windowHeight = 600;
-        float windowAspect = 4.0 / 3.0;
 
         GLHelper::GL_Framebuffer framebuffer;
 
@@ -179,13 +159,9 @@ class ModelViewer
 
         void ResizeWindow(GLsizei width, GLsizei height);
 
-        void ClampView();
-
         [[nodiscard]] ImTextureID GetFramebufferTexture() const;
 
         [[nodiscard]] ImVec2 GetFramebufferSize() const;
-
-        void UpdateMatrix();
 
         static void LoadCube();
 

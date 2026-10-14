@@ -89,8 +89,10 @@ class DialogFilters
             SDL_DialogFileFilter{.name = "EXR Images", .pattern = "exr"},
         };
         static inline const std::vector<SDL_DialogFileFilter> IMAGE_FILTERS = {
-            SDL_DialogFileFilter{.name = "Images", .pattern = "png;exr"},
+            SDL_DialogFileFilter{.name = "Images", .pattern = "png;jpg;jpeg;tga;exr"},
             SDL_DialogFileFilter{.name = "PNG Images", .pattern = "png"},
+            SDL_DialogFileFilter{.name = "JPG Images", .pattern = "jpg;jepg"},
+            SDL_DialogFileFilter{.name = "TGA Images", .pattern = "tga"},
             SDL_DialogFileFilter{.name = "EXR Images", .pattern = "exr"},
         };
 

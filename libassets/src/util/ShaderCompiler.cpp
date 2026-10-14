@@ -6,21 +6,22 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <glslang/MachineIndependent/Versions.h>
 #include <glslang/Public/ResourceLimits.h>
-#include <glslang/SPIRV/GlslangToSpv.h>
+#include <glslang/Public/ShaderLang.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
 #include <libassets/util/ShaderCompiler.h>
 #include <list>
-#include <memory>
+#include <SPIRV/GlslangToSpv.h>
 #include <string>
 #include <utility>
 #include <vector>
 
 ShaderCompiler::SDKIncluder &ShaderCompiler::SDKIncluder::Get()
 {
-    static SDKIncluder includer{};
+    thread_local SDKIncluder includer{};
     return includer;
 }
 
@@ -58,15 +59,20 @@ void ShaderCompiler::SDKIncluder::releaseInclude(IncludeResult *data)
 ShaderCompiler::ShaderCompiler(std::string glslSource,
                                const EShLanguage shaderType,
                                std::string shaderName,
-                               const bool optimize):
+                               const bool optimize,
+                               const bool debugInfo):
     shaderType(shaderType),
     glslSource(std::move(glslSource)),
     shaderPath(std::move(shaderName)),
-    optimize(optimize)
+    optimize(optimize),
+    debugInfo(debugInfo)
 {}
 
-ShaderCompiler::ShaderCompiler(const std::filesystem::path &path, const EShLanguage shaderType, const bool optimize):
-    ShaderCompiler("", shaderType, path.string(), optimize)
+ShaderCompiler::ShaderCompiler(const std::filesystem::path &path,
+                               const EShLanguage shaderType,
+                               const bool optimize,
+                               const bool debugInfo):
+    ShaderCompiler("", shaderType, path.string(), optimize, debugInfo)
 {
     FileIo::ReadFileToString(path.string(), this->glslSource);
 }
@@ -93,7 +99,8 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
     shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_2);
     shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
     shader.setEnhancedMsgs();
-    shader.setPreamble("#extension GL_GOOGLE_include_directive : require\n");
+    const std::string preamble = "#extension GL_GOOGLE_include_directive : require\n" + GetShaderTypeMacro() + "\n";
+    shader.setPreamble(preamble.c_str());
 
     constexpr EShMessages MESSAGES = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
 
@@ -115,11 +122,12 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
     }
 
     glslang::SpvOptions options = {
-        .generateDebugInfo = true,
+        .generateDebugInfo = debugInfo,
+        .stripDebugInfo = !debugInfo,
         .disableOptimizer = !optimize,
         .validate = true,
-        .emitNonSemanticShaderDebugInfo = true,
-        .emitNonSemanticShaderDebugSource = true,
+        .emitNonSemanticShaderDebugInfo = debugInfo,
+        .emitNonSemanticShaderDebugSource = debugInfo,
     };
 
     glslang::GlslangToSpv(*program.getIntermediate(shaderType), outputSpirv, &options);
@@ -131,4 +139,41 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
 const std::string &ShaderCompiler::GetErrorMessage() const
 {
     return compileLog;
+}
+
+std::string ShaderCompiler::GetShaderTypeMacro() const noexcept
+{
+    switch (shaderType)
+    {
+        case EShLangVertex:
+            return "#define SHADER_TYPE_VERTEX";
+        case EShLangTessControl:
+            return "#define SHADER_TYPE_TESSELLATION_CONTROL";
+        case EShLangTessEvaluation:
+            return "#define SHADER_TYPE_TESSELLATION_EVALUATION";
+        case EShLangGeometry:
+            return "#define SHADER_TYPE_GEOMETRY";
+        case EShLangFragment:
+            return "#define SHADER_TYPE_FRAGMENT";
+        case EShLangCompute:
+            return "#define SHADER_TYPE_COMPUTE";
+        case EShLangRayGen:
+            return "#define SHADER_TYPE_RAYGEN";
+        case EShLangIntersect:
+            return "#define SHADER_TYPE_INTERSECTION";
+        case EShLangAnyHit:
+            return "#define SHADER_TYPE_ANY_HIT";
+        case EShLangClosestHit:
+            return "#define SHADER_TYPE_CLOSEST_HIT";
+        case EShLangMiss:
+            return "#define SHADER_TYPE_MISS";
+        case EShLangCallable:
+            return "#define SHADER_TYPE_CALLABLE";
+        case EShLangTask:
+            return "#define SHADER_TYPE_TASK";
+        case EShLangMesh:
+            return "#define SHADER_TYPE_MESH";
+        default:
+            return "";
+    }
 }

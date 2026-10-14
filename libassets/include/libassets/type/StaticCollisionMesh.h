@@ -34,6 +34,8 @@ class StaticCollisionMesh
          */
         [[nodiscard]] size_t GetNumTriangles() const;
 
+        void Scale(glm::vec3 by);
+
     private:
         std::vector<glm::vec3> vertices{};
 };

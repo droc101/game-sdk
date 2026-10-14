@@ -16,6 +16,8 @@
 #include <libassets/type/Axis.h>
 #include <libassets/type/BoundingBox.h>
 #include <libassets/type/Brush.h>
+#include <libassets/type/Color.h>
+#include <libassets/util/Colors.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <numbers>
 #include <string>

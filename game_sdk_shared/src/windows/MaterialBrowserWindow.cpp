@@ -2,6 +2,7 @@
 // Created by droc101 on 11/16/25.
 //
 
+#include <cassert>
 #include <cfloat>
 #include <cstddef>
 #include <format>

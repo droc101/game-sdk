@@ -15,6 +15,7 @@ class MdleditWindow final: public Window
 
         bool Init() override;
         void Render() override;
+        void FileDropped(const std::string &filePath) override;
         [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:

@@ -14,10 +14,10 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Droc101 Development"
-            VALUE "FileDescription", "GAME SDK Map Dumper"
-            VALUE "InternalName", "mapcomp"
+            VALUE "FileDescription", "GAME SDK Shader Compiler"
+            VALUE "InternalName", "shdcomp"
             VALUE "LegalCopyright", "Droc101 Development"
-            VALUE "OriginalFilename", "mapdump.exe"
+            VALUE "OriginalFilename", "shdcomp.exe"
             VALUE "ProductName", "GAME SDK"
         END
     END

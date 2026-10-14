@@ -17,6 +17,7 @@ IOConnection::IOConnection(const nlohmann::ordered_json &j)
     numRefires = j.value("numRefires", 0);
     overridesParam = j.value("overridesParam", false);
     param = Param(j["param"]);
+    delayMsec = j.value("delay_msec", 0);
 }
 
 IOConnection::IOConnection(DataReader &reader)
@@ -30,6 +31,7 @@ IOConnection::IOConnection(DataReader &reader)
         param = Param(reader);
     }
     numRefires = reader.Read<size_t>();
+    delayMsec = reader.Read<uint16_t>();
 }
 
 
@@ -44,6 +46,7 @@ void IOConnection::Write(DataWriter &writer) const
         param.Write(writer);
     }
     writer.Write<size_t>(numRefires);
+    writer.Write<uint16_t>(delayMsec);
 }
 
 nlohmann::ordered_json IOConnection::GenerateJson() const
@@ -55,5 +58,6 @@ nlohmann::ordered_json IOConnection::GenerateJson() const
     j["numRefires"] = numRefires;
     j["overridesParam"] = overridesParam;
     j["param"] = param.GetJson();
+    j["delay_msec"] = delayMsec;
     return j;
 }

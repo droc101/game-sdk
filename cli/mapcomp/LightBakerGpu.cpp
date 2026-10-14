@@ -38,6 +38,11 @@ namespace
 {
 using float16_t = _Float16; // NOLINT(*-identifier-naming)
 
+#ifdef NDEBUG
+constexpr bool SHADER_DEBUG_INFO = false;
+#else
+constexpr bool SHADER_DEBUG_INFO = true;
+#endif
 constexpr uint32_t MAX_DISPATCH_DIMENSION = 1u << 8u;
 constexpr VkPipelineStageFlagBits2 WAIT_STAGE = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT |
                                                 VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
@@ -210,6 +215,7 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
 
     static constexpr bool OVERWRITE_EDGE = false;
 
+    output.clear();
     output.resize(lightmapSize.x * lightmapSize.y * 4);
     std::copy_n(reinterpret_cast<const uint16_t *>(lightmapData), output.size(), output.data());
     float16_t *outputData = reinterpret_cast<float16_t *>(output.data());
@@ -720,7 +726,8 @@ bool LightBakerGpu::Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
                          const glm::uvec2 &lightmapSize,
                          const uint32_t bounceCount,
                          const uint32_t sampleCount,
-                         std::vector<uint16_t> &pixelData)
+                         std::vector<uint16_t> &pixelData,
+                         std::vector<uint16_t> &indirectLightingPixelData)
 {
     const uint64_t luxelCount = lightmapSize.x * lightmapSize.y;
     const uint32_t width = std::min(luxelCount, uint64_t{MAX_DISPATCH_DIMENSION});
@@ -736,8 +743,6 @@ bool LightBakerGpu::Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
         Logger::Error("Maximum number of lights allowed in a level is 16384!");
         return false;
     }
-
-    pixelData.clear();
 
     const LunaBufferCreationInfo lightsBufferCreationInfo = {
         .size = sizeof(Light) * lights.size(),
@@ -854,7 +859,7 @@ bool LightBakerGpu::Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
     {
         return false;
     }
-    if (!CreateDirectLightingPipeline(lightmapSize, lights.size()))
+    if (!CreateDirectLightingPipeline(lightmapSize, lights.size(), VK_FALSE))
     {
         return false;
     }
@@ -878,7 +883,7 @@ bool LightBakerGpu::Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
         if (!SingleBakeIteration(width,
                                  height,
                                  static_cast<float>(100 * iteration) /
-                                         static_cast<float>(iterations * (bounceCount + 1)),
+                                         static_cast<float>(iterations * (bounceCount + 2)),
                                  width * height * iteration,
                                  true))
         {
@@ -916,7 +921,7 @@ bool LightBakerGpu::Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
             if (!SingleBakeIteration(width,
                                      height,
                                      static_cast<float>(100 * ((bounce + 1) * iterations + iteration)) /
-                                             static_cast<float>(iterations * (bounceCount + 1)),
+                                             static_cast<float>(iterations * (bounceCount + 2)),
                                      width * height * iteration,
                                      false))
             {
@@ -926,10 +931,42 @@ bool LightBakerGpu::Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
     }
     lunaDeviceWaitIdle(device);
     const std::chrono::time_point<std::chrono::system_clock> end = std::chrono::high_resolution_clock::now();
-    Logger::Info("Compiled in {}us", std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
+    Logger::Info("Baked indirect lighting in {}us",
+                 std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
 
-    Logger::Info("Padding Lightmap...");
+    Logger::Info("Padding Indirect Lighting Lightmap...");
+    AddPaddingToLightmap(lightmapSize,
+                         static_cast<float16_t *>(lunaGetBufferDataPointer(lightmapOne)),
+                         indirectLightingPixelData);
+
+    if (!CreateDirectLightingPipeline(lightmapSize, lights.size(), VK_TRUE))
+    {
+        return false;
+    }
+    if (!CreateShaderBindingTables())
+    {
+        return false;
+    }
+    for (uint32_t iteration = 0; iteration < iterations; iteration++)
+    {
+        if (!SingleBakeIteration(width,
+                                 height,
+                                 static_cast<float>(100 * ((bounceCount + 1) * iterations + iteration)) /
+                                         static_cast<float>(iterations * (bounceCount + 2)),
+                                 width * height * iteration,
+                                 true))
+        {
+            return false;
+        }
+    }
+    lunaDeviceWaitIdle(device);
+    const std::chrono::time_point<std::chrono::system_clock> end2 = std::chrono::high_resolution_clock::now();
+    Logger::Info("Baked direct lighting in {}us",
+                 std::chrono::duration_cast<std::chrono::microseconds>(end2 - end).count());
+
+    Logger::Info("Padding Direct Lighting Lightmap...");
     AddPaddingToLightmap(lightmapSize, static_cast<float16_t *>(lunaGetBufferDataPointer(lightmapOne)), pixelData);
+
     return true;
 }
 
@@ -938,7 +975,7 @@ VkShaderModule LightBakerGpu::GenerateShaderModule(const std::filesystem::path &
 {
     spirv.clear();
 
-    ShaderCompiler shaderCompiler(path, shaderType, true);
+    ShaderCompiler shaderCompiler(path, shaderType, true, false);
     if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
     {
         Logger::Error("Error compiling shader {}!", path.string());
@@ -1377,7 +1414,7 @@ bool LightBakerGpu::CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize)
 {
     spirv.clear();
     static constexpr const char *PATH_STRING = "assets/shaders/lightmap/cache_emissive_luxel_indices.comp";
-    ShaderCompiler shaderCompiler(PATH_STRING, EShLangCompute, true);
+    ShaderCompiler shaderCompiler(PATH_STRING, EShLangCompute, true, SHADER_DEBUG_INFO);
     if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
     {
         Logger::Error("Error compiling shader {}!", PATH_STRING);
@@ -1813,7 +1850,9 @@ bool LightBakerGpu::CreateTLAS()
     return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }
 
-bool LightBakerGpu::CreateDirectLightingPipeline(const glm::uvec2 &lightmapSize, const uint32_t lightCount)
+bool LightBakerGpu::CreateDirectLightingPipeline(const glm::uvec2 &lightmapSize,
+                                                 const uint32_t lightCount,
+                                                 const VkBool32 writeDirect)
 {
     const VkShaderModule raygenShaderModule = GenerateShaderModule("assets/shaders/lightmap/"
                                                                    "direct_lighting.rgen",
@@ -1828,13 +1867,18 @@ bool LightBakerGpu::CreateDirectLightingPipeline(const glm::uvec2 &lightmapSize,
         return false;
     }
 
+    if (directLightingPipeline != VK_NULL_HANDLE)
+    {
+        vkDestroyPipeline(lunaGetVkDevice(device), directLightingPipeline, nullptr);
+    }
 
     const std::array raygenSpecializationData = {
         lightmapSize.x,
         lightmapSize.y,
         lightCount,
+        writeDirect,
     };
-    static constexpr SpecializationMapEntries<uint32_t, uint32_t, uint32_t> RAYGEN_MAP_ENTRIES{};
+    static constexpr SpecializationMapEntries<uint32_t, uint32_t, uint32_t, VkBool32> RAYGEN_MAP_ENTRIES{};
     const VkSpecializationInfo raygenSpecializationInfo = {
         .mapEntryCount = RAYGEN_MAP_ENTRIES.size(),
         .pMapEntries = RAYGEN_MAP_ENTRIES.data(),

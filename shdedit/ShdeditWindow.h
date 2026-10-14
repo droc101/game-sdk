@@ -14,6 +14,7 @@
 class ShdeditWindow final: public Window
 {
     protected:
+        bool Init() override;
         void Render() override;
         [[nodiscard]] const WindowProperties &GetProperties() const override;
 
@@ -33,6 +34,7 @@ class ShdeditWindow final: public Window
         bool replicateFolderStructure = false;
         std::string sourcesBaseFolder{};
         bool enableOptimization = false;
+        bool debugInfo = false;
         bool dumpBinaries = false;
 
         void SelectCallback(const std::vector<std::string> &paths);

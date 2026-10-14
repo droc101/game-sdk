@@ -3,17 +3,27 @@
 //
 
 #include "MdleditWindow.h"
+#include <cstddef>
+#include <format>
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/Options.h>
 #include <game_sdk/SharedMgr.h>
+#include <game_sdk/Window.h>
 #include <game_sdk/WindowManager.h>
+#include <imgui.h>
 #include <imgui_internal.h>
+#include <libassets/asset/ModelAsset.h>
+#include <libassets/util/Error.h>
+#include <libassets/util/Logger.h>
+#include <memory>
+#include <string>
 #include "ModelEditor.h"
 #include "tabs/CollisionTab.h"
 #include "tabs/LodsTab.h"
 #include "tabs/MaterialsTab.h"
 #include "tabs/PreviewOptionsTab.h"
 #include "tabs/SkinsTab.h"
+#include "TransformWindow.h"
 
 const Window::WindowProperties &MdleditWindow::GetProperties() const
 {
@@ -45,6 +55,20 @@ bool MdleditWindow::Init()
     }
 
     return true;
+}
+
+void MdleditWindow::FileDropped(const std::string &filePath)
+{
+    if (filePath.ends_with(".gmdl"))
+    {
+        OpenGmdl(filePath);
+    } else if (filePath.ends_with(".obj") ||
+               filePath.ends_with(".fbx") ||
+               filePath.ends_with(".gltf") ||
+               filePath.ends_with("dae"))
+    {
+        ImportModel(filePath);
+    }
 }
 
 void MdleditWindow::OpenGmdl(const std::string &path) const
@@ -109,11 +133,19 @@ void MdleditWindow::HandleMenuAndShortcuts()
             }
             ImGui::EndMenu();
         }
+        if (ImGui::BeginMenu("Edit", ModelEditor::modelLoaded))
+        {
+            if (ImGui::MenuItem("Scale Model", "", false, ModelEditor::modelLoaded))
+            {
+                WindowManager::Get().AddModalWindow<TransformWindow>();
+            }
+            ImGui::EndMenu();
+        }
         if (ImGui::BeginMenu("View", ModelEditor::modelLoaded))
         {
             if (ImGui::MenuItem("Reset View"))
             {
-                ModelEditor::modelViewer.UpdateView(0, 0, 1);
+                ModelEditor::modelViewer.ResetView();
             }
             ImGui::Separator();
             if (ImGui::BeginMenu("Display Mode"))

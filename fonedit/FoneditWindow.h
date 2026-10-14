@@ -16,6 +16,7 @@ class FoneditWindow final: public Window
         bool Init() override;
         void Render() override;
         [[nodiscard]] const WindowProperties &GetProperties() const override;
+        void FileDropped(const std::string &filePath) override;
 
     private:
         WindowProperties properties = {
@@ -30,6 +31,6 @@ class FoneditWindow final: public Window
         FontAsset font{};
 
         void OpenGfon(const std::string &path);
-        void SaveGfon(const std::string &path);
+        void SaveGfon(const std::string &path) const;
         static const char* ComboGetter(void* userData, int index);
 };

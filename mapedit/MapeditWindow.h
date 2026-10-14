@@ -20,6 +20,8 @@ class MapeditWindow final: public Window
 
         void Render() override;
 
+        void FileDropped(const std::string &filePath) override;
+
         [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:

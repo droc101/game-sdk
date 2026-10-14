@@ -32,12 +32,14 @@ class ShaderAsset final: public Asset
 
         [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
         [[nodiscard]] Error::ErrorCode SaveToBufferEx(DataWriter &writer,
-                                                    bool enableOptimization,
-                                                    std::string *errorLog = nullptr,
-                                                    const std::string &shaderFilename = "glsl_source") const;
+                                                      bool enableOptimization,
+                                                      bool debugInfo,
+                                                      std::string *errorLog = nullptr,
+                                                      const std::string &shaderFilename = "glsl_source") const;
 
         [[nodiscard]] Error::ErrorCode SaveToAssetEx(const std::string &filePath,
                                                      bool enableOptimization,
+                                                     bool debugInfo,
                                                      std::string *errorLog = nullptr,
                                                      const std::string &shaderFilename = "glsl_source",
                                                      bool dumpSpvBinary = false) const;

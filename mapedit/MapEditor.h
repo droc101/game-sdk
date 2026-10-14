@@ -68,7 +68,7 @@ class MapEditor
         static constexpr const char *CUT_ICON_NAME = "editor/icon_cut";
         static constexpr const char *VERTEX_ICON_NAME = "editor/icon_vertex";
 
-        static inline std::unique_ptr<EditorTool> tool = std::unique_ptr<EditorTool>(new SelectTool());
+        static inline std::unique_ptr<EditorTool> tool = std::make_unique<SelectTool>();
 
         static inline std::string material{};
 

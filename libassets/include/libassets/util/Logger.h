@@ -7,6 +7,7 @@
 
 #include <format>
 #include <iostream>
+#include <mutex>
 #include <string>
 
 class Logger
@@ -76,7 +77,9 @@ class Logger
                                                            std::format_string<Args...> fmt,
                                                            Args &&...args)
         {
+            static std::mutex mutex;
             const std::string formatted = std::format(fmt, std::forward<Args>(args)...);
+            const std::scoped_lock lock{mutex};
             std::cout << (ansi ? level.ansiPrefix : level.prefix) << formatted << (ansi ? "\x1b[0m" : "") << std::endl;
         }
 };

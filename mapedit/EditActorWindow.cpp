@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <format>
 #include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
 #include <game_sdk/windows/SoundBrowserWindow.h>
@@ -19,8 +20,10 @@
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
+#include <libassets/type/InputDefinition.h>
 #include <libassets/type/IOConnection.h>
 #include <libassets/type/OptionDefinition.h>
+#include <libassets/type/OutputDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/BoolParamDefinition.h>
 #include <libassets/type/paramDefs/ByteParamDefinition.h>
@@ -33,13 +36,14 @@
 #include <libassets/type/paramDefs/Uint64ParamDefinition.h>
 #include <libassets/type/paramDefs/Vec2ParamDefinition.h>
 #include <libassets/type/paramDefs/Vec3ParamDefinition.h>
-#include <libassets/type/SignalDefinition.h>
+#include <libassets/util/Colors.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <misc/cpp/imgui_stdlib.h>
 #include <ranges>
-#include <unordered_set>
+#include <set>
 #include <vector>
+#include "ActorBrowserWindow.h"
 #include "MapEditor.h"
 
 EditActorWindow::EditActorWindow(Actor &actorToEdit): actor(actorToEdit) {}
@@ -71,7 +75,7 @@ void EditActorWindow::Render()
     {
         ImGui::TableNextColumn();
         ImGui::Text("Class");
-        ImGui::PushItemWidth(-1);
+        ImGui::PushItemWidth(-32);
         if (ImGui::BeginCombo("##class", actor.className.c_str()))
         {
             for (const std::string &key: MapEditor::adm.GetActorClasses())
@@ -93,6 +97,12 @@ void EditActorWindow::Render()
                 }
             }
             ImGui::EndCombo();
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("?", ImVec2(24, 0)))
+        {
+            WindowManager::Get().AddWindow<ActorBrowserWindow>(actor.className);
         }
 
         const ActorDefinition &classDef = MapEditor::adm.GetActorDefinition(actor.className);
@@ -313,7 +323,7 @@ void EditActorWindow::RenderParamsTab(const ActorDefinition &definition)
                 } else if (paramDef->type == Param::ParamType::PARAM_TYPE_COLOR)
                 {
                     const ColorParamDefinition *colorDef = dynamic_cast<ColorParamDefinition *>(paramDef.get());
-                    Color col = param.Get<Color>(Color(-1));
+                    Color col = param.Get<Color>(Colors::WHITE);
                     std::array<float, 4> colorData = col.CopyData();
                     if (ImGui::ColorEdit4("##color",
                                           colorData.data(),
@@ -388,7 +398,7 @@ void EditActorWindow::RenderParamsTab(const ActorDefinition &definition)
                     }
                 } else if (param.GetType() == Param::ParamType::PARAM_TYPE_COLOR)
                 {
-                    Color col = param.Get<Color>(Color(-1));
+                    Color col = param.Get<Color>(Colors::WHITE);
                     std::array<float, 4> colorData = col.CopyData();
                     if (ImGui::ColorEdit4("##color", colorData.data()))
                     {
@@ -428,13 +438,14 @@ void EditActorWindow::RenderParamsTab(const ActorDefinition &definition)
 void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
 {
     const float boxSize = ImGui::GetContentRegionAvail().y - 200;
-    if (ImGui::BeginTable("charTable", 5, ImGuiTableFlags_ScrollY | ImGuiTableFlags_BordersH, ImVec2(-1, boxSize)))
+    if (ImGui::BeginTable("charTable", 6, ImGuiTableFlags_ScrollY | ImGuiTableFlags_BordersH, ImVec2(-1, boxSize)))
     {
         ImGui::TableSetupColumn("Source Output", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Target Name", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Target Input", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("Param Override", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableSetupColumn("# Refires", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("Delay", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
         ImGui::TableHeadersRow();
         size_t i = 0;
         for (const IOConnection &connection: actor.connections)
@@ -469,6 +480,9 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                 ImGui::Text("%zu", connection.numRefires);
             }
 
+            ImGui::TableNextColumn();
+            ImGui::Text("%d ms", connection.delayMsec);
+
             i++;
         }
 
@@ -493,11 +507,11 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
             {
                 ImGui::TableNextColumn();
                 ImGui::PushItemWidth(-1);
-                std::unordered_set<std::string> myOutputNames{};
+                std::set<std::string> myOutputNames{};
                 definition.GetOutputNames(myOutputNames);
                 ImGui::Text("Source Output");
 
-                SignalDefinition outputDef{};
+                OutputDefinition outputDef{};
                 if (definition.GetOutput(connection.sourceOutput, outputDef) != Error::ErrorCode::OK)
                 {
                     ImGui::SameLine();
@@ -570,14 +584,14 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                 }
 
                 bool hasInputDef = false;
-                SignalDefinition inputDef;
+                InputDefinition inputDef;
 
                 if (validTargetActor)
                 {
                     const Actor *targetActor = MapEditor::map.GetActor(connection.targetName);
                     assert(targetActor);
                     const ActorDefinition &targetDef = MapEditor::adm.GetActorDefinition(targetActor->className);
-                    std::unordered_set<std::string> targetInputNames{};
+                    std::set<std::string> targetInputNames{};
                     targetDef.GetInputNames(targetInputNames);
                     ImGui::Text("Target Input");
                     if (ImGui::BeginCombo("##targetInput", connection.targetInput.c_str()))
@@ -599,9 +613,9 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                     const Error::ErrorCode e = targetDef.GetInput(connection.targetInput, inputDef);
                     if (e == Error::ErrorCode::OK)
                     {
-                        if (connection.param.GetType() != inputDef.GetType())
+                        if (!inputDef.AcceptsType(inputDef.GetPrimaryType()))
                         {
-                            connection.param.ClearToType(inputDef.GetType());
+                            connection.param.ClearToType(inputDef.GetPrimaryType());
                         }
                         hasInputDef = true;
                     }
@@ -624,9 +638,12 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                 ImGui::Text("Num Refires (0 for infinite)");
                 ImGui::InputScalar("##nRefires", ImGuiDataType_U64, &connection.numRefires);
 
+                ImGui::Text("Delay (approx. milliseconds)");
+                ImGui::InputScalar("##delayMsec", ImGuiDataType_U16, &connection.delayMsec);
+
                 if (hasInputDef)
                 {
-                    if (outputDef.GetType() != inputDef.GetType())
+                    if (!inputDef.AcceptsType(outputDef.GetType()))
                     {
                         connection.overridesParam = true;
                         ImGui::BeginDisabled();
@@ -634,11 +651,36 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                         ImGui::EndDisabled();
                     } else
                     {
-                        ImGui::Checkbox("Parameter Override", &connection.overridesParam);
+                        if (ImGui::Checkbox("Parameter Override", &connection.overridesParam))
+                        {
+                            if (connection.overridesParam && !inputDef.AcceptsType(param.GetType()))
+                            {
+                                param.ClearToType(inputDef.GetPrimaryType());
+                            } else if (!connection.overridesParam)
+                            {
+                                param.Clear();
+                            }
+                        }
                     }
 
                     if (connection.overridesParam)
                     {
+                        ImGui::SameLine();
+                        ImGui::SetNextItemWidth(-1);
+                        if (ImGui::BeginCombo("##overrideParamType", param.GetTypeName().c_str()))
+                        {
+                            for (const Param::ParamType &type: inputDef.GetTypes())
+                            {
+                                if (ImGui::Selectable(Param::GetTypeName(type).c_str(), param.GetType() == type))
+                                {
+                                    if (param.GetType() != type)
+                                    {
+                                        param.ClearToType(type);
+                                    }
+                                }
+                            }
+                            ImGui::EndCombo();
+                        }
                         // ImGui::TextWrapped("%s", paramDef->description.empty() ? "No Description" : paramDef->description.c_str());
                         if (param.GetType() == Param::ParamType::PARAM_TYPE_BYTE)
                         {
@@ -677,7 +719,7 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                             }
                         } else if (param.GetType() == Param::ParamType::PARAM_TYPE_COLOR)
                         {
-                            Color col = param.Get<Color>(Color(-1));
+                            Color col = param.Get<Color>(Colors::WHITE);
                             std::array<float, 4> colorData = col.CopyData();
                             if (ImGui::ColorEdit4("##color", colorData.data()))
                             {

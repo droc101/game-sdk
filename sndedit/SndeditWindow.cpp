@@ -94,6 +94,17 @@ bool SndeditWindow::Init()
     return true;
 }
 
+void SndeditWindow::FileDropped(const std::string &filePath)
+{
+    if (filePath.ends_with(".gsnd"))
+    {
+        OpenGsnd(filePath);
+    } else if (filePath.ends_with(".wav"))
+    {
+        ImportWav(filePath);
+    }
+}
+
 void SndeditWindow::Destroy()
 {
     SoundSystem::Get().Destroy();

@@ -18,7 +18,7 @@
 class Param;
 
 using ParamVector = std::vector<Param>;
-using KvList = std::unordered_map<std::string, Param>;
+using KvList = std::map<std::string, Param>;
 
 template<typename T> concept ParamTypeTemplate = std::same_as<T, uint8_t> ||
                                                  std::same_as<T, int32_t> ||
@@ -48,7 +48,7 @@ class Param
             PARAM_TYPE_ARRAY,
             PARAM_TYPE_UINT_64,
             PARAM_TYPE_VEC2,
-            PARAM_TYPE_VEC3
+            PARAM_TYPE_VEC3,
         };
 
         Param();
@@ -107,6 +107,17 @@ class Param
          * Get a string representation of this param's type
          */
         [[nodiscard]] std::string GetTypeName() const;
+
+        static std::string GetTypeName(ParamType type);
+
+        template <ParamTypeTemplate T> [[nodiscard]] static T KvListGet(const KvList &list, const std::string &key, T defaultValue)
+        {
+            if (list.contains(key))
+            {
+                return list.at(key).Get<T>(defaultValue);
+            }
+            return defaultValue;
+        }
 
         /**
          * Get the value of this param

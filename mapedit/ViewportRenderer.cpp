@@ -27,6 +27,7 @@
 #include <libassets/type/renderDefs/RenderDefinition.h>
 #include <libassets/type/renderDefs/SpriteRenderDefinition.h>
 #include <libassets/type/renderDefs/WallRenderDefinition.h>
+#include <libassets/util/Colors.h>
 #include <memory>
 #include <numbers>
 #include <unordered_set>
@@ -165,7 +166,7 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
     if ((settings.selectionType == EditorTool::ItemType::BRUSH && settings.selectionIndex == brushIndex) ||
         isFocusedBrush)
     {
-        c = Color(1, 1, 1, 1);
+        c = Colors::WHITE;
     } else if (settings.hoverType == EditorTool::ItemType::BRUSH && settings.hoverIndex == brushIndex)
     {
         c = Color(.8, .8, .8, 1);
@@ -226,11 +227,11 @@ void ViewportRenderer::RenderNewPrimitive(Viewport &vp, const ViewportRenderNewP
                                               Color(1, 0, 0, 1),
                                               matrix);
         }
-        MapRenderer::RenderLine(startPointFront, endPointFront, Color(1, 1, 1, 1), matrix, 4);
+        MapRenderer::RenderLine(startPointFront, endPointFront, Colors::WHITE, matrix, 4);
         if (vp.Is3D() || vp.GetAxis() != prim->axis)
         {
-            MapRenderer::RenderLine(startPointBack, endPointBack, Color(1, 1, 1, 1), matrix, 4);
-            MapRenderer::RenderLine(startPointFront, startPointBack, Color(1, 1, 1, 1), matrix, 4);
+            MapRenderer::RenderLine(startPointBack, endPointBack, Colors::WHITE, matrix, 4);
+            MapRenderer::RenderLine(startPointFront, startPointBack, Colors::WHITE, matrix, 4);
         }
     }
 }
@@ -277,11 +278,11 @@ void ViewportRenderer::RenderNewPolygon(const Viewport &vp,
         }
         if (vp.Is3D() || vp.GetAxis() != poly->axis)
         {
-            MapRenderer::RenderLine(startBack, endBack, Color(1, 1, 1, 1), matrix, 4);
+            MapRenderer::RenderLine(startBack, endBack, Colors::WHITE, matrix, 4);
             MapRenderer::RenderLine(startFront, startBack, Color(.6, .6, .6, 1), matrix, 4);
         }
 
-        MapRenderer::RenderLine(startFront, endFront, Color(1, 1, 1, 1), matrix, 4);
+        MapRenderer::RenderLine(startFront, endFront, Colors::WHITE, matrix, 4);
     }
 }
 

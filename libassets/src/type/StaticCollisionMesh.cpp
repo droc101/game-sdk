@@ -94,3 +94,11 @@ size_t StaticCollisionMesh::GetNumTriangles() const
 {
     return vertices.size() / 3;
 }
+
+void StaticCollisionMesh::Scale(const glm::vec3 by)
+{
+    for (glm::vec3 &vertex: vertices)
+    {
+        vertex *= by;
+    }
+}

@@ -37,7 +37,7 @@ class Actor
          */
         void RemoveUnknownParams(const ActorDefinition &definition);
 
-        nlohmann::ordered_json GenerateJson() const;
+        [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 
         void Write(DataWriter &writer) const;
 };

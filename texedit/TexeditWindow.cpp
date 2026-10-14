@@ -45,6 +45,17 @@ bool TexeditWindow::Init()
     return true;
 }
 
+void TexeditWindow::FileDropped(const std::string &filePath)
+{
+    if (filePath.ends_with(".gtex"))
+    {
+        OpenGtex(filePath);
+    } else if (filePath.ends_with(".png") || filePath.ends_with(".exr") || filePath.ends_with(".jpg") || filePath.ends_with(".jpeg") || filePath.ends_with(".tga"))
+    {
+        ImportImage(filePath);
+    }
+}
+
 void TexeditWindow::Destroy()
 {
     DestroyExistingTexture();
@@ -90,7 +101,7 @@ void TexeditWindow::ImportImage(const std::string &path)
     LoadTexture();
 }
 
-void TexeditWindow::SaveGtex(const std::string &path)
+void TexeditWindow::SaveGtex(const std::string &path) const
 {
     const Error::ErrorCode errorCode = texture.SaveToAsset(path);
     if (errorCode != Error::ErrorCode::OK)
@@ -99,7 +110,7 @@ void TexeditWindow::SaveGtex(const std::string &path)
     }
 }
 
-void TexeditWindow::Export(const std::string &path)
+void TexeditWindow::Export(const std::string &path) const
 {
     const Error::ErrorCode errorCode = texture.Export(path);
     if (errorCode != Error::ErrorCode::OK)

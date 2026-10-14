@@ -8,9 +8,9 @@
 #include <libassets/type/Color.h>
 #include <libassets/type/Param.h>
 #include <libassets/util/Error.h>
+#include <map>
 #include <nlohmann/json.hpp>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 class OptionDefinition
@@ -23,33 +23,33 @@ class OptionDefinition
         /**
          * Get the type this option definition uses
          */
-        Param::ParamType GetValueType() const;
+        [[nodiscard]] Param::ParamType GetValueType() const;
 
         /**
          * Get the value of a key
          */
-        const Param &GetValue(const std::string &key) const;
+        [[nodiscard]] const Param &GetValue(const std::string &key) const;
 
         /**
          * Get all keys in this definition
          */
-        std::vector<std::string> GetOptions() const;
+        [[nodiscard]] std::vector<std::string> GetOptions() const;
 
         /**
          * Get the name of this definition
          */
-        const std::string &GetName() const;
+        [[nodiscard]] const std::string &GetName() const;
 
         /**
          * Find a value's key
          * @param value The value to search for
          */
-        std::string Find(const Param &value) const;
+        [[nodiscard]] std::string Find(const Param &value) const;
 
     private:
         std::string name;
         Param::ParamType valueType = Param::ParamType::PARAM_TYPE_NONE;
-        std::unordered_map<std::string, Param> options{};
+        std::map<std::string, Param> options{};
 
         template<ParamTypeTemplate T> [[nodiscard]] Error::ErrorCode LoadOptions(const nlohmann::json &definitionJson)
         {

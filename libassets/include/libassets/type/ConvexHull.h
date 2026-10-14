@@ -44,6 +44,8 @@ class ConvexHull
          */
         [[nodiscard]] std::vector<float> GetPointsForRender() const;
 
+        void Scale(glm::vec3 by);
+
         /**
          * Import multiple ConvexHulls from a single OBJ file
          * @param path The OBJ file to import from

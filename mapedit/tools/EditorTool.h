@@ -24,6 +24,6 @@ class EditorTool
             LINE,
             BRUSH,
             ACTOR,
-            FACE
+            FACE,
         };
 };

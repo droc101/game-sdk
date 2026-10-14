@@ -6,6 +6,7 @@
 
 #include <libassets/type/Color.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
+#include <libassets/util/Colors.h>
 #include <utility>
 
 class ColorParamDefinition final: public ParamDefinition
@@ -17,6 +18,6 @@ class ColorParamDefinition final: public ParamDefinition
             showAlpha(showAlpha)
         {}
 
-        Color defaultValue = Color(1, 1, 1, 1);
+        Color defaultValue = Colors::WHITE;
         bool showAlpha = true;
 };

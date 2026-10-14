@@ -11,6 +11,7 @@
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/SharedMgr.h>
 #include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <imgui.h>
 #include <iterator>
 #include <libassets/asset/ShaderAsset.h>
@@ -23,6 +24,38 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+bool ShdeditWindow::Init()
+{
+    if (WindowManager::Get().GetArgumentParser().HasFlagWithValue("--output-directory"))
+    {
+        OutPathCallback(WindowManager::Get().GetArgumentParser().GetFlagValue("--output-directory"));
+    }
+
+    replicateFolderStructure = WindowManager::Get().GetArgumentParser().HasFlagWithValue("--base-directory");
+    if (replicateFolderStructure)
+    {
+        BasePathCallback(WindowManager::Get().GetArgumentParser().GetFlagValue("--base-directory"));
+    }
+
+    if (WindowManager::Get().GetArgumentParser().HasFlagWithValue("--source-file"))
+    {
+        SelectCallback({WindowManager::Get().GetArgumentParser().GetFlagValue("--source-file")});
+    } else if (WindowManager::Get().GetArgumentParser().HasFlagWithValue("--source-directory"))
+    {
+        const std::string &dir = WindowManager::Get().GetArgumentParser().GetFlagValue("--source-directory");
+        if (!replicateFolderStructure) {
+            replicateFolderStructure = true;
+            BasePathCallback(dir);
+        }
+        AddFolderCallback(dir);
+    }
+
+    enableOptimization = WindowManager::Get().GetArgumentParser().HasFlag("-O");
+    debugInfo = WindowManager::Get().GetArgumentParser().HasFlag("-g");
+
+    return true;
+}
 
 const Window::WindowProperties &ShdeditWindow::GetProperties() const
 {
@@ -190,7 +223,7 @@ Error::ErrorCode ShdeditWindow::Execute(std::string &errorLog)
             }
         }
 
-        e = shader.SaveToAssetEx(outputPath, enableOptimization, &errorLog, file, dumpBinaries);
+        e = shader.SaveToAssetEx(outputPath, enableOptimization, debugInfo, &errorLog, file, dumpBinaries);
         if (e != Error::ErrorCode::OK)
         {
             return e;
@@ -240,9 +273,11 @@ void ShdeditWindow::Render()
     ImGui::Separator();
     ImGui::Dummy({1, 3});
 
-    (void)ImGui::Checkbox("Enable optimization", &enableOptimization);
+    (void)ImGui::Checkbox("Enable Optimization", &enableOptimization);
     ImGui::SameLine();
-    (void)ImGui::Checkbox("Dump SPIR-V binaries", &dumpBinaries);
+    (void)ImGui::Checkbox("Enable Debug Info", &debugInfo);
+    ImGui::SameLine();
+    (void)ImGui::Checkbox("Dump SPIR-V Binaries", &dumpBinaries);
 
     ImGui::Dummy({1, 3});
     ImGui::Separator();
@@ -281,7 +316,7 @@ void ShdeditWindow::Render()
                 std::string filename = files.at(i);
                 if (replicateFolderStructure)
                 {
-                    if (filename.starts_with(sourcesBaseFolder) && sourcesBaseFolder.length() != 0)
+                    if (filename.starts_with(sourcesBaseFolder) && !sourcesBaseFolder.empty())
                     {
                         filename = filename.substr(sourcesBaseFolder.length());
                     } else

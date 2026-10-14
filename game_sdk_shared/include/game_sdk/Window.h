@@ -206,6 +206,8 @@ class Window
          */
         virtual void ThemeChanged() const;
 
+        virtual void FileDropped(const std::string &filePath);
+
     private:
         /// The backing SDL window
         SDL_Window *window = nullptr;
