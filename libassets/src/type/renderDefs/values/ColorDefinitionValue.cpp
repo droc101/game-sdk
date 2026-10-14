@@ -27,11 +27,11 @@ ColorDefinitionValue::ColorDefinitionValue(const nlohmann::json &json,
         } else if (json.at(key).type() == nlohmann::detail::value_t::string)
         {
             const std::string colorValue = json.value(key, "");
-            if (colorValue.starts_with("$"))
+            if (colorValue.starts_with('$'))
             {
                 usesParam = true;
                 paramName = colorValue.substr(1, colorValue.length() - 1);
-            } else if (colorValue.starts_with("#"))
+            } else if (colorValue.starts_with('#'))
             {
                 SetValue(Color(colorValue));
             } else

@@ -32,6 +32,7 @@ class TextureAsset final: public Asset
         bool filter = false;
         bool repeat = true;
         bool mipmaps = true;
+        bool opaque = true;
 
         void Reset() override;
 
@@ -80,14 +81,14 @@ class TextureAsset final: public Asset
         * @param imagePath The path to the PNG
         * @return Error Code
         */
-        [[nodiscard]] Error::ErrorCode CreateFromPNG(const std::string &imagePath);
+        [[nodiscard]] Error::ErrorCode CreateFromSdrImage(const std::string &imagePath);
 
         /**
          * Create an HDR @c TextureAsset from an EXR image
          * @param imagePath The path to the EXR
          * @return Error Code
          */
-        [[nodiscard]] Error::ErrorCode CreateFromEXR(const std::string &imagePath);
+        [[nodiscard]] Error::ErrorCode CreateFromHdrImage(const std::string &imagePath);
 
         /**
          * Save this @c TextureAsset as a standard PNG image

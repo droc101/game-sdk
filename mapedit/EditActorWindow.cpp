@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <format>
 #include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <game_sdk/windows/ModelBrowserWindow.h>
 #include <game_sdk/windows/SoundBrowserWindow.h>
@@ -19,8 +20,10 @@
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
+#include <libassets/type/InputDefinition.h>
 #include <libassets/type/IOConnection.h>
 #include <libassets/type/OptionDefinition.h>
+#include <libassets/type/OutputDefinition.h>
 #include <libassets/type/Param.h>
 #include <libassets/type/paramDefs/BoolParamDefinition.h>
 #include <libassets/type/paramDefs/ByteParamDefinition.h>
@@ -33,14 +36,14 @@
 #include <libassets/type/paramDefs/Uint64ParamDefinition.h>
 #include <libassets/type/paramDefs/Vec2ParamDefinition.h>
 #include <libassets/type/paramDefs/Vec3ParamDefinition.h>
-#include <libassets/type/SignalDefinition.h>
 #include <libassets/util/Colors.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <misc/cpp/imgui_stdlib.h>
 #include <ranges>
-#include <unordered_set>
+#include <set>
 #include <vector>
+#include "ActorBrowserWindow.h"
 #include "MapEditor.h"
 
 EditActorWindow::EditActorWindow(Actor &actorToEdit): actor(actorToEdit) {}
@@ -72,7 +75,7 @@ void EditActorWindow::Render()
     {
         ImGui::TableNextColumn();
         ImGui::Text("Class");
-        ImGui::PushItemWidth(-1);
+        ImGui::PushItemWidth(-32);
         if (ImGui::BeginCombo("##class", actor.className.c_str()))
         {
             for (const std::string &key: MapEditor::adm.GetActorClasses())
@@ -94,6 +97,12 @@ void EditActorWindow::Render()
                 }
             }
             ImGui::EndCombo();
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("?", ImVec2(24, 0)))
+        {
+            WindowManager::Get().AddWindow<ActorBrowserWindow>(actor.className);
         }
 
         const ActorDefinition &classDef = MapEditor::adm.GetActorDefinition(actor.className);
@@ -502,7 +511,7 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                 definition.GetOutputNames(myOutputNames);
                 ImGui::Text("Source Output");
 
-                SignalDefinition outputDef{};
+                OutputDefinition outputDef{};
                 if (definition.GetOutput(connection.sourceOutput, outputDef) != Error::ErrorCode::OK)
                 {
                     ImGui::SameLine();
@@ -575,7 +584,7 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                 }
 
                 bool hasInputDef = false;
-                SignalDefinition inputDef;
+                InputDefinition inputDef;
 
                 if (validTargetActor)
                 {
@@ -604,9 +613,9 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                     const Error::ErrorCode e = targetDef.GetInput(connection.targetInput, inputDef);
                     if (e == Error::ErrorCode::OK)
                     {
-                        if (connection.param.GetType() != inputDef.GetType())
+                        if (!inputDef.AcceptsType(inputDef.GetPrimaryType()))
                         {
-                            connection.param.ClearToType(inputDef.GetType());
+                            connection.param.ClearToType(inputDef.GetPrimaryType());
                         }
                         hasInputDef = true;
                     }
@@ -634,7 +643,7 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
 
                 if (hasInputDef)
                 {
-                    if (outputDef.GetType() != inputDef.GetType())
+                    if (!inputDef.AcceptsType(outputDef.GetType()))
                     {
                         connection.overridesParam = true;
                         ImGui::BeginDisabled();
@@ -642,11 +651,36 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                         ImGui::EndDisabled();
                     } else
                     {
-                        ImGui::Checkbox("Parameter Override", &connection.overridesParam);
+                        if (ImGui::Checkbox("Parameter Override", &connection.overridesParam))
+                        {
+                            if (connection.overridesParam && !inputDef.AcceptsType(param.GetType()))
+                            {
+                                param.ClearToType(inputDef.GetPrimaryType());
+                            } else if (!connection.overridesParam)
+                            {
+                                param.Clear();
+                            }
+                        }
                     }
 
                     if (connection.overridesParam)
                     {
+                        ImGui::SameLine();
+                        ImGui::SetNextItemWidth(-1);
+                        if (ImGui::BeginCombo("##overrideParamType", param.GetTypeName().c_str()))
+                        {
+                            for (const Param::ParamType &type: inputDef.GetTypes())
+                            {
+                                if (ImGui::Selectable(Param::GetTypeName(type).c_str(), param.GetType() == type))
+                                {
+                                    if (param.GetType() != type)
+                                    {
+                                        param.ClearToType(type);
+                                    }
+                                }
+                            }
+                            ImGui::EndCombo();
+                        }
                         // ImGui::TextWrapped("%s", paramDef->description.empty() ? "No Description" : paramDef->description.c_str());
                         if (param.GetType() == Param::ParamType::PARAM_TYPE_BYTE)
                         {

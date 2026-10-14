@@ -12,7 +12,7 @@ StringDefinitionValue::StringDefinitionValue(const nlohmann::json &json,
     if (json.contains(key) && json.at(key).type() == nlohmann::detail::value_t::string)
     {
         const std::string jsonValue = json.value(key, defaultValue);
-        if (jsonValue.starts_with("$"))
+        if (jsonValue.starts_with('$'))
         {
             usesParam = true;
             paramName = jsonValue.substr(1, jsonValue.length() - 1);

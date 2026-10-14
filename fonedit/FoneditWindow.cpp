@@ -26,7 +26,7 @@ void FoneditWindow::OpenGfon(const std::string &path)
     }
 }
 
-void FoneditWindow::SaveGfon(const std::string &path)
+void FoneditWindow::SaveGfon(const std::string &path) const
 {
     const Error::ErrorCode errorCode = font.SaveToAsset(path);
     if (errorCode != Error::ErrorCode::OK)
@@ -230,4 +230,12 @@ bool FoneditWindow::Init()
     }
 
     return true;
+}
+
+void FoneditWindow::FileDropped(const std::string &filePath)
+{
+    if (filePath.ends_with(".gfon"))
+    {
+        OpenGfon(filePath);
+    }
 }

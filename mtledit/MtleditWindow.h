@@ -13,12 +13,13 @@ class MtleditWindow final: public Window
     protected:
         bool Init() override;
         void Render() override;
+        void FileDropped(const std::string &filePath) override;
         [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
         WindowProperties properties = {
             .title = "GAME SDK Material Editor",
-            .defaultSize = glm::ivec2(400, 420),
+            .defaultSize = glm::ivec2(400, 444),
             .icon = "mtledit",
             .defaultFlags = 0,
             .defaultImguiWindow = true,

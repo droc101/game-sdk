@@ -12,8 +12,8 @@ class Flycam
     public:
         Flycam();
 
-        glm::mat4 GetViewMatrix();
-        glm::mat4 GetPerspectiveMatrix();
+        glm::mat4 GetViewMatrix() const;
+        glm::mat4 GetPerspectiveMatrix() const;
 
         void SetViewport(glm::vec2 size, float nearPlane, float farPlane);
 

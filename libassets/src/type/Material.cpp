@@ -13,6 +13,7 @@ Material::Material(DataReader &reader)
     reader.ReadStringWithSize(texture);
     color = Color(reader, true);
     shader = static_cast<MaterialShader>(reader.Read<uint32_t>());
+    castsShadows = reader.Read<bool>();
 }
 
 Material::Material(const std::string &texture, const uint32_t color, const MaterialShader shader)
@@ -27,4 +28,5 @@ void Material::Write(DataWriter &writer) const
     writer.WriteString(texture);
     color.WriteFloats(writer);
     writer.Write<uint32_t>(static_cast<uint32_t>(shader));
+    writer.Write<bool>(castsShadows);
 }

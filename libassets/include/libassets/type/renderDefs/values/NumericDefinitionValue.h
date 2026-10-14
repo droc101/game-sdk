@@ -98,7 +98,7 @@ template<typename T> class NumericDefinitionValue: public BasicDefinitionValue<T
             /// Color Blue
             B,
             /// Color Alpha
-            A
+            A,
         };
 
         struct ExpressionVariable

@@ -3,6 +3,7 @@
 //
 
 #include "MtleditWindow.h"
+#include <algorithm>
 #include <format>
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/SharedMgr.h>
@@ -28,6 +29,14 @@ bool MtleditWindow::Init()
         OpenGmtl(openPath);
     }
     return true;
+}
+
+void MtleditWindow::FileDropped(const std::string &filePath)
+{
+    if (filePath.ends_with(".gmtl"))
+    {
+        OpenGmtl(filePath);
+    }
 }
 
 void MtleditWindow::OpenGmtl(const std::string &path)
@@ -128,6 +137,7 @@ void MtleditWindow::Render()
     }
     ImGui::Checkbox("Invisible", &material.compileInvisible);
     ImGui::Checkbox("No Collision", &material.compileNoClip);
+    ImGui::Checkbox("Casts Shadows", &material.castsShadows);
     ImGui::Separator();
     ImGui::SetNextItemWidth(-1);
     ImGui::Text("Emissive Strength");

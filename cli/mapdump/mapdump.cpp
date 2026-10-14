@@ -109,6 +109,8 @@ int main(const int argc, const char **argv)
     {
         std::string materialName{};
         asset.reader.ReadStringWithSize(materialName);
+        (void)asset.reader.ReadVec3();
+        (void)asset.reader.ReadVec3();
         const uint32_t numVerts = asset.reader.Read<uint32_t>();
         for (size_t j = 0; j < numVerts; j++)
         {
@@ -116,6 +118,7 @@ int main(const int argc, const char **argv)
             v.position = asset.reader.ReadVec3();
             v.uv = asset.reader.ReadVec2();
             v.lightmapUv = asset.reader.ReadVec2();
+            v.normal = asset.reader.ReadVec3();
             mapVerts.push_back(v);
         }
         const uint32_t numIndices = asset.reader.Read<uint32_t>();
@@ -151,6 +154,8 @@ int main(const int argc, const char **argv)
     }
 
     Logger::Info("{} collision model(s)", numCollisionModels);
+
+    asset.reader.Skip<float>(); // We don't need to know the inbounds diagonal length
 
     const size_t lightmapWidth = asset.reader.Read<size_t>();
     const size_t lightmapHeight = asset.reader.Read<size_t>();

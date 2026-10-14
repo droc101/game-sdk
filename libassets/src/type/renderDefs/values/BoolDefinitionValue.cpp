@@ -15,7 +15,7 @@ BoolDefinitionValue::BoolDefinitionValue(const nlohmann::json &json, const std::
         } else if (json.at(key).type() == nlohmann::detail::value_t::string)
         {
             const std::string boolValue = json.value(key, "");
-            if (boolValue.starts_with("$"))
+            if (boolValue.starts_with('$'))
             {
                 usesParam = true;
                 paramName = boolValue.substr(1, boolValue.length() - 1);

@@ -23,7 +23,8 @@ class LightBakerGpu
                   const glm::uvec2 &lightmapSize,
                   uint32_t bounceCount,
                   uint32_t sampleCount,
-                  std::vector<uint16_t> &pixelData);
+                  std::vector<uint16_t> &pixelData,
+                  std::vector<uint16_t> &indirectLightingPixelData);
 
         bool GetTextureIndex(const std::string &textureName, uint32_t &index, const SearchPathManager &pathManager);
 
@@ -68,7 +69,7 @@ class LightBakerGpu
 
         bool CreateAndWriteDescriptorSet();
 
-        bool CreateDirectLightingPipeline(const glm::uvec2 &lightmapSize, uint32_t lightCount);
+        bool CreateDirectLightingPipeline(const glm::uvec2 &lightmapSize, uint32_t lightCount, VkBool32 writeDirect);
 
         bool CreateGlobalIlluminationPipeline(const glm::uvec2 &lightmapSize, uint32_t sampleCount);
 

@@ -18,7 +18,7 @@ class Material
         {
             SHADER_SKY,
             SHADER_UNSHADED,
-            SHADER_SHADED
+            SHADER_SHADED,
         };
 
         Material() = default;
@@ -30,6 +30,7 @@ class Material
         std::string texture{};
         Color color = Colors::WHITE;
         MaterialShader shader{};
+        bool castsShadows = true;
 
         void Write(DataWriter &writer) const;
 };

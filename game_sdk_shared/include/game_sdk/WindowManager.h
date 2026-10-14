@@ -116,7 +116,7 @@ class WindowManager
          */
         [[nodiscard]] Window *GetCurrentWindow() const;
 
-        const ArgumentParser &GetArgumentParser() const;
+        [[nodiscard]] const ArgumentParser &GetArgumentParser() const;
 
     private:
         /// Whether the first OpenGL context has been created

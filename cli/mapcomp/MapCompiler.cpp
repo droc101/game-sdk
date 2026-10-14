@@ -8,11 +8,13 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <glm/vec2.hpp>
+#include <libassets/asset/Asset.h>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
+#include <libassets/type/BoundingBox.h>
+#include <libassets/type/MapVertex.h>
 #include <libassets/type/Sector.h>
 #include <libassets/type/WallMaterial.h>
 #include <libassets/util/AssetContainer.h>
@@ -22,7 +24,6 @@
 #include <ranges>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 #include "LevelMeshBuilder.h"
 #include "Light.h"
@@ -60,7 +61,7 @@ Error::ErrorCode MapCompiler::Compile()
 
     const std::string outPath = settings.assetsDirectory + "/map/" + mapBasename + ".gmap";
     Logger::Info("Saving map to \"{}\"", outPath.c_str());
-    return AssetContainer::SaveToFile(outPath.c_str(),
+    return AssetContainer::SaveToFile(outPath,
                                       buffer,
                                       Asset::AssetType::ASSET_TYPE_LEVEL,
                                       MapAsset::MAP_ASSET_VERSION,
@@ -117,6 +118,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
 
     Logger::Info("Compiling actors...");
 
+    bool hasDirectionalLight{};
     std::vector<Light> lights{};
 
     size_t numPlayerActors = 0;
@@ -138,11 +140,23 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
 
         if (def.Extends("light"))
         {
+            if (actor.className == "light_directional")
+            {
+                if (hasDirectionalLight)
+                {
+                    Logger::Error("Found more than one directional light!");
+                    return Error::ErrorCode::INCORRECT_FORMAT;
+                }
+                hasDirectionalLight = true;
+            }
             lights.emplace_back(actor);
-            continue;
         }
 
-        actorsToWrite.push_back(actor);
+        if (!def.editorOnly)
+        {
+            actorsToWrite.push_back(actor);
+        }
+
         if (def.Extends("player"))
         {
             Logger::Info("Found player spawnpoint at {} {} {}", actor.position.x, actor.position.y, actor.position.z);
@@ -188,9 +202,9 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         for (Sector &sector: map.sectors)
         {
             sector.ceilingMaterial.unitsPerLuxel = std::max<float>(sector.ceilingMaterial.unitsPerLuxel,
-                                                                     FAST_COMPILE_MIN_UNITS_PER_LUXEL);
-            sector.floorMaterial.unitsPerLuxel = std::max<float>(sector.floorMaterial.unitsPerLuxel,
                                                                    FAST_COMPILE_MIN_UNITS_PER_LUXEL);
+            sector.floorMaterial.unitsPerLuxel = std::max<float>(sector.floorMaterial.unitsPerLuxel,
+                                                                 FAST_COMPILE_MIN_UNITS_PER_LUXEL);
             for (WallMaterial &mat: sector.wallMaterials)
             {
                 mat.unitsPerLuxel = std::max<float>(mat.unitsPerLuxel, FAST_COMPILE_MIN_UNITS_PER_LUXEL);
@@ -321,7 +335,8 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         {
             if (!sectorMeshBuilders.contains(sector.ceilingMaterial.material))
             {
-                sectorMeshBuilders.emplace(sector.ceilingMaterial.material, LevelMeshBuilder(pathManager, sector.ceilingMaterial.material));
+                sectorMeshBuilders.emplace(sector.ceilingMaterial.material,
+                                           LevelMeshBuilder(pathManager, sector.ceilingMaterial.material));
             }
             sectorMeshBuilders.at(sector.ceilingMaterial.material).AddCeiling(sector, overlappingFloors);
         }
@@ -335,7 +350,8 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         {
             if (!sectorMeshBuilders.contains(sector.floorMaterial.material))
             {
-                sectorMeshBuilders.emplace(sector.floorMaterial.material, LevelMeshBuilder(pathManager, sector.floorMaterial.material));
+                sectorMeshBuilders.emplace(sector.floorMaterial.material,
+                                           LevelMeshBuilder(pathManager, sector.floorMaterial.material));
             }
             sectorMeshBuilders.at(sector.floorMaterial.material).AddFloor(sector, overlappingCeilings);
         }
@@ -346,14 +362,13 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         }
 
         collisionBuilders.push_back(builder);
-        for (const LevelMeshBuilder &b : sectorMeshBuilders | std::views::values)
+        for (const LevelMeshBuilder &b: sectorMeshBuilders | std::views::values)
         {
             mapMeshBuilders.push_back(b);
         }
     }
 
-    std::erase_if(mapMeshBuilders,
-                  [](const LevelMeshBuilder &item) -> bool { return item.IsEmpty(); });
+    std::erase_if(mapMeshBuilders, [](const LevelMeshBuilder &item) -> bool { return item.IsEmpty(); });
 
     Logger::Info("Level has {} visual meshes", mapMeshBuilders.size());
     Logger::Info("Level has {} physics meshes", collisionBuilders.size());
@@ -379,11 +394,20 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         builder.Write(writer);
     }
 
-    std::vector<uint16_t> pixels = {0x3c00, 0x3c00, 0x3c00, 0x3c00}; // float16 1.0
+    std::vector<MapVertex> vertices{};
+    for (const LevelMeshBuilder &builder: mapMeshBuilders)
+    {
+        vertices.insert(vertices.end(), builder.GetVertices().begin(), builder.GetVertices().end());
+    }
+
+    writer.Write<float>(2 * glm::length(BoundingBox(vertices).extents));
+
+    std::vector<uint16_t> lightmapPixels = {0x3c00, 0x3c00, 0x3c00, 0x3c00}; // float16 1.0
+    std::vector<uint16_t> indirectLightingLightmapPixels = {0, 0, 0, 0};
     if (!skipLighting)
     {
         Logger::Info("Baking lightmap...");
-        if (!LightBaker::Bake(mapMeshBuilders, lights, lightmapSize, pixels))
+        if (!LightBaker::Bake(mapMeshBuilders, lights, lightmapSize, lightmapPixels, indirectLightingLightmapPixels))
         {
             return Error::ErrorCode::UNKNOWN;
         }
@@ -395,21 +419,18 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     Logger::Info("Finalizing Map...");
     writer.Write<size_t>(lightmapSize.x);
     writer.Write<size_t>(lightmapSize.y);
-    writer.WriteBuffer(pixels);
-    writer.Write<uint16_t>(lights.size());
-    for (const Light &light: lights)
+    writer.WriteBuffer(lightmapPixels);
+    writer.WriteBuffer(indirectLightingLightmapPixels);
+    if (settings.skipLighting)
     {
-        writer.Write<uint32_t>(static_cast<uint32_t>(light.type));
-        writer.WriteVec3(light.position);
-        writer.WriteVec3(light.negativeForwardDirection);
-        writer.WriteVec3(light.color);
-        writer.Write<float>(light.brightness);
-        writer.Write<float>(light.constantAttenuation);
-        writer.Write<float>(light.linearAttenuation);
-        writer.Write<float>(light.quadraticAttenuation);
-        writer.Write<float>(light.attenuationMultiplier);
-        writer.Write<float>(light.brightAngle);
-        writer.Write<float>(light.fadingAngle);
+        writer.Write<uint32_t>(0); // number of lights
+    } else
+    {
+        writer.Write<uint32_t>(lights.size());
+        for (const Light &light: lights)
+        {
+            light.Write(writer);
+        }
     }
     writer.CopyToVector(buffer);
     return Error::ErrorCode::OK;

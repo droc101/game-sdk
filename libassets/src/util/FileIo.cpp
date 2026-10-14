@@ -6,6 +6,7 @@
 #include <fstream>
 #include <ios>
 #include <istream>
+#include <libassets/util/DataReader.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/FileIo.h>
 #include <ostream>

@@ -40,7 +40,7 @@ void SoundSystem::Destroy()
     initialized = false;
 }
 
-void SoundSystem::UnloadSound(Sound &sound)
+void SoundSystem::UnloadSound(Sound &sound) const
 {
     if (!initialized)
     {
@@ -193,7 +193,7 @@ void SoundSystem::Sound::SetLooping(const bool looping)
     {
         return;
     }
-    ma_sound_set_looping(&sound, static_cast<ma_bool32>(looping));
+    ma_sound_set_looping(&sound, looping);
 }
 
 bool SoundSystem::Sound::IsLoaded() const

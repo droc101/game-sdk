@@ -5,6 +5,7 @@
 const uint RAY_FLAGS = gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT;
 
 layout (constant_id = 2) const uint LIGHT_COUNT = 0;
+layout (constant_id = 3) const bool STORE_DIRECT = false;
 
 layout (location = 0) rayPayloadEXT bool isLightVisible;
 
@@ -45,7 +46,7 @@ void main() {
     }
 
     const vec4 luxelNormal = imageLoad(luxelNormals, luxelCoord);
-    vec3 accumulatedColor = vec3(luxelNormal.w, luxelNormal.w, luxelNormal.w);
+    vec3 accumulatedColor = vec3(STORE_DIRECT ? 0 : luxelNormal.w);
     for (uint i = 0; i < LIGHT_COUNT; i++) {
         float distance;
         vec3 rayDirection;
@@ -78,10 +79,19 @@ void main() {
             accumulatedColor += getLightColor(light, distance, theta) * max(dot(rayDirection, luxelNormal.xyz), 0);
         }
     }
+
+    if (STORE_DIRECT) {
+        imageStore(outputLightmap, luxelIndex, vec4(imageLoad(outputLightmap, luxelIndex).rgb + accumulatedColor, 1));
+        return;
+    }
+
     vec3 areaLightColor = vec3(0);
     uint hitCount = 0;
     for (uint i = 0; i < emissiveLuxelIndices.indexCount; i++) {
         const int sourceLuxelIndex = emissiveLuxelIndices.indices[i];
+        if (luxelIndex == sourceLuxelIndex) {
+            continue;
+        }
         const ivec2 sourceLuxelCoord = ivec2(sourceLuxelIndex % WIDTH, sourceLuxelIndex / WIDTH);
         const vec4 sourceLuxelPosition = imageLoad(luxelPositions, sourceLuxelCoord);
         if (sourceLuxelPosition.w == 0) {
@@ -102,14 +112,14 @@ void main() {
         traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, rayDirection, distance, 0);
         if (isLightVisible) {
             const vec4 color = imageLoad(luxelAlbedos, sourceLuxelCoord);
-            areaLightColor += color.rgb * color.a / (distance * distance) * max(dot(rayDirection, luxelNormal.xyz), 0);
+            areaLightColor += color.rgb * color.a / (distance * distance / 256.0) * max(dot(rayDirection, luxelNormal.xyz), 0);
             ++hitCount;
         }
     }
     if (hitCount > 0) {
         accumulatedColor += areaLightColor / hitCount;
+        imageStore(outputLightmap, luxelIndex, vec4(vec3(luxelNormal.w, luxelNormal.w, luxelNormal.w) + areaLightColor / hitCount, 1));
     }
 
-    imageStore(outputLightmap, luxelIndex, vec4(accumulatedColor, 1));
     imageStore(currentBounceLightmap, luxelIndex, vec4(accumulatedColor, 1));
 }

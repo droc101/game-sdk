@@ -20,6 +20,8 @@ class TexeditWindow final: public Window
 
         void Render() override;
 
+        void FileDropped(const std::string &filePath) override;
+
         [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
@@ -51,8 +53,8 @@ class TexeditWindow final: public Window
 
         void OpenGtex(const std::string &path);
         void ImportImage(const std::string &path);
-        void SaveGtex(const std::string &path);
-        void Export(const std::string &path);
+        void SaveGtex(const std::string &path) const;
+        void Export(const std::string &path) const;
 
         void ClampZoom();
 };

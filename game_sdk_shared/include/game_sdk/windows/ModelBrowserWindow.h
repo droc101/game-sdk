@@ -28,7 +28,7 @@ class ModelBrowserWindow final: public Window
 
         void Render() override;
 
-        const WindowProperties &GetProperties() const override;
+        [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
         WindowProperties properties = {

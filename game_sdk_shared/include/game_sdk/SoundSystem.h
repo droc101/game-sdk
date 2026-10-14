@@ -53,7 +53,7 @@ class SoundSystem
 
         bool LoadSound(const SoundAsset &soundAsset, Sound &dest);
 
-        void UnloadSound(Sound &sound);
+        void UnloadSound(Sound &sound) const;
 
         void SetVolume(float volume);
 

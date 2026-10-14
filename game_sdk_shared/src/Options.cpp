@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <game_sdk/Options.h>
+#include <libassets/util/Error.h>
 #include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
 #include <nlohmann/json.hpp>

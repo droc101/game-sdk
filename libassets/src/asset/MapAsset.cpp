@@ -12,7 +12,6 @@
 #include <libassets/util/Error.h>
 #include <libassets/util/FileIo.h>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 MapAsset::MapAsset()

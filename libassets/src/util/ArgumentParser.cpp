@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <libassets/util/ArgumentParser.h>
 #include <string>
+#include <vector>
 
 ArgumentParser::ArgumentParser(const int argc, const char **argv)
 {
@@ -59,4 +60,20 @@ std::string ArgumentParser::GetFileArgument(const std::vector<std::string> &exte
         }
     }
     return "";
+}
+
+std::vector<std::string> ArgumentParser::GetFileArguments(const std::vector<std::string> &extensions) const
+{
+    std::vector<std::string> files{};
+    for (const std::string &argument: arguments)
+    {
+        for (const std::string &extension: extensions)
+        {
+            if (argument.ends_with(extension) && std::filesystem::exists(argument))
+            {
+                files.push_back(argument);
+            }
+        }
+    }
+    return files;
 }

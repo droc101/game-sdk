@@ -15,13 +15,18 @@
 #include <ImfPixelType.h>
 #include <ImfRgba.h>
 #include <ImfRgbaFile.h>
+#include <libassets/asset/Asset.h>
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/util/AssetContainer.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/Error.h>
+#include <libassets/util/FileIo.h>
 #include <libassets/util/Logger.h>
+#include <limits>
 #include <OpenEXRConfig.h>
+#include <string>
+#include <unistd.h>
 #include <vector>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -54,6 +59,7 @@ void TextureAsset::Reset()
     filter = true;
     repeat = true;
     mipmaps = true;
+    opaque = true;
     pixelFormat = PixelFormat::RGBA8;
     pixelData = {};
 }
@@ -66,6 +72,7 @@ Error::ErrorCode TextureAsset::LoadFromBuffer(DataReader &reader)
     filter = reader.Read<uint8_t>() != 0;
     repeat = reader.Read<uint8_t>() != 0;
     mipmaps = reader.Read<uint8_t>() != 0;
+    opaque = reader.Read<uint8_t>() != 0;
     pixelFormat = static_cast<PixelFormat>(reader.Read<uint8_t>());
     size_t pixelDataSize = width * height;
     if (pixelFormat == PixelFormat::RGBA8)
@@ -86,30 +93,31 @@ Error::ErrorCode TextureAsset::SaveToBuffer(DataWriter &writer) const
     writer.Write<uint8_t>(filter ? 1 : 0);
     writer.Write<uint8_t>(repeat ? 1 : 0);
     writer.Write<uint8_t>(mipmaps ? 1 : 0);
+    writer.Write<uint8_t>(opaque ? 1 : 0);
     writer.Write<uint8_t>(static_cast<uint8_t>(pixelFormat));
     writer.WriteBuffer<uint8_t>(pixelData);
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode TextureAsset::CreateFromPNG(const string &imagePath)
+Error::ErrorCode TextureAsset::CreateFromSdrImage(const string &imagePath)
 {
-    if (access(imagePath.c_str(), F_OK | R_OK))
+    if (access(imagePath.c_str(), F_OK | R_OK) != 0)
     {
         CreateMissingTexture();
         return Error::ErrorCode::OK;
     }
-    int pngWidth = 0;
-    int pngHeight = 0;
+    int imageWidth = 0;
+    int imageHeight = 0;
     int channels = 0;
-    uint8_t *data = stbi_load(imagePath.c_str(), &pngWidth, &pngHeight, &channels, STBI_rgb_alpha);
+    uint8_t *data = stbi_load(imagePath.c_str(), &imageWidth, &imageHeight, &channels, STBI_rgb_alpha);
     if (data == nullptr)
     {
         Logger::Error("stbi_load failed: {}", stbi_failure_reason());
         return Error::ErrorCode::UNKNOWN;
     }
     Reset();
-    width = pngWidth;
-    height = pngHeight;
+    width = imageWidth;
+    height = imageHeight;
     pixelFormat = PixelFormat::RGBA8;
     const size_t pixelDataSize = width * height * 4;
     pixelData = std::vector<uint8_t>(pixelDataSize);
@@ -118,10 +126,21 @@ Error::ErrorCode TextureAsset::CreateFromPNG(const string &imagePath)
         pixelData.at(i) = data[i];
     }
     stbi_image_free(data);
+
+    opaque = true;
+    for (size_t i = 3; i < pixelDataSize; i += 4)
+    {
+        if (pixelData.at(i) != std::numeric_limits<uint8_t>::max())
+        {
+            opaque = false;
+            break;
+        }
+    }
+
     return Error::ErrorCode::OK;
 }
 
-Error::ErrorCode TextureAsset::CreateFromEXR(const string &imagePath)
+Error::ErrorCode TextureAsset::CreateFromHdrImage(const string &imagePath)
 {
     Reset();
     RgbaInputFile file = RgbaInputFile(imagePath.c_str());
@@ -132,6 +151,17 @@ Error::ErrorCode TextureAsset::CreateFromEXR(const string &imagePath)
     pixelFormat = PixelFormat::RGBAF16;
     file.setFrameBuffer(reinterpret_cast<Rgba *>(GetPixelsRGBA()), 1, width);
     file.readPixels(dw.min.y, dw.max.y);
+
+    opaque = true;
+    for (size_t i = 6; i < pixelData.size(); i += 8)
+    {
+        if (*reinterpret_cast<_Float16 *>(&pixelData.at(i)) < 1)
+        {
+            opaque = false;
+            break;
+        }
+    }
+
     return Error::ErrorCode::OK;
 }
 
@@ -195,13 +225,13 @@ Error::ErrorCode TextureAsset::Import(const std::string &filePath)
 {
     const std::filesystem::path path = filePath;
     const std::string extension = path.extension().string();
-    if (extension == ".png")
+    if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".tga")
     {
-        return CreateFromPNG(filePath.c_str());
+        return CreateFromSdrImage(filePath);
     }
     if (extension == ".exr")
     {
-        return CreateFromEXR(filePath.c_str());
+        return CreateFromHdrImage(filePath);
     }
     return Error::ErrorCode::INCORRECT_FORMAT;
 }
@@ -211,9 +241,9 @@ Error::ErrorCode TextureAsset::Export(const std::string &filePath) const
     switch (pixelFormat)
     {
         case PixelFormat::RGBA8:
-            return SaveAsPNG(filePath.c_str());
+            return SaveAsPNG(filePath);
         case PixelFormat::RGBAF16:
-            return SaveAsEXR(filePath.c_str());
+            return SaveAsEXR(filePath);
     }
     return Error::ErrorCode::INCORRECT_FORMAT;
 }

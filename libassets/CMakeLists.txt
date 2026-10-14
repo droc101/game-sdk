@@ -105,8 +105,8 @@ add_library(assets SHARED
         include/libassets/type/OptionDefinition.h
         src/type/ActorDefinition.cpp
         include/libassets/type/ActorDefinition.h
-        src/type/SignalDefinition.cpp
-        include/libassets/type/SignalDefinition.h
+        src/type/InputDefinition.cpp
+        include/libassets/type/InputDefinition.h
         include/libassets/type/paramDefs/ParamDefinition.h
         include/libassets/type/paramDefs/ByteParamDefinition.h
         include/libassets/type/paramDefs/IntParamDefinition.h
@@ -169,6 +169,8 @@ add_library(assets SHARED
         src/util/FileIo.cpp
         include/libassets/util/FileIo.h
         include/libassets/util/Colors.h
+        src/type/OutputDefinition.cpp
+        include/libassets/type/OutputDefinition.h
 )
 
 set_target_properties(assets PROPERTIES

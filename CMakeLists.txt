@@ -3,19 +3,22 @@ project(game-sdk)
 
 include(cmake/utils.cmake)
 
-option(GAME_SDK_BUILD_PLUGINS "Builds GAME SDK plugins" OFF)
-
 set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_CXX_FLAGS "-Wpedantic -Wall -Wextra -Wno-missing-field-initializers -march=x86-64-v3 ${CMAKE_CXX_FLAGS}")
+get_filename_component(DEPS_ABS_PATH "${FETCHCONTENT_BASE_DIR}" ABSOLUTE)
+get_filename_component(REPO_ABS_PATH "${CMAKE_SOURCE_DIR}" ABSOLUTE)
+
+set(CMAKE_CXX_FLAGS "-Wpedantic -Wall -Wextra -Wno-missing-field-initializers -march=x86-64-v3 -fcanon-prefix-map -fmacro-prefix-map=${REPO_ABS_PATH}=/repo -fmacro-prefix-map=${DEPS_ABS_PATH}=/deps ${CMAKE_CXX_FLAGS}")
 
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DBUILDSTYLE_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
-set(CMAKE_CXX_FLAGS_RELEASE "-g0 -O3 -s -DNDEBUG -DBUILDSTYLE_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -DBUILDSTYLE_DEBUG ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+set(CMAKE_CXX_FLAGS_RELEASE "-g0 -O3 -s -DNDEBUG -DBUILDSTYLE_RELEASE -fdata-sections -ffunction-sections -Wl,--gc-sections ${CMAKE_CXX_FLAGS_RELEASE}")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -DBUILDSTYLE_DEBUG -fdata-sections -ffunction-sections -Wl,--gc-sections ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
+set(CMAKE_SKIP_RPATH ON)
 set(CMAKE_PLATFORM_NO_VERSIONED_SONAME ON)
 
 if (WIN32)
@@ -121,8 +124,8 @@ target_compile_definitions(imgui INTERFACE
 
 add_custom_target(
         copy_assets
-        COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/bin/assets
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/bin/assets
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/out/assets
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/out/assets
 )
 
 add_subdirectory(libassets)
@@ -134,14 +137,9 @@ add_subdirectory(mapedit)
 add_subdirectory(shdedit)
 add_subdirectory(fonedit)
 add_subdirectory(mtledit)
-add_subdirectory(mapcomp)
+add_subdirectory(cli/mapcomp)
 add_subdirectory(kvledit)
 add_subdirectory(launcher)
-add_subdirectory(mapdump)
-add_dependencies(launcher texedit mdledit sndedit mapedit shdedit fonedit mtledit kvledit mapdump)
-
-if (GAME_SDK_BUILD_PLUGINS)
-    if (UNIX)
-        add_subdirectory(plugins/gtex_thumbs)
-    endif ()
-endif ()
+add_subdirectory(cli/mapdump)
+add_subdirectory(cli/shdcomp)
+add_dependencies(launcher texedit mdledit sndedit mapedit shdedit fonedit mtledit kvledit mapdump shdcomp)

@@ -17,7 +17,6 @@ struct MapVertex
         glm::vec2 lightmapUv;
 
         /// The normal of the surface this point is on
-        /// @note Only used by lightmap compiling. Not actually written to the asset binary.
         glm::vec3 normal;
 
         /// The texture index used by the material of this vertex

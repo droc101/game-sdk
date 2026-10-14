@@ -6,6 +6,7 @@
 
 #include <array>
 #include <concepts>
+#include <libassets/type/MapVertex.h>
 #include <libassets/type/ModelVertex.h>
 #include <libassets/util/DataReader.h>
 #include <libassets/util/DataWriter.h>
@@ -41,8 +42,9 @@ class BoundingBox
          * Create a bounding box of the given vertices
          * @param verts The vertices to create a box for
          */
-        template<typename T> requires(std::same_as<T, ModelVertex> || std::same_as<T, glm::vec3>)
-        explicit BoundingBox(const std::vector<T> &verts)
+        template<typename T> requires(std::same_as<T, ModelVertex> ||
+                                      std::same_as<T, glm::vec3> ||
+                                      std::same_as<T, MapVertex>) explicit BoundingBox(const std::vector<T> &verts)
         {
             if (verts.empty())
             {
@@ -63,12 +65,12 @@ class BoundingBox
             for (const T &vert: verts)
             {
                 glm::vec3 point;
-                if constexpr (std::same_as<T, ModelVertex>)
-                {
-                    point = vert.position;
-                } else
+                if constexpr (std::same_as<T, glm::vec3>)
                 {
                     point = vert;
+                } else
+                {
+                    point = vert.position;
                 }
 
                 if (point.x < minPoint.x)

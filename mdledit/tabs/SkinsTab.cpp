@@ -52,7 +52,8 @@ void SkinsTab::Render()
         ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetCurrentContext()->Style.Colors[ImGuiCol_TextDisabled]);
         const uint32_t indexCount = ModelEditor::modelViewer.GetModel()
                                             .GetLod(ModelEditor::modelViewer.lodIndex)
-                                            .indexCounts.at(i);
+                                            .components.at(i)
+                                            .indices.size();
         ImGui::TextUnformatted(std::format("{} triangles", indexCount / 3).c_str());
         ImGui::PopStyleColor();
 

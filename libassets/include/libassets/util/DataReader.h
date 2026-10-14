@@ -126,7 +126,7 @@ class DataReader
             }
             T *offsetData = reinterpret_cast<T *>(bytes.data() + offset);
             buffer.insert(buffer.begin(), offsetData, offsetData + numberToRead);
-            offset += numberToRead;
+            offset += sizeof(T) * numberToRead;
         }
 
     protected:

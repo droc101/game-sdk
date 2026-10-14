@@ -38,15 +38,21 @@ class ShaderCompiler
     public:
         ShaderCompiler() = delete;
 
-        ShaderCompiler(std::string glslSource, EShLanguage shaderType, std::string shaderName, bool optimize);
+        ShaderCompiler(std::string glslSource,
+                       EShLanguage shaderType,
+                       std::string shaderName,
+                       bool optimize,
+                       bool debugInfo);
 
-        ShaderCompiler(const std::filesystem::path &path, EShLanguage shaderKind, bool optimize);
+        ShaderCompiler(const std::filesystem::path &path, EShLanguage shaderType, bool optimize, bool debugInfo);
 
         [[nodiscard]] Error::ErrorCode Compile(std::vector<uint32_t> &outputSpirv);
 
         [[nodiscard]] const std::string &GetErrorMessage() const;
 
     private:
+        [[nodiscard]] __attribute__((const,always_inline)) inline std::string GetShaderTypeMacro() const noexcept;
+
         EShLanguage shaderType;
 
         std::string glslSource;
@@ -54,6 +60,8 @@ class ShaderCompiler
         std::string shaderPath;
 
         bool optimize;
+
+        bool debugInfo;
 
         std::string compileLog;
 };
