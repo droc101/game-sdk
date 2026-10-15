@@ -4,15 +4,14 @@
 
 #include "Viewport.h"
 #include <game_sdk/gl/GLHelper.h>
-#include <glm/detail/type_quat.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/fwd.hpp>
-#include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <string>
+#include "libassets/asset/MapAsset.h"
 #include "MapEditor.h"
 
 Viewport::Viewport(const ViewportType type)
@@ -182,6 +181,9 @@ void Viewport::Render()
                 const ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
                 perspectiveCameraRotation.x += glm::radians(dragDelta.y / -5.0f);
                 perspectiveCameraRotation.y += glm::radians(dragDelta.x / 5.0f);
+                perspectiveCameraRotation.x = glm::clamp(perspectiveCameraRotation.x,
+                                                         glm::radians(-89.0f),
+                                                         glm::radians(89.0f));
                 ImGui::ResetMouseDragDelta(ImGuiMouseButton_Right);
             }
             glm::vec3 moveDir{};
@@ -203,8 +205,9 @@ void Viewport::Render()
             perspectiveCameraSpeed += ImGui::GetIO().MouseWheel;
             perspectiveCameraSpeed = glm::clamp(perspectiveCameraSpeed, 1.0f, 128.0f);
 
-            moveDir *= perspectiveCameraSpeed;
-            perspectiveCameraPos += glm::quat(perspectiveCameraRotation) * moveDir;
+            const glm::vec3 forward = GetPerspectiveForward();
+            const glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0, 1, 0)));
+            perspectiveCameraPos += (forward * moveDir.z + right * moveDir.x) * perspectiveCameraSpeed;
         }
     }
 
@@ -356,17 +359,14 @@ void Viewport::RecalculateMatrices()
         worldScreenMatrix = ortho * view;
     } else
     {
-        perspectiveCameraRotation.z = glm::radians(180.0f);
-        glm::mat4 perspectiveMatrix;
-        perspectiveMatrix = glm::perspective(glm::radians(90.0f), aspect, 0.01f, MapAsset::MAP_MAX_HALF_EXTENTS * 3.0f);
+        const glm::mat4 perspectiveMatrix = glm::perspective(glm::radians(90.0f),
+                                                             aspect,
+                                                             0.01f,
+                                                             MapAsset::MAP_MAX_HALF_EXTENTS * 3.0f);
 
-        glm::quat rotationQuat = glm::quat(perspectiveCameraRotation);
-        glm::quat rotationOffset;
-        glm::quat(glm::pi<float>(), {1, 0, 0});
-        rotationQuat *= rotationOffset;
-
-        glm::mat4 view = glm::mat4_cast(glm::conjugate(rotationQuat)) *
-                         glm::translate(glm::mat4(1.0f), -perspectiveCameraPos);
+        const glm::mat4 view = glm::lookAt(perspectiveCameraPos,
+                                           perspectiveCameraPos + GetPerspectiveForward(),
+                                           glm::vec3(0, 1, 0));
 
         worldScreenMatrix = perspectiveMatrix * view;
     }
@@ -402,6 +402,13 @@ Axis Viewport::GetAxis() const
 bool Viewport::Is3D() const
 {
     return type == ViewportType::PERSPECTIVE;
+}
+
+glm::vec3 Viewport::GetPerspectiveForward() const
+{
+    const float pitch = perspectiveCameraRotation.x;
+    const float yaw = perspectiveCameraRotation.y;
+    return {glm::sin(yaw) * glm::cos(pitch), glm::sin(pitch), -glm::cos(yaw) * glm::cos(pitch)};
 }
 
 glm::vec3 Viewport::GetPerspectiveCameraPosition() const

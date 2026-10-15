@@ -144,4 +144,7 @@ class Viewport
         float perspectiveCameraSpeed = 4.0f;
 
         void RecalculateMatrices();
+
+        /// Get the unit look direction of the perspective camera (rotation x = pitch, y = yaw)
+        [[nodiscard]] glm::vec3 GetPerspectiveForward() const;
 };
