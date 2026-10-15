@@ -260,6 +260,78 @@ bool Brush::ContainsPoint(const Axis axis, const glm::vec2 point) const
     return false;
 }
 
+Brush::TriangulatedFace::TriangulatedFace(const Brush &brush, const Face &face): material(face.material)
+{
+    indices.reserve(face.indices.size());
+    std::unordered_map<uint32_t, uint32_t> indicesMap{};
+    for (const uint32_t index: face.indices)
+    {
+        if (!indicesMap.contains(index))
+        {
+            vertices.emplace_back(brush.vertices.at(index));
+            const uint32_t newIndex = indicesMap.size();
+            indicesMap[index] = newIndex;
+        }
+    }
+
+    const uint32_t sharedIndex = indicesMap.at(face.indices.at(0));
+    for (uint32_t i = 1; i < face.indices.size() - 1; i++)
+    {
+        indices.emplace_back(sharedIndex);
+        indices.emplace_back(indicesMap.at(face.indices.at(i)));
+        indices.emplace_back(indicesMap.at(face.indices.at(i + 1)));
+    }
+
+    CalculateUVs(face);
+}
+
+const std::string &Brush::TriangulatedFace::Material() const
+{
+    return material;
+}
+
+const std::vector<uint32_t> &Brush::TriangulatedFace::Indices() const
+{
+    return indices;
+}
+
+const std::vector<MapVertex> &Brush::TriangulatedFace::Vertices() const
+{
+    return vertices;
+}
+
+void Brush::TriangulatedFace::CalculateUVs(const Face &face)
+{
+    const glm::vec3 &corner = vertices.at(indices.at(0)).position;
+    const glm::vec3 &p1 = vertices.at(indices.at(1)).position;
+    const glm::vec3 &p2 = vertices.at(indices.at(2)).position;
+    const glm::vec3 &normal = glm::normalize(glm::cross(glm::normalize(p1 - corner), glm::normalize(p2 - corner)));
+
+    const glm::vec3 absNormal = glm::abs(normal);
+    const glm::vec3 reference = absNormal.y >= absNormal.x && absNormal.y >= absNormal.z ? glm::vec3{0, 0, 1}
+                                                                                         : glm::vec3{0, -1, 0};
+
+    const glm::vec3 v = glm::normalize(reference - glm::dot(reference, normal) * normal);
+    const glm::vec3 u = glm::cross(normal, v);
+
+    glm::vec2 minPoint = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
+    glm::vec2 maxPoint = {std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()};
+    for (MapVertex &vertex: vertices)
+    {
+        vertex.uv = glm::vec2{glm::dot(vertex.position, u), glm::dot(vertex.position, v)};
+        vertex.normal = normal;
+
+        minPoint = glm::min(minPoint, vertex.uv);
+        maxPoint = glm::max(maxPoint, vertex.uv);
+    }
+
+    const glm::vec2 centerPoint = (minPoint + maxPoint) * 0.5f;
+    for (MapVertex &vertex: vertices)
+    {
+        vertex.uv = (vertex.uv - centerPoint + face.textureOffset) / face.textureScale;
+    }
+}
+
 const std::vector<Brush::TriangulatedFace> &Brush::GetTriangulatedMesh()
 {
     if (!facesNeedRetriangulation)
@@ -271,54 +343,7 @@ const std::vector<Brush::TriangulatedFace> &Brush::GetTriangulatedMesh()
     triangulatedFaces.reserve(faces.size());
     for (const Face &face: faces)
     {
-        TriangulatedFace triangulatedFace = {
-            .material = face.material,
-        };
-        triangulatedFace.indices.reserve(face.indices.size());
-        std::unordered_map<uint32_t, uint32_t> indicesMap{};
-        for (const uint32_t index: face.indices)
-        {
-            if (!indicesMap.contains(index))
-            {
-                triangulatedFace.vertices.emplace_back(vertices.at(index));
-                const uint32_t newIndex = indicesMap.size();
-                indicesMap[index] = newIndex;
-            }
-        }
-
-        const uint32_t sharedIndex = indicesMap.at(face.indices.at(0));
-        for (uint32_t i = 1; i < face.indices.size() - 1; i++)
-        {
-            triangulatedFace.indices.emplace_back(sharedIndex);
-            triangulatedFace.indices.emplace_back(indicesMap.at(face.indices.at(i)));
-            triangulatedFace.indices.emplace_back(indicesMap.at(face.indices.at(i + 1)));
-        }
-
-        const glm::vec3 &corner = triangulatedFace.vertices.at(triangulatedFace.indices.at(0)).position;
-        const glm::vec3 &p1 = triangulatedFace.vertices.at(triangulatedFace.indices.at(1)).position;
-        const glm::vec3 &p2 = triangulatedFace.vertices.at(triangulatedFace.indices.at(2)).position;
-        const glm::vec3 &u = glm::normalize(p1 - corner);
-        const glm::vec3 &normal = glm::normalize(glm::cross(u, glm::normalize(p2 - corner)));
-        const glm::vec3 &v = glm::normalize(glm::cross(u, normal));
-
-        glm::vec2 minPoint = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
-        glm::vec2 maxPoint = {std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()};
-        for (MapVertex &vertex: triangulatedFace.vertices)
-        {
-            vertex.uv = glm::vec2{glm::dot(vertex.position - corner, u), glm::dot(vertex.position - corner, v)};
-            vertex.normal = normal;
-
-            minPoint = glm::min(minPoint, vertex.uv);
-            maxPoint = glm::max(maxPoint, vertex.uv);
-        }
-
-        const glm::vec2 &centerPoint = (minPoint + maxPoint) * 0.5f;
-        for (MapVertex &vertex: triangulatedFace.vertices)
-        {
-            vertex.uv = (vertex.uv - centerPoint + face.textureOffset) / face.textureScale;
-        }
-
-        triangulatedFaces.emplace_back(std::move(triangulatedFace));
+        triangulatedFaces.emplace_back(*this, face);
     }
     facesNeedRetriangulation = false;
     return triangulatedFaces;

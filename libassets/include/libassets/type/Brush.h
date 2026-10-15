@@ -43,11 +43,22 @@ class Brush
                 float unitsPerLuxel = 1.0f;
         };
 
-        struct TriangulatedFace
+        class TriangulatedFace
         {
+            public:
+                TriangulatedFace() = delete;
+                explicit TriangulatedFace(const Brush &brush, const Face &face);
+
+                [[nodiscard]] const std::string &Material() const;
+                [[nodiscard]] const std::vector<uint32_t> &Indices() const;
+                [[nodiscard]] const std::vector<MapVertex> &Vertices() const;
+
+            private:
+                void CalculateUVs(const Face &face);
+
                 std::string material;
-                std::vector<uint32_t> indices{};
-                std::vector<MapVertex> vertices{};
+                std::vector<uint32_t> indices;
+                std::vector<MapVertex> vertices;
         };
 
         Brush() = default;

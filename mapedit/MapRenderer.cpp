@@ -381,7 +381,7 @@ void MapRenderer::RenderBrushFace(const Brush::TriangulatedFace &face,
     glBindVertexArray(workBuffer.vao);
 
     glBindBuffer(GL_ARRAY_BUFFER, workBuffer.vbo);
-    glBufferData(GL_ARRAY_BUFFER, face.vertices.size() * sizeof(MapVertex), face.vertices.data(), GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, face.Vertices().size() * sizeof(MapVertex), face.Vertices().data(), GL_STREAM_DRAW);
 
     const GLint posAttrib = glGetAttribLocation(brushProgram, "VERTEX");
     const GLint uvAttrib = glGetAttribLocation(brushProgram, "VERTEX_UV");
@@ -398,7 +398,7 @@ void MapRenderer::RenderBrushFace(const Brush::TriangulatedFace &face,
     glUniformMatrix4fv(glGetUniformLocation(brushProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(glGetUniformLocation(brushProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
 
-    const std::string materialPath = SharedMgr::Get().pathManager.GetAssetPath(face.material);
+    const std::string materialPath = SharedMgr::Get().pathManager.GetAssetPath(face.Material());
     LevelMaterialAsset material{};
     Error::ErrorCode error = material.LoadFromAsset(materialPath);
     if (error != Error::ErrorCode::OK)
@@ -418,8 +418,11 @@ void MapRenderer::RenderBrushFace(const Brush::TriangulatedFace &face,
 
     const GLuint ebo = workBuffer.ebo;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, face.indices.size() * sizeof(uint32_t), face.indices.data(), GL_STREAM_DRAW);
-    glDrawElements(GL_TRIANGLES, face.indices.size(), GL_UNSIGNED_INT, nullptr);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 face.Indices().size() * sizeof(uint32_t),
+                 face.Indices().data(),
+                 GL_STREAM_DRAW);
+    glDrawElements(GL_TRIANGLES, face.Indices().size(), GL_UNSIGNED_INT, nullptr);
 
     glDisable(GL_CULL_FACE);
 }
