@@ -160,19 +160,6 @@ void Viewport::Render()
                         glm::degrees(perspectiveCameraRotation.x),
                         glm::degrees(perspectiveCameraRotation.y),
                         perspectiveCameraSpeed);
-            ImGui::Separator();
-            ImGui::Text("Hover Debug Info:\nHover Type: %d\nHover Index: %zu\nHover Subindex: %zu\nHover Pos: %.2f, %.2f, "
-                        "%.2f\nHover "
-                        "Normal: %.2f, %.2f, %.2f",
-                        lastHoverInfo.objectType,
-                        lastHoverInfo.objectIndex,
-                        lastHoverInfo.objectSubIndex,
-                        lastHoverInfo.position.x,
-                        lastHoverInfo.position.y,
-                        lastHoverInfo.position.z,
-                        lastHoverInfo.normal.x,
-                        lastHoverInfo.normal.y,
-                        lastHoverInfo.normal.z);
         }
         ImGui::EndChild();
     }

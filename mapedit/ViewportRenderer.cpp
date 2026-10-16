@@ -106,33 +106,51 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
 
     if (settings.hoverType == EditorTool::ItemType::BRUSH)
     {
-        GLHelper::ClearDepth();
+        if (!vp.Is3D())
+        {
+            GLHelper::ClearDepth();
+        }
         RenderBrush(vp, settings, settings.hoverIndex, matrix);
     } else if (settings.hoverType == EditorTool::ItemType::ACTOR)
     {
-        GLHelper::ClearDepth();
+        if (!vp.Is3D())
+        {
+            GLHelper::ClearDepth();
+        }
         RenderActor(MapEditor::map.actors.at(settings.hoverIndex), matrix, vp);
     }
 
     if (settings.selectionType == EditorTool::ItemType::BRUSH)
     {
-        GLHelper::ClearDepth();
+        if (!vp.Is3D())
+        {
+            GLHelper::ClearDepth();
+        }
         RenderBrush(vp, settings, settings.selectionIndex, matrix);
     } else if (settings.selectionType == EditorTool::ItemType::ACTOR)
     {
-        GLHelper::ClearDepth();
+        if (!vp.Is3D())
+        {
+            GLHelper::ClearDepth();
+        }
         RenderActor(MapEditor::map.actors.at(settings.selectionIndex), matrix, vp);
     }
 
     if (settings.brushFocusMode)
     {
-        GLHelper::ClearDepth();
+        if (!vp.Is3D())
+        {
+            GLHelper::ClearDepth();
+        }
         RenderBrush(vp, settings, settings.focusedBrushIndex, matrix);
     }
 
     if (settings.gizmo != nullptr)
     {
-        GLHelper::ClearDepth();
+        if (!vp.Is3D())
+        {
+            GLHelper::ClearDepth();
+        }
         RenderGizmo(vp, settings.gizmo, matrix);
     }
 
@@ -161,9 +179,12 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
         const std::vector<Brush::TriangulatedFace> &triangulatedFaces = brush.GetTriangulatedMesh();
         for (size_t i = 0; i < triangulatedFaces.size(); i++)
         {
-            if (settings.selectionType == EditorTool::ItemType::FACE && settings.selectionIndex == brushIndex && settings.selectionVertexIndex == i)
+            if (settings.selectionType == EditorTool::ItemType::FACE &&
+                settings.selectionIndex == brushIndex &&
+                settings.selectionVertexIndex == i)
             {
-                const std::unordered_set<std::pair<glm::vec3, glm::vec3>> edges = brush.GetFaceEdges(settings.selectionVertexIndex);
+                const std::unordered_set<std::pair<glm::vec3, glm::vec3>>
+                        edges = brush.GetFaceEdges(settings.selectionVertexIndex);
 
                 for (const std::pair<glm::vec3, glm::vec3> &edge: edges)
                 {

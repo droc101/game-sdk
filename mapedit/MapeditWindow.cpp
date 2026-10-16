@@ -589,6 +589,8 @@ void MapeditWindow::Render()
         MapEditor::tool = std::make_unique<AddPolygonTool>();
     }
 
+    ToolbarSeparator();
+
     if (ToolbarToolButton("##cutTool",
                           "Cut Brushes",
                           MapEditor::CUT_ICON_NAME,
