@@ -180,6 +180,20 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
                                                                                               const glm::vec3
                                                                                                       &worldSpaceHover)
 {
+    if (vp.Is3D())
+    {
+        hoverType = ItemType::NONE;
+        const Viewport::PerspectiveHoverInfo hoverInfo = vp.GetPerspectiveHover();
+        std::vector<std::tuple<ItemType, size_t, float>> stack{};
+        if (hoverInfo.objectType != 0)
+        {
+            stack.emplace_back(static_cast<ItemType>(hoverInfo.objectType), hoverInfo.objectIndex, 0.0f);
+            hoverType = static_cast<ItemType>(hoverInfo.objectType);
+            hoverIndex = hoverInfo.objectIndex;
+        }
+        return stack;
+    }
+
     const ImVec2 localMousePos = vp.GetLocalMousePos();
 
     hoverType = ItemType::NONE;
