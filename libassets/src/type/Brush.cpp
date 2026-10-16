@@ -332,7 +332,8 @@ void Brush::TriangulatedFace::CalculateUVs(const Face &face)
     const glm::vec3 reference = absNormal.y >= absNormal.x && absNormal.y >= absNormal.z ? glm::vec3{0, 0, 1}
                                                                                          : glm::vec3{0, -1, 0};
 
-    const glm::vec3 v = glm::normalize(reference - glm::dot(reference, normal) * normal);
+    const glm::quat rot = glm::angleAxis(glm::radians(-face.textureRotation), normal);
+    const glm::vec3 v = rot * glm::normalize(reference - glm::dot(reference, normal) * normal);
     const glm::vec3 u = glm::cross(normal, v);
 
     glm::vec2 minPoint = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
