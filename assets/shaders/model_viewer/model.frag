@@ -11,12 +11,12 @@ in vec2 UV;
 in vec3 NORMAL;
 in vec4 COLOR;
 
-out vec4 PIXEL;
+out vec4 FRAG_COLOR;
 
 uniform sampler2D ALBEDO_TEXTURE;
 uniform vec4 ALBEDO;
 
-uniform int displayMode;
+uniform int DISPLAY_MODE;
 
 float calculate_shading() {
     vec3 light_dir = normalize(vec3(0.0, -1.0, 1.0));
@@ -33,26 +33,26 @@ bool check_alpha_discard(float fade_alpha) {
 
 void main()
 {
-    if (displayMode == DISPLAY_MODE_COLORED || displayMode == DISPLAY_MODE_COLORED_SHADED) {
-        PIXEL = ALBEDO * COLOR;
-        if (check_alpha_discard(PIXEL.a)) discard;
-        PIXEL.a = 1.0;
-        if (displayMode == DISPLAY_MODE_COLORED_SHADED) {
+    if (DISPLAY_MODE == DISPLAY_MODE_COLORED || DISPLAY_MODE == DISPLAY_MODE_COLORED_SHADED) {
+        FRAG_COLOR = ALBEDO * COLOR;
+        if (check_alpha_discard(FRAG_COLOR.a)) discard;
+        FRAG_COLOR.a = 1.0;
+        if (DISPLAY_MODE == DISPLAY_MODE_COLORED_SHADED) {
             float shading = calculate_shading();
-            PIXEL.rgb *= vec3(shading);
+            FRAG_COLOR.rgb *= vec3(shading);
         }
-    } else if (displayMode == DISPLAY_MODE_TEXTURED || displayMode == DISPLAY_MODE_TEXTURED_SHADED) {
-        PIXEL = texture(ALBEDO_TEXTURE, UV) * ALBEDO * COLOR;
-        if (check_alpha_discard(PIXEL.a)) discard;
-        PIXEL.a = 1.0;
-        if (displayMode == DISPLAY_MODE_TEXTURED_SHADED) {
+    } else if (DISPLAY_MODE == DISPLAY_MODE_TEXTURED || DISPLAY_MODE == DISPLAY_MODE_TEXTURED_SHADED) {
+        FRAG_COLOR = texture(ALBEDO_TEXTURE, UV) * ALBEDO * COLOR;
+        if (check_alpha_discard(FRAG_COLOR.a)) discard;
+        FRAG_COLOR.a = 1.0;
+        if (DISPLAY_MODE == DISPLAY_MODE_TEXTURED_SHADED) {
             float shading = calculate_shading();
-            PIXEL.rgb *= vec3(shading);
+            FRAG_COLOR.rgb *= vec3(shading);
         }
-    } else if (displayMode == DISPLAY_MODE_UV) {
-        PIXEL = vec4(UV, 0.0, 1.0);
-    } else if (displayMode == DISPLAY_MODE_NORMAL) {
-        PIXEL = vec4(NORMAL, 1.0);
+    } else if (DISPLAY_MODE == DISPLAY_MODE_UV) {
+        FRAG_COLOR = vec4(UV, 0.0, 1.0);
+    } else if (DISPLAY_MODE == DISPLAY_MODE_NORMAL) {
+        FRAG_COLOR = vec4(NORMAL, 1.0);
     }
     
 

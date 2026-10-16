@@ -1,11 +1,11 @@
 #version 460
 
-out mediump vec4 COLOR;
+out vec4 FRAG_COLOR;
 
-in vec3 FSVCOL;
+in vec3 COLOR;
 
 void main()
 {
-    COLOR.rgb = FSVCOL;
-    COLOR.a = 1.0;
+    FRAG_COLOR.rgb = COLOR;
+    FRAG_COLOR.a = 1.0;
 }

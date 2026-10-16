@@ -415,6 +415,10 @@ void MapeditWindow::Render()
             {
                 MapEditor::culling = !MapEditor::culling;
             }
+            if (ImGui::MenuItem("Show Internal Buffers", "", MapEditor::showInternalBuffers))
+            {
+                MapEditor::showInternalBuffers = !MapEditor::showInternalBuffers;
+            }
             ImGui::Separator();
             if (ImGui::MenuItem("Show Grid", "", MapEditor::drawGrid))
             {

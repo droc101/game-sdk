@@ -22,6 +22,10 @@ Viewport::Viewport(const ViewportType type)
 Viewport::~Viewport()
 {
     GLHelper::DestroyFramebuffer(framebuffer);
+    if (type == ViewportType::PERSPECTIVE)
+    {
+        DestroyWorldBuffers();
+    }
 }
 
 void Viewport::GetWindowRect(ImVec2 &pos, ImVec2 &size) const
@@ -91,17 +95,45 @@ void Viewport::Render()
         GLHelper::ResizeFramebuffer(framebuffer, {windowSize.x, windowSize.y});
     }
 
+    if (GetType() == ViewportType::PERSPECTIVE)
+    {
+        if (!worldBuffers.created)
+        {
+            CreateWorldBuffers(glm::vec2(windowSize.x, windowSize.y));
+        } else if (glm::vec2(windowSize.x, windowSize.y) != worldBuffers.size)
+        {
+            ResizeWorldBuffers(glm::vec2(windowSize.x, windowSize.y));
+        }
+    }
+
     GLHelper::BindFramebuffer(framebuffer);
 
     RecalculateMatrices();
 
     MapEditor::tool->RenderViewport(*this);
 
+    if (type == ViewportType::PERSPECTIVE)
+    {
+        UpdatePerspectiveHover();
+    }
     GLHelper::UnbindFramebuffer();
 
     const ImVec2 origCursor = ImGui::GetCursorPos();
     ImGui::SetCursorPos({0, 0});
-    ImGui::Image(framebuffer.colorTexture, {framebuffer.size.x, framebuffer.size.y}, {0, 1}, {1, 0});
+    if (type == ViewportType::PERSPECTIVE && MapEditor::showInternalBuffers)
+    {
+        const ImVec2 imgSize = {windowSize.x / 2, windowSize.y / 2};
+        ImGui::Image(framebuffer.colorTexture, imgSize, {0, 1}, {1, 0});
+        ImGui::SetCursorPos({imgSize.x, 0});
+        ImGui::Image(worldBuffers.objectInfoTexture, imgSize, {0, 1}, {1, 0});
+        ImGui::SetCursorPos({0, imgSize.y});
+        ImGui::Image(worldBuffers.positionTexture, imgSize, {0, 1}, {1, 0});
+        ImGui::SetCursorPos({imgSize.x, imgSize.y});
+        ImGui::Image(worldBuffers.normalTexture, imgSize, {0, 1}, {1, 0});
+    } else
+    {
+        ImGui::Image(framebuffer.colorTexture, {framebuffer.size.x, framebuffer.size.y}, {0, 1}, {1, 0});
+    }
     ImGui::SetCursorPos(origCursor);
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetColorU32(ImGuiCol_WindowBg));
@@ -128,6 +160,19 @@ void Viewport::Render()
                         glm::degrees(perspectiveCameraRotation.x),
                         glm::degrees(perspectiveCameraRotation.y),
                         perspectiveCameraSpeed);
+            ImGui::Separator();
+            ImGui::Text("Hover Debug Info:\nHover Type: %d\nHover Index: %zu\nHover Subindex: %zu\nHover Pos: %.2f, %.2f, "
+                        "%.2f\nHover "
+                        "Normal: %.2f, %.2f, %.2f",
+                        lastHoverInfo.objectType,
+                        lastHoverInfo.objectIndex,
+                        lastHoverInfo.objectSubIndex,
+                        lastHoverInfo.position.x,
+                        lastHoverInfo.position.y,
+                        lastHoverInfo.position.z,
+                        lastHoverInfo.normal.x,
+                        lastHoverInfo.normal.y,
+                        lastHoverInfo.normal.z);
         }
         ImGui::EndChild();
     }
@@ -247,13 +292,13 @@ glm::vec3 Viewport::ScreenToWorldPos(ImVec2 localScreenPos) const
 
 glm::vec2 Viewport::WorldToScreenPos(const glm::vec3 worldPos) const
 {
-    ImVec2 WindowSize;
-    ImVec2 WindowPos;
-    GetWindowRect(WindowPos, WindowSize);
+    ImVec2 igWindowSize;
+    ImVec2 igWindowPos;
+    GetWindowRect(igWindowPos, igWindowSize);
     const glm::vec4 fullNdc = worldScreenMatrix * glm::vec4(worldPos, 1.0f);
     const glm::vec2 ndc = glm::vec2(fullNdc.x, fullNdc.y);
-    const float screenX = (ndc.x * 0.5f + 0.5f) * WindowSize.x;
-    const float screenY = (-ndc.y * 0.5f + 0.5f) * WindowSize.y;
+    const float screenX = (ndc.x * 0.5f + 0.5f) * igWindowSize.x;
+    const float screenY = (-ndc.y * 0.5f + 0.5f) * igWindowSize.y;
     return {screenX, screenY};
 }
 
@@ -414,4 +459,207 @@ glm::vec3 Viewport::GetPerspectiveForward() const
 glm::vec3 Viewport::GetPerspectiveCameraPosition() const
 {
     return perspectiveCameraPos;
+}
+
+void Viewport::CreateWorldBuffers(const glm::vec2 size)
+{
+    glGenFramebuffers(1, &worldBuffers.fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, worldBuffers.fbo);
+    glGenRenderbuffers(1, &worldBuffers.rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, worldBuffers.rbo);
+
+    glGenTextures(1, &worldBuffers.objectInfoTexture);
+    glBindTexture(GL_TEXTURE_2D, worldBuffers.objectInfoTexture);
+
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB32F,
+                 static_cast<GLsizei>(size.x),
+                 static_cast<GLsizei>(size.y),
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 nullptr);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, worldBuffers.objectInfoTexture, 0);
+
+    glGenTextures(1, &worldBuffers.positionTexture);
+    glBindTexture(GL_TEXTURE_2D, worldBuffers.positionTexture);
+
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB32F,
+                 static_cast<GLsizei>(size.x),
+                 static_cast<GLsizei>(size.y),
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 nullptr);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, worldBuffers.positionTexture, 0);
+
+    glGenTextures(1, &worldBuffers.normalTexture);
+    glBindTexture(GL_TEXTURE_2D, worldBuffers.normalTexture);
+
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB32F,
+                 static_cast<GLsizei>(size.x),
+                 static_cast<GLsizei>(size.y),
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 nullptr);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, worldBuffers.normalTexture, 0);
+
+    glRenderbufferStorage(GL_RENDERBUFFER,
+                          GL_DEPTH24_STENCIL8,
+                          static_cast<GLsizei>(size.x),
+                          static_cast<GLsizei>(size.y));
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, worldBuffers.rbo);
+
+    constexpr std::array<GLenum, 3> COLOR_ATTACHMENTS = {
+        GL_COLOR_ATTACHMENT0,
+        GL_COLOR_ATTACHMENT1,
+        GL_COLOR_ATTACHMENT2,
+    };
+    glDrawBuffers(COLOR_ATTACHMENTS.size(), COLOR_ATTACHMENTS.data());
+
+    const GLenum frameBufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    assert(frameBufferStatus == GL_FRAMEBUFFER_COMPLETE);
+
+    GLHelper::UnbindFramebuffer();
+
+    worldBuffers.size = size;
+    worldBuffers.created = true;
+}
+
+void Viewport::ResizeWorldBuffers(const glm::vec2 size)
+{
+    if (worldBuffers.size == size)
+    {
+        return;
+    }
+
+    GLint boundRbo = GL_NONE;
+    glGetIntegerv(GL_RENDERBUFFER_BINDING, &boundRbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, worldBuffers.rbo);
+
+    glBindTexture(GL_TEXTURE_2D, worldBuffers.objectInfoTexture);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB32F,
+                 static_cast<GLsizei>(size.x),
+                 static_cast<GLsizei>(size.y),
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 nullptr);
+
+    glBindTexture(GL_TEXTURE_2D, worldBuffers.positionTexture);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB32F,
+                 static_cast<GLsizei>(size.x),
+                 static_cast<GLsizei>(size.y),
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 nullptr);
+
+    glBindTexture(GL_TEXTURE_2D, worldBuffers.normalTexture);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB32F,
+                 static_cast<GLsizei>(size.x),
+                 static_cast<GLsizei>(size.y),
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 nullptr);
+
+    glRenderbufferStorage(GL_RENDERBUFFER,
+                          GL_DEPTH24_STENCIL8,
+                          static_cast<GLsizei>(size.x),
+                          static_cast<GLsizei>(size.y));
+
+    glBindRenderbuffer(GL_RENDERBUFFER, boundRbo);
+
+    worldBuffers.size = size;
+}
+
+void Viewport::DestroyWorldBuffers()
+{
+    worldBuffers.created = false;
+    glDeleteTextures(1, &worldBuffers.objectInfoTexture);
+    glDeleteTextures(1, &worldBuffers.positionTexture);
+    glDeleteTextures(1, &worldBuffers.normalTexture);
+    glDeleteFramebuffers(1, &worldBuffers.fbo);
+    glDeleteRenderbuffers(1, &worldBuffers.rbo);
+}
+
+void Viewport::BindWorldBuffers() const
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, worldBuffers.fbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, worldBuffers.rbo);
+    glViewport(0, 0, static_cast<GLsizei>(worldBuffers.size.x), static_cast<GLsizei>(worldBuffers.size.y));
+}
+
+Viewport::PerspectiveHoverInfo Viewport::GetPerspectiveHover() const
+{
+    assert(type == ViewportType::PERSPECTIVE);
+    return lastHoverInfo;
+}
+
+void Viewport::UpdatePerspectiveHover()
+{
+    assert(type == ViewportType::PERSPECTIVE);
+    BindWorldBuffers();
+    std::array<float, 3> rawObjectInfo{};
+    lastHoverInfo = {
+        .objectType = 0,
+        .objectIndex = 0,
+        .objectSubIndex = 0,
+        .position = {},
+        .normal = {},
+    };
+
+    const GLint mouseX = static_cast<GLint>(lastLocalMousePos.x);
+    const GLint mouseY = static_cast<GLint>(windowSize.y - lastLocalMousePos.y);
+
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glReadPixels(mouseX, mouseY, 1, 1, GL_RGB, GL_FLOAT, rawObjectInfo.data());
+
+    lastHoverInfo.objectType = *reinterpret_cast<uint8_t *>(&rawObjectInfo.at(0));
+
+    if (lastHoverInfo.objectType == static_cast<uint8_t>(EditorTool::ItemType::NONE))
+    {
+        GLHelper::UnbindFramebuffer();
+        return; // no need to bother reading the other values if nothing is hovered
+    }
+
+    lastHoverInfo.objectIndex = *reinterpret_cast<uint32_t *>(&rawObjectInfo.at(1));
+    lastHoverInfo.objectSubIndex = *reinterpret_cast<uint32_t *>(&rawObjectInfo.at(2));
+
+    glReadBuffer(GL_COLOR_ATTACHMENT1);
+    glReadPixels(mouseX, mouseY, 1, 1, GL_RGB, GL_FLOAT, glm::value_ptr(lastHoverInfo.position));
+
+    glReadBuffer(GL_COLOR_ATTACHMENT2);
+    glReadPixels(mouseX, mouseY, 1, 1, GL_RGB, GL_FLOAT, glm::value_ptr(lastHoverInfo.normal));
 }

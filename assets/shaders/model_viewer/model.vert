@@ -9,12 +9,12 @@ out vec2 UV;
 out vec3 NORMAL;
 out vec4 COLOR;
 
-uniform mat4 PROJECTION;
-uniform mat4 VIEW;
+uniform mat4 VIEW_MATRIX;
+uniform mat4 WORLD_MATRIX;
 
 void main()
 {
-    gl_Position = PROJECTION * VIEW * vec4(VERTEX, 1.0);
+    gl_Position = VIEW_MATRIX * WORLD_MATRIX * vec4(VERTEX, 1.0);
     UV = VERTEX_UV;
     NORMAL = VERTEX_NORMAL;
     COLOR = VERTEX_COLOR;

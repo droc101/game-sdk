@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
-#include <libassets/type/Axis.h>
+#include <libassets/type/Brush.h>
 #include <libassets/util/ActorDefinitionManager.h>
 #include <memory>
 #include <optional>
@@ -49,6 +49,7 @@ class MapEditor
         static inline bool drawModels = true;
         static inline bool culling = true;
         static inline bool drawGizmos = true;
+        static inline bool showInternalBuffers = false;
 
         static constexpr size_t HOVER_DISTANCE_PIXELS = 10;
         static constexpr size_t TOOLBAR_HEIGHT = 48;

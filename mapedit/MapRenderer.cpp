@@ -6,6 +6,7 @@
 #include <array>
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
 #include <game_sdk/SharedMgr.h>
 #include <glm/ext.hpp>
@@ -25,39 +26,53 @@
 #include "libassets/asset/LevelMaterialAsset.h"
 #include "MapEditor.h"
 #include "Viewport.h"
+#include "libassets/type/Brush.h"
 
 bool MapRenderer::Init()
 {
-    const Error::ErrorCode vertexColorProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/vertex_color.frag",
-                                                                           "assets/shaders/mapedit/vertex_color.vert",
-                                                                           vertexColorProgram);
+    const Error::ErrorCode vertexColorProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
+                                                                                 "vertex_color.frag",
+                                                                                 "assets/shaders/mapedit/"
+                                                                                 "vertex_color.vert",
+                                                                                 vertexColorProgram);
 
     const Error::ErrorCode gridProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/grid.frag",
                                                                           "assets/shaders/mapedit/grid.vert",
                                                                           gridProgram);
 
-    const Error::ErrorCode uniformColorProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/uniform_color.frag",
-                                                                          "assets/shaders/mapedit/uniform_color.vert",
-                                                                          uniformColorProgram);
+    const Error::ErrorCode uniformColorProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
+                                                                                  "uniform_color.frag",
+                                                                                  "assets/shaders/mapedit/"
+                                                                                  "uniform_color.vert",
+                                                                                  uniformColorProgram);
 
     const Error::ErrorCode spriteProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/sprite.frag",
                                                                             "assets/shaders/mapedit/sprite.vert",
                                                                             spriteProgram);
 
-    const Error::ErrorCode shadedModelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/model_shaded.frag",
-                                                                                 "assets/shaders/mapedit/model_shaded.vert",
+    const Error::ErrorCode shadedModelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
+                                                                                 "model_shaded.frag",
+                                                                                 "assets/shaders/mapedit/"
+                                                                                 "model_shaded.vert",
                                                                                  shadedModelProgram);
 
     const Error::ErrorCode brushProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/brush.frag",
                                                                            "assets/shaders/mapedit/brush.vert",
                                                                            brushProgram);
 
+    const Error::ErrorCode worldBuffersProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
+                                                                                  "world_buffers.frag",
+                                                                                  "assets/shaders/mapedit/"
+                                                                                  "world_buffers.vert",
+                                                                                  worldBuffersProgram);
+
     if (uniformColorProgramErrorCode != Error::ErrorCode::OK ||
         vertexColorProgramErrorCode != Error::ErrorCode::OK ||
         gridProgramErrorCode != Error::ErrorCode::OK ||
         spriteProgramErrorCode != Error::ErrorCode::OK ||
         shadedModelProgramErrorCode != Error::ErrorCode::OK ||
-        brushProgramErrorCode != Error::ErrorCode::OK)
+        brushProgramErrorCode != Error::ErrorCode::OK ||
+        worldBuffersProgramErrorCode != Error::ErrorCode::OK)
     {
         return false;
     }
@@ -160,9 +175,9 @@ void MapRenderer::RenderViewportGrid(const Viewport &vp)
         const int numInstances = static_cast<int>(MapEditor::MAP_SIZE * 2 / gridSpacing);
 
         glUseProgram(gridProgram);
-        glUniformMatrix4fv(glGetUniformLocation(gridProgram, "matrix"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniform1f(glGetUniformLocation(gridProgram, "spacing"), gridSpacing);
-        glUniform1i(glGetUniformLocation(gridProgram, "plane"), static_cast<int>(vp.GetType()));
+        glUniformMatrix4fv(glGetUniformLocation(gridProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniform1f(glGetUniformLocation(gridProgram, "SPACING"), gridSpacing);
+        glUniform1i(glGetUniformLocation(gridProgram, "PLANE"), static_cast<int>(vp.GetType()));
         glDrawArraysInstanced(GL_LINES, 0, 2, numInstances);
     }
 
@@ -170,7 +185,7 @@ void MapRenderer::RenderViewportGrid(const Viewport &vp)
     glDepthFunc(GL_LESS);
 
     glUseProgram(vertexColorProgram);
-    glUniformMatrix4fv(glGetUniformLocation(vertexColorProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(vertexColorProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(view));
     const GLint posAttrib = glGetAttribLocation(vertexColorProgram, "VERTEX");
     const GLint colorAttrib = glGetAttribLocation(vertexColorProgram, "VERTEX_COLOR");
     if (MapEditor::drawAxisHelper)
@@ -218,9 +233,12 @@ void MapRenderer::RenderLine(const glm::vec3 start,
 
     glLineWidth(thickness);
 
-    glUniform4fv(glGetUniformLocation(uniformColorProgram, "alb"), 1, color.GetDataPointer());
+    glUniform4fv(glGetUniformLocation(uniformColorProgram, "COLOR"), 1, color.GetDataPointer());
     glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
-    glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(identity));
+    glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "WORLD_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(identity));
 
     const std::vector<float> vertices = {
         start.x,
@@ -251,9 +269,12 @@ void MapRenderer::RenderBillboardPoint(const glm::vec3 position,
 
     glPointSize(pointSize);
 
-    glUniform4fv(glGetUniformLocation(uniformColorProgram, "alb"), 1, color.GetDataPointer());
+    glUniform4fv(glGetUniformLocation(uniformColorProgram, "COLOR"), 1, color.GetDataPointer());
     glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
-    glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(identity));
+    glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "WORLD_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(identity));
 
     const std::vector<float> vertices = {position.x, position.y, position.z};
 
@@ -263,6 +284,35 @@ void MapRenderer::RenderBillboardPoint(const glm::vec3 position,
                  vertices.data(),
                  GL_STREAM_DRAW);
     const GLint posAttrLoc = glGetAttribLocation(uniformColorProgram, "VERTEX");
+    glVertexAttribPointer(posAttrLoc, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+    glEnableVertexAttribArray(posAttrLoc);
+    glDrawArrays(GL_POINTS, 0, 1);
+}
+
+void MapRenderer::RenderBillboardPointObjectBuffer(glm::vec3 position,
+                                                   float pointSize,
+                                                   ObjectBufferInfo info,
+                                                   const glm::mat4 &matrix)
+{
+    glUseProgram(worldBuffersProgram);
+
+    glPointSize(pointSize);
+
+    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
+    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(identity));
+
+    glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_TYPE"), info.objectType);
+    glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_INDEX"), info.objectIndex);
+    glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_SUB_INDEX"), info.objectSubIndex);
+
+    const std::vector<float> vertices = {position.x, position.y, position.z};
+
+    GLHelper::BindBuffer(workBufferNonIndexed);
+    glBufferData(GL_ARRAY_BUFFER,
+                 static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)),
+                 vertices.data(),
+                 GL_STREAM_DRAW);
+    const GLint posAttrLoc = glGetAttribLocation(worldBuffersProgram, "VERTEX");
     glVertexAttribPointer(posAttrLoc, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
     glEnableVertexAttribArray(posAttrLoc);
     glDrawArrays(GL_POINTS, 0, 1);
@@ -287,8 +337,8 @@ void MapRenderer::RenderBillboardSprite(const glm::vec3 position,
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureId);
-    glUniform1i(glGetUniformLocation(spriteProgram, "sprite"), 0);
-    glUniform4fv(glGetUniformLocation(spriteProgram, "color"), 1, color.GetDataPointer());
+    glUniform1i(glGetUniformLocation(spriteProgram, "SPRITE"), 0);
+    glUniform4fv(glGetUniformLocation(spriteProgram, "COLOR"), 1, color.GetDataPointer());
     glUniformMatrix4fv(glGetUniformLocation(spriteProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
     glUniformMatrix4fv(glGetUniformLocation(spriteProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(identity));
 
@@ -371,6 +421,29 @@ void MapRenderer::RenderModelTextured(std::string model,
     }
 }
 
+void MapRenderer::RenderModelObjectBuffer(std::string model,
+                                          const glm::mat4 &viewMatrix,
+                                          const glm::mat4 &worldMatrix,
+                                          const ObjectBufferInfo info)
+{
+    if (!model.empty())
+    {
+        if (!modelBuffers.contains(model))
+        {
+            const std::string absolutePath = SharedMgr::Get().pathManager.GetAssetPath(model);
+            if (absolutePath.empty())
+            {
+                model = "model/error.gmdl";
+            } else
+            {
+                const ModelBuffer buf = LoadModel(absolutePath);
+                modelBuffers[model] = buf;
+            }
+        }
+        RenderModelObjectBufferInternal(modelBuffers.at(model), viewMatrix, worldMatrix, info);
+    }
+}
+
 void MapRenderer::RenderBrushFace(const Brush::TriangulatedFace &face,
                                   const glm::mat4 &viewMatrix,
                                   const glm::mat4 &worldMatrix)
@@ -415,6 +488,52 @@ void MapRenderer::RenderBrushFace(const Brush::TriangulatedFace &face,
     }
     glBindTexture(GL_TEXTURE_2D, texture);
     glUniform1i(glGetUniformLocation(shadedModelProgram, "TEXTURE"), 0);
+
+    const GLuint ebo = workBuffer.ebo;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 face.Indices().size() * sizeof(uint32_t),
+                 face.Indices().data(),
+                 GL_STREAM_DRAW);
+    glDrawElements(GL_TRIANGLES, face.Indices().size(), GL_UNSIGNED_INT, nullptr);
+
+    glDisable(GL_CULL_FACE);
+}
+
+void MapRenderer::RenderBrushFaceObjectBuffer(const Brush::TriangulatedFace &face,
+                                              const glm::mat4 &viewMatrix,
+                                              const glm::mat4 &worldMatrix,
+                                              const ObjectBufferInfo info)
+{
+    glEnable(GL_CULL_FACE);
+
+    glUseProgram(worldBuffersProgram);
+    glBindVertexArray(workBuffer.vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, workBuffer.vbo);
+    glBufferData(GL_ARRAY_BUFFER, face.Vertices().size() * sizeof(MapVertex), face.Vertices().data(), GL_STREAM_DRAW);
+
+    const GLint posAttrib = glGetAttribLocation(worldBuffersProgram, "VERTEX");
+    const GLint normalAttrib = glGetAttribLocation(worldBuffersProgram, "VERTEX_NORMAL");
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(MapVertex), nullptr);
+    glVertexAttribPointer(normalAttrib,
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(MapVertex),
+                          reinterpret_cast<const void *>(offsetof(MapVertex, normal)));
+    glEnableVertexAttribArray(posAttrib);
+    glEnableVertexAttribArray(normalAttrib);
+
+    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "VIEW_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+
+    glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_TYPE"), info.objectType);
+    glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_INDEX"), info.objectIndex);
+    glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_SUB_INDEX"), info.objectSubIndex);
 
     const GLuint ebo = workBuffer.ebo;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
@@ -491,9 +610,15 @@ void MapRenderer::RenderModel(ModelBuffer &buffer,
 
     glLineWidth(1);
 
-    glUniform4fv(glGetUniformLocation(uniformColorProgram, "alb"), 1, c.GetDataPointer());
-    glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+    glUniform4fv(glGetUniformLocation(uniformColorProgram, "COLOR"), 1, c.GetDataPointer());
+    glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "VIEW_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "WORLD_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(worldMatrix));
 
     glBindVertexArray(buffer.vao);
     glBindBuffer(GL_ARRAY_BUFFER, buffer.vbo);
@@ -587,6 +712,51 @@ void MapRenderer::RenderModelTextured(ModelBuffer &buffer,
         glBindTexture(GL_TEXTURE_2D, texture);
         glUniform1i(glGetUniformLocation(shadedModelProgram, "TEXTURE"), 0);
 
+        const GLuint ebo = buffer.ebos.at(i);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glDrawElements(GL_TRIANGLES,
+                       static_cast<GLsizei>(buffer.model.GetLod(lodIndex).components.at(i).indices.size()),
+                       GL_UNSIGNED_INT,
+                       nullptr);
+    }
+
+    glDisable(GL_CULL_FACE);
+}
+
+void MapRenderer::RenderModelObjectBufferInternal(ModelBuffer &buffer,
+                                                  const glm::mat4 &viewMatrix,
+                                                  const glm::mat4 &worldMatrix,
+                                                  ObjectBufferInfo info)
+{
+    const uint32_t lodIndex = 0;
+
+    glEnable(GL_CULL_FACE);
+
+    glUseProgram(worldBuffersProgram);
+    glBindVertexArray(buffer.vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffer.vbo);
+    const GLint posAttrib = glGetAttribLocation(worldBuffersProgram, "VERTEX");
+    const GLint normAttrib = glGetAttribLocation(worldBuffersProgram, "VERTEX_NORMAL");
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), nullptr);
+    glVertexAttribPointer(normAttrib,
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          12 * sizeof(float),
+                          reinterpret_cast<void *>(9 * sizeof(float)));
+    glEnableVertexAttribArray(posAttrib);
+    glEnableVertexAttribArray(normAttrib);
+
+    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+
+    glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_TYPE"), info.objectType);
+    glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_INDEX"), info.objectIndex);
+    glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_SUB_INDEX"), info.objectSubIndex);
+
+    for (size_t i = 0; i < buffer.model.GetMaterialsPerSkin(); i++)
+    {
         const GLuint ebo = buffer.ebos.at(i);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glDrawElements(GL_TRIANGLES,
@@ -793,6 +963,137 @@ void MapRenderer::RenderWall(const glm::mat4 &viewMatrix, const glm::mat4 &world
     }
     glBindTexture(GL_TEXTURE_2D, texture);
     glUniform1i(glGetUniformLocation(shadedModelProgram, "TEXTURE"), 0);
+
+    const GLuint ebo = workBuffer.ebo;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STREAM_DRAW);
+    glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(uint32_t), GL_UNSIGNED_INT, nullptr);
+
+    glDisable(GL_CULL_FACE);
+}
+
+void MapRenderer::RenderWallObjectBuffer(const glm::mat4 &viewMatrix,
+                                         const glm::mat4 &worldMatrix,
+                                         const Wall &wall,
+                                         ObjectBufferInfo info)
+{
+    const float bottom = wall.localCenter.y - (wall.size.y / 2.0f);
+    const float top = wall.localCenter.y + (wall.size.y / 2.0f);
+    const glm::vec2 startPoint = wall.zAxisOrientation ? glm::vec2(0, wall.localCenter.x - wall.size.x / 2.0f)
+                                                       : glm::vec2(wall.localCenter.x - wall.size.x / 2.0f, 0);
+    const glm::vec2 endPoint = wall.zAxisOrientation ? glm::vec2(0, wall.localCenter.x + wall.size.x / 2.0f)
+                                                     : glm::vec2(wall.localCenter.x + wall.size.x / 2.0f, 0);
+
+    glm::vec3 normal{};
+    glm::vec3 backfaceNormal{};
+    if (!wall.zAxisOrientation)
+    {
+        normal.z = 1;
+        backfaceNormal.z = -1;
+    } else
+    {
+        normal.x = -1;
+        backfaceNormal.x = 1;
+    }
+
+    const float vertices[8][6] = {
+        // X Y Z U V A
+        {
+            startPoint.x,
+            top,
+            startPoint.y,
+            normal.x,
+            normal.y,
+            normal.z,
+        },
+        {
+            endPoint.x,
+            top,
+            endPoint.y,
+            normal.x,
+            normal.y,
+            normal.z,
+        },
+        {
+            endPoint.x,
+            bottom,
+            endPoint.y,
+            normal.x,
+            normal.y,
+            normal.z,
+        },
+        {
+            startPoint.x,
+            bottom,
+            startPoint.y,
+            normal.x,
+            normal.y,
+            normal.z,
+        },
+
+        // backface
+        {
+            startPoint.x,
+            top,
+            startPoint.y,
+            backfaceNormal.x,
+            backfaceNormal.y,
+            backfaceNormal.z,
+        },
+        {
+            endPoint.x,
+            top,
+            endPoint.y,
+            backfaceNormal.x,
+            backfaceNormal.y,
+            backfaceNormal.z,
+        },
+        {
+            endPoint.x,
+            bottom,
+            endPoint.y,
+            backfaceNormal.x,
+            backfaceNormal.y,
+            backfaceNormal.z,
+        },
+        {
+            startPoint.x,
+            bottom,
+            startPoint.y,
+            backfaceNormal.x,
+            backfaceNormal.y,
+            backfaceNormal.z,
+        },
+    };
+
+    const uint32_t indices[] = {2, 1, 0, 3, 2, 0, 4, 5, 6, 4, 6, 7};
+
+    glEnable(GL_CULL_FACE);
+
+    glUseProgram(worldBuffersProgram);
+    glBindVertexArray(workBuffer.vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, workBuffer.vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+
+    const GLint posAttrib = glGetAttribLocation(worldBuffersProgram, "VERTEX");
+    const GLint normAttrib = glGetAttribLocation(worldBuffersProgram, "VERTEX_NORMAL");
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
+    glVertexAttribPointer(normAttrib,
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          6 * sizeof(float),
+                          reinterpret_cast<void *>(3 * sizeof(float)));
+    glEnableVertexAttribArray(posAttrib);
+    glEnableVertexAttribArray(normAttrib);
+
+    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+
+    glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_TYPE"), info.objectType);
+    glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_INDEX"), info.objectIndex);
+    glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_SUB_INDEX"), info.objectSubIndex);
 
     const GLuint ebo = workBuffer.ebo;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);

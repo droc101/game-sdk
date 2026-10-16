@@ -5,10 +5,10 @@ in vec3 VERTEX_COLOR;
 
 uniform mat4 VIEW;
 
-out vec3 FSVCOL;
+out vec3 COLOR;
 
 void main()
 {
     gl_Position = VIEW * vec4(VERTEX, 1.0);
-    FSVCOL = VERTEX_COLOR;
+    COLOR = VERTEX_COLOR;
 }

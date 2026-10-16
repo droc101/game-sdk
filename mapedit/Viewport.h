@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
 #include <glm/ext/matrix_transform.hpp>
@@ -22,6 +23,15 @@ class Viewport
             FRONT_XY,
             SIDE_YZ,
             PERSPECTIVE,
+        };
+
+        struct PerspectiveHoverInfo
+        {
+                uint8_t objectType;
+                size_t objectIndex;
+                size_t objectSubIndex;
+                glm::vec3 position;
+                glm::vec3 normal;
         };
 
         Viewport() = delete;
@@ -108,15 +118,30 @@ class Viewport
 
         [[nodiscard]] glm::vec2 Make2D(glm::vec3 point) const;
 
-        Axis GetAxis() const;
+        [[nodiscard]] Axis GetAxis() const;
 
-        bool Is3D() const;
+        [[nodiscard]] bool Is3D() const;
 
-        glm::vec3 GetPerspectiveCameraPosition() const;
+        [[nodiscard]] glm::vec3 GetPerspectiveCameraPosition() const;
+
+        void BindWorldBuffers() const;
+
+        [[nodiscard]] PerspectiveHoverInfo GetPerspectiveHover() const;
 
         static constexpr float ZOOM_STEP = 20.0f;
 
     private:
+        struct WorldBuffersFramebuffer
+        {
+                bool created = false;
+                glm::vec2 size;
+                GLuint objectInfoTexture;
+                GLuint positionTexture;
+                GLuint normalTexture;
+                GLuint fbo;
+                GLuint rbo;
+        };
+
         /// Screen space window position
         ImVec2 windowPos;
         /// Screen space window size
@@ -130,9 +155,11 @@ class Viewport
         glm::mat4 worldScreenMatrix = glm::identity<glm::mat4>();
         /// Inverse of world to screen matrix
         glm::mat4 inverseWorldScreenMatrix = glm::identity<glm::mat4>();
+        PerspectiveHoverInfo lastHoverInfo{};
 
         /// The OpenGL framebuffer
         GLHelper::GL_Framebuffer framebuffer{};
+        WorldBuffersFramebuffer worldBuffers{};
 
         /// The camera's center position
         ImVec2 scrollCenterPos{};
@@ -147,4 +174,12 @@ class Viewport
 
         /// Get the unit look direction of the perspective camera (rotation x = pitch, y = yaw)
         [[nodiscard]] glm::vec3 GetPerspectiveForward() const;
+
+        void CreateWorldBuffers(glm::vec2 size);
+
+        void ResizeWorldBuffers(glm::vec2 size);
+
+        void DestroyWorldBuffers();
+
+        void UpdatePerspectiveHover();
 };

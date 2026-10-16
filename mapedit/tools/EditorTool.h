@@ -26,4 +26,5 @@ class EditorTool
             ACTOR,
             FACE,
         };
+        static_assert(ItemType::NONE == static_cast<ItemType>(0));
 };

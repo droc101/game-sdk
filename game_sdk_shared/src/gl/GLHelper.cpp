@@ -197,6 +197,11 @@ GLHelper::GL_Framebuffer GLHelper::CreateFramebuffer(const glm::vec2 size)
                           static_cast<GLsizei>(size.y));
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fb.rbo);
 
+    constexpr std::array<GLenum, 1> COLOR_ATTACHMENTS = {
+        GL_COLOR_ATTACHMENT0,
+    };
+    glDrawBuffers(COLOR_ATTACHMENTS.size(), COLOR_ATTACHMENTS.data());
+
     const GLenum frameBufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     assert(frameBufferStatus == GL_FRAMEBUFFER_COMPLETE);
 

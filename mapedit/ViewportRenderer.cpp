@@ -37,6 +37,7 @@
 #include "MapRenderer.h"
 #include "tools/EditorTool.h"
 #include "Viewport.h"
+#include "WorldBuffersRenderer.h"
 
 void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings &settings)
 {
@@ -133,6 +134,11 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
     {
         GLHelper::ClearDepth();
         RenderGizmo(vp, settings.gizmo, matrix);
+    }
+
+    if (vp.Is3D())
+    {
+        WorldBuffersRenderer::RenderWorldBuffers(vp);
     }
 }
 

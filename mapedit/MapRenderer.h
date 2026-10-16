@@ -4,18 +4,17 @@
 
 #pragma once
 
+#include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
 #include <GL/glew.h>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
 #include <libassets/asset/ModelAsset.h>
+#include <libassets/type/Brush.h>
 #include <libassets/type/Color.h>
-#include <libassets/type/MapVertex.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "libassets/type/Brush.h"
-#include "tools/AddActorTool.h"
 #include "Viewport.h"
 
 class MapRenderer
@@ -37,6 +36,13 @@ class MapRenderer
                 bool unshaded;
         };
 
+        struct ObjectBufferInfo
+        {
+                uint32_t objectType;
+                uint32_t objectIndex;
+                uint32_t objectSubIndex;
+        };
+
         MapRenderer() = delete;
 
         static bool Init();
@@ -47,6 +53,11 @@ class MapRenderer
         static void RenderLine(glm::vec3 start, glm::vec3 end, Color color, const glm::mat4 &matrix, float thickness);
 
         static void RenderBillboardPoint(glm::vec3 position, float pointSize, Color color, const glm::mat4 &matrix);
+
+        static void RenderBillboardPointObjectBuffer(glm::vec3 position,
+                                                     float pointSize,
+                                                     ObjectBufferInfo info,
+                                                     const glm::mat4 &matrix);
 
         static void RenderBillboardSprite(glm::vec3 position,
                                           float pointSize,
@@ -72,13 +83,28 @@ class MapRenderer
                                         uint32_t skin,
                                         const Color &modColor);
 
+        static void RenderModelObjectBuffer(std::string model,
+                                            const glm::mat4 &viewMatrix,
+                                            const glm::mat4 &worldMatrix,
+                                            ObjectBufferInfo info);
+
         static void RenderBrushFace(const Brush::TriangulatedFace &face,
                                     const glm::mat4 &viewMatrix,
                                     const glm::mat4 &worldMatrix);
 
+        static void RenderBrushFaceObjectBuffer(const Brush::TriangulatedFace &face,
+                                                const glm::mat4 &viewMatrix,
+                                                const glm::mat4 &worldMatrix,
+                                                ObjectBufferInfo info);
+
         static const ModelAsset &GetModel(std::string model);
 
         static void RenderWall(const glm::mat4 &viewMatrix, const glm::mat4 &worldMatrix, const Wall &wall);
+
+        static void RenderWallObjectBuffer(const glm::mat4 &viewMatrix,
+                                           const glm::mat4 &worldMatrix,
+                                           const Wall &wall,
+                                           ObjectBufferInfo info);
 
     private:
         struct ModelBuffer
@@ -95,6 +121,7 @@ class MapRenderer
         static inline GLuint spriteProgram = 0;
         static inline GLuint shadedModelProgram = 0;
         static inline GLuint brushProgram = 0;
+        static inline GLuint worldBuffersProgram = 0;
 
         static inline GLHelper::GL_Buffer axisHelperBuffer{};
         static inline GLHelper::GL_Buffer worldBorderBuffer{};
@@ -118,4 +145,9 @@ class MapRenderer
                                         const glm::mat4 &worldMatrix,
                                         uint32_t skinIndex,
                                         const Color &modColor);
+
+        static void RenderModelObjectBufferInternal(ModelBuffer &buffer,
+                                                    const glm::mat4 &viewMatrix,
+                                                    const glm::mat4 &worldMatrix,
+                                                    ObjectBufferInfo info);
 };

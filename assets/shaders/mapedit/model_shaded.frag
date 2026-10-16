@@ -4,7 +4,7 @@ in vec2 UV;
 in vec3 NORMAL;
 in vec4 COLOR;
 
-out vec4 PIXEL;
+out vec4 FRAG_COLOR;
 
 uniform sampler2D TEXTURE;
 uniform vec4 MATERIAL_COLOR;
@@ -26,11 +26,11 @@ bool check_alpha_discard(float fade_alpha) {
 
 void main()
 {
-    PIXEL = texture(TEXTURE, UV) * MATERIAL_COLOR * MOD_COLOR * COLOR;
-    if (check_alpha_discard(PIXEL.a)) discard;
-    PIXEL.a = 1.0;
+    FRAG_COLOR = texture(TEXTURE, UV) * MATERIAL_COLOR * MOD_COLOR * COLOR;
+    if (check_alpha_discard(FRAG_COLOR.a)) discard;
+    FRAG_COLOR.a = 1.0;
     if (SHADED) {
         float shading = calculate_shading();
-        PIXEL.rgb *= vec3(shading);
+        FRAG_COLOR.rgb *= vec3(shading);
     }
 }

@@ -1,10 +1,10 @@
 #version 460
 
-out vec4 COLOR;
+out vec4 FRAG_COLOR;
 
-uniform vec4 color;
-uniform sampler2D sprite;
+uniform vec4 COLOR;
+uniform sampler2D SPRITE;
 
 void main() {
-    COLOR = texture(sprite, gl_PointCoord) * color;
+    FRAG_COLOR = texture(SPRITE, gl_PointCoord) * COLOR;
 }

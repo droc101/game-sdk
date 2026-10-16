@@ -8,6 +8,7 @@
 #include <glm/fwd.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <imgui.h>
+#include <math.h>
 
 Flycam::Flycam()
 {
@@ -19,13 +20,13 @@ void Flycam::SetViewport(const glm::vec2 size, const float nearPlane, const floa
     perspectiveMatrix = glm::perspective(glm::radians(90.0f), size.x / size.y, nearPlane, farPlane);
 }
 
-glm::mat4 Flycam::GetViewMatrix() const
+glm::mat4 Flycam::GetWorldMatrix() const
 {
     const glm::quat rotationQuat = glm::quat(cameraRotation);
 
-    const glm::mat4 view = glm::mat4_cast(glm::conjugate(rotationQuat)) * glm::translate(glm::mat4(1.0f), -cameraPos);
+    const glm::mat4 world = glm::mat4_cast(glm::conjugate(rotationQuat)) * glm::translate(glm::mat4(1.0f), -cameraPos);
 
-    return view;
+    return world;
 }
 
 glm::mat4 Flycam::GetPerspectiveMatrix() const
