@@ -89,8 +89,8 @@ class MapRenderer
                 std::vector<GLuint> ebos;
         };
 
-        static inline GLuint genericProgram = 0;
-        static inline GLuint lineProgram = 0;
+        static inline GLuint uniformColorProgram = 0;
+        static inline GLuint vertexColorProgram = 0;
         static inline GLuint gridProgram = 0;
         static inline GLuint spriteProgram = 0;
         static inline GLuint shadedModelProgram = 0;

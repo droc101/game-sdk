@@ -23,11 +23,11 @@
 
 bool ModelViewer::GlobalInit()
 {
-    const Error::ErrorCode modelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/model.frag",
-                                                                           "assets/shaders/model.vert",
+    const Error::ErrorCode modelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/model_viewer/model.frag",
+                                                                           "assets/shaders/model_viewer/model.vert",
                                                                            ModelViewerShared::Get().program);
-    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/shaders/uniform_color.frag",
-                                                                          "assets/shaders/uniform_color.vert",
+    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/shaders/model_viewer/uniform_color.frag",
+                                                                          "assets/shaders/model_viewer/uniform_color.vert",
                                                                           ModelViewerShared::Get().linesProgram);
     if (modelProgramErrorCode != Error::ErrorCode::OK || cubeProgramErrorCode != Error::ErrorCode::OK)
     {

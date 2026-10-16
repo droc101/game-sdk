@@ -28,32 +28,32 @@
 
 bool MapRenderer::Init()
 {
-    const Error::ErrorCode linesProgramErrorCode = GLHelper::CreateProgram("assets/shaders/basicVertexColor.frag",
-                                                                           "assets/shaders/basicVertexColor.vert",
-                                                                           lineProgram);
+    const Error::ErrorCode vertexColorProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/vertex_color.frag",
+                                                                           "assets/shaders/mapedit/vertex_color.vert",
+                                                                           vertexColorProgram);
 
-    const Error::ErrorCode gridProgramErrorCode = GLHelper::CreateProgram("assets/shaders/grid.frag",
-                                                                          "assets/shaders/grid.vert",
+    const Error::ErrorCode gridProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/grid.frag",
+                                                                          "assets/shaders/mapedit/grid.vert",
                                                                           gridProgram);
 
-    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/shaders/generic.frag",
-                                                                          "assets/shaders/generic.vert",
-                                                                          genericProgram);
+    const Error::ErrorCode uniformColorProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/uniform_color.frag",
+                                                                          "assets/shaders/mapedit/uniform_color.vert",
+                                                                          uniformColorProgram);
 
-    const Error::ErrorCode spriteProgramErrorCode = GLHelper::CreateProgram("assets/shaders/sprite.frag",
-                                                                            "assets/shaders/sprite.vert",
+    const Error::ErrorCode spriteProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/sprite.frag",
+                                                                            "assets/shaders/mapedit/sprite.vert",
                                                                             spriteProgram);
 
-    const Error::ErrorCode shadedModelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/model_shaded.frag",
-                                                                                 "assets/shaders/model_shaded.vert",
+    const Error::ErrorCode shadedModelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/model_shaded.frag",
+                                                                                 "assets/shaders/mapedit/model_shaded.vert",
                                                                                  shadedModelProgram);
 
-    const Error::ErrorCode brushProgramErrorCode = GLHelper::CreateProgram("assets/shaders/brush.frag",
-                                                                           "assets/shaders/brush.vert",
+    const Error::ErrorCode brushProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/brush.frag",
+                                                                           "assets/shaders/mapedit/brush.vert",
                                                                            brushProgram);
 
-    if (cubeProgramErrorCode != Error::ErrorCode::OK ||
-        linesProgramErrorCode != Error::ErrorCode::OK ||
+    if (uniformColorProgramErrorCode != Error::ErrorCode::OK ||
+        vertexColorProgramErrorCode != Error::ErrorCode::OK ||
         gridProgramErrorCode != Error::ErrorCode::OK ||
         spriteProgramErrorCode != Error::ErrorCode::OK ||
         shadedModelProgramErrorCode != Error::ErrorCode::OK ||
@@ -129,8 +129,8 @@ bool MapRenderer::Init()
 
 void MapRenderer::Destroy()
 {
-    glDeleteProgram(genericProgram);
-    glDeleteProgram(lineProgram);
+    glDeleteProgram(uniformColorProgram);
+    glDeleteProgram(vertexColorProgram);
     glDeleteProgram(gridProgram);
     glDeleteProgram(spriteProgram);
     GLHelper::DestroyBuffer(axisHelperBuffer);
@@ -169,10 +169,10 @@ void MapRenderer::RenderViewportGrid(const Viewport &vp)
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
-    glUseProgram(lineProgram);
-    glUniformMatrix4fv(glGetUniformLocation(lineProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
-    const GLint posAttrib = glGetAttribLocation(lineProgram, "VERTEX");
-    const GLint colorAttrib = glGetAttribLocation(lineProgram, "VERTEX_COLOR");
+    glUseProgram(vertexColorProgram);
+    glUniformMatrix4fv(glGetUniformLocation(vertexColorProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(view));
+    const GLint posAttrib = glGetAttribLocation(vertexColorProgram, "VERTEX");
+    const GLint colorAttrib = glGetAttribLocation(vertexColorProgram, "VERTEX_COLOR");
     if (MapEditor::drawAxisHelper)
     {
         GLHelper::BindBuffer(axisHelperBuffer);
@@ -214,13 +214,13 @@ void MapRenderer::RenderLine(const glm::vec3 start,
                              const glm::mat4 &matrix,
                              const float thickness)
 {
-    glUseProgram(genericProgram);
+    glUseProgram(uniformColorProgram);
 
     glLineWidth(thickness);
 
-    glUniform4fv(glGetUniformLocation(genericProgram, "alb"), 1, color.GetDataPointer());
-    glUniformMatrix4fv(glGetUniformLocation(genericProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
-    glUniformMatrix4fv(glGetUniformLocation(genericProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(identity));
+    glUniform4fv(glGetUniformLocation(uniformColorProgram, "alb"), 1, color.GetDataPointer());
+    glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
+    glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(identity));
 
     const std::vector<float> vertices = {
         start.x,
@@ -236,7 +236,7 @@ void MapRenderer::RenderLine(const glm::vec3 start,
                  static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)),
                  vertices.data(),
                  GL_STREAM_DRAW);
-    const GLint posAttrLoc = glGetAttribLocation(genericProgram, "VERTEX");
+    const GLint posAttrLoc = glGetAttribLocation(uniformColorProgram, "VERTEX");
     glVertexAttribPointer(posAttrLoc, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
     glEnableVertexAttribArray(posAttrLoc);
     glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(vertices.size()));
@@ -247,13 +247,13 @@ void MapRenderer::RenderBillboardPoint(const glm::vec3 position,
                                        Color color,
                                        const glm::mat4 &matrix)
 {
-    glUseProgram(genericProgram);
+    glUseProgram(uniformColorProgram);
 
     glPointSize(pointSize);
 
-    glUniform4fv(glGetUniformLocation(genericProgram, "alb"), 1, color.GetDataPointer());
-    glUniformMatrix4fv(glGetUniformLocation(genericProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
-    glUniformMatrix4fv(glGetUniformLocation(genericProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(identity));
+    glUniform4fv(glGetUniformLocation(uniformColorProgram, "alb"), 1, color.GetDataPointer());
+    glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
+    glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(identity));
 
     const std::vector<float> vertices = {position.x, position.y, position.z};
 
@@ -262,7 +262,7 @@ void MapRenderer::RenderBillboardPoint(const glm::vec3 position,
                  static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)),
                  vertices.data(),
                  GL_STREAM_DRAW);
-    const GLint posAttrLoc = glGetAttribLocation(genericProgram, "VERTEX");
+    const GLint posAttrLoc = glGetAttribLocation(uniformColorProgram, "VERTEX");
     glVertexAttribPointer(posAttrLoc, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
     glEnableVertexAttribArray(posAttrLoc);
     glDrawArrays(GL_POINTS, 0, 1);
@@ -487,18 +487,18 @@ void MapRenderer::RenderModel(ModelBuffer &buffer,
                               const Color &c)
 {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glUseProgram(genericProgram);
+    glUseProgram(uniformColorProgram);
 
     glLineWidth(1);
 
-    glUniform4fv(glGetUniformLocation(genericProgram, "alb"), 1, c.GetDataPointer());
-    glUniformMatrix4fv(glGetUniformLocation(genericProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(genericProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+    glUniform4fv(glGetUniformLocation(uniformColorProgram, "alb"), 1, c.GetDataPointer());
+    glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(uniformColorProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
 
     glBindVertexArray(buffer.vao);
     glBindBuffer(GL_ARRAY_BUFFER, buffer.vbo);
 
-    const GLint posAttrib = glGetAttribLocation(genericProgram, "VERTEX");
+    const GLint posAttrib = glGetAttribLocation(uniformColorProgram, "VERTEX");
     glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), nullptr);
     glEnableVertexAttribArray(posAttrib);
 
