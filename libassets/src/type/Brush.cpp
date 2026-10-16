@@ -230,6 +230,27 @@ std::unordered_set<std::pair<glm::vec3, glm::vec3>> Brush::GetUniqueEdges() cons
     return edges;
 }
 
+std::unordered_set<std::pair<glm::vec3, glm::vec3>> Brush::GetFaceEdges(const size_t faceIndex) const
+{
+    std::unordered_set<std::pair<glm::vec3, glm::vec3>> edges{};
+    const Face &face = faces.at(faceIndex);
+
+    for (size_t i = 0; i < face.indices.size(); i++)
+    {
+        const size_t nextIndex = (i + 1) % face.indices.size();
+        uint32_t startIndex = face.indices.at(i);
+        uint32_t endIndex = face.indices.at(nextIndex);
+        if (startIndex > endIndex)
+        {
+            // swap to have consistent ordering to not push duplicates into set via a reversed pair
+            std::swap(startIndex, endIndex);
+        }
+        edges.emplace(vertices.at(startIndex), vertices.at(endIndex));
+    }
+
+    return edges;
+}
+
 bool Brush::ContainsPoint(const Axis axis, const glm::vec2 point) const
 {
     for (const Face &face: faces)

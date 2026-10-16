@@ -39,6 +39,8 @@ add_executable(mapedit mapedit.cpp
         tools/VertexTool.h
         WorldBuffersRenderer.cpp
         WorldBuffersRenderer.h
+        tools/FaceTool.cpp
+        tools/FaceTool.h
 )
 
 configure_sdk_gui_program(mapedit)

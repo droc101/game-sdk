@@ -159,9 +159,21 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
     if (vp.Is3D())
     {
         const std::vector<Brush::TriangulatedFace> &triangulatedFaces = brush.GetTriangulatedMesh();
-        for (const Brush::TriangulatedFace &face: triangulatedFaces)
+        for (size_t i = 0; i < triangulatedFaces.size(); i++)
         {
-            MapRenderer::RenderBrushFace(face, matrix, brushMatrix);
+            if (settings.selectionType == EditorTool::ItemType::FACE && settings.selectionIndex == brushIndex && settings.selectionVertexIndex == i)
+            {
+                const std::unordered_set<std::pair<glm::vec3, glm::vec3>> edges = brush.GetFaceEdges(settings.selectionVertexIndex);
+
+                for (const std::pair<glm::vec3, glm::vec3> &edge: edges)
+                {
+                    const glm::vec3 startPos = brushMatrix * glm::vec4(edge.first, 1.0f);
+                    const glm::vec3 endPos = brushMatrix * glm::vec4(edge.second, 1.0f);
+
+                    MapRenderer::RenderLine(startPos, endPos, Color(1.0f, 0.5f, 0.5f, 1.0f), matrix, 4);
+                }
+            }
+            MapRenderer::RenderBrushFace(triangulatedFaces.at(i), matrix, brushMatrix);
         }
         return;
     }

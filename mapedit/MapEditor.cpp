@@ -161,7 +161,7 @@ void MapEditor::BrushFaceToolWindow(Brush::Face &face)
     ImGui::Text("Texture Offset");
     ImGui::InputFloat2("##uvOffset", glm::value_ptr(face.textureOffset));
     ImGui::Text("Texture Scale");
-    ImGui::InputFloat2("##uvScale", glm::value_ptr(face.textureOffset));
+    ImGui::InputFloat2("##uvScale", glm::value_ptr(face.textureScale));
     ImGui::Text("Texture Rotation");
     ImGui::InputFloat("##textureRotation", &face.textureRotation);
     ImGui::Separator();

@@ -30,6 +30,7 @@
 #include "tools/AddPolygonTool.h"
 #include "tools/AddPrimitiveTool.h"
 #include "tools/CutTool.h"
+#include "tools/FaceTool.h"
 #include "tools/VertexTool.h"
 
 const Window::WindowProperties &MapeditWindow::GetProperties() const
@@ -78,6 +79,7 @@ bool MapeditWindow::Init()
     (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/polygon.png", MapEditor::POLYGON_ICON_NAME);
     (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/cut.png", MapEditor::CUT_ICON_NAME);
     (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/vertex.png", MapEditor::VERTEX_ICON_NAME);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/face.png", MapEditor::FACE_ICON_NAME);
 
     vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
     vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;
@@ -609,6 +611,18 @@ void MapeditWindow::Render()
     {
         MapEditor::toolType = MapEditor::EditorToolType::VERTEX;
         MapEditor::tool = std::make_unique<VertexTool>();
+    }
+
+    if (ToolbarToolButton("##faceTool",
+                          "Face Tool",
+                          MapEditor::FACE_ICON_NAME,
+                          MapEditor::toolType == MapEditor::EditorToolType::FACE,
+                          2,
+                          "Ctrl+7",
+                          ImGuiMod_Ctrl | ImGuiKey_7))
+    {
+        MapEditor::toolType = MapEditor::EditorToolType::FACE;
+        MapEditor::tool = std::make_unique<FaceTool>();
     }
 
     ImGui::Dummy({1, 1});

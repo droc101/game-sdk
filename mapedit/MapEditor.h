@@ -32,6 +32,7 @@ class MapEditor
             ADD_POLYGON,
             CUT,
             VERTEX,
+            FACE,
         };
 
         static inline EditorToolType toolType = EditorToolType::SELECT;
@@ -68,6 +69,7 @@ class MapEditor
         static constexpr const char *POLYGON_ICON_NAME = "editor/icon_polygon";
         static constexpr const char *CUT_ICON_NAME = "editor/icon_cut";
         static constexpr const char *VERTEX_ICON_NAME = "editor/icon_vertex";
+        static constexpr const char *FACE_ICON_NAME = "editor/icon_face";
 
         static inline std::unique_ptr<EditorTool> tool = std::make_unique<SelectTool>();
 

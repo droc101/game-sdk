@@ -81,6 +81,8 @@ class Brush
 
         [[nodiscard]] std::unordered_set<std::pair<glm::vec3, glm::vec3>> GetUniqueEdges() const;
 
+        [[nodiscard]] std::unordered_set<std::pair<glm::vec3, glm::vec3>> GetFaceEdges(size_t faceIndex) const;
+
         [[nodiscard]] bool ContainsPoint(Axis axis, glm::vec2 point) const;
 
         [[nodiscard]] const std::vector<TriangulatedFace> &GetTriangulatedMesh();
