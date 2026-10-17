@@ -251,8 +251,10 @@ std::unordered_set<std::pair<glm::vec3, glm::vec3>> Brush::GetFaceEdges(const si
     return edges;
 }
 
+
 bool Brush::ContainsPoint(const Axis axis, const glm::vec2 point) const
 {
+    const glm::mat4 matrix = GetTransformMatrix();
     for (const Face &face: faces)
     {
         bool inside = false;
@@ -260,8 +262,8 @@ bool Brush::ContainsPoint(const Axis axis, const glm::vec2 point) const
         for (size_t i = 0; i < n; i++)
         {
             const size_t j = (i + n - 1) % n;
-            const glm::vec2 &pointI = AxisHelper::Make2D(axis, vertices.at(face.indices.at(i)));
-            const glm::vec2 &pointJ = AxisHelper::Make2D(axis, vertices.at(face.indices.at(j)));
+            const glm::vec2 &pointI = AxisHelper::Make2D(axis, matrix * glm::vec4(vertices.at(face.indices.at(i)), 1.0f));
+            const glm::vec2 &pointJ = AxisHelper::Make2D(axis, matrix * glm::vec4(vertices.at(face.indices.at(j)), 1.0f));
 
             const bool intersect = ((pointI.y > point.y) != (pointJ.y > point.y)) &&
                                    (point.x <
