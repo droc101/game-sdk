@@ -90,13 +90,15 @@ class ViewportRenderer
                 EditorTool::ItemType hoverType = EditorTool::ItemType::NONE;
                 /// The index of the hovered element
                 size_t hoverIndex = 0;
+                /// The index of the hovered vertex/line/face
+                size_t hoverSubIndex = 0;
 
                 /// The type of element that is selected
                 EditorTool::ItemType selectionType = EditorTool::ItemType::NONE;
                 /// The index of the selected element, or the brush index for LINE and VERTEX
                 size_t selectionIndex = 0;
-                /// The index of the selected vertex/line
-                size_t selectionVertexIndex = 0;
+                /// The index of the selected vertex/line/face
+                size_t selectionSubIndex = 0;
 
                 ViewportRenderPoint *point = nullptr;
                 ViewportRenderNewPrimitive *newPrimitive = nullptr;

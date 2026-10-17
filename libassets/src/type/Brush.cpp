@@ -138,7 +138,7 @@ nlohmann::ordered_json Brush::GenerateJson() const
     json["faces"] = nlohmann::ordered_json::array();
     for (const Face &face: faces)
     {
-        json.push_back(face.GenerateJson());
+        json["faces"].push_back(face.GenerateJson());
     }
 
     return json;

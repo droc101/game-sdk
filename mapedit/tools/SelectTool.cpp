@@ -16,8 +16,6 @@
 #include <libassets/type/Axis.h>
 #include <libassets/type/BoundingBox.h>
 #include <libassets/type/Brush.h>
-#include <libassets/type/Color.h>
-#include <libassets/util/Colors.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <numbers>
 #include <string>
@@ -46,6 +44,11 @@ float SelectTool::WrapAndSnapAngle(float angle)
 
 void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
 {
+    if (vp.Is3D())
+    {
+        return;
+    }
+
     if (!isHovered)
     {
         return;
@@ -314,6 +317,8 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
                                                                                               isHovered,
                                                                                               worldSpaceHover);
 
+    const ImGuiMouseCursor hoverCursor = vp.Is3D() ? ImGuiMouseCursor_Hand : ImGuiMouseCursor_ResizeAll;
+
     if (hoverStack.size() > 1 && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
     {
         menuHoveredItems = hoverStack;
@@ -374,7 +379,7 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
 
         if (hoverType == ItemType::ACTOR && hoverIndex == actorIndex && isHovered)
         {
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            ImGui::SetMouseCursor(hoverCursor);
             if (ImGui::BeginTooltip())
             {
                 if (a.params.contains("name") && !a.params.at("name").Get<std::string>("").empty())
@@ -395,7 +400,7 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
         const Brush &brush = MapEditor::map.brushes.at(brushIndex);
         if (hoverType == ItemType::BRUSH && hoverIndex == brushIndex)
         {
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            ImGui::SetMouseCursor(hoverCursor);
             if (ImGui::BeginTooltip())
             {
                 if (!brush.editorName.empty())

@@ -3,14 +3,16 @@
 //
 
 #pragma once
+#include <cstddef>
+#include "../Viewport.h"
 #include "EditorTool.h"
-
 
 class FaceTool: public EditorTool
 {
     public:
         void RenderViewport(Viewport &vp) override;
         void RenderToolWindow() override;
+
     private:
         bool hasSelection = false;
         size_t brushIndex = 0;

@@ -104,7 +104,7 @@ void AddActorTool::RenderViewport(Viewport &vp)
         .hoverIndex = 0,
         .selectionType = ItemType::NONE,
         .selectionIndex = 0,
-        .selectionVertexIndex = 0,
+        .selectionSubIndex = 0,
         .point = !hasPlacedActor && vp.GetType() == Viewport::ViewportType::TOP_DOWN_XZ ? &vpt : nullptr,
         .newActor = hasPlacedActor ? &vpa : nullptr,
     };

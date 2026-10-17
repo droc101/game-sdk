@@ -231,7 +231,7 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
         .hoverIndex = 0,
         .selectionType = ItemType::NONE,
         .selectionIndex = 0,
-        .selectionVertexIndex = 0,
+        .selectionSubIndex = 0,
         .point = showPoint ? &vpt : nullptr,
         .newPrimitive = showNewPrim ? &newPrim : nullptr,
         .newPolygon = state == PolygonToolState::DRAWING ? &sect : nullptr,

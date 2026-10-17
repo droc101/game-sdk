@@ -181,17 +181,31 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
         {
             if (settings.selectionType == EditorTool::ItemType::FACE &&
                 settings.selectionIndex == brushIndex &&
-                settings.selectionVertexIndex == i)
+                settings.selectionSubIndex == i)
             {
                 const std::unordered_set<std::pair<glm::vec3, glm::vec3>>
-                        edges = brush.GetFaceEdges(settings.selectionVertexIndex);
+                        edges = brush.GetFaceEdges(settings.selectionSubIndex);
 
                 for (const std::pair<glm::vec3, glm::vec3> &edge: edges)
                 {
                     const glm::vec3 startPos = brushMatrix * glm::vec4(edge.first, 1.0f);
                     const glm::vec3 endPos = brushMatrix * glm::vec4(edge.second, 1.0f);
 
-                    MapRenderer::RenderLine(startPos, endPos, Color(1.0f, 0.5f, 0.5f, 1.0f), matrix, 4);
+                    MapRenderer::RenderLine(startPos, endPos, Color(1.0f, 0.25f, 0.25f, 1.0f), matrix, 4);
+                }
+            } else if (settings.hoverType == EditorTool::ItemType::FACE &&
+                       settings.hoverIndex == brushIndex &&
+                       settings.hoverSubIndex == i)
+            {
+                const std::unordered_set<std::pair<glm::vec3, glm::vec3>>
+                        edges = brush.GetFaceEdges(settings.hoverSubIndex);
+
+                for (const std::pair<glm::vec3, glm::vec3> &edge: edges)
+                {
+                    const glm::vec3 startPos = brushMatrix * glm::vec4(edge.first, 1.0f);
+                    const glm::vec3 endPos = brushMatrix * glm::vec4(edge.second, 1.0f);
+
+                    MapRenderer::RenderLine(startPos, endPos, Color(0.5f, 0.5f, 0.5f, 1.0f), matrix, 4);
                 }
             }
             MapRenderer::RenderBrushFace(triangulatedFaces.at(i), matrix, brushMatrix);
