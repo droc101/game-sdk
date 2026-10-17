@@ -49,7 +49,7 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
     {
         glm::mat4 skyWorldMatrix = glm::mat4(1.0);
         skyWorldMatrix = glm::translate(skyWorldMatrix, vp.GetPerspectiveCameraPosition());
-        MapRenderer::RenderModelTextured("model/sky.gmdl", matrix, skyWorldMatrix, 0, Color(-1));
+        MapRenderer::RenderModelTextured("model/sky.gmdl", matrix, skyWorldMatrix, 0, Color(-1), Color(0));
         GLHelper::ClearDepth();
     }
     MapRenderer::RenderViewportGrid(vp);
@@ -64,7 +64,7 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
         {
             continue;
         }
-        RenderActor(MapEditor::map.actors.at(actorIndex), matrix, vp);
+        RenderActor(MapEditor::map.actors.at(actorIndex), matrix, vp, Color(0));
     }
 
     for (size_t brushIndex = 0; brushIndex < MapEditor::map.brushes.size(); brushIndex++)
@@ -104,20 +104,23 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
         RenderNewPolygon(vp, settings.newPolygon, matrix);
     }
 
-    if (settings.hoverType == EditorTool::ItemType::BRUSH)
+    if (settings.hoverType != settings.selectionType || settings.hoverIndex != settings.selectionIndex)
     {
-        if (!vp.Is3D())
+        if (settings.hoverType == EditorTool::ItemType::BRUSH)
         {
-            GLHelper::ClearDepth();
-        }
-        RenderBrush(vp, settings, settings.hoverIndex, matrix);
-    } else if (settings.hoverType == EditorTool::ItemType::ACTOR)
-    {
-        if (!vp.Is3D())
+            if (!vp.Is3D())
+            {
+                GLHelper::ClearDepth();
+            }
+            RenderBrush(vp, settings, settings.hoverIndex, matrix);
+        } else if (settings.hoverType == EditorTool::ItemType::ACTOR)
         {
-            GLHelper::ClearDepth();
+            if (!vp.Is3D())
+            {
+                GLHelper::ClearDepth();
+            }
+            RenderActor(MapEditor::map.actors.at(settings.hoverIndex), matrix, vp, Color(1.0f, 0.0f, 0.0f, 0.125f));
         }
-        RenderActor(MapEditor::map.actors.at(settings.hoverIndex), matrix, vp);
     }
 
     if (settings.selectionType == EditorTool::ItemType::BRUSH)
@@ -133,7 +136,7 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
         {
             GLHelper::ClearDepth();
         }
-        RenderActor(MapEditor::map.actors.at(settings.selectionIndex), matrix, vp);
+        RenderActor(MapEditor::map.actors.at(settings.selectionIndex), matrix, vp, Color(1.0f, 0.0f, 0.0f, 0.25f));
     }
 
     if (settings.brushFocusMode)
@@ -179,6 +182,7 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
         const std::vector<Brush::TriangulatedFace> &triangulatedFaces = brush.GetTriangulatedMesh();
         for (size_t i = 0; i < triangulatedFaces.size(); i++)
         {
+            Color modColor = Color(0);
             if (settings.selectionType == EditorTool::ItemType::FACE &&
                 settings.selectionIndex == brushIndex &&
                 settings.selectionSubIndex == i)
@@ -193,6 +197,7 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
 
                     MapRenderer::RenderLine(startPos, endPos, Color(1.0f, 0.25f, 0.25f, 1.0f), matrix, 4);
                 }
+                modColor = Color(1.0f, 0.0f, 0.0f, 0.25f);
             } else if (settings.hoverType == EditorTool::ItemType::FACE &&
                        settings.hoverIndex == brushIndex &&
                        settings.hoverSubIndex == i)
@@ -207,8 +212,15 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
 
                     MapRenderer::RenderLine(startPos, endPos, Color(0.5f, 0.5f, 0.5f, 1.0f), matrix, 4);
                 }
+                modColor = Color(1.0f, 0.0f, 0.0f, 0.125f);
+            } else if (settings.selectionType == EditorTool::ItemType::BRUSH && settings.selectionIndex == brushIndex)
+            {
+                modColor = Color(1.0f, 0.0f, 0.0f, 0.25f);
+            } else if (settings.hoverType == EditorTool::ItemType::BRUSH && settings.hoverIndex == brushIndex)
+            {
+                modColor = Color(1.0f, 0.0f, 0.0f, 0.125f);
             }
-            MapRenderer::RenderBrushFace(triangulatedFaces.at(i), matrix, brushMatrix);
+            MapRenderer::RenderBrushFace(triangulatedFaces.at(i), matrix, brushMatrix, modColor);
         }
         return;
     }
@@ -297,7 +309,7 @@ void ViewportRenderer::RenderNewActor(const Viewport &vp, const ViewportRenderNe
     tempActor.position = actor->position;
     tempActor.rotation = actor->rotation;
     tempActor.className = actor->className;
-    RenderActor(tempActor, matrix, vp);
+    RenderActor(tempActor, matrix, vp, Color(1.0f, 0.0f, 0.0f, 0.25f));
 }
 
 void ViewportRenderer::RenderNewPolygon(const Viewport &vp,
@@ -434,7 +446,10 @@ bool ViewportRenderer::BrushIsCulled(const Brush &brush, const Viewport &vp)
     return false;
 }
 
-void ViewportRenderer::RenderActor(const Actor &a, const glm::mat4 &matrix, const Viewport &vp)
+void ViewportRenderer::RenderActor(const Actor &a,
+                                   const glm::mat4 &matrix,
+                                   const Viewport &vp,
+                                   const Color &overlayColor)
 {
     if (MapEditor::culling && ActorIsCulled(a, vp))
     {
@@ -470,7 +485,12 @@ void ViewportRenderer::RenderActor(const Actor &a, const glm::mat4 &matrix, cons
                 RenderBoxRdef(dynamic_cast<BoxRenderDefinition *>(rdef.get()), a, worldMatrix, matrix);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_MODEL:
-                RenderModelRdef(dynamic_cast<ModelRenderDefinition *>(rdef.get()), a, worldMatrix, matrix, vp.Is3D());
+                RenderModelRdef(dynamic_cast<ModelRenderDefinition *>(rdef.get()),
+                                a,
+                                worldMatrix,
+                                matrix,
+                                vp.Is3D(),
+                                overlayColor);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_ORIENTATION:
                 RenderOrientationRdef(dynamic_cast<OrientationRenderDefinition *>(rdef.get()), a, matrix, vp);
@@ -482,7 +502,12 @@ void ViewportRenderer::RenderActor(const Actor &a, const glm::mat4 &matrix, cons
                 RenderSpriteRdef(dynamic_cast<SpriteRenderDefinition *>(rdef.get()), a, matrix);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_WALL:
-                RenderWallRdef(dynamic_cast<WallRenderDefinition *>(rdef.get()), a, worldMatrix, matrix, vp.Is3D());
+                RenderWallRdef(dynamic_cast<WallRenderDefinition *>(rdef.get()),
+                               a,
+                               worldMatrix,
+                               matrix,
+                               vp.Is3D(),
+                               overlayColor);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_CIRCLE:
                 RenderCircleRdef(dynamic_cast<CircleRenderDefinition *>(rdef.get()), a, matrix, vp.GetType());
@@ -690,7 +715,8 @@ void ViewportRenderer::RenderModelRdef(ModelRenderDefinition *rdef,
                                        const Actor &actor,
                                        const glm::mat4 &worldMatrix,
                                        const glm::mat4 &matrix,
-                                       const bool textured)
+                                       const bool textured,
+                                       const Color &overlayColor)
 {
     if (textured)
     {
@@ -698,7 +724,8 @@ void ViewportRenderer::RenderModelRdef(ModelRenderDefinition *rdef,
                                          matrix,
                                          worldMatrix,
                                          rdef->GetSkin(actor),
-                                         rdef->GetModColor(actor));
+                                         rdef->GetModColor(actor),
+                                         overlayColor);
     } else if (MapEditor::drawModels)
     {
         MapRenderer::RenderModel(rdef->GetModel(actor), matrix, worldMatrix, rdef->GetColor(actor));
@@ -731,7 +758,8 @@ void ViewportRenderer::RenderWallRdef(WallRenderDefinition *rdef,
                                       const Actor &actor,
                                       const glm::mat4 &worldMatrix,
                                       const glm::mat4 &matrix,
-                                      const bool textured)
+                                      const bool textured,
+                                      const Color &overlayColor)
 {
     if (textured)
     {
@@ -745,7 +773,7 @@ void ViewportRenderer::RenderWallRdef(WallRenderDefinition *rdef,
             .uvScale = rdef->GetUvScale(actor),
             .unshaded = rdef->IsUnshaded(actor),
         };
-        MapRenderer::RenderWall(matrix, worldMatrix, wall);
+        MapRenderer::RenderWall(matrix, worldMatrix, wall, overlayColor);
     } else
     {
         const glm::vec2 size = rdef->GetSize(actor);

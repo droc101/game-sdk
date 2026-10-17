@@ -21,8 +21,10 @@ void FaceTool::RenderToolWindow()
     if (hasSelection)
     {
         Brush &brush = MapEditor::map.brushes.at(brushIndex);
-        MapEditor::BrushFaceToolWindow(brush.faces.at(faceIndex));
-        brush.facesNeedRetriangulation = true;
+        if (MapEditor::BrushFaceToolWindow(brush.faces.at(faceIndex)))
+        {
+            brush.facesNeedRetriangulation = true;
+        }
     }
 }
 

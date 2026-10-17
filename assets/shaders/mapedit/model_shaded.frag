@@ -10,6 +10,7 @@ uniform sampler2D TEXTURE;
 uniform vec4 MATERIAL_COLOR;
 uniform vec4 MOD_COLOR;
 uniform bool SHADED;
+uniform vec4 OVERLAY_COLOR;
 
 float calculate_shading() {
     vec3 light_dir = normalize(vec3(0.0, -1.0, 1.0));
@@ -26,7 +27,9 @@ bool check_alpha_discard(float fade_alpha) {
 
 void main()
 {
-    FRAG_COLOR = texture(TEXTURE, UV) * MATERIAL_COLOR * MOD_COLOR * COLOR;
+    vec4 baseColor = texture(TEXTURE, UV) * MATERIAL_COLOR * MOD_COLOR * COLOR;
+    FRAG_COLOR.rgb = mix(baseColor.rgb, OVERLAY_COLOR.rgb, OVERLAY_COLOR.a);
+    FRAG_COLOR.a = baseColor.a;
     if (check_alpha_discard(FRAG_COLOR.a)) discard;
     FRAG_COLOR.a = 1.0;
     if (SHADED) {

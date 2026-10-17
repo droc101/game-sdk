@@ -93,7 +93,7 @@ class MapEditor
 
         static std::array<float, 4> CalculateBBox(const std::vector<std::array<float, 2>> &points);
 
-        static void BrushFaceToolWindow(Brush::Face &face);
+        static bool BrushFaceToolWindow(Brush::Face &face);
 
-        static void MaterialSelectionTool(std::string &material);
+        static bool MaterialSelectionTool(std::string &material);
 };

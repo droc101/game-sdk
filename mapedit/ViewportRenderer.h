@@ -129,7 +129,7 @@ class ViewportRenderer
 
         static bool BrushIsCulled(const Brush &brush, const Viewport &vp);
 
-        static void RenderActor(const Actor &a, const glm::mat4 &matrix, const Viewport &vp);
+        static void RenderActor(const Actor &a, const glm::mat4 &matrix, const Viewport &vp, const Color &overlayColor);
 
         static bool ActorIsCulled(const Actor &actor, const Viewport &vp);
 
@@ -142,7 +142,8 @@ class ViewportRenderer
                                     const Actor &actor,
                                     const glm::mat4 &worldMatrix,
                                     const glm::mat4 &matrix,
-                                    bool textured);
+                                    bool textured,
+                                    const Color &overlayColor);
 
         static void RenderOrientationRdef(OrientationRenderDefinition *rdef,
                                           const Actor &actor,
@@ -157,7 +158,8 @@ class ViewportRenderer
                                    const Actor &actor,
                                    const glm::mat4 &worldMatrix,
                                    const glm::mat4 &matrix,
-                                   bool textured);
+                                   bool textured,
+                                   const Color &overlayColor);
 
         static void RenderCircleRdef(CircleRenderDefinition *rdef,
                                      const Actor &actor,

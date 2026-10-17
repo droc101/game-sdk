@@ -154,16 +154,18 @@ std::array<float, 4> MapEditor::CalculateBBox(const std::vector<glm::vec2> &poin
 //     }
 // }
 
-void MapEditor::BrushFaceToolWindow(Brush::Face &face)
+bool MapEditor::BrushFaceToolWindow(Brush::Face &face)
 {
-    MaterialSelectionTool(face.material);
+    bool modified = false;
+    modified |= MaterialSelectionTool(face.material);
+    ImGui::PushItemWidth(-1);
     ImGui::Separator();
     ImGui::Text("Texture Offset");
-    ImGui::InputFloat2("##uvOffset", glm::value_ptr(face.textureOffset));
+    modified |= ImGui::InputFloat2("##uvOffset", glm::value_ptr(face.textureOffset));
     ImGui::Text("Texture Scale");
-    ImGui::InputFloat2("##uvScale", glm::value_ptr(face.textureScale));
+    modified |= ImGui::InputFloat2("##uvScale", glm::value_ptr(face.textureScale));
     ImGui::Text("Texture Rotation");
-    ImGui::InputFloat("##textureRotation", &face.textureRotation);
+    modified |= ImGui::InputFloat("##textureRotation", &face.textureRotation);
     ImGui::Separator();
     ImGui::Text("Units per Luxel (lower is higher quality)");
     if (ImGui::BeginCombo("##unitsPerLuxel", std::format("{}", face.unitsPerLuxel).c_str()))
@@ -173,14 +175,17 @@ void MapEditor::BrushFaceToolWindow(Brush::Face &face)
             if (ImGui::Selectable(std::format("{}", luxelScaleValue).c_str(), face.unitsPerLuxel == luxelScaleValue))
             {
                 face.unitsPerLuxel = luxelScaleValue;
+                modified = true;
             }
         }
         ImGui::EndCombo();
     }
+    return modified;
 }
 
-void MapEditor::MaterialSelectionTool(std::string &material)
+bool MapEditor::MaterialSelectionTool(std::string &material)
 {
+    std::string startString = material;
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
     LevelMaterialAsset mat;
@@ -212,4 +217,5 @@ void MapEditor::MaterialSelectionTool(std::string &material)
         ImGui::EndChild();
     }
     MaterialBrowserWindow::InputMaterial("##Texture", material);
+    return material == startString;
 }

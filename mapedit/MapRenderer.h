@@ -75,13 +75,14 @@ class MapRenderer
         static void RenderModel(std::string model,
                                 const glm::mat4 &viewMatrix,
                                 const glm::mat4 &worldMatrix,
-                                const Color &c);
+                                const Color &modColor);
 
         static void RenderModelTextured(std::string model,
                                         const glm::mat4 &viewMatrix,
                                         const glm::mat4 &worldMatrix,
                                         uint32_t skin,
-                                        const Color &modColor);
+                                        const Color &modColor,
+                                        const Color &overlayColor);
 
         static void RenderModelObjectBuffer(std::string model,
                                             const glm::mat4 &viewMatrix,
@@ -90,7 +91,8 @@ class MapRenderer
 
         static void RenderBrushFace(const Brush::TriangulatedFace &face,
                                     const glm::mat4 &viewMatrix,
-                                    const glm::mat4 &worldMatrix);
+                                    const glm::mat4 &worldMatrix,
+                                    const Color &overlayColor);
 
         static void RenderBrushFaceObjectBuffer(const Brush::TriangulatedFace &face,
                                                 const glm::mat4 &viewMatrix,
@@ -99,7 +101,10 @@ class MapRenderer
 
         static const ModelAsset &GetModel(std::string model);
 
-        static void RenderWall(const glm::mat4 &viewMatrix, const glm::mat4 &worldMatrix, const Wall &wall);
+        static void RenderWall(const glm::mat4 &viewMatrix,
+                               const glm::mat4 &worldMatrix,
+                               const Wall &wall,
+                               const Color &overlayColor);
 
         static void RenderWallObjectBuffer(const glm::mat4 &viewMatrix,
                                            const glm::mat4 &worldMatrix,
@@ -144,7 +149,8 @@ class MapRenderer
                                         const glm::mat4 &viewMatrix,
                                         const glm::mat4 &worldMatrix,
                                         uint32_t skinIndex,
-                                        const Color &modColor);
+                                        const Color &modColor,
+                                        const Color &overlayColor);
 
         static void RenderModelObjectBufferInternal(ModelBuffer &buffer,
                                                     const glm::mat4 &viewMatrix,

@@ -24,9 +24,9 @@
 #include <string>
 #include <vector>
 #include "libassets/asset/LevelMaterialAsset.h"
+#include "libassets/type/Brush.h"
 #include "MapEditor.h"
 #include "Viewport.h"
-#include "libassets/type/Brush.h"
 
 bool MapRenderer::Init()
 {
@@ -299,7 +299,10 @@ void MapRenderer::RenderBillboardPointObjectBuffer(glm::vec3 position,
     glPointSize(pointSize);
 
     glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
-    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(identity));
+    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "WORLD_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(identity));
 
     glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_TYPE"), info.objectType);
     glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_INDEX"), info.objectIndex);
@@ -377,7 +380,7 @@ void MapRenderer::RenderUnitVector(const glm::vec3 origin,
 void MapRenderer::RenderModel(std::string model,
                               const glm::mat4 &viewMatrix,
                               const glm::mat4 &worldMatrix,
-                              const Color &c)
+                              const Color &modColor)
 {
     if (!model.empty())
     {
@@ -393,7 +396,7 @@ void MapRenderer::RenderModel(std::string model,
                 modelBuffers[model] = buf;
             }
         }
-        RenderModel(modelBuffers.at(model), viewMatrix, worldMatrix, c);
+        RenderModel(modelBuffers.at(model), viewMatrix, worldMatrix, modColor);
     }
 }
 
@@ -401,7 +404,8 @@ void MapRenderer::RenderModelTextured(std::string model,
                                       const glm::mat4 &viewMatrix,
                                       const glm::mat4 &worldMatrix,
                                       const uint32_t skin,
-                                      const Color &modColor)
+                                      const Color &modColor,
+                                      const Color &overlayColor)
 {
     if (!model.empty())
     {
@@ -417,7 +421,7 @@ void MapRenderer::RenderModelTextured(std::string model,
                 modelBuffers[model] = buf;
             }
         }
-        RenderModelTextured(modelBuffers.at(model), viewMatrix, worldMatrix, skin, modColor);
+        RenderModelTextured(modelBuffers.at(model), viewMatrix, worldMatrix, skin, modColor, overlayColor);
     }
 }
 
@@ -446,7 +450,8 @@ void MapRenderer::RenderModelObjectBuffer(std::string model,
 
 void MapRenderer::RenderBrushFace(const Brush::TriangulatedFace &face,
                                   const glm::mat4 &viewMatrix,
-                                  const glm::mat4 &worldMatrix)
+                                  const glm::mat4 &worldMatrix,
+                                  const Color &overlayColor)
 {
     glEnable(GL_CULL_FACE);
 
@@ -458,6 +463,7 @@ void MapRenderer::RenderBrushFace(const Brush::TriangulatedFace &face,
 
     const GLint posAttrib = glGetAttribLocation(brushProgram, "VERTEX");
     const GLint uvAttrib = glGetAttribLocation(brushProgram, "VERTEX_UV");
+    const GLint normalAttrib = glGetAttribLocation(brushProgram, "VERTEX_NORMAL");
     glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(MapVertex), nullptr);
     glVertexAttribPointer(uvAttrib,
                           2,
@@ -465,11 +471,19 @@ void MapRenderer::RenderBrushFace(const Brush::TriangulatedFace &face,
                           GL_FALSE,
                           sizeof(MapVertex),
                           reinterpret_cast<const void *>(offsetof(MapVertex, uv)));
+    glVertexAttribPointer(normalAttrib,
+                          3,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          sizeof(MapVertex),
+                          reinterpret_cast<const void *>(offsetof(MapVertex, normal)));
     glEnableVertexAttribArray(posAttrib);
     glEnableVertexAttribArray(uvAttrib);
+    glEnableVertexAttribArray(normalAttrib);
 
     glUniformMatrix4fv(glGetUniformLocation(brushProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
     glUniformMatrix4fv(glGetUniformLocation(brushProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+    glUniform4fv(glGetUniformLocation(brushProgram, "OVERLAY_COLOR"), 1, overlayColor.GetDataPointer());
 
     const std::string materialPath = SharedMgr::Get().pathManager.GetAssetPath(face.Material());
     LevelMaterialAsset material{};
@@ -487,7 +501,9 @@ void MapRenderer::RenderBrushFace(const Brush::TriangulatedFace &face,
         texture = SharedMgr::Get().textureCache.GetMissingTextureGLuint();
     }
     glBindTexture(GL_TEXTURE_2D, texture);
-    glUniform1i(glGetUniformLocation(shadedModelProgram, "TEXTURE"), 0);
+    glUniform1i(glGetUniformLocation(brushProgram, "TEXTURE"), 0);
+    glUniform1i(glGetUniformLocation(brushProgram, "SHADED"),
+                material.shader == Material::MaterialShader::SHADER_SHADED);
 
     const GLuint ebo = workBuffer.ebo;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
@@ -529,7 +545,10 @@ void MapRenderer::RenderBrushFaceObjectBuffer(const Brush::TriangulatedFace &fac
                        1,
                        GL_FALSE,
                        glm::value_ptr(viewMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "WORLD_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(worldMatrix));
 
     glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_TYPE"), info.objectType);
     glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_INDEX"), info.objectIndex);
@@ -644,7 +663,8 @@ void MapRenderer::RenderModelTextured(ModelBuffer &buffer,
                                       const glm::mat4 &viewMatrix,
                                       const glm::mat4 &worldMatrix,
                                       const uint32_t skinIndex,
-                                      const Color &modColor)
+                                      const Color &modColor,
+                                      const Color &overlayColor)
 {
     const uint32_t lodIndex = 0;
 
@@ -682,9 +702,10 @@ void MapRenderer::RenderModelTextured(ModelBuffer &buffer,
     glEnableVertexAttribArray(colorAttrib);
     glEnableVertexAttribArray(normAttrib);
 
-    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
     glUniform4fv(glGetUniformLocation(shadedModelProgram, "MOD_COLOR"), 1, modColor.GetDataPointer());
+    glUniform4fv(glGetUniformLocation(shadedModelProgram, "OVERLAY_COLOR"), 1, overlayColor.GetDataPointer());
 
     for (size_t i = 0; i < buffer.model.GetMaterialsPerSkin(); i++)
     {
@@ -748,8 +769,14 @@ void MapRenderer::RenderModelObjectBufferInternal(ModelBuffer &buffer,
     glEnableVertexAttribArray(posAttrib);
     glEnableVertexAttribArray(normAttrib);
 
-    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "VIEW_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "WORLD_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(worldMatrix));
 
     glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_TYPE"), info.objectType);
     glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_INDEX"), info.objectIndex);
@@ -768,7 +795,10 @@ void MapRenderer::RenderModelObjectBufferInternal(ModelBuffer &buffer,
     glDisable(GL_CULL_FACE);
 }
 
-void MapRenderer::RenderWall(const glm::mat4 &viewMatrix, const glm::mat4 &worldMatrix, const Wall &wall)
+void MapRenderer::RenderWall(const glm::mat4 &viewMatrix,
+                             const glm::mat4 &worldMatrix,
+                             const Wall &wall,
+                             const Color &overlayColor)
 {
     const float bottom = wall.localCenter.y - (wall.size.y / 2.0f);
     const float top = wall.localCenter.y + (wall.size.y / 2.0f);
@@ -948,9 +978,10 @@ void MapRenderer::RenderWall(const glm::mat4 &viewMatrix, const glm::mat4 &world
     glEnableVertexAttribArray(colorAttrib);
     glEnableVertexAttribArray(normAttrib);
 
-    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "PROJECTION"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "VIEW"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
     glUniform4fv(glGetUniformLocation(shadedModelProgram, "MOD_COLOR"), 1, wall.color.GetDataPointer());
+    glUniform4fv(glGetUniformLocation(shadedModelProgram, "OVERLAY_COLOR"), 1, overlayColor.GetDataPointer());
 
     glUniform4fv(glGetUniformLocation(shadedModelProgram, "MATERIAL_COLOR"), 1, Color(-1).GetDataPointer());
     glUniform1i(glGetUniformLocation(shadedModelProgram, "SHADED"), !wall.unshaded);
@@ -1088,8 +1119,14 @@ void MapRenderer::RenderWallObjectBuffer(const glm::mat4 &viewMatrix,
     glEnableVertexAttribArray(posAttrib);
     glEnableVertexAttribArray(normAttrib);
 
-    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "VIEW_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "WORLD_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(worldMatrix));
 
     glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_TYPE"), info.objectType);
     glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_INDEX"), info.objectIndex);
