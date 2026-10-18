@@ -12,6 +12,13 @@
 #include "imgui.h"
 #include "SelectTool.h"
 
+FaceTool::FaceTool(const size_t brushIndex, const size_t faceIndex)
+{
+    this->brushIndex = brushIndex;
+    this->faceIndex = faceIndex;
+    this->hasSelection = true;
+}
+
 void FaceTool::RenderToolWindow()
 {
     if (!ImGui::CollapsingHeader("Face Tool", ImGuiTreeNodeFlags_DefaultOpen))
@@ -44,7 +51,8 @@ void FaceTool::RenderViewport(Viewport &vp)
     {
         if (hasSelection)
         {
-            hasSelection = false;
+            MapEditor::toolType = MapEditor::EditorToolType::SELECT;
+            MapEditor::tool = std::make_unique<SelectTool>(ItemType::BRUSH, brushIndex);
         } else
         {
             MapEditor::toolType = MapEditor::EditorToolType::SELECT;

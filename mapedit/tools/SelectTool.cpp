@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <format>
 #include <game_sdk/WindowManager.h>
 #include <glm/gtc/round.hpp>
@@ -16,6 +17,7 @@
 #include <libassets/type/Axis.h>
 #include <libassets/type/BoundingBox.h>
 #include <libassets/type/Brush.h>
+#include <memory>
 #include <misc/cpp/imgui_stdlib.h>
 #include <numbers>
 #include <string>
@@ -27,6 +29,13 @@
 #include "../Viewport.h"
 #include "../ViewportRenderer.h"
 #include "EditorTool.h"
+#include "FaceTool.h"
+
+SelectTool::SelectTool(ItemType selectionType, size_t selectionIndex)
+{
+    this->selectionType = selectionType;
+    this->selectionIndex = selectionIndex;
+}
 
 float SelectTool::WrapAndSnapAngle(float angle)
 {
@@ -435,6 +444,14 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
         {
             Actor &toEdit = MapEditor::map.actors.at(selectionIndex);
             WindowManager::Get().AddModalWindow<EditActorWindow>(toEdit);
+        } else if (vp.Is3D() && selectionType == ItemType::BRUSH && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+        {
+            const Viewport::PerspectiveHoverInfo hoverInfo = vp.GetPerspectiveHover();
+            if (hoverInfo.objectType == static_cast<uint8_t>(ItemType::BRUSH) && hoverInfo.objectIndex == selectionIndex)
+            {
+                MapEditor::toolType = MapEditor::EditorToolType::FACE;
+                MapEditor::tool = std::make_unique<FaceTool>(hoverInfo.objectIndex, hoverInfo.objectSubIndex);
+            }
         }
     }
 

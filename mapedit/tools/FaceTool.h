@@ -10,6 +10,9 @@
 class FaceTool: public EditorTool
 {
     public:
+        FaceTool() = default;
+        FaceTool(size_t brushIndex, size_t faceIndex);
+
         void RenderViewport(Viewport &vp) override;
         void RenderToolWindow() override;
 

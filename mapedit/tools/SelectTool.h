@@ -16,6 +16,8 @@ class SelectTool final: public EditorTool
         SelectTool() = default;
         ~SelectTool() override = default;
 
+        SelectTool(ItemType selectionType, size_t selectionIndex);
+
         void HandleDrag(const Viewport &vp, bool isHovered, glm::vec3 worldSpaceHover);
 
         std::vector<std::tuple<ItemType, size_t, float>> DetermineHoveredItem(const Viewport &vp,
