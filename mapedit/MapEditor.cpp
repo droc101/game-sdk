@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 
+#include "game_sdk/WindowManager.h"
+
 float MapEditor::SnapToGrid(const float f)
 {
     if (!snapToGrid)
@@ -165,7 +167,22 @@ bool MapEditor::BrushFaceToolWindow(Brush::Face &face)
     ImGui::Text("Texture Scale");
     modified |= ImGui::InputFloat2("##uvScale", glm::value_ptr(face.textureScale));
     ImGui::Text("Texture Rotation");
-    modified |= ImGui::InputFloat("##textureRotation", &face.textureRotation);
+    modified |= ImGui::DragFloat("##textureRotation",
+                                 &face.textureRotation,
+                                 1.0,
+                                 0.0,
+                                 360.0,
+                                 "%.3f",
+                                 ImGuiSliderFlags_NoRoundToFormat | ImGuiSliderFlags_WrapAround);
+    if (ImGui::IsItemActive())
+    {
+        ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+        (void)SDL_SetWindowRelativeMouseMode(WindowManager::Get().GetCurrentWindow()->GetWindow(), true);
+    } else
+    {
+        (void)SDL_SetWindowRelativeMouseMode(WindowManager::Get().GetCurrentWindow()->GetWindow(), false);
+    }
+    modified |= ImGui::Checkbox("Align Texture to World Grid", &face.worldAlignedTextureUVs);
     ImGui::Separator();
     ImGui::Text("Units per Luxel (lower is higher quality)");
     if (ImGui::BeginCombo("##unitsPerLuxel", std::format("{}", face.unitsPerLuxel).c_str()))

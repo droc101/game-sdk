@@ -157,6 +157,7 @@ Brush::Face::Face(nlohmann::ordered_json json)
     textureOffset.x = json.value("texture_offset_x", 0.0f);
     textureOffset.y = json.value("texture_offset_y", 0.0f);
     textureRotation = json.value("texture_rotation", 0.0f);
+    worldAlignedTextureUVs = json.value("world_aligned_texture", true);
     unitsPerLuxel = json.value("units_per_luxel", 1.0f);
 }
 
@@ -174,6 +175,7 @@ nlohmann::ordered_json Brush::Face::GenerateJson() const
     json["texture_offset_x"] = textureOffset.x;
     json["texture_offset_y"] = textureOffset.y;
     json["texture_rotation"] = textureRotation;
+    json["world_aligned_texture"] = worldAlignedTextureUVs;
     json["units_per_luxel"] = unitsPerLuxel;
     return json;
 }
@@ -262,8 +264,10 @@ bool Brush::ContainsPoint(const Axis axis, const glm::vec2 point) const
         for (size_t i = 0; i < n; i++)
         {
             const size_t j = (i + n - 1) % n;
-            const glm::vec2 &pointI = AxisHelper::Make2D(axis, matrix * glm::vec4(vertices.at(face.indices.at(i)), 1.0f));
-            const glm::vec2 &pointJ = AxisHelper::Make2D(axis, matrix * glm::vec4(vertices.at(face.indices.at(j)), 1.0f));
+            const glm::vec2 &pointI = AxisHelper::Make2D(axis,
+                                                         matrix * glm::vec4(vertices.at(face.indices.at(i)), 1.0f));
+            const glm::vec2 &pointJ = AxisHelper::Make2D(axis,
+                                                         matrix * glm::vec4(vertices.at(face.indices.at(j)), 1.0f));
 
             const bool intersect = ((pointI.y > point.y) != (pointJ.y > point.y)) &&
                                    (point.x <
@@ -305,7 +309,7 @@ Brush::TriangulatedFace::TriangulatedFace(const Brush &brush, const Face &face):
         indices.emplace_back(indicesMap.at(face.indices.at(i + 1)));
     }
 
-    CalculateUVs(face);
+    CalculateUVs(brush.origin, face);
 }
 
 const std::string &Brush::TriangulatedFace::Material() const
@@ -323,36 +327,80 @@ const std::vector<MapVertex> &Brush::TriangulatedFace::Vertices() const
     return vertices;
 }
 
-void Brush::TriangulatedFace::CalculateUVs(const Face &face)
+void Brush::TriangulatedFace::CalculateUVs(const glm::vec3 &brushOrigin, const Face &face)
 {
-    const glm::vec3 &corner = vertices.at(indices.at(0)).position;
-    const glm::vec3 &p1 = vertices.at(indices.at(1)).position;
-    const glm::vec3 &p2 = vertices.at(indices.at(2)).position;
-    const glm::vec3 &normal = glm::normalize(glm::cross(glm::normalize(p1 - corner), glm::normalize(p2 - corner)));
-
+    const MapVertex &corner = vertices.at(indices.at(0));
+    const MapVertex &p1 = vertices.at(indices.at(1));
+    const MapVertex &p2 = vertices.at(indices.at(2));
+    const glm::vec3 &normal = glm::normalize(glm::cross(glm::normalize(p1.position - corner.position),
+                                                        glm::normalize(p2.position - corner.position)));
     const glm::vec3 absNormal = glm::abs(normal);
-    const glm::vec3 reference = absNormal.y >= absNormal.x && absNormal.y >= absNormal.z ? glm::vec3{0, 0, 1}
-                                                                                         : glm::vec3{0, -1, 0};
 
-    const glm::quat rot = glm::angleAxis(glm::radians(-face.textureRotation), normal);
-    const glm::vec3 v = rot * glm::normalize(reference - glm::dot(reference, normal) * normal);
-    const glm::vec3 u = glm::cross(normal, v);
-
+    glm::vec2 uvOffset;
     glm::vec2 minPoint = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
     glm::vec2 maxPoint = {std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()};
-    for (MapVertex &vertex: vertices)
+    if (face.worldAlignedTextureUVs)
     {
-        vertex.uv = glm::vec2{glm::dot(vertex.position, u), glm::dot(vertex.position, v)};
-        vertex.normal = normal;
+        int dominantAxisIndex = 1;
+        if (absNormal.x > absNormal[dominantAxisIndex])
+        {
+            dominantAxisIndex = 0;
+        }
+        if (absNormal.z > absNormal[dominantAxisIndex])
+        {
+            dominantAxisIndex = 2;
+        }
 
-        minPoint = glm::min(minPoint, vertex.uv);
-        maxPoint = glm::max(maxPoint, vertex.uv);
+        glm::vec3 dominantAxis{};
+        dominantAxis[dominantAxisIndex] = glm::sign(normal[dominantAxisIndex]);
+
+        const glm::vec3 v = dominantAxisIndex == 1 ? glm::vec3{0, 0, 1} : glm::vec3(0, -1, 0);
+        const glm::vec3 u = glm::cross(dominantAxis, v);
+        const glm::vec3 rotatedV = glm::angleAxis(glm::radians(-face.textureRotation), dominantAxis) * v;
+        const glm::vec3 rotatedU = glm::cross(dominantAxis, rotatedV);
+
+        for (MapVertex &vertex: vertices)
+        {
+            vertex.uv = glm::vec2{glm::dot(vertex.position - corner.position, rotatedU),
+                                  glm::dot(vertex.position - corner.position, rotatedV)};
+            vertex.normal = normal;
+
+            const glm::vec2 unrotatedUV = glm::vec2{glm::dot(vertex.position - corner.position, u),
+                                                    glm::dot(vertex.position - corner.position, v)};
+            minPoint = glm::min(minPoint, unrotatedUV);
+            maxPoint = glm::max(maxPoint, unrotatedUV);
+        }
+
+        const glm::vec2 centerOffsetFromCorner = (minPoint + maxPoint) * 0.5f - corner.uv;
+        const glm::vec3 cornerToCenter = u * centerOffsetFromCorner.x + v * centerOffsetFromCorner.y;
+        const glm::vec3 centerWorldSpace = brushOrigin + corner.position + cornerToCenter;
+
+        uvOffset = glm::vec2{glm::dot(centerWorldSpace, u) - glm::dot(cornerToCenter, rotatedU),
+                             glm::dot(centerWorldSpace, v) - glm::dot(cornerToCenter, rotatedV)} -
+                   face.textureOffset;
+    } else
+    {
+        const glm::vec3 referenceAxis = absNormal.y >= absNormal.x && absNormal.y >= absNormal.z ? glm::vec3{0, 0, 1}
+                                                                                                 : glm::vec3{0, -1, 0};
+        const glm::quat rotationQuat = glm::angleAxis(glm::radians(-face.textureRotation), normal);
+        const glm::vec3 v = rotationQuat * glm::normalize(referenceAxis - glm::dot(referenceAxis, normal) * normal);
+        const glm::vec3 u = glm::cross(normal, v);
+
+        for (MapVertex &vertex: vertices)
+        {
+            vertex.uv = glm::vec2{glm::dot(vertex.position, u), glm::dot(vertex.position, v)};
+            vertex.normal = normal;
+
+            minPoint = glm::min(minPoint, vertex.uv);
+            maxPoint = glm::max(maxPoint, vertex.uv);
+        }
+
+        uvOffset = -(minPoint + maxPoint) * 0.5f - face.textureOffset;
     }
 
-    const glm::vec2 centerPoint = (minPoint + maxPoint) * 0.5f;
     for (MapVertex &vertex: vertices)
     {
-        vertex.uv = (vertex.uv - centerPoint + face.textureOffset) / face.textureScale;
+        vertex.uv = (vertex.uv + uvOffset) / face.textureScale;
     }
 }
 
@@ -369,7 +417,7 @@ const std::vector<Brush::TriangulatedFace> &Brush::GetTriangulatedMesh()
     {
         triangulatedFaces.emplace_back(*this, face);
     }
-    facesNeedRetriangulation = false;
+    // facesNeedRetriangulation = false;
     return triangulatedFaces;
 }
 

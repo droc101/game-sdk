@@ -17,7 +17,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
 #include "MapVertex.h"
 
 class Brush
@@ -39,6 +38,7 @@ class Brush
                 glm::vec2 textureScale = {16.0f, 16.0f};
                 glm::vec2 textureOffset = {0.0f, 0.0f};
                 float textureRotation = 0;
+                bool worldAlignedTextureUVs = true;
 
                 float unitsPerLuxel = 1.0f;
         };
@@ -54,7 +54,7 @@ class Brush
                 [[nodiscard]] const std::vector<MapVertex> &Vertices() const;
 
             private:
-                void CalculateUVs(const Face &face);
+                void CalculateUVs(const glm::vec3 &brushOrigin, const Face &face);
 
                 std::string material;
                 std::vector<uint32_t> indices;

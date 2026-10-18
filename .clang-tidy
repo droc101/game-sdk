@@ -63,6 +63,8 @@ CheckOptions:
   bugprone-multi-level-implicit-pointer-conversion.EnableInC: false
   bugprone-unused-return-value.CheckedFunctions: '^::[A-Z][^m\n][^G\n]?[^u\n]?[^i\n]?.*$'
   bugprone-unused-return-value.AllowCastToVoid: true
+  cppcoreguidelines-pro-bounds-avoid-unchecked-container-access.ExcludeClasses: '::std::map;::std::unordered_map;::std::flat_map;::nlohmann::basic_json;glm::vec'
+  cppcoreguidelines-pro-bounds-avoid-unchecked-container-access.FixMode: at
   misc-include-cleaner.IgnoreHeaders: "glm/.*;nlohmann/.*"
   misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: true
   readability-function-cognitive-complexity.IgnoreMacros: true
