@@ -11,7 +11,7 @@ uniform mat4 VIEW_MATRIX;
 
 void main()
 {
-    POSITION = (WORLD_MATRIX * vec4(VERTEX, 0.0)).xyz;
+    POSITION = (WORLD_MATRIX * vec4(VERTEX, 1.0)).xyz;
     NORMAL = (WORLD_MATRIX * vec4(VERTEX_NORMAL, 0.0)).xyz;
 
     gl_Position = VIEW_MATRIX * WORLD_MATRIX * vec4(VERTEX, 1.0);
