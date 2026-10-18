@@ -51,12 +51,9 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
 {
     glm::vec3 worldSpaceHover{};
 
-    if (ImGui::IsWindowFocused() && !vp.Is3D())
+    if (ImGui::IsWindowFocused() && ImGui::IsWindowHovered() && !vp.Is3D())
     {
-        if (ImGui::IsWindowHovered())
-        {
-            worldSpaceHover = vp.GetWorldSpaceMousePos();
-        }
+        worldSpaceHover = vp.GetWorldSpaceMousePos();
 
         if (dragMode == DragMode::NOT_DRAGGING && ImGui::IsMouseDown(ImGuiMouseButton_Left))
         {
@@ -97,10 +94,10 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
                     shapeEnd = vp.Make2D(MapEditor::SnapToGrid(worldSpaceHover));
                     break;
                 case DragMode::DRAGGING_START_DEPTH:
-                    startDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(vp.GetAxis(), worldSpaceHover));
+                    startDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(axis, worldSpaceHover));
                     break;
                 case DragMode::DRAGGING_END_DEPTH:
-                    startDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(vp.GetAxis(), worldSpaceHover));
+                    endDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(axis, worldSpaceHover));
                     break;
                 default:
                     break;

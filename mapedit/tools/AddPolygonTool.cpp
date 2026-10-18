@@ -101,7 +101,7 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                 const glm::vec2 screenSpaceFirstPoint = vp.WorldToScreenPos(AxisHelper::Make3D(axis,
                                                                                                points.at(0),
                                                                                                startDepth));
-                if (distance(screenSpaceHover, screenSpaceFirstPoint) < 5 ||
+                if (distance(screenSpaceHover, screenSpaceFirstPoint) < 10 ||
                     AxisHelper::Make2D(axis, worldSpaceHover) == points.at(0))
                 {
                     if (points.size() < 3)
@@ -181,14 +181,14 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
             {
                 state = PolygonToolState::WAITING_TO_PLACE;
             }
-            startDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(vp.GetAxis(), worldSpaceHover));
+            startDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(axis, worldSpaceHover));
         } else if (state == PolygonToolState::DRAGGING_END_DEPTH)
         {
             if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 state = PolygonToolState::WAITING_TO_PLACE;
             }
-            endDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(vp.GetAxis(), worldSpaceHover));
+            endDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(axis, worldSpaceHover));
         }
     }
 
