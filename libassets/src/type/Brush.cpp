@@ -312,21 +312,6 @@ Brush::TriangulatedFace::TriangulatedFace(const Brush &brush, const Face &face):
     CalculateUVs(brush.origin, face);
 }
 
-const std::string &Brush::TriangulatedFace::Material() const
-{
-    return material;
-}
-
-const std::vector<uint32_t> &Brush::TriangulatedFace::Indices() const
-{
-    return indices;
-}
-
-const std::vector<MapVertex> &Brush::TriangulatedFace::Vertices() const
-{
-    return vertices;
-}
-
 void Brush::TriangulatedFace::CalculateUVs(const glm::vec3 &brushOrigin, const Face &face)
 {
     const MapVertex &corner = vertices.at(indices.at(0));
@@ -417,6 +402,7 @@ const std::vector<Brush::TriangulatedFace> &Brush::GetTriangulatedMesh()
     {
         triangulatedFaces.emplace_back(*this, face);
     }
+    // TODO: update when moving in editor
     // facesNeedRetriangulation = false;
     return triangulatedFaces;
 }

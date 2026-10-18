@@ -34,7 +34,7 @@ class MapAsset final: public Asset
 
         uint8_t lightCubeLuxelsPerUnit;
 
-        static constexpr uint8_t MAP_ASSET_VERSION = 1;
+        static constexpr uint8_t MAP_ASSET_VERSION = 2;
         static constexpr uint8_t MAP_JSON_VERSION = 1;
 
         static constexpr float MAP_MAX_HALF_EXTENTS = 8192;

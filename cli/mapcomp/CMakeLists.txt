@@ -16,12 +16,12 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Luna)
 
 add_executable(mapcomp mapcomp.cpp
-        LevelMeshBuilder.cpp
-        LevelMeshBuilder.h
+        BrushMeshBuilder.cpp
+        BrushMeshBuilder.h
         MapCompiler.cpp
         MapCompiler.h
-        SectorCollisionBuilder.cpp
-        SectorCollisionBuilder.h
+        BrushCollisionBuilder.cpp
+        BrushCollisionBuilder.h
         SectorClipper.cpp
         SectorClipper.h
         Light.h

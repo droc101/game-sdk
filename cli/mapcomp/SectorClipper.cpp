@@ -8,28 +8,27 @@
 #include <clipper2/clipper.h>
 #include <cstddef>
 #include <cstdint>
-#include <libassets/type/Sector.h>
 #include <mapbox/earcut.hpp>
 #include <numeric>
 #include <vector>
 
-SectorClipper::SectorClipper(const Sector &sector)
+SectorClipper::SectorClipper(const Brush &sector, size_t faceIndex)
 {
-    for (const glm::vec2 &point: sector.points)
-    {
-        polygon.emplace_back(point.x, point.y);
-    }
+    // for (const glm::vec2 &point: sector.points)
+    // {
+    //     polygon.emplace_back(point.x, point.y);
+    // }
 }
 
-void SectorClipper::AddHole(const Sector *sector)
+void SectorClipper::AddHole(const Brush &brush, size_t faceIndex)
 {
-    Clipper2Lib::PathD holePolygon{};
-    for (const glm::vec2 &point: sector->points)
-    {
-        holePolygon.emplace_back(point.x, point.y);
-    }
-
-    holes.push_back(holePolygon);
+    // Clipper2Lib::PathD holePolygon{};
+    // for (const glm::vec2 &point: sector->points)
+    // {
+    //     holePolygon.emplace_back(point.x, point.y);
+    // }
+    //
+    // holes.push_back(holePolygon);
 }
 
 void SectorClipper::ProcessAndMesh(std::vector<glm::vec2> &vertices, std::vector<uint32_t> &indices) const

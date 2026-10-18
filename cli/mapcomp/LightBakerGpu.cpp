@@ -31,7 +31,7 @@
 #include <vector>
 #include <volk.h>
 #include <vulkan/vulkan_core.h>
-#include "LevelMeshBuilder.h"
+#include "BrushMeshBuilder.h"
 #include "Light.h"
 
 namespace
@@ -721,7 +721,7 @@ bool LightBakerGpu::GetTextureIndex(const std::string &materialName,
     return true;
 }
 
-bool LightBakerGpu::Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
+bool LightBakerGpu::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
                          const std::vector<Light> &lights,
                          const glm::uvec2 &lightmapSize,
                          const uint32_t bounceCount,
@@ -997,14 +997,14 @@ VkShaderModule LightBakerGpu::GenerateShaderModule(const std::filesystem::path &
     return shaderModule;
 }
 
-bool LightBakerGpu::CreateVertexAndIndexBuffers(const std::vector<LevelMeshBuilder> &meshBuilders,
+bool LightBakerGpu::CreateVertexAndIndexBuffers(const std::vector<BrushMeshBuilder> &meshBuilders,
                                                 uint32_t &vertexCount,
                                                 uint32_t &indexCount)
 {
     size_t indexOffset = 0;
     std::vector<MapVertex> vertices{};
     std::vector<uint32_t> indices{};
-    for (const LevelMeshBuilder &builder: meshBuilders)
+    for (const BrushMeshBuilder &builder: meshBuilders)
     {
         vertices.insert(vertices.end(), builder.GetVertices().begin(), builder.GetVertices().end());
         for (const uint32_t index: builder.GetIndices())

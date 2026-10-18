@@ -7,11 +7,11 @@
 #include <libassets/type/MapVertex.h>
 #include <type_traits>
 #include <vector>
-#include "LevelMeshBuilder.h"
+#include "BrushMeshBuilder.h"
 #include "Light.h"
 #include "LightBakerGpu.hpp"
 
-bool LightBaker::Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
+bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
                       const std::vector<Light> &lights,
                       const glm::uvec2 &lightmapSize,
                       std::vector<uint16_t> &pixelData,

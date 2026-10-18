@@ -44,4 +44,4 @@ add_executable(mapedit mapedit.cpp
 )
 
 configure_sdk_gui_program(mapedit)
-#add_dependencies(mapedit mapcomp)
+add_dependencies(mapedit mapcomp)

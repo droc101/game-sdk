@@ -6,22 +6,15 @@
 
 #include <clipper2/clipper.core.h>
 #include <cstdint>
-#include <libassets/type/Sector.h>
+#include <libassets/type/Brush.h>
 #include <vector>
 
 class SectorClipper
 {
     public:
-        /**
-         * Create a SectorClipper for a sector
-         */
-        explicit SectorClipper(const Sector &sector);
+        explicit SectorClipper(const Brush &sector, size_t faceIndex);
 
-        /**
-         * Add a sector to use as a hole
-         * @param sector The sector to cut a hole for
-         */
-        void AddHole(const Sector *sector);
+        void AddHole(const Brush &brush, size_t faceIndex);
 
         /**
          * Perform the clipping process and create mesh data

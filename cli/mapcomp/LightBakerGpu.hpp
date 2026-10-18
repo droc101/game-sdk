@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 #include <vulkan/vulkan_core.h>
-#include "LevelMeshBuilder.h"
+#include "BrushMeshBuilder.h"
 #include "Light.h"
 
 class LightBakerGpu
@@ -18,7 +18,7 @@ class LightBakerGpu
     public:
         static LightBakerGpu &Get();
 
-        bool Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
+        bool Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
                   const std::vector<Light> &lights,
                   const glm::uvec2 &lightmapSize,
                   uint32_t bounceCount,
@@ -53,7 +53,7 @@ class LightBakerGpu
         [[nodiscard]] VkShaderModule GenerateShaderModule(const std::filesystem::path &path,
                                                           EShLanguage shaderType) const;
 
-        bool CreateVertexAndIndexBuffers(const std::vector<LevelMeshBuilder> &meshBuilders,
+        bool CreateVertexAndIndexBuffers(const std::vector<BrushMeshBuilder> &meshBuilders,
                                          uint32_t &vertexCount,
                                          uint32_t &indexCount);
 

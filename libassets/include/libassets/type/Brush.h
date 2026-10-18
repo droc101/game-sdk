@@ -49,16 +49,12 @@ class Brush
                 TriangulatedFace() = delete;
                 explicit TriangulatedFace(const Brush &brush, const Face &face);
 
-                [[nodiscard]] const std::string &Material() const;
-                [[nodiscard]] const std::vector<uint32_t> &Indices() const;
-                [[nodiscard]] const std::vector<MapVertex> &Vertices() const;
-
-            private:
-                void CalculateUVs(const glm::vec3 &brushOrigin, const Face &face);
-
                 std::string material;
                 std::vector<uint32_t> indices;
                 std::vector<MapVertex> vertices;
+
+            private:
+                void CalculateUVs(const glm::vec3 &brushOrigin, const Face &face);
         };
 
         Brush() = default;

@@ -6,13 +6,13 @@
 
 #include <cstdint>
 #include <vector>
-#include "LevelMeshBuilder.h"
+#include "BrushMeshBuilder.h"
 #include "Light.h"
 
 class LightBaker
 {
     public:
-        static bool Bake(const std::vector<LevelMeshBuilder> &meshBuilders,
+        static bool Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
                          const std::vector<Light> &lights,
                          const glm::uvec2 &lightmapSize,
                          std::vector<uint16_t> &pixelData,
