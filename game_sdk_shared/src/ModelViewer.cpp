@@ -205,6 +205,7 @@ void ModelViewer::RenderFramebuffer()
 
     const float *color = backgroundColor.GetDataPointer();
     glClearColor(color[0], color[1], color[2], color[3]);
+    glClearDepth(0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
@@ -215,7 +216,7 @@ void ModelViewer::RenderFramebuffer()
     }
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glDepthFunc(GL_GREATER);
     if (cullBackfaces)
     {
         glEnable(GL_CULL_FACE);
@@ -326,11 +327,11 @@ void ModelViewer::RenderFramebuffer()
                            1,
                            GL_FALSE,
                            glm::value_ptr(camera.GetPerspectiveMatrix()));
-        glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "WORLD)_MATRIX"),
+        glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "WORLD_MATRIX"),
                            1,
                            GL_FALSE,
                            glm::value_ptr(camera.GetWorldMatrix()));
-        glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"), 0.2f, 0.2f, 0.2f, 1.0f);
+        glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "COLOR"), 0.2f, 0.2f, 0.2f, 1.0f);
         glDrawArrays(GL_LINES, 0, 24);
     }
 

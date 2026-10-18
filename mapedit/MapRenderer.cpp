@@ -182,7 +182,7 @@ void MapRenderer::RenderViewportGrid(const Viewport &vp)
     }
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glDepthFunc(GL_GREATER);
 
     glUseProgram(vertexColorProgram);
     glUniformMatrix4fv(glGetUniformLocation(vertexColorProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(view));

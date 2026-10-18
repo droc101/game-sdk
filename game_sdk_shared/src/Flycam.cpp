@@ -17,7 +17,7 @@ Flycam::Flycam()
 
 void Flycam::SetViewport(const glm::vec2 size, const float nearPlane, const float farPlane)
 {
-    perspectiveMatrix = glm::perspective(glm::radians(90.0f), size.x / size.y, nearPlane, farPlane);
+    perspectiveMatrix = glm::perspective(glm::radians(90.0f), size.x / size.y, farPlane, nearPlane);
 }
 
 glm::mat4 Flycam::GetWorldMatrix() const

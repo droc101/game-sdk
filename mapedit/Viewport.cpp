@@ -393,8 +393,8 @@ void Viewport::RecalculateMatrices()
     {
         const glm::mat4 perspectiveMatrix = glm::perspective(glm::radians(90.0f),
                                                              aspect,
-                                                             0.01f,
-                                                             MapAsset::MAP_MAX_HALF_EXTENTS * 3.0f);
+                                                             MapAsset::MAP_MAX_HALF_EXTENTS * 3.0f,
+                                                             0.01f);
 
         const glm::mat4 view = glm::lookAt(perspectiveCameraPos,
                                            perspectiveCameraPos + GetPerspectiveForward(),

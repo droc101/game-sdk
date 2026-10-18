@@ -35,7 +35,9 @@ bool GLHelper::Init()
 #endif
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glDepthRange(0.0, 1.0);
+    glClearDepth(0.0f);
+    glDepthFunc(GL_GREATER);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
@@ -273,10 +275,12 @@ glm::vec2 GLHelper::ScreenToNDC(const glm::vec2 screenPos, const glm::vec2 scree
 void GLHelper::Clear()
 {
     glClearColor(0, 0, 0, 1);
+    glClearDepth(0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void GLHelper::ClearDepth()
 {
+    glClearDepth(0.0f);
     glClear(GL_DEPTH_BUFFER_BIT);
 }
