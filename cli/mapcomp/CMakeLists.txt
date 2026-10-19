@@ -3,10 +3,6 @@ project(mapcomp)
 
 set(CMAKE_CXX_STANDARD 23)
 
-fetch_earcut_hpp()
-
-fetch_clipper2()
-
 FetchContent_Declare(
         Luna
         GIT_REPOSITORY https://github.com/NBT22/Luna
@@ -22,8 +18,6 @@ add_executable(mapcomp mapcomp.cpp
         MapCompiler.h
         BrushCollisionBuilder.cpp
         BrushCollisionBuilder.h
-        SectorClipper.cpp
-        SectorClipper.h
         Light.h
         LightBaker.cpp
         LightBaker.hpp
@@ -35,8 +29,6 @@ add_executable(mapcomp mapcomp.cpp
 configure_sdk_cli_program(mapcomp)
 
 target_link_libraries(mapcomp PRIVATE
-        earcut
-        Clipper2
         glm::glm
         Luna
 )

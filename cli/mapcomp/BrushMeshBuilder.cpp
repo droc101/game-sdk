@@ -49,15 +49,7 @@ void BrushMeshBuilder::AddFace(const Brush &brush, const size_t faceIndex)
 
     Brush::TriangulatedFace triangulatedFace = Brush::TriangulatedFace(brush, face);
 
-    // TODO clip across other brushes
-    // SectorClipper clipper = SectorClipper(sector);
-    // for (const Sector *s: overlapping)
-    // {
-    //     clipper.AddHole(s);
-    // }
-    // std::vector<glm::vec2> points{};
-    // std::vector<uint32_t> idx{};
-    // clipper.ProcessAndMesh(points, idx);
+    // TODO discard face if it is entirely occluded by faces of other brushes (could be multiple faces on multiple brushes!)
 
     for (uint32_t &i: triangulatedFace.indices)
     {
