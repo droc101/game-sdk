@@ -120,3 +120,16 @@ const std::vector<std::string> &ActorDefinitionManager::GetActorClasses() const
 {
     return actorClassNames;
 }
+
+const std::vector<std::string> &ActorDefinitionManager::GetDerivedActorClasses(const std::string &baseClassName) const
+{
+    std::vector<std::string> classes{};
+    for (const auto &actorDefinition: actorDefinitions | std::views::values)
+    {
+        if (actorDefinition.parentClassName == baseClassName)
+        {
+            classes.push_back(actorDefinition.className);
+        }
+    }
+    return classes;
+}

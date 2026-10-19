@@ -9,6 +9,7 @@
 #include <game_sdk/Window.h>
 #include <libassets/type/ActorDefinition.h>
 #include <string>
+#include <vector>
 
 class ActorBrowserWindow final: public Window
 {
@@ -29,12 +30,14 @@ class ActorBrowserWindow final: public Window
             .defaultImguiWindow = true,
         };
 
-        std::string selectedClass = "actor";
-        size_t selectedParam = 0;
+        static constexpr std::string HOME_PAGE = "Actor Classes";
 
-        void RenderParamsTab(const ActorDefinition &def);
+        static inline std::vector<std::string> history{};
+        bool resetScrollAfterNav = false;
 
-        void RenderInputsTab(const ActorDefinition &def);
+        void RenderHomePage();
 
-        void RenderOutputsTab(const ActorDefinition &def);
+        void RenderParamDef(const std::shared_ptr<ParamDefinition> &param);
+
+        void RenderActorPage(const std::string &actorClass);
 };
