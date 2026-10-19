@@ -35,6 +35,8 @@ class ActorBrowserWindow final: public Window
         static inline std::vector<std::string> history{};
         bool resetScrollAfterNav = false;
 
+        void RenderClassTree(const std::string &baseClass);
+
         void RenderHomePage();
 
         void RenderParamDef(const std::shared_ptr<ParamDefinition> &param);

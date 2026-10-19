@@ -42,7 +42,8 @@ class ActorDefinitionManager
         /**
          * Get all actor classes immediately deriving a base class (does NOT include the base class)
          */
-        [[nodiscard]] const std::vector<std::string> &GetDerivedActorClasses(const std::string &baseClassName) const;
+        [[nodiscard]] void GetDerivedActorClasses(const std::string &baseClassName,
+                                                  std::vector<std::string> &derivedClassOutput) const;
 
     private:
         std::map<std::string, OptionDefinition> optionDefinitions{};

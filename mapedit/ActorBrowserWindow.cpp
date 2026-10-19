@@ -90,20 +90,31 @@ void ActorBrowserWindow::Render()
     }
 }
 
-void ActorBrowserWindow::RenderHomePage()
+void ActorBrowserWindow::RenderClassTree(const std::string &baseClass)
 {
-    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 32);
-    ImGui::Text("%s", HOME_PAGE.c_str());
-    ImGui::PopFont();
-    ImGui::Separator();
-    for (const std::string &actorClass: MapEditor::adm.GetActorClasses())
+    std::vector<std::string> derived{};
+    MapEditor::adm.GetDerivedActorClasses(baseClass, derived);
+    for (const std::string &actorClass: derived)
     {
         if (ImGui::TextLink(actorClass.c_str()))
         {
             history.push_back(actorClass);
             resetScrollAfterNav = true;
         }
+        ImGui::Indent();
+        RenderClassTree(actorClass);
+        ImGui::Unindent();
     }
+}
+
+void ActorBrowserWindow::RenderHomePage()
+{
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 32);
+    ImGui::Text("%s", HOME_PAGE.c_str());
+    ImGui::PopFont();
+    ImGui::Separator();
+
+    RenderClassTree("");
 }
 
 void ActorBrowserWindow::RenderParamDef(const std::shared_ptr<ParamDefinition> &param)
@@ -302,6 +313,26 @@ void ActorBrowserWindow::RenderActorPage(const std::string &actorClass)
                                                                : output.second.GetDescription().c_str());
 
             ImGui::Unindent();
+        }
+    }
+
+    std::vector<std::string> derived{};
+    MapEditor::adm.GetDerivedActorClasses(actorClass, derived);
+    if (!derived.empty())
+    {
+        ImGui::Dummy({1, 4});
+        ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 24);
+        ImGui::Text("Derived Classes");
+        ImGui::PopFont();
+        ImGui::Separator();
+        for (const std::string & classname : derived)
+        {
+            ImGui::Bullet();
+            if (ImGui::TextLink(classname.c_str()))
+            {
+                history.push_back(classname);
+                resetScrollAfterNav = true;
+            }
         }
     }
 }
