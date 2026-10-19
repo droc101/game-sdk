@@ -4,9 +4,10 @@
 
 #pragma once
 
-#include <map>
-#include <string>
 #include <game_sdk/Window.h>
+#include <map>
+#include <SDL3/SDL_video.h>
+#include <string>
 
 class AboutWindow final: public Window
 {
@@ -20,7 +21,7 @@ class AboutWindow final: public Window
     private:
         WindowProperties properties = {
             .title = "About the GAME SDK",
-            .defaultSize = {500, 400},
+            .defaultSize = {900, 600},
             .icon = "",
             .defaultFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_UTILITY,
             .defaultImguiWindow = true,

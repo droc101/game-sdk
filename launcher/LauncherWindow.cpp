@@ -3,7 +3,6 @@
 //
 
 #include "LauncherWindow.h"
-#include <SDL3/SDL_error.h>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
@@ -20,6 +19,7 @@
 #include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <memory>
+#include <SDL3/SDL_error.h>
 #include <SDL3/SDL_filesystem.h>
 #include <vector>
 
@@ -48,9 +48,23 @@ bool LauncherWindow::Init()
 
 void LauncherWindow::Render()
 {
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("Quit", "Alt+F4"))
+            {
+                RequestClose();
+            }
+            ImGui::EndMenu();
+        }
+        SharedMgr::Get().SharedMenuUI("");
+        ImGui::EndMainMenuBar();
+    }
+
     ImVec2 wndArea = ImGui::GetContentRegionAvail();
 
-    if (ImGui::BeginChild("##list", ImVec2(wndArea.x, wndArea.y - 36), ImGuiChildFlags_Borders))
+    if (ImGui::BeginChild("##list", ImVec2(wndArea.x, wndArea.y - 68), ImGuiChildFlags_Borders))
     {
         for (const auto &[category, items]: launcherJson.at("categories").items())
         {
@@ -87,19 +101,24 @@ void LauncherWindow::Render()
         ImGui::EndChild();
     }
 
-    if (ImGui::Button("Options", ImVec2(80, 32)))
+    if (ImGui::BeginChild("##tool", ImVec2(wndArea.x, 64), ImGuiChildFlags_Borders))
     {
-        WindowManager::Get().AddModalWindow<SetupWindow>(false);
-    }
-    // ImGui::SameLine();
-    // ImGui::TextDisabled("GAME SDK\nVersion %s", LIBASSETS_VERSION_STRING);
-    ImGui::SameLine();
-    wndArea = ImGui::GetContentRegionAvail();
-    ImGui::Dummy(ImVec2(wndArea.x - 80 - 8, 1));
-    ImGui::SameLine();
-    if (ImGui::Button("Launch", ImVec2(80, 32)))
-    {
-        LaunchSelectedTool();
+        const nlohmann::json item = launcherJson.at("categories").at(selectionCategory).at(selectionIndex);
+        ImTextureID textureId = 0;
+        if (SharedMgr::Get().textureCache.GetTextureID(item.value("icon", "file"), textureId) != Error::ErrorCode::OK)
+        {
+            textureId = SharedMgr::Get().textureCache.GetMissingTextureID();
+        }
+        ImGui::Image(textureId, ImVec2(48, 48));
+        ImGui::SameLine();
+        ImVec2 cursor = ImGui::GetCursorPos();
+        ImGui::Text("%s", selectionIndex.c_str());
+        ImGui::SameLine();
+        ImGui::TextDisabled("%s", selectionCategory.c_str());
+        cursor.y += ImGui::GetFontSize();
+        ImGui::SetCursorPos(cursor);
+        ImGui::TextWrapped("%s", item.value("description", "").c_str());
+        ImGui::EndChild();
     }
 }
 
