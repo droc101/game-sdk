@@ -3,7 +3,9 @@
 //
 
 #include "BrushMeshBuilder.h"
+#include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <glm/glm.hpp>
@@ -26,22 +28,6 @@ BrushMeshBuilder::BrushMeshBuilder(const SearchPathManager &pathManager, const s
     this->materialPath = materialPath;
 }
 
-// TODO find better place for this
-static float MapRange(const float value,
-                      const float fromLow,
-                      const float fromHigh,
-                      const float toLow,
-                      const float toHigh)
-{
-    if (fromLow == fromHigh)
-    {
-        return toLow;
-    }
-    const float normalizedValue = (value - fromLow) / (fromHigh - fromLow);
-    const float result = toLow + normalizedValue * (toHigh - toLow);
-    return result;
-}
-
 void BrushMeshBuilder::AddFace(const Brush &brush, const size_t faceIndex)
 {
     const Brush::Face &face = brush.faces.at(faceIndex);
@@ -51,12 +37,13 @@ void BrushMeshBuilder::AddFace(const Brush &brush, const size_t faceIndex)
 
     // TODO discard face if it is entirely occluded by faces of other brushes (could be multiple faces on multiple brushes!)
 
-    for (uint32_t &i: triangulatedFace.indices)
+    std::vector<uint32_t> offsetIndices;
+    offsetIndices.reserve(triangulatedFace.indices.size());
+    for (const uint32_t index: triangulatedFace.indices)
     {
-        i += currentIndex;
+        offsetIndices.emplace_back(index + currentIndex);
     }
-    currentIndex += triangulatedFace.vertices.size();
-    indices.insert(indices.end(), triangulatedFace.indices.begin(), triangulatedFace.indices.end());
+    indices.insert(indices.end(), offsetIndices.begin(), offsetIndices.end());
 
     const glm::mat4 matrix = brush.GetTransformMatrix();
     for (MapVertex &vertex: triangulatedFace.vertices)
@@ -66,42 +53,24 @@ void BrushMeshBuilder::AddFace(const Brush &brush, const size_t faceIndex)
 
     if (!triangulatedFace.vertices.empty())
     {
-        // const BoundingBox sectorAABB = brush.GetAABB(); // TODO face bounding box
-        // const bool rotate = sectorAABB.z < sectorAABB.w;
-        // const glm::vec2 sectorTopLeft = {sectorAABB.x - sectorAABB.z, sectorAABB.y - sectorAABB.w};
-        // const glm::vec2 sectorBottomRight = {sectorAABB.x + sectorAABB.z, sectorAABB.y + sectorAABB.w};
-        // std::vector<glm::vec2> positionsInRect{};
-        // for (const uint32_t index: idx)
-        // {
-        //     const MapVertex &vert = vertices.at(index);
-        //     const glm::vec2 position = {vert.position.x, vert.position.z};
-        //     float localX = MapRange(position.x, sectorTopLeft.x, sectorBottomRight.x, 0.0f, 1.0f);
-        //     float localY = MapRange(position.y, sectorTopLeft.y, sectorBottomRight.y, 0.0f, 1.0f);
-        //     if (rotate)
-        //     {
-        //         std::swap(localX, localY);
-        //     }
-        //     positionsInRect.emplace_back(localX, localY);
-        // }
-        //
-        // float width = sectorAABB.z * 2;
-        // float height = sectorAABB.w * 2;
-        // if (rotate)
-        // {
-        //     std::swap(width, height);
-        // }
-        // const float unitsPerLuxel = isFloor ? sector.floorMaterial.unitsPerLuxel : sector.ceilingMaterial.unitsPerLuxel;
-        // faceIndices.emplace_back(idx, positionsInRect);
-        // const float luxelsX = ceilf(fmaxf(width / unitsPerLuxel, 1.0f));
-        // const float luxelsY = ceilf(fmaxf(height / unitsPerLuxel, 1.0f));
-        // const stbrp_rect rect = {
-        //     .id = 0,
-        //     .w = static_cast<stbrp_coord>(luxelsX + LightmapHelpers::LIGHTMAP_PADDING * 2),
-        //     .h = static_cast<stbrp_coord>(luxelsY + LightmapHelpers::LIGHTMAP_PADDING * 2),
-        // };
-        // faceRects.push_back(rect);
+        std::vector<glm::vec2> positionsInRect;
+        positionsInRect.reserve(triangulatedFace.indices.size());
+        for (const uint32_t index: triangulatedFace.indices)
+        {
+            positionsInRect.emplace_back(triangulatedFace.vertices.at(index).lightmapUv);
+        }
+
+        const float width = std::max(triangulatedFace.faceSize.x, triangulatedFace.faceSize.y);
+        const float height = std::min(triangulatedFace.faceSize.x, triangulatedFace.faceSize.y);
+        faceDatas.emplace_back(offsetIndices, positionsInRect);
+        const float luxelsX = std::ceil(std::max(width / face.unitsPerLuxel, 1.0f));
+        const float luxelsY = std::ceil(std::max(height / face.unitsPerLuxel, 1.0f));
+        faceRects.emplace_back(0,
+                               static_cast<stbrp_coord>(luxelsX + LightmapHelpers::LIGHTMAP_PADDING * 2),
+                               static_cast<stbrp_coord>(luxelsY + LightmapHelpers::LIGHTMAP_PADDING * 2));
     }
 
+    currentIndex += triangulatedFace.vertices.size();
     vertices.insert(vertices.end(), triangulatedFace.vertices.begin(), triangulatedFace.vertices.end());
 }
 
@@ -133,7 +102,7 @@ bool BrushMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
 {
     for (const BrushMeshBuilder &builder: meshBuilders)
     {
-        assert(builder.faceIndices.size() == builder.faceRects.size());
+        assert(builder.faceDatas.size() == builder.faceRects.size());
     }
 
     std::vector<stbrp_rect> rects{};
@@ -165,10 +134,10 @@ bool BrushMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
             continue;
         }
 
-        for (size_t i = 0; i < builder.faceIndices.size(); i++)
+        for (size_t i = 0; i < builder.faceDatas.size(); i++)
         {
             const stbrp_rect &rect = rects.at(i + rectIndexBegin);
-            const FaceData &faceData = builder.faceIndices.at(i);
+            const FaceData &faceData = builder.faceDatas.at(i);
             assert(rect.h != 0);
             assert(rect.w != 0);
             for (size_t j = 0; j < faceData.indices.size(); j++)
@@ -177,6 +146,11 @@ bool BrushMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
                 MapVertex &vertex = builder.vertices.at(index);
                 const glm::vec2 &positionInRect = faceData.positionsInRect.at(j);
                 vertex.lightmapUv = LightmapHelpers::GetUv(lightmapSize, rect, positionInRect);
+                if (vertex.lightmapUv.x < 0 || vertex.lightmapUv.y < 0)
+                {
+                    asm("int3");
+                }
+                asm("nop");
             }
         }
         rectIndexBegin += builder.faceRects.size();

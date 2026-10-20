@@ -137,19 +137,18 @@ int main(const int argc, const char **argv)
     for (size_t i = 0; i < numCollisionModels; i++)
     {
         const glm::vec3 position = asset.reader.ReadVec3();
-        const size_t numSubShapes = asset.reader.Read<size_t>();
-        for (size_t j = 0; j < numSubShapes; j++)
+        asset.reader.Skip<float>();
+        asset.reader.Skip<float>();
+        asset.reader.Skip<float>();
+        const size_t numTriangles = asset.reader.Read<size_t>();
+        collisionTriangles.reserve(numTriangles);
+        for (size_t k = 0; k < numTriangles; k++)
         {
-            const size_t numTriangles = asset.reader.Read<size_t>();
-            collisionTriangles.reserve(numTriangles);
-            for (size_t k = 0; k < numTriangles; k++)
-            {
-                std::array<glm::vec3, 3> triangle{};
-                triangle.at(0) = asset.reader.ReadVec3() + position;
-                triangle.at(1) = asset.reader.ReadVec3() + position;
-                triangle.at(2) = asset.reader.ReadVec3() + position;
-                collisionTriangles.push_back(triangle);
-            }
+            std::array<glm::vec3, 3> triangle{};
+            triangle.at(0) = asset.reader.ReadVec3() + position;
+            triangle.at(1) = asset.reader.ReadVec3() + position;
+            triangle.at(2) = asset.reader.ReadVec3() + position;
+            collisionTriangles.push_back(triangle);
         }
     }
 

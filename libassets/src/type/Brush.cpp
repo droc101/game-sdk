@@ -350,10 +350,10 @@ void Brush::TriangulatedFace::CalculateUVs(const glm::vec3 &brushOrigin, const F
                                   glm::dot(vertex.position - corner.position, rotatedV)};
             vertex.normal = normal;
 
-            const glm::vec2 unrotatedUV = glm::vec2{glm::dot(vertex.position - corner.position, u),
+            vertex.lightmapUv = glm::vec2{glm::dot(vertex.position - corner.position, u),
                                                     glm::dot(vertex.position - corner.position, v)};
-            minPoint = glm::min(minPoint, unrotatedUV);
-            maxPoint = glm::max(maxPoint, unrotatedUV);
+            minPoint = glm::min(minPoint, vertex.lightmapUv);
+            maxPoint = glm::max(maxPoint, vertex.lightmapUv);
         }
 
         const glm::vec2 centerOffsetFromCorner = (minPoint + maxPoint) * 0.5f - corner.uv;
@@ -374,6 +374,7 @@ void Brush::TriangulatedFace::CalculateUVs(const glm::vec3 &brushOrigin, const F
         for (MapVertex &vertex: vertices)
         {
             vertex.uv = glm::vec2{glm::dot(vertex.position, u), glm::dot(vertex.position, v)};
+            vertex.lightmapUv = vertex.uv;
             vertex.normal = normal;
 
             minPoint = glm::min(minPoint, vertex.uv);
@@ -383,8 +384,14 @@ void Brush::TriangulatedFace::CalculateUVs(const glm::vec3 &brushOrigin, const F
         uvOffset = -(minPoint + maxPoint) * 0.5f - face.textureOffset;
     }
 
+    faceSize = maxPoint - minPoint;
     for (MapVertex &vertex: vertices)
     {
+        vertex.lightmapUv = (vertex.lightmapUv - minPoint) / (maxPoint - minPoint);
+        if (vertex.lightmapUv.x < 0 || vertex.lightmapUv.y < 0)
+        {
+            asm("ud2");
+        }
         vertex.uv = (vertex.uv + uvOffset) / face.textureScale;
     }
 }

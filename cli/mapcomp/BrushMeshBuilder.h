@@ -58,7 +58,7 @@ class BrushMeshBuilder
 
         std::vector<MapVertex> vertices{};
         std::vector<uint32_t> indices{};
-        std::vector<FaceData> faceIndices{};
+        std::vector<FaceData> faceDatas{};
         std::vector<stbrp_rect> faceRects{};
         uint32_t currentIndex = 0;
         SearchPathManager pathManager;

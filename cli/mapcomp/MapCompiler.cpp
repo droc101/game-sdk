@@ -31,10 +31,6 @@
 
 MapCompiler::MapCompiler(MapCompilerSettings &settings)
 {
-    Logger::Warning("Forcefully disabling lightmaps for now");
-    settings.skipLighting = true;
-
-
     this->settings = settings;
     this->pathManager = SearchPathManager(settings.gameConfig,
                                           settings.executableDirectory,
