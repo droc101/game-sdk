@@ -235,7 +235,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     const bool skipLighting = lights.empty() || settings.skipLighting;
 
     glm::uvec2 lightmapSize{1};
-    if (!skipLighting && !BrushMeshBuilder::CalculateLightmapUvs(lightmapSize, mapMeshBuilders, pathManager))
+    if (!skipLighting && !LightmapPacker::CalculateLightmapUvs(lightmapSize, mapMeshBuilders, pathManager))
     {
         return Error::ErrorCode::LIGHTMAP_TOO_LARGE;
     }

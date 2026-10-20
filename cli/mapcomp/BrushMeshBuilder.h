@@ -10,12 +10,14 @@
 #include <libassets/type/MapVertex.h>
 #include <libassets/util/DataWriter.h>
 #include <libassets/util/SearchPathManager.h>
-#include <stb_rect_pack.h>
 #include <string>
 #include <vector>
+#include "LightmapPacker.h"
 
 class BrushMeshBuilder
 {
+        friend class LightmapPacker;
+
     public:
 
         BrushMeshBuilder(const SearchPathManager &pathManager, const std::string &materialPath);
@@ -33,10 +35,6 @@ class BrushMeshBuilder
          */
         [[nodiscard]] bool IsEmpty() const;
 
-        static bool CalculateLightmapUvs(glm::uvec2 &lightmapSize,
-                                         std::vector<BrushMeshBuilder> &meshBuilders,
-                                         const SearchPathManager &pathMgr);
-
         [[nodiscard]] const std::vector<MapVertex> &GetVertices() const
         {
             return vertices;
@@ -50,16 +48,9 @@ class BrushMeshBuilder
         [[nodiscard]] const std::string &GetMaterialPath() const;
 
     private:
-        struct FaceData
-        {
-                std::vector<uint32_t> indices;
-                std::vector<glm::vec2> positionsInRect;
-        };
-
         std::vector<MapVertex> vertices{};
         std::vector<uint32_t> indices{};
-        std::vector<FaceData> faceDatas{};
-        std::vector<stbrp_rect> faceRects{};
+        std::vector<LightmapPacker::FaceData> faceDatas{};
         uint32_t currentIndex = 0;
         SearchPathManager pathManager;
         std::string materialPath;

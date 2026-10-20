@@ -24,6 +24,8 @@ add_executable(mapcomp mapcomp.cpp
         LightBakerGpu.cpp
         LightBakerGpu.hpp
         Light.cpp
+        LightmapPacker.cpp
+        LightmapPacker.h
 )
 
 configure_sdk_cli_program(mapcomp)
