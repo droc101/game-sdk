@@ -33,6 +33,7 @@
 #include <vulkan/vulkan_core.h>
 #include "BrushMeshBuilder.h"
 #include "Light.h"
+#include "RenderdocManager.h"
 
 namespace
 {
@@ -613,11 +614,14 @@ LightBakerGpu::LightBakerGpu()
                  VK_API_VERSION_MINOR(physicalDeviceProperties.properties.apiVersion),
                  VK_API_VERSION_PATCH(physicalDeviceProperties.properties.apiVersion));
 
+    (void)RenderdocManager::InitRenderdoc();
+
     initialized = true;
 }
 
 LightBakerGpu::~LightBakerGpu()
 {
+    RenderdocManager::DestroyRenderdoc();
     lunaDestroyInstance();
 }
 
@@ -729,6 +733,7 @@ bool LightBakerGpu::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
                          std::vector<uint16_t> &pixelData,
                          std::vector<uint16_t> &indirectLightingPixelData)
 {
+    RenderdocManager::StartCapture("bake");
     const uint64_t luxelCount = lightmapSize.x * lightmapSize.y;
     const uint32_t width = std::min(luxelCount, uint64_t{MAX_DISPATCH_DIMENSION});
     const uint32_t height = std::min(std::max(luxelCount / width, uint64_t{1}), uint64_t{MAX_DISPATCH_DIMENSION});
@@ -960,6 +965,8 @@ bool LightBakerGpu::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
         }
     }
     lunaDeviceWaitIdle(device);
+    RenderdocManager::EndCapture();
+
     const std::chrono::time_point<std::chrono::system_clock> end2 = std::chrono::high_resolution_clock::now();
     Logger::Info("Baked direct lighting in {}us",
                  std::chrono::duration_cast<std::chrono::microseconds>(end2 - end).count());

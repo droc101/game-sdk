@@ -26,7 +26,13 @@ add_executable(mapcomp mapcomp.cpp
         Light.cpp
         LightmapPacker.cpp
         LightmapPacker.h
+        RenderdocManager.cpp
+        RenderdocManager.h
 )
+
+if (ENABLE_MAPCOMP_RENDERDOC)
+    target_compile_definitions(mapcomp PRIVATE ENABLE_RENDERDOC)
+endif ()
 
 configure_sdk_cli_program(mapcomp)
 
