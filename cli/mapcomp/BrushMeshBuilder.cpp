@@ -21,6 +21,7 @@
 #include <stb_rect_pack.h>
 #include <string>
 #include <vector>
+#include "LightBakerGpu.hpp"
 
 BrushMeshBuilder::BrushMeshBuilder(const SearchPathManager &pathManager, const std::string &materialPath)
 {
@@ -49,6 +50,10 @@ void BrushMeshBuilder::AddFace(const Brush &brush, const size_t faceIndex)
     for (MapVertex &vertex: triangulatedFace.vertices)
     {
         vertex.position = matrix * glm::vec4(vertex.position, 1.0f);
+        if (!LightBakerGpu::Get().GetTextureIndex(face.material, vertex.textureIndex, pathManager))
+        {
+            vertex.textureIndex = 0;
+        }
     }
 
     if (!triangulatedFace.vertices.empty())
@@ -146,11 +151,6 @@ bool BrushMeshBuilder::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
                 MapVertex &vertex = builder.vertices.at(index);
                 const glm::vec2 &positionInRect = faceData.positionsInRect.at(j);
                 vertex.lightmapUv = LightmapHelpers::GetUv(lightmapSize, rect, positionInRect);
-                if (vertex.lightmapUv.x < 0 || vertex.lightmapUv.y < 0)
-                {
-                    asm("int3");
-                }
-                asm("nop");
             }
         }
         rectIndexBegin += builder.faceRects.size();

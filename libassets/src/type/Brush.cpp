@@ -388,10 +388,6 @@ void Brush::TriangulatedFace::CalculateUVs(const glm::vec3 &brushOrigin, const F
     for (MapVertex &vertex: vertices)
     {
         vertex.lightmapUv = (vertex.lightmapUv - minPoint) / (maxPoint - minPoint);
-        if (vertex.lightmapUv.x < 0 || vertex.lightmapUv.y < 0)
-        {
-            asm("ud2");
-        }
         vertex.uv = (vertex.uv + uvOffset) / face.textureScale;
     }
 }
