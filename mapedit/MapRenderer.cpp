@@ -169,7 +169,7 @@ void MapRenderer::RenderViewportGrid(const Viewport &vp)
 
     glDisable(GL_DEPTH_TEST);
 
-    if (MapEditor::drawGrid && vp.GetType() != Viewport::ViewportType::PERSPECTIVE)
+    if (MapEditor::drawGrid && !vp.Is3D())
     {
         const float gridSpacing = MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex);
         const int numInstances = static_cast<int>(MapEditor::MAP_SIZE * 2 / gridSpacing);
@@ -188,7 +188,7 @@ void MapRenderer::RenderViewportGrid(const Viewport &vp)
     glUniformMatrix4fv(glGetUniformLocation(vertexColorProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(view));
     const GLint posAttrib = glGetAttribLocation(vertexColorProgram, "VERTEX");
     const GLint colorAttrib = glGetAttribLocation(vertexColorProgram, "VERTEX_COLOR");
-    if (MapEditor::drawAxisHelper)
+    if (MapEditor::drawAxisHelper && !vp.Is3D())
     {
         GLHelper::BindBuffer(axisHelperBuffer);
         glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
@@ -202,7 +202,7 @@ void MapRenderer::RenderViewportGrid(const Viewport &vp)
         glEnableVertexAttribArray(colorAttrib);
         glDrawArrays(GL_LINES, 0, 6);
     }
-    if (MapEditor::drawWorldBorder)
+    if (MapEditor::drawWorldBorder && !vp.Is3D())
     {
         GLHelper::BindBuffer(worldBorderBuffer);
         glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
