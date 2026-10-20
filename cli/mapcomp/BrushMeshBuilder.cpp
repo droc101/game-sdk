@@ -44,6 +44,7 @@ void BrushMeshBuilder::AddFace(const Brush &brush, const size_t faceIndex)
     for (MapVertex &vertex: triangulatedFace.vertices)
     {
         vertex.position = matrix * glm::vec4(vertex.position, 1.0f);
+        vertex.normal = matrix * glm::vec4(vertex.normal, 0.0f);
         if (!LightBakerGpu::Get().GetTextureIndex(face.material, vertex.textureIndex, pathManager))
         {
             vertex.textureIndex = 0;
