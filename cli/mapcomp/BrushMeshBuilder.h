@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/type/Brush.h>
 #include <libassets/type/MapVertex.h>
 #include <libassets/util/DataWriter.h>
@@ -54,4 +55,5 @@ class BrushMeshBuilder
         uint32_t currentIndex = 0;
         SearchPathManager pathManager;
         std::string materialPath;
+        LevelMaterialAsset materialAsset{};
 };

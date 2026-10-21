@@ -21,6 +21,7 @@ BrushMeshBuilder::BrushMeshBuilder(const SearchPathManager &pathManager, const s
 {
     this->pathManager = pathManager;
     this->materialPath = materialPath;
+    (void)materialAsset.LoadFromAsset(pathManager.GetAssetPath(materialPath));
 }
 
 void BrushMeshBuilder::AddFace(const Brush &brush, const size_t faceIndex)
@@ -45,6 +46,7 @@ void BrushMeshBuilder::AddFace(const Brush &brush, const size_t faceIndex)
     {
         vertex.position = matrix * glm::vec4(vertex.position, 1.0f);
         vertex.normal = matrix * glm::vec4(vertex.normal, 0.0f);
+        vertex.emissive = materialAsset.emissive;
         if (!LightBakerGpu::Get().GetTextureIndex(face.material, vertex.textureIndex, pathManager))
         {
             vertex.textureIndex = 0;
