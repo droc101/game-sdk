@@ -21,6 +21,9 @@ class LevelMaterialAsset final: public Asset
             DEFAULT,
         };
 
+        static constexpr uint32_t FLAG_CASTS_SHADOWS = 1 << 0;
+        static constexpr uint32_t FLAG_INVISIBLE = 1 << 1;
+
         LevelMaterialAsset();
 
         /// The texture this material uses
@@ -31,12 +34,8 @@ class LevelMaterialAsset final: public Asset
         Material::MaterialShader shader;
         /// The sound class this material uses
         SoundClass soundClass;
-        /// Whether this material should cast shadows or not
-        bool castsShadows;
-        /// Whether to skip generating visual geometry for faces with this material
-        bool compileInvisible;
-        /// Whether to skip generating collision geometry for faces with this material
-        bool compileNoClip;
+        /// Misc. material flags
+        uint32_t flags;
         /// The strength of emission by this material
         /// The color of each luxel this surface maps to will be multipled by this value to determine how much light is emitted
         float emissive;
@@ -48,6 +47,8 @@ class LevelMaterialAsset final: public Asset
 
         [[nodiscard]] AssetType GetAssetType() const override;
         [[nodiscard]] uint8_t GetAssetTypeVersion() const override;
+
+        [[nodiscard]] bool HasFlags(uint32_t flagsToCheck) const;
 
     private:
         static constexpr uint8_t LEVEL_MATERIAL_ASSET_VERSION = 1;

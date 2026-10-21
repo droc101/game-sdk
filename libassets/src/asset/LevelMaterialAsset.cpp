@@ -31,9 +31,7 @@ void LevelMaterialAsset::Reset()
     baseScale = {1, 1};
     shader = Material::MaterialShader::SHADER_SHADED;
     soundClass = SoundClass::DEFAULT;
-    castsShadows = true;
-    compileInvisible = false;
-    compileNoClip = false;
+    flags = FLAG_CASTS_SHADOWS;
     emissive = 0;
 }
 
@@ -44,9 +42,7 @@ Error::ErrorCode LevelMaterialAsset::LoadFromBuffer(DataReader &reader)
     baseScale = reader.ReadVec2();
     shader = static_cast<Material::MaterialShader>(reader.Read<uint8_t>());
     soundClass = static_cast<SoundClass>(reader.Read<uint8_t>());
-    castsShadows = reader.Read<bool>();
-    compileInvisible = reader.Read<uint8_t>() == 1;
-    compileNoClip = reader.Read<uint8_t>() == 1;
+    flags = reader.Read<uint32_t>();
     emissive = reader.Read<float>();
     return Error::ErrorCode::OK;
 }
@@ -57,9 +53,12 @@ Error::ErrorCode LevelMaterialAsset::SaveToBuffer(DataWriter &writer) const
     writer.WriteVec2(baseScale);
     writer.Write<uint8_t>(static_cast<uint8_t>(shader));
     writer.Write<uint8_t>(static_cast<uint8_t>(soundClass));
-    writer.Write<bool>(castsShadows);
-    writer.Write<uint8_t>(compileInvisible ? 1 : 0);
-    writer.Write<uint8_t>(compileNoClip ? 1 : 0);
+    writer.Write<uint32_t>(flags);
     writer.Write<float>(emissive);
     return Error::ErrorCode::OK;
+}
+
+bool LevelMaterialAsset::HasFlags(const uint32_t flagsToCheck) const
+{
+    return (this->flags & flagsToCheck) == flagsToCheck;
 }

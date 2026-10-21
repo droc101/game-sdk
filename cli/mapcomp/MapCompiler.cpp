@@ -197,14 +197,13 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     for (size_t brushIndex = 0; brushIndex < map.brushes.size(); brushIndex++)
     {
         const Brush &brush = map.brushes.at(brushIndex);
-        BrushCollisionBuilder collisionBuilder = BrushCollisionBuilder(brush);
         std::unordered_map<std::string, BrushMeshBuilder> sectorMeshBuilders{};
 
         for (size_t i = 0; i < brush.faces.size(); i++)
         {
             const Brush::Face &face = brush.faces.at(i);
             const LevelMaterialAsset mapMaterial = GetMapMaterial(face.material);
-            if (!mapMaterial.compileInvisible)
+            if (!mapMaterial.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
             {
                 if (!sectorMeshBuilders.contains(face.material))
                 {
@@ -212,18 +211,13 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
                 }
                 sectorMeshBuilders.at(face.material).AddFace(brush, i);
             }
-
-            if (!mapMaterial.compileNoClip)
-            {
-                collisionBuilder.AddFace(i);
-            }
         }
 
         for (const BrushMeshBuilder &b: sectorMeshBuilders | std::views::values)
         {
             mapMeshBuilders.push_back(b);
         }
-        collisionBuilders.push_back(collisionBuilder);
+        collisionBuilders.emplace_back(brush);
     }
 
     std::erase_if(mapMeshBuilders, [](const BrushMeshBuilder &item) -> bool { return item.IsEmpty(); });
