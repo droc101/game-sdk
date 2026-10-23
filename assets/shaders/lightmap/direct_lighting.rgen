@@ -35,6 +35,13 @@ vec3 getLightColor(const Light light, const float distance, const float theta) {
     return light.color * brightness;
 }
 
+void getLengthAndUnitVector(const in vec3 vec, out float length, out vec3 unitVec) {
+    const float d = dot(vec, vec);
+    const float scale = inversesqrt(d);
+    length = d * scale;
+    unitVec = vec * scale;
+}
+
 void main() {
     const int luxelIndex = int(pushConstants.baseLuxelIndex + gl_LaunchIDEXT.x + gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x);
     const ivec2 luxelCoord = ivec2(luxelIndex % WIDTH, luxelIndex / WIDTH);
@@ -46,7 +53,7 @@ void main() {
     }
 
     const vec4 luxelNormal = imageLoad(luxelNormals, luxelCoord);
-    vec3 accumulatedColor = vec3(STORE_DIRECT ? 0 : luxelNormal.w);
+    vec3 accumulatedColor = vec3(0);
     for (uint i = 0; i < LIGHT_COUNT; i++) {
         float distance;
         vec3 rayDirection;
@@ -104,21 +111,34 @@ void main() {
         }
 #endif
 
-        const vec3 luxelToLight = sourceLuxelPosition.xyz - luxelPosition.xyz;
-        const float distance = length(luxelToLight) - EPSILON;
-        const vec3 rayDirection = normalize(luxelToLight);
+        float distance;
+        vec3 rayDirection;
+        getLengthAndUnitVector(sourceLuxelPosition.xyz - luxelPosition.xyz, distance, rayDirection);
+        if (distance < EPSILON) {
+            continue;
+        }
+        float normalFactor = dot(rayDirection, luxelNormal.xyz);
+        if (normalFactor < EPSILON) {
+            continue;
+        }
+        normalFactor *= -(dot(rayDirection, sourceLuxelNormal.xyz) - EPSILON);
+        if (normalFactor < EPSILON) {
+            continue;
+        }
 
         isLightVisible = false;
-        traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, rayDirection, distance, 0);
+        traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, rayDirection, distance - EPSILON, 0);
         if (isLightVisible) {
             const vec4 color = imageLoad(luxelAlbedos, sourceLuxelCoord);
-            areaLightColor += color.rgb * color.a / (distance * distance / 256.0) * max(dot(rayDirection, luxelNormal.xyz), 0);
+            areaLightColor += sourceLuxelNormal.w * color.rgb * color.a / (distance * distance / 256.0) * normalFactor;
             ++hitCount;
         }
     }
     if (hitCount > 0) {
         accumulatedColor += areaLightColor / hitCount;
-        imageStore(outputLightmap, luxelIndex, vec4(vec3(luxelNormal.w, luxelNormal.w, luxelNormal.w) + areaLightColor / hitCount, 1));
+        imageStore(outputLightmap, luxelIndex, vec4(vec3(luxelNormal.w) + areaLightColor / hitCount, 1));
+    } else if (luxelNormal.w > EPSILON) {
+        imageStore(outputLightmap, luxelIndex, vec4(luxelNormal.w, luxelNormal.w, luxelNormal.w, 1));
     }
 
     imageStore(currentBounceLightmap, luxelIndex, vec4(accumulatedColor, 1));
