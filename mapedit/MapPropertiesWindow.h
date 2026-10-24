@@ -4,14 +4,15 @@
 
 #pragma once
 
-#include <SDL3/SDL_video.h>
 #include <game_sdk/Window.h>
+#include <SDL3/SDL_video.h>
 
 class MapPropertiesWindow final: public Window
 {
     protected:
         void Render() override;
         [[nodiscard]] const WindowProperties &GetProperties() const override;
+
     private:
         WindowProperties properties = {
             .title = "Map Properties",

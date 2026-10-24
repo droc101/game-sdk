@@ -48,12 +48,12 @@ class MapeditWindow final: public Window
         std::string soundBrowserToolSelection{};
 
         static bool ToolbarToolButton(const char *id,
-                               const char *tooltip,
-                               const char *icon,
-                               bool selected,
-                               int spacing = 2,
-                               const char *shortcutText = nullptr,
-                               ImGuiKeyChord shortcut = 0);
+                                      const char *tooltip,
+                                      const char *icon,
+                                      bool selected,
+                                      int spacing = 2,
+                                      const char *shortcutText = nullptr,
+                                      ImGuiKeyChord shortcut = 0);
 
         static void ToolbarSeparator();
 

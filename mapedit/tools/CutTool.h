@@ -3,8 +3,9 @@
 //
 
 #pragma once
-#include "EditorTool.h"
 
+#include "../Viewport.h"
+#include "EditorTool.h"
 
 class CutTool final: public EditorTool
 {

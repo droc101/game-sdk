@@ -3,13 +3,14 @@
 //
 
 #include "CutTool.h"
+#include "../Viewport.h"
 #include "../ViewportRenderer.h"
 
 void CutTool::RenderToolWindow() {}
 
 void CutTool::RenderViewport(Viewport &vp)
 {
-    const ViewportRenderer::ViewportRenderSettings vps = {
+    constexpr ViewportRenderer::ViewportRenderSettings vps = {
         .brushFocusMode = false,
         .focusedBrushIndex = 0,
         .hoverType = ItemType::NONE,

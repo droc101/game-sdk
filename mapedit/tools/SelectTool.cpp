@@ -31,7 +31,7 @@
 #include "EditorTool.h"
 #include "FaceTool.h"
 
-SelectTool::SelectTool(ItemType selectionType, size_t selectionIndex)
+SelectTool::SelectTool(const ItemType selectionType, const size_t selectionIndex)
 {
     this->selectionType = selectionType;
     this->selectionIndex = selectionIndex;
@@ -447,7 +447,8 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
         } else if (vp.Is3D() && selectionType == ItemType::BRUSH && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
         {
             const Viewport::PerspectiveHoverInfo hoverInfo = vp.GetPerspectiveHover();
-            if (hoverInfo.objectType == static_cast<uint8_t>(ItemType::BRUSH) && hoverInfo.objectIndex == selectionIndex)
+            if (hoverInfo.objectType == static_cast<uint8_t>(ItemType::BRUSH) &&
+                hoverInfo.objectIndex == selectionIndex)
             {
                 MapEditor::toolType = MapEditor::EditorToolType::FACE;
                 MapEditor::tool = std::make_unique<FaceTool>(hoverInfo.objectIndex, hoverInfo.objectSubIndex);
@@ -631,4 +632,5 @@ glm::vec3 SelectTool::SelectionCenter() const
         return b.origin;
     }
     assert(false);
+    return glm::vec3{0};
 }

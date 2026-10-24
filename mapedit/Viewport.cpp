@@ -421,6 +421,7 @@ Axis Viewport::GetAxis() const
     assert(type != ViewportType::PERSPECTIVE);
     switch (type)
     {
+        default:
         case ViewportType::TOP_DOWN_XZ:
             return Axis::Y;
         case ViewportType::FRONT_XY:
@@ -428,7 +429,6 @@ Axis Viewport::GetAxis() const
         case ViewportType::SIDE_YZ:
             return Axis::X;
     }
-    return Axis::Y;
 }
 
 bool Viewport::Is3D() const

@@ -147,7 +147,7 @@ void WorldBuffersRenderer::RenderModelRdef(ModelRenderDefinition *rdef,
                                            const Actor &actor,
                                            const glm::mat4 &worldMatrix,
                                            const glm::mat4 &matrix,
-                                           MapRenderer::ObjectBufferInfo info)
+                                           const MapRenderer::ObjectBufferInfo info)
 {
     MapRenderer::RenderModelObjectBuffer(rdef->GetModel(actor), matrix, worldMatrix, info);
 }

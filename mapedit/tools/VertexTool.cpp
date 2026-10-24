@@ -3,13 +3,14 @@
 //
 
 #include "VertexTool.h"
+#include "../Viewport.h"
 #include "../ViewportRenderer.h"
 
 void VertexTool::RenderToolWindow() {}
 
 void VertexTool::RenderViewport(Viewport &vp)
 {
-    const ViewportRenderer::ViewportRenderSettings vps = {
+    constexpr ViewportRenderer::ViewportRenderSettings vps = {
         .brushFocusMode = false,
         .focusedBrushIndex = 0,
         .hoverType = ItemType::NONE,

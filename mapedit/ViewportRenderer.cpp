@@ -412,6 +412,8 @@ void ViewportRenderer::RenderGizmo(const Viewport &vp, const ViewportRenderGizmo
                                         matrix,
                                         4);
                 break;
+            default:
+                break;
         }
     }
 }
@@ -857,6 +859,8 @@ void ViewportRenderer::RenderCircleRdef(CircleRenderDefinition *rdef,
                                         color,
                                         worldMatrix,
                                         1);
+                break;
+            default:
                 break;
         }
     }

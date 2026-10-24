@@ -3,6 +3,7 @@
 //
 
 #pragma once
+
 #include <cstddef>
 #include "../Viewport.h"
 #include "EditorTool.h"

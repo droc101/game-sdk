@@ -56,19 +56,14 @@ void AddPolygonTool::RenderToolWindow()
 
 void AddPolygonTool::RenderViewport(Viewport &vp)
 {
-    bool isHovered = false;
     glm::vec3 worldSpaceHover{};
     glm::vec2 screenSpaceHover{};
 
-    if (ImGui::IsWindowFocused())
+    if (ImGui::IsWindowFocused() && ImGui::IsWindowHovered())
     {
-        isHovered = ImGui::IsWindowHovered();
-        if (isHovered)
-        {
-            worldSpaceHover = vp.GetWorldSpaceMousePos();
-            const ImVec2 localMouse = vp.GetLocalMousePos();
-            screenSpaceHover = glm::vec2(localMouse.x, localMouse.y);
-        }
+        worldSpaceHover = vp.GetWorldSpaceMousePos();
+        const ImVec2 localMouse = vp.GetLocalMousePos();
+        screenSpaceHover = glm::vec2(localMouse.x, localMouse.y);
     }
 
     if (ImGui::IsWindowFocused() && !vp.Is3D())

@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include <SDL3/SDL_video.h>
-#include <cstddef>
 #include <game_sdk/Window.h>
 #include <libassets/type/ActorDefinition.h>
+#include <libassets/type/paramDefs/ParamDefinition.h>
+#include <memory>
+#include <SDL3/SDL_video.h>
 #include <string>
 #include <vector>
 
@@ -39,7 +40,13 @@ class ActorBrowserWindow final: public Window
 
         void RenderHomePage();
 
-        void RenderParamDef(const std::shared_ptr<ParamDefinition> &param);
+        static void RenderParamDef(const std::shared_ptr<ParamDefinition> &param);
+
+        static void RenderParams(const ActorDefinition &def);
+
+        static void RenderInputs(const ActorDefinition &def);
+
+        static void RenderOutputs(const ActorDefinition &def);
 
         void RenderActorPage(const std::string &actorClass);
 };

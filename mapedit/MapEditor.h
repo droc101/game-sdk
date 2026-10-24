@@ -95,5 +95,5 @@ class MapEditor
 
         static bool BrushFaceToolWindow(Brush::Face &face);
 
-        static bool MaterialSelectionTool(std::string &material);
+        static bool MaterialSelectionTool(std::string &inputMaterial);
 };

@@ -145,13 +145,13 @@ bool MapEditor::BrushFaceToolWindow(Brush::Face &face)
     return modified;
 }
 
-bool MapEditor::MaterialSelectionTool(std::string &material)
+bool MapEditor::MaterialSelectionTool(std::string &inputMaterial)
 {
-    std::string startString = material;
+    const std::string startString = inputMaterial;
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
     LevelMaterialAsset mat;
-    mat.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(material)); // TODO improve
+    mat.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(inputMaterial)); // TODO improve
     const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e == Error::ErrorCode::OK)
@@ -178,6 +178,6 @@ bool MapEditor::MaterialSelectionTool(std::string &material)
         }
         ImGui::EndChild();
     }
-    MaterialBrowserWindow::InputMaterial("##Texture", material);
-    return material == startString;
+    MaterialBrowserWindow::InputMaterial("##Texture", inputMaterial);
+    return inputMaterial == startString;
 }

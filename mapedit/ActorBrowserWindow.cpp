@@ -197,6 +197,92 @@ void ActorBrowserWindow::RenderParamDef(const std::shared_ptr<ParamDefinition> &
     }
 }
 
+void ActorBrowserWindow::RenderParams(const ActorDefinition &def)
+{
+    ImGui::Dummy({1, 4});
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 24);
+    ImGui::Text("Params");
+    ImGui::PopFont();
+    ImGui::Separator();
+    for (const std::pair<const std::string, std::shared_ptr<ParamDefinition>> &paramPair: def.params)
+    {
+        ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
+        ImGui::Text("%s", paramPair.first.c_str());
+        ImGui::SameLine();
+        ImGui::TextDisabled(": %s", Param::GetTypeName(paramPair.second->type).c_str());
+        ImGui::PopFont();
+        ImGui::Indent();
+
+        std::shared_ptr<ParamDefinition> param;
+        const Error::ErrorCode e = def.GetParam(paramPair.first, param);
+        assert(e == Error::ErrorCode::OK); // TODO: Should this be handled in release?
+        RenderParamDef(param);
+
+        ImGui::Unindent();
+    }
+}
+
+void ActorBrowserWindow::RenderInputs(const ActorDefinition &def)
+{
+    ImGui::Dummy({1, 4});
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 24);
+    ImGui::Text("Inputs");
+    ImGui::PopFont();
+    ImGui::Separator();
+    for (const std::pair<const std::string, InputDefinition> &input: def.inputs)
+    {
+        ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
+        ImGui::Text("%s", input.first.c_str());
+        std::vector<std::string> types{};
+        for (const Param::ParamType &type: input.second.GetTypes())
+        {
+            types.push_back(Param::GetTypeName(type));
+        }
+        std::stringstream typesString{};
+        for (size_t i = 0; i < types.size(); i++)
+        {
+            if (i != 0)
+            {
+                typesString << " | ";
+            }
+            typesString << types.at(i);
+        }
+
+        ImGui::SameLine();
+        ImGui::TextDisabled(": %s", typesString.str().c_str());
+        ImGui::PopFont();
+        ImGui::Indent();
+
+        ImGui::Text("%s",
+                    input.second.GetDescription().empty() ? "No Description" : input.second.GetDescription().c_str());
+
+        ImGui::Unindent();
+    }
+}
+
+void ActorBrowserWindow::RenderOutputs(const ActorDefinition &def)
+{
+    ImGui::Dummy({1, 4});
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 24);
+    ImGui::Text("Outputs");
+    ImGui::PopFont();
+    ImGui::Separator();
+    for (const std::pair<const std::string, OutputDefinition> &output: def.outputs)
+    {
+        ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
+        ImGui::Text("%s", output.first.c_str());
+        ImGui::SameLine();
+        ImGui::TextDisabled(": %s", Param::GetTypeName(output.second.GetType()).c_str());
+        ImGui::PopFont();
+        ImGui::Indent();
+
+        ImGui::Text("%s",
+                    output.second.GetDescription().empty() ? "No Description" : output.second.GetDescription().c_str());
+
+        ImGui::Unindent();
+    }
+}
+
 void ActorBrowserWindow::RenderActorPage(const std::string &actorClass)
 {
     const ActorDefinition &def = MapEditor::adm.GetActorDefinition(actorClass);
@@ -231,89 +317,17 @@ void ActorBrowserWindow::RenderActorPage(const std::string &actorClass)
 
     if (!def.params.empty())
     {
-        ImGui::Dummy({1, 4});
-        ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 24);
-        ImGui::Text("Params");
-        ImGui::PopFont();
-        ImGui::Separator();
-        for (const std::pair<const std::string, std::shared_ptr<ParamDefinition>> &paramPair: def.params)
-        {
-            ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
-            ImGui::Text("%s", paramPair.first.c_str());
-            ImGui::SameLine();
-            ImGui::TextDisabled(": %s", Param::GetTypeName(paramPair.second->type).c_str());
-            ImGui::PopFont();
-            ImGui::Indent();
-
-            std::shared_ptr<ParamDefinition> param;
-            assert(def.GetParam(paramPair.first, param) == Error::ErrorCode::OK);
-            RenderParamDef(param);
-
-            ImGui::Unindent();
-        }
+        RenderParams(def);
     }
 
     if (!def.inputs.empty())
     {
-        ImGui::Dummy({1, 4});
-        ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 24);
-        ImGui::Text("Inputs");
-        ImGui::PopFont();
-        ImGui::Separator();
-        for (const std::pair<const std::string, InputDefinition> &input: def.inputs)
-        {
-            ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
-            ImGui::Text("%s", input.first.c_str());
-            std::vector<std::string> types{};
-            for (const Param::ParamType &type: input.second.GetTypes())
-            {
-                types.push_back(Param::GetTypeName(type));
-            }
-            std::stringstream typesString{};
-            for (size_t i = 0; i < types.size(); i++)
-            {
-                if (i != 0)
-                {
-                    typesString << " | ";
-                }
-                typesString << types.at(i);
-            }
-
-            ImGui::SameLine();
-            ImGui::TextDisabled(": %s", typesString.str().c_str());
-            ImGui::PopFont();
-            ImGui::Indent();
-
-            ImGui::Text("%s",
-                        input.second.GetDescription().empty() ? "No Description"
-                                                              : input.second.GetDescription().c_str());
-
-            ImGui::Unindent();
-        }
+        RenderInputs(def);
     }
 
     if (!def.outputs.empty())
     {
-        ImGui::Dummy({1, 4});
-        ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 24);
-        ImGui::Text("Outputs");
-        ImGui::PopFont();
-        ImGui::Separator();
-        for (const std::pair<const std::string, OutputDefinition> &output: def.outputs)
-        {
-            ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
-            ImGui::Text("%s", output.first.c_str());
-            ImGui::SameLine();
-            ImGui::TextDisabled(": %s", Param::GetTypeName(output.second.GetType()).c_str());
-            ImGui::PopFont();
-            ImGui::Indent();
-
-            ImGui::Text("%s",
-                        output.second.GetDescription().empty() ? "No Description"
-                                                               : output.second.GetDescription().c_str());
-
-            ImGui::Unindent();
-        }
+        RenderOutputs(def);
     }
 
     std::vector<std::string> derived{};
@@ -325,7 +339,7 @@ void ActorBrowserWindow::RenderActorPage(const std::string &actorClass)
         ImGui::Text("Derived Classes");
         ImGui::PopFont();
         ImGui::Separator();
-        for (const std::string & classname : derived)
+        for (const std::string &classname: derived)
         {
             ImGui::Bullet();
             if (ImGui::TextLink(classname.c_str()))

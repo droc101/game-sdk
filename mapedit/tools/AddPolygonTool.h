@@ -39,5 +39,5 @@ class AddPolygonTool final: public EditorTool
         static inline glm::vec2 shapeStart{};
         static inline glm::vec2 shapeEnd{};
 
-        void AddBrush();
+        static void AddBrush();
 };

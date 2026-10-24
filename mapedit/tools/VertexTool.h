@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "../Viewport.h"
 #include "EditorTool.h"
 
 class VertexTool final: public EditorTool
@@ -12,4 +13,3 @@ class VertexTool final: public EditorTool
         void RenderViewport(Viewport &vp) override;
         void RenderToolWindow() override;
 };
-

@@ -240,7 +240,7 @@ void MapRenderer::RenderLine(const glm::vec3 start,
                        GL_FALSE,
                        glm::value_ptr(identity));
 
-    const std::vector<float> vertices = {
+    const std::array vertices = {
         start.x,
         start.y,
         start.z,
@@ -250,14 +250,11 @@ void MapRenderer::RenderLine(const glm::vec3 start,
     };
 
     GLHelper::BindBuffer(workBufferNonIndexed);
-    glBufferData(GL_ARRAY_BUFFER,
-                 static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)),
-                 vertices.data(),
-                 GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STREAM_DRAW);
     const GLint posAttrLoc = glGetAttribLocation(uniformColorProgram, "VERTEX");
     glVertexAttribPointer(posAttrLoc, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
     glEnableVertexAttribArray(posAttrLoc);
-    glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(vertices.size()));
+    glDrawArrays(GL_LINES, 0, vertices.size());
 }
 
 void MapRenderer::RenderBillboardPoint(const glm::vec3 position,
@@ -276,22 +273,19 @@ void MapRenderer::RenderBillboardPoint(const glm::vec3 position,
                        GL_FALSE,
                        glm::value_ptr(identity));
 
-    const std::vector<float> vertices = {position.x, position.y, position.z};
+    const std::array vertices = {position.x, position.y, position.z};
 
     GLHelper::BindBuffer(workBufferNonIndexed);
-    glBufferData(GL_ARRAY_BUFFER,
-                 static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)),
-                 vertices.data(),
-                 GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STREAM_DRAW);
     const GLint posAttrLoc = glGetAttribLocation(uniformColorProgram, "VERTEX");
     glVertexAttribPointer(posAttrLoc, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
     glEnableVertexAttribArray(posAttrLoc);
     glDrawArrays(GL_POINTS, 0, 1);
 }
 
-void MapRenderer::RenderBillboardPointObjectBuffer(glm::vec3 position,
-                                                   float pointSize,
-                                                   ObjectBufferInfo info,
+void MapRenderer::RenderBillboardPointObjectBuffer(const glm::vec3 position,
+                                                   const float pointSize,
+                                                   const ObjectBufferInfo info,
                                                    const glm::mat4 &matrix)
 {
     glUseProgram(worldBuffersProgram);
@@ -308,13 +302,10 @@ void MapRenderer::RenderBillboardPointObjectBuffer(glm::vec3 position,
     glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_INDEX"), info.objectIndex);
     glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_SUB_INDEX"), info.objectSubIndex);
 
-    const std::vector<float> vertices = {position.x, position.y, position.z};
+    const std::array vertices = {position.x, position.y, position.z};
 
     GLHelper::BindBuffer(workBufferNonIndexed);
-    glBufferData(GL_ARRAY_BUFFER,
-                 static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)),
-                 vertices.data(),
-                 GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STREAM_DRAW);
     const GLint posAttrLoc = glGetAttribLocation(worldBuffersProgram, "VERTEX");
     glVertexAttribPointer(posAttrLoc, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
     glEnableVertexAttribArray(posAttrLoc);
@@ -345,13 +336,10 @@ void MapRenderer::RenderBillboardSprite(const glm::vec3 position,
     glUniformMatrix4fv(glGetUniformLocation(spriteProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(matrix));
     glUniformMatrix4fv(glGetUniformLocation(spriteProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(identity));
 
-    const std::vector<float> vertices = {position.x, position.y, position.z};
+    const std::array vertices = {position.x, position.y, position.z};
 
     GLHelper::BindBuffer(workBufferNonIndexed);
-    glBufferData(GL_ARRAY_BUFFER,
-                 static_cast<GLsizeiptr>(vertices.size() * sizeof(GLfloat)),
-                 vertices.data(),
-                 GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STREAM_DRAW);
     const GLint posAttrLoc = glGetAttribLocation(spriteProgram, "VERTEX");
     glVertexAttribPointer(posAttrLoc, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
     glEnableVertexAttribArray(posAttrLoc);
@@ -507,10 +495,7 @@ void MapRenderer::RenderBrushFace(const Brush::TriangulatedFace &face,
 
     const GLuint ebo = workBuffer.ebo;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 face.indices.size() * sizeof(uint32_t),
-                 face.indices.data(),
-                 GL_STREAM_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, face.indices.size() * sizeof(uint32_t), face.indices.data(), GL_STREAM_DRAW);
     glDrawElements(GL_TRIANGLES, face.indices.size(), GL_UNSIGNED_INT, nullptr);
 
     glDisable(GL_CULL_FACE);
@@ -556,10 +541,7 @@ void MapRenderer::RenderBrushFaceObjectBuffer(const Brush::TriangulatedFace &fac
 
     const GLuint ebo = workBuffer.ebo;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 face.indices.size() * sizeof(uint32_t),
-                 face.indices.data(),
-                 GL_STREAM_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, face.indices.size() * sizeof(uint32_t), face.indices.data(), GL_STREAM_DRAW);
     glDrawElements(GL_TRIANGLES, face.indices.size(), GL_UNSIGNED_INT, nullptr);
 
     glDisable(GL_CULL_FACE);
@@ -666,7 +648,7 @@ void MapRenderer::RenderModelTextured(ModelBuffer &buffer,
                                       const Color &modColor,
                                       const Color &overlayColor)
 {
-    const uint32_t lodIndex = 0;
+    static constexpr uint32_t LOD_INDEX = 0;
 
     glEnable(GL_CULL_FACE);
 
@@ -702,8 +684,14 @@ void MapRenderer::RenderModelTextured(ModelBuffer &buffer,
     glEnableVertexAttribArray(colorAttrib);
     glEnableVertexAttribArray(normAttrib);
 
-    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "VIEW_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "WORLD_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(worldMatrix));
     glUniform4fv(glGetUniformLocation(shadedModelProgram, "MOD_COLOR"), 1, modColor.GetDataPointer());
     glUniform4fv(glGetUniformLocation(shadedModelProgram, "OVERLAY_COLOR"), 1, overlayColor.GetDataPointer());
 
@@ -736,7 +724,7 @@ void MapRenderer::RenderModelTextured(ModelBuffer &buffer,
         const GLuint ebo = buffer.ebos.at(i);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glDrawElements(GL_TRIANGLES,
-                       static_cast<GLsizei>(buffer.model.GetLod(lodIndex).components.at(i).indices.size()),
+                       static_cast<GLsizei>(buffer.model.GetLod(LOD_INDEX).components.at(i).indices.size()),
                        GL_UNSIGNED_INT,
                        nullptr);
     }
@@ -747,9 +735,9 @@ void MapRenderer::RenderModelTextured(ModelBuffer &buffer,
 void MapRenderer::RenderModelObjectBufferInternal(ModelBuffer &buffer,
                                                   const glm::mat4 &viewMatrix,
                                                   const glm::mat4 &worldMatrix,
-                                                  ObjectBufferInfo info)
+                                                  const ObjectBufferInfo info)
 {
-    const uint32_t lodIndex = 0;
+    static constexpr uint32_t LOD_INDEX = 0;
 
     glEnable(GL_CULL_FACE);
 
@@ -787,7 +775,7 @@ void MapRenderer::RenderModelObjectBufferInternal(ModelBuffer &buffer,
         const GLuint ebo = buffer.ebos.at(i);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glDrawElements(GL_TRIANGLES,
-                       static_cast<GLsizei>(buffer.model.GetLod(lodIndex).components.at(i).indices.size()),
+                       static_cast<GLsizei>(buffer.model.GetLod(LOD_INDEX).components.at(i).indices.size()),
                        GL_UNSIGNED_INT,
                        nullptr);
     }
@@ -978,8 +966,14 @@ void MapRenderer::RenderWall(const glm::mat4 &viewMatrix,
     glEnableVertexAttribArray(colorAttrib);
     glEnableVertexAttribArray(normAttrib);
 
-    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "WORLD_MATRIX"), 1, GL_FALSE, glm::value_ptr(worldMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "VIEW_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "WORLD_MATRIX"),
+                       1,
+                       GL_FALSE,
+                       glm::value_ptr(worldMatrix));
     glUniform4fv(glGetUniformLocation(shadedModelProgram, "MOD_COLOR"), 1, wall.color.GetDataPointer());
     glUniform4fv(glGetUniformLocation(shadedModelProgram, "OVERLAY_COLOR"), 1, overlayColor.GetDataPointer());
 
@@ -1006,7 +1000,7 @@ void MapRenderer::RenderWall(const glm::mat4 &viewMatrix,
 void MapRenderer::RenderWallObjectBuffer(const glm::mat4 &viewMatrix,
                                          const glm::mat4 &worldMatrix,
                                          const Wall &wall,
-                                         ObjectBufferInfo info)
+                                         const ObjectBufferInfo info)
 {
     const float bottom = wall.localCenter.y - (wall.size.y / 2.0f);
     const float top = wall.localCenter.y + (wall.size.y / 2.0f);

@@ -165,7 +165,7 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
     ViewportRenderer::RenderViewport(vp, vps);
 }
 
-std::vector<glm::vec2> AddPrimitiveTool::GetPoints() const
+std::vector<glm::vec2> AddPrimitiveTool::GetPoints()
 {
     std::vector<glm::vec2> points{};
 
@@ -260,9 +260,9 @@ std::vector<glm::vec2> AddPrimitiveTool::BuildNgon(const int n,
     pts.reserve(n);
     for (int i = 0; i < n; i++)
     {
-        const float theta = startAngleRadians + 1 * (2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / n);
-        const float x = cx + rx * std::cos(theta);
-        const float y = cy + ry * std::sin(theta);
+        const float theta = 2.0f * std::numbers::pi_v<float> * static_cast<float>(i) / static_cast<float>(n);
+        const float x = cx + rx * std::cos(startAngleRadians + theta);
+        const float y = cy + ry * std::sin(startAngleRadians + theta);
         pts.emplace_back(x, y);
     }
     return pts;
