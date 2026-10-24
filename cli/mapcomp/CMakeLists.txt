@@ -21,8 +21,6 @@ add_executable(mapcomp mapcomp.cpp
         Light.h
         LightBaker.cpp
         LightBaker.hpp
-        LightBakerGpu.cpp
-        LightBakerGpu.hpp
         Light.cpp
         LightmapPacker.cpp
         LightmapPacker.h

@@ -14,7 +14,7 @@
 #include <libassets/util/SearchPathManager.h>
 #include <string>
 #include <vector>
-#include "LightBakerGpu.hpp"
+#include "LightBaker.hpp"
 #include "LightmapPacker.h"
 
 BrushMeshBuilder::BrushMeshBuilder(const SearchPathManager &pathManager, const std::string &materialPath)
@@ -47,7 +47,7 @@ void BrushMeshBuilder::AddFace(const Brush &brush, const size_t faceIndex)
         vertex.position = matrix * glm::vec4(vertex.position, 1.0f);
         vertex.normal = matrix * glm::vec4(vertex.normal, 0.0f);
         vertex.emissive = materialAsset.emissive;
-        if (!LightBakerGpu::Get().GetTextureIndex(face.material, vertex.textureIndex, pathManager))
+        if (!LightBaker::Get().GetTextureIndex(face.material, vertex.textureIndex, pathManager))
         {
             vertex.textureIndex = 0;
         }
