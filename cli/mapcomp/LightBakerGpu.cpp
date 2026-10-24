@@ -1748,7 +1748,7 @@ bool LightBakerGpu::CreateTLAS()
     const LunaBufferWriteInfo instancesBufferWriteInfo = {
         .bytes = sizeof(instance),
         .data = &instance,
-        .stageFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        .stageFlags = VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
     };
     if (!CheckResult(lunaWriteDataToBuffer(device,
                                            commandBuffer,

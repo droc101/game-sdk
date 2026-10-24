@@ -85,18 +85,18 @@ LightmapPacker::FaceData LightmapPacker::CalculateFaceData(const Brush::Face &fa
         positionsInRect.emplace_back(triangulatedFace.vertices.at(index).lightmapUv);
     }
 
-    const float width = std::max(triangulatedFace.faceSize.x, triangulatedFace.faceSize.y);
-    const float height = std::min(triangulatedFace.faceSize.x, triangulatedFace.faceSize.y);
+    const float width = triangulatedFace.faceSize.x;
+    const float height = triangulatedFace.faceSize.y;
     const float luxelsX = std::ceil(std::max(width / face.unitsPerLuxel, 1.0f));
     const float luxelsY = std::ceil(std::max(height / face.unitsPerLuxel, 1.0f));
+    const stbrp_rect rect = {
+        .w = static_cast<stbrp_coord>(luxelsX + LightmapHelpers::LIGHTMAP_PADDING * 2),
+        .h = static_cast<stbrp_coord>(luxelsY + LightmapHelpers::LIGHTMAP_PADDING * 2),
+    };
     const FaceData faceData = {
         .indices = offsetIndices,
         .positionsInRect = positionsInRect,
-        .rect =
-                {
-                    .w = static_cast<stbrp_coord>(luxelsX + LightmapHelpers::LIGHTMAP_PADDING * 2),
-                    .h = static_cast<stbrp_coord>(luxelsY + LightmapHelpers::LIGHTMAP_PADDING * 2),
-                },
+        .rect = rect,
     };
     return faceData;
 }
