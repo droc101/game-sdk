@@ -50,8 +50,7 @@ Brush::Brush(const std::vector<glm::vec2> &points,
              const float startDepth,
              const float endDepth,
              const Axis axis,
-             const std::string &material,
-             const float gridSnap)
+             const std::string &material)
 {
     for (const glm::vec2 &glmPoint: points)
     {
@@ -109,7 +108,7 @@ Brush::Brush(const std::vector<glm::vec2> &points,
         faces.push_back(face);
     }
 
-    CenterOrigin(gridSnap);
+    CenterOrigin();
 }
 
 nlohmann::ordered_json Brush::GenerateJson() const
@@ -191,6 +190,7 @@ bool Brush::IsValid() const
 
 BoundingBox Brush::GetAABB() const
 {
+    // TODO this should prolly be cached
     const glm::mat4 matrix = GetTransformMatrix();
     std::vector<glm::vec3> points{};
     for (const glm::vec3 &vertex: vertices)
@@ -252,7 +252,6 @@ std::unordered_set<std::pair<glm::vec3, glm::vec3>> Brush::GetFaceEdges(const si
 
     return edges;
 }
-
 
 bool Brush::ContainsPoint(const Axis axis, const glm::vec2 point) const
 {
@@ -351,7 +350,7 @@ void Brush::TriangulatedFace::CalculateUVs(const glm::vec3 &brushOrigin, const F
             vertex.normal = normal;
 
             vertex.lightmapUv = glm::vec2{glm::dot(vertex.position - corner.position, u),
-                                                    glm::dot(vertex.position - corner.position, v)};
+                                          glm::dot(vertex.position - corner.position, v)};
             minPoint = glm::min(minPoint, vertex.lightmapUv);
             maxPoint = glm::max(maxPoint, vertex.lightmapUv);
         }
@@ -410,20 +409,10 @@ const std::vector<Brush::TriangulatedFace> &Brush::GetTriangulatedMesh()
     return triangulatedFaces;
 }
 
-void Brush::CenterOrigin(const float gridSnap)
+void Brush::CenterOrigin()
 {
     const BoundingBox bb = BoundingBox(vertices);
-    glm::vec3 newOrigin = bb.origin;
-
-    float nf = newOrigin.x / gridSnap;
-    float fs = std::round(nf);
-    newOrigin.x = fs * gridSnap;
-    nf = newOrigin.y / gridSnap;
-    fs = std::round(nf);
-    newOrigin.y = fs * gridSnap;
-    nf = newOrigin.z / gridSnap;
-    fs = std::round(nf);
-    newOrigin.z = fs * gridSnap;
+    const glm::vec3 newOrigin = bb.origin;
 
     for (glm::vec3 &vertex: vertices)
     {

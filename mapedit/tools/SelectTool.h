@@ -57,11 +57,11 @@ class SelectTool final: public EditorTool
         float rotationGizmoLastAngle = 0.0f;
         float rotationGizmoSelectionAngle = 0.0f;
 
-        bool draggingScaleGizmo = false;
-        glm::vec3 scaleGizmoDragStart{};
-        BoundingBox scaleGizmoStartBounds{};
-        std::vector<glm::vec3> scaleGizmoStartVertices{};
-        ViewportRenderer::ViewportRenderScaleGizmo::Handle scaleGizmoDraggedHandle{};
+        bool draggingResizeGizmo = false;
+        glm::vec3 resizeGizmoDragStart{};
+        BoundingBox resizeGizmoStartBounds{};
+        std::vector<glm::vec3> resizeGizmoStartVertices{};
+        ResizeGizmoHelper::Handle resizeGizmoDraggedHandle{};
 
         std::vector<std::tuple<ItemType, size_t, float>> menuHoveredItems{};
 

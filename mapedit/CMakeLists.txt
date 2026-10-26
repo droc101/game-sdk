@@ -41,6 +41,8 @@ add_executable(mapedit mapedit.cpp
         WorldBuffersRenderer.h
         tools/FaceTool.cpp
         tools/FaceTool.h
+        ResizeGizmoHelper.cpp
+        ResizeGizmoHelper.h
 )
 
 configure_sdk_gui_program(mapedit)

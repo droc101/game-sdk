@@ -8,7 +8,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <glm/vec3.hpp>
-#include <libassets/type/Actor.h>
 #include <libassets/type/Axis.h>
 #include <libassets/type/BoundingBox.h>
 #include <libassets/type/Brush.h>
@@ -22,8 +21,8 @@
 #include <libassets/type/renderDefs/SpriteRenderDefinition.h>
 #include <libassets/type/renderDefs/WallRenderDefinition.h>
 #include <string>
-#include <utility>
 #include <vector>
+#include "ResizeGizmoHelper.h"
 #include "tools/EditorTool.h"
 
 class Viewport;
@@ -85,60 +84,9 @@ class ViewportRenderer
                 float radiusInPx;
         };
 
-        class ViewportRenderScaleGizmo
+        struct ViewportRenderResizeGizmo
         {
-            public:
-                enum class Handle : uint8_t
-                {
-                    NONE,
-                    TOP_LEFT,
-                    TOP_RIGHT,
-                    BOTTOM_LEFT,
-                    BOTTOM_RIGHT,
-                    TOP_CENTER,
-                    BOTTOM_CENTER,
-                    LEFT_CENTER,
-                    RIGHT_CENTER,
-                };
-
-                ViewportRenderScaleGizmo() = delete;
-                ViewportRenderScaleGizmo(Viewport &viewport, const Brush &brush);
-
-                void Render(const glm::mat4 &matrix) const;
-
-                [[nodiscard]] Handle HoveredHandle() const;
-
-                void ScaleVertex(glm::vec3 &vertex,
-                                 const BoundingBox &startBounds,
-                                 const glm::vec3 &worldDrag,
-                                 Handle draggedHandle) const;
-
-            private:
-                static constexpr float POINT_SIZE = 10;
-                static constexpr float LINE_THICKNESS = 2;
-
-                static constexpr std::array<std::pair<uint32_t, uint32_t>, 8> LINES = {
-                    std::pair{0, 1},
-                    std::pair{0, 2},
-                    std::pair{2, 3},
-                    std::pair{0, 4},
-                    std::pair{1, 5},
-                    std::pair{4, 5},
-                    std::pair{2, 6},
-                    std::pair{5, 7},
-                };
-
-                [[nodiscard]] Handle GetHandleFromBoundingBoxPointIndex(uint32_t index) const;
-
-                [[nodiscard]] Handle GetHandleFromLineIndex(uint32_t index) const;
-
-                /**
-                 * Get which side of the bounding box a handle is on, per axis
-                 * @return -1 for the min side, 1 for the max side, or 0 if the handle doesn't scale that axis
-                 */
-                [[nodiscard]] glm::vec3 HandleDirection(Handle draggedHandle) const;
-
-                Viewport &viewport;
+                ResizeGizmoHelper::Handle hoveredHandle;
                 BoundingBox boundingBox;
         };
 
@@ -168,7 +116,7 @@ class ViewportRenderer
                 ViewportRenderNewActor *newActor = nullptr;
                 ViewportRenderNewPolygon *newPolygon = nullptr;
                 ViewportRenderRotationGizmo *rotationGizmo = nullptr;
-                ViewportRenderScaleGizmo *scaleGizmo = nullptr;
+                ViewportRenderResizeGizmo *resizeGizmo = nullptr;
         };
 
         ViewportRenderer() = delete;
@@ -192,6 +140,9 @@ class ViewportRenderer
         static void RenderRotationGizmo(const Viewport &vp,
                                         const ViewportRenderRotationGizmo *rotationGizmo,
                                         const glm::mat4 &matrix);
+        static void RenderResizeGizmo(const Viewport &vp,
+                                      const ViewportRenderResizeGizmo *resizeGizmo,
+                                      const glm::mat4 &matrix);
 
         static bool BrushIsCulled(const Brush &brush, const Viewport &vp);
 

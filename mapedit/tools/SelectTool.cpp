@@ -67,26 +67,27 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
         if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
         {
             dragging = true;
-            if (selectionType == ItemType::BRUSH && vp.scaleGizmo != nullptr)
+            if (selectionType == ItemType::BRUSH)
             {
-                const ViewportRenderer::ViewportRenderScaleGizmo::Handle handle = vp.scaleGizmo->HoveredHandle();
-                if (handle != ViewportRenderer::ViewportRenderScaleGizmo::Handle::NONE)
+                const Brush &brush = MapEditor::map.brushes.at(selectionIndex);
+                const BoundingBox bbox = brush.GetAABB();
+                const ResizeGizmoHelper::Handle handle = ResizeGizmoHelper::HoveredHandle(vp, bbox);
+                if (handle != ResizeGizmoHelper::Handle::NONE)
                 {
-                    draggingScaleGizmo = true;
-                    scaleGizmoDragStart = worldSpaceHover;
-                    scaleGizmoDraggedHandle = handle;
-                    const Brush &brush = MapEditor::map.brushes.at(selectionIndex);
-                    scaleGizmoStartVertices = brush.vertices;
-                    scaleGizmoStartBounds = brush.GetAABB();
+                    draggingResizeGizmo = true;
+                    resizeGizmoDragStart = worldSpaceHover;
+                    resizeGizmoDraggedHandle = handle;
+                    resizeGizmoStartVertices = brush.vertices;
+                    resizeGizmoStartBounds = bbox;
                 } else
                 {
-                    draggingScaleGizmo = false;
+                    draggingResizeGizmo = false;
                 }
             } else
             {
-                draggingScaleGizmo = false;
+                draggingResizeGizmo = false;
             }
-            if (!draggingScaleGizmo && (selectionType == ItemType::ACTOR || selectionType == ItemType::BRUSH))
+            if (!draggingResizeGizmo && (selectionType == ItemType::ACTOR || selectionType == ItemType::BRUSH))
             {
                 glm::vec3 objectPosition;
                 glm::vec3 objectRotation;
@@ -149,16 +150,20 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
         dragging = false;
     }
 
-    if (draggingScaleGizmo)
+    if (draggingResizeGizmo)
     {
         Brush &brush = MapEditor::map.brushes.at(selectionIndex);
         const glm::mat4 transformMatrix = brush.GetTransformMatrix();
         const glm::mat4 inverseTransformMatrix = glm::inverse(transformMatrix);
-        const glm::vec3 snappedDrag = MapEditor::SnapToGrid(worldSpaceHover - scaleGizmoDragStart);
+        const glm::vec3 snappedDrag = MapEditor::SnapToGrid(worldSpaceHover - resizeGizmoDragStart);
         for (size_t i = 0; i < brush.vertices.size(); i++)
         {
-            glm::vec3 vertexWorldSpace = transformMatrix * glm::vec4{scaleGizmoStartVertices.at(i), 1};
-            vp.scaleGizmo->ScaleVertex(vertexWorldSpace, scaleGizmoStartBounds, snappedDrag, scaleGizmoDraggedHandle);
+            glm::vec3 vertexWorldSpace = transformMatrix * glm::vec4{resizeGizmoStartVertices.at(i), 1};
+            ResizeGizmoHelper::ScaleVertex(vertexWorldSpace,
+                                           resizeGizmoStartBounds,
+                                           snappedDrag,
+                                           resizeGizmoDraggedHandle,
+                                           vp.GetAxis());
             brush.vertices.at(i) = inverseTransformMatrix * glm::vec4{vertexWorldSpace, 1};
         }
     } else if (draggingRotationGizmo)
@@ -321,9 +326,9 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
         const Brush &brush = MapEditor::map.brushes.at(selectionIndex);
         const float dist = glm::distance(vp.GetLocalMousePos(), vp.WorldToScreenPos(brush.origin));
 
-        if ((dist >= 44 && dist <= 52) ||
-            (vp.scaleGizmo != nullptr &&
-             vp.scaleGizmo->HoveredHandle() != ViewportRenderer::ViewportRenderScaleGizmo::Handle::NONE))
+        bool hoveringRotation = dist >= 44 && dist <= 52;
+        bool hoveringResize = ResizeGizmoHelper::HoveredHandle(vp, brush.GetAABB()) != ResizeGizmoHelper::Handle::NONE;
+        if (hoveringRotation || hoveringResize)
         {
             hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);
         }
@@ -516,23 +521,31 @@ void SelectTool::RenderViewport(Viewport &vp)
 
     ProcessViewportSelectMode(vp, isHovered, worldSpaceHover);
 
-    delete vp.scaleGizmo;
-    vp.scaleGizmo = nullptr;
-
     bool showRotationGizmo = false;
     ViewportRenderer::ViewportRenderRotationGizmo rotationGizmo = {
         .position = glm::vec3(0),
         .radiusInPx = 48,
     };
+
+    bool showResizeGizmo = false;
+    ViewportRenderer::ViewportRenderResizeGizmo resizeGizmo = {
+        .hoveredHandle = ResizeGizmoHelper::Handle::NONE,
+        .boundingBox = BoundingBox(),
+    };
+
     if (selectionType == ItemType::ACTOR)
     {
         rotationGizmo.position = MapEditor::map.actors.at(selectionIndex).position;
         showRotationGizmo = true;
     } else if (selectionType == ItemType::BRUSH)
     {
-        rotationGizmo.position = MapEditor::map.brushes.at(selectionIndex).origin;
-        vp.scaleGizmo = new ViewportRenderer::ViewportRenderScaleGizmo(vp, MapEditor::map.brushes.at(selectionIndex));
+        const Brush &brush = MapEditor::map.brushes.at(selectionIndex);
+        rotationGizmo.position = brush.origin;
+        const BoundingBox bb = brush.GetAABB();
+        resizeGizmo.hoveredHandle = ResizeGizmoHelper::HoveredHandle(vp, bb);
+        resizeGizmo.boundingBox = bb;
         showRotationGizmo = true;
+        showResizeGizmo = true;
     }
 
     const ViewportRenderer::ViewportRenderSettings vps = {
@@ -543,7 +556,7 @@ void SelectTool::RenderViewport(Viewport &vp)
         .point = nullptr,
         .newActor = nullptr,
         .rotationGizmo = showRotationGizmo ? &rotationGizmo : nullptr,
-        .scaleGizmo = vp.scaleGizmo,
+        .resizeGizmo = showResizeGizmo ? &resizeGizmo : nullptr,
     };
     ViewportRenderer::RenderViewport(vp, vps);
 }

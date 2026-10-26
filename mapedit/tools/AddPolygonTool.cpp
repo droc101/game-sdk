@@ -26,12 +26,7 @@ void AddPolygonTool::AddBrush()
         return;
     }
 
-    Brush brush = Brush(points,
-                        startDepth,
-                        endDepth,
-                        axis,
-                        MapEditor::material,
-                        MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex));
+    Brush brush = Brush(points, startDepth, endDepth, axis, MapEditor::material);
 
     if (!brush.IsValid())
     {

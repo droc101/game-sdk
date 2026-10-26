@@ -14,7 +14,6 @@
 #include <imgui.h>
 #include <libassets/type/Axis.h>
 #include "tools/EditorTool.h"
-#include "ViewportRenderer.h"
 
 class Viewport
 {
@@ -131,9 +130,6 @@ class Viewport
         [[nodiscard]] PerspectiveHoverInfo GetPerspectiveHover() const;
 
         static constexpr float ZOOM_STEP = 20.0f;
-
-        // TODO: This is a hacky workaround
-        ViewportRenderer::ViewportRenderScaleGizmo *scaleGizmo{};
 
     private:
         struct WorldBuffersFramebuffer

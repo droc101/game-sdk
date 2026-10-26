@@ -28,12 +28,7 @@ void AddPrimitiveTool::AddBrush()
     }
 
     const std::vector<glm::vec2> points = GetPoints();
-    Brush brush = Brush(points,
-                        startDepth,
-                        endDepth,
-                        axis,
-                        MapEditor::material,
-                        MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex));
+    Brush brush = Brush(points, startDepth, endDepth, axis, MapEditor::material);
 
     if (!brush.IsValid())
     {

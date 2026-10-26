@@ -66,8 +66,7 @@ class Brush
               float startDepth,
               float endDepth,
               Axis axis,
-              const std::string &material,
-              float gridSnap);
+              const std::string &material);
 
         [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 
@@ -85,7 +84,7 @@ class Brush
 
         [[nodiscard]] const std::vector<TriangulatedFace> &GetTriangulatedMesh();
 
-        void CenterOrigin(float gridSnap);
+        void CenterOrigin();
 
         std::string editorName{};
 
