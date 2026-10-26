@@ -148,6 +148,13 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
     if (!ImGui::IsMouseDragging(ImGuiMouseButton_Left))
     {
         dragging = false;
+        if (draggingResizeGizmo)
+        {
+            Brush &brush = MapEditor::map.brushes.at(selectionIndex);
+            brush.CenterOrigin();
+            draggingResizeGizmo = false;
+            return;
+        }
     }
 
     if (draggingResizeGizmo)
@@ -201,11 +208,15 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
         if (selectionType == ItemType::ACTOR)
         {
             Actor &actor = MapEditor::map.actors.at(selectionIndex);
-            AxisHelper::SetComponent(vp.GetAxis(), actor.rotation, WrapAndSnapAngle(rotationGizmoSelectionAngle, rotationStep));
+            AxisHelper::SetComponent(vp.GetAxis(),
+                                     actor.rotation,
+                                     WrapAndSnapAngle(rotationGizmoSelectionAngle, rotationStep));
         } else if (selectionType == ItemType::BRUSH)
         {
             Brush &brush = MapEditor::map.brushes.at(selectionIndex);
-            AxisHelper::SetComponent(vp.GetAxis(), brush.rotation, WrapAndSnapAngle(rotationGizmoSelectionAngle, rotationStep));
+            AxisHelper::SetComponent(vp.GetAxis(),
+                                     brush.rotation,
+                                     WrapAndSnapAngle(rotationGizmoSelectionAngle, rotationStep));
         }
     } else if (selectionType == ItemType::ACTOR)
     {
