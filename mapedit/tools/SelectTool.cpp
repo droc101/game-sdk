@@ -50,14 +50,9 @@ float SelectTool::WrapAndSnapAngle(float angle, float step)
     return angle;
 }
 
-void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm::vec3 worldSpaceHover)
+void SelectTool::HandleDrag(const Viewport &vp, const glm::vec3 worldSpaceHover)
 {
     if (vp.Is3D())
-    {
-        return;
-    }
-
-    if (!isHovered)
     {
         return;
     }
@@ -232,7 +227,6 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
 }
 
 std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::DetermineHoveredItem(const Viewport &vp,
-                                                                                              const bool isHovered,
                                                                                               const glm::vec3
                                                                                                       &worldSpaceHover)
 {
@@ -260,7 +254,7 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
         const Actor &a = MapEditor::map.actors.at(actorIndex);
         const glm::vec2 posScreenSpace = vp.WorldToScreenPos(a.position);
 
-        if (glm::distance(posScreenSpace, vp.GetLocalMousePos()) <= MapEditor::HOVER_DISTANCE_PIXELS && isHovered)
+        if (glm::distance(posScreenSpace, vp.GetLocalMousePos()) <= MapEditor::HOVER_DISTANCE_PIXELS)
         {
             if (selectionType == ItemType::ACTOR && selectionIndex == actorIndex)
             {
@@ -289,7 +283,7 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
         for (size_t brushIndex = 0; brushIndex < MapEditor::map.brushes.size(); brushIndex++)
         {
             const Brush &brush = MapEditor::map.brushes.at(brushIndex);
-            if (brush.ContainsPoint(vp.GetAxis(), vp.Make2D(worldSpaceHover)) && isHovered)
+            if (brush.ContainsPoint(vp.GetAxis(), vp.Make2D(worldSpaceHover)))
             {
                 if (selectionType == ItemType::BRUSH && selectionIndex == brushIndex)
                 {
@@ -363,11 +357,9 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
     return hoverStack;
 }
 
-void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHovered, const glm::vec3 &worldSpaceHover)
+void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const glm::vec3 &worldSpaceHover)
 {
-    const std::vector<std::tuple<ItemType, size_t, float>> &hoverStack = DetermineHoveredItem(vp,
-                                                                                              isHovered,
-                                                                                              worldSpaceHover);
+    const std::vector<std::tuple<ItemType, size_t, float>> &hoverStack = DetermineHoveredItem(vp, worldSpaceHover);
 
     const ImGuiMouseCursor hoverCursor = vp.Is3D() ? ImGuiMouseCursor_Hand : ImGuiMouseCursor_ResizeAll;
 
@@ -429,7 +421,7 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
     {
         Actor &a = MapEditor::map.actors.at(actorIndex);
 
-        if (hoverType == ItemType::ACTOR && hoverIndex == actorIndex && isHovered)
+        if (hoverType == ItemType::ACTOR && hoverIndex == actorIndex)
         {
             ImGui::SetMouseCursor(hoverCursor);
             if (ImGui::BeginTooltip())
@@ -467,38 +459,35 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
         }
     }
 
-    if (isHovered)
+    if ((hoverType == ItemType::NONE && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) ||
+        ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
     {
-        if ((hoverType == ItemType::NONE && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) ||
-            ImGui::Shortcut(ImGuiKey_Escape, ImGuiInputFlags_RouteGlobal))
-        {
-            selectionType = ItemType::NONE;
-        } else if (hoverType == ItemType::BRUSH && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-        {
-            selectionIndex = hoverIndex;
-            selectionType = ItemType::BRUSH;
-        } else if (hoverType == ItemType::ACTOR && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-        {
-            selectionIndex = hoverIndex;
-            selectionType = ItemType::ACTOR;
-        }
+        selectionType = ItemType::NONE;
+    } else if (hoverType == ItemType::BRUSH && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    {
+        selectionIndex = hoverIndex;
+        selectionType = ItemType::BRUSH;
+    } else if (hoverType == ItemType::ACTOR && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    {
+        selectionIndex = hoverIndex;
+        selectionType = ItemType::ACTOR;
+    }
 
-        if (selectionType == ItemType::ACTOR && ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_Enter))
+    if (selectionType == ItemType::ACTOR && ImGui::Shortcut(ImGuiMod_Alt | ImGuiKey_Enter))
+    {
+        Actor &toEdit = MapEditor::map.actors.at(selectionIndex);
+        WindowManager::Get().AddModalWindow<EditActorWindow>(toEdit);
+    } else if (vp.Is3D() && selectionType == ItemType::BRUSH && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+    {
+        const Viewport::PerspectiveHoverInfo hoverInfo = vp.GetPerspectiveHover();
+        if (hoverInfo.objectType == ItemType::BRUSH && hoverInfo.objectIndex == selectionIndex)
         {
-            Actor &toEdit = MapEditor::map.actors.at(selectionIndex);
-            WindowManager::Get().AddModalWindow<EditActorWindow>(toEdit);
-        } else if (vp.Is3D() && selectionType == ItemType::BRUSH && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-        {
-            const Viewport::PerspectiveHoverInfo hoverInfo = vp.GetPerspectiveHover();
-            if (hoverInfo.objectType == ItemType::BRUSH && hoverInfo.objectIndex == selectionIndex)
-            {
-                MapEditor::toolType = MapEditor::EditorToolType::FACE;
-                MapEditor::tool = std::make_unique<FaceTool>(hoverInfo.objectIndex, hoverInfo.objectSubIndex);
-            }
+            MapEditor::toolType = MapEditor::EditorToolType::FACE;
+            MapEditor::tool = std::make_unique<FaceTool>(hoverInfo.objectIndex, hoverInfo.objectSubIndex);
         }
     }
 
-    HandleDrag(vp, isHovered, worldSpaceHover);
+    HandleDrag(vp, worldSpaceHover);
 
     if (ImGui::Shortcut(ImGuiKey_Delete))
     {
@@ -524,19 +513,10 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
 
 void SelectTool::RenderViewport(Viewport &vp)
 {
-    bool isHovered = false;
-    glm::vec3 worldSpaceHover{};
-
-    if (ImGui::IsWindowFocused())
+    if (ImGui::IsWindowFocused() && ImGui::IsWindowHovered())
     {
-        isHovered = ImGui::IsWindowHovered();
-        if (isHovered)
-        {
-            worldSpaceHover = vp.GetWorldSpaceMousePos();
-        }
+        ProcessViewportSelectMode(vp, vp.GetWorldSpaceMousePos());
     }
-
-    ProcessViewportSelectMode(vp, isHovered, worldSpaceHover);
 
     bool showRotationGizmo = false;
     ViewportRenderer::ViewportRenderRotationGizmo rotationGizmo = {

@@ -478,7 +478,7 @@ void MapRenderer::RenderBrushFace(const Brush::TriangulatedFace &face,
     Error::ErrorCode error = material.LoadFromAsset(materialPath);
     if (error != Error::ErrorCode::OK)
     {
-        Logger::Error("Creating material asset \"{}\" failed with error: {}", materialPath, error);
+        // Logger::Error("Creating material asset \"{}\" failed with error: {}", materialPath, error);
         return; // TODO: Use missing texture
     }
 
