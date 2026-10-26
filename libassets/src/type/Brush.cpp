@@ -411,15 +411,10 @@ const std::vector<Brush::TriangulatedFace> &Brush::GetTriangulatedMesh()
 
 void Brush::CenterOrigin(const bool fromWorldSpace)
 {
-    if (fromWorldSpace)
+    const glm::vec3 newOrigin = fromWorldSpace ? BoundingBox(vertices).origin : GetAABB().origin;
+    for (glm::vec3 &vertex: vertices)
     {
-        origin = BoundingBox(vertices).origin;
-        for (glm::vec3 &vertex: vertices)
-        {
-            vertex = vertex - origin;
-        }
-    } else
-    {
-        origin = BoundingBox(vertices).origin + origin;
+        vertex -= fromWorldSpace ? newOrigin : newOrigin - origin;
     }
+    origin = newOrigin;
 }
