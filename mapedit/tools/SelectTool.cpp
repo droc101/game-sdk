@@ -36,7 +36,7 @@ SelectTool::SelectTool(const ItemType selectionType, const size_t selectionIndex
     this->selectionIndex = selectionIndex;
 }
 
-float SelectTool::WrapAndSnapAngle(float angle)
+float SelectTool::WrapAndSnapAngle(float angle, float step)
 {
     while (angle < 0.0f)
     {
@@ -46,7 +46,7 @@ float SelectTool::WrapAndSnapAngle(float angle)
     {
         angle -= 360.0f;
     }
-    angle = std::round(angle / 22.5f) * 22.5f;
+    angle = std::round(angle / step) * step;
     return angle;
 }
 
@@ -192,14 +192,20 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
         rotationGizmoLastAngle = newAngle;
         rotationGizmoSelectionAngle += angleDiff;
 
+        float rotationStep = 22.5f;
+        if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
+        {
+            rotationStep = 5.0f;
+        }
+
         if (selectionType == ItemType::ACTOR)
         {
             Actor &actor = MapEditor::map.actors.at(selectionIndex);
-            AxisHelper::SetComponent(vp.GetAxis(), actor.rotation, WrapAndSnapAngle(rotationGizmoSelectionAngle));
+            AxisHelper::SetComponent(vp.GetAxis(), actor.rotation, WrapAndSnapAngle(rotationGizmoSelectionAngle, rotationStep));
         } else if (selectionType == ItemType::BRUSH)
         {
             Brush &brush = MapEditor::map.brushes.at(selectionIndex);
-            AxisHelper::SetComponent(vp.GetAxis(), brush.rotation, WrapAndSnapAngle(rotationGizmoSelectionAngle));
+            AxisHelper::SetComponent(vp.GetAxis(), brush.rotation, WrapAndSnapAngle(rotationGizmoSelectionAngle, rotationStep));
         }
     } else if (selectionType == ItemType::ACTOR)
     {

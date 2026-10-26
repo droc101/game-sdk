@@ -67,5 +67,5 @@ class SelectTool final: public EditorTool
 
         bool dragging = false;
 
-        static float WrapAndSnapAngle(float angle);
+        static float WrapAndSnapAngle(float angle, float step);
 };
