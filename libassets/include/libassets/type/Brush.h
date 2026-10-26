@@ -84,7 +84,7 @@ class Brush
 
         [[nodiscard]] const std::vector<TriangulatedFace> &GetTriangulatedMesh();
 
-        void CenterOrigin();
+        void CenterOrigin(bool fromWorldSpace = false);
 
         std::string editorName{};
 

@@ -108,7 +108,7 @@ Brush::Brush(const std::vector<glm::vec2> &points,
         faces.push_back(face);
     }
 
-    CenterOrigin();
+    CenterOrigin(true);
 }
 
 nlohmann::ordered_json Brush::GenerateJson() const
@@ -409,15 +409,17 @@ const std::vector<Brush::TriangulatedFace> &Brush::GetTriangulatedMesh()
     return triangulatedFaces;
 }
 
-void Brush::CenterOrigin()
+void Brush::CenterOrigin(const bool fromWorldSpace)
 {
-    const BoundingBox bb = BoundingBox(vertices);
-    const glm::vec3 newOrigin = bb.origin;
-
-    for (glm::vec3 &vertex: vertices)
+    if (fromWorldSpace)
     {
-        vertex = vertex - newOrigin;
+        origin = BoundingBox(vertices).origin;
+        for (glm::vec3 &vertex: vertices)
+        {
+            vertex = vertex - origin;
+        }
+    } else
+    {
+        origin = BoundingBox(vertices).origin + origin;
     }
-
-    origin = newOrigin;
 }
