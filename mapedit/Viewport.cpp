@@ -326,9 +326,9 @@ float Viewport::GetZoom() const
     return zoom;
 }
 
-ImVec2 Viewport::GetLocalMousePos() const
+glm::vec2 Viewport::GetLocalMousePos() const
 {
-    return lastLocalMousePos;
+    return glm::vec2{lastLocalMousePos.x, lastLocalMousePos.y};
 }
 
 glm::vec3 Viewport::GetWorldSpaceMousePos() const
@@ -620,7 +620,7 @@ void Viewport::UpdatePerspectiveHover()
     BindWorldBuffers();
     std::array<float, 3> rawObjectInfo{};
     lastHoverInfo = {
-        .objectType = 0,
+        .objectType = EditorTool::ItemType::NONE,
         .objectIndex = 0,
         .objectSubIndex = 0,
         .position = {},
@@ -633,9 +633,9 @@ void Viewport::UpdatePerspectiveHover()
     glReadBuffer(GL_COLOR_ATTACHMENT0);
     glReadPixels(mouseX, mouseY, 1, 1, GL_RGB, GL_FLOAT, rawObjectInfo.data());
 
-    lastHoverInfo.objectType = *reinterpret_cast<uint8_t *>(&rawObjectInfo.at(0));
+    lastHoverInfo.objectType = *reinterpret_cast<EditorTool::ItemType *>(&rawObjectInfo.at(0));
 
-    if (lastHoverInfo.objectType == static_cast<uint8_t>(EditorTool::ItemType::NONE))
+    if (lastHoverInfo.objectType == EditorTool::ItemType::NONE)
     {
         GLHelper::UnbindFramebuffer();
         return; // no need to bother reading the other values if nothing is hovered

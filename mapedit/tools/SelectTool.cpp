@@ -7,10 +7,9 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
 #include <format>
 #include <game_sdk/WindowManager.h>
-#include <glm/gtc/round.hpp>
+#include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
@@ -68,10 +67,27 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
         if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
         {
             dragging = true;
-            if (selectionType == ItemType::ACTOR || selectionType == ItemType::BRUSH)
+            if (selectionType == ItemType::BRUSH && vp.scaleGizmo != nullptr)
             {
-                const ImVec2 lmp = vp.GetLocalMousePos();
-
+                const ViewportRenderer::ViewportRenderScaleGizmo::Handle handle = vp.scaleGizmo->HoveredHandle();
+                if (handle != ViewportRenderer::ViewportRenderScaleGizmo::Handle::NONE)
+                {
+                    draggingScaleGizmo = true;
+                    scaleGizmoDragStart = worldSpaceHover;
+                    scaleGizmoDraggedHandle = handle;
+                    const Brush &brush = MapEditor::map.brushes.at(selectionIndex);
+                    scaleGizmoStartVertices = brush.vertices;
+                    scaleGizmoStartBounds = brush.GetAABB();
+                } else
+                {
+                    draggingScaleGizmo = false;
+                }
+            } else
+            {
+                draggingScaleGizmo = false;
+            }
+            if (!draggingScaleGizmo && (selectionType == ItemType::ACTOR || selectionType == ItemType::BRUSH))
+            {
                 glm::vec3 objectPosition;
                 glm::vec3 objectRotation;
                 if (selectionType == ItemType::ACTOR)
@@ -86,15 +102,13 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
                     objectRotation = brush.rotation;
                 }
 
-                const float dist = glm::distance({lmp.x, lmp.y}, vp.WorldToScreenPos(objectPosition));
-
-                if (dist >= 44 && dist <= 52)
+                const float dist = glm::distance(vp.GetLocalMousePos(), vp.WorldToScreenPos(objectPosition));
+                if (dist >= 44 && dist <= 52) // Nice magic numbers you've got there
                 {
                     draggingRotationGizmo = true;
 
                     const glm::vec2 actorScreenPos = vp.WorldToScreenPos(objectPosition);
-                    const glm::vec2 mousePos = {vp.GetLocalMousePos().x, vp.GetLocalMousePos().y};
-                    const glm::vec2 mousePosDifference = mousePos - actorScreenPos;
+                    const glm::vec2 mousePosDifference = vp.GetLocalMousePos() - actorScreenPos;
                     rotationGizmoLastAngle = atanf(mousePosDifference.x / mousePosDifference.y);
                     if (mousePosDifference.y > 0)
                     {
@@ -135,7 +149,19 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
         dragging = false;
     }
 
-    if (draggingRotationGizmo)
+    if (draggingScaleGizmo)
+    {
+        Brush &brush = MapEditor::map.brushes.at(selectionIndex);
+        const glm::mat4 transformMatrix = brush.GetTransformMatrix();
+        const glm::mat4 inverseTransformMatrix = glm::inverse(transformMatrix);
+        const glm::vec3 snappedDrag = MapEditor::SnapToGrid(worldSpaceHover - scaleGizmoDragStart);
+        for (size_t i = 0; i < brush.vertices.size(); i++)
+        {
+            glm::vec3 vertexWorldSpace = transformMatrix * glm::vec4{scaleGizmoStartVertices.at(i), 1};
+            vp.scaleGizmo->ScaleVertex(vertexWorldSpace, scaleGizmoStartBounds, snappedDrag, scaleGizmoDraggedHandle);
+            brush.vertices.at(i) = inverseTransformMatrix * glm::vec4{vertexWorldSpace, 1};
+        }
+    } else if (draggingRotationGizmo)
     {
         const glm::vec2 mousePos = {vp.GetLocalMousePos().x, vp.GetLocalMousePos().y};
 
@@ -170,11 +196,7 @@ void SelectTool::HandleDrag(const Viewport &vp, const bool isHovered, const glm:
             Brush &brush = MapEditor::map.brushes.at(selectionIndex);
             AxisHelper::SetComponent(vp.GetAxis(), brush.rotation, WrapAndSnapAngle(rotationGizmoSelectionAngle));
         }
-
-        return;
-    }
-
-    if (selectionType == ItemType::ACTOR)
+    } else if (selectionType == ItemType::ACTOR)
     {
         Actor &actor = MapEditor::map.actors.at(selectionIndex);
         const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
@@ -197,7 +219,7 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
         hoverType = ItemType::NONE;
         const Viewport::PerspectiveHoverInfo hoverInfo = vp.GetPerspectiveHover();
         std::vector<std::tuple<ItemType, size_t, float>> stack{};
-        if (hoverInfo.objectType != 0)
+        if (hoverInfo.objectType != ItemType::NONE)
         {
             stack.emplace_back(static_cast<ItemType>(hoverInfo.objectType), hoverInfo.objectIndex, 0.0f);
             hoverType = static_cast<ItemType>(hoverInfo.objectType);
@@ -205,8 +227,6 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
         }
         return stack;
     }
-
-    const ImVec2 localMousePos = vp.GetLocalMousePos();
 
     hoverType = ItemType::NONE;
     bool selectionHovered = false;
@@ -218,9 +238,7 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
         const Actor &a = MapEditor::map.actors.at(actorIndex);
         const glm::vec2 posScreenSpace = vp.WorldToScreenPos(a.position);
 
-        const glm::vec2 hoverScreenSpace = glm::vec2(localMousePos.x, localMousePos.y);
-
-        if (distance(posScreenSpace, hoverScreenSpace) <= MapEditor::HOVER_DISTANCE_PIXELS && isHovered)
+        if (glm::distance(posScreenSpace, vp.GetLocalMousePos()) <= MapEditor::HOVER_DISTANCE_PIXELS && isHovered)
         {
             if (selectionType == ItemType::ACTOR && selectionIndex == actorIndex)
             {
@@ -293,7 +311,7 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
     if (selectionType == ItemType::ACTOR)
     {
         const Actor &actor = MapEditor::map.actors.at(selectionIndex);
-        const float dist = glm::distance({localMousePos.x, localMousePos.y}, vp.WorldToScreenPos(actor.position));
+        const float dist = glm::distance(vp.GetLocalMousePos(), vp.WorldToScreenPos(actor.position));
         if (dist >= 44 && dist <= 52)
         {
             hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);
@@ -301,8 +319,11 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
     } else if (selectionType == ItemType::BRUSH)
     {
         const Brush &brush = MapEditor::map.brushes.at(selectionIndex);
-        const float dist = glm::distance({localMousePos.x, localMousePos.y}, vp.WorldToScreenPos(brush.origin));
-        if (dist >= 44 && dist <= 52)
+        const float dist = glm::distance(vp.GetLocalMousePos(), vp.WorldToScreenPos(brush.origin));
+
+        if ((dist >= 44 && dist <= 52) ||
+            (vp.scaleGizmo != nullptr &&
+             vp.scaleGizmo->HoveredHandle() != ViewportRenderer::ViewportRenderScaleGizmo::Handle::NONE))
         {
             hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);
         }
@@ -447,8 +468,7 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const bool isHove
         } else if (vp.Is3D() && selectionType == ItemType::BRUSH && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
         {
             const Viewport::PerspectiveHoverInfo hoverInfo = vp.GetPerspectiveHover();
-            if (hoverInfo.objectType == static_cast<uint8_t>(ItemType::BRUSH) &&
-                hoverInfo.objectIndex == selectionIndex)
+            if (hoverInfo.objectType == ItemType::BRUSH && hoverInfo.objectIndex == selectionIndex)
             {
                 MapEditor::toolType = MapEditor::EditorToolType::FACE;
                 MapEditor::tool = std::make_unique<FaceTool>(hoverInfo.objectIndex, hoverInfo.objectSubIndex);
@@ -496,19 +516,23 @@ void SelectTool::RenderViewport(Viewport &vp)
 
     ProcessViewportSelectMode(vp, isHovered, worldSpaceHover);
 
-    bool showGizmo = false;
-    ViewportRenderer::ViewportRenderGizmo gizmo = {
+    delete vp.scaleGizmo;
+    vp.scaleGizmo = nullptr;
+
+    bool showRotationGizmo = false;
+    ViewportRenderer::ViewportRenderRotationGizmo rotationGizmo = {
         .position = glm::vec3(0),
         .radiusInPx = 48,
     };
     if (selectionType == ItemType::ACTOR)
     {
-        gizmo.position = MapEditor::map.actors.at(selectionIndex).position;
-        showGizmo = true;
+        rotationGizmo.position = MapEditor::map.actors.at(selectionIndex).position;
+        showRotationGizmo = true;
     } else if (selectionType == ItemType::BRUSH)
     {
-        gizmo.position = MapEditor::map.brushes.at(selectionIndex).origin;
-        showGizmo = true;
+        rotationGizmo.position = MapEditor::map.brushes.at(selectionIndex).origin;
+        vp.scaleGizmo = new ViewportRenderer::ViewportRenderScaleGizmo(vp, MapEditor::map.brushes.at(selectionIndex));
+        showRotationGizmo = true;
     }
 
     const ViewportRenderer::ViewportRenderSettings vps = {
@@ -518,7 +542,8 @@ void SelectTool::RenderViewport(Viewport &vp)
         .selectionIndex = selectionIndex,
         .point = nullptr,
         .newActor = nullptr,
-        .gizmo = showGizmo ? &gizmo : nullptr,
+        .rotationGizmo = showRotationGizmo ? &rotationGizmo : nullptr,
+        .scaleGizmo = vp.scaleGizmo,
     };
     ViewportRenderer::RenderViewport(vp, vps);
 }
@@ -632,5 +657,7 @@ glm::vec3 SelectTool::SelectionCenter() const
         return b.origin;
     }
     assert(false);
+#ifdef NDEBUG
     return glm::vec3{0};
+#endif
 }

@@ -5,9 +5,11 @@
 #pragma once
 
 #include <cstddef>
+#include <libassets/type/BoundingBox.h>
 #include <tuple>
 #include <vector>
 #include "../Viewport.h"
+#include "../ViewportRenderer.h"
 #include "EditorTool.h"
 
 class SelectTool final: public EditorTool
@@ -54,6 +56,12 @@ class SelectTool final: public EditorTool
         bool draggingRotationGizmo = false;
         float rotationGizmoLastAngle = 0.0f;
         float rotationGizmoSelectionAngle = 0.0f;
+
+        bool draggingScaleGizmo = false;
+        glm::vec3 scaleGizmoDragStart{};
+        BoundingBox scaleGizmoStartBounds{};
+        std::vector<glm::vec3> scaleGizmoStartVertices{};
+        ViewportRenderer::ViewportRenderScaleGizmo::Handle scaleGizmoDraggedHandle{};
 
         std::vector<std::tuple<ItemType, size_t, float>> menuHoveredItems{};
 

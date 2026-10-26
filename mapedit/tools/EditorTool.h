@@ -5,7 +5,8 @@
 #pragma once
 
 #include <cstdint>
-#include "../Viewport.h"
+
+class Viewport;
 
 class EditorTool
 {

@@ -195,7 +195,7 @@ BoundingBox Brush::GetAABB() const
     std::vector<glm::vec3> points{};
     for (const glm::vec3 &vertex: vertices)
     {
-        points.emplace_back(matrix * glm::vec4(vertex, 0.0f));
+        points.emplace_back(matrix * glm::vec4(vertex, 1.0f));
     }
     return BoundingBox(points);
 }

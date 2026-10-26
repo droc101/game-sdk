@@ -74,7 +74,7 @@ void FaceTool::RenderViewport(Viewport &vp)
             hover = true;
             hoverBrush = hoverInfo.objectIndex;
             hoverFace = hoverInfo.objectSubIndex;
-        } else if (hoverInfo.objectType == 0 && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        } else if (hoverInfo.objectType == ItemType::NONE && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         {
             hasSelection = false;
         }

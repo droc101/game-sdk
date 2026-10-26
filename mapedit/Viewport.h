@@ -13,6 +13,8 @@
 #include <glm/vec3.hpp>
 #include <imgui.h>
 #include <libassets/type/Axis.h>
+#include "tools/EditorTool.h"
+#include "ViewportRenderer.h"
 
 class Viewport
 {
@@ -27,7 +29,7 @@ class Viewport
 
         struct PerspectiveHoverInfo
         {
-                uint8_t objectType;
+                EditorTool::ItemType objectType;
                 size_t objectIndex;
                 size_t objectSubIndex;
                 glm::vec3 position;
@@ -96,7 +98,7 @@ class Viewport
         /**
          * Get the local mouse position in the viewport
          */
-        [[nodiscard]] ImVec2 GetLocalMousePos() const;
+        [[nodiscard]] glm::vec2 GetLocalMousePos() const;
 
         /**
          * Adjust zoom
@@ -129,6 +131,9 @@ class Viewport
         [[nodiscard]] PerspectiveHoverInfo GetPerspectiveHover() const;
 
         static constexpr float ZOOM_STEP = 20.0f;
+
+        // TODO: This is a hacky workaround
+        ViewportRenderer::ViewportRenderScaleGizmo *scaleGizmo{};
 
     private:
         struct WorldBuffersFramebuffer
