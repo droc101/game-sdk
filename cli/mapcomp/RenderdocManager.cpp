@@ -3,12 +3,12 @@
 //
 
 #include "RenderdocManager.h"
+
+#ifdef ENABLE_RENDERDOC
 #include <cerrno>
 #include <cstring>
 #include <dlfcn.h>
 #include <libassets/util/Logger.h>
-
-#ifdef ENABLE_RENDERDOC
 #include <renderdoc_app.h>
 #endif
 
