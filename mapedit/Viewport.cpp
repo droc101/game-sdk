@@ -614,6 +614,11 @@ Viewport::PerspectiveHoverInfo Viewport::GetPerspectiveHover() const
     return lastHoverInfo;
 }
 
+void Viewport::ClearPerspectiveHover()
+{
+    lastHoverInfo.objectType = EditorTool::ItemType::NONE;
+}
+
 void Viewport::UpdatePerspectiveHover()
 {
     assert(type == ViewportType::PERSPECTIVE);

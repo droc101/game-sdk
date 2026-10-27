@@ -129,6 +129,8 @@ class Viewport
 
         [[nodiscard]] PerspectiveHoverInfo GetPerspectiveHover() const;
 
+        void ClearPerspectiveHover();
+
         static constexpr float ZOOM_STEP = 20.0f;
 
     private:

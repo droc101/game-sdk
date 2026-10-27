@@ -494,9 +494,10 @@ void MapeditWindow::Render()
 
     if (newPressed)
     {
-        MapEditor::map = MapAsset();
         MapEditor::toolType = MapEditor::EditorToolType::SELECT;
         MapEditor::tool = std::make_unique<SelectTool>();
+        vpPerspective.ClearPerspectiveHover();
+        MapEditor::map = MapAsset();
         MapEditor::mapFile = "";
     }
     if (openPressed)
