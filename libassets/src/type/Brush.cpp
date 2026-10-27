@@ -128,9 +128,9 @@ nlohmann::ordered_json Brush::GenerateJson() const
     for (const glm::vec3 &vertex: vertices)
     {
         nlohmann::ordered_json vertexJson = nlohmann::ordered_json();
-        vertexJson["x"] = vertex.x;
-        vertexJson["y"] = vertex.y;
-        vertexJson["z"] = vertex.z;
+        vertexJson["x"] = std::round(vertex.x * 10.0f) / 10.0f;
+        vertexJson["y"] = std::round(vertex.y * 10.0f) / 10.0f;
+        vertexJson["z"] = std::round(vertex.z * 10.0f) / 10.0f;
         json["vertices"].push_back(vertexJson);
     }
 
