@@ -769,15 +769,20 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
         const GLint brushPosAttrib = glGetAttribLocation(brushProgram, "VERTEX");
         const GLint brushUvAttrib = glGetAttribLocation(brushProgram, "VERTEX_UV");
         const GLint brushNormalAttrib = glGetAttribLocation(brushProgram, "VERTEX_NORMAL");
-        glVertexAttribPointer(brushPosAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(MapVertex), nullptr);
+        glVertexAttribPointer(brushPosAttrib,
+                              decltype(MapVertex::position)::length(),
+                              GL_FLOAT,
+                              GL_FALSE,
+                              sizeof(MapVertex),
+                              reinterpret_cast<const void *>(offsetof(MapVertex, position)));
         glVertexAttribPointer(brushUvAttrib,
-                              2,
+                              decltype(MapVertex::uv)::length(),
                               GL_FLOAT,
                               GL_FALSE,
                               sizeof(MapVertex),
                               reinterpret_cast<const void *>(offsetof(MapVertex, uv)));
         glVertexAttribPointer(brushNormalAttrib,
-                              3,
+                              decltype(MapVertex::normal)::length(),
                               GL_FLOAT,
                               GL_FALSE,
                               sizeof(MapVertex),
@@ -793,6 +798,11 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
         uint32_t indexOffset = 0;
         for (const BrushFaceCommand &command: brushFaceCommands)
         {
+            const LevelMaterialAsset &material = MaterialCache::GetMaterial(command.face.material);
+            if (!MapEditor::showInvisibleFaces && material.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
+            {
+                continue;
+            }
             vertices.insert(vertices.end(), command.face.vertices.begin(), command.face.vertices.end());
             for (const uint32_t index: command.face.indices)
             {
@@ -1001,6 +1011,11 @@ void MapRenderer::ExecuteObjectBufferCommands(const glm::mat4 &viewMatrix)
         uint32_t indexOffset = 0;
         for (const ObjectBufferBrushFaceCommand &command: objectBufferBrushFaceCommands)
         {
+            const LevelMaterialAsset &material = MaterialCache::GetMaterial(command.face.material);
+            if (!MapEditor::showInvisibleFaces && material.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
+            {
+                continue;
+            }
             vertices.insert(vertices.end(), command.face.vertices.begin(), command.face.vertices.end());
             for (const uint32_t index: command.face.indices)
             {
@@ -1019,9 +1034,13 @@ void MapRenderer::ExecuteObjectBufferCommands(const glm::mat4 &viewMatrix)
                      GL_STREAM_DRAW);
 
         indexOffset = 0;
-        for (size_t i = 0; i < objectBufferBrushFaceCommands.size(); i++)
+        for (const ObjectBufferBrushFaceCommand &command: objectBufferBrushFaceCommands)
         {
-            const ObjectBufferBrushFaceCommand &command = objectBufferBrushFaceCommands.at(i);
+            const LevelMaterialAsset &material = MaterialCache::GetMaterial(command.face.material);
+            if (!MapEditor::showInvisibleFaces && material.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
+            {
+                continue;
+            }
 
             glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "VIEW_MATRIX"),
                                1,
