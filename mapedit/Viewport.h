@@ -131,6 +131,11 @@ class Viewport
 
         void ClearPerspectiveHover();
 
+        /**
+         * Check if this viewport has captured the mouse (relative mouse mode while dragging the perspective camera)
+         */
+        [[nodiscard]] bool IsMouseCaptured() const;
+
         static constexpr float ZOOM_STEP = 20.0f;
 
     private:
@@ -173,7 +178,16 @@ class Viewport
         glm::vec3 perspectiveCameraRotation{};
         float perspectiveCameraSpeed = 4.0f;
 
+        /// Whether the mouse is currently captured by this viewport
+        bool mouseCaptured = false;
+        /// The mouse position (in SDL window coordinates) to restore when the capture ends
+        ImVec2 mouseCaptureStartPos{};
+
         void RecalculateMatrices();
+
+        void BeginMouseCapture(ImGuiMouseButton button);
+
+        void EndMouseCapture();
 
         /// Get the unit look direction of the perspective camera (rotation x = pitch, y = yaw)
         [[nodiscard]] glm::vec3 GetPerspectiveForward() const;

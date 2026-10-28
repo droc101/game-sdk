@@ -123,8 +123,11 @@ bool MapEditor::BrushFaceToolWindow(Brush::Face &face)
     if (ImGui::IsItemActive())
     {
         ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+    }
+    if (ImGui::IsItemActivated())
+    {
         (void)SDL_SetWindowRelativeMouseMode(WindowManager::Get().GetCurrentWindow()->GetWindow(), true);
-    } else
+    } else if (ImGui::IsItemDeactivated())
     {
         (void)SDL_SetWindowRelativeMouseMode(WindowManager::Get().GetCurrentWindow()->GetWindow(), false);
     }

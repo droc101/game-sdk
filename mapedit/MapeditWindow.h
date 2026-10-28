@@ -22,6 +22,8 @@ class MapeditWindow final: public Window
 
         void FileDropped(const std::string &filePath) override;
 
+        bool ProcessEvent(SDL_Event *event) override;
+
         [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:

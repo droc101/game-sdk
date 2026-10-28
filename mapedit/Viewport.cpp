@@ -3,7 +3,9 @@
 //
 
 #include "Viewport.h"
+#include <SDL3/SDL_video.h>
 #include <game_sdk/gl/GLHelper.h>
+#include <game_sdk/WindowManager.h>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/fwd.hpp>
@@ -11,6 +13,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <libassets/asset/MapAsset.h>
+#include <SDL3/SDL_mouse.h>
 #include <string>
 #include "MapEditor.h"
 
@@ -112,7 +115,7 @@ void Viewport::Render()
 
     MapEditor::tool->RenderViewport(*this);
 
-    if (type == ViewportType::PERSPECTIVE)
+    if (type == ViewportType::PERSPECTIVE && !mouseCaptured)
     {
         UpdatePerspectiveHover();
     }
@@ -173,7 +176,7 @@ void Viewport::Render()
         ImGui::SetWindowFocus();
     }
 
-    if (ImGui::IsWindowFocused() && ImGui::IsWindowHovered())
+    if (mouseCaptured || (ImGui::IsWindowFocused() && ImGui::IsWindowHovered()))
     {
         if (type != ViewportType::PERSPECTIVE)
         {
@@ -206,17 +209,30 @@ void Viewport::Render()
         } else
         {
             ImGuiIO &io = ImGui::GetIO();
-            if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+            if (!mouseCaptured)
+            {
+                if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+                {
+                    BeginMouseCapture(ImGuiMouseButton_Right);
+                } else if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
+                {
+                    BeginMouseCapture(ImGuiMouseButton_Middle);
+                }
+            } else if (!ImGui::IsMouseDown(ImGuiMouseButton_Right) && !ImGui::IsMouseDown(ImGuiMouseButton_Middle))
+            {
+                EndMouseCapture();
+            }
+            if (mouseCaptured)
             {
                 io.WantCaptureMouse = false;
-                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-                const ImVec2 dragDelta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
-                perspectiveCameraRotation.x += glm::radians(dragDelta.y / -5.0f);
-                perspectiveCameraRotation.y += glm::radians(dragDelta.x / 5.0f);
+                ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+                glm::vec2 mouseDelta{};
+                (void)SDL_GetRelativeMouseState(&mouseDelta.x, &mouseDelta.y);
+                perspectiveCameraRotation.x += glm::radians(mouseDelta.y / -5.0f);
+                perspectiveCameraRotation.y += glm::radians(mouseDelta.x / 5.0f);
                 perspectiveCameraRotation.x = glm::clamp(perspectiveCameraRotation.x,
                                                          glm::radians(-89.0f),
                                                          glm::radians(89.0f));
-                ImGui::ResetMouseDragDelta(ImGuiMouseButton_Right);
             }
             glm::vec3 moveDir{};
             if (ImGui::IsKeyDown(ImGuiKey_W))
@@ -232,6 +248,14 @@ void Viewport::Render()
             } else if (ImGui::IsKeyDown(ImGuiKey_D))
             {
                 moveDir.x = 1;
+            }
+
+            if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
+            {
+                moveDir *= 2.0f;
+            } else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt))
+            {
+                moveDir /= 8.0f;
             }
 
             perspectiveCameraSpeed += ImGui::GetIO().MouseWheel;
@@ -617,6 +641,32 @@ Viewport::PerspectiveHoverInfo Viewport::GetPerspectiveHover() const
 void Viewport::ClearPerspectiveHover()
 {
     lastHoverInfo.objectType = EditorTool::ItemType::NONE;
+}
+
+bool Viewport::IsMouseCaptured() const
+{
+    return mouseCaptured;
+}
+
+void Viewport::BeginMouseCapture(const ImGuiMouseButton button)
+{
+    assert(type == ViewportType::PERSPECTIVE);
+    mouseCaptured = true;
+    const ImGuiIO &io = ImGui::GetIO();
+    assert(button < (sizeof(io.MouseClickedPos) / sizeof(*io.MouseClickedPos)));
+    mouseCaptureStartPos = io.MouseClickedPos[button]; // NOLINT(*-pro-bounds-constant-array-index)
+    ClearPerspectiveHover();
+    (void)SDL_SetWindowRelativeMouseMode(WindowManager::Get().GetCurrentWindow()->GetWindow(), true);
+    (void)SDL_GetRelativeMouseState(nullptr, nullptr);
+}
+
+void Viewport::EndMouseCapture()
+{
+    mouseCaptured = false;
+    SDL_Window *window = WindowManager::Get().GetCurrentWindow()->GetWindow();
+    SDL_WarpMouseInWindow(window, mouseCaptureStartPos.x, mouseCaptureStartPos.y);
+    (void)SDL_SetWindowRelativeMouseMode(window, false);
+    ImGui::GetIO().AddMousePosEvent(mouseCaptureStartPos.x, mouseCaptureStartPos.y);
 }
 
 void Viewport::UpdatePerspectiveHover()

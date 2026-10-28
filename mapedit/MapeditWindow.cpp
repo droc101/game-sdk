@@ -20,6 +20,7 @@
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
+#include <SDL3/SDL_events.h>
 #include <SDL3/SDL_video.h>
 #include "ActorBrowserWindow.h"
 #include "MapCompileWindow.h"
@@ -100,6 +101,11 @@ void MapeditWindow::FileDropped(const std::string &filePath)
     {
         OpenJson(filePath);
     }
+}
+
+bool MapeditWindow::ProcessEvent(SDL_Event *event)
+{
+    return event->type == SDL_EVENT_MOUSE_MOTION && vpPerspective.IsMouseCaptured();
 }
 
 void MapeditWindow::Destroy()
