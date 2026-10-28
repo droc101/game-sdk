@@ -44,13 +44,14 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
 {
     GLHelper::Clear();
 
-    glm::mat4 matrix = vp.GetMatrix();
+    const glm::mat4 matrix = vp.GetMatrix();
 
     if (vp.Is3D() && MapEditor::map.hasSky)
     {
         glm::mat4 skyWorldMatrix = glm::mat4(1.0);
         skyWorldMatrix = glm::translate(skyWorldMatrix, vp.GetPerspectiveCameraPosition());
-        MapRenderer::RenderModelTextured("model/sky.gmdl", matrix, skyWorldMatrix, 0, Color(-1), Color(0));
+        MapRenderer::CmdTexturedModel("model/sky.gmdl", skyWorldMatrix, 0, Color(-1), Color(0));
+        MapRenderer::ExecuteCommands(matrix);
         GLHelper::ClearDepth();
     }
     MapRenderer::RenderViewportGrid(vp);
@@ -65,7 +66,7 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
         {
             continue;
         }
-        RenderActor(MapEditor::map.actors.at(actorIndex), matrix, vp, Color(0));
+        RenderActor(MapEditor::map.actors.at(actorIndex), vp, Color(0));
     }
 
     for (size_t brushIndex = 0; brushIndex < MapEditor::map.brushes.size(); brushIndex++)
@@ -82,27 +83,27 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
         {
             continue;
         }
-        RenderBrush(vp, settings, brushIndex, matrix);
+        RenderBrush(vp, settings, brushIndex);
     }
 
     if (settings.point != nullptr)
     {
-        RenderPoint(settings.point, matrix);
+        RenderPoint(settings.point);
     }
 
     if (settings.newActor != nullptr)
     {
-        RenderNewActor(vp, settings.newActor, matrix);
+        RenderNewActor(vp, settings.newActor);
     }
 
     if (settings.newPrimitive != nullptr)
     {
-        RenderNewPrimitive(vp, settings.newPrimitive, matrix);
+        RenderNewPrimitive(vp, settings.newPrimitive);
     }
 
     if (settings.newPolygon != nullptr)
     {
-        RenderNewPolygon(vp, settings.newPolygon, matrix);
+        RenderNewPolygon(vp, settings.newPolygon);
     }
 
     if (settings.hoverType != settings.selectionType || settings.hoverIndex != settings.selectionIndex)
@@ -111,16 +112,18 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
         {
             if (!vp.Is3D())
             {
+                MapRenderer::ExecuteCommands(matrix);
                 GLHelper::ClearDepth();
             }
-            RenderBrush(vp, settings, settings.hoverIndex, matrix);
+            RenderBrush(vp, settings, settings.hoverIndex);
         } else if (settings.hoverType == EditorTool::ItemType::ACTOR)
         {
             if (!vp.Is3D())
             {
+                MapRenderer::ExecuteCommands(matrix);
                 GLHelper::ClearDepth();
             }
-            RenderActor(MapEditor::map.actors.at(settings.hoverIndex), matrix, vp, Color(1.0f, 0.0f, 0.0f, 0.125f));
+            RenderActor(MapEditor::map.actors.at(settings.hoverIndex), vp, Color(1.0f, 0.0f, 0.0f, 0.125f));
         }
     }
 
@@ -128,55 +131,59 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
     {
         if (!vp.Is3D())
         {
+            MapRenderer::ExecuteCommands(matrix);
             GLHelper::ClearDepth();
         }
-        RenderBrush(vp, settings, settings.selectionIndex, matrix);
+        RenderBrush(vp, settings, settings.selectionIndex);
     } else if (settings.selectionType == EditorTool::ItemType::ACTOR)
     {
         if (!vp.Is3D())
         {
+            MapRenderer::ExecuteCommands(matrix);
             GLHelper::ClearDepth();
         }
-        RenderActor(MapEditor::map.actors.at(settings.selectionIndex), matrix, vp, Color(1.0f, 0.0f, 0.0f, 0.25f));
+        RenderActor(MapEditor::map.actors.at(settings.selectionIndex), vp, Color(1.0f, 0.0f, 0.0f, 0.25f));
     }
 
     if (settings.brushFocusMode)
     {
         if (!vp.Is3D())
         {
+            MapRenderer::ExecuteCommands(matrix);
             GLHelper::ClearDepth();
         }
-        RenderBrush(vp, settings, settings.focusedBrushIndex, matrix);
+        RenderBrush(vp, settings, settings.focusedBrushIndex);
     }
 
     if (settings.rotationGizmo != nullptr)
     {
         if (!vp.Is3D())
         {
+            MapRenderer::ExecuteCommands(matrix);
             GLHelper::ClearDepth();
         }
-        RenderRotationGizmo(vp, settings.rotationGizmo, matrix);
+        RenderRotationGizmo(vp, settings.rotationGizmo);
     }
 
     if (settings.resizeGizmo != nullptr)
     {
         if (!vp.Is3D())
         {
+            MapRenderer::ExecuteCommands(matrix);
             GLHelper::ClearDepth();
         }
-        RenderResizeGizmo(vp, settings.resizeGizmo, matrix);
+        RenderResizeGizmo(vp, settings.resizeGizmo);
     }
 
-    if (vp.Is3D())
+    MapRenderer::ExecuteCommands(matrix);
+
+    if (vp.Is3D() && settings.renderObjectBuffers)
     {
         WorldBuffersRenderer::RenderWorldBuffers(vp);
     }
 }
 
-void ViewportRenderer::RenderBrush(const Viewport &vp,
-                                   const ViewportRenderSettings &settings,
-                                   const size_t brushIndex,
-                                   const glm::mat4 &matrix)
+void ViewportRenderer::RenderBrush(const Viewport &vp, const ViewportRenderSettings &settings, const size_t brushIndex)
 {
     Brush &brush = MapEditor::map.brushes.at(brushIndex);
 
@@ -205,7 +212,7 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
                     const glm::vec3 startPos = brushMatrix * glm::vec4(edge.first, 1.0f);
                     const glm::vec3 endPos = brushMatrix * glm::vec4(edge.second, 1.0f);
 
-                    MapRenderer::RenderLine(startPos, endPos, Color(1.0f, 0.25f, 0.25f, 1.0f), matrix, 4);
+                    MapRenderer::CmdLine(startPos, endPos, Color(1.0f, 0.25f, 0.25f, 1.0f), 4);
                 }
                 modColor = Color(1.0f, 0.0f, 0.0f, 0.25f);
             } else if (settings.hoverType == EditorTool::ItemType::FACE &&
@@ -220,7 +227,7 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
                     const glm::vec3 startPos = brushMatrix * glm::vec4(edge.first, 1.0f);
                     const glm::vec3 endPos = brushMatrix * glm::vec4(edge.second, 1.0f);
 
-                    MapRenderer::RenderLine(startPos, endPos, Color(0.5f, 0.5f, 0.5f, 1.0f), matrix, 4);
+                    MapRenderer::CmdLine(startPos, endPos, Color(0.5f, 0.5f, 0.5f, 1.0f), 4);
                 }
                 modColor = Color(1.0f, 0.0f, 0.0f, 0.125f);
             } else if (settings.selectionType == EditorTool::ItemType::BRUSH && settings.selectionIndex == brushIndex)
@@ -230,7 +237,7 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
             {
                 modColor = Color(1.0f, 0.0f, 0.0f, 0.125f);
             }
-            MapRenderer::RenderBrushFace(triangulatedFaces.at(i), matrix, brushMatrix, modColor);
+            MapRenderer::CmdBrushFace(triangulatedFaces.at(i), brushMatrix, modColor);
         }
         return;
     }
@@ -247,7 +254,7 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
         c = Color(.8, .8, .8, 1);
     }
 
-    MapRenderer::RenderBillboardPoint(brush.origin, 10.0f, c, matrix);
+    MapRenderer::CmdPoint(brush.origin, 10.0f, c);
 
     const std::unordered_set<std::pair<glm::vec3, glm::vec3>> edges = brush.GetUniqueEdges();
 
@@ -256,16 +263,16 @@ void ViewportRenderer::RenderBrush(const Viewport &vp,
         const glm::vec3 startPos = brushMatrix * glm::vec4(edge.first, 1.0f);
         const glm::vec3 endPos = brushMatrix * glm::vec4(edge.second, 1.0f);
 
-        MapRenderer::RenderLine(startPos, endPos, c, matrix, 4);
+        MapRenderer::CmdLine(startPos, endPos, c, 4);
     }
 }
 
-void ViewportRenderer::RenderPoint(const ViewportRenderPoint *point, const glm::mat4 &matrix)
+void ViewportRenderer::RenderPoint(const ViewportRenderPoint *point)
 {
-    MapRenderer::RenderBillboardPoint(point->pos, point->size, point->color, matrix);
+    MapRenderer::CmdPoint(point->pos, point->size, point->color);
 }
 
-void ViewportRenderer::RenderNewPrimitive(Viewport &vp, const ViewportRenderNewPrimitive *prim, glm::mat4 &matrix)
+void ViewportRenderer::RenderNewPrimitive(Viewport &vp, const ViewportRenderNewPrimitive *prim)
 {
     const std::array<glm::vec2, 4> boxPoints = {
         prim->aabbStart,
@@ -280,11 +287,11 @@ void ViewportRenderer::RenderNewPrimitive(Viewport &vp, const ViewportRenderNewP
         const glm::vec3 startPointBack = AxisHelper::Make3D(prim->axis, boxPoints.at(i), prim->endDepth);
         const glm::vec3 endPointFront = AxisHelper::Make3D(prim->axis, boxPoints.at(nextIndex), prim->startDepth);
         const glm::vec3 endPointBack = AxisHelper::Make3D(prim->axis, boxPoints.at(nextIndex), prim->endDepth);
-        MapRenderer::RenderLine(startPointFront, endPointFront, Color(.6, 6, 0, 1), matrix, 2);
+        MapRenderer::CmdLine(startPointFront, endPointFront, Color(.6, 6, 0, 1), 2);
         if (vp.Is3D() || vp.GetAxis() != prim->axis)
         {
-            MapRenderer::RenderLine(startPointBack, endPointBack, Color(.6, .6, 0, 1), matrix, 2);
-            MapRenderer::RenderLine(startPointFront, startPointBack, Color(.3, .3, 0, 1), matrix, 1);
+            MapRenderer::CmdLine(startPointBack, endPointBack, Color(.6, .6, 0, 1), 2);
+            MapRenderer::CmdLine(startPointFront, startPointBack, Color(.3, .3, 0, 1), 1);
         }
     }
 
@@ -297,21 +304,20 @@ void ViewportRenderer::RenderNewPrimitive(Viewport &vp, const ViewportRenderNewP
         const glm::vec3 endPointBack = AxisHelper::Make3D(prim->axis, prim->points.at(nextIndex), prim->endDepth);
         if (!vp.Is3D() && vp.GetAxis() == prim->axis)
         {
-            MapRenderer::RenderBillboardPoint(startPointFront + AxisHelper::Make3D(prim->axis, glm::vec2(0), 0.1),
-                                              10,
-                                              Color(1, 0, 0, 1),
-                                              matrix);
+            MapRenderer::CmdPoint(startPointFront + AxisHelper::Make3D(prim->axis, glm::vec2(0), 0.1),
+                                  10,
+                                  Color(1, 0, 0, 1));
         }
-        MapRenderer::RenderLine(startPointFront, endPointFront, Colors::WHITE, matrix, 4);
+        MapRenderer::CmdLine(startPointFront, endPointFront, Colors::WHITE, 4);
         if (vp.Is3D() || vp.GetAxis() != prim->axis)
         {
-            MapRenderer::RenderLine(startPointBack, endPointBack, Colors::WHITE, matrix, 4);
-            MapRenderer::RenderLine(startPointFront, startPointBack, Colors::WHITE, matrix, 4);
+            MapRenderer::CmdLine(startPointBack, endPointBack, Colors::WHITE, 4);
+            MapRenderer::CmdLine(startPointFront, startPointBack, Colors::WHITE, 4);
         }
     }
 }
 
-void ViewportRenderer::RenderNewActor(const Viewport &vp, const ViewportRenderNewActor *actor, const glm::mat4 &matrix)
+void ViewportRenderer::RenderNewActor(const Viewport &vp, const ViewportRenderNewActor *actor)
 {
     const ActorDefinition &newActorDef = MapEditor::adm.GetActorDefinition(actor->className);
     Actor tempActor{};
@@ -319,12 +325,10 @@ void ViewportRenderer::RenderNewActor(const Viewport &vp, const ViewportRenderNe
     tempActor.position = actor->position;
     tempActor.rotation = actor->rotation;
     tempActor.className = actor->className;
-    RenderActor(tempActor, matrix, vp, Color(1.0f, 0.0f, 0.0f, 0.25f));
+    RenderActor(tempActor, vp, Color(1.0f, 0.0f, 0.0f, 0.25f));
 }
 
-void ViewportRenderer::RenderNewPolygon(const Viewport &vp,
-                                        const ViewportRenderNewPolygon *poly,
-                                        const glm::mat4 &matrix)
+void ViewportRenderer::RenderNewPolygon(const Viewport &vp, const ViewportRenderNewPolygon *poly)
 {
     for (size_t vertexIndex = 0; vertexIndex < poly->points.size(); vertexIndex++)
     {
@@ -346,24 +350,21 @@ void ViewportRenderer::RenderNewPolygon(const Viewport &vp,
 
         if (!vp.Is3D() && vp.GetAxis() == poly->axis)
         {
-            MapRenderer::RenderBillboardPoint(startFront + AxisHelper::Make3D(poly->axis, glm::vec2(0), 0.1),
-                                              10,
-                                              Color(1, 0, 0, 1),
-                                              matrix);
+            MapRenderer::CmdPoint(startFront + AxisHelper::Make3D(poly->axis, glm::vec2(0), 0.1),
+                                  10,
+                                  Color(1, 0, 0, 1));
         }
         if (vp.Is3D() || vp.GetAxis() != poly->axis)
         {
-            MapRenderer::RenderLine(startBack, endBack, Colors::WHITE, matrix, 4);
-            MapRenderer::RenderLine(startFront, startBack, Color(.6, .6, .6, 1), matrix, 4);
+            MapRenderer::CmdLine(startBack, endBack, Colors::WHITE, 4);
+            MapRenderer::CmdLine(startFront, startBack, Color(.6, .6, .6, 1), 4);
         }
 
-        MapRenderer::RenderLine(startFront, endFront, Colors::WHITE, matrix, 4);
+        MapRenderer::CmdLine(startFront, endFront, Colors::WHITE, 4);
     }
 }
 
-void ViewportRenderer::RenderRotationGizmo(const Viewport &vp,
-                                           const ViewportRenderRotationGizmo *rotationGizmo,
-                                           const glm::mat4 &matrix)
+void ViewportRenderer::RenderRotationGizmo(const Viewport &vp, const ViewportRenderRotationGizmo *rotationGizmo)
 {
     if (vp.Is3D())
     {
@@ -392,37 +393,34 @@ void ViewportRenderer::RenderRotationGizmo(const Viewport &vp,
         switch (vp.GetType())
         {
             case Viewport::ViewportType::TOP_DOWN_XZ:
-                MapRenderer::RenderLine(glm::vec3(startPoint.x + rotationGizmo->position.x,
-                                                  rotationGizmo->position.y,
-                                                  startPoint.y + rotationGizmo->position.z),
-                                        glm::vec3(endPoint.x + rotationGizmo->position.x,
-                                                  rotationGizmo->position.y,
-                                                  endPoint.y + rotationGizmo->position.z),
-                                        Color(0x40C040FF),
-                                        matrix,
-                                        4);
+                MapRenderer::CmdLine(glm::vec3(startPoint.x + rotationGizmo->position.x,
+                                               rotationGizmo->position.y,
+                                               startPoint.y + rotationGizmo->position.z),
+                                     glm::vec3(endPoint.x + rotationGizmo->position.x,
+                                               rotationGizmo->position.y,
+                                               endPoint.y + rotationGizmo->position.z),
+                                     Color(0x40C040FF),
+                                     4);
                 break;
             case Viewport::ViewportType::FRONT_XY:
-                MapRenderer::RenderLine(glm::vec3(startPoint.x + rotationGizmo->position.x,
-                                                  startPoint.y + rotationGizmo->position.y,
-                                                  rotationGizmo->position.z),
-                                        glm::vec3(endPoint.x + rotationGizmo->position.x,
-                                                  endPoint.y + rotationGizmo->position.y,
-                                                  rotationGizmo->position.z),
-                                        Color(0x4040C0FF),
-                                        matrix,
-                                        4);
+                MapRenderer::CmdLine(glm::vec3(startPoint.x + rotationGizmo->position.x,
+                                               startPoint.y + rotationGizmo->position.y,
+                                               rotationGizmo->position.z),
+                                     glm::vec3(endPoint.x + rotationGizmo->position.x,
+                                               endPoint.y + rotationGizmo->position.y,
+                                               rotationGizmo->position.z),
+                                     Color(0x4040C0FF),
+                                     4);
                 break;
             case Viewport::ViewportType::SIDE_YZ:
-                MapRenderer::RenderLine(glm::vec3(rotationGizmo->position.x,
-                                                  startPoint.x + rotationGizmo->position.y,
-                                                  startPoint.y + rotationGizmo->position.z),
-                                        glm::vec3(rotationGizmo->position.x,
-                                                  endPoint.x + rotationGizmo->position.y,
-                                                  endPoint.y + rotationGizmo->position.z),
-                                        Color(0xC04040FF),
-                                        matrix,
-                                        4);
+                MapRenderer::CmdLine(glm::vec3(rotationGizmo->position.x,
+                                               startPoint.x + rotationGizmo->position.y,
+                                               startPoint.y + rotationGizmo->position.z),
+                                     glm::vec3(rotationGizmo->position.x,
+                                               endPoint.x + rotationGizmo->position.y,
+                                               endPoint.y + rotationGizmo->position.z),
+                                     Color(0xC04040FF),
+                                     4);
                 break;
             default:
                 break;
@@ -430,9 +428,7 @@ void ViewportRenderer::RenderRotationGizmo(const Viewport &vp,
     }
 }
 
-void ViewportRenderer::RenderResizeGizmo(const Viewport &vp,
-                                         const ViewportRenderResizeGizmo *resizeGizmo,
-                                         const glm::mat4 &matrix)
+void ViewportRenderer::RenderResizeGizmo(const Viewport &vp, const ViewportRenderResizeGizmo *resizeGizmo)
 {
     if (vp.Is3D())
     {
@@ -443,20 +439,17 @@ void ViewportRenderer::RenderResizeGizmo(const Viewport &vp,
 
     for (const glm::vec3 &point: points)
     {
-        MapRenderer::RenderBillboardPoint(point, ResizeGizmoHelper::POINT_SIZE, Color(0xFF0000FF), matrix);
+        MapRenderer::CmdPoint(point, ResizeGizmoHelper::POINT_SIZE, Color(0xFF0000FF));
     }
     for (const std::pair<uint32_t, uint32_t> &line: ResizeGizmoHelper::LINES)
     {
-        MapRenderer::RenderBillboardPoint((points.at(line.second) - points.at(line.first)) / 2.0f +
-                                                  points.at(line.first),
-                                          ResizeGizmoHelper::POINT_SIZE,
-                                          Color(0xFF0000FF),
-                                          matrix);
-        MapRenderer::RenderLine(points.at(line.first),
-                                points.at(line.second),
-                                Color(0xD0D000FF),
-                                matrix,
-                                ResizeGizmoHelper::LINE_THICKNESS);
+        MapRenderer::CmdPoint((points.at(line.second) - points.at(line.first)) / 2.0f + points.at(line.first),
+                              ResizeGizmoHelper::POINT_SIZE,
+                              Color(0xFF0000FF));
+        MapRenderer::CmdLine(points.at(line.first),
+                             points.at(line.second),
+                             Color(0xD0D000FF),
+                             ResizeGizmoHelper::LINE_THICKNESS);
     }
 }
 
@@ -490,10 +483,7 @@ bool ViewportRenderer::BrushIsCulled(const Brush &brush, const Viewport &vp)
     return false;
 }
 
-void ViewportRenderer::RenderActor(const Actor &a,
-                                   const glm::mat4 &matrix,
-                                   const Viewport &vp,
-                                   const Color &overlayColor)
+void ViewportRenderer::RenderActor(const Actor &a, const Viewport &vp, const Color &overlayColor)
 {
     if (MapEditor::culling && ActorIsCulled(a, vp))
     {
@@ -526,38 +516,36 @@ void ViewportRenderer::RenderActor(const Actor &a,
         switch (rdef.get()->GetType())
         {
             case RenderDefinition::RenderDefinitionType::RD_TYPE_BOX:
-                RenderBoxRdef(dynamic_cast<BoxRenderDefinition *>(rdef.get()), a, worldMatrix, matrix);
+                RenderBoxRdef(dynamic_cast<BoxRenderDefinition *>(rdef.get()), a, worldMatrix);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_MODEL:
                 RenderModelRdef(dynamic_cast<ModelRenderDefinition *>(rdef.get()),
                                 a,
                                 worldMatrix,
-                                matrix,
                                 vp.Is3D(),
                                 overlayColor);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_ORIENTATION:
-                RenderOrientationRdef(dynamic_cast<OrientationRenderDefinition *>(rdef.get()), a, matrix, vp);
+                RenderOrientationRdef(dynamic_cast<OrientationRenderDefinition *>(rdef.get()), a, vp);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_POINT:
-                RenderPointRdef(dynamic_cast<PointRenderDefinition *>(rdef.get()), a, matrix);
+                RenderPointRdef(dynamic_cast<PointRenderDefinition *>(rdef.get()), a);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_SPRITE:
-                RenderSpriteRdef(dynamic_cast<SpriteRenderDefinition *>(rdef.get()), a, matrix);
+                RenderSpriteRdef(dynamic_cast<SpriteRenderDefinition *>(rdef.get()), a);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_WALL:
                 RenderWallRdef(dynamic_cast<WallRenderDefinition *>(rdef.get()),
                                a,
                                worldMatrix,
-                               matrix,
                                vp.Is3D(),
                                overlayColor);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_CIRCLE:
-                RenderCircleRdef(dynamic_cast<CircleRenderDefinition *>(rdef.get()), a, matrix, vp);
+                RenderCircleRdef(dynamic_cast<CircleRenderDefinition *>(rdef.get()), a, vp);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_CONE:
-                RenderConeRdef(dynamic_cast<ConeRenderDefinition *>(rdef.get()), a, matrix, worldMatrix);
+                RenderConeRdef(dynamic_cast<ConeRenderDefinition *>(rdef.get()), a, worldMatrix);
                 break;
             default:
             case RenderDefinition::RenderDefinitionType::RD_TYPE_UNKNOWN:
@@ -724,10 +712,7 @@ bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
     return false;
 }
 
-void ViewportRenderer::RenderBoxRdef(BoxRenderDefinition *rdef,
-                                     const Actor &actor,
-                                     const glm::mat4 &worldMatrix,
-                                     const glm::mat4 &matrix)
+void ViewportRenderer::RenderBoxRdef(BoxRenderDefinition *rdef, const Actor &actor, const glm::mat4 &worldMatrix)
 {
     const Color c = rdef->GetColor(actor);
     const glm::vec3 boxExtents = rdef->GetExtents(actor);
@@ -749,59 +734,52 @@ void ViewportRenderer::RenderBoxRdef(BoxRenderDefinition *rdef,
                                                                 -boxExtents.y,
                                                                 boxPoints.at(nextIndex).y,
                                                                 1);
-        MapRenderer::RenderLine(startPointCeil, endPointCeil, c, matrix, 2);
-        MapRenderer::RenderLine(startPointFloor, endPointFloor, c, matrix, 2);
-        MapRenderer::RenderLine(startPointCeil, startPointFloor, c, matrix, 2);
+        MapRenderer::CmdLine(startPointCeil, endPointCeil, c, 2);
+        MapRenderer::CmdLine(startPointFloor, endPointFloor, c, 2);
+        MapRenderer::CmdLine(startPointCeil, startPointFloor, c, 2);
     }
 }
 
 void ViewportRenderer::RenderModelRdef(ModelRenderDefinition *rdef,
                                        const Actor &actor,
                                        const glm::mat4 &worldMatrix,
-                                       const glm::mat4 &matrix,
                                        const bool textured,
                                        const Color &overlayColor)
 {
     if (textured)
     {
-        MapRenderer::RenderModelTextured(rdef->GetModel(actor),
-                                         matrix,
-                                         worldMatrix,
-                                         rdef->GetSkin(actor),
-                                         rdef->GetModColor(actor),
-                                         overlayColor);
+        MapRenderer::CmdTexturedModel(rdef->GetModel(actor),
+                                      worldMatrix,
+                                      rdef->GetSkin(actor),
+                                      rdef->GetModColor(actor),
+                                      overlayColor);
     } else if (MapEditor::drawModels)
     {
-        MapRenderer::RenderModel(rdef->GetModel(actor), matrix, worldMatrix, rdef->GetColor(actor));
+        MapRenderer::CmdModel(rdef->GetModel(actor), worldMatrix, rdef->GetColor(actor));
     }
 }
 
-void ViewportRenderer::RenderOrientationRdef(OrientationRenderDefinition *rdef,
-                                             const Actor &actor,
-                                             const glm::mat4 &matrix,
-                                             const Viewport &vp)
+void ViewportRenderer::RenderOrientationRdef(OrientationRenderDefinition *rdef, const Actor &actor, const Viewport &vp)
 {
-    MapRenderer::RenderUnitVector(actor.position, actor.rotation, rdef->GetColor(actor), matrix, 2, vp.GetZoom() / 20);
+    MapRenderer::CmdUnitVector(actor.position, actor.rotation, rdef->GetColor(actor), 2, vp.GetZoom() / 20);
 }
 
-void ViewportRenderer::RenderPointRdef(PointRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix)
+void ViewportRenderer::RenderPointRdef(PointRenderDefinition *rdef, const Actor &actor)
 {
-    MapRenderer::RenderBillboardPoint(actor.position, rdef->GetPointSize(actor), rdef->GetColor(actor), matrix);
+    MapRenderer::CmdPoint(actor.position, rdef->GetPointSize(actor), rdef->GetColor(actor));
 }
 
-void ViewportRenderer::RenderSpriteRdef(SpriteRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix)
+void ViewportRenderer::RenderSpriteRdef(SpriteRenderDefinition *rdef, const Actor &actor)
 {
-    MapRenderer::RenderBillboardSprite(actor.position,
-                                       rdef->GetPointSize(actor),
-                                       rdef->GetTexture(actor),
-                                       rdef->GetTintColor(actor),
-                                       matrix);
+    MapRenderer::CmdSprite(actor.position,
+                           rdef->GetPointSize(actor),
+                           rdef->GetTexture(actor),
+                           rdef->GetTintColor(actor));
 }
 
 void ViewportRenderer::RenderWallRdef(WallRenderDefinition *rdef,
                                       const Actor &actor,
                                       const glm::mat4 &worldMatrix,
-                                      const glm::mat4 &matrix,
                                       const bool textured,
                                       const Color &overlayColor)
 {
@@ -817,7 +795,7 @@ void ViewportRenderer::RenderWallRdef(WallRenderDefinition *rdef,
             .uvScale = rdef->GetUvScale(actor),
             .unshaded = rdef->IsUnshaded(actor),
         };
-        MapRenderer::RenderWall(matrix, worldMatrix, wall, overlayColor);
+        MapRenderer::CmdWall(worldMatrix, wall, overlayColor);
     } else
     {
         const glm::vec2 size = rdef->GetSize(actor);
@@ -835,17 +813,14 @@ void ViewportRenderer::RenderWallRdef(WallRenderDefinition *rdef,
         const glm::vec3 endFloor = worldMatrix * glm::vec4(endPoint.x, bottom, endPoint.y, 1.0f);
 
         const Color c = rdef->GetColor(actor);
-        MapRenderer::RenderLine(startCeiling, endCeiling, c, matrix, 2.0f);
-        MapRenderer::RenderLine(startFloor, endFloor, c, matrix, 2.0f);
-        MapRenderer::RenderLine(startCeiling, startFloor, c, matrix, 2.0f);
-        MapRenderer::RenderLine(endCeiling, endFloor, c, matrix, 2.0f);
+        MapRenderer::CmdLine(startCeiling, endCeiling, c, 2.0f);
+        MapRenderer::CmdLine(startFloor, endFloor, c, 2.0f);
+        MapRenderer::CmdLine(startCeiling, startFloor, c, 2.0f);
+        MapRenderer::CmdLine(endCeiling, endFloor, c, 2.0f);
     }
 }
 
-void ViewportRenderer::RenderCircleRdef(CircleRenderDefinition *rdef,
-                                        const Actor &actor,
-                                        const glm::mat4 &worldMatrix,
-                                        const Viewport &vp)
+void ViewportRenderer::RenderCircleRdef(CircleRenderDefinition *rdef, const Actor &actor, const Viewport &vp)
 {
     const float radius = rdef->GetRadius(actor);
     const Color color = rdef->GetColor(actor);
@@ -870,37 +845,34 @@ void ViewportRenderer::RenderCircleRdef(CircleRenderDefinition *rdef,
         switch (vp.GetType())
         {
             case Viewport::ViewportType::TOP_DOWN_XZ:
-                MapRenderer::RenderLine(glm::vec3(startPoint.x + actor.position.x,
-                                                  actor.position.y,
-                                                  startPoint.y + actor.position.z),
-                                        glm::vec3(endPoint.x + actor.position.x,
-                                                  actor.position.y,
-                                                  endPoint.y + actor.position.z),
-                                        color,
-                                        worldMatrix,
-                                        1);
+                MapRenderer::CmdLine(glm::vec3(startPoint.x + actor.position.x,
+                                               actor.position.y,
+                                               startPoint.y + actor.position.z),
+                                     glm::vec3(endPoint.x + actor.position.x,
+                                               actor.position.y,
+                                               endPoint.y + actor.position.z),
+                                     color,
+                                     1);
                 break;
             case Viewport::ViewportType::FRONT_XY:
-                MapRenderer::RenderLine(glm::vec3(startPoint.x + actor.position.x,
-                                                  startPoint.y + actor.position.y,
-                                                  actor.position.z),
-                                        glm::vec3(endPoint.x + actor.position.x,
-                                                  endPoint.y + actor.position.y,
-                                                  actor.position.z),
-                                        color,
-                                        worldMatrix,
-                                        1);
+                MapRenderer::CmdLine(glm::vec3(startPoint.x + actor.position.x,
+                                               startPoint.y + actor.position.y,
+                                               actor.position.z),
+                                     glm::vec3(endPoint.x + actor.position.x,
+                                               endPoint.y + actor.position.y,
+                                               actor.position.z),
+                                     color,
+                                     1);
                 break;
             case Viewport::ViewportType::SIDE_YZ:
-                MapRenderer::RenderLine(glm::vec3(actor.position.x,
-                                                  startPoint.x + actor.position.y,
-                                                  startPoint.y + actor.position.z),
-                                        glm::vec3(actor.position.x,
-                                                  endPoint.x + actor.position.y,
-                                                  endPoint.y + actor.position.z),
-                                        color,
-                                        worldMatrix,
-                                        1);
+                MapRenderer::CmdLine(glm::vec3(actor.position.x,
+                                               startPoint.x + actor.position.y,
+                                               startPoint.y + actor.position.z),
+                                     glm::vec3(actor.position.x,
+                                               endPoint.x + actor.position.y,
+                                               endPoint.y + actor.position.z),
+                                     color,
+                                     1);
                 break;
             default:
                 break;
@@ -908,10 +880,7 @@ void ViewportRenderer::RenderCircleRdef(CircleRenderDefinition *rdef,
     }
 }
 
-void ViewportRenderer::RenderConeRdef(ConeRenderDefinition *rdef,
-                                      const Actor &actor,
-                                      const glm::mat4 &matrix,
-                                      const glm::mat4 &worldMatrix)
+void ViewportRenderer::RenderConeRdef(ConeRenderDefinition *rdef, const Actor &actor, const glm::mat4 &worldMatrix)
 {
     const float length = rdef->GetLength(actor);
     const Color color = rdef->GetColor(actor);
@@ -937,7 +906,7 @@ void ViewportRenderer::RenderConeRdef(ConeRenderDefinition *rdef,
         const glm::vec3 startPoint = worldMatrix * glm::vec4(pts.at(i).x, pts.at(i).y, -length, 1);
         const glm::vec3 endPoint = worldMatrix * glm::vec4(pts.at(nextIndex).x, pts.at(nextIndex).y, -length, 1);
 
-        MapRenderer::RenderLine(startPoint, endPoint, color, matrix, 1);
-        MapRenderer::RenderLine(actor.position, startPoint, color, matrix, 1);
+        MapRenderer::CmdLine(startPoint, endPoint, color, 1);
+        MapRenderer::CmdLine(actor.position, startPoint, color, 1);
     }
 }

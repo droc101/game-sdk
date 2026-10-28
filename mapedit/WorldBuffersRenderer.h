@@ -20,27 +20,23 @@ class WorldBuffersRenderer
         static void RenderWorldBuffers(const Viewport &vp);
 
     private:
-        static void RenderBrush(size_t brushIndex, const glm::mat4 &matrix);
-        static void RenderActor(size_t actorIndex, const glm::mat4 &matrix);
+        static void RenderBrush(size_t brushIndex);
+        static void RenderActor(size_t actorIndex);
 
         static void RenderModelRdef(ModelRenderDefinition *rdef,
                                     const Actor &actor,
                                     const glm::mat4 &worldMatrix,
-                                    const glm::mat4 &matrix,
                                     MapRenderer::ObjectBufferInfo info);
         static void RenderPointRdef(PointRenderDefinition *rdef,
                                     const Actor &actor,
-                                    const glm::mat4 &matrix,
                                     MapRenderer::ObjectBufferInfo info);
 
         static void RenderSpriteRdef(SpriteRenderDefinition *rdef,
                                      const Actor &actor,
-                                     const glm::mat4 &matrix,
                                      MapRenderer::ObjectBufferInfo info);
 
         static void RenderWallRdef(WallRenderDefinition *rdef,
                                    const Actor &actor,
                                    const glm::mat4 &worldMatrix,
-                                   const glm::mat4 &matrix,
                                    MapRenderer::ObjectBufferInfo info);
 };

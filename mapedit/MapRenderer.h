@@ -50,66 +50,47 @@ class MapRenderer
 
         static void RenderViewportGrid(const Viewport &vp);
 
-        static void RenderLine(glm::vec3 start, glm::vec3 end, Color color, const glm::mat4 &matrix, float thickness);
+        static void CmdLine(glm::vec3 start, glm::vec3 end, Color color, float thickness);
 
-        static void RenderBillboardPoint(glm::vec3 position, float pointSize, Color color, const glm::mat4 &matrix);
+        static void CmdPoint(glm::vec3 position, float pointSize, Color color);
 
-        static void RenderBillboardPointObjectBuffer(glm::vec3 position,
-                                                     float pointSize,
-                                                     ObjectBufferInfo info,
-                                                     const glm::mat4 &matrix);
+        static void CmdSprite(glm::vec3 position, float pointSize, const std::string &texture, Color color);
 
-        static void RenderBillboardSprite(glm::vec3 position,
-                                          float pointSize,
-                                          const std::string &texture,
-                                          Color color,
-                                          const glm::mat4 &matrix);
-
-        static void RenderUnitVector(glm::vec3 origin,
+        static void CmdUnitVector(glm::vec3 origin,
                                      glm::vec3 eulerAngles,
                                      Color color,
-                                     const glm::mat4 &matrix,
                                      float thickness,
                                      float length);
 
-        static void RenderModel(std::string model,
-                                const glm::mat4 &viewMatrix,
-                                const glm::mat4 &worldMatrix,
-                                const Color &modColor);
+        static void CmdModel(std::string model, const glm::mat4 &worldMatrix, const Color &modColor);
 
-        static void RenderModelTextured(std::string model,
-                                        const glm::mat4 &viewMatrix,
+        static void CmdTexturedModel(std::string model,
                                         const glm::mat4 &worldMatrix,
                                         uint32_t skin,
                                         const Color &modColor,
                                         const Color &overlayColor);
 
-        static void RenderModelObjectBuffer(std::string model,
-                                            const glm::mat4 &viewMatrix,
-                                            const glm::mat4 &worldMatrix,
-                                            ObjectBufferInfo info);
-
-        static void RenderBrushFace(const Brush::TriangulatedFace &face,
-                                    const glm::mat4 &viewMatrix,
+        static void CmdBrushFace(const Brush::TriangulatedFace &face,
                                     const glm::mat4 &worldMatrix,
                                     const Color &overlayColor);
 
-        static void RenderBrushFaceObjectBuffer(const Brush::TriangulatedFace &face,
-                                                const glm::mat4 &viewMatrix,
-                                                const glm::mat4 &worldMatrix,
-                                                ObjectBufferInfo info);
+        static void CmdWall(const glm::mat4 &worldMatrix, const Wall &wall, const Color &overlayColor);
 
         static const ModelAsset &GetModel(std::string model);
 
-        static void RenderWall(const glm::mat4 &viewMatrix,
-                               const glm::mat4 &worldMatrix,
-                               const Wall &wall,
-                               const Color &overlayColor);
+        static void ExecuteCommands(const glm::mat4 &viewMatrix);
 
-        static void RenderWallObjectBuffer(const glm::mat4 &viewMatrix,
-                                           const glm::mat4 &worldMatrix,
-                                           const Wall &wall,
-                                           ObjectBufferInfo info);
+        static void CmdObjectBufferPoint(glm::vec3 position, float pointSize, ObjectBufferInfo info);
+
+        static void CmdObjectBufferWall(const glm::mat4 &worldMatrix, const Wall &wall, ObjectBufferInfo info);
+
+        static void CmdObjectBufferBrushFace(const Brush::TriangulatedFace &face,
+                                                const glm::mat4 &worldMatrix,
+                                                ObjectBufferInfo info);
+
+        static void CmdObjectBufferModel(std::string model, const glm::mat4 &worldMatrix, ObjectBufferInfo info);
+
+        static void ExecuteObjectBufferCommands(const glm::mat4 &viewMatrix);
 
     private:
         struct ModelBuffer
@@ -119,6 +100,102 @@ class MapRenderer
                 GLuint vbo;
                 std::vector<GLuint> ebos;
         };
+
+        struct LineCommand
+        {
+            glm::vec3 start;
+            glm::vec3 end;
+            float width;
+            Color color;
+        };
+
+        struct PointCommand
+        {
+            glm::vec3 position;
+            float size;
+            Color color;
+        };
+
+        struct WallCommand
+        {
+            Wall wall;
+            Color overlayColor;
+            glm::mat4 worldMatrix;
+        };
+
+        struct ModelCommand
+        {
+            ModelBuffer &buffer;
+            glm::mat4 worldMatrix;
+            Color color;
+        };
+
+        struct TexturedModelCommand
+        {
+            ModelBuffer &buffer;
+            glm::mat4 worldMatrix;
+            uint32_t skinIndex;
+            uint32_t lodIndex;
+            Color modColor;
+            Color overlayColor;
+        };
+
+        struct SpriteCommand
+        {
+            glm::vec3 position;
+            float pointSize;
+            std::string texture;
+            Color color;
+        };
+
+        struct BrushFaceCommand
+        {
+            Brush::TriangulatedFace face;
+            glm::mat4 worldMatrix;
+            Color overlayColor;
+        };
+
+        static inline std::vector<LineCommand> lineCommands{};
+        static inline std::vector<PointCommand> pointCommands{};
+        static inline std::vector<WallCommand> wallCommands{};
+        static inline std::vector<TexturedModelCommand> texturedModelCommands{};
+        static inline std::vector<ModelCommand> modelCommands{};
+        static inline std::vector<SpriteCommand> spriteCommands{};
+        static inline std::vector<BrushFaceCommand> brushFaceCommands{};
+
+        struct ObjectBufferPointCommand
+        {
+            glm::vec3 position;
+            float pointSize;
+            ObjectBufferInfo info;
+        };
+
+        struct ObjectBufferWallCommand
+        {
+            glm::mat4 worldMatrix;
+            Wall wall;
+            ObjectBufferInfo info;
+        };
+
+        struct ObjectBufferBrushFaceCommand
+        {
+            Brush::TriangulatedFace face;
+            glm::mat4 worldMatrix;
+            ObjectBufferInfo info;
+        };
+
+        struct ObjectBufferModelCommand
+        {
+            ModelBuffer &buffer;
+            glm::mat4 worldMatrix;
+            ObjectBufferInfo info;
+            uint32_t lodIndex;
+        };
+
+        static inline std::vector<ObjectBufferPointCommand> objectBufferPointCommands{};
+        static inline std::vector<ObjectBufferWallCommand> objectBufferWallCommands{};
+        static inline std::vector<ObjectBufferBrushFaceCommand> objectBufferBrushFaceCommands{};
+        static inline std::vector<ObjectBufferModelCommand> objectBufferModelCommands{};
 
         static inline GLuint uniformColorProgram = 0;
         static inline GLuint vertexColorProgram = 0;
@@ -139,21 +216,4 @@ class MapRenderer
         static inline glm::mat4 identity = glm::identity<glm::mat4>();
 
         static ModelBuffer LoadModel(const std::string &path);
-
-        static void RenderModel(ModelBuffer &buffer,
-                                const glm::mat4 &viewMatrix,
-                                const glm::mat4 &worldMatrix,
-                                const Color &c);
-
-        static void RenderModelTextured(ModelBuffer &buffer,
-                                        const glm::mat4 &viewMatrix,
-                                        const glm::mat4 &worldMatrix,
-                                        uint32_t skinIndex,
-                                        const Color &modColor,
-                                        const Color &overlayColor);
-
-        static void RenderModelObjectBufferInternal(ModelBuffer &buffer,
-                                                    const glm::mat4 &viewMatrix,
-                                                    const glm::mat4 &worldMatrix,
-                                                    ObjectBufferInfo info);
 };

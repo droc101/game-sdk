@@ -27,20 +27,20 @@ void WorldBuffersRenderer::RenderWorldBuffers(const Viewport &vp)
     vp.BindWorldBuffers();
     GLHelper::Clear();
 
-    const glm::mat4 matrix = vp.GetMatrix();
-
     for (size_t actorIndex = 0; actorIndex < MapEditor::map.actors.size(); actorIndex++)
     {
-        RenderActor(actorIndex, matrix);
+        RenderActor(actorIndex);
     }
 
     for (size_t brushIndex = 0; brushIndex < MapEditor::map.brushes.size(); brushIndex++)
     {
-        RenderBrush(brushIndex, matrix);
+        RenderBrush(brushIndex);
     }
+
+    MapRenderer::ExecuteObjectBufferCommands(vp.GetMatrix());
 }
 
-void WorldBuffersRenderer::RenderBrush(const size_t brushIndex, const glm::mat4 &matrix)
+void WorldBuffersRenderer::RenderBrush(const size_t brushIndex)
 {
     Brush &brush = MapEditor::map.brushes.at(brushIndex);
     MapRenderer::ObjectBufferInfo info = {
@@ -56,11 +56,11 @@ void WorldBuffersRenderer::RenderBrush(const size_t brushIndex, const glm::mat4 
     {
         const Brush::TriangulatedFace &face = triangulatedFaces.at(i);
         info.objectSubIndex = i;
-        MapRenderer::RenderBrushFaceObjectBuffer(face, matrix, brushMatrix, info);
+        MapRenderer::CmdObjectBufferBrushFace(face, brushMatrix, info);
     }
 }
 
-void WorldBuffersRenderer::RenderActor(const size_t actorIndex, const glm::mat4 &matrix)
+void WorldBuffersRenderer::RenderActor(const size_t actorIndex)
 {
     const Actor &a = MapEditor::map.actors.at(actorIndex);
     const MapRenderer::ObjectBufferInfo info = {
@@ -91,16 +91,16 @@ void WorldBuffersRenderer::RenderActor(const size_t actorIndex, const glm::mat4 
         switch (rdef.get()->GetType())
         {
             case RenderDefinition::RenderDefinitionType::RD_TYPE_MODEL:
-                RenderModelRdef(dynamic_cast<ModelRenderDefinition *>(rdef.get()), a, worldMatrix, matrix, info);
+                RenderModelRdef(dynamic_cast<ModelRenderDefinition *>(rdef.get()), a, worldMatrix, info);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_POINT:
-                RenderPointRdef(dynamic_cast<PointRenderDefinition *>(rdef.get()), a, matrix, info);
+                RenderPointRdef(dynamic_cast<PointRenderDefinition *>(rdef.get()), a, info);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_SPRITE:
-                RenderSpriteRdef(dynamic_cast<SpriteRenderDefinition *>(rdef.get()), a, matrix, info);
+                RenderSpriteRdef(dynamic_cast<SpriteRenderDefinition *>(rdef.get()), a, info);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_WALL:
-                RenderWallRdef(dynamic_cast<WallRenderDefinition *>(rdef.get()), a, worldMatrix, matrix, info);
+                RenderWallRdef(dynamic_cast<WallRenderDefinition *>(rdef.get()), a, worldMatrix, info);
                 break;
             default:
                 break;
@@ -110,24 +110,21 @@ void WorldBuffersRenderer::RenderActor(const size_t actorIndex, const glm::mat4 
 
 void WorldBuffersRenderer::RenderPointRdef(PointRenderDefinition *rdef,
                                            const Actor &actor,
-                                           const glm::mat4 &matrix,
                                            const MapRenderer::ObjectBufferInfo info)
 {
-    MapRenderer::RenderBillboardPointObjectBuffer(actor.position, rdef->GetPointSize(actor), info, matrix);
+    MapRenderer::CmdObjectBufferPoint(actor.position, rdef->GetPointSize(actor), info);
 }
 
 void WorldBuffersRenderer::RenderSpriteRdef(SpriteRenderDefinition *rdef,
                                             const Actor &actor,
-                                            const glm::mat4 &matrix,
                                             const MapRenderer::ObjectBufferInfo info)
 {
-    MapRenderer::RenderBillboardPointObjectBuffer(actor.position, rdef->GetPointSize(actor), info, matrix);
+    MapRenderer::CmdObjectBufferPoint(actor.position, rdef->GetPointSize(actor), info);
 }
 
 void WorldBuffersRenderer::RenderWallRdef(WallRenderDefinition *rdef,
                                           const Actor &actor,
                                           const glm::mat4 &worldMatrix,
-                                          const glm::mat4 &matrix,
                                           const MapRenderer::ObjectBufferInfo info)
 {
     const MapRenderer::Wall wall = {
@@ -140,14 +137,13 @@ void WorldBuffersRenderer::RenderWallRdef(WallRenderDefinition *rdef,
         .uvScale = glm::vec2(0),
         .unshaded = true,
     };
-    MapRenderer::RenderWallObjectBuffer(matrix, worldMatrix, wall, info);
+    MapRenderer::CmdObjectBufferWall(worldMatrix, wall, info);
 }
 
 void WorldBuffersRenderer::RenderModelRdef(ModelRenderDefinition *rdef,
                                            const Actor &actor,
                                            const glm::mat4 &worldMatrix,
-                                           const glm::mat4 &matrix,
                                            const MapRenderer::ObjectBufferInfo info)
 {
-    MapRenderer::RenderModelObjectBuffer(rdef->GetModel(actor), matrix, worldMatrix, info);
+    MapRenderer::CmdObjectBufferModel(rdef->GetModel(actor), worldMatrix, info);
 }

@@ -421,6 +421,14 @@ void MapeditWindow::Render()
             {
                 MapEditor::showInternalBuffers = !MapEditor::showInternalBuffers;
             }
+            if (ImGui::MenuItem("Show 2D Viewports", "", MapEditor::show2dViewports))
+            {
+                MapEditor::show2dViewports = !MapEditor::show2dViewports;
+            }
+            if (ImGui::MenuItem("Show Invisible Faces", "", MapEditor::showInvisibleFaces))
+            {
+                MapEditor::showInvisibleFaces = !MapEditor::showInvisibleFaces;
+            }
             ImGui::Separator();
             if (ImGui::MenuItem("Show Grid", "", MapEditor::drawGrid))
             {
@@ -670,7 +678,10 @@ void MapeditWindow::Render()
     ImGui::PopStyleVar();
 
     vpPerspective.Render();
-    vpTopDown.Render();
-    vpFront.Render();
-    vpSide.Render();
+    if (MapEditor::show2dViewports)
+    {
+        vpTopDown.Render();
+        vpFront.Render();
+        vpSide.Render();
+    }
 }

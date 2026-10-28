@@ -87,6 +87,7 @@ void FaceTool::RenderViewport(Viewport &vp)
         .selectionType = hasSelection ? ItemType::FACE : ItemType::NONE,
         .selectionIndex = brushIndex,
         .selectionSubIndex = faceIndex,
+        .renderObjectBuffers = isHovered,
     };
     ViewportRenderer::RenderViewport(vp, vps);
 }

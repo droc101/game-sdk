@@ -51,6 +51,8 @@ class MapEditor
         static inline bool culling = true;
         static inline bool drawGizmos = true;
         static inline bool showInternalBuffers = false;
+        static inline bool show2dViewports = true;
+        static inline bool showInvisibleFaces = true;
 
         static constexpr size_t HOVER_DISTANCE_PIXELS = 10;
         static constexpr size_t TOOLBAR_HEIGHT = 48;

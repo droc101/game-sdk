@@ -513,7 +513,8 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const glm::vec3 &
 
 void SelectTool::RenderViewport(Viewport &vp)
 {
-    if (ImGui::IsWindowFocused() && ImGui::IsWindowHovered())
+    const bool isFocusedAndHovered = ImGui::IsWindowFocused() && ImGui::IsWindowHovered();
+    if (isFocusedAndHovered)
     {
         ProcessViewportSelectMode(vp, vp.GetWorldSpaceMousePos());
     }
@@ -550,6 +551,7 @@ void SelectTool::RenderViewport(Viewport &vp)
         .hoverIndex = hoverIndex,
         .selectionType = selectionType,
         .selectionIndex = selectionIndex,
+        .renderObjectBuffers = isFocusedAndHovered,
         .point = nullptr,
         .newActor = nullptr,
         .rotationGizmo = showRotationGizmo ? &rotationGizmo : nullptr,

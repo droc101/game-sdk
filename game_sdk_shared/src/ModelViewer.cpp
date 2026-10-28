@@ -216,7 +216,7 @@ void ModelViewer::RenderFramebuffer()
     }
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_GREATER);
+    glDepthFunc(GL_GEQUAL);
     if (cullBackfaces)
     {
         glEnable(GL_CULL_FACE);
