@@ -113,7 +113,7 @@ SDL_GLContext WindowManager::CreateGlContext(SDL_Window *window)
         firstGlContextCreated = true;
     }
 
-    if (!SDL_GL_SetSwapInterval(0)) // Enable vsync
+    if (!SDL_GL_SetSwapInterval(1)) // Enable vsync
     {
         Logger::Error("SDL_GL_SetSwapInterval() failed: {}", SDL_GetError());
     }
