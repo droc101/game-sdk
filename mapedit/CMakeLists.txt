@@ -43,6 +43,8 @@ add_executable(mapedit mapedit.cpp
         tools/FaceTool.h
         ResizeGizmoHelper.cpp
         ResizeGizmoHelper.h
+        MaterialCache.cpp
+        MaterialCache.h
 )
 
 configure_sdk_gui_program(mapedit)

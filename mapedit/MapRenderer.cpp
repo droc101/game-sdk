@@ -12,6 +12,7 @@
 #include <game_sdk/SharedMgr.h>
 #include <glm/ext.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/asset/ModelAsset.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/MapVertex.h>
@@ -24,9 +25,9 @@
 #include <ranges>
 #include <string>
 #include <vector>
-#include "libassets/asset/LevelMaterialAsset.h"
 #include "libassets/type/Brush.h"
 #include "MapEditor.h"
+#include "MaterialCache.h"
 #include "Viewport.h"
 
 bool MapRenderer::Init()
@@ -766,23 +767,15 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
         for (const BrushFaceCommand &command: brushFaceCommands)
         {
             GLuint texture = 0;
-            const std::string materialPath = SharedMgr::Get().pathManager.GetAssetPath(command.face.material);
-            LevelMaterialAsset material{};
-            Error::ErrorCode error = material.LoadFromAsset(materialPath);
-            if (error != Error::ErrorCode::OK)
+            LevelMaterialAsset &material = MaterialCache::GetMaterial(command.face.material);
+            if (!MapEditor::showInvisibleFaces && material.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
+            {
+                continue;
+            }
+            const Error::ErrorCode code = SharedMgr::Get().textureCache.GetTextureGLuint(material.texture, texture);
+            if (code != Error::ErrorCode::OK)
             {
                 texture = SharedMgr::Get().textureCache.GetMissingTextureGLuint();
-            } else
-            {
-                if (!MapEditor::showInvisibleFaces && material.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
-                {
-                    continue;
-                }
-                const Error::ErrorCode code = SharedMgr::Get().textureCache.GetTextureGLuint(material.texture, texture);
-                if (code != Error::ErrorCode::OK)
-                {
-                    texture = SharedMgr::Get().textureCache.GetMissingTextureGLuint();
-                }
             }
 
             glBindTexture(GL_TEXTURE_2D, texture);
@@ -1024,9 +1017,7 @@ void MapRenderer::ExecuteObjectBufferCommands(const glm::mat4 &viewMatrix)
     }
 }
 
-void MapRenderer::CmdObjectBufferPoint(const glm::vec3 position,
-                                                   const float pointSize,
-                                                   const ObjectBufferInfo info)
+void MapRenderer::CmdObjectBufferPoint(const glm::vec3 position, const float pointSize, const ObjectBufferInfo info)
 {
     objectBufferPointCommands.emplace_back(position, pointSize, info);
 }
@@ -1054,8 +1045,8 @@ void MapRenderer::CmdObjectBufferModel(std::string model, const glm::mat4 &world
 
 
 void MapRenderer::CmdObjectBufferBrushFace(const Brush::TriangulatedFace &face,
-                                              const glm::mat4 &worldMatrix,
-                                              const ObjectBufferInfo info)
+                                           const glm::mat4 &worldMatrix,
+                                           const ObjectBufferInfo info)
 {
     objectBufferBrushFaceCommands.emplace_back(face, worldMatrix, info);
 }

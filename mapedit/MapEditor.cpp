@@ -18,6 +18,7 @@
 #include <limits>
 #include <string>
 #include <vector>
+#include "MaterialCache.h"
 
 float MapEditor::SnapToGrid(const float f)
 {
@@ -150,8 +151,7 @@ bool MapEditor::MaterialSelectionTool(std::string &inputMaterial)
     const std::string startString = inputMaterial;
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
-    LevelMaterialAsset mat;
-    mat.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(inputMaterial)); // TODO improve
+    const LevelMaterialAsset &mat = MaterialCache::GetMaterial(inputMaterial);
     const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e == Error::ErrorCode::OK)
