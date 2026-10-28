@@ -56,23 +56,19 @@ class MapRenderer
 
         static void CmdSprite(glm::vec3 position, float pointSize, const std::string &texture, Color color);
 
-        static void CmdUnitVector(glm::vec3 origin,
-                                     glm::vec3 eulerAngles,
-                                     Color color,
-                                     float thickness,
-                                     float length);
+        static void CmdUnitVector(glm::vec3 origin, glm::vec3 eulerAngles, Color color, float thickness, float length);
 
         static void CmdModel(std::string model, const glm::mat4 &worldMatrix, const Color &modColor);
 
         static void CmdTexturedModel(std::string model,
-                                        const glm::mat4 &worldMatrix,
-                                        uint32_t skin,
-                                        const Color &modColor,
-                                        const Color &overlayColor);
+                                     const glm::mat4 &worldMatrix,
+                                     uint32_t skin,
+                                     const Color &modColor,
+                                     const Color &overlayColor);
 
         static void CmdBrushFace(const Brush::TriangulatedFace &face,
-                                    const glm::mat4 &worldMatrix,
-                                    const Color &overlayColor);
+                                 const glm::mat4 &worldMatrix,
+                                 const Color &overlayColor);
 
         static void CmdWall(const glm::mat4 &worldMatrix, const Wall &wall, const Color &overlayColor);
 
@@ -85,14 +81,17 @@ class MapRenderer
         static void CmdObjectBufferWall(const glm::mat4 &worldMatrix, const Wall &wall, ObjectBufferInfo info);
 
         static void CmdObjectBufferBrushFace(const Brush::TriangulatedFace &face,
-                                                const glm::mat4 &worldMatrix,
-                                                ObjectBufferInfo info);
+                                             const glm::mat4 &worldMatrix,
+                                             ObjectBufferInfo info);
 
         static void CmdObjectBufferModel(std::string model, const glm::mat4 &worldMatrix, ObjectBufferInfo info);
 
         static void ExecuteObjectBufferCommands(const glm::mat4 &viewMatrix);
 
     private:
+        static constexpr uint32_t WALL_VERTEX_COUNT = 8;
+        static constexpr uint32_t WALL_INDEX_COUNT = 12;
+
         struct ModelBuffer
         {
                 ModelAsset model;
@@ -101,58 +100,72 @@ class MapRenderer
                 std::vector<GLuint> ebos;
         };
 
+        struct WallVertex
+        {
+                glm::vec3 position;
+                glm::vec2 uv;
+                glm::vec3 normal;
+                glm::vec4 color{1};
+        };
+
+        struct ObjectBufferWallVertex
+        {
+                glm::vec3 position;
+                glm::vec3 normal;
+        };
+
         struct LineCommand
         {
-            glm::vec3 start;
-            glm::vec3 end;
-            float width;
-            Color color;
+                glm::vec3 start;
+                glm::vec3 end;
+                float width;
+                Color color;
         };
 
         struct PointCommand
         {
-            glm::vec3 position;
-            float size;
-            Color color;
+                glm::vec3 position;
+                float size;
+                Color color;
         };
 
         struct WallCommand
         {
-            Wall wall;
-            Color overlayColor;
-            glm::mat4 worldMatrix;
+                Wall wall;
+                Color overlayColor;
+                glm::mat4 worldMatrix;
         };
 
         struct ModelCommand
         {
-            ModelBuffer &buffer;
-            glm::mat4 worldMatrix;
-            Color color;
+                ModelBuffer &buffer;
+                glm::mat4 worldMatrix;
+                Color color;
         };
 
         struct TexturedModelCommand
         {
-            ModelBuffer &buffer;
-            glm::mat4 worldMatrix;
-            uint32_t skinIndex;
-            uint32_t lodIndex;
-            Color modColor;
-            Color overlayColor;
+                ModelBuffer &buffer;
+                glm::mat4 worldMatrix;
+                uint32_t skinIndex;
+                uint32_t lodIndex;
+                Color modColor;
+                Color overlayColor;
         };
 
         struct SpriteCommand
         {
-            glm::vec3 position;
-            float pointSize;
-            std::string texture;
-            Color color;
+                glm::vec3 position;
+                float pointSize;
+                std::string texture;
+                Color color;
         };
 
         struct BrushFaceCommand
         {
-            Brush::TriangulatedFace face;
-            glm::mat4 worldMatrix;
-            Color overlayColor;
+                Brush::TriangulatedFace face;
+                glm::mat4 worldMatrix;
+                Color overlayColor;
         };
 
         static inline std::vector<LineCommand> lineCommands{};
@@ -165,31 +178,31 @@ class MapRenderer
 
         struct ObjectBufferPointCommand
         {
-            glm::vec3 position;
-            float pointSize;
-            ObjectBufferInfo info;
+                glm::vec3 position;
+                float pointSize;
+                ObjectBufferInfo info;
         };
 
         struct ObjectBufferWallCommand
         {
-            glm::mat4 worldMatrix;
-            Wall wall;
-            ObjectBufferInfo info;
+                glm::mat4 worldMatrix;
+                Wall wall;
+                ObjectBufferInfo info;
         };
 
         struct ObjectBufferBrushFaceCommand
         {
-            Brush::TriangulatedFace face;
-            glm::mat4 worldMatrix;
-            ObjectBufferInfo info;
+                Brush::TriangulatedFace face;
+                glm::mat4 worldMatrix;
+                ObjectBufferInfo info;
         };
 
         struct ObjectBufferModelCommand
         {
-            ModelBuffer &buffer;
-            glm::mat4 worldMatrix;
-            ObjectBufferInfo info;
-            uint32_t lodIndex;
+                ModelBuffer &buffer;
+                glm::mat4 worldMatrix;
+                ObjectBufferInfo info;
+                uint32_t lodIndex;
         };
 
         static inline std::vector<ObjectBufferPointCommand> objectBufferPointCommands{};

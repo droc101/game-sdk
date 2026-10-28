@@ -402,7 +402,10 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
                 lineVertices.push_back(line.end);
             }
             float lineWidth = NAN;
-            glBufferData(GL_ARRAY_BUFFER, lineVertices.size() * sizeof(glm::vec3), lineVertices.data(), GL_STREAM_DRAW);
+            glBufferData(GL_ARRAY_BUFFER,
+                         static_cast<GLsizeiptr>(lineVertices.size() * sizeof(glm::vec3)),
+                         lineVertices.data(),
+                         GL_STREAM_DRAW);
             for (uint32_t i = 0; i < lineCommands.size(); i++)
             {
                 const LineCommand &line = lineCommands.at(i);
@@ -423,7 +426,7 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
             glVertexAttribPointer(uniformColorProgramPosAttrLoc, 3, GL_FLOAT, GL_FALSE, sizeof(PointCommand), nullptr);
             glEnableVertexAttribArray(uniformColorProgramPosAttrLoc);
             glBufferData(GL_ARRAY_BUFFER,
-                         pointCommands.size() * sizeof(PointCommand),
+                         static_cast<GLsizeiptr>(pointCommands.size() * sizeof(PointCommand)),
                          pointCommands.data(),
                          GL_STREAM_DRAW);
             for (uint32_t i = 0; i < pointCommands.size(); i++)
@@ -482,31 +485,36 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
         GLHelper::BindIndexedBuffer(workBuffer);
         const GLint posAttrib = glGetAttribLocation(shadedModelProgram, "VERTEX");
         const GLint uvAttrib = glGetAttribLocation(shadedModelProgram, "VERTEX_UV");
-        const GLint colorAttrib = glGetAttribLocation(shadedModelProgram, "VERTEX_COLOR");
         const GLint normAttrib = glGetAttribLocation(shadedModelProgram, "VERTEX_NORMAL");
-        glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), nullptr);
+        const GLint colorAttrib = glGetAttribLocation(shadedModelProgram, "VERTEX_COLOR");
+        glVertexAttribPointer(posAttrib,
+                              decltype(WallVertex::position)::length(),
+                              GL_FLOAT,
+                              GL_FALSE,
+                              sizeof(WallVertex),
+                              reinterpret_cast<void *>(offsetof(WallVertex, position)));
         glVertexAttribPointer(uvAttrib,
-                              2,
+                              decltype(WallVertex::uv)::length(),
                               GL_FLOAT,
                               GL_FALSE,
-                              12 * sizeof(float),
-                              reinterpret_cast<void *>(3 * sizeof(float)));
-        glVertexAttribPointer(colorAttrib,
-                              4,
-                              GL_FLOAT,
-                              GL_FALSE,
-                              12 * sizeof(float),
-                              reinterpret_cast<void *>(5 * sizeof(float)));
+                              sizeof(WallVertex),
+                              reinterpret_cast<void *>(offsetof(WallVertex, uv)));
         glVertexAttribPointer(normAttrib,
-                              3,
+                              decltype(WallVertex::normal)::length(),
                               GL_FLOAT,
                               GL_FALSE,
-                              12 * sizeof(float),
-                              reinterpret_cast<void *>(9 * sizeof(float)));
+                              sizeof(WallVertex),
+                              reinterpret_cast<void *>(offsetof(WallVertex, normal)));
+        glVertexAttribPointer(colorAttrib,
+                              decltype(WallVertex::color)::length(),
+                              GL_FLOAT,
+                              GL_FALSE,
+                              sizeof(WallVertex),
+                              reinterpret_cast<void *>(offsetof(WallVertex, color)));
         glEnableVertexAttribArray(posAttrib);
         glEnableVertexAttribArray(uvAttrib);
-        glEnableVertexAttribArray(colorAttrib);
         glEnableVertexAttribArray(normAttrib);
+        glEnableVertexAttribArray(colorAttrib);
 
         glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "VIEW_MATRIX"),
                            1,
@@ -516,10 +524,14 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
         // -------------------------------- Walls --------------------------------
         if (!wallCommands.empty())
         {
-            std::vector<float> wallVerts{};
-            wallVerts.reserve(wallCommands.size() * 8 * 12);
-            for (const WallCommand &bufferEntry: wallCommands)
+            std::vector<WallVertex> vertices{};
+            vertices.reserve(wallCommands.size() * WALL_VERTEX_COUNT);
+            std::vector<uint32_t> indices{};
+            vertices.reserve(wallCommands.size() * WALL_INDEX_COUNT);
+            for (size_t i = 0; i < wallCommands.size(); i++)
             {
+                const WallCommand &bufferEntry = wallCommands.at(i);
+
                 const float bottom = bufferEntry.wall.localCenter.y - (bufferEntry.wall.size.y / 2.0f);
                 const float top = bufferEntry.wall.localCenter.y + (bufferEntry.wall.size.y / 2.0f);
                 glm::vec2 startPoint{};
@@ -547,43 +559,48 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
                                                   (bufferEntry.wall.uvScale.y / 16.0f) * bufferEntry.wall.size.y +
                                                           bufferEntry.wall.uvOffset.y);
 
-                // clang-format off
-                const std::array<float, 8 * 12> verts = {
-                    // X Y Z U V A
-                    startPoint.x, top, startPoint.y, startUV.x, startUV.y, 1, 1, 1, 1, normal.x, normal.y, normal.z,
-                    // ----
-                    endPoint.x, top, endPoint.y, endUV.x, startUV.y, 1, 1, 1, 1, normal.x, normal.y, normal.z,
-                    // ----
-                    endPoint.x, bottom, endPoint.y, endUV.x, endUV.y, 1, 1, 1, 1, normal.x, normal.y, normal.z,
-                    // ----
-                    startPoint.x, bottom, startPoint.y, startUV.x, endUV.y, 1, 1, 1, 1, normal.x, normal.y, normal.z,
-                    // ---- backface
-                    startPoint.x, top, startPoint.y, endUV.x, startUV.y, 1, 1, 1, 1, backfaceNormal.x, backfaceNormal.y, backfaceNormal.z,
-                    // ----
-                    endPoint.x, top, endPoint.y, startUV.x, startUV.y, 1, 1, 1, 1, backfaceNormal.x, backfaceNormal.y, backfaceNormal.z,
-                    // ----
-                    endPoint.x, bottom, endPoint.y, startUV.x, endUV.y, 1, 1, 1, 1, backfaceNormal.x, backfaceNormal.y, backfaceNormal.z,
-                    // ----
-                    startPoint.x, bottom, startPoint.y, endUV.x, endUV.y, 1, 1, 1, 1, backfaceNormal.x, backfaceNormal.y, backfaceNormal.z,
-                };
-                // clang-format on
+                // front face
+                vertices.emplace_back(glm::vec3{startPoint.x, top, startPoint.y},
+                                      glm::vec2{startUV.x, startUV.y},
+                                      normal);
+                vertices.emplace_back(glm::vec3{endPoint.x, top, endPoint.y}, glm::vec2{endUV.x, startUV.y}, normal);
+                vertices.emplace_back(glm::vec3{endPoint.x, bottom, endPoint.y}, glm::vec2{endUV.x, endUV.y}, normal);
+                vertices.emplace_back(glm::vec3{startPoint.x, bottom, startPoint.y},
+                                      glm::vec2{startUV.x, endUV.y},
+                                      normal);
+                // backface
+                vertices.emplace_back(glm::vec3{startPoint.x, top, startPoint.y},
+                                      glm::vec2{endUV.x, startUV.y},
+                                      backfaceNormal);
+                vertices.emplace_back(glm::vec3{endPoint.x, top, endPoint.y},
+                                      glm::vec2{startUV.x, startUV.y},
+                                      backfaceNormal);
+                vertices.emplace_back(glm::vec3{endPoint.x, bottom, endPoint.y},
+                                      glm::vec2{startUV.x, endUV.y},
+                                      backfaceNormal);
+                vertices.emplace_back(glm::vec3{startPoint.x, bottom, startPoint.y},
+                                      glm::vec2{endUV.x, endUV.y},
+                                      backfaceNormal);
 
-                wallVerts.insert(wallVerts.end(), verts.begin(), verts.end());
+                for (const int index: {2, 1, 0, 3, 2, 0, 4, 5, 6, 4, 6, 7})
+                {
+                    indices.emplace_back(index + i * WALL_VERTEX_COUNT);
+                }
             }
 
-            glBufferData(GL_ARRAY_BUFFER, wallVerts.size() * sizeof(float), wallVerts.data(), GL_STREAM_DRAW);
+            glBufferData(GL_ARRAY_BUFFER,
+                         static_cast<GLsizeiptr>(vertices.size() * sizeof(WallVertex)),
+                         vertices.data(),
+                         GL_STREAM_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                         static_cast<GLsizeiptr>(indices.size() * sizeof(uint32_t)),
+                         indices.data(),
+                         GL_STREAM_DRAW);
             glUniform4fv(glGetUniformLocation(shadedModelProgram, "MATERIAL_COLOR"), 1, Color(-1).GetDataPointer());
 
             for (size_t i = 0; i < wallCommands.size(); i++)
             {
                 const WallCommand &bufferEntry = wallCommands.at(i);
-                std::array<uint32_t, 12> indices = {2, 1, 0, 3, 2, 0, 4, 5, 6, 4, 6, 7};
-                for (unsigned int &index: indices)
-                {
-                    index += i * 8;
-                }
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), &indices, GL_STREAM_DRAW);
-
 
                 glUniformMatrix4fv(glGetUniformLocation(shadedModelProgram, "WORLD_MATRIX"),
                                    1,
@@ -595,7 +612,7 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
                 glUniform4fv(glGetUniformLocation(shadedModelProgram, "OVERLAY_COLOR"),
                              1,
                              bufferEntry.overlayColor.GetDataPointer());
-                glUniform1i(glGetUniformLocation(shadedModelProgram, "SHADED"), !bufferEntry.wall.unshaded);
+                glUniform1i(glGetUniformLocation(shadedModelProgram, "SHADED"), bufferEntry.wall.unshaded ? 0 : 1);
 
                 GLuint texture = 0;
                 const Error::ErrorCode code = SharedMgr::Get().textureCache.GetTextureGLuint(bufferEntry.wall.texture,
@@ -607,7 +624,10 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
                 glBindTexture(GL_TEXTURE_2D, texture);
                 glUniform1i(glGetUniformLocation(shadedModelProgram, "TEXTURE"), 0);
 
-                glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
+                glDrawElements(GL_TRIANGLES,
+                               WALL_INDEX_COUNT,
+                               GL_UNSIGNED_INT,
+                               reinterpret_cast<void *>(i * WALL_INDEX_COUNT * sizeof(uint32_t)));
             }
             wallCommands.clear();
         }
@@ -662,7 +682,7 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
                                  1,
                                  mat.color.GetDataPointer());
                     glUniform1i(glGetUniformLocation(shadedModelProgram, "SHADED"),
-                                mat.shader == Material::MaterialShader::SHADER_SHADED);
+                                mat.shader == Material::MaterialShader::SHADER_SHADED ? 1 : 0);
 
                     std::string textureName;
                     if (mat.shader == Material::MaterialShader::SHADER_SKY)
@@ -702,11 +722,18 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
         glUseProgram(spriteProgram);
         GLHelper::BindBuffer(workBufferNonIndexed);
         const GLint posAttrLoc = glGetAttribLocation(spriteProgram, "VERTEX");
-        glVertexAttribPointer(posAttrLoc, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+        glVertexAttribPointer(posAttrLoc, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteCommand), nullptr);
         glEnableVertexAttribArray(posAttrLoc);
 
-        for (const SpriteCommand &command: spriteCommands)
+        glBufferData(GL_ARRAY_BUFFER,
+                     static_cast<GLsizeiptr>(spriteCommands.size() * sizeof(SpriteCommand)),
+                     spriteCommands.data(),
+                     GL_STREAM_DRAW);
+
+        for (size_t i = 0; i < spriteCommands.size(); i++)
         {
+            const SpriteCommand &command = spriteCommands.at(i);
+
             glPointSize(command.pointSize);
 
             GLuint textureId = -1;
@@ -729,10 +756,7 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
                                GL_FALSE,
                                glm::value_ptr(identity));
 
-            const std::array vertices = {command.position.x, command.position.y, command.position.z};
-            glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STREAM_DRAW);
-
-            glDrawArrays(GL_POINTS, 0, 1);
+            glDrawArrays(GL_POINTS, static_cast<GLint>(i), 1);
         }
         spriteCommands.clear();
     }
@@ -764,10 +788,33 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
 
         glUniformMatrix4fv(glGetUniformLocation(brushProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
+        std::vector<MapVertex> vertices;
+        std::vector<uint32_t> indices;
+        uint32_t indexOffset = 0;
+        for (const BrushFaceCommand &command: brushFaceCommands)
+        {
+            vertices.insert(vertices.end(), command.face.vertices.begin(), command.face.vertices.end());
+            for (const uint32_t index: command.face.indices)
+            {
+                indices.emplace_back(index + indexOffset);
+            }
+            indexOffset += command.face.vertices.size();
+        }
+
+        glBufferData(GL_ARRAY_BUFFER,
+                     static_cast<GLsizeiptr>(vertices.size() * sizeof(MapVertex)),
+                     vertices.data(),
+                     GL_STREAM_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                     static_cast<GLsizeiptr>(indices.size() * sizeof(uint32_t)),
+                     indices.data(),
+                     GL_STREAM_DRAW);
+
+        indexOffset = 0;
         for (const BrushFaceCommand &command: brushFaceCommands)
         {
             GLuint texture = 0;
-            LevelMaterialAsset &material = MaterialCache::GetMaterial(command.face.material);
+            const LevelMaterialAsset &material = MaterialCache::GetMaterial(command.face.material);
             if (!MapEditor::showInvisibleFaces && material.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
             {
                 continue;
@@ -787,17 +834,13 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
             glUniform4fv(glGetUniformLocation(brushProgram, "OVERLAY_COLOR"), 1, command.overlayColor.GetDataPointer());
             glUniform1i(glGetUniformLocation(brushProgram, "TEXTURE"), 0);
             glUniform1i(glGetUniformLocation(brushProgram, "SHADED"),
-                        material.shader == Material::MaterialShader::SHADER_SHADED);
+                        material.shader == Material::MaterialShader::SHADER_SHADED ? 1 : 0);
 
-            glBufferData(GL_ARRAY_BUFFER,
-                         command.face.vertices.size() * sizeof(MapVertex),
-                         command.face.vertices.data(),
-                         GL_STREAM_DRAW);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                         command.face.indices.size() * sizeof(uint32_t),
-                         command.face.indices.data(),
-                         GL_STREAM_DRAW);
-            glDrawElements(GL_TRIANGLES, command.face.indices.size(), GL_UNSIGNED_INT, nullptr);
+            glDrawElements(GL_TRIANGLES,
+                           static_cast<GLsizei>(command.face.indices.size()),
+                           GL_UNSIGNED_INT,
+                           reinterpret_cast<void *>(indexOffset));
+            indexOffset += command.face.indices.size() * sizeof(uint32_t);
         }
         brushFaceCommands.clear();
     }
@@ -859,10 +902,14 @@ void MapRenderer::ExecuteObjectBufferCommands(const glm::mat4 &viewMatrix)
         glEnableVertexAttribArray(posAttrib);
         glEnableVertexAttribArray(normAttrib);
 
-        std::vector<float> wallVerts{};
-        wallVerts.reserve(objectBufferWallCommands.size() * 8 * 6);
-        for (const ObjectBufferWallCommand &bufferEntry: objectBufferWallCommands)
+        std::vector<ObjectBufferWallVertex> vertices{};
+        vertices.reserve(objectBufferWallCommands.size() * WALL_VERTEX_COUNT);
+        std::vector<uint32_t> indices{};
+        vertices.reserve(objectBufferWallCommands.size() * WALL_INDEX_COUNT);
+        for (size_t i = 0; i < objectBufferWallCommands.size(); i++)
         {
+            const ObjectBufferWallCommand &bufferEntry = objectBufferWallCommands.at(i);
+
             const float bottom = bufferEntry.wall.localCenter.y - (bufferEntry.wall.size.y / 2.0f);
             const float top = bufferEntry.wall.localCenter.y + (bufferEntry.wall.size.y / 2.0f);
             glm::vec2 startPoint{};
@@ -884,40 +931,35 @@ void MapRenderer::ExecuteObjectBufferCommands(const glm::mat4 &viewMatrix)
                 backfaceNormal.z = -1;
             }
 
-            // clang-format off
-            const std::array<float, 8 * 6> verts = {
-                // X Y Z U V A
-                startPoint.x, top, startPoint.y, normal.x, normal.y, normal.z,
-                // ----
-                endPoint.x, top, endPoint.y, normal.x, normal.y, normal.z,
-                // ----
-                endPoint.x, bottom, endPoint.y, normal.x, normal.y, normal.z,
-                // ----
-                startPoint.x, bottom, startPoint.y, normal.x, normal.y, normal.z,
-                // ---- backface
-                startPoint.x, top, startPoint.y, backfaceNormal.x, backfaceNormal.y, backfaceNormal.z,
-                // ----
-                endPoint.x, top, endPoint.y, backfaceNormal.x, backfaceNormal.y, backfaceNormal.z,
-                // ----
-                endPoint.x, bottom, endPoint.y, backfaceNormal.x, backfaceNormal.y, backfaceNormal.z,
-                // ----
-                startPoint.x, bottom, startPoint.y, backfaceNormal.x, backfaceNormal.y, backfaceNormal.z,
-            };
-            // clang-format on
+            // front face
+            vertices.emplace_back(glm::vec3{startPoint.x, top, startPoint.y}, normal);
+            vertices.emplace_back(glm::vec3{endPoint.x, top, endPoint.y}, normal);
+            vertices.emplace_back(glm::vec3{endPoint.x, bottom, endPoint.y}, normal);
+            vertices.emplace_back(glm::vec3{startPoint.x, bottom, startPoint.y}, normal);
+            // backface
+            vertices.emplace_back(glm::vec3{startPoint.x, top, startPoint.y}, backfaceNormal);
+            vertices.emplace_back(glm::vec3{endPoint.x, top, endPoint.y}, backfaceNormal);
+            vertices.emplace_back(glm::vec3{endPoint.x, bottom, endPoint.y}, backfaceNormal);
+            vertices.emplace_back(glm::vec3{startPoint.x, bottom, startPoint.y}, backfaceNormal);
 
-            wallVerts.insert(wallVerts.end(), verts.begin(), verts.end());
+            for (const int index: {2, 1, 0, 3, 2, 0, 4, 5, 6, 4, 6, 7})
+            {
+                indices.emplace_back(index + i * WALL_VERTEX_COUNT);
+            }
         }
-        glBufferData(GL_ARRAY_BUFFER, wallVerts.size() * sizeof(float), wallVerts.data(), GL_STREAM_DRAW);
+
+        glBufferData(GL_ARRAY_BUFFER,
+                     static_cast<GLsizeiptr>(vertices.size() * sizeof(ObjectBufferWallVertex)),
+                     vertices.data(),
+                     GL_STREAM_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                     static_cast<GLsizeiptr>(indices.size() * sizeof(uint32_t)),
+                     indices.data(),
+                     GL_STREAM_DRAW);
 
         for (size_t i = 0; i < objectBufferWallCommands.size(); i++)
         {
             const ObjectBufferWallCommand &bufferEntry = objectBufferWallCommands.at(i);
-            std::array<uint32_t, 12> indices = {2, 1, 0, 3, 2, 0, 4, 5, 6, 4, 6, 7};
-            for (unsigned int &index: indices)
-            {
-                index += i * 8;
-            }
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), &indices, GL_STREAM_DRAW);
 
             glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "WORLD_MATRIX"),
                                1,
@@ -929,28 +971,57 @@ void MapRenderer::ExecuteObjectBufferCommands(const glm::mat4 &viewMatrix)
             glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_SUB_INDEX"),
                          bufferEntry.info.objectSubIndex);
 
-            glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
+            glDrawElements(GL_TRIANGLES,
+                           WALL_INDEX_COUNT,
+                           GL_UNSIGNED_INT,
+                           reinterpret_cast<void *>(i * WALL_INDEX_COUNT * sizeof(uint32_t)));
         }
         objectBufferWallCommands.clear();
     }
 
     if (!objectBufferBrushFaceCommands.empty())
     {
-        glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(MapVertex), nullptr);
+        glVertexAttribPointer(posAttrib,
+                              decltype(MapVertex::position)::length(),
+                              GL_FLOAT,
+                              GL_FALSE,
+                              sizeof(MapVertex),
+                              reinterpret_cast<const void *>(offsetof(MapVertex, position)));
         glVertexAttribPointer(normAttrib,
-                              3,
+                              decltype(MapVertex::normal)::length(),
                               GL_FLOAT,
                               GL_FALSE,
                               sizeof(MapVertex),
                               reinterpret_cast<const void *>(offsetof(MapVertex, normal)));
         glEnableVertexAttribArray(posAttrib);
         glEnableVertexAttribArray(normAttrib);
+
+        std::vector<MapVertex> vertices;
+        std::vector<uint32_t> indices;
+        uint32_t indexOffset = 0;
         for (const ObjectBufferBrushFaceCommand &command: objectBufferBrushFaceCommands)
         {
-            glBufferData(GL_ARRAY_BUFFER,
-                         command.face.vertices.size() * sizeof(MapVertex),
-                         command.face.vertices.data(),
-                         GL_STREAM_DRAW);
+            vertices.insert(vertices.end(), command.face.vertices.begin(), command.face.vertices.end());
+            for (const uint32_t index: command.face.indices)
+            {
+                indices.emplace_back(index + indexOffset);
+            }
+            indexOffset += command.face.vertices.size();
+        }
+
+        glBufferData(GL_ARRAY_BUFFER,
+                     static_cast<GLsizeiptr>(vertices.size() * sizeof(MapVertex)),
+                     vertices.data(),
+                     GL_STREAM_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                     static_cast<GLsizeiptr>(indices.size() * sizeof(uint32_t)),
+                     indices.data(),
+                     GL_STREAM_DRAW);
+
+        indexOffset = 0;
+        for (size_t i = 0; i < objectBufferBrushFaceCommands.size(); i++)
+        {
+            const ObjectBufferBrushFaceCommand &command = objectBufferBrushFaceCommands.at(i);
 
             glUniformMatrix4fv(glGetUniformLocation(worldBuffersProgram, "VIEW_MATRIX"),
                                1,
@@ -965,11 +1036,11 @@ void MapRenderer::ExecuteObjectBufferCommands(const glm::mat4 &viewMatrix)
             glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_INDEX"), command.info.objectIndex);
             glUniform1ui(glGetUniformLocation(worldBuffersProgram, "OBJECT_SUB_INDEX"), command.info.objectSubIndex);
 
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                         command.face.indices.size() * sizeof(uint32_t),
-                         command.face.indices.data(),
-                         GL_STREAM_DRAW);
-            glDrawElements(GL_TRIANGLES, command.face.indices.size(), GL_UNSIGNED_INT, nullptr);
+            glDrawElements(GL_TRIANGLES,
+                           static_cast<GLsizei>(command.face.indices.size()),
+                           GL_UNSIGNED_INT,
+                           reinterpret_cast<void *>(indexOffset));
+            indexOffset += command.face.indices.size() * sizeof(uint32_t);
         }
         objectBufferBrushFaceCommands.clear();
     }
