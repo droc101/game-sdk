@@ -51,6 +51,13 @@ bool LightmapPacker::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
         material.LoadFromAsset(materialPath);
         if (material.shader != Material::MaterialShader::SHADER_SHADED)
         {
+            for (size_t _ = 0; _ < builder.faceDatas.size(); _++)
+            {
+                for (MapVertex &vertex: builder.vertices)
+                {
+                    vertex.lightmapUv = glm::vec2{0};
+                }
+            }
             continue;
         }
 
