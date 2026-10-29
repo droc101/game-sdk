@@ -252,7 +252,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         vertices.insert(vertices.end(), builder.GetVertices().begin(), builder.GetVertices().end());
     }
 
-    writer.Write<float>(2 * glm::length(BoundingBox(vertices).extents));
+    writer.Write<float>(std::max(128.0f, 2 * glm::length(BoundingBox(vertices).extents)));
 
     std::vector<uint16_t> lightmapPixels = {0x3c00, 0x3c00, 0x3c00, 0x3c00}; // float16 1.0
     std::vector<uint16_t> indirectLightingLightmapPixels = {0, 0, 0, 0};
