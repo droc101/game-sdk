@@ -79,7 +79,6 @@ class LightBaker
 
         [[nodiscard]] bool SingleBakeIteration(uint32_t width,
                                                uint32_t height,
-                                               float percentDone,
                                                uint32_t baseLuxelIndex,
                                                bool directLighting) const;
 

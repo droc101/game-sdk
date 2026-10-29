@@ -882,15 +882,18 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
     Logger::Verbose("{} Emissive luxels in lightmap",
                     *static_cast<const uint32_t *>(lunaGetBufferDataPointer(emissiveLuxelIndicesBuffer)));
 
+    uint32_t nextPercentLog = 10;
     const std::chrono::time_point<std::chrono::system_clock> start = std::chrono::high_resolution_clock::now();
     for (uint32_t iteration = 0; iteration < iterations; iteration++)
     {
-        if (!SingleBakeIteration(width,
-                                 height,
-                                 static_cast<float>(100 * iteration) /
-                                         static_cast<float>(iterations * (BOUNCE_COUNT + 2)),
-                                 width * height * iteration,
-                                 true))
+        const float percentDone = static_cast<float>(100 * iteration) /
+                                  static_cast<float>(iterations * (BOUNCE_COUNT + 2));
+        if (percentDone > static_cast<float>(nextPercentLog))
+        {
+            Logger::Info("Baking lighting {}%...", nextPercentLog);
+            nextPercentLog = (static_cast<uint32_t>(percentDone) / 10 + 1) * 10;
+        }
+        if (!SingleBakeIteration(width, height, width * height * iteration, true))
         {
             return false;
         }
@@ -923,12 +926,14 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
                                nullptr);
         for (uint32_t iteration = 0; iteration < iterations; iteration++)
         {
-            if (!SingleBakeIteration(width,
-                                     height,
-                                     static_cast<float>(100 * ((bounce + 1) * iterations + iteration)) /
-                                             static_cast<float>(iterations * (BOUNCE_COUNT + 2)),
-                                     width * height * iteration,
-                                     false))
+            const float percentDone = static_cast<float>(100 * ((bounce + 1) * iterations + iteration)) /
+                                      static_cast<float>(iterations * (BOUNCE_COUNT + 2));
+            if (percentDone > static_cast<float>(nextPercentLog))
+            {
+                Logger::Info("Baking lighting {}%...", nextPercentLog);
+                nextPercentLog = (static_cast<uint32_t>(percentDone) / 10 + 1) * 10;
+            }
+            if (!SingleBakeIteration(width, height, width * height * iteration, false))
             {
                 return false;
             }
@@ -954,12 +959,14 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
     }
     for (uint32_t iteration = 0; iteration < iterations; iteration++)
     {
-        if (!SingleBakeIteration(width,
-                                 height,
-                                 static_cast<float>(100 * ((BOUNCE_COUNT + 1) * iterations + iteration)) /
-                                         static_cast<float>(iterations * (BOUNCE_COUNT + 2)),
-                                 width * height * iteration,
-                                 true))
+        const float percentDone = static_cast<float>(100 * ((BOUNCE_COUNT + 1) * iterations + iteration)) /
+                                  static_cast<float>(iterations * (BOUNCE_COUNT + 2));
+        if (percentDone > static_cast<float>(nextPercentLog))
+        {
+            Logger::Info("Baking lighting {}%...", nextPercentLog);
+            nextPercentLog = (static_cast<uint32_t>(percentDone) / 10 + 1) * 10;
+        }
+        if (!SingleBakeIteration(width, height, width * height * iteration, true))
         {
             return false;
         }
@@ -2437,12 +2444,9 @@ bool LightBaker::CreateShaderBindingTables()
 
 bool LightBaker::SingleBakeIteration(const uint32_t width,
                                      const uint32_t height,
-                                     const float percentDone,
                                      const uint32_t baseLuxelIndex,
                                      const bool directLighting) const
 {
-    Logger::Info("Baking lighting {}%...", percentDone);
-
     if (!CheckResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
     {
         return false;
