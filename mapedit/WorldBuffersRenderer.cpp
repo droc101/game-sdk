@@ -79,7 +79,7 @@ void WorldBuffersRenderer::RenderActor(const size_t actorIndex)
 
     for (const std::shared_ptr<RenderDefinition> &rdef: definition.renderDefinitions)
     {
-        if (!MapEditor::drawGizmos && rdef.get()->IsGizmo(a))
+        if (!MapEditor::options.drawGizmos && rdef.get()->IsGizmo(a))
         {
             continue;
         }

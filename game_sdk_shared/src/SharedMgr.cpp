@@ -45,7 +45,7 @@ void SharedMgr::SharedMenuUI(const std::string &programName)
 {
     if (ImGui::BeginMenu("Tools"))
     {
-        if (ImGui::MenuItem("Options"))
+        if (ImGui::MenuItem("GAME SDK Options"))
         {
             WindowManager::Get().AddModalWindow<OptionsWindow>();
         }

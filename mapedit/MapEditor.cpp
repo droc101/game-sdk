@@ -3,6 +3,7 @@
 //
 
 #include "MapEditor.h"
+#include <SDL3/SDL_mouse.h>
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -22,7 +23,7 @@
 
 float MapEditor::SnapToGrid(const float f)
 {
-    if (!snapToGrid)
+    if (!options.snapToGrid)
     {
         return f;
     }

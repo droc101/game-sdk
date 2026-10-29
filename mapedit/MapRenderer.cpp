@@ -226,7 +226,7 @@ void MapRenderer::RenderViewportGrid(const Viewport &vp)
 
     glDisable(GL_DEPTH_TEST);
 
-    if (MapEditor::drawGrid && !vp.Is3D())
+    if (MapEditor::options.drawGrid && !vp.Is3D())
     {
         const float gridSpacing = MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex);
         const int numInstances = static_cast<int>(MapEditor::MAP_SIZE * 2 / gridSpacing);
@@ -245,7 +245,7 @@ void MapRenderer::RenderViewportGrid(const Viewport &vp)
     glUniformMatrix4fv(glGetUniformLocation(vertexColorProgram, "VIEW_MATRIX"), 1, GL_FALSE, glm::value_ptr(view));
     const GLint posAttrib = glGetAttribLocation(vertexColorProgram, "VERTEX");
     const GLint colorAttrib = glGetAttribLocation(vertexColorProgram, "VERTEX_COLOR");
-    if (MapEditor::drawAxisHelper && !vp.Is3D())
+    if (MapEditor::options.drawAxisHelper && !vp.Is3D())
     {
         GLHelper::BindBuffer(axisHelperBuffer);
         glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
@@ -259,7 +259,7 @@ void MapRenderer::RenderViewportGrid(const Viewport &vp)
         glEnableVertexAttribArray(colorAttrib);
         glDrawArrays(GL_LINES, 0, 6);
     }
-    if (MapEditor::drawWorldBorder && !vp.Is3D())
+    if (MapEditor::options.drawWorldBorder && !vp.Is3D())
     {
         GLHelper::BindBuffer(worldBorderBuffer);
         glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
@@ -799,7 +799,7 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
         for (const BrushFaceCommand &command: brushFaceCommands)
         {
             const LevelMaterialAsset &material = MaterialCache::GetMaterial(command.face.material);
-            if (!MapEditor::showInvisibleFaces && material.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
+            if (!MapEditor::options.showInvisibleFaces && material.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
             {
                 continue;
             }
@@ -825,7 +825,7 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
         {
             GLuint texture = 0;
             const LevelMaterialAsset &material = MaterialCache::GetMaterial(command.face.material);
-            if (!MapEditor::showInvisibleFaces && material.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
+            if (!MapEditor::options.showInvisibleFaces && material.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
             {
                 continue;
             }
@@ -1012,7 +1012,7 @@ void MapRenderer::ExecuteObjectBufferCommands(const glm::mat4 &viewMatrix)
         for (const ObjectBufferBrushFaceCommand &command: objectBufferBrushFaceCommands)
         {
             const LevelMaterialAsset &material = MaterialCache::GetMaterial(command.face.material);
-            if (!MapEditor::showInvisibleFaces && material.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
+            if (!MapEditor::options.showInvisibleFaces && material.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
             {
                 continue;
             }
@@ -1037,7 +1037,7 @@ void MapRenderer::ExecuteObjectBufferCommands(const glm::mat4 &viewMatrix)
         for (const ObjectBufferBrushFaceCommand &command: objectBufferBrushFaceCommands)
         {
             const LevelMaterialAsset &material = MaterialCache::GetMaterial(command.face.material);
-            if (!MapEditor::showInvisibleFaces && material.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
+            if (!MapEditor::options.showInvisibleFaces && material.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
             {
                 continue;
             }

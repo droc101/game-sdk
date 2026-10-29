@@ -27,6 +27,7 @@
 #include "MapEditor.h"
 #include "MapPropertiesWindow.h"
 #include "MapRenderer.h"
+#include "MapeditOptionsWindow.h"
 #include "tools/AddActorTool.h"
 #include "tools/AddPolygonTool.h"
 #include "tools/AddPrimitiveTool.h"
@@ -66,7 +67,8 @@ bool MapeditWindow::Init()
         return false;
     }
 
-    MapEditor::material = Options::Get().defaultMaterial;
+    MapEditor::options.Load();
+    MapEditor::material = MapEditor::options.defaultMaterial;
     if (!MapRenderer::Init())
     {
         Logger::Error("Failed to start renderer!");
@@ -110,6 +112,7 @@ bool MapeditWindow::ProcessEvent(SDL_Event *event)
 
 void MapeditWindow::Destroy()
 {
+    MapEditor::options.Save();
     SoundSystem::Get().Destroy();
     MapRenderer::Destroy();
 }
@@ -162,7 +165,7 @@ void MapeditWindow::SetupDockspace()
     }
 
     const ImGuiViewport *viewport = ImGui::GetMainViewport();
-    const float sidebarSize = MapEditor::showSidebar ? MapEditor::SIDEBAR_WIDTH : 0;
+    const float sidebarSize = MapEditor::options.showSidebar ? MapEditor::SIDEBAR_WIDTH : 0;
     const ImVec2 vpAreaSize = ImVec2((viewport->WorkSize.x - sidebarSize),
                                      (viewport->WorkSize.y - MapEditor::TOOLBAR_HEIGHT));
 
@@ -323,9 +326,9 @@ void MapeditWindow::Render()
                 WindowManager::Get().AddModalWindow<MapPropertiesWindow>();
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Snap on Grid", "", MapEditor::snapToGrid))
+            if (ImGui::MenuItem("Snap on Grid", "", MapEditor::options.snapToGrid))
             {
-                MapEditor::snapToGrid = !MapEditor::snapToGrid;
+                MapEditor::options.snapToGrid = !MapEditor::options.snapToGrid;
             }
             if (ImGui::MenuItem("Smaller Grid", "["))
             {
@@ -399,46 +402,46 @@ void MapeditWindow::Render()
                 vpSide.CenterPosition(center);
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Show Viewport Information", "", MapEditor::drawViewportInfo))
+            if (ImGui::MenuItem("Show Viewport Information", "", MapEditor::options.drawViewportInfo))
             {
-                MapEditor::drawViewportInfo = !MapEditor::drawViewportInfo;
+                MapEditor::options.drawViewportInfo = !MapEditor::options.drawViewportInfo;
             }
-            if (ImGui::MenuItem("Show Axes", "", MapEditor::drawAxisHelper))
+            if (ImGui::MenuItem("Show Axes", "", MapEditor::options.drawAxisHelper))
             {
-                MapEditor::drawAxisHelper = !MapEditor::drawAxisHelper;
+                MapEditor::options.drawAxisHelper = !MapEditor::options.drawAxisHelper;
             }
-            if (ImGui::MenuItem("Show World Border", "", MapEditor::drawWorldBorder))
+            if (ImGui::MenuItem("Show World Border", "", MapEditor::options.drawWorldBorder))
             {
-                MapEditor::drawWorldBorder = !MapEditor::drawWorldBorder;
+                MapEditor::options.drawWorldBorder = !MapEditor::options.drawWorldBorder;
             }
-            if (ImGui::MenuItem("Show 3D Models in 2D viewports", "", MapEditor::drawModels))
+            if (ImGui::MenuItem("Show 3D Models in 2D viewports", "", MapEditor::options.drawModels))
             {
-                MapEditor::drawModels = !MapEditor::drawModels;
+                MapEditor::options.drawModels = !MapEditor::options.drawModels;
             }
-            if (ImGui::MenuItem("Show Gizmos", "", MapEditor::drawGizmos))
+            if (ImGui::MenuItem("Show Gizmos", "", MapEditor::options.drawGizmos))
             {
-                MapEditor::drawGizmos = !MapEditor::drawGizmos;
+                MapEditor::options.drawGizmos = !MapEditor::options.drawGizmos;
             }
-            if (ImGui::MenuItem("Enable Culling", "", MapEditor::culling))
+            if (ImGui::MenuItem("Enable Culling", "", MapEditor::options.culling))
             {
-                MapEditor::culling = !MapEditor::culling;
+                MapEditor::options.culling = !MapEditor::options.culling;
             }
-            if (ImGui::MenuItem("Show Internal Buffers", "", MapEditor::showInternalBuffers))
+            if (ImGui::MenuItem("Show Internal Buffers", "", MapEditor::options.showInternalBuffers))
             {
-                MapEditor::showInternalBuffers = !MapEditor::showInternalBuffers;
+                MapEditor::options.showInternalBuffers = !MapEditor::options.showInternalBuffers;
             }
-            if (ImGui::MenuItem("Show 2D Viewports", "", MapEditor::show2dViewports))
+            if (ImGui::MenuItem("Show 2D Viewports", "", MapEditor::options.show2dViewports))
             {
-                MapEditor::show2dViewports = !MapEditor::show2dViewports;
+                MapEditor::options.show2dViewports = !MapEditor::options.show2dViewports;
             }
-            if (ImGui::MenuItem("Show Invisible Faces", "", MapEditor::showInvisibleFaces))
+            if (ImGui::MenuItem("Show Invisible Faces", "", MapEditor::options.showInvisibleFaces))
             {
-                MapEditor::showInvisibleFaces = !MapEditor::showInvisibleFaces;
+                MapEditor::options.showInvisibleFaces = !MapEditor::options.showInvisibleFaces;
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Show Grid", "", MapEditor::drawGrid))
+            if (ImGui::MenuItem("Show Grid", "", MapEditor::options.drawGrid))
             {
-                MapEditor::drawGrid = !MapEditor::drawGrid;
+                MapEditor::options.drawGrid = !MapEditor::options.drawGrid;
             }
             if (ImGui::MenuItem("Smaller Grid", "["))
             {
@@ -461,9 +464,9 @@ void MapeditWindow::Render()
                 MapEditor::gridSpacingIndex = MapEditor::DEFAULT_GRID_SPACING_INDEX;
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Show Sidebar", "", MapEditor::showSidebar))
+            if (ImGui::MenuItem("Show Sidebar", "", MapEditor::options.showSidebar))
             {
-                MapEditor::showSidebar = !MapEditor::showSidebar;
+                MapEditor::options.showSidebar = !MapEditor::options.showSidebar;
             }
             ImGui::EndMenu();
         }
@@ -500,6 +503,10 @@ void MapeditWindow::Render()
                 }
             }
             ImGui::Separator();
+            if (ImGui::MenuItem("Map Editor Options"))
+            {
+                WindowManager::Get().AddModalWindow<MapeditOptionsWindow>();
+            }
             ImGui::EndMenu();
         }
         SharedMgr::Get().SharedMenuUI("mapedit");
@@ -645,7 +652,7 @@ void MapeditWindow::Render()
     ImGui::Dummy({1, 1});
     ImGui::End();
 
-    if (MapEditor::showSidebar)
+    if (MapEditor::options.showSidebar)
     {
         ImGui::SetNextWindowPos(ImVec2(0, viewport->WorkPos.y + MapEditor::TOOLBAR_HEIGHT));
         ImGui::SetNextWindowSize(ImVec2(MapEditor::SIDEBAR_WIDTH, viewport->WorkSize.y - MapEditor::TOOLBAR_HEIGHT));
@@ -662,7 +669,7 @@ void MapeditWindow::Render()
         ImGui::End();
     }
 
-    const float sidebarSize = MapEditor::showSidebar ? MapEditor::SIDEBAR_WIDTH : 0;
+    const float sidebarSize = MapEditor::options.showSidebar ? MapEditor::SIDEBAR_WIDTH : 0;
     const ImVec2 vpAreaTopLeft = ImVec2(viewport->WorkPos.x + sidebarSize,
                                         viewport->WorkPos.y + MapEditor::TOOLBAR_HEIGHT);
     const ImVec2 vpAreaSize = ImVec2((viewport->WorkSize.x - sidebarSize),
@@ -684,7 +691,7 @@ void MapeditWindow::Render()
     ImGui::PopStyleVar();
 
     vpPerspective.Render();
-    if (MapEditor::show2dViewports)
+    if (MapEditor::options.show2dViewports)
     {
         vpTopDown.Render();
         vpFront.Render();

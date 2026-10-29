@@ -187,7 +187,7 @@ void ViewportRenderer::RenderBrush(const Viewport &vp, const ViewportRenderSetti
 {
     Brush &brush = MapEditor::map.brushes.at(brushIndex);
 
-    if (MapEditor::culling && BrushIsCulled(brush, vp))
+    if (MapEditor::options.culling && BrushIsCulled(brush, vp))
     {
         return;
     }
@@ -485,7 +485,7 @@ bool ViewportRenderer::BrushIsCulled(const Brush &brush, const Viewport &vp)
 
 void ViewportRenderer::RenderActor(const Actor &a, const Viewport &vp, const Color &overlayColor)
 {
-    if (MapEditor::culling && ActorIsCulled(a, vp))
+    if (MapEditor::options.culling && ActorIsCulled(a, vp))
     {
         return;
     }
@@ -500,7 +500,7 @@ void ViewportRenderer::RenderActor(const Actor &a, const Viewport &vp, const Col
 
     for (const std::shared_ptr<RenderDefinition> &rdef: definition.renderDefinitions)
     {
-        if (!MapEditor::drawGizmos && rdef.get()->IsGizmo(a))
+        if (!MapEditor::options.drawGizmos && rdef.get()->IsGizmo(a))
         {
             continue;
         }
@@ -574,7 +574,7 @@ bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
 
     for (const std::shared_ptr<RenderDefinition> &rdef: definition.renderDefinitions)
     {
-        if (!MapEditor::drawGizmos && rdef.get()->IsGizmo(actor))
+        if (!MapEditor::options.drawGizmos && rdef.get()->IsGizmo(actor))
         {
             continue;
         }
@@ -753,7 +753,7 @@ void ViewportRenderer::RenderModelRdef(ModelRenderDefinition *rdef,
                                       rdef->GetSkin(actor),
                                       rdef->GetModColor(actor),
                                       overlayColor);
-    } else if (MapEditor::drawModels)
+    } else if (MapEditor::options.drawModels)
     {
         MapRenderer::CmdModel(rdef->GetModel(actor), worldMatrix, rdef->GetColor(actor));
     }

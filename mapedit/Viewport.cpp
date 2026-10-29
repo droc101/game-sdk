@@ -75,11 +75,17 @@ void Viewport::Render()
         }
     }
 
-    const ImVec2 wPos = ImGui::GetWindowPos();
-    const ImVec2 mPos = ImGui::GetMousePos();
-    lastLocalMousePos = {mPos.x - wPos.x, mPos.y - wPos.y};
-
     windowPos = ImGui::GetWindowPos();
+    const ImVec2 mPos = ImGui::GetMousePos();
+    lastLocalMousePos = {mPos.x - windowPos.x, mPos.y - windowPos.y};
+    if (type == ViewportType::PERSPECTIVE && MapEditor::options.showInternalBuffers && mPos.x != -FLT_MAX)
+    {
+        lastLocalMousePos.x *= 2;
+        lastLocalMousePos.y *= 2;
+        lastLocalMousePos.x = static_cast<uint32_t>(lastLocalMousePos.x) % static_cast<uint32_t>(windowSize.x);
+        lastLocalMousePos.y = static_cast<uint32_t>(lastLocalMousePos.y) % static_cast<uint32_t>(windowSize.y);
+    }
+
     const float windowSizeX = ImGui::GetContentRegionAvail().x +
                               ImGui::GetCursorScreenPos().x -
                               ImGui::GetWindowPos().x +
@@ -123,7 +129,7 @@ void Viewport::Render()
 
     const ImVec2 origCursor = ImGui::GetCursorPos();
     ImGui::SetCursorPos({0, 0});
-    if (type == ViewportType::PERSPECTIVE && MapEditor::showInternalBuffers)
+    if (type == ViewportType::PERSPECTIVE && MapEditor::options.showInternalBuffers)
     {
         const ImVec2 imgSize = {windowSize.x / 2, windowSize.y / 2};
         ImGui::Image(framebuffer.colorTexture, imgSize, {0, 1}, {1, 0});
@@ -145,7 +151,7 @@ void Viewport::Render()
                                             ImGuiChildFlags_AutoResizeX |
                                             ImGuiChildFlags_AutoResizeY |
                                             ImGuiChildFlags_Borders;
-    if (MapEditor::drawViewportInfo && ImGui::BeginChild("_vp_stats", ImVec2(0, 0), CHILD_FLAGS))
+    if (MapEditor::options.drawViewportInfo && ImGui::BeginChild("_vp_stats", ImVec2(0, 0), CHILD_FLAGS))
     {
         if (type != ViewportType::PERSPECTIVE)
         {

@@ -54,8 +54,6 @@ void OptionsWindow::Render()
     ImGui::SeparatorText("Default Assets");
     ImGui::TextUnformatted("Default Texture");
     TextureBrowserWindow::InputTexture("##defaulttexinput", Options::Get().defaultTexture);
-    ImGui::TextUnformatted("Default Material");
-    MaterialBrowserWindow::InputMaterial("##defaultmatinput", Options::Get().defaultMaterial);
 
     ImGui::SeparatorText("Appearance");
     ImGui::TextUnformatted("Theme");

@@ -16,6 +16,8 @@
 #include <string>
 #include <variant>
 #include <vector>
+
+#include "MapeditOptions.h"
 #include "tools/EditorTool.h"
 #include "tools/SelectTool.h"
 
@@ -40,19 +42,9 @@ class MapEditor
         static inline MapAsset map{};
         static inline std::string mapFile{};
 
+        static inline MapeditOptions options{};
+
         static inline int gridSpacingIndex = 3;
-        static inline bool drawGrid = true;
-        static inline bool drawAxisHelper = true;
-        static inline bool drawWorldBorder = true;
-        static inline bool drawViewportInfo = true;
-        static inline bool snapToGrid = true;
-        static inline bool showSidebar = true;
-        static inline bool drawModels = true;
-        static inline bool culling = true;
-        static inline bool drawGizmos = true;
-        static inline bool showInternalBuffers = false;
-        static inline bool show2dViewports = true;
-        static inline bool showInvisibleFaces = true;
 
         static constexpr size_t HOVER_DISTANCE_PIXELS = 10;
         static constexpr size_t TOOLBAR_HEIGHT = 48;

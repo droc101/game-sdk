@@ -45,7 +45,6 @@ void Options::Load()
         gameExecutablePath = savedata.value("game_executable_path", "");
         gameConfigPath = savedata.value("game_config_path", "");
         defaultTexture = savedata.value("default_texture", DEFAULT_TEXTURE);
-        defaultMaterial = savedata.value("default_material", DEFAULT_MATERIAL);
         theme = savedata.value("theme", Theme::SYSTEM);
     }
 }
@@ -54,7 +53,6 @@ void Options::LoadDefault()
 {
     gameExecutablePath = "";
     defaultTexture = DEFAULT_TEXTURE;
-    defaultMaterial = DEFAULT_MATERIAL;
     gameConfigPath = "";
     theme = Theme::SYSTEM;
 }
@@ -64,7 +62,6 @@ void Options::Save()
     const nlohmann::json savedata = {
         {"game_executable_path", gameExecutablePath},
         {"default_texture", defaultTexture},
-        {"default_material", defaultMaterial},
         {"theme", theme},
         {"game_config_path", gameConfigPath},
     };
