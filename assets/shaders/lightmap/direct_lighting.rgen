@@ -85,7 +85,7 @@ void main() {
                 continue;
             }
         }
-        traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, rayDirection, distance, 0);
+        traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, rayDirection, distance - RAY_LENGTH_OFFSET, 0);
         if (isLightVisible) {
             accumulatedColor += getLightColor(light, distance, theta) * max(dot(rayDirection, luxelNormal.xyz), 0);
         }
@@ -131,7 +131,7 @@ void main() {
         }
 
         isLightVisible = false;
-        traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, rayDirection, distance - EPSILON, 0);
+        traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, rayDirection, distance - RAY_LENGTH_OFFSET, 0);
         if (isLightVisible) {
             const vec4 color = imageLoad(luxelAlbedos, sourceLuxelCoord);
             areaLightColor += sourceLuxelNormal.w * color.rgb * color.a / (distance * distance / 256.0) * normalFactor;

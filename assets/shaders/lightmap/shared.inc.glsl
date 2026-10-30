@@ -12,6 +12,7 @@ const float PI = 3.141592653589793;
 const float MIN_BRIGHTNESS = 1.0 / 256.0;
 const float MIN_RAY_LENGTH = 0.0001;
 const float MAX_RAY_LENGTH = 28400; // 2 * sqrt(3) * MAP_MAX_HALF_EXTENTS; Rounded up slightly
+const float RAY_LENGTH_OFFSET = 0.001953125;
 
 layout (constant_id = 0) const uint WIDTH = 8192;
 layout (constant_id = 1) const uint HEIGHT = 4096;
