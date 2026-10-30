@@ -2373,6 +2373,10 @@ bool LightBaker::CreateShaderBindingTables()
     {
         return false;
     }
+    if (!CheckResult(lunaCreateBuffer(device, &shaderBindingTableCreationInfo, &nullShaderBindingTable)))
+    {
+        return false;
+    }
 
     std::vector<char> shaderHandles(2 * physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize);
     if (!CheckResult(vkGetRayTracingShaderGroupHandlesKHR(lunaGetVkDevice(device),
@@ -2438,8 +2442,7 @@ bool LightBaker::CreateShaderBindingTables()
         return false;
     }
 
-
-    return true;
+    return CheckResult(lunaFillBuffer(device, commandBuffer, nullShaderBindingTable, 0, nullptr));
 }
 
 bool LightBaker::SingleBakeIteration(const uint32_t width,
@@ -2468,11 +2471,15 @@ bool LightBaker::SingleBakeIteration(const uint32_t width,
                        0,
                        sizeof(baseLuxelIndex),
                        &baseLuxelIndex);
+    const VkStridedDeviceAddressRegionKHR nullShaderBindingTableAddressRegion = {
+        .deviceAddress = lunaGetBufferDeviceAddress(device, nullShaderBindingTable),
+        .stride = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
+        .size = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
+    };
     if (directLighting)
     {
         vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, directLightingPipeline);
 
-        static constexpr VkStridedDeviceAddressRegionKHR STRIDED_DEVICE_ADDRESS_REGION_NONE{};
         const VkStridedDeviceAddressRegionKHR raygenShaderBindingTableAddressRegion = {
             .deviceAddress = lunaGetBufferDeviceAddress(device, directLightingRaygenShaderBindingTable),
             .stride = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
@@ -2486,8 +2493,8 @@ bool LightBaker::SingleBakeIteration(const uint32_t width,
         vkCmdTraceRaysKHR(vkCommandBuffer,
                           &raygenShaderBindingTableAddressRegion,
                           &missShaderBindingTableAddressRegion,
-                          &STRIDED_DEVICE_ADDRESS_REGION_NONE,
-                          &STRIDED_DEVICE_ADDRESS_REGION_NONE,
+                          &nullShaderBindingTableAddressRegion,
+                          &nullShaderBindingTableAddressRegion,
                           width,
                           height,
                           1);
@@ -2495,7 +2502,6 @@ bool LightBaker::SingleBakeIteration(const uint32_t width,
     {
         vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, globalIlluminationPipeline);
 
-        static constexpr VkStridedDeviceAddressRegionKHR STRIDED_DEVICE_ADDRESS_REGION_NONE{};
         const VkStridedDeviceAddressRegionKHR raygenShaderBindingTableAddressRegion = {
             .deviceAddress = lunaGetBufferDeviceAddress(device, globalIlluminationRaygenShaderBindingTable),
             .stride = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
@@ -2508,9 +2514,9 @@ bool LightBaker::SingleBakeIteration(const uint32_t width,
         };
         vkCmdTraceRaysKHR(vkCommandBuffer,
                           &raygenShaderBindingTableAddressRegion,
-                          &STRIDED_DEVICE_ADDRESS_REGION_NONE,
+                          &nullShaderBindingTableAddressRegion,
                           &closestHitShaderBindingTableAddressRegion,
-                          &STRIDED_DEVICE_ADDRESS_REGION_NONE,
+                          &nullShaderBindingTableAddressRegion,
                           width,
                           height,
                           1);

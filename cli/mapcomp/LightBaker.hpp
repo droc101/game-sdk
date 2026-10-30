@@ -129,6 +129,8 @@ class LightBaker
         LunaBuffer missShaderBindingTable{};
         LunaBuffer globalIlluminationRaygenShaderBindingTable{};
         LunaBuffer closestHitShaderBindingTable{};
+        /// A shader binding table containing a single zeroed record, used for unused shader binding table regions
+        LunaBuffer nullShaderBindingTable{};
         /// The bottom-level acceleration structure used for hardware acceleration of path tracing
         AccelerationStructure blas{};
         /// The buffer that holds the blas instances for the tlas to reference
