@@ -37,6 +37,10 @@ vec3 getLightColor(const Light light, const float distance, const float theta) {
 
 void getLengthAndUnitVector(const in vec3 vec, out float length, out vec3 unitVec) {
     const float d = dot(vec, vec);
+    if (d < EPSILON) {
+        length = 0;
+        return;
+    }
     const float scale = inversesqrt(d);
     length = d * scale;
     unitVec = vec * scale;
