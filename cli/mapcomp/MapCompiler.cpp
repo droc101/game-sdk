@@ -64,7 +64,7 @@ Error::ErrorCode MapCompiler::Compile()
                                       buffer,
                                       Asset::AssetType::ASSET_TYPE_LEVEL,
                                       MapAsset::MAP_ASSET_VERSION,
-                                      settings.fastCompile ? AssetContainer::FASTEST_COMPRESSION
+                                      settings.fastCompression ? AssetContainer::FASTEST_COMPRESSION
                                                            : AssetContainer::BEST_COMPRESSION);
 }
 
@@ -181,7 +181,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
 
     Logger::Info("Compiling Sectors...");
 
-    if (settings.fastCompile)
+    if (settings.lowResolutionLightmap)
     {
         for (Brush &brush: map.brushes)
         {
@@ -260,7 +260,13 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     {
         Logger::Info("Baking lightmap...");
         LightBaker &baker = LightBaker::Get();
-        if (!baker.Bake(mapMeshBuilders, lights, lightmapSize, lightmapPixels, indirectLightingLightmapPixels))
+        if (!baker.Bake(mapMeshBuilders,
+                        lights,
+                        lightmapSize,
+                        lightmapPixels,
+                        indirectLightingLightmapPixels,
+                        settings.bounceCount,
+                        settings.sampleCount))
         {
             return Error::ErrorCode::UNKNOWN;
         }

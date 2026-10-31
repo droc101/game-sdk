@@ -40,9 +40,6 @@ namespace
 {
 using float16_t = _Float16; // NOLINT(*-identifier-naming)
 
-constexpr uint32_t BOUNCE_COUNT = 3;
-constexpr uint32_t SAMPLE_COUNT = 8192;
-
 #ifdef NDEBUG
 constexpr bool SHADER_DEBUG_INFO = false;
 #else
@@ -731,7 +728,9 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
                       const std::vector<Light> &lights,
                       const glm::uvec2 &lightmapSize,
                       std::vector<uint16_t> &pixelData,
-                      std::vector<uint16_t> &indirectLightingPixelData)
+                      std::vector<uint16_t> &indirectLightingPixelData,
+                      const uint32_t bounceCount,
+                      const uint32_t sampleCount)
 {
     RenderdocManager::StartCapture("bake");
     const uint64_t luxelCount = lightmapSize.x * lightmapSize.y;
@@ -868,7 +867,7 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
     {
         return false;
     }
-    if (!CreateGlobalIlluminationPipeline(lightmapSize, SAMPLE_COUNT))
+    if (!CreateGlobalIlluminationPipeline(lightmapSize, sampleCount))
     {
         return false;
     }
@@ -887,7 +886,7 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
     for (uint32_t iteration = 0; iteration < iterations; iteration++)
     {
         const float percentDone = static_cast<float>(100 * iteration) /
-                                  static_cast<float>(iterations * (BOUNCE_COUNT + 2));
+                                  static_cast<float>(iterations * (bounceCount + 2));
         if (percentDone > static_cast<float>(nextPercentLog))
         {
             Logger::Info("Baking lighting {}%...", nextPercentLog);
@@ -898,7 +897,7 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
             return false;
         }
     }
-    for (uint32_t bounce = 0; bounce < BOUNCE_COUNT; bounce++)
+    for (uint32_t bounce = 0; bounce < bounceCount; bounce++)
     {
         lunaDeviceWaitIdle(device);
         const std::array descriptorSetWrites = {
@@ -927,7 +926,7 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
         for (uint32_t iteration = 0; iteration < iterations; iteration++)
         {
             const float percentDone = static_cast<float>(100 * ((bounce + 1) * iterations + iteration)) /
-                                      static_cast<float>(iterations * (BOUNCE_COUNT + 2));
+                                      static_cast<float>(iterations * (bounceCount + 2));
             if (percentDone > static_cast<float>(nextPercentLog))
             {
                 Logger::Info("Baking lighting {}%...", nextPercentLog);
@@ -959,8 +958,8 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
     }
     for (uint32_t iteration = 0; iteration < iterations; iteration++)
     {
-        const float percentDone = static_cast<float>(100 * ((BOUNCE_COUNT + 1) * iterations + iteration)) /
-                                  static_cast<float>(iterations * (BOUNCE_COUNT + 2));
+        const float percentDone = static_cast<float>(100 * ((bounceCount + 1) * iterations + iteration)) /
+                                  static_cast<float>(iterations * (bounceCount + 2));
         if (percentDone > static_cast<float>(nextPercentLog))
         {
             Logger::Info("Baking lighting {}%...", nextPercentLog);

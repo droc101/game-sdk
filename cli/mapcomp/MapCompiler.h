@@ -25,7 +25,10 @@ class MapCompiler
                 std::string gameConfigParentDirectory;
                 DataAsset gameConfig;
                 bool skipLighting = false;
-                bool fastCompile = false;
+                bool lowResolutionLightmap = false;
+                bool fastCompression = false;
+                uint32_t bounceCount;
+                uint32_t sampleCount;
         };
 
         /**

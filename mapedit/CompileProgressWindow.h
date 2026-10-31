@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <game_sdk/Window.h>
 #include <SDL3/SDL_iostream.h>
 #include <SDL3/SDL_process.h>
@@ -13,10 +14,17 @@
 class CompileProgressWindow final: public Window
 {
     public:
+        enum class CompileMode : uint8_t
+        {
+            SKIP_LIGHTING,
+            FAST,
+            NORMAL,
+            FULL,
+        };
+
         struct CompileOptions
         {
-                bool fastCompile = false;
-                bool skipLighting = false;
+                CompileMode compileMode = CompileMode::NORMAL;
                 bool verbose = false;
                 bool playMap = true;
                 std::string gameDir{};

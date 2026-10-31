@@ -26,7 +26,9 @@ class LightBaker
                   const std::vector<Light> &lights,
                   const glm::uvec2 &lightmapSize,
                   std::vector<uint16_t> &pixelData,
-                  std::vector<uint16_t> &indirectLightingPixelData);
+                  std::vector<uint16_t> &indirectLightingPixelData,
+                  uint32_t bounceCount,
+                  uint32_t sampleCount);
 
         bool GetTextureIndex(const std::string &materialName, uint32_t &index, const SearchPathManager &pathManager);
 
