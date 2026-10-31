@@ -36,7 +36,6 @@ class MapeditOptions
         bool showSidebar = true;
         bool drawModels = true;
         bool culling = true;
-        bool drawGizmos = true;
         bool showInternalBuffers = false;
         bool show2dViewports = true;
         bool showInvisibleFaces = true;

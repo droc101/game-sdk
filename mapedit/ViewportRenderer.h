@@ -142,9 +142,9 @@ class ViewportRenderer
 
         static bool BrushIsCulled(const Brush &brush, const Viewport &vp);
 
-        static void RenderActor(const Actor &a, const Viewport &vp, const Color &overlayColor);
+        static void RenderActor(const Actor &a, const Viewport &vp, const Color &overlayColor, bool isSelected);
 
-        static bool ActorIsCulled(const Actor &actor, const Viewport &vp);
+        static bool ActorIsCulled(const Actor &actor, const Viewport &vp, bool isSelected);
 
         static void RenderBoxRdef(BoxRenderDefinition *rdef, const Actor &actor, const glm::mat4 &worldMatrix);
 

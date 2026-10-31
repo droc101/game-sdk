@@ -29,7 +29,7 @@ void WorldBuffersRenderer::RenderWorldBuffers(const Viewport &vp)
 
     for (size_t actorIndex = 0; actorIndex < MapEditor::map.actors.size(); actorIndex++)
     {
-        RenderActor(actorIndex);
+        RenderActor(actorIndex, false);
     }
 
     for (size_t brushIndex = 0; brushIndex < MapEditor::map.brushes.size(); brushIndex++)
@@ -60,7 +60,7 @@ void WorldBuffersRenderer::RenderBrush(const size_t brushIndex)
     }
 }
 
-void WorldBuffersRenderer::RenderActor(const size_t actorIndex)
+void WorldBuffersRenderer::RenderActor(const size_t actorIndex, const bool isSelected)
 {
     const Actor &a = MapEditor::map.actors.at(actorIndex);
     const MapRenderer::ObjectBufferInfo info = {
@@ -79,7 +79,7 @@ void WorldBuffersRenderer::RenderActor(const size_t actorIndex)
 
     for (const std::shared_ptr<RenderDefinition> &rdef: definition.renderDefinitions)
     {
-        if (!MapEditor::options.drawGizmos && rdef.get()->IsGizmo(a))
+        if (!isSelected && rdef.get()->IsGizmo(a))
         {
             continue;
         }

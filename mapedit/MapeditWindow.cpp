@@ -418,10 +418,6 @@ void MapeditWindow::Render()
             {
                 MapEditor::options.drawModels = !MapEditor::options.drawModels;
             }
-            if (ImGui::MenuItem("Show Gizmos", "", MapEditor::options.drawGizmos))
-            {
-                MapEditor::options.drawGizmos = !MapEditor::options.drawGizmos;
-            }
             if (ImGui::MenuItem("Enable Culling", "", MapEditor::options.culling))
             {
                 MapEditor::options.culling = !MapEditor::options.culling;

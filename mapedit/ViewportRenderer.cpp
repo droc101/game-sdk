@@ -66,7 +66,7 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
         {
             continue;
         }
-        RenderActor(MapEditor::map.actors.at(actorIndex), vp, Color(0));
+        RenderActor(MapEditor::map.actors.at(actorIndex), vp, Color(0), false);
     }
 
     for (size_t brushIndex = 0; brushIndex < MapEditor::map.brushes.size(); brushIndex++)
@@ -123,7 +123,7 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
                 MapRenderer::ExecuteCommands(matrix);
                 GLHelper::ClearDepth();
             }
-            RenderActor(MapEditor::map.actors.at(settings.hoverIndex), vp, Color(1.0f, 0.0f, 0.0f, 0.125f));
+            RenderActor(MapEditor::map.actors.at(settings.hoverIndex), vp, Color(1.0f, 0.0f, 0.0f, 0.125f), false);
         }
     }
 
@@ -142,7 +142,7 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
             MapRenderer::ExecuteCommands(matrix);
             GLHelper::ClearDepth();
         }
-        RenderActor(MapEditor::map.actors.at(settings.selectionIndex), vp, Color(1.0f, 0.0f, 0.0f, 0.25f));
+        RenderActor(MapEditor::map.actors.at(settings.selectionIndex), vp, Color(1.0f, 0.0f, 0.0f, 0.25f), true);
     }
 
     if (settings.brushFocusMode)
@@ -325,7 +325,7 @@ void ViewportRenderer::RenderNewActor(const Viewport &vp, const ViewportRenderNe
     tempActor.position = actor->position;
     tempActor.rotation = actor->rotation;
     tempActor.className = actor->className;
-    RenderActor(tempActor, vp, Color(1.0f, 0.0f, 0.0f, 0.25f));
+    RenderActor(tempActor, vp, Color(1.0f, 0.0f, 0.0f, 0.25f), true);
 }
 
 void ViewportRenderer::RenderNewPolygon(const Viewport &vp, const ViewportRenderNewPolygon *poly)
@@ -483,9 +483,9 @@ bool ViewportRenderer::BrushIsCulled(const Brush &brush, const Viewport &vp)
     return false;
 }
 
-void ViewportRenderer::RenderActor(const Actor &a, const Viewport &vp, const Color &overlayColor)
+void ViewportRenderer::RenderActor(const Actor &a, const Viewport &vp, const Color &overlayColor, const bool isSelected)
 {
-    if (MapEditor::options.culling && ActorIsCulled(a, vp))
+    if (MapEditor::options.culling && ActorIsCulled(a, vp, isSelected))
     {
         return;
     }
@@ -500,7 +500,7 @@ void ViewportRenderer::RenderActor(const Actor &a, const Viewport &vp, const Col
 
     for (const std::shared_ptr<RenderDefinition> &rdef: definition.renderDefinitions)
     {
-        if (!MapEditor::options.drawGizmos && rdef.get()->IsGizmo(a))
+        if (!isSelected && rdef.get()->IsGizmo(a))
         {
             continue;
         }
@@ -555,7 +555,7 @@ void ViewportRenderer::RenderActor(const Actor &a, const Viewport &vp, const Col
     }
 }
 
-bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
+bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp, const bool isSelected)
 {
     if (vp.Is3D())
     {
@@ -574,7 +574,7 @@ bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp)
 
     for (const std::shared_ptr<RenderDefinition> &rdef: definition.renderDefinitions)
     {
-        if (!MapEditor::options.drawGizmos && rdef.get()->IsGizmo(actor))
+        if (!isSelected && rdef.get()->IsGizmo(actor))
         {
             continue;
         }

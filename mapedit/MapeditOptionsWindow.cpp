@@ -23,7 +23,6 @@ void MapeditOptionsWindow::Render()
 
             ImGui::SeparatorText("General");
             ImGui::Checkbox("Show viewport information", &MapEditor::options.drawViewportInfo);
-            ImGui::Checkbox("Show gizmos", &MapEditor::options.drawGizmos);
             ImGui::Checkbox("Enable culling", &MapEditor::options.culling);
             ImGui::Checkbox("Show sidebar", &MapEditor::options.showSidebar);
 

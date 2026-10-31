@@ -43,7 +43,6 @@ void MapeditOptions::Load()
         showSidebar = savedata.value("show_sidebar", true);
         drawModels = savedata.value("draw_models", true);
         culling = savedata.value("culling", true);
-        drawGizmos = savedata.value("draw_gizmos", true);
         showInternalBuffers = savedata.value("show_internal_buffers", false);
         show2dViewports = savedata.value("show_2d_viewports", true);
         showInvisibleFaces = savedata.value("show_invisible_faces", true);
@@ -61,7 +60,6 @@ void MapeditOptions::LoadDefault()
     showSidebar = true;
     drawModels = true;
     culling = true;
-    drawGizmos = true;
     showInternalBuffers = false;
     show2dViewports = true;
     showInvisibleFaces = true;
@@ -80,7 +78,6 @@ void MapeditOptions::Save()
         {"show_sidebar", showSidebar},
         {"draw_models", drawModels},
         {"culling", culling},
-        {"draw_gizmos", drawGizmos},
         {"show_internal_buffers", showInternalBuffers},
         {"show_2d_viewports", show2dViewports},
     };

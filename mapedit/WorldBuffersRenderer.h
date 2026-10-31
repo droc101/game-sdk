@@ -21,7 +21,7 @@ class WorldBuffersRenderer
 
     private:
         static void RenderBrush(size_t brushIndex);
-        static void RenderActor(size_t actorIndex);
+        static void RenderActor(size_t actorIndex, bool isSelected);
 
         static void RenderModelRdef(ModelRenderDefinition *rdef,
                                     const Actor &actor,
