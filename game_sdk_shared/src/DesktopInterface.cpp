@@ -101,7 +101,7 @@ bool DesktopInterface::OpenFilesystemPath(const std::string &path)
     info.fMask = 0;
     return ShellExecuteEx(&info);
 #else
-    return ExecuteProcess("xdg-open", {path}, nullptr,TODO);
+    return ExecuteProcess("xdg-open", {path}, nullptr,false);
 #endif
 }
 
