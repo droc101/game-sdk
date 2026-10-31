@@ -183,5 +183,9 @@ bool MapEditor::MaterialSelectionTool(std::string &inputMaterial)
         ImGui::EndChild();
     }
     MaterialBrowserWindow::InputMaterial("##Texture", inputMaterial);
+    if (ImGui::Button("Change to invisible", {-1, 0}))
+    {
+        inputMaterial = "material/tools/invisible.gmtl";
+    }
     return inputMaterial == startString;
 }
