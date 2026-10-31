@@ -6,7 +6,6 @@
 #define GAME_SDK_MAPCOMPILEWINDOW_H
 
 #include <game_sdk/Window.h>
-#include <SDL3/SDL_video.h>
 #include "CompileProgressWindow.h"
 
 class MapCompileWindow final: public Window
@@ -20,7 +19,7 @@ class MapCompileWindow final: public Window
             .title = "Compile Map",
             .defaultSize = glm::ivec2(250, 290),
             .icon = "",
-            .defaultFlags = SDL_WINDOW_UTILITY,
+            .defaultFlags = 0,
             .defaultImguiWindow = true,
         };
 

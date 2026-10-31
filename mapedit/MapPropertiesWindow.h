@@ -5,7 +5,6 @@
 #pragma once
 
 #include <game_sdk/Window.h>
-#include <SDL3/SDL_video.h>
 
 class MapPropertiesWindow final: public Window
 {
@@ -18,7 +17,7 @@ class MapPropertiesWindow final: public Window
             .title = "Map Properties",
             .defaultSize = glm::ivec2(400, 250),
             .icon = "",
-            .defaultFlags = SDL_WINDOW_UTILITY,
+            .defaultFlags = 0,
             .defaultImguiWindow = true,
         };
 };

@@ -35,7 +35,7 @@ class ModelBrowserWindow final: public Window
             .title = "Choose Model",
             .defaultSize = glm::ivec2(1366, 768),
             .icon = "",
-            .defaultFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_UTILITY,
+            .defaultFlags = SDL_WINDOW_RESIZABLE,
             .defaultImguiWindow = true,
         };
 

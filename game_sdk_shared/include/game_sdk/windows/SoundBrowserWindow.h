@@ -31,7 +31,7 @@ class SoundBrowserWindow final: public Window
             .title = "Choose Sound",
             .defaultSize = glm::ivec2(600, 500),
             .icon = "",
-            .defaultFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_UTILITY,
+            .defaultFlags = SDL_WINDOW_RESIZABLE,
             .defaultImguiWindow = true,
         };
 

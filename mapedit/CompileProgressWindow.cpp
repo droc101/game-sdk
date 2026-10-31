@@ -69,7 +69,7 @@ bool CompileProgressWindow::Init()
         arguments.emplace_back("--verbose");
     }
 
-    compilerProcess = DesktopInterface::Get().StartSDLProcess(compilerPath, arguments);
+    compilerProcess = DesktopInterface::Get().StartSDLProcess(compilerPath, arguments, true);
 
     if (compilerProcess == nullptr)
     {
@@ -171,7 +171,7 @@ void CompileProgressWindow::ProcessCompilerOutput()
                     "--nosteam",
                     "--show-console",
                 };
-                if (!DesktopInterface::Get().ExecuteProcessNonBlocking(Options::Get().gameExecutablePath, arguments))
+                if (!DesktopInterface::Get().ExecuteProcessNonBlocking(Options::Get().gameExecutablePath, arguments, false))
                 {
                     log += "Failed to execute game binary";
                 }

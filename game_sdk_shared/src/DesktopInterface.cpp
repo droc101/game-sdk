@@ -28,9 +28,9 @@ DesktopInterface &DesktopInterface::Get()
 
 bool DesktopInterface::ExecuteProcess(const std::string &executable,
                                       const std::vector<std::string> &arguments,
-                                      int *exitCode)
+                                      int *exitCode,const bool redirectStdio)
 {
-    SDL_Process *p = StartSDLProcess(executable, arguments);
+    SDL_Process *p = StartSDLProcess(executable, arguments,redirectStdio);
     if (p == nullptr)
     {
         return false;
@@ -38,7 +38,7 @@ bool DesktopInterface::ExecuteProcess(const std::string &executable,
     return SDL_WaitProcess(p, true, exitCode);
 }
 
-SDL_Process *DesktopInterface::StartSDLProcess(const std::string &executable, const std::vector<std::string> &arguments)
+SDL_Process *DesktopInterface::StartSDLProcess(const std::string &executable, const std::vector<std::string> &arguments,const bool redirectStdio)
 {
     std::vector<const char *> args{};
     args.push_back(executable.c_str());
@@ -50,9 +50,17 @@ SDL_Process *DesktopInterface::StartSDLProcess(const std::string &executable, co
 
     const SDL_PropertiesID props = SDL_CreateProperties();
     (void)SDL_SetPointerProperty(props, SDL_PROP_PROCESS_CREATE_ARGS_POINTER, args.data());
-    (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER, SDL_PROCESS_STDIO_APP);
-    (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDIN_NUMBER, SDL_PROCESS_STDIO_NULL);
-    (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDERR_NUMBER, SDL_PROCESS_STDIO_APP);
+    if (redirectStdio)
+    {
+        (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER, SDL_PROCESS_STDIO_APP);
+        (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDIN_NUMBER, SDL_PROCESS_STDIO_NULL);
+        (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDERR_NUMBER, SDL_PROCESS_STDIO_APP);
+    } else
+    {
+        (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER, SDL_PROCESS_STDIO_NULL);
+        (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDIN_NUMBER, SDL_PROCESS_STDIO_NULL);
+        (void)SDL_SetNumberProperty(props, SDL_PROP_PROCESS_CREATE_STDERR_NUMBER, SDL_PROCESS_STDIO_NULL);
+    }
     SDL_Process *p = SDL_CreateProcessWithProperties(props);
     SDL_DestroyProperties(props);
 
@@ -60,9 +68,9 @@ SDL_Process *DesktopInterface::StartSDLProcess(const std::string &executable, co
 }
 
 bool DesktopInterface::ExecuteProcessNonBlocking(const std::string &executable,
-                                                 const std::vector<std::string> &arguments)
+                                                 const std::vector<std::string> &arguments,const bool redirectStdio)
 {
-    SDL_Process *p = StartSDLProcess(executable, arguments);
+    SDL_Process *p = StartSDLProcess(executable, arguments,redirectStdio);
     if (p == nullptr)
     {
         return false;
@@ -93,7 +101,7 @@ bool DesktopInterface::OpenFilesystemPath(const std::string &path)
     info.fMask = 0;
     return ShellExecuteEx(&info);
 #else
-    return ExecuteProcess("xdg-open", {path}, nullptr);
+    return ExecuteProcess("xdg-open", {path}, nullptr,TODO);
 #endif
 }
 

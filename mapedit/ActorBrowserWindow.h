@@ -27,7 +27,7 @@ class ActorBrowserWindow final: public Window
             .title = "Actor Class Browser",
             .defaultSize = {1000, 600},
             .icon = "",
-            .defaultFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_UTILITY,
+            .defaultFlags = SDL_WINDOW_RESIZABLE,
             .defaultImguiWindow = true,
         };
 

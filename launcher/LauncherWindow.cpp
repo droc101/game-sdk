@@ -192,7 +192,7 @@ void LauncherWindow::LaunchSelectedTool()
             args.push_back(arg);
         }
         Logger::Info("Launching process \"{}\"...", folder.c_str());
-        if (!DesktopInterface::Get().ExecuteProcessNonBlocking(folder, args))
+        if (!DesktopInterface::Get().ExecuteProcessNonBlocking(folder, args, false))
         {
             ErrorMessage(std::format("Failed to launch process: {}", SDL_GetError()));
         }

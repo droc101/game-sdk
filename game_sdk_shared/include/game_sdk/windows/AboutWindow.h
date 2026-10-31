@@ -23,7 +23,7 @@ class AboutWindow final: public Window
             .title = "About the GAME SDK",
             .defaultSize = {900, 600},
             .icon = "",
-            .defaultFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_UTILITY,
+            .defaultFlags = SDL_WINDOW_RESIZABLE,
             .defaultImguiWindow = true,
         };
 

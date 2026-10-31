@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <SDL3/SDL_video.h>
 #include <game_sdk/Window.h>
 
 class MapeditOptionsWindow final: public Window
@@ -19,7 +18,7 @@ class MapeditOptionsWindow final: public Window
             .title = "Map Editor Options",
             .defaultSize = glm::ivec2(400, 450),
             .icon = "",
-            .defaultFlags = SDL_WINDOW_UTILITY,
+            .defaultFlags = 0,
             .defaultImguiWindow = true,
         };
 };

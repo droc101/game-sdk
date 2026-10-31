@@ -35,7 +35,7 @@ class CompileProgressWindow final: public Window
             .title = "Compile Progress",
             .defaultSize = glm::ivec2(900, 640),
             .icon = "",
-            .defaultFlags = SDL_WINDOW_UTILITY | SDL_WINDOW_RESIZABLE,
+            .defaultFlags = SDL_WINDOW_RESIZABLE,
             .defaultImguiWindow = true,
         };
 
