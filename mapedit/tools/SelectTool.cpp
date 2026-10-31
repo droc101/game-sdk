@@ -585,17 +585,31 @@ void SelectTool::RenderToolWindow()
             ImGui::InputFloat3("##rotation", glm::value_ptr(MapEditor::map.brushes.at(selectionIndex).rotation));
             break;
         case ItemType::ACTOR:
-            ImGui::Text("Position");
-            ImGui::InputFloat3("##position", glm::value_ptr(MapEditor::map.actors.at(selectionIndex).position));
-            ImGui::Text("Rotation");
-            ImGui::InputFloat3("##rotation", glm::value_ptr(MapEditor::map.actors.at(selectionIndex).rotation));
-            ImGui::Separator();
-            if (ImGui::Button("Actor Properties"))
+        {
+            Actor &actor = MapEditor::map.actors.at(selectionIndex);
+            if (actor.params.contains("name") &&
+                actor.params.at("name").GetType() == Param::ParamType::PARAM_TYPE_STRING &&
+                !actor.params.at("name").Get<std::string>("").empty())
             {
-                Actor &toEdit = MapEditor::map.actors.at(selectionIndex);
-                WindowManager::Get().AddModalWindow<EditActorWindow>(toEdit);
+                ImGui::Text("%s", actor.params.at("name").Get<std::string>("").c_str());
+                ImGui::SameLine();
+                ImGui::TextDisabled(": %s", actor.className.c_str());
+            } else
+            {
+                ImGui::Text("%s", actor.className.c_str());
+            }
+            ImGui::Separator();
+            ImGui::Text("Position");
+            ImGui::InputFloat3("##position", glm::value_ptr(actor.position));
+            ImGui::Text("Rotation");
+            ImGui::InputFloat3("##rotation", glm::value_ptr(actor.rotation));
+            ImGui::Separator();
+            if (ImGui::Button("Actor Properties", {-1, 0}))
+            {
+                WindowManager::Get().AddModalWindow<EditActorWindow>(actor);
             }
             break;
+        }
         default:
             ImGui::Text("The current selection has no properties");
     }
