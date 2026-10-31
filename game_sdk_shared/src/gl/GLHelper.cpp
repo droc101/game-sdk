@@ -23,12 +23,6 @@ bool GLHelper::Init()
         return false;
     }
 
-    if (!GLEW_VERSION_4_6)
-    {
-        Logger::Error("GLEW init failure -- we don't have opengl 4.6");
-        return false;
-    }
-
 #ifdef BUILDSTYLE_DEBUG
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(GLDebug::GL_DebugMessageCallback, nullptr);
