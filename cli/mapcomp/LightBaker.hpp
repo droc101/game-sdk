@@ -19,6 +19,11 @@
 
 class LightBaker
 {
+    struct Lightmap {
+        LunaBuffer buffer;
+        VkBufferView bufferView;
+    };
+
     public:
         static LightBaker &Get();
 
@@ -56,6 +61,10 @@ class LightBaker
 
         [[nodiscard]] VkShaderModule GenerateShaderModule(const std::filesystem::path &path,
                                                           EShLanguage shaderType) const;
+
+        VkResult CreateBufferView(LunaBuffer buffer, VkFormat format, VkBufferView &bufferView) const;
+
+        bool CreateLightmap(Lightmap &lightmap, const glm::uvec2 &lightmapSize) const;
 
         bool CreateVertexAndIndexBuffers(const std::vector<BrushMeshBuilder> &meshBuilders,
                                          uint32_t &vertexCount,
@@ -146,10 +155,7 @@ class LightBaker
         LunaImage luxelAlbedosImage{};
         LunaBuffer lightsBuffer{};
         LunaBuffer emissiveLuxelIndicesBuffer{};
-        LunaBuffer lightmapOne{};
-        LunaBuffer lightmapTwo{};
-        LunaBuffer lightmapThree{};
-        VkBufferView lightmapOneBufferView{};
-        VkBufferView lightmapTwoBufferView{};
-        VkBufferView lightmapThreeBufferView{};
+        Lightmap lightmapOne{};
+        Lightmap lightmapTwo{};
+        Lightmap lightmapThree{};
 };

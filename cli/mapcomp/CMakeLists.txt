@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 FetchContent_Declare(
         Luna
         GIT_REPOSITORY https://github.com/NBT22/Luna
-        GIT_TAG 4902420b47ef06d6dc4e67fb3af2c6a989e9d6a1
+        GIT_TAG c036bc90a86fe05fbbc263463ba5eb2c36232a4f
         GIT_PROGRESS TRUE
 )
 FetchContent_MakeAvailable(Luna)
