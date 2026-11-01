@@ -40,9 +40,10 @@ int main(const int argc, const char **argv)
         printf("--map=/path/to/map.gmap.......................The path to the GMAP file to dump.\n");
         printf("\n-- Dumping Options --\n");
         printf("All dumping options take an optional value specifying what file to save to.\n");
-        printf("--dump-visual-model[=visual.obj]..............Dump the visual model with texture UVs.\n");
-        printf("--dump-lightmap-model[=visual_lightmap.obj]...Dump the visual model with lightmap UVs.\n");
-        printf("--dump-lightmap[=lightmap.exr]................Dump the HDR lightmap texture as an EXR\n");
+        printf("--dump-visual-model[=visual.obj]...................Dump the visual model with texture UVs.\n");
+        printf("--dump-lightmap-model[=visual_lightmap.obj]........Dump the visual model with lightmap UVs.\n");
+        printf("--dump-lightmap[=lightmap.exr].....................Dump the HDR lightmap texture as an EXR\n");
+        printf("--dump-indirect-lightmap[=lightmap_indirect.exr]...Dump the HDR lightmap texture containing only indirect lighting as an EXR\n");
         return 0;
     }
 
@@ -148,10 +149,17 @@ int main(const int argc, const char **argv)
 
     const size_t lightmapWidth = asset.reader.Read<size_t>();
     const size_t lightmapHeight = asset.reader.Read<size_t>();
-    std::vector<uint16_t> pixels{};
+    std::vector<uint16_t> lightmapPixels{};
+    lightmapPixels.reserve(lightmapWidth * lightmapHeight * 4);
     for (size_t i = 0; i < lightmapWidth * lightmapHeight * 4; i++)
     {
-        pixels.push_back(asset.reader.Read<uint16_t>());
+        lightmapPixels.push_back(asset.reader.Read<uint16_t>());
+    }
+    std::vector<uint16_t> indirectLightmapPixels{};
+    indirectLightmapPixels.reserve(lightmapWidth * lightmapHeight * 4);
+    for (size_t i = 0; i < lightmapWidth * lightmapHeight * 4; i++)
+    {
+        indirectLightmapPixels.push_back(asset.reader.Read<uint16_t>());
     }
 
     Logger::Info("{}x{} lightmap", lightmapWidth, lightmapHeight);
@@ -238,7 +246,38 @@ int main(const int argc, const char **argv)
 
         FrameBuffer framebuffer;
         constexpr size_t PIXEL_SIZE = sizeof(half) * 4;
-        char *base = reinterpret_cast<char *>(pixels.data());
+        char *base = reinterpret_cast<char *>(lightmapPixels.data());
+
+        framebuffer.insert("R", Slice(HALF, base + sizeof(half) * 0, PIXEL_SIZE, PIXEL_SIZE * lightmapWidth));
+
+        framebuffer.insert("G", Slice(HALF, base + sizeof(half) * 1, PIXEL_SIZE, PIXEL_SIZE * lightmapWidth));
+
+        framebuffer.insert("B", Slice(HALF, base + sizeof(half) * 2, PIXEL_SIZE, PIXEL_SIZE * lightmapWidth));
+
+        framebuffer.insert("A", Slice(HALF, base + sizeof(half) * 3, PIXEL_SIZE, PIXEL_SIZE * lightmapWidth));
+
+        OutputFile file(lightmapPath.c_str(), header);
+        file.setFrameBuffer(framebuffer);
+        file.writePixels(static_cast<int>(lightmapHeight));
+    }
+
+    if (args.HasFlag("--dump-indirect-lightmap"))
+    {
+        std::string lightmapPath = "lightmap_indirect.exr";
+        if (args.HasFlagWithValue("--dump-indirect-lightmap"))
+        {
+            lightmapPath = args.GetFlagValue("--dump-indirect-lightmap");
+        }
+        Logger::Info("Exporting Indirect Lightmap to \"{}\"...", lightmapPath.c_str());
+        Header header = Header(static_cast<int>(lightmapWidth), static_cast<int>(lightmapHeight));
+        header.channels().insert("R", Channel(HALF));
+        header.channels().insert("G", Channel(HALF));
+        header.channels().insert("B", Channel(HALF));
+        header.channels().insert("A", Channel(HALF));
+
+        FrameBuffer framebuffer;
+        constexpr size_t PIXEL_SIZE = sizeof(half) * 4;
+        char *base = reinterpret_cast<char *>(indirectLightmapPixels.data());
 
         framebuffer.insert("R", Slice(HALF, base + sizeof(half) * 0, PIXEL_SIZE, PIXEL_SIZE * lightmapWidth));
 
