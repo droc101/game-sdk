@@ -92,28 +92,6 @@ template<typename... T> class DescriptorSetLayoutBindings
     public:
         explicit constexpr DescriptorSetLayoutBindings(const T &...) = delete;
 };
-template<Concepts::LunaDescriptorSetLayoutBindingPair... T> class DescriptorSetLayoutBindings<T...>
-    : public std::array<LunaDescriptorSetLayoutBinding,
-                        ((sizeof(T::second_type::_M_elems) / sizeof(typename T::second_type::value_type)) + ...)>
-{
-    public:
-        explicit constexpr DescriptorSetLayoutBindings(const T &...bindings)
-        {
-            size_t index = 0;
-
-            auto addEntry = [&index, this]<typename Type>(const Type &binding) {
-                for (const char *name: binding.second)
-                {
-                    this->at(index++) = LunaDescriptorSetLayoutBinding{
-                        .bindingName = name,
-                        .descriptorType = binding.first,
-                        .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-                    };
-                }
-            };
-            (addEntry(bindings), ...);
-        }
-};
 template<Concepts::VkDescriptorSetLayoutBindingPair... T> class DescriptorSetLayoutBindings<T...>
     : public std::array<VkDescriptorSetLayoutBinding, sizeof...(T)>
 {
@@ -133,67 +111,6 @@ template<Concepts::VkDescriptorSetLayoutBindingPair... T> class DescriptorSetLay
             };
             (addEntry(bindings), ...);
         }
-};
-
-template<auto *BINDINGS> class DescriptorPoolCreationInfo: public LunaDescriptorPoolCreationInfo
-{
-        static constexpr VkDescriptorPoolCreateFlags CREATION_FLAGS = ([] -> VkDescriptorPoolCreateFlags {
-            VkDescriptorPoolCreateFlags ret{};
-            for (const LunaDescriptorSetLayoutBinding &binding: *BINDINGS)
-            {
-                if ((binding.bindingFlags & VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT) ==
-                    VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT)
-                {
-                    ret |= VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
-                }
-            }
-            return ret;
-        })();
-        static constexpr size_t POOL_SIZE_COUNT = ([] -> size_t {
-            size_t count = BINDINGS->size();
-            for (size_t i = 0; i < BINDINGS->size() - 1; i++)
-            {
-                const LunaDescriptorSetLayoutBinding &binding = BINDINGS->at(i);
-                for (size_t j = i + 1; j < BINDINGS->size(); j++)
-                {
-                    if (binding.descriptorType == BINDINGS->at(j).descriptorType)
-                    {
-                        --count;
-                        break;
-                    }
-                }
-            }
-            return count;
-        })();
-        static constexpr auto POOL_SIZES = ([] {
-            std::array<VkDescriptorPoolSize, POOL_SIZE_COUNT> ret{};
-            for (const LunaDescriptorSetLayoutBinding &binding: *BINDINGS)
-            {
-                for (VkDescriptorPoolSize &poolSize: ret)
-                {
-                    if (poolSize.descriptorCount == 0)
-                    {
-                        poolSize.type = binding.descriptorType;
-                    }
-                    if (poolSize.type == binding.descriptorType)
-                    {
-                        poolSize.descriptorCount += (binding.descriptorCount == 0 ? 1 : binding.descriptorCount);
-                        break;
-                    }
-                }
-            }
-            return ret;
-        })();
-
-    public:
-        consteval DescriptorPoolCreationInfo():
-            LunaDescriptorPoolCreationInfo{
-                .flags = CREATION_FLAGS,
-                .maxSets = 1,
-                .poolSizeCount = POOL_SIZE_COUNT,
-                .poolSizes = POOL_SIZES.data(),
-            }
-        {}
 };
 
 constexpr bool IsZero(const float16_t value)
@@ -851,7 +768,6 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
                     *static_cast<const uint32_t *>(lunaGetBufferDataPointer(emissiveLuxelIndicesBuffer)));
 
     uint32_t nextPercentLog = 10;
-    const std::chrono::time_point<std::chrono::system_clock> start = std::chrono::high_resolution_clock::now();
     for (uint32_t iteration = 0; iteration < iterations; iteration++)
     {
         const float percentDone = static_cast<float>(100 * iteration) /
@@ -908,7 +824,6 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
         }
     }
 
-    Logger::Info("Padding Indirect Lighting Lightmap...");
     AddPaddingToLightmap(lightmapSize,
                          static_cast<float16_t *>(lunaGetBufferDataPointer(lightmapOne.buffer)),
                          indirectLightingPixelData);
@@ -937,7 +852,6 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
     }
     RenderdocManager::EndCapture();
 
-    Logger::Info("Padding Direct Lighting Lightmap...");
     AddPaddingToLightmap(lightmapSize,
                          static_cast<float16_t *>(lunaGetBufferDataPointer(lightmapOne.buffer)),
                          pixelData);
