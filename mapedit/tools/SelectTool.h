@@ -22,8 +22,7 @@ class SelectTool final: public EditorTool
 
         void HandleDrag(const Viewport &vp, glm::vec3 worldSpaceHover);
 
-        std::vector<std::tuple<ItemType, size_t, float>> DetermineHoveredItem(const Viewport &vp,
-                                                                              const glm::vec3 &worldSpaceHover);
+        void DetermineHoveredItem(const Viewport &vp, const glm::vec3 &worldSpaceHover);
 
         void ProcessViewportSelectMode(const Viewport &vp, const glm::vec3 &worldSpaceHover);
 

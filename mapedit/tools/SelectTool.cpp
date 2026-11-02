@@ -7,15 +7,14 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
-#include <format>
 #include <game_sdk/WindowManager.h>
-#include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
 #include <libassets/type/Axis.h>
 #include <libassets/type/BoundingBox.h>
 #include <libassets/type/Brush.h>
+#include <libassets/type/Param.h>
 #include <memory>
 #include <misc/cpp/imgui_stdlib.h>
 #include <numbers>
@@ -25,6 +24,7 @@
 #include <vector>
 #include "../EditActorWindow.h"
 #include "../MapEditor.h"
+#include "../ResizeGizmoHelper.h"
 #include "../Viewport.h"
 #include "../ViewportRenderer.h"
 #include "EditorTool.h"
@@ -226,22 +226,23 @@ void SelectTool::HandleDrag(const Viewport &vp, const glm::vec3 worldSpaceHover)
     }
 }
 
-std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::DetermineHoveredItem(const Viewport &vp,
-                                                                                              const glm::vec3
-                                                                                                      &worldSpaceHover)
+void SelectTool::DetermineHoveredItem(const Viewport &vp, const glm::vec3 &worldSpaceHover)
 {
     if (vp.Is3D())
     {
         hoverType = ItemType::NONE;
         const Viewport::PerspectiveHoverInfo hoverInfo = vp.GetPerspectiveHover();
-        std::vector<std::tuple<ItemType, size_t, float>> stack{};
         if (hoverInfo.objectType != ItemType::NONE)
         {
-            stack.emplace_back(static_cast<ItemType>(hoverInfo.objectType), hoverInfo.objectIndex, 0.0f);
             hoverType = static_cast<ItemType>(hoverInfo.objectType);
             hoverIndex = hoverInfo.objectIndex;
         }
-        return stack;
+        return;
+    }
+
+    if (dragging)
+    {
+        return;
     }
 
     hoverType = ItemType::NONE;
@@ -278,23 +279,20 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
                           });
     }
 
-    if (!vp.Is3D())
+    for (size_t brushIndex = 0; brushIndex < MapEditor::map.brushes.size(); brushIndex++)
     {
-        for (size_t brushIndex = 0; brushIndex < MapEditor::map.brushes.size(); brushIndex++)
+        const Brush &brush = MapEditor::map.brushes.at(brushIndex);
+        if (brush.ContainsPoint(vp.GetAxis(), vp.Make2D(worldSpaceHover)))
         {
-            const Brush &brush = MapEditor::map.brushes.at(brushIndex);
-            if (brush.ContainsPoint(vp.GetAxis(), vp.Make2D(worldSpaceHover)))
+            if (selectionType == ItemType::BRUSH && selectionIndex == brushIndex)
             {
-                if (selectionType == ItemType::BRUSH && selectionIndex == brushIndex)
-                {
-                    selectionHovered = true;
-                } else
-                {
-                    const BoundingBox bb = brush.GetAABB();
-                    const float componentA = AxisHelper::GetComponent(vp.GetAxis(), bb.StartPosition());
-                    const float componentB = AxisHelper::GetComponent(vp.GetAxis(), bb.EndPosition());
-                    sectorHoverStack.emplace_back(ItemType::BRUSH, brushIndex, std::max(componentA, componentB));
-                }
+                selectionHovered = true;
+            } else
+            {
+                const BoundingBox bb = brush.GetAABB();
+                const float componentA = AxisHelper::GetComponent(vp.GetAxis(), bb.StartPosition());
+                const float componentB = AxisHelper::GetComponent(vp.GetAxis(), bb.EndPosition());
+                sectorHoverStack.emplace_back(ItemType::BRUSH, brushIndex, std::max(componentA, componentB));
             }
         }
     }
@@ -310,19 +308,11 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
 
     std::vector<std::tuple<ItemType, size_t, float>> hoverStack{};
 
-    if (dragging)
-    {
-        hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);
-        return hoverStack;
-    }
-
-
     hoverStack.reserve(actorHoverStack.size() + sectorHoverStack.size() + 1);
     if (selectionHovered)
     {
         hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);
     }
-
 
     if (selectionType == ItemType::ACTOR)
     {
@@ -337,8 +327,9 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
         const Brush &brush = MapEditor::map.brushes.at(selectionIndex);
         const float dist = glm::distance(vp.GetLocalMousePos(), vp.WorldToScreenPos(brush.origin));
 
-        bool hoveringRotation = dist >= 44 && dist <= 52;
-        bool hoveringResize = ResizeGizmoHelper::HoveredHandle(vp, brush.GetAABB()) != ResizeGizmoHelper::Handle::NONE;
+        const bool hoveringRotation = dist >= 44 && dist <= 52;
+        const bool hoveringResize = ResizeGizmoHelper::HoveredHandle(vp, brush.GetAABB()) !=
+                                    ResizeGizmoHelper::Handle::NONE;
         if (hoveringRotation || hoveringResize)
         {
             hoverStack.emplace_back(selectionType, selectionIndex, 0.0f);
@@ -353,69 +344,13 @@ std::vector<std::tuple<EditorTool::ItemType, size_t, float>> SelectTool::Determi
         hoverType = std::get<ItemType>(hoverStack.at(0));
         hoverIndex = std::get<size_t>(hoverStack.at(0));
     }
-
-    return hoverStack;
 }
 
 void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const glm::vec3 &worldSpaceHover)
 {
-    const std::vector<std::tuple<ItemType, size_t, float>> &hoverStack = DetermineHoveredItem(vp, worldSpaceHover);
+    DetermineHoveredItem(vp, worldSpaceHover);
 
     const ImGuiMouseCursor hoverCursor = vp.Is3D() ? ImGuiMouseCursor_Hand : ImGuiMouseCursor_ResizeAll;
-
-    if (hoverStack.size() > 1 && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-    {
-        menuHoveredItems = hoverStack;
-        ImGui::OpenPopup("hoverSelectionRClick");
-    }
-
-    if (ImGui::BeginPopup("hoverSelectionRClick"))
-    {
-        for (const std::tuple<ItemType, size_t, float> &item: menuHoveredItems)
-        {
-            std::string text{};
-            const ItemType type = std::get<ItemType>(item);
-            size_t index = std::get<size_t>(item);
-            if (type == ItemType::ACTOR)
-            {
-                const Actor &a = MapEditor::map.actors.at(index);
-                if (a.params.contains("name") && !a.params.at("name").Get<std::string>("").empty())
-                {
-                    text = std::format("\"{}\": {}##{}", a.params.at("name").Get<std::string>(""), a.className, index);
-                } else
-                {
-                    text = std::format("{}##{}", a.className, index);
-                }
-            } else if (type == ItemType::BRUSH)
-            {
-                const Brush &b = MapEditor::map.brushes.at(index);
-                if (b.editorName.empty())
-                {
-                    text = std::format("Brush {}", index);
-                } else
-                {
-                    text = std::format("Brush {}: {}", index, b.editorName);
-                }
-            } else
-            {
-                text = "???";
-            }
-            const bool itemClicked = ImGui::MenuItem(text.c_str());
-            if (ImGui::IsItemHovered())
-            {
-                hoverType = type;
-                hoverIndex = index;
-            }
-            if (itemClicked)
-            {
-                selectionType = type;
-                selectionIndex = index;
-                menuHoveredItems.clear();
-                ImGui::CloseCurrentPopup();
-            }
-        }
-        ImGui::EndPopup();
-    }
 
     for (size_t actorIndex = 0; actorIndex < MapEditor::map.actors.size(); actorIndex++)
     {
