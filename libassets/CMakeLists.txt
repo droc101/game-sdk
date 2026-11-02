@@ -173,7 +173,7 @@ add_library(assets SHARED
         src/type/Axis.cpp
 )
 
-target_precompile_headers(assets PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch/pch.h>")
+target_precompile_headers(assets PUBLIC "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch/pch.h>")
 
 set_target_properties(assets PROPERTIES
         POSITION_INDEPENDENT_CODE TRUE
