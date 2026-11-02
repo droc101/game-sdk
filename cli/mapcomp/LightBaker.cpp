@@ -731,7 +731,7 @@ bool LightBaker::CreateLightmap(Lightmap &lightmap, const glm::uvec2 &lightmapSi
     const LunaBufferCreationInfo lightmapCreationInfo = {
         .size = lightmapSize.x * lightmapSize.y * sizeof(float16_t) * 4,
         .alignment = physicalDeviceProperties.properties.limits.minTexelBufferOffsetAlignment,
-        .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
+        .memoryType = LUNA_MEMORY_TYPE_HOST_CACHED,
         .additionalUsageFlags = VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT,
     };
     if (!CheckResult(lunaCreateBuffer(device, &lightmapCreationInfo, &lightmap.buffer)))
@@ -847,8 +847,6 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
         return false;
     }
 
-    lunaDeviceWaitIdle(device);
-
     Logger::Verbose("{} Emissive luxels in lightmap",
                     *static_cast<const uint32_t *>(lunaGetBufferDataPointer(emissiveLuxelIndicesBuffer)));
 
@@ -909,10 +907,6 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
             }
         }
     }
-    lunaDeviceWaitIdle(device);
-    const std::chrono::time_point<std::chrono::system_clock> end = std::chrono::high_resolution_clock::now();
-    Logger::Info("Baked indirect lighting in {}us",
-                 std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
 
     Logger::Info("Padding Indirect Lighting Lightmap...");
     AddPaddingToLightmap(lightmapSize,
@@ -941,12 +935,7 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
             return false;
         }
     }
-    lunaDeviceWaitIdle(device);
     RenderdocManager::EndCapture();
-
-    const std::chrono::time_point<std::chrono::system_clock> end2 = std::chrono::high_resolution_clock::now();
-    Logger::Info("Baked direct lighting in {}us",
-                 std::chrono::duration_cast<std::chrono::microseconds>(end2 - end).count());
 
     Logger::Info("Padding Direct Lighting Lightmap...");
     AddPaddingToLightmap(lightmapSize,
