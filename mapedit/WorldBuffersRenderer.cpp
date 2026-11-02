@@ -22,22 +22,25 @@
 #include "tools/EditorTool.h"
 #include "Viewport.h"
 
-void WorldBuffersRenderer::RenderWorldBuffers(const Viewport &vp)
+void WorldBuffersRenderer::RenderWorldBuffers(const Viewport &vp, const bool nop)
 {
     vp.BindWorldBuffers();
     GLHelper::Clear();
 
-    for (size_t actorIndex = 0; actorIndex < MapEditor::map.actors.size(); actorIndex++)
+    if (!nop)
     {
-        RenderActor(actorIndex, false);
-    }
+        for (size_t actorIndex = 0; actorIndex < MapEditor::map.actors.size(); actorIndex++)
+        {
+            RenderActor(actorIndex, false);
+        }
 
-    for (size_t brushIndex = 0; brushIndex < MapEditor::map.brushes.size(); brushIndex++)
-    {
-        RenderBrush(brushIndex);
-    }
+        for (size_t brushIndex = 0; brushIndex < MapEditor::map.brushes.size(); brushIndex++)
+        {
+            RenderBrush(brushIndex);
+        }
 
-    MapRenderer::ExecuteObjectBufferCommands(vp.GetMatrix());
+        MapRenderer::ExecuteObjectBufferCommands(vp.GetMatrix());
+    }
 }
 
 void WorldBuffersRenderer::RenderBrush(const size_t brushIndex)

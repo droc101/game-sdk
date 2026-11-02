@@ -127,7 +127,7 @@ class Viewport
 
         void BindWorldBuffers() const;
 
-        [[nodiscard]] PerspectiveHoverInfo GetPerspectiveHover() const;
+        [[nodiscard]] PerspectiveHoverInfo GetPerspectiveHover();
 
         void ClearPerspectiveHover();
 

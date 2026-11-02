@@ -177,10 +177,7 @@ void ViewportRenderer::RenderViewport(Viewport &vp, const ViewportRenderSettings
 
     MapRenderer::ExecuteCommands(matrix);
 
-    if (vp.Is3D() && settings.renderObjectBuffers)
-    {
-        WorldBuffersRenderer::RenderWorldBuffers(vp);
-    }
+    WorldBuffersRenderer::RenderWorldBuffers(vp, !(vp.Is3D() && settings.renderObjectBuffers));
 }
 
 void ViewportRenderer::RenderBrush(const Viewport &vp, const ViewportRenderSettings &settings, const size_t brushIndex)

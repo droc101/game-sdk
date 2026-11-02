@@ -17,7 +17,7 @@ class WorldBuffersRenderer
     public:
         WorldBuffersRenderer() = delete;
 
-        static void RenderWorldBuffers(const Viewport &vp);
+        static void RenderWorldBuffers(const Viewport &vp, bool nop);
 
     private:
         static void RenderBrush(size_t brushIndex);

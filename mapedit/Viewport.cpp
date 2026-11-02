@@ -3,7 +3,6 @@
 //
 
 #include "Viewport.h"
-#include <SDL3/SDL_video.h>
 #include <game_sdk/gl/GLHelper.h>
 #include <game_sdk/WindowManager.h>
 #include <glm/ext/matrix_clip_space.hpp>
@@ -14,6 +13,7 @@
 #include <imgui_internal.h>
 #include <libassets/asset/MapAsset.h>
 #include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_video.h>
 #include <string>
 #include "MapEditor.h"
 
@@ -638,9 +638,34 @@ void Viewport::BindWorldBuffers() const
     glViewport(0, 0, static_cast<GLsizei>(worldBuffers.size.x), static_cast<GLsizei>(worldBuffers.size.y));
 }
 
-Viewport::PerspectiveHoverInfo Viewport::GetPerspectiveHover() const
+Viewport::PerspectiveHoverInfo Viewport::GetPerspectiveHover()
 {
     assert(type == ViewportType::PERSPECTIVE);
+    // This info is 1 frame out of date, this makes sure it doesn't index out of bounds.
+    switch (lastHoverInfo.objectType)
+    {
+        case EditorTool::ItemType::BRUSH:
+            if (MapEditor::map.brushes.size() <= lastHoverInfo.objectIndex)
+            {
+                lastHoverInfo.objectType = EditorTool::ItemType::NONE;
+            }
+            break;
+        case EditorTool::ItemType::ACTOR:
+            if (MapEditor::map.actors.size() <= lastHoverInfo.objectIndex)
+            {
+                lastHoverInfo.objectType = EditorTool::ItemType::NONE;
+            }
+            break;
+        case EditorTool::ItemType::FACE:
+            if (MapEditor::map.brushes.size() <= lastHoverInfo.objectIndex ||
+                MapEditor::map.brushes.at(lastHoverInfo.objectIndex).faces.size() <= lastHoverInfo.objectSubIndex)
+            {
+                lastHoverInfo.objectType = EditorTool::ItemType::NONE;
+            }
+            break;
+        default:
+            break;
+    }
     return lastHoverInfo;
 }
 

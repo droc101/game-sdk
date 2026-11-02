@@ -22,9 +22,9 @@ class SelectTool final: public EditorTool
 
         void HandleDrag(const Viewport &vp, glm::vec3 worldSpaceHover);
 
-        void DetermineHoveredItem(const Viewport &vp, const glm::vec3 &worldSpaceHover);
+        void DetermineHoveredItem(Viewport &vp, const glm::vec3 &worldSpaceHover);
 
-        void ProcessViewportSelectMode(const Viewport &vp, const glm::vec3 &worldSpaceHover);
+        void ProcessViewportSelectMode(Viewport &vp, const glm::vec3 &worldSpaceHover);
 
         void RenderViewport(Viewport &vp) override;
 

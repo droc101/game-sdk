@@ -226,7 +226,7 @@ void SelectTool::HandleDrag(const Viewport &vp, const glm::vec3 worldSpaceHover)
     }
 }
 
-void SelectTool::DetermineHoveredItem(const Viewport &vp, const glm::vec3 &worldSpaceHover)
+void SelectTool::DetermineHoveredItem(Viewport &vp, const glm::vec3 &worldSpaceHover)
 {
     if (vp.Is3D())
     {
@@ -346,7 +346,7 @@ void SelectTool::DetermineHoveredItem(const Viewport &vp, const glm::vec3 &world
     }
 }
 
-void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const glm::vec3 &worldSpaceHover)
+void SelectTool::ProcessViewportSelectMode(Viewport &vp, const glm::vec3 &worldSpaceHover)
 {
     DetermineHoveredItem(vp, worldSpaceHover);
 
@@ -429,18 +429,12 @@ void SelectTool::ProcessViewportSelectMode(const Viewport &vp, const glm::vec3 &
         if (selectionType == ItemType::ACTOR)
         {
             MapEditor::map.actors.erase(MapEditor::map.actors.begin() + selectionIndex);
-            if (hoverType == ItemType::ACTOR && hoverIndex == selectionIndex)
-            {
-                hoverType = ItemType::NONE;
-            }
+            hoverType = ItemType::NONE;
             selectionType = ItemType::NONE;
         } else if (selectionType == ItemType::BRUSH)
         {
             MapEditor::map.brushes.erase(MapEditor::map.brushes.begin() + selectionIndex);
-            if (hoverType == ItemType::BRUSH && hoverIndex == selectionIndex)
-            {
-                hoverType = ItemType::NONE;
-            }
+            hoverType = ItemType::NONE;
             selectionType = ItemType::NONE;
         }
     }
