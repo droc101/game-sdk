@@ -215,6 +215,8 @@ void MapeditWindow::OpenJson(const std::string &path) const
 
         actor.ApplyDefinition(MapEditor::adm.GetActorDefinition(actor.className), false);
     }
+    MapEditor::toolType = MapEditor::EditorToolType::SELECT;
+    MapEditor::tool = std::make_unique<SelectTool>();
 }
 
 void MapeditWindow::SaveJson(const std::string &path) const
@@ -297,6 +299,7 @@ void MapeditWindow::Render()
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N, ImGuiInputFlags_RouteGlobal);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O, ImGuiInputFlags_RouteGlobal);
     bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S, ImGuiInputFlags_RouteGlobal);
+    bool saveAsPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S, ImGuiInputFlags_RouteGlobal);
     bool compilePressed = ImGui::Shortcut(ImGuiKey_F5, ImGuiInputFlags_RouteGlobal);
     bool cutPressed = canCutCopy && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_X, ImGuiInputFlags_RouteGlobal);
     bool copyPressed = canCutCopy && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_C, ImGuiInputFlags_RouteGlobal);
@@ -310,6 +313,7 @@ void MapeditWindow::Render()
             ImGui::Separator();
             openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
             savePressed |= ImGui::MenuItem("Save", "Ctrl+S");
+            saveAsPressed |= ImGui::MenuItem("Save As", "Ctrl+Shift+S");
             ImGui::Separator();
             compilePressed |= ImGui::MenuItem("Compile", "F5");
             ImGui::Separator();
@@ -520,10 +524,19 @@ void MapeditWindow::Render()
     if (openPressed)
     {
         OpenFileDialog(FILE_DIALOG_CALLBACK(OpenJson), DialogFilters::MAP_JSON_FILTERS);
-        MapEditor::toolType = MapEditor::EditorToolType::SELECT;
-        MapEditor::tool = std::make_unique<SelectTool>();
     }
     if (savePressed)
+    {
+        if (MapEditor::mapFile.empty())
+        {
+            SaveFileDialog(FILE_DIALOG_CALLBACK(SaveJson), DialogFilters::MAP_JSON_FILTERS);
+        } else
+        {
+            // TODO visual feedback that this save happened
+            SaveJson(MapEditor::mapFile);
+        }
+    }
+    if (saveAsPressed)
     {
         SaveFileDialog(FILE_DIALOG_CALLBACK(SaveJson), DialogFilters::MAP_JSON_FILTERS);
     }
