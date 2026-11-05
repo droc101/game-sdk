@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstddef>
 #include <game_sdk/WindowManager.h>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/type/Actor.h>
@@ -17,7 +18,6 @@
 #include <libassets/type/Param.h>
 #include <memory>
 #include <misc/cpp/imgui_stdlib.h>
-#include <numbers>
 #include <string>
 #include <tuple>
 #include <variant>
@@ -30,24 +30,13 @@
 #include "EditorTool.h"
 #include "FaceTool.h"
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/euler_angles.hpp>
+
 SelectTool::SelectTool(const ItemType selectionType, const size_t selectionIndex)
 {
     this->selectionType = selectionType;
     this->selectionIndex = selectionIndex;
-}
-
-float SelectTool::WrapAndSnapAngle(float angle, float step)
-{
-    while (angle < 0.0f)
-    {
-        angle += 360.0f;
-    }
-    while (angle > 360.0f)
-    {
-        angle -= 360.0f;
-    }
-    angle = std::round(angle / step) * step;
-    return angle;
 }
 
 void SelectTool::HandleDrag(const Viewport &vp, const glm::vec3 worldSpaceHover)
@@ -102,26 +91,11 @@ void SelectTool::HandleDrag(const Viewport &vp, const glm::vec3 worldSpaceHover)
                 if (dist >= 44 && dist <= 52) // Nice magic numbers you've got there
                 {
                     draggingRotationGizmo = true;
-
-                    const glm::vec2 actorScreenPos = vp.WorldToScreenPos(objectPosition);
-                    const glm::vec2 mousePosDifference = vp.GetLocalMousePos() - actorScreenPos;
-                    rotationGizmoLastAngle = atanf(mousePosDifference.x / mousePosDifference.y);
-                    if (mousePosDifference.y > 0)
-                    {
-                        rotationGizmoLastAngle += std::numbers::pi_v<float>;
-                    }
-                    switch (vp.GetAxis())
-                    {
-                        case Axis::Y:
-                            rotationGizmoSelectionAngle = objectRotation.y;
-                            break;
-                        case Axis::Z:
-                            rotationGizmoSelectionAngle = objectRotation.z;
-                            break;
-                        case Axis::X:
-                            rotationGizmoSelectionAngle = objectRotation.x;
-                            break;
-                    }
+                    rotationGizmoStart = glm::angleAxis(glm::radians(objectRotation.y), glm::vec3(0, 1, 0)) *
+                                         glm::angleAxis(glm::radians(objectRotation.x), glm::vec3(1, 0, 0)) *
+                                         glm::angleAxis(-glm::radians(objectRotation.z), glm::vec3(0, 0, 1));
+                    rotationGizmoLastMouseDirection = vp.GetLocalMousePos() - vp.WorldToScreenPos(objectPosition);
+                    rotationGizmoAngle = 0.0f;
                 } else
                 {
                     if (selectionType == ItemType::BRUSH)
@@ -189,34 +163,38 @@ void SelectTool::HandleDrag(const Viewport &vp, const glm::vec3 worldSpaceHover)
             actorScreenPos = vp.WorldToScreenPos(brush.origin);
         }
 
-        const glm::vec2 mousePosDifference = mousePos - actorScreenPos;
-        float newAngle = atanf(mousePosDifference.x / mousePosDifference.y);
-        if (mousePosDifference.y > 0)
-        {
-            newAngle += std::numbers::pi_v<float>;
-        }
-        const float angleDiff = glm::degrees(newAngle - rotationGizmoLastAngle);
-        rotationGizmoLastAngle = newAngle;
-        rotationGizmoSelectionAngle += angleDiff;
+        const glm::vec2 mouseDirection = mousePos - actorScreenPos;
+        const bool slowRotation = ImGui::IsKeyDown(ImGuiKey_LeftAlt);
+        const float rotationSpeed = slowRotation ? 0.25f : 1.0f;
 
-        float rotationStep = 22.5f;
-        if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
+        const float cross = rotationGizmoLastMouseDirection.x * mouseDirection.y -
+                            rotationGizmoLastMouseDirection.y * mouseDirection.x;
+        rotationGizmoAngle -= std::atan2(cross, glm::dot(rotationGizmoLastMouseDirection, mouseDirection)) *
+                              rotationSpeed;
+        rotationGizmoLastMouseDirection = mouseDirection;
+
+        float appliedAngle = rotationGizmoAngle;
+        if (!slowRotation)
         {
-            rotationStep = 5.0f;
+            const float rotationStep = glm::radians(ImGui::IsKeyDown(ImGuiKey_LeftShift) ? 5.0f : 22.5f);
+            appliedAngle = std::round(appliedAngle / rotationStep) * rotationStep;
         }
+
+        glm::vec3 rotationAxis{};
+        AxisHelper::SetComponent(vp.GetAxis(), rotationAxis, 1.0f);
+        glm::vec3 newRotation{};
+        glm::extractEulerAngleYXZ(glm::mat4_cast(glm::angleAxis(appliedAngle, rotationAxis) * rotationGizmoStart),
+                                  newRotation.y,
+                                  newRotation.x,
+                                  newRotation.z);
+        newRotation = glm::degrees(newRotation) * glm::vec3{1, 1, -1};
 
         if (selectionType == ItemType::ACTOR)
         {
-            Actor &actor = MapEditor::map.actors.at(selectionIndex);
-            AxisHelper::SetComponent(vp.GetAxis(),
-                                     actor.rotation,
-                                     WrapAndSnapAngle(rotationGizmoSelectionAngle, rotationStep));
+            MapEditor::map.actors.at(selectionIndex).rotation = newRotation;
         } else if (selectionType == ItemType::BRUSH)
         {
-            Brush &brush = MapEditor::map.brushes.at(selectionIndex);
-            AxisHelper::SetComponent(vp.GetAxis(),
-                                     brush.rotation,
-                                     WrapAndSnapAngle(rotationGizmoSelectionAngle, rotationStep));
+            MapEditor::map.brushes.at(selectionIndex).rotation = newRotation;
         }
     } else if (selectionType == ItemType::ACTOR)
     {

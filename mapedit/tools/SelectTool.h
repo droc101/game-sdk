@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstddef>
+#include <glm/gtc/quaternion.hpp>
 #include <libassets/type/BoundingBox.h>
 #include <tuple>
 #include <vector>
@@ -53,8 +54,9 @@ class SelectTool final: public EditorTool
         glm::vec3 brushDragStartOrigin{};
 
         bool draggingRotationGizmo = false;
-        float rotationGizmoLastAngle = 0.0f;
-        float rotationGizmoSelectionAngle = 0.0f;
+        glm::quat rotationGizmoStart{1.0f, 0.0f, 0.0f, 0.0f};
+        glm::vec2 rotationGizmoLastMouseDirection{};
+        float rotationGizmoAngle = 0.0f;
 
         bool draggingResizeGizmo = false;
         glm::vec3 resizeGizmoDragStart{};
@@ -65,6 +67,4 @@ class SelectTool final: public EditorTool
         std::vector<std::tuple<ItemType, size_t, float>> menuHoveredItems{};
 
         bool dragging = false;
-
-        static float WrapAndSnapAngle(float angle, float step);
 };

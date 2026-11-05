@@ -565,7 +565,7 @@ bool ViewportRenderer::ActorIsCulled(const Actor &actor, const Viewport &vp, con
     worldMatrix = glm::translate(worldMatrix, actor.position);
     worldMatrix = glm::rotate(worldMatrix, glm::radians(actor.rotation.y), glm::vec3(0, 1, 0));
     worldMatrix = glm::rotate(worldMatrix, glm::radians(actor.rotation.x), glm::vec3(1, 0, 0));
-    worldMatrix = glm::rotate(worldMatrix, glm::radians(actor.rotation.z), glm::vec3(0, 0, 1));
+    worldMatrix = glm::rotate(worldMatrix, -glm::radians(actor.rotation.z), glm::vec3(0, 0, 1));
 
     std::vector<glm::vec3> boundingBoxPoints{}; // not aabb, just bb
 
