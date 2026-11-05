@@ -49,7 +49,8 @@ class SelectTool final: public EditorTool
         ItemType selectionType = ItemType::NONE;
         size_t selectionIndex = 0;
 
-        glm::vec2 brushDragMouseOffset{};
+        glm::vec3 brushDragStart{};
+        glm::vec3 brushDragStartOrigin{};
 
         bool draggingRotationGizmo = false;
         float rotationGizmoLastAngle = 0.0f;

@@ -31,6 +31,8 @@ class ResizeGizmoHelper
 
         [[nodiscard]] static Handle HoveredHandle(const Viewport &viewport, const BoundingBox &boundingBox);
 
+        [[nodiscard]] static glm::vec3 HandlePosition(const BoundingBox &boundingBox, Handle handle, Axis axis);
+
         static void ScaleVertex(glm::vec3 &vertex,
                                 const BoundingBox &startBounds,
                                 const glm::vec3 &worldDrag,

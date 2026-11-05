@@ -127,7 +127,8 @@ void SelectTool::HandleDrag(const Viewport &vp, const glm::vec3 worldSpaceHover)
                     if (selectionType == ItemType::BRUSH)
                     {
                         const Brush &brush = MapEditor::map.brushes.at(selectionIndex);
-                        brushDragMouseOffset = MapEditor::SnapToGrid(vp.Make2D(brush.origin - worldSpaceHover));
+                        brushDragStart = worldSpaceHover;
+                        brushDragStartOrigin = brush.origin;
                     }
                     draggingRotationGizmo = false;
                 }
@@ -157,7 +158,11 @@ void SelectTool::HandleDrag(const Viewport &vp, const glm::vec3 worldSpaceHover)
         Brush &brush = MapEditor::map.brushes.at(selectionIndex);
         const glm::mat4 transformMatrix = brush.GetTransformMatrix();
         const glm::mat4 inverseTransformMatrix = glm::inverse(transformMatrix);
-        const glm::vec3 snappedDrag = MapEditor::SnapToGrid(worldSpaceHover - resizeGizmoDragStart);
+        const glm::vec3 handleStart = ResizeGizmoHelper::HandlePosition(resizeGizmoStartBounds,
+                                                                        resizeGizmoDraggedHandle,
+                                                                        vp.GetAxis());
+        const glm::vec3 snappedDrag = MapEditor::SnapToGrid(handleStart + worldSpaceHover - resizeGizmoDragStart) -
+                                      handleStart;
         for (size_t i = 0; i < brush.vertices.size(); i++)
         {
             glm::vec3 vertexWorldSpace = transformMatrix * glm::vec4{resizeGizmoStartVertices.at(i), 1};
@@ -221,8 +226,8 @@ void SelectTool::HandleDrag(const Viewport &vp, const glm::vec3 worldSpaceHover)
     } else if (selectionType == ItemType::BRUSH)
     {
         Brush &brush = MapEditor::map.brushes.at(selectionIndex);
-        const glm::vec3 snapped = MapEditor::SnapToGrid(worldSpaceHover);
-        AxisHelper::Set2DComponents(vp.GetAxis(), brush.origin, vp.Make2D(snapped) + brushDragMouseOffset);
+        const glm::vec2 snappedDrag = MapEditor::SnapToGrid(vp.Make2D(worldSpaceHover - brushDragStart));
+        AxisHelper::Set2DComponents(vp.GetAxis(), brush.origin, vp.Make2D(brushDragStartOrigin) + snappedDrag);
     }
 }
 

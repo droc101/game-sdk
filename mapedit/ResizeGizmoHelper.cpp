@@ -43,6 +43,11 @@ ResizeGizmoHelper::Handle ResizeGizmoHelper::HoveredHandle(const Viewport &viewp
     return Handle::NONE;
 }
 
+glm::vec3 ResizeGizmoHelper::HandlePosition(const BoundingBox &boundingBox, const Handle handle, const Axis axis)
+{
+    return boundingBox.origin + HandleDirection(handle, axis) * boundingBox.extents;
+}
+
 void ResizeGizmoHelper::ScaleVertex(glm::vec3 &vertex,
                                     const BoundingBox &startBounds,
                                     const glm::vec3 &worldDrag,
