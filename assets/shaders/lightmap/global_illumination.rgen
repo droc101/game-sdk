@@ -50,7 +50,7 @@ void main() {
         const vec3 T = buildTangent(luxelNormal.xyz);
         const vec3 B = cross(luxelNormal.xyz, T);
         const vec3 rayDirection = localDir.x * T + localDir.y * B + localDir.z * luxelNormal.xyz;
-        traceRayEXT(accelerationStructure, gl_RayFlagsOpaqueEXT, 0xFF, 0, 0, 0, luxelPosition.xyz, MIN_RAY_LENGTH, rayDirection, MAX_RAY_LENGTH, 0);
+        traceRayEXT(accelerationStructure, gl_RayFlagsOpaqueEXT, 0xFF, 0, 0, 0, luxelPosition.xyz + rayDirection * RAY_LENGTH_OFFSET, MIN_RAY_LENGTH, rayDirection, MAX_RAY_LENGTH, 0);
         accumulatedColor += hitColor;
     }
 
