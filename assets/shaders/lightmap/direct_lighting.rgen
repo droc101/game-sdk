@@ -73,6 +73,7 @@ void main() {
             distance = length(luxelToLight);
             rayDirection = normalize(luxelToLight);
         }
+        distance -= 2 * RAY_LENGTH_OFFSET;
 #ifdef DEBUG
         if (distance < MIN_RAY_LENGTH) {
             debugPrintfEXT("[ERROR] Distance %f from luxel to light is less than minimum ray distance %f!", distance, MIN_RAY_LENGTH);
@@ -118,6 +119,7 @@ void main() {
         float distance;
         vec3 rayDirection;
         getLengthAndUnitVector(sourceLuxelPosition.xyz - luxelPosition.xyz, distance, rayDirection);
+        distance -= 2 * RAY_LENGTH_OFFSET;
         if (distance < EPSILON) {
             continue;
         }
@@ -131,7 +133,7 @@ void main() {
         }
 
         isLightVisible = false;
-        traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0,  + rayDirection * RAY_LENGTH_OFFSET, MIN_RAY_LENGTH, rayDirection, distance, 0);
+        traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz + rayDirection * RAY_LENGTH_OFFSET, MIN_RAY_LENGTH, rayDirection, distance, 0);
         if (isLightVisible) {
             const vec4 color = imageLoad(luxelAlbedos, sourceLuxelCoord);
             areaLightColor += sourceLuxelNormal.w * color.rgb * color.a / (distance * distance / 256.0) * normalFactor;
