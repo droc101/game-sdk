@@ -11,6 +11,7 @@
 #include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <vector>
+#include "LightBaker.hpp"
 #include "MapCompiler.h"
 
 int main(const int argc, const char **argv)
