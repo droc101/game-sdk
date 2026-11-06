@@ -61,13 +61,14 @@ struct Light {
 #pragma region Pipeline Layout
 
 layout (push_constant) uniform PushConstants {
-    uint baseLuxelIndex;
+    int baseLuxelIndex;
+    uint baseSampleIndex;
 } pushConstants;
 
 layout (set = 0, binding = 0) uniform accelerationStructureEXT accelerationStructure;
-layout (set = 0, binding = 1, rgba16f) restrict uniform imageBuffer outputLightmap;
-layout (set = 0, binding = 2, rgba16f) readonly restrict uniform imageBuffer previousBounceLightmap;
-layout (set = 0, binding = 3, rgba16f) writeonly restrict uniform imageBuffer currentBounceLightmap;
+layout (set = 0, binding = 1, rgba32f) restrict uniform imageBuffer outputLightmap;
+layout (set = 0, binding = 2, rgba32f) readonly restrict uniform imageBuffer previousBounceLightmap;
+layout (set = 0, binding = 3, rgba32f) restrict uniform imageBuffer currentBounceLightmap;
 layout (set = 0, binding = 4, rgba32f) readonly restrict uniform image2D luxelPositions;
 layout (set = 0, binding = 5, rgba32f) readonly restrict uniform image2D luxelNormals;
 layout (set = 0, binding = 6, rgba16f) readonly restrict uniform image2D luxelAlbedos;

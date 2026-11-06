@@ -2,7 +2,8 @@
 
 #include "shared.inc.glsl"
 
-layout (constant_id = 2) const uint SAMPLE_COUNT = 1024;
+layout (constant_id = 2) const uint TOTAL_SAMPLE_COUNT = 1024;
+layout (constant_id = 3) const uint SAMPLES_PER_THREAD = 256;
 
 layout (location = 0) rayPayloadEXT vec3 hitColor;
 
@@ -19,7 +20,7 @@ float radicalInverse_VdC(uint bits)
 }
 
 vec3 getRayDirection(const uint sampleIndex) {
-    const vec2 hammersly = vec2(float(sampleIndex) / float(SAMPLE_COUNT), radicalInverse_VdC(sampleIndex));
+    const vec2 hammersly = vec2(float(sampleIndex) / float(TOTAL_SAMPLE_COUNT), radicalInverse_VdC(sampleIndex));
     const float r = sqrt(hammersly.x);
     const float phi = 2 * PI * hammersly.y;
     return vec3(r * cos(phi), r * sin(phi), sqrt(max(0.0, 1.0 - hammersly.x)));
@@ -38,15 +39,15 @@ void main() {
     const vec4 luxelPosition = imageLoad(luxelPositions, luxelCoord);
 
     if (luxelPosition.w == 0) {
-        // The target luxel is not mapped to any wall
+        // The luxel is not mapped to any wall
         return;
     }
 
     const vec4 luxelNormal = imageLoad(luxelNormals, luxelCoord);
     vec3 accumulatedColor = vec3(0);
-    for (uint i = 0; i < SAMPLE_COUNT; i++) {
+    for (uint i = 0; i < SAMPLES_PER_THREAD; i++) {
         hitColor = vec3(0);
-        const vec3 localDir = getRayDirection(i);
+        const vec3 localDir = getRayDirection(i + pushConstants.baseSampleIndex);
         const vec3 T = buildTangent(luxelNormal.xyz);
         const vec3 B = cross(luxelNormal.xyz, T);
         const vec3 rayDirection = localDir.x * T + localDir.y * B + localDir.z * luxelNormal.xyz;
@@ -54,6 +55,11 @@ void main() {
         accumulatedColor += hitColor;
     }
 
-    imageStore(currentBounceLightmap, luxelIndex, vec4(accumulatedColor / SAMPLE_COUNT, 1));
-    imageStore(outputLightmap, luxelIndex, vec4(imageLoad(outputLightmap, luxelIndex).rgb + accumulatedColor / SAMPLE_COUNT, 1));
+    accumulatedColor /= TOTAL_SAMPLE_COUNT;
+    if (pushConstants.baseSampleIndex == 0) {
+        imageStore(currentBounceLightmap, luxelIndex, vec4(accumulatedColor, 1));
+    } else {
+        imageStore(currentBounceLightmap, luxelIndex, vec4(imageLoad(currentBounceLightmap, luxelIndex).rgb + accumulatedColor, 1));
+    }
+    imageStore(outputLightmap, luxelIndex, vec4(imageLoad(outputLightmap, luxelIndex).rgb + accumulatedColor, 1));
 }

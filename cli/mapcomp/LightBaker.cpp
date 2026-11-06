@@ -685,6 +685,9 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
     const uint32_t width = std::min(luxelCount, uint64_t{MAX_DISPATCH_DIMENSION});
     const uint32_t height = std::min(std::max(luxelCount / width, uint64_t{1}), uint64_t{MAX_DISPATCH_DIMENSION});
     const uint32_t iterations = std::max(luxelCount / width / height, uint64_t{1});
+    const uint32_t perLuxelBounceIterations = sampleCount / SAMPLES_PER_THREAD;
+    const float totalBounceDispatches = static_cast<float>(iterations * perLuxelBounceIterations * bounceCount);
+    const float totalDispatches = static_cast<float>(2 * iterations) + totalBounceDispatches;
 
     if (meshBuilders.empty())
     {
@@ -780,14 +783,13 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
     uint32_t nextPercentLog = 10;
     for (uint32_t iteration = 0; iteration < iterations; iteration++)
     {
-        const float percentDone = static_cast<float>(100 * iteration) /
-                                  static_cast<float>(iterations * (bounceCount + 2));
+        const float percentDone = static_cast<float>(100 * iteration) / totalDispatches;
         if (percentDone > static_cast<float>(nextPercentLog))
         {
             Logger::Info("Baking lighting {}%...", nextPercentLog);
             nextPercentLog = (static_cast<uint32_t>(percentDone) / 10 + 1) * 10;
         }
-        if (!SingleBakeIteration(width, height, width * height * iteration, true))
+        if (!SingleBakeIteration(width, height, width * height * iteration, 0, true))
         {
             return false;
         }
@@ -818,22 +820,35 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
                                descriptorSetWrites.data(),
                                0,
                                nullptr);
+
         for (uint32_t iteration = 0; iteration < iterations; iteration++)
         {
-            const float percentDone = static_cast<float>(100 * ((bounce + 1) * iterations + iteration)) /
-                                      static_cast<float>(iterations * (bounceCount + 2));
-            if (percentDone > static_cast<float>(nextPercentLog))
+            lunaDeviceWaitIdle(device);
+            for (uint32_t perLuxelIteration = 0; perLuxelIteration < perLuxelBounceIterations; perLuxelIteration++)
             {
-                Logger::Info("Baking lighting {}%...", nextPercentLog);
-                nextPercentLog = (static_cast<uint32_t>(percentDone) / 10 + 1) * 10;
-            }
-            if (!SingleBakeIteration(width, height, width * height * iteration, false))
-            {
-                return false;
+                const float percentDone = static_cast<float>(100 * (iterations +
+                                                                    bounce * iterations * perLuxelBounceIterations +
+                                                                    iteration * perLuxelBounceIterations +
+                                                                    perLuxelIteration)) /
+                                          totalDispatches;
+                if (percentDone > static_cast<float>(nextPercentLog))
+                {
+                    Logger::Info("Baking lighting {}%...", nextPercentLog);
+                    nextPercentLog = (static_cast<uint32_t>(percentDone) / 10 + 1) * 10;
+                }
+                if (!SingleBakeIteration(width,
+                                         height,
+                                         width * height * iteration,
+                                         perLuxelIteration * SAMPLES_PER_THREAD,
+                                         false))
+                {
+                    return false;
+                }
             }
         }
     }
 
+    lunaDeviceWaitIdle(device);
     AddPaddingToLightmap(lightmapSize,
                          static_cast<float16_t *>(lunaGetBufferDataPointer(lightmapOne.buffer)),
                          indirectLightingPixelData);
@@ -848,20 +863,22 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
     }
     for (uint32_t iteration = 0; iteration < iterations; iteration++)
     {
-        const float percentDone = static_cast<float>(100 * ((bounceCount + 1) * iterations + iteration)) /
-                                  static_cast<float>(iterations * (bounceCount + 2));
+        const float percentDone = 100 *
+                                  (static_cast<float>(iterations + iteration) + totalBounceDispatches) /
+                                  totalDispatches;
         if (percentDone > static_cast<float>(nextPercentLog))
         {
             Logger::Info("Baking lighting {}%...", nextPercentLog);
             nextPercentLog = (static_cast<uint32_t>(percentDone) / 10 + 1) * 10;
         }
-        if (!SingleBakeIteration(width, height, width * height * iteration, true))
+        if (!SingleBakeIteration(width, height, width * height * iteration, 0, true))
         {
             return false;
         }
     }
     RenderdocManager::EndCapture();
 
+    lunaDeviceWaitIdle(device);
     AddPaddingToLightmap(lightmapSize,
                          static_cast<float16_t *>(lunaGetBufferDataPointer(lightmapOne.buffer)),
                          pixelData);
@@ -1886,8 +1903,9 @@ bool LightBaker::CreateGlobalIlluminationPipeline(const glm::uvec2 &lightmapSize
         lightmapSize.x,
         lightmapSize.y,
         sampleCount,
+        SAMPLES_PER_THREAD,
     };
-    static constexpr SpecializationMapEntries<uint32_t, uint32_t, uint32_t> RAYGEN_MAP_ENTRIES{};
+    static constexpr SpecializationMapEntries<uint32_t, uint32_t, uint32_t, uint32_t> RAYGEN_MAP_ENTRIES{};
     const VkSpecializationInfo raygenSpecializationInfo = {
         .mapEntryCount = RAYGEN_MAP_ENTRIES.size(),
         .pMapEntries = RAYGEN_MAP_ENTRIES.data(),
@@ -1939,7 +1957,7 @@ bool LightBaker::CreateGlobalIlluminationPipeline(const glm::uvec2 &lightmapSize
 
     static constexpr VkPushConstantRange PUSH_CONSTANT_RANGE = {
         .stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-        .size = sizeof(uint32_t),
+        .size = sizeof(uint32_t) * 2,
     };
     const VkPipelineLayoutCreateInfo layoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -2341,6 +2359,7 @@ bool LightBaker::CreateShaderBindingTables()
 bool LightBaker::SingleBakeIteration(const uint32_t width,
                                      const uint32_t height,
                                      const uint32_t baseLuxelIndex,
+                                     const uint32_t baseSampleIndex,
                                      const bool directLighting) const
 {
     if (!CheckResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
@@ -2364,6 +2383,15 @@ bool LightBaker::SingleBakeIteration(const uint32_t width,
                        0,
                        sizeof(baseLuxelIndex),
                        &baseLuxelIndex);
+    if (!directLighting)
+    {
+        vkCmdPushConstants(vkCommandBuffer,
+                           pipelineLayout,
+                           VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+                           sizeof(baseLuxelIndex),
+                           sizeof(baseSampleIndex),
+                           &baseSampleIndex);
+    }
     const VkStridedDeviceAddressRegionKHR nullShaderBindingTableAddressRegion = {
         .deviceAddress = lunaGetBufferDeviceAddress(device, nullShaderBindingTable),
         .stride = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,

@@ -84,6 +84,10 @@ int main(const int argc, const char **argv)
         samples = std::strtol(args.GetFlagValue("--samples").c_str(), nullptr, 10);
     }
 
+    // TODO: If bounces are enabled, samples must be a positive integer multiple of LightBaker::SAMPLES_PER_THREAD
+    assert(bounces == 0 ||
+           (samples / LightBaker::SAMPLES_PER_THREAD > 0 && samples % LightBaker::SAMPLES_PER_THREAD == 0));
+
     MapCompiler::MapCompilerSettings settings = {
         .assetsDirectory = assetsPath,
         .executableDirectory = args.GetFlagValue("--executable-dir"),

@@ -19,12 +19,15 @@
 
 class LightBaker
 {
-    struct Lightmap {
-        LunaBuffer buffer;
-        VkBufferView bufferView;
-    };
+        struct Lightmap
+        {
+                LunaBuffer buffer;
+                VkBufferView bufferView;
+        };
 
     public:
+        static constexpr uint32_t SAMPLES_PER_THREAD = 2048;
+
         static LightBaker &Get();
 
         bool Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
@@ -91,6 +94,7 @@ class LightBaker
         [[nodiscard]] bool SingleBakeIteration(uint32_t width,
                                                uint32_t height,
                                                uint32_t baseLuxelIndex,
+                                               uint32_t baseSampleIndex,
                                                bool directLighting) const;
 
         static inline VkPhysicalDeviceRayTracingPipelinePropertiesKHR physicalDeviceRayTracingPipelineProperties{
