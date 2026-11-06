@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include <chrono>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
@@ -388,8 +387,16 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
 
 LightBaker::LightBaker()
 {
+#ifdef INVALID_PRESENT_FOR_CAPTURING
+    static constexpr std::array INSTANCE_EXTENSIONS = {VK_KHR_SURFACE_EXTENSION_NAME};
+#else
+    static constexpr std::array<const char *const, 0> INSTANCE_EXTENSIONS{};
+#endif
+
     static constexpr LunaInstanceCreationInfo INSTANCE_CREATION_INFO = {
         .apiVersion = VK_API_VERSION_1_2,
+        .extensionCount = INSTANCE_EXTENSIONS.size(),
+        .extensionNames = INSTANCE_EXTENSIONS.data(),
 #ifndef NDEBUG
         .enableValidation = true,
 #endif
@@ -434,6 +441,9 @@ LightBaker::LightBaker()
         VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
         VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
         VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
+#ifdef INVALID_PRESENT_FOR_CAPTURING
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+#endif
     };
     static constexpr LunaDeviceCreationInfo2 DEVICE_CREATION_INFO = {
         .extensionCount = REQUIRED_EXTENSIONS.size(),
@@ -855,6 +865,13 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
     AddPaddingToLightmap(lightmapSize,
                          static_cast<float16_t *>(lunaGetBufferDataPointer(lightmapOne.buffer)),
                          pixelData);
+
+#ifdef INVALID_PRESENT_FOR_CAPTURING
+    static constexpr VkPresentInfoKHR PRESENT_INFO = {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+    };
+    vkQueuePresentKHR(queue, &PRESENT_INFO);
+#endif
 
     return true;
 }
