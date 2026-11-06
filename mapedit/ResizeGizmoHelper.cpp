@@ -58,7 +58,7 @@ void ResizeGizmoHelper::ScaleVertex(glm::vec3 &vertex,
     const glm::vec3 anchor = startBounds.origin - direction * startBounds.extents;
     const glm::vec3 scale = 1.0f + direction * worldDrag / (2.0f * startBounds.extents);
     const glm::vec3 offset = vertex - anchor;
-    vertex = anchor + glm::max(offset * scale * glm::sign(offset), glm::vec3{1}) * glm::sign(offset);
+    vertex = anchor + glm::max(offset * scale * glm::sign(offset), glm::abs(direction * glm::vec3{1})) * glm::sign(offset);
 }
 
 ResizeGizmoHelper::Handle ResizeGizmoHelper::GetHandleFromBoundingBoxPointIndex(const uint32_t index, const Axis axis)
