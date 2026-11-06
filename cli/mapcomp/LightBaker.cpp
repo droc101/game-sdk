@@ -1842,7 +1842,7 @@ bool LightBaker::CreateDirectLightingPipeline(const glm::uvec2 &lightmapSize,
 
     static constexpr VkPushConstantRange PUSH_CONSTANT_RANGE = {
         .stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-        .size = sizeof(uint32_t),
+        .size = sizeof(uint32_t) * 2,
     };
     const VkPipelineLayoutCreateInfo layoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
