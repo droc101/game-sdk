@@ -78,7 +78,7 @@ class LightBaker
         bool CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize);
 
         /// Create the bottom-level acceleration structures
-        bool CreateBLAS(uint32_t vertexCount, uint32_t indexCount);
+        bool CreateBLAS(const std::vector<BrushMeshBuilder> &meshBuilders, uint32_t vertexCount);
 
         /// Create the top-level acceleration structures
         bool CreateTLAS();
@@ -146,8 +146,8 @@ class LightBaker
         LunaBuffer closestHitShaderBindingTable{};
         /// A shader binding table containing a single zeroed record, used for unused shader binding table regions
         LunaBuffer nullShaderBindingTable{};
-        /// The bottom-level acceleration structure used for hardware acceleration of path tracing
-        AccelerationStructure blas{};
+        /// The bottom-level acceleration structures used for hardware acceleration of path tracing
+        std::vector<AccelerationStructure> bottomLevelAccelerationStructures{};
         /// The buffer that holds the blas instances for the tlas to reference
         LunaBuffer accelerationStructureInstancesBuffer{};
         /// The top-level acceleration structure used for hardware acceleration of path tracing

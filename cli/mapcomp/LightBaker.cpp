@@ -752,7 +752,7 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
         return false;
     }
 
-    if (!CreateBLAS(vertexCount, indexCount))
+    if (!CreateBLAS(meshBuilders, vertexCount))
     {
         return false;
     }
@@ -1501,7 +1501,7 @@ bool LightBaker::CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize)
     return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }
 
-bool LightBaker::CreateBLAS(const uint32_t vertexCount, const uint32_t indexCount)
+bool LightBaker::CreateBLAS(const std::vector<BrushMeshBuilder> &meshBuilders, const uint32_t vertexCount)
 {
     // The position MUST be at the start of the struct for the acceleration structure to work properly
     static_assert(offsetof(MapVertex, position) == 0, "MapVertex::position must be at offset zero!");
@@ -1517,105 +1517,116 @@ bool LightBaker::CreateBLAS(const uint32_t vertexCount, const uint32_t indexCoun
         return false;
     }
 
-    const VkDeviceOrHostAddressConstKHR vertexDataAddress = {
-        .deviceAddress = lunaGetBufferDeviceAddress(device, vertexBuffer),
-    };
-    const VkDeviceOrHostAddressConstKHR indexDataAddress = {
-        .deviceAddress = lunaGetBufferDeviceAddress(device, indexBuffer),
-    };
-    const VkAccelerationStructureGeometryTrianglesDataKHR geometryTrianglesData = {
-        .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR,
-        .vertexFormat = VK_FORMAT_R32G32B32_SFLOAT,
-        .vertexData = vertexDataAddress,
-        .vertexStride = sizeof(MapVertex),
-        .maxVertex = vertexCount - 1,
-        .indexType = VK_INDEX_TYPE_UINT32,
-        .indexData = indexDataAddress,
-    };
-    const VkAccelerationStructureGeometryDataKHR geometryData = {
-        .triangles = geometryTrianglesData,
-    };
-    const VkAccelerationStructureGeometryKHR geometry = {
-        .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR,
-        .geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR,
-        .geometry = geometryData,
-        .flags = VK_GEOMETRY_OPAQUE_BIT_KHR,
-    };
-
-    const VkAccelerationStructureBuildGeometryInfoKHR buildSizesGeometryInfo = {
-        .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
-        .type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
-        .flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
-        .mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
-        .geometryCount = 1,
-        .pGeometries = &geometry,
-    };
-    VkAccelerationStructureBuildSizesInfoKHR buildSizesInfo = {
-        .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR,
-    };
-    const uint32_t triangleCount = indexCount / 3;
-    vkGetAccelerationStructureBuildSizesKHR(lunaGetVkDevice(device),
-                                            VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-                                            &buildSizesGeometryInfo,
-                                            &triangleCount,
-                                            &buildSizesInfo);
-
-    const LunaBufferCreationInfo bufferCreationInfo = {
-        .size = buildSizesInfo.accelerationStructureSize,
-        .alignment = 256, // 256 is directly required by the spec
-        .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
-        .additionalUsageFlags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
-                                VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-    };
-    if (!CheckResult(lunaCreateBuffer(device, &bufferCreationInfo, &blas.buffer)))
+    bottomLevelAccelerationStructures.reserve(meshBuilders.size());
+    VkDeviceSize indexBufferOffset = 0;
+    for (const BrushMeshBuilder &meshBuilder: meshBuilders)
     {
-        return false;
-    }
+        AccelerationStructure &blas = bottomLevelAccelerationStructures.emplace_back();
+        const VkDeviceOrHostAddressConstKHR vertexDataAddress = {
+            .deviceAddress = lunaGetBufferDeviceAddress(device, vertexBuffer),
+        };
+        const VkDeviceOrHostAddressConstKHR indexDataAddress = {
+            .deviceAddress = lunaGetBufferDeviceAddress(device, indexBuffer) + indexBufferOffset,
+        };
+        const VkAccelerationStructureGeometryTrianglesDataKHR geometryTrianglesData = {
+            .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR,
+            .vertexFormat = VK_FORMAT_R32G32B32_SFLOAT,
+            .vertexData = vertexDataAddress,
+            .vertexStride = sizeof(MapVertex),
+            .maxVertex = vertexCount - 1,
+            .indexType = VK_INDEX_TYPE_UINT32,
+            .indexData = indexDataAddress,
+        };
+        const VkAccelerationStructureGeometryDataKHR geometryData = {
+            .triangles = geometryTrianglesData,
+        };
+        const VkAccelerationStructureGeometryKHR geometry = {
+            .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR,
+            .geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR,
+            .geometry = geometryData,
+            .flags = VK_GEOMETRY_OPAQUE_BIT_KHR,
+        };
 
-    const VkAccelerationStructureCreateInfoKHR createInfo = {
-        .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR,
-        .buffer = lunaGetVkBuffer(blas.buffer),
-        .offset = lunaGetBufferOffset(blas.buffer),
-        .size = lunaGetBufferSize(blas.buffer),
-        .type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
-    };
-    if (!CheckResult(vkCreateAccelerationStructureKHR(lunaGetVkDevice(device),
-                                                      &createInfo,
-                                                      nullptr,
-                                                      &blas.accelerationStructure)))
-    {
-        return false;
-    }
+        const VkAccelerationStructureBuildGeometryInfoKHR buildSizesGeometryInfo = {
+            .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
+            .type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
+            .flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
+            .mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
+            .geometryCount = 1,
+            .pGeometries = &geometry,
+        };
+        VkAccelerationStructureBuildSizesInfoKHR buildSizesInfo = {
+            .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR,
+        };
+        const uint32_t triangleCount = meshBuilder.GetIndices().size() / 3;
+        vkGetAccelerationStructureBuildSizesKHR(lunaGetVkDevice(device),
+                                                VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+                                                &buildSizesGeometryInfo,
+                                                &triangleCount,
+                                                &buildSizesInfo);
 
-    const LunaBufferCreationInfo scratchBufferCreationInfo = {
-        .size = buildSizesInfo.buildScratchSize,
-        .alignment = physicalDeviceAccelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment,
-        .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
-        .additionalUsageFlags = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-    };
-    if (!CheckResult(lunaCreateBuffer(device, &scratchBufferCreationInfo, &blas.scratchBuffer)))
-    {
-        return false;
-    }
+        const LunaBufferCreationInfo bufferCreationInfo = {
+            .size = buildSizesInfo.accelerationStructureSize,
+            .alignment = 256, // 256 is directly required by the spec
+            .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
+            .additionalUsageFlags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
+                                    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+        };
+        if (!CheckResult(lunaCreateBuffer(device, &bufferCreationInfo, &blas.buffer)))
+        {
+            return false;
+        }
 
-    const VkDeviceOrHostAddressKHR scratchDataAddress = {
-        .deviceAddress = lunaGetBufferDeviceAddress(device, blas.scratchBuffer),
-    };
-    const VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfo = {
-        .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
-        .type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
-        .flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
-        .mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
-        .dstAccelerationStructure = blas.accelerationStructure,
-        .geometryCount = 1,
-        .pGeometries = &geometry,
-        .scratchData = scratchDataAddress,
-    };
-    const VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo = {
-        .primitiveCount = triangleCount,
-    };
-    const VkAccelerationStructureBuildRangeInfoKHR *pBuildRangeInfo = &buildRangeInfo;
-    vkCmdBuildAccelerationStructuresKHR(lunaGetVkCommandBuffer(commandBuffer), 1, &buildGeometryInfo, &pBuildRangeInfo);
+        const VkAccelerationStructureCreateInfoKHR createInfo = {
+            .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR,
+            .buffer = lunaGetVkBuffer(blas.buffer),
+            .offset = lunaGetBufferOffset(blas.buffer),
+            .size = lunaGetBufferSize(blas.buffer),
+            .type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
+        };
+        if (!CheckResult(vkCreateAccelerationStructureKHR(lunaGetVkDevice(device),
+                                                          &createInfo,
+                                                          nullptr,
+                                                          &blas.accelerationStructure)))
+        {
+            return false;
+        }
+
+        const LunaBufferCreationInfo scratchBufferCreationInfo = {
+            .size = buildSizesInfo.buildScratchSize,
+            .alignment = physicalDeviceAccelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment,
+            .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
+            .additionalUsageFlags = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+        };
+        if (!CheckResult(lunaCreateBuffer(device, &scratchBufferCreationInfo, &blas.scratchBuffer)))
+        {
+            return false;
+        }
+
+        const VkDeviceOrHostAddressKHR scratchDataAddress = {
+            .deviceAddress = lunaGetBufferDeviceAddress(device, blas.scratchBuffer),
+        };
+        const VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfo = {
+            .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
+            .type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
+            .flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
+            .mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
+            .dstAccelerationStructure = blas.accelerationStructure,
+            .geometryCount = 1,
+            .pGeometries = &geometry,
+            .scratchData = scratchDataAddress,
+        };
+        const VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo = {
+            .primitiveCount = triangleCount,
+        };
+        const VkAccelerationStructureBuildRangeInfoKHR *pBuildRangeInfo = &buildRangeInfo;
+        vkCmdBuildAccelerationStructuresKHR(lunaGetVkCommandBuffer(commandBuffer),
+                                            1,
+                                            &buildGeometryInfo,
+                                            &pBuildRangeInfo);
+
+        indexBufferOffset += meshBuilder.GetIndices().size() * sizeof(uint32_t);
+    }
 
     return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }
@@ -1635,7 +1646,7 @@ bool LightBaker::CreateTLAS()
         return false;
     }
 
-    const LunaBufferCreationInfo instancesBufferCreationInfo = {
+    constexpr LunaBufferCreationInfo instancesBufferCreationInfo = {
         .size = sizeof(VkAccelerationStructureInstanceKHR),
         .alignment = 16, // 16 is directly required by the spec
         .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
@@ -1647,20 +1658,24 @@ bool LightBaker::CreateTLAS()
         return false;
     }
 
-    const VkAccelerationStructureDeviceAddressInfoKHR deviceAddressInfo = {
-        .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR,
-        .accelerationStructure = blas.accelerationStructure,
-    };
-    const VkAccelerationStructureInstanceKHR instance = {
-        .transform = TRANSFORM_MATRIX_IDENTITY,
-        .mask = 0xFF,
-        .flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR,
-        .accelerationStructureReference = vkGetAccelerationStructureDeviceAddressKHR(lunaGetVkDevice(device),
-                                                                                     &deviceAddressInfo),
-    };
+    std::vector<VkAccelerationStructureInstanceKHR> instances;
+    instances.reserve(bottomLevelAccelerationStructures.size());
+    for (const AccelerationStructure &blas: bottomLevelAccelerationStructures)
+    {
+        const VkAccelerationStructureDeviceAddressInfoKHR deviceAddressInfo = {
+            .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR,
+            .accelerationStructure = blas.accelerationStructure,
+        };
+        instances.emplace_back(TRANSFORM_MATRIX_IDENTITY,
+                               0,
+                               0xFF,
+                               0,
+                               VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR,
+                               vkGetAccelerationStructureDeviceAddressKHR(lunaGetVkDevice(device), &deviceAddressInfo));
+    }
     const LunaBufferWriteInfo instancesBufferWriteInfo = {
-        .size = sizeof(instance),
-        .data = &instance,
+        .size = instances.size() * sizeof(VkAccelerationStructureInstanceKHR),
+        .data = instances.data(),
         .sourceStageMask = VK_PIPELINE_STAGE_2_NONE,
         .sourceAccessMask = VK_ACCESS_2_NONE,
         .destinationStageMask = VK_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
@@ -1703,11 +1718,11 @@ bool LightBaker::CreateTLAS()
     VkAccelerationStructureBuildSizesInfoKHR buildSizesInfo = {
         .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR,
     };
-    static constexpr uint32_t MAX_PRIMITIVE_COUNT = 1;
+    const uint32_t instanceCount = instances.size();
     vkGetAccelerationStructureBuildSizesKHR(lunaGetVkDevice(device),
                                             VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
                                             &buildSizesGeometryInfo,
-                                            &MAX_PRIMITIVE_COUNT,
+                                            &instanceCount,
                                             &buildSizesInfo);
 
     const LunaBufferCreationInfo bufferCreationInfo = {
@@ -1761,8 +1776,8 @@ bool LightBaker::CreateTLAS()
         .pGeometries = &geometry,
         .scratchData = scratchDataAddress,
     };
-    constexpr VkAccelerationStructureBuildRangeInfoKHR BUILD_RANGE_INFO = {
-        .primitiveCount = MAX_PRIMITIVE_COUNT,
+    const VkAccelerationStructureBuildRangeInfoKHR BUILD_RANGE_INFO = {
+        .primitiveCount = instanceCount,
     };
     const VkAccelerationStructureBuildRangeInfoKHR *pBuildRangeInfo = &BUILD_RANGE_INFO;
     vkCmdBuildAccelerationStructuresKHR(lunaGetVkCommandBuffer(commandBuffer), 1, &buildGeometryInfo, &pBuildRangeInfo);
