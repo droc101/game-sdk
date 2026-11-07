@@ -26,7 +26,7 @@ class LightBaker
         };
 
     public:
-        static constexpr uint32_t SAMPLES_PER_THREAD = 2048;
+        static constexpr uint32_t SAMPLES_PER_THREAD = 256;
 
         static LightBaker &Get();
 
