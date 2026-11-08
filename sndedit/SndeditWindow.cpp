@@ -23,36 +23,36 @@ bool SndeditWindow::LoadSound()
 
 void SndeditWindow::OpenGsnd(const std::string &path)
 {
-    const Error::ErrorCode errorCode = soundAsset.LoadFromAsset(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error &errorCode = soundAsset.LoadFromAsset(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to open the sound!\n{}", errorCode));
         return;
     }
     if (!LoadSound())
     {
-        ErrorMessage(std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN));
+        ErrorMessage(std::format("Failed to load the sound!"));
     }
 }
 
 void SndeditWindow::ImportWav(const std::string &path)
 {
-    const Error::ErrorCode errorCode = soundAsset.Import(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error &errorCode = soundAsset.Import(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to import the sound!\n{}", errorCode));
         return;
     }
     if (!LoadSound())
     {
-        ErrorMessage(std::format("Failed to load the sound!\n{}", Error::ErrorCode::UNKNOWN));
+        ErrorMessage(std::format("Failed to load the sound!"));
     }
 }
 
 void SndeditWindow::SaveGsnd(const std::string &path) const
 {
-    const Error::ErrorCode errorCode = soundAsset.SaveToAsset(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error &errorCode = soundAsset.SaveToAsset(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to save the sound!\n{}", errorCode));
     }
@@ -60,8 +60,8 @@ void SndeditWindow::SaveGsnd(const std::string &path) const
 
 void SndeditWindow::ExportWav(const std::string &path) const
 {
-    const Error::ErrorCode errorCode = soundAsset.Export(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error &errorCode = soundAsset.Export(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to export the sound!\n{}", errorCode));
     }

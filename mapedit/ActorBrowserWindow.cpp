@@ -214,8 +214,8 @@ void ActorBrowserWindow::RenderParams(const ActorDefinition &def)
         ImGui::Indent();
 
         std::shared_ptr<ParamDefinition> param;
-        const Error::ErrorCode e = def.GetParam(paramPair.first, param);
-        assert(e == Error::ErrorCode::OK); // TODO: Should this be handled in release?
+        const Error &e = def.GetParam(paramPair.first, param);
+        assert(e.Ok()); // TODO: Should this be handled in release?
         RenderParamDef(param);
 
         ImGui::Unindent();

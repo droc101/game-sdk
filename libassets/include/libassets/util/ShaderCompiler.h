@@ -46,12 +46,12 @@ class ShaderCompiler
 
         ShaderCompiler(const std::filesystem::path &path, EShLanguage shaderType, bool optimize, bool debugInfo);
 
-        [[nodiscard]] Error::ErrorCode Compile(std::vector<uint32_t> &outputSpirv);
+        [[nodiscard]] const Error &Compile(std::vector<uint32_t> &outputSpirv);
 
         [[nodiscard]] const std::string &GetErrorMessage() const;
 
     private:
-        [[nodiscard]] __attribute__((const,always_inline)) inline std::string GetShaderTypeMacro() const noexcept;
+        [[nodiscard]] __attribute__((const, always_inline)) inline std::string GetShaderTypeMacro() const noexcept;
 
         EShLanguage shaderType;
 

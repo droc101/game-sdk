@@ -17,8 +17,8 @@ LevelMaterialAsset &MaterialCache::GetMaterial(const std::string &material)
 
     const std::string materialPath = SharedMgr::Get().pathManager.GetAssetPath(material);
     LevelMaterialAsset materialAsset{};
-    const Error::ErrorCode error = materialAsset.LoadFromAsset(materialPath);
-    if (error != Error::ErrorCode::OK)
+    const Error &error = materialAsset.LoadFromAsset(materialPath);
+    if (error.Failed())
     {
         materialAsset.Reset();
     }

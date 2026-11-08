@@ -62,8 +62,7 @@ void SkinsTab::Render()
                                               .at(i);
         Material &currentMaterial = ModelEditor::modelViewer.GetModel().GetMaterial(currentMaterialIndex);
         ImTextureID currentTextureId;
-        if (SharedMgr::Get().textureCache.GetTextureID(currentMaterial.texture, currentTextureId) !=
-            Error::ErrorCode::OK)
+        if (SharedMgr::Get().textureCache.GetTextureID(currentMaterial.texture, currentTextureId).Failed())
         {
             currentTextureId = SharedMgr::Get().textureCache.GetMissingTextureID();
         }
@@ -83,7 +82,7 @@ void SkinsTab::Render()
             {
                 Material &mat = ModelEditor::modelViewer.GetModel().GetMaterial(m);
                 ImTextureID textureId;
-                if (SharedMgr::Get().textureCache.GetTextureID(mat.texture, textureId) != Error::ErrorCode::OK)
+                if (SharedMgr::Get().textureCache.GetTextureID(mat.texture, textureId).Failed())
                 {
                     textureId = SharedMgr::Get().textureCache.GetMissingTextureID();
                 }

@@ -31,7 +31,7 @@ class RenderDefinition
             RD_TYPE_CONE,
         };
 
-        enum class RenderDefinitionViewportMode: uint8_t
+        enum class RenderDefinitionViewportMode : uint8_t
         {
             ALL_VIEWPORTS,
             ONLY_2D,
@@ -43,7 +43,7 @@ class RenderDefinition
 
         virtual ~RenderDefinition() = default;
 
-        [[nodiscard]] static std::unique_ptr<RenderDefinition> Create(const nlohmann::json &json, Error::ErrorCode &e);
+        [[nodiscard]] static std::unique_ptr<RenderDefinition> Create(const nlohmann::json &json, Error &e);
 
         [[nodiscard]] RenderDefinitionType GetType() const;
 

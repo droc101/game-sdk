@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath, Error::ErrorCode &status)
+StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath, Error &status)
 {
     Assimp::Importer importer{};
     (void)importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
@@ -33,7 +33,7 @@ StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath, Error::Erro
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
         Logger::Error("Assimp error: {}", importer.GetErrorString());
-        status = Error::ErrorCode::UNKNOWN;
+        status = Error("Assimp error: {}", importer.GetErrorString());
         return;
     }
 
@@ -54,7 +54,7 @@ StaticCollisionMesh::StaticCollisionMesh(const std::string &objPath, Error::Erro
         }
     }
 
-    status = Error::ErrorCode::OK;
+    status = Errors::OK;
 }
 
 StaticCollisionMesh::StaticCollisionMesh(DataReader &reader)

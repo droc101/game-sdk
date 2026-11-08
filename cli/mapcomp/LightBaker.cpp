@@ -570,17 +570,17 @@ bool LightBaker::GetTextureIndex(const std::string &materialName, uint32_t &inde
     }
     const std::string materialPath = pathManager.GetAssetPath(materialName);
     LevelMaterialAsset material{};
-    Error::ErrorCode error = material.LoadFromAsset(materialPath);
-    if (error != Error::ErrorCode::OK)
+    const Error &error = material.LoadFromAsset(materialPath);
+    if (error.Failed())
     {
         Logger::Error("Creating material asset \"{}\" failed with error: {}", materialPath, error);
     }
     const std::string texturePath = pathManager.GetAssetPath(material.texture);
     TextureAsset image{};
-    error = image.LoadFromAsset(texturePath);
-    if (error != Error::ErrorCode::OK)
+    const Error &texError = image.LoadFromAsset(texturePath);
+    if (texError.Failed())
     {
-        Logger::Error("Creating texture asset \"{}\" failed with error: {}", materialPath, error);
+        Logger::Error("Creating texture asset \"{}\" failed with error: {}", materialPath, texError);
     }
     const VkSamplerAddressMode samplerAddressMode = image.repeat ? VK_SAMPLER_ADDRESS_MODE_REPEAT
                                                                  : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
@@ -672,6 +672,7 @@ bool LightBaker::CreateLightmap(Lightmap &lightmap, const glm::uvec2 &lightmapSi
     return CheckResult(CreateBufferView(lightmap.buffer, VK_FORMAT_R16G16B16A16_SFLOAT, lightmap.bufferView));
 }
 
+// TODO return an Error from this now that they can contain more details
 bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
                       const std::vector<Light> &lights,
                       const glm::uvec2 &lightmapSize,
@@ -898,7 +899,7 @@ VkShaderModule LightBaker::GenerateShaderModule(const std::filesystem::path &pat
     spirv.clear();
 
     ShaderCompiler shaderCompiler(path, shaderType, true, false);
-    if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
+    if (shaderCompiler.Compile(spirv).Failed())
     {
         Logger::Error("Error compiling shader {}!", path.string());
         Logger::Info("{}", shaderCompiler.GetErrorMessage());
@@ -1341,7 +1342,7 @@ bool LightBaker::CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize)
     spirv.clear();
     static constexpr const char *PATH_STRING = "assets/shaders/lightmap/cache_emissive_luxel_indices.comp";
     ShaderCompiler shaderCompiler(PATH_STRING, EShLangCompute, true, SHADER_DEBUG_INFO);
-    if (shaderCompiler.Compile(spirv) != Error::ErrorCode::OK)
+    if (shaderCompiler.Compile(spirv).Failed())
     {
         Logger::Error("Error compiling shader {}!", PATH_STRING);
         Logger::Info("{}", shaderCompiler.GetErrorMessage());

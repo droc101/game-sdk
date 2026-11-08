@@ -4,97 +4,63 @@
 
 #pragma once
 
-#include <algorithm>
-#include <cstdint>
-#include <format>
-#include <string>
-#include <utility>
-
 class Error
 {
+        friend class Errors;
+
     public:
-        enum class ErrorCode : uint8_t
-        {
-            OK,
-            INVALID_HEADER,
-            COMPRESSION_ERROR,
-            INVALID_BODY,
-            INVALID_ARGUMENT,
-            FILE_NOT_FOUND,
-            CANT_OPEN_FILE,
-            UNKNOWN,
-            INCORRECT_FORMAT,
-            SHADER_PARSE_ERROR,
-            SHADER_LINK_ERROR,
-            INCORRECT_VERSION,
-            INVALID_DIRECTORY,
-            NOT_FOUND,
-            INVALID_SHADER_TYPE,
-            LIGHTMAP_TOO_LARGE,
-            NOT_IMPLEMENTED,
-            PERMISSION_DENIED,
-        };
-
         Error() = delete;
-
-        /**
-         * Get a string representation of an error
-         */
-        static constexpr std::string ErrorString(const ErrorCode error)
+        explicit Error(const std::string &errorMessage);
+        template<typename... Args> explicit Error(std::format_string<Args...> fmt, Args &&...args)
         {
-            switch (error)
-            {
-                case ErrorCode::OK:
-                    return "OK";
-                case ErrorCode::INVALID_HEADER:
-                    return "Invalid asset header";
-                case ErrorCode::COMPRESSION_ERROR:
-                    return "Compression error";
-                case ErrorCode::INVALID_BODY:
-                    return "Invalid asset body";
-                case ErrorCode::INVALID_ARGUMENT:
-                    return "Invalid argument";
-                case ErrorCode::FILE_NOT_FOUND:
-                    return "File not found";
-                case ErrorCode::CANT_OPEN_FILE:
-                    return "Can't open file";
-                case ErrorCode::INCORRECT_FORMAT:
-                    return "Incorrect File Format";
-                case ErrorCode::SHADER_PARSE_ERROR:
-                    return "Shader Parse Error";
-                case ErrorCode::SHADER_LINK_ERROR:
-                    return "Shader Link Error";
-                case ErrorCode::INCORRECT_VERSION:
-                    return "Incorrect Version";
-                case ErrorCode::INVALID_DIRECTORY:
-                    return "Invalid Directory Path";
-                case ErrorCode::NOT_FOUND:
-                    return "Not Found";
-                case ErrorCode::INVALID_SHADER_TYPE:
-                    return "Invalid Shader Type";
-                case ErrorCode::LIGHTMAP_TOO_LARGE:
-                    return "Lightmap Too Large";
-                case ErrorCode::NOT_IMPLEMENTED:
-                    return "Not Implemented";
-                case ErrorCode::PERMISSION_DENIED:
-                    return "Permission Denied";
-                case ErrorCode::UNKNOWN:
-                default:
-                    return "Unknown Error";
-            }
+            this->ok = false;
+            this->errorMessage = std::format(fmt, std::forward<Args>(args)...);
         }
+
+        const std::string &Message() const;
+        bool Ok() const;
+        bool Failed() const;
+
+    private:
+        Error(const std::string &errorMessage, bool ok);
+
+        std::string errorMessage;
+        bool ok;
 };
 
-template<> struct std::formatter<Error::ErrorCode, char>
+class Errors
+{
+    public:
+        Errors() = delete;
+
+        static inline const Error OK = Error("OK", true);
+        static inline const Error INVALID_HEADER = Error("Invalid header data");
+        static inline const Error COMPRESSION_ERROR = Error("Compression error");
+        static inline const Error INVALID_BODY = Error("Invalid body data");
+        static inline const Error INVALID_ARGUMENT = Error("Invalid argument");
+        static inline const Error FILE_NOT_FOUND = Error("File not found");
+        static inline const Error CANT_OPEN_FILE = Error("Can't open file");
+        static inline const Error INCORRECT_FORMAT = Error("Incorrect file format");
+        static inline const Error INCORRECT_VERSION = Error("Incorrect file version");
+        static inline const Error INVALID_DIRECTORY = Error("Invalid directory path");
+        static inline const Error NOT_FOUND = Error("Not found");
+        static inline const Error NOT_IMPLEMENTED = Error("Not implemented");
+        static inline const Error PERMISSION_DENIED = Error("Permission denied");
+
+
+        /// @warning Avoid returning this whenever possible
+        static inline const Error UNKNOWN = Error("Unknown error");
+};
+
+template<> struct std::formatter<Error, char>
 {
         template<class ParseContext> constexpr ParseContext::iterator parse(ParseContext &context)
         {
             return context.begin();
         }
 
-        template<class FormatContext> FormatContext::iterator format(const Error::ErrorCode errorCode,
-                                                                     FormatContext &context) const
+        template<class FormatContext> FormatContext::iterator format(const Error error, FormatContext &context) const
         {
-            return std::ranges::copy(std::move(Error::ErrorString(errorCode)), context.out()).out;
+            return std::ranges::copy(std::move(error.Message()), context.out()).out;
         }
 };

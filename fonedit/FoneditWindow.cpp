@@ -19,8 +19,8 @@
 
 void FoneditWindow::OpenGfon(const std::string &path)
 {
-    const Error::ErrorCode errorCode = font.LoadFromAsset(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error &errorCode = font.LoadFromAsset(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to open the font!\n{}", errorCode));
     }
@@ -28,8 +28,8 @@ void FoneditWindow::OpenGfon(const std::string &path)
 
 void FoneditWindow::SaveGfon(const std::string &path) const
 {
-    const Error::ErrorCode errorCode = font.SaveToAsset(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error &errorCode = font.SaveToAsset(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to save the font!\n{}", errorCode));
     }

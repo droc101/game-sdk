@@ -43,7 +43,7 @@ void FontAsset::Reset()
     charWidths = {};
 }
 
-Error::ErrorCode FontAsset::LoadFromBuffer(DataReader &reader)
+const Error &FontAsset::LoadFromBuffer(DataReader &reader)
 {
     Reset();
     charWidth = reader.Read<uint8_t>();
@@ -59,7 +59,7 @@ Error::ErrorCode FontAsset::LoadFromBuffer(DataReader &reader)
     const uint8_t charCount = reader.Read<uint8_t>();
     if (charCount > FONT_MAX_SYMBOLS)
     {
-        return Error::ErrorCode::INVALID_BODY;
+        return Errors::INVALID_BODY;
     }
     for (uint8_t i = 0; i < charCount; i++)
     {
@@ -69,10 +69,10 @@ Error::ErrorCode FontAsset::LoadFromBuffer(DataReader &reader)
         charWidths.push_back(width);
     }
 
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode FontAsset::SaveToBuffer(DataWriter &writer) const
+const Error &FontAsset::SaveToBuffer(DataWriter &writer) const
 {
     writer.Write<uint8_t>(charWidth);
     writer.Write<uint8_t>(textureHeight);
@@ -90,7 +90,7 @@ Error::ErrorCode FontAsset::SaveToBuffer(DataWriter &writer) const
         writer.Write<char>(chars.at(i));
         writer.Write<uint8_t>(charWidths.at(i));
     }
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
 std::vector<std::string> FontAsset::GetCharListForDisplay()

@@ -29,7 +29,7 @@ ConvexHull::ConvexHull(DataReader &reader)
     }
 }
 
-ConvexHull::ConvexHull(const std::string &objPath, Error::ErrorCode &status)
+ConvexHull::ConvexHull(const std::string &objPath, Error &status)
 {
     Assimp::Importer importer{};
     (void)importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
@@ -43,7 +43,7 @@ ConvexHull::ConvexHull(const std::string &objPath, Error::ErrorCode &status)
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
         Logger::Error("Assimp error: {}", importer.GetErrorString());
-        status = Error::ErrorCode::UNKNOWN;
+        status = Error("Assimp error: {}", importer.GetErrorString());
         return;
     }
 
@@ -59,7 +59,7 @@ ConvexHull::ConvexHull(const std::string &objPath, Error::ErrorCode &status)
     }
 
     CalculateOffset();
-    status = Error::ErrorCode::OK;
+    status = Errors::OK;
 }
 
 ConvexHull::ConvexHull(const aiMesh *mesh)
@@ -114,7 +114,7 @@ void ConvexHull::CalculateOffset()
     offset = bb.origin;
 }
 
-Error::ErrorCode ConvexHull::ImportMultiple(const std::string &path, std::vector<ConvexHull> &output)
+const Error &ConvexHull::ImportMultiple(const std::string &path, std::vector<ConvexHull> &output)
 {
     Assimp::Importer importer;
     (void)importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,
@@ -128,7 +128,7 @@ Error::ErrorCode ConvexHull::ImportMultiple(const std::string &path, std::vector
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
         Logger::Error("Assimp error: {}", importer.GetErrorString());
-        return Error::ErrorCode::UNKNOWN;
+        return Error("Assimp error: {}", importer.GetErrorString());
     }
 
     for (uint32_t i = 0; i < scene->mNumMeshes; i++)
@@ -136,5 +136,5 @@ Error::ErrorCode ConvexHull::ImportMultiple(const std::string &path, std::vector
         output.emplace_back(scene->mMeshes[i]);
     }
 
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }

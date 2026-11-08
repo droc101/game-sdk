@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <SDL3/SDL_video.h>
 #include <game_sdk/Window.h>
 #include <libassets/asset/ShaderAsset.h>
 #include <libassets/util/Error.h>
+#include <SDL3/SDL_video.h>
 #include <string>
 #include <vector>
 
@@ -41,5 +41,5 @@ class ShdeditWindow final: public Window
         void OutPathCallback(const std::string &path);
         void BasePathCallback(const std::string &path);
         void AddFolderCallback(const std::string &folder);
-        Error::ErrorCode Execute(std::string &errorLog);
+        const Error &Execute(std::string &errorLog);
 };

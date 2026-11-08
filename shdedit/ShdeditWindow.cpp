@@ -44,7 +44,8 @@ bool ShdeditWindow::Init()
     } else if (WindowManager::Get().GetArgumentParser().HasFlagWithValue("--source-directory"))
     {
         const std::string &dir = WindowManager::Get().GetArgumentParser().GetFlagValue("--source-directory");
-        if (!replicateFolderStructure) {
+        if (!replicateFolderStructure)
+        {
             replicateFolderStructure = true;
             BasePathCallback(dir);
         }
@@ -165,11 +166,11 @@ void ShdeditWindow::AddFolderCallback(const std::string &folder)
     SelectCallback(sourcePaths);
 }
 
-Error::ErrorCode ShdeditWindow::Execute(std::string &errorLog)
+const Error &ShdeditWindow::Execute(std::string &errorLog)
 {
     if (!std::filesystem::is_directory(outputFolder))
     {
-        return Error::ErrorCode::INVALID_DIRECTORY;
+        return Errors::INVALID_DIRECTORY;
     }
 
     for (size_t i = 0; i < files.size(); i++)
@@ -177,8 +178,8 @@ Error::ErrorCode ShdeditWindow::Execute(std::string &errorLog)
         const std::string &file = files.at(i);
         const ShaderAsset::ShaderType kind = types.at(i);
         ShaderAsset shader;
-        Error::ErrorCode e = shader.Import(file);
-        if (e != Error::ErrorCode::OK)
+        const Error &e = shader.Import(file);
+        if (e.Failed())
         {
             return e;
         }
@@ -223,14 +224,19 @@ Error::ErrorCode ShdeditWindow::Execute(std::string &errorLog)
             }
         }
 
-        e = shader.SaveToAssetEx(outputPath, enableOptimization, debugInfo, &errorLog, file, dumpBinaries);
-        if (e != Error::ErrorCode::OK)
+        const Error &writeError = shader.SaveToAssetEx(outputPath,
+                                                       enableOptimization,
+                                                       debugInfo,
+                                                       &errorLog,
+                                                       file,
+                                                       dumpBinaries);
+        if (writeError.Failed())
         {
-            return e;
+            return writeError;
         }
     }
 
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
 void ShdeditWindow::Render()
@@ -382,8 +388,8 @@ void ShdeditWindow::Render()
         } else
         {
             std::string compileLog;
-            Error::ErrorCode e = Execute(compileLog);
-            if (e == Error::ErrorCode::OK)
+            const Error &e = Execute(compileLog);
+            if (e.Ok())
             {
                 InfoMessage("Successfully compiled", "");
             } else

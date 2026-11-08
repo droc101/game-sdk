@@ -37,9 +37,9 @@ void ModelEditor::ImportLod(const std::string &path)
 void ModelEditor::ImportSingleHull(const std::string &path)
 {
     ModelAsset model = modelViewer.GetModel();
-    Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
+    Error e = Errors::UNKNOWN;
     const ConvexHull hull = ConvexHull(path, e);
-    if (e != Error::ErrorCode::OK)
+    if (e.Failed())
     {
         WindowManager::Get().GetCurrentWindow()->ErrorMessage("Failed to import collision hull");
         return;
@@ -53,7 +53,7 @@ void ModelEditor::ImportSingleHull(const std::string &path)
 void ModelEditor::ImportMultipleHulls(const std::string &path)
 {
     ModelAsset model = modelViewer.GetModel();
-    if (model.AddHulls(path) != Error::ErrorCode::OK)
+    if (model.AddHulls(path).Failed())
     {
         WindowManager::Get().GetCurrentWindow()->ErrorMessage("Failed to import collision hulls");
         return;
@@ -66,9 +66,9 @@ void ModelEditor::ImportMultipleHulls(const std::string &path)
 void ModelEditor::ImportStaticCollider(const std::string &path)
 {
     ModelAsset model = modelViewer.GetModel();
-    Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
+    Error e = Errors::UNKNOWN;
     model.SetStaticCollisionMesh(StaticCollisionMesh(path, e));
-    if (e != Error::ErrorCode::OK)
+    if (e.Failed())
     {
         WindowManager::Get().GetCurrentWindow()->ErrorMessage("Failed to import static collision model");
         return;

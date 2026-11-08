@@ -24,10 +24,10 @@
 #include <SDL3/SDL_video.h>
 #include "ActorBrowserWindow.h"
 #include "MapCompileWindow.h"
+#include "MapeditOptionsWindow.h"
 #include "MapEditor.h"
 #include "MapPropertiesWindow.h"
 #include "MapRenderer.h"
-#include "MapeditOptionsWindow.h"
 #include "tools/AddActorTool.h"
 #include "tools/AddPolygonTool.h"
 #include "tools/AddPrimitiveTool.h"
@@ -44,9 +44,9 @@ bool MapeditWindow::Init()
 {
     SoundSystem::Get().Init();
 
-    Error::ErrorCode adms = Error::ErrorCode::UNKNOWN;
+    Error adms = Errors::UNKNOWN;
     MapEditor::adm = ActorDefinitionManager(SharedMgr::Get().pathManager, adms);
-    if (adms != Error::ErrorCode::OK)
+    if (adms.Failed())
     {
         ErrorMessage("Failed to load actor definitions");
         return false;
@@ -138,8 +138,8 @@ bool MapeditWindow::ToolbarToolButton(const char *id,
         ImGui::EndTooltip();
     }
     ImTextureID tex = 0;
-    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(icon, tex);
-    if (e != Error::ErrorCode::OK)
+    const Error &e = SharedMgr::Get().textureCache.GetTextureID(icon, tex);
+    if (e.Failed())
     {
         tex = SharedMgr::Get().textureCache.GetMissingTextureID();
     }
@@ -195,8 +195,8 @@ void MapeditWindow::SetupDockspace()
 
 void MapeditWindow::OpenJson(const std::string &path) const
 {
-    const Error::ErrorCode errorCode = MapEditor::map.Import(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error &errorCode = MapEditor::map.Import(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to open the map!\n{}", errorCode));
         return;
@@ -221,8 +221,8 @@ void MapeditWindow::OpenJson(const std::string &path) const
 
 void MapeditWindow::SaveJson(const std::string &path) const
 {
-    const Error::ErrorCode errorCode = MapEditor::map.Export(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error &errorCode = MapEditor::map.Export(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to save the map!\n{}", errorCode));
         return;

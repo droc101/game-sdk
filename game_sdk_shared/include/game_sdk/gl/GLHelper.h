@@ -47,7 +47,7 @@ class GLHelper
          * @param type The shader type (fragment, vertex, etc.)
          * @param outShader Where to store the shader ID
          */
-        [[nodiscard]] static Error::ErrorCode CreateShader(const char *filename, GLenum type, GLuint &outShader);
+        [[nodiscard]] static const Error &CreateShader(const char *filename, GLenum type, GLuint &outShader);
 
         /**
          * Create a program from two shader filenames
@@ -55,9 +55,9 @@ class GLHelper
          * @param vertexFilename Vertex shader filename
          * @param outProgram Where to store the program ID
          */
-        [[nodiscard]] static Error::ErrorCode CreateProgram(const char *fragmentFilename,
-                                                            const char *vertexFilename,
-                                                            GLuint &outProgram);
+        [[nodiscard]] static const Error &CreateProgram(const char *fragmentFilename,
+                                                        const char *vertexFilename,
+                                                        GLuint &outProgram);
 
         /**
          * Create a non-indexed buffer with a VAO

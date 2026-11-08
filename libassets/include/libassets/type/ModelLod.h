@@ -26,7 +26,7 @@ class ModelLod
 
         ModelLod(DataReader &reader, uint32_t componentCount);
 
-        ModelLod(const std::string &filePath, float distance, Error::ErrorCode &status);
+        ModelLod(const std::string &filePath, float distance, Error &status);
 
         float distance{};
         float unitsPerLuxel{};

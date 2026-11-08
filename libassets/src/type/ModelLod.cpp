@@ -57,7 +57,7 @@ ModelLod::ModelLod(DataReader &reader, const uint32_t componentCount)
     }
 }
 
-ModelLod::ModelLod(const std::string &filePath, const float distance, Error::ErrorCode &status)
+ModelLod::ModelLod(const std::string &filePath, const float distance, Error &status)
 {
     this->distance = distance;
 
@@ -74,7 +74,7 @@ ModelLod::ModelLod(const std::string &filePath, const float distance, Error::Err
     if (scene == nullptr || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) != 0u || scene->mRootNode == nullptr)
     {
         Logger::Error("Assimp error: {}", importer.GetErrorString());
-        status = Error::ErrorCode::UNKNOWN;
+        status = Error("Assimp error: {}", importer.GetErrorString());
         return;
     }
 
@@ -126,7 +126,7 @@ ModelLod::ModelLod(const std::string &filePath, const float distance, Error::Err
         component.radius = glm::length((maxPoint - minPoint) * 0.5f);
     }
 
-    status = Error::ErrorCode::OK;
+    status = Errors::OK;
 }
 
 void ModelLod::Export(const char *path) const

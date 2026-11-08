@@ -17,28 +17,28 @@
 #include <zconf.h>
 #include <zlib.h>
 
-Error::ErrorCode AssetContainer::Decompress(std::vector<uint8_t> &asset, AssetContainer &outAsset)
+const Error &AssetContainer::Decompress(std::vector<uint8_t> &asset, AssetContainer &outAsset)
 {
     if (!outAsset.reader.bytes.empty())
     {
-        return Error::ErrorCode::INVALID_ARGUMENT;
+        return Errors::INVALID_ARGUMENT;
     }
     outAsset.reader.offset = 0;
     if (ASSET_HEADER_SIZE > asset.size())
     {
-        return Error::ErrorCode::INVALID_HEADER;
+        return Errors::INVALID_HEADER;
     }
 
     DataReader reader = DataReader(asset);
     const uint32_t magic = reader.Read<uint32_t>();
     if (magic != ASSET_CONTAINER_MAGIC)
     {
-        return Error::ErrorCode::INVALID_HEADER;
+        return Errors::INVALID_HEADER;
     }
     const uint8_t version = reader.Read<uint8_t>();
     if (version != ASSET_CONTAINER_VERSION)
     {
-        return Error::ErrorCode::INCORRECT_VERSION;
+        return Errors::INCORRECT_VERSION;
     }
     outAsset.type = static_cast<Asset::AssetType>(reader.Read<uint8_t>());
     outAsset.typeVersion = reader.Read<uint8_t>();
@@ -60,7 +60,7 @@ Error::ErrorCode AssetContainer::Decompress(std::vector<uint8_t> &asset, AssetCo
     if (inflateInit2(&zStream, MAX_WBITS | 16) != Z_OK)
     {
         Logger::Error("inflateInit2() failed with error: {}", zStream.msg == nullptr ? "(null)" : zStream.msg);
-        return Error::ErrorCode::COMPRESSION_ERROR;
+        return Errors::COMPRESSION_ERROR;
     }
 
     int inflateReturnValue = inflate(&zStream, Z_NO_FLUSH);
@@ -69,7 +69,7 @@ Error::ErrorCode AssetContainer::Decompress(std::vector<uint8_t> &asset, AssetCo
         if (inflateReturnValue != Z_OK)
         {
             Logger::Error("inflate() failed with error: {}", zStream.msg == nullptr ? "(null)" : zStream.msg);
-            return Error::ErrorCode::COMPRESSION_ERROR;
+            return Errors::COMPRESSION_ERROR;
         }
         inflateReturnValue = inflate(&zStream, Z_NO_FLUSH);
     }
@@ -77,29 +77,29 @@ Error::ErrorCode AssetContainer::Decompress(std::vector<uint8_t> &asset, AssetCo
     if (inflateEnd(&zStream) != Z_OK)
     {
         Logger::Error("inflateEnd() failed with error: {}", zStream.msg == nullptr ? "(null)" : zStream.msg);
-        return Error::ErrorCode::COMPRESSION_ERROR;
+        return Errors::COMPRESSION_ERROR;
     }
 
     if (outAsset.reader.size != zStream.total_out)
     {
-        return Error::ErrorCode::INVALID_BODY;
+        return Errors::INVALID_BODY;
     }
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode AssetContainer::Compress(std::vector<uint8_t> &inBuffer,
-                                          std::vector<uint8_t> &outBuffer,
-                                          const Asset::AssetType type,
-                                          const uint8_t typeVersion,
-                                          const uint8_t compressionLevel)
+const Error &AssetContainer::Compress(std::vector<uint8_t> &inBuffer,
+                                      std::vector<uint8_t> &outBuffer,
+                                      const Asset::AssetType type,
+                                      const uint8_t typeVersion,
+                                      const uint8_t compressionLevel)
 {
     if (inBuffer.empty())
     {
-        return Error::ErrorCode::INVALID_ARGUMENT;
+        return Errors::INVALID_ARGUMENT;
     }
     if (!outBuffer.empty())
     {
-        return Error::ErrorCode::INVALID_ARGUMENT;
+        return Errors::INVALID_ARGUMENT;
     }
 
     DataWriter writer{};
@@ -135,37 +135,37 @@ Error::ErrorCode AssetContainer::Compress(std::vector<uint8_t> &inBuffer,
     if (deflateEnd(&zStream) != Z_OK || ret != Z_STREAM_END)
     {
         Logger::Error("deflateEnd() failed: {}", zStream.msg);
-        return Error::ErrorCode::COMPRESSION_ERROR;
+        return Errors::COMPRESSION_ERROR;
     }
 
     writer.Write<size_t>(compressedData.size());
     writer.WriteBuffer<uint8_t>(compressedData);
     writer.CopyToVector(outBuffer);
 
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode AssetContainer::SaveToFile(const std::string &filePath,
-                                            std::vector<uint8_t> &data,
-                                            const Asset::AssetType type,
-                                            const uint8_t typeVersion,
-                                            const uint8_t compressionLevel)
+const Error &AssetContainer::SaveToFile(const std::string &filePath,
+                                        std::vector<uint8_t> &data,
+                                        const Asset::AssetType type,
+                                        const uint8_t typeVersion,
+                                        const uint8_t compressionLevel)
 {
     std::vector<uint8_t> compressedData;
-    const Error::ErrorCode compressError = Compress(data, compressedData, type, typeVersion, compressionLevel);
-    if (compressError != Error::ErrorCode::OK)
+    const Error &compressError = Compress(data, compressedData, type, typeVersion, compressionLevel);
+    if (compressError.Failed())
     {
         return compressError;
     }
-    const Error::ErrorCode writeError = FileIo::WriteBufferToFile(filePath, compressedData);
+    const Error &writeError = FileIo::WriteBufferToFile(filePath, compressedData);
     return writeError;
 }
 
-Error::ErrorCode AssetContainer::LoadFromFile(const std::string &filePath, AssetContainer &outAsset)
+const Error &AssetContainer::LoadFromFile(const std::string &filePath, AssetContainer &outAsset)
 {
     std::vector<uint8_t> compressedData;
-    const Error::ErrorCode readError = FileIo::ReadFileToBuffer(filePath, compressedData);
-    if (readError != Error::ErrorCode::OK)
+    const Error &readError = FileIo::ReadFileToBuffer(filePath, compressedData);
+    if (readError.Failed())
     {
         return readError;
     }

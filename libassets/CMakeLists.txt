@@ -171,6 +171,7 @@ add_library(assets SHARED
         include/libassets/type/Brush.h
         include/libassets/type/Axis.h
         src/type/Axis.cpp
+        src/util/Error.cpp
 )
 
 target_precompile_headers(assets PUBLIC "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch/pch.h>")

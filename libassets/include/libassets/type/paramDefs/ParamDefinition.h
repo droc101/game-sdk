@@ -27,6 +27,6 @@ class ParamDefinition
          * @return a std::unique_ptr to the ParamDefinition
          */
         [[nodiscard]] static std::unique_ptr<ParamDefinition> Create(const nlohmann::json &json,
-                                                                     Error::ErrorCode &e,
+                                                                     Error &e,
                                                                      const std::string &paramName);
 };

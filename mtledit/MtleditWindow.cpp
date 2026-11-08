@@ -44,8 +44,8 @@ void MtleditWindow::FileDropped(const std::string &filePath)
 
 void MtleditWindow::OpenGmtl(const std::string &path)
 {
-    const Error::ErrorCode errorCode = material.LoadFromAsset(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error &errorCode = material.LoadFromAsset(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to open the material!\n{}", errorCode));
     }
@@ -53,8 +53,8 @@ void MtleditWindow::OpenGmtl(const std::string &path)
 
 void MtleditWindow::SaveGmtl(const std::string &path) const
 {
-    const Error::ErrorCode errorCode = material.SaveToAsset(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error &errorCode = material.SaveToAsset(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to save the material!\n{}", errorCode));
     }
@@ -97,9 +97,9 @@ void MtleditWindow::Render()
 
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
-    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(material.texture, tid);
+    const Error &e = SharedMgr::Get().textureCache.GetTextureID(material.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
-    if (e == Error::ErrorCode::OK)
+    if (e.Ok())
     {
         constexpr int IMAGE_PANEL_HEIGHT = 128;
         ImVec2 imageSize{};

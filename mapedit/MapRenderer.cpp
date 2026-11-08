@@ -32,49 +32,49 @@
 
 bool MapRenderer::Init()
 {
-    const Error::ErrorCode vertexColorProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
-                                                                                 "vertex_color.frag",
-                                                                                 "assets/shaders/mapedit/"
-                                                                                 "vertex_color.vert",
-                                                                                 vertexColorProgram);
+    const Error &vertexColorProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
+                                                                       "vertex_color.frag",
+                                                                       "assets/shaders/mapedit/"
+                                                                       "vertex_color.vert",
+                                                                       vertexColorProgram);
 
-    const Error::ErrorCode gridProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/grid.frag",
-                                                                          "assets/shaders/mapedit/grid.vert",
-                                                                          gridProgram);
+    const Error &gridProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/grid.frag",
+                                                                "assets/shaders/mapedit/grid.vert",
+                                                                gridProgram);
 
-    const Error::ErrorCode uniformColorProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
-                                                                                  "uniform_color.frag",
-                                                                                  "assets/shaders/mapedit/"
-                                                                                  "uniform_color.vert",
-                                                                                  uniformColorProgram);
+    const Error &uniformColorProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
+                                                                        "uniform_color.frag",
+                                                                        "assets/shaders/mapedit/"
+                                                                        "uniform_color.vert",
+                                                                        uniformColorProgram);
 
-    const Error::ErrorCode spriteProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/sprite.frag",
-                                                                            "assets/shaders/mapedit/sprite.vert",
-                                                                            spriteProgram);
+    const Error &spriteProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/sprite.frag",
+                                                                  "assets/shaders/mapedit/sprite.vert",
+                                                                  spriteProgram);
 
-    const Error::ErrorCode shadedModelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
-                                                                                 "model_shaded.frag",
-                                                                                 "assets/shaders/mapedit/"
-                                                                                 "model_shaded.vert",
-                                                                                 shadedModelProgram);
+    const Error &shadedModelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
+                                                                       "model_shaded.frag",
+                                                                       "assets/shaders/mapedit/"
+                                                                       "model_shaded.vert",
+                                                                       shadedModelProgram);
 
-    const Error::ErrorCode brushProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/brush.frag",
-                                                                           "assets/shaders/mapedit/brush.vert",
-                                                                           brushProgram);
+    const Error &brushProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/brush.frag",
+                                                                 "assets/shaders/mapedit/brush.vert",
+                                                                 brushProgram);
 
-    const Error::ErrorCode worldBuffersProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
-                                                                                  "world_buffers.frag",
-                                                                                  "assets/shaders/mapedit/"
-                                                                                  "world_buffers.vert",
-                                                                                  worldBuffersProgram);
+    const Error &worldBuffersProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
+                                                                        "world_buffers.frag",
+                                                                        "assets/shaders/mapedit/"
+                                                                        "world_buffers.vert",
+                                                                        worldBuffersProgram);
 
-    if (uniformColorProgramErrorCode != Error::ErrorCode::OK ||
-        vertexColorProgramErrorCode != Error::ErrorCode::OK ||
-        gridProgramErrorCode != Error::ErrorCode::OK ||
-        spriteProgramErrorCode != Error::ErrorCode::OK ||
-        shadedModelProgramErrorCode != Error::ErrorCode::OK ||
-        brushProgramErrorCode != Error::ErrorCode::OK ||
-        worldBuffersProgramErrorCode != Error::ErrorCode::OK)
+    if (uniformColorProgramErrorCode.Failed() ||
+        vertexColorProgramErrorCode.Failed() ||
+        gridProgramErrorCode.Failed() ||
+        spriteProgramErrorCode.Failed() ||
+        shadedModelProgramErrorCode.Failed() ||
+        brushProgramErrorCode.Failed() ||
+        worldBuffersProgramErrorCode.Failed())
     {
         return false;
     }
@@ -189,8 +189,8 @@ MapRenderer::ModelBuffer MapRenderer::LoadModel(const std::string &path)
     // TODO this should use one big VAO and VBO for all models
     Logger::Info("Loading model \"{}\"", path);
     ModelBuffer buf{};
-    const Error::ErrorCode e = buf.model.LoadFromAsset(path);
-    assert(e == Error::ErrorCode::OK); // TODO proper handling
+    const Error &e = buf.model.LoadFromAsset(path);
+    assert(e.Ok()); // TODO proper handling
     glGenVertexArrays(1, &buf.vao);
     glBindVertexArray(buf.vao);
 
@@ -615,9 +615,8 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
                 glUniform1i(glGetUniformLocation(shadedModelProgram, "SHADED"), bufferEntry.wall.unshaded ? 0 : 1);
 
                 GLuint texture = 0;
-                const Error::ErrorCode code = SharedMgr::Get().textureCache.GetTextureGLuint(bufferEntry.wall.texture,
-                                                                                             texture);
-                if (code != Error::ErrorCode::OK)
+                const Error &error = SharedMgr::Get().textureCache.GetTextureGLuint(bufferEntry.wall.texture, texture);
+                if (error.Failed())
                 {
                     texture = SharedMgr::Get().textureCache.GetMissingTextureGLuint();
                 }
@@ -694,8 +693,8 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
                     }
 
                     GLuint texture = 0;
-                    const Error::ErrorCode code = SharedMgr::Get().textureCache.GetTextureGLuint(textureName, texture);
-                    if (code != Error::ErrorCode::OK)
+                    const Error &error = SharedMgr::Get().textureCache.GetTextureGLuint(textureName, texture);
+                    if (error.Failed())
                     {
                         texture = SharedMgr::Get().textureCache.GetMissingTextureGLuint();
                     }
@@ -737,8 +736,8 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
             glPointSize(command.pointSize);
 
             GLuint textureId = -1;
-            const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureGLuint(command.texture, textureId);
-            if (e != Error::ErrorCode::OK)
+            const Error &e = SharedMgr::Get().textureCache.GetTextureGLuint(command.texture, textureId);
+            if (e.Failed())
             {
                 textureId = SharedMgr::Get().textureCache.GetMissingTextureGLuint();
             }
@@ -829,8 +828,8 @@ void MapRenderer::ExecuteCommands(const glm::mat4 &viewMatrix)
             {
                 continue;
             }
-            const Error::ErrorCode code = SharedMgr::Get().textureCache.GetTextureGLuint(material.texture, texture);
-            if (code != Error::ErrorCode::OK)
+            const Error &error = SharedMgr::Get().textureCache.GetTextureGLuint(material.texture, texture);
+            if (error.Failed())
             {
                 texture = SharedMgr::Get().textureCache.GetMissingTextureGLuint();
             }

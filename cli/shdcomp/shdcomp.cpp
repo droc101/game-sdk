@@ -34,10 +34,10 @@ static std::atomic_bool successful = true;
 static void CompileFile(const std::string &file, const ShaderAsset::ShaderType type)
 {
     ShaderAsset shader;
-    Error::ErrorCode e = shader.Import(file);
-    if (e != Error::ErrorCode::OK)
+    const Error &e = shader.Import(file);
+    if (e.Failed())
     {
-        Logger::Error("Failed to compile shaders: {}", Error::ErrorString(e));
+        Logger::Error("Failed to compile shaders: {}", e);
         successful = false;
         return;
     }
@@ -84,20 +84,25 @@ static void CompileFile(const std::string &file, const ShaderAsset::ShaderType t
 
     Logger::Info("Compiling \"{}\"...", file);
     std::string errorLog{};
-    e = shader.SaveToAssetEx(outputPath, enableOptimization, debugInfo, &errorLog, file, dumpBinaries);
+    const Error &saveError = shader.SaveToAssetEx(outputPath,
+                                                  enableOptimization,
+                                                  debugInfo,
+                                                  &errorLog,
+                                                  file,
+                                                  dumpBinaries);
     if (!errorLog.empty())
     {
         Logger::Info("Log: {}", errorLog);
-        Logger::Error("Failed to compile shaders: {}", Error::ErrorString(e));
+        Logger::Error("Failed to compile shaders: {}", saveError);
         successful = false;
     }
 }
 
-static Error::ErrorCode Compile()
+static const Error &Compile()
 {
     if (!std::filesystem::is_directory(outputFolder))
     {
-        return Error::ErrorCode::INVALID_DIRECTORY;
+        return Errors::INVALID_DIRECTORY;
     }
 
     std::vector<std::jthread> threads;
@@ -106,7 +111,7 @@ static Error::ErrorCode Compile()
         threads.emplace_back(CompileFile, pair.first, pair.second);
     }
 
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
 static void AddSourceFiles(const std::vector<std::string> &paths)
@@ -251,10 +256,10 @@ int main(const int argc, const char **argv)
     }
 
     Logger::Info("Compiling shaders...");
-    const Error::ErrorCode e = Compile();
-    if (e != Error::ErrorCode::OK)
+    const Error &e = Compile();
+    if (e.Failed())
     {
-        Logger::Error("Failed to compile shaders: {}", Error::ErrorString(e));
+        Logger::Error("Failed to compile shaders: {}", e);
         return 1;
     }
     if (!successful)

@@ -32,8 +32,8 @@ ShaderCompiler::SDKIncluder::IncludeResult *ShaderCompiler::SDKIncluder::include
     std::filesystem::path requestingSourcePath{requestingSource};
     const std::filesystem::path requestedSourcePath = requestingSourcePath.remove_filename().append(requestedSource);
     std::string glslString{};
-    const Error::ErrorCode readError = FileIo::ReadFileToString(requestedSourcePath.string(), glslString);
-    if (readError != Error::ErrorCode::OK)
+    const Error &readError = FileIo::ReadFileToString(requestedSourcePath.string(), glslString);
+    if (readError.Failed())
     {
         Logger::Error("Failed to read include file \"{}\": {}", requestedSource, readError);
         glslString = "";
@@ -77,17 +77,17 @@ ShaderCompiler::ShaderCompiler(const std::filesystem::path &path,
     FileIo::ReadFileToString(path.string(), this->glslSource);
 }
 
-Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
+const Error &ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
 {
     if (!outputSpirv.empty())
     {
         compileLog = "";
-        return Error::ErrorCode::INVALID_ARGUMENT;
+        return Errors::INVALID_ARGUMENT;
     }
     if (!glslang::InitializeProcess())
     {
         compileLog = "Failed to initialize glslang!";
-        return Error::ErrorCode::UNKNOWN;
+        return Error("Failed to initialize glslang!");
     }
 
     glslang::TShader shader(shaderType);
@@ -108,7 +108,7 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
     {
         compileLog = shader.getInfoLog();
         Logger::Error("GLSL Parsing Failed:\n {}", shader.getInfoLog());
-        return Error::ErrorCode::SHADER_PARSE_ERROR;
+        return Error("Failed to parse GLSL source");
     }
 
     glslang::TProgram program;
@@ -118,7 +118,7 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
     {
         compileLog = program.getInfoLog();
         Logger::Error("GLSL Linking Failed:\n {}", program.getInfoLog());
-        return Error::ErrorCode::SHADER_LINK_ERROR;
+        return Error("Failed to link shader");
     }
 
     glslang::SpvOptions options = {
@@ -133,7 +133,7 @@ Error::ErrorCode ShaderCompiler::Compile(std::vector<uint32_t> &outputSpirv)
     glslang::GlslangToSpv(*program.getIntermediate(shaderType), outputSpirv, &options);
     glslang::FinalizeProcess();
 
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
 const std::string &ShaderCompiler::GetErrorMessage() const

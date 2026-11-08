@@ -40,13 +40,13 @@ class MapCompiler
          * Load a map source file
          * @return Error code
          */
-        [[nodiscard]] Error::ErrorCode LoadMapSource(const std::string &mapSourceFile);
+        [[nodiscard]] const Error &LoadMapSource(const std::string &mapSourceFile);
 
         /**
          * Compile the loaded map
          * @return Error code
          */
-        [[nodiscard]] Error::ErrorCode Compile();
+        [[nodiscard]] const Error &Compile();
 
     private:
         MapCompilerSettings settings;
@@ -57,7 +57,7 @@ class MapCompiler
 
         static constexpr float FAST_COMPILE_MIN_UNITS_PER_LUXEL = 2.0f;
 
-        Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer);
+        const Error &SaveToBuffer(std::vector<uint8_t> &buffer);
 
         [[nodiscard]] LevelMaterialAsset GetMapMaterial(const std::string &path) const;
 

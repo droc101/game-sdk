@@ -36,10 +36,10 @@ const Window::WindowProperties &CompileProgressWindow::GetProperties() const
 bool CompileProgressWindow::Init()
 {
     log = "";
-    const Error::ErrorCode errorCode = MapEditor::map.Export(MapEditor::mapFile);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error &errorCode = MapEditor::map.Export(MapEditor::mapFile);
+    if (errorCode.Failed())
     {
-        log += std::format("Failed to save the level!{}\n", Error::ErrorString(errorCode));
+        log += std::format("Failed to save the level!{}\n", errorCode);
         return false;
     }
     std::string compilerPath = SDL_GetBasePath();
@@ -184,7 +184,9 @@ void CompileProgressWindow::ProcessCompilerOutput()
                     "--nosteam",
                     "--show-console",
                 };
-                if (!DesktopInterface::Get().ExecuteProcessNonBlocking(Options::Get().gameExecutablePath, arguments, false))
+                if (!DesktopInterface::Get().ExecuteProcessNonBlocking(Options::Get().gameExecutablePath,
+                                                                       arguments,
+                                                                       false))
                 {
                     log += "Failed to execute game binary";
                 }

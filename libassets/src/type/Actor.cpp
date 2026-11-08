@@ -71,8 +71,8 @@ void Actor::ApplyDefinition(const ActorDefinition &definition, const bool overwr
             continue;
         }
         std::shared_ptr<ParamDefinition> param = nullptr;
-        const Error::ErrorCode e = definition.GetParam(key, param);
-        if (e != Error::ErrorCode::OK)
+        const Error &e = definition.GetParam(key, param);
+        if (e.Failed())
         {
             Logger::Error("Failed to get definition for param {}::{}", definition.className.c_str(), key.c_str());
             continue;

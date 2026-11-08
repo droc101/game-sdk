@@ -28,8 +28,8 @@ bool AboutWindow::Init()
         for (const std::string &path: paths)
         {
             std::string text;
-            const Error::ErrorCode readError = FileIo::ReadFileToString("assets/licenses/" + path, text);
-            if (readError != Error::ErrorCode::OK)
+            const Error &readError = FileIo::ReadFileToString("assets/licenses/" + path, text);
+            if (readError.Failed())
             {
                 continue;
             }

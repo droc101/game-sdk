@@ -21,11 +21,11 @@ class DataAsset final: public Asset
 
         void Reset() override;
 
-        [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
-        [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
+        [[nodiscard]] const Error &LoadFromBuffer(DataReader &reader) override;
+        [[nodiscard]] const Error &SaveToBuffer(DataWriter &writer) const override;
 
-        [[nodiscard]] Error::ErrorCode Import(const std::string &filePath) override;
-        [[nodiscard]] Error::ErrorCode Export(const std::string &filePath) const override;
+        [[nodiscard]] const Error &Import(const std::string &filePath) override;
+        [[nodiscard]] const Error &Export(const std::string &filePath) const override;
 
         [[nodiscard]] AssetType GetAssetType() const override;
         [[nodiscard]] uint8_t GetAssetTypeVersion() const override;
@@ -34,13 +34,13 @@ class DataAsset final: public Asset
          * Create a DataAsset from a KVL file
          * @param kvlPath The path to the KVL file
          */
-        [[nodiscard]] Error::ErrorCode CreateFromKvlFile(const std::string &kvlPath);
+        [[nodiscard]] const Error &CreateFromKvlFile(const std::string &kvlPath);
 
         /**
          * Save this DataAsset as a KVL file
          * @param kvlFile The path to the KVL file
          */
-        [[nodiscard]] Error::ErrorCode SaveAsKvlFile(const std::string &kvlFile) const;
+        [[nodiscard]] const Error &SaveAsKvlFile(const std::string &kvlFile) const;
 
     private:
         struct KvlFileHeader

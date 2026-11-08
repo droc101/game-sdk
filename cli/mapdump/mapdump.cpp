@@ -43,7 +43,8 @@ int main(const int argc, const char **argv)
         printf("--dump-visual-model[=visual.obj]...................Dump the visual model with texture UVs.\n");
         printf("--dump-lightmap-model[=visual_lightmap.obj]........Dump the visual model with lightmap UVs.\n");
         printf("--dump-lightmap[=lightmap.exr].....................Dump the HDR lightmap texture as an EXR\n");
-        printf("--dump-indirect-lightmap[=lightmap_indirect.exr]...Dump the HDR lightmap texture containing only indirect lighting as an EXR\n");
+        printf("--dump-indirect-lightmap[=lightmap_indirect.exr]...Dump the HDR lightmap texture containing only "
+               "indirect lighting as an EXR\n");
         return 0;
     }
 
@@ -56,10 +57,10 @@ int main(const int argc, const char **argv)
     Logger::Info("Loading map...");
 
     AssetContainer asset;
-    const Error::ErrorCode e = AssetContainer::LoadFromFile(args.GetFlagValue("--map").c_str(), asset);
-    if (e != Error::ErrorCode::OK)
+    const Error &e = AssetContainer::LoadFromFile(args.GetFlagValue("--map").c_str(), asset);
+    if (e.Failed())
     {
-        Logger::Error("Failed to open map file: {}", Error::ErrorString(e).c_str());
+        Logger::Error("Failed to open map file: {}", e);
         return 1;
     }
 

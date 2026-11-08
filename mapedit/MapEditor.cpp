@@ -3,7 +3,6 @@
 //
 
 #include "MapEditor.h"
-#include <SDL3/SDL_mouse.h>
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -17,6 +16,7 @@
 #include <libassets/type/Brush.h>
 #include <libassets/util/Error.h>
 #include <limits>
+#include <SDL3/SDL_mouse.h>
 #include <string>
 #include <vector>
 #include "MaterialCache.h"
@@ -156,9 +156,9 @@ bool MapEditor::MaterialSelectionTool(std::string &inputMaterial)
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
     const LevelMaterialAsset &mat = MaterialCache::GetMaterial(inputMaterial);
-    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
+    const Error &e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
-    if (e == Error::ErrorCode::OK)
+    if (e.Ok())
     {
         constexpr int IMAGE_PANEL_HEIGHT = 128;
         ImVec2 imageSize{};

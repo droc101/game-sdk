@@ -64,7 +64,7 @@ void TextureAsset::Reset()
     pixelData = {};
 }
 
-Error::ErrorCode TextureAsset::LoadFromBuffer(DataReader &reader)
+const Error &TextureAsset::LoadFromBuffer(DataReader &reader)
 {
     Reset();
     width = reader.Read<size_t>();
@@ -83,10 +83,10 @@ Error::ErrorCode TextureAsset::LoadFromBuffer(DataReader &reader)
         pixelDataSize *= 4 * 2; // 4 16-bit floats
     }
     reader.ReadToVector<uint8_t>(pixelData, pixelDataSize);
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode TextureAsset::SaveToBuffer(DataWriter &writer) const
+const Error &TextureAsset::SaveToBuffer(DataWriter &writer) const
 {
     writer.Write<size_t>(width);
     writer.Write<size_t>(height);
@@ -96,15 +96,15 @@ Error::ErrorCode TextureAsset::SaveToBuffer(DataWriter &writer) const
     writer.Write<uint8_t>(opaque ? 1 : 0);
     writer.Write<uint8_t>(static_cast<uint8_t>(pixelFormat));
     writer.WriteBuffer<uint8_t>(pixelData);
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode TextureAsset::CreateFromSdrImage(const string &imagePath)
+const Error &TextureAsset::CreateFromSdrImage(const string &imagePath)
 {
     if (access(imagePath.c_str(), F_OK | R_OK) != 0)
     {
         CreateMissingTexture();
-        return Error::ErrorCode::OK;
+        return Errors::OK;
     }
     int imageWidth = 0;
     int imageHeight = 0;
@@ -113,7 +113,7 @@ Error::ErrorCode TextureAsset::CreateFromSdrImage(const string &imagePath)
     if (data == nullptr)
     {
         Logger::Error("stbi_load failed: {}", stbi_failure_reason());
-        return Error::ErrorCode::UNKNOWN;
+        return Error("Failed to read image: {}", stbi_failure_reason());
     }
     Reset();
     width = imageWidth;
@@ -137,10 +137,10 @@ Error::ErrorCode TextureAsset::CreateFromSdrImage(const string &imagePath)
         }
     }
 
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode TextureAsset::CreateFromHdrImage(const string &imagePath)
+const Error &TextureAsset::CreateFromHdrImage(const string &imagePath)
 {
     Reset();
     RgbaInputFile file = RgbaInputFile(imagePath.c_str());
@@ -162,7 +162,7 @@ Error::ErrorCode TextureAsset::CreateFromHdrImage(const string &imagePath)
         }
     }
 
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
 void TextureAsset::CreateMissingTexture()
@@ -193,35 +193,35 @@ void TextureAsset::CreateMissingTexture()
     }
 }
 
-Error::ErrorCode TextureAsset::LoadFromAsset(const std::string &filePath)
+const Error &TextureAsset::LoadFromAsset(const std::string &filePath)
 {
     Reset();
     AssetContainer asset;
-    const Error::ErrorCode error = AssetContainer::LoadFromFile(filePath.c_str(), asset);
-    if (error != Error::ErrorCode::OK)
+    const Error &error = AssetContainer::LoadFromFile(filePath.c_str(), asset);
+    if (error.Failed())
     {
         CreateMissingTexture();
-        return Error::ErrorCode::OK;
+        return Errors::OK;
     }
     if (asset.type != GetAssetType())
     {
         CreateMissingTexture();
-        return Error::ErrorCode::OK;
+        return Errors::OK;
     }
     if (asset.typeVersion != GetAssetTypeVersion())
     {
         CreateMissingTexture();
-        return Error::ErrorCode::OK;
+        return Errors::OK;
     }
-    const Error::ErrorCode loadErr = LoadFromBuffer(asset.reader);
-    if (loadErr != Error::ErrorCode::OK)
+    const Error &loadErr = LoadFromBuffer(asset.reader);
+    if (loadErr.Failed())
     {
         CreateMissingTexture();
     }
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode TextureAsset::Import(const std::string &filePath)
+const Error &TextureAsset::Import(const std::string &filePath)
 {
     const std::filesystem::path path = filePath;
     const std::string extension = path.extension().string();
@@ -233,10 +233,10 @@ Error::ErrorCode TextureAsset::Import(const std::string &filePath)
     {
         return CreateFromHdrImage(filePath);
     }
-    return Error::ErrorCode::INCORRECT_FORMAT;
+    return Errors::INCORRECT_FORMAT;
 }
 
-Error::ErrorCode TextureAsset::Export(const std::string &filePath) const
+const Error &TextureAsset::Export(const std::string &filePath) const
 {
     switch (pixelFormat)
     {
@@ -245,7 +245,7 @@ Error::ErrorCode TextureAsset::Export(const std::string &filePath) const
         case PixelFormat::RGBAF16:
             return SaveAsEXR(filePath);
     }
-    return Error::ErrorCode::INCORRECT_FORMAT;
+    return Errors::INCORRECT_FORMAT;
 }
 
 uint32_t TextureAsset::GetHeight() const
@@ -263,7 +263,7 @@ size_t TextureAsset::GetPixelDataSize() const
     return pixelData.size();
 }
 
-Error::ErrorCode TextureAsset::SaveAsPNG(const string &imagePath) const
+const Error &TextureAsset::SaveAsPNG(const string &imagePath) const
 {
     std::vector<uint8_t> pixelDataCopy = pixelData;
     const uint32_t *texturePixels = reinterpret_cast<uint32_t *>(pixelDataCopy.data());
@@ -273,10 +273,10 @@ Error::ErrorCode TextureAsset::SaveAsPNG(const string &imagePath) const
                                     4,
                                     texturePixels,
                                     static_cast<int>(width * sizeof(uint32_t)));
-    return code != 0 ? Error::ErrorCode::OK : Error::ErrorCode::UNKNOWN;
+    return code != 0 ? Errors::OK : Error("Failed to write PNG");
 }
 
-Error::ErrorCode TextureAsset::SaveAsEXR(const string &imagePath) const
+const Error &TextureAsset::SaveAsEXR(const string &imagePath) const
 {
     Header header = Header(static_cast<int>(width), static_cast<int>(height));
     header.channels().insert("R", Channel(HALF));
@@ -300,7 +300,7 @@ Error::ErrorCode TextureAsset::SaveAsEXR(const string &imagePath) const
     OutputFile file(imagePath.c_str(), header);
     file.setFrameBuffer(framebuffer);
     file.writePixels(static_cast<int>(height));
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
 TextureAsset::PixelFormat TextureAsset::GetFormat() const

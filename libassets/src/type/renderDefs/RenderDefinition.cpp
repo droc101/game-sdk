@@ -28,14 +28,14 @@ RenderDefinition::RenderDefinition(const nlohmann::json &json)
     viewportMode = StringDefinitionValue(json, "viewport_mode", "all");
 }
 
-std::unique_ptr<RenderDefinition> RenderDefinition::Create(const nlohmann::json &json, Error::ErrorCode &e)
+std::unique_ptr<RenderDefinition> RenderDefinition::Create(const nlohmann::json &json, Error &e)
 {
     std::unique_ptr<RenderDefinition> output = nullptr;
     const RenderDefinitionType type = ParseType(json.value("type", "point"));
     if (type == RenderDefinitionType::RD_TYPE_UNKNOWN)
     {
         Logger::Error("Failed to parse type of render definition:\n{}", json.dump(4).c_str());
-        e = Error::ErrorCode::INCORRECT_FORMAT;
+        e = Errors::INCORRECT_FORMAT;
         return nullptr;
     }
 
@@ -72,7 +72,7 @@ std::unique_ptr<RenderDefinition> RenderDefinition::Create(const nlohmann::json 
 
     output->type = type;
 
-    e = Error::ErrorCode::OK;
+    e = Errors::OK;
     return output;
 }
 

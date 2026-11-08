@@ -40,22 +40,22 @@ void MapAsset::Reset()
     lightCubeLuxelsPerUnit = 4;
 }
 
-Error::ErrorCode MapAsset::Import(const std::string &filePath)
+const Error &MapAsset::Import(const std::string &filePath)
 {
     std::string jsonString;
-    const Error::ErrorCode readError = FileIo::ReadFileToString(filePath, jsonString);
-    if (readError != Error::ErrorCode::OK)
+    const Error &readError = FileIo::ReadFileToString(filePath, jsonString);
+    if (readError.Failed())
     {
         return readError;
     }
     const nlohmann::ordered_json json = nlohmann::ordered_json::parse(jsonString);
     if (json.is_discarded())
     {
-        return Error::ErrorCode::INCORRECT_FORMAT;
+        return Errors::INCORRECT_FORMAT;
     }
     if (json.value("version", 0) != MAP_JSON_VERSION)
     {
-        return Error::ErrorCode::INCORRECT_VERSION;
+        return Errors::INCORRECT_VERSION;
     }
 
     Reset();
@@ -79,10 +79,10 @@ Error::ErrorCode MapAsset::Import(const std::string &filePath)
     {
         actors.emplace_back(actor);
     }
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode MapAsset::Export(const std::string &filePath) const
+const Error &MapAsset::Export(const std::string &filePath) const
 {
     nlohmann::ordered_json src = nlohmann::ordered_json();
     src["version"] = MAP_JSON_VERSION;

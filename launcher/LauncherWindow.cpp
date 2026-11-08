@@ -36,10 +36,10 @@ bool LauncherWindow::Init()
         (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/" + icon, basename);
     }
 
-    const Error::ErrorCode c = LoadLauncherConfig();
-    if (c != Error::ErrorCode::OK)
+    const Error &c = LoadLauncherConfig();
+    if (c.Failed())
     {
-        Logger::Error("Failed to load launcher.json: %s", Error::ErrorString(c).c_str());
+        Logger::Error("Failed to load launcher.json: %s", c);
         return false;
     }
 
@@ -72,8 +72,7 @@ void LauncherWindow::Render()
             for (const auto &[key, value]: items.items())
             {
                 ImTextureID textureId = 0;
-                if (SharedMgr::Get().textureCache.GetTextureID(value.value("icon", "file"), textureId) !=
-                    Error::ErrorCode::OK)
+                if (SharedMgr::Get().textureCache.GetTextureID(value.value("icon", "file"), textureId).Failed())
                 {
                     textureId = SharedMgr::Get().textureCache.GetMissingTextureID();
                 }
@@ -105,7 +104,7 @@ void LauncherWindow::Render()
     {
         const nlohmann::json item = launcherJson.at("categories").at(selectionCategory).at(selectionIndex);
         ImTextureID textureId = 0;
-        if (SharedMgr::Get().textureCache.GetTextureID(item.value("icon", "file"), textureId) != Error::ErrorCode::OK)
+        if (SharedMgr::Get().textureCache.GetTextureID(item.value("icon", "file"), textureId).Failed())
         {
             textureId = SharedMgr::Get().textureCache.GetMissingTextureID();
         }
@@ -127,11 +126,11 @@ const Window::WindowProperties &LauncherWindow::GetProperties() const
     return properties;
 }
 
-Error::ErrorCode LauncherWindow::LoadLauncherConfig()
+const Error &LauncherWindow::LoadLauncherConfig()
 {
     std::string jsonStr;
-    const Error::ErrorCode readError = FileIo::ReadFileToString("assets/launcher.json", jsonStr);
-    if (readError != Error::ErrorCode::OK)
+    const Error &readError = FileIo::ReadFileToString("assets/launcher.json", jsonStr);
+    if (readError.Failed())
     {
         return readError;
     }
@@ -139,13 +138,13 @@ Error::ErrorCode LauncherWindow::LoadLauncherConfig()
     if (launcherJson.is_discarded())
     {
         // printf("File %s is not valid JSON\n", path.c_str());
-        return Error::ErrorCode::INCORRECT_FORMAT;
+        return Errors::INCORRECT_FORMAT;
     }
 
     selectionCategory = launcherJson.at("categories").items().begin().key();
     selectionIndex = launcherJson.at("categories").items().begin().value().items().begin().key();
 
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
 constexpr void LauncherWindow::StringReplace(std::string &string, const std::string &find, const std::string &replace)

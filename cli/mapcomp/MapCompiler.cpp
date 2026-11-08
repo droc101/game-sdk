@@ -35,25 +35,25 @@ MapCompiler::MapCompiler(MapCompilerSettings &settings)
     this->pathManager = SearchPathManager(settings.gameConfig,
                                           settings.executableDirectory,
                                           settings.gameConfigParentDirectory);
-    Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
+    Error e = Errors::UNKNOWN;
     this->defManager = ActorDefinitionManager(this->pathManager, e);
-    if (e != Error::ErrorCode::OK)
+    if (e.Failed())
     {
         Logger::Error("Failed to load actor definitions");
     }
 }
 
-Error::ErrorCode MapCompiler::LoadMapSource(const std::string &mapSourceFile)
+const Error &MapCompiler::LoadMapSource(const std::string &mapSourceFile)
 {
     mapBasename = std::filesystem::path(mapSourceFile).stem().string();
     return map.Import(mapSourceFile);
 }
 
-Error::ErrorCode MapCompiler::Compile()
+const Error &MapCompiler::Compile()
 {
     std::vector<uint8_t> buffer;
-    const Error::ErrorCode e = SaveToBuffer(buffer);
-    if (e != Error::ErrorCode::OK)
+    const Error &e = SaveToBuffer(buffer);
+    if (e.Failed())
     {
         return e;
     }
@@ -65,23 +65,23 @@ Error::ErrorCode MapCompiler::Compile()
                                       Asset::AssetType::ASSET_TYPE_LEVEL,
                                       MapAsset::MAP_ASSET_VERSION,
                                       settings.fastCompression ? AssetContainer::FASTEST_COMPRESSION
-                                                           : AssetContainer::BEST_COMPRESSION);
+                                                               : AssetContainer::BEST_COMPRESSION);
 }
 
 LevelMaterialAsset MapCompiler::GetMapMaterial(const std::string &path) const
 {
     LevelMaterialAsset mapMaterial;
     const std::string absPath = pathManager.GetAssetPath(path);
-    const Error::ErrorCode e = mapMaterial.LoadFromAsset(absPath);
-    if (e != Error::ErrorCode::OK)
+    const Error &e = mapMaterial.LoadFromAsset(absPath);
+    if (e.Failed())
     {
-        Logger::Error("Failed to load material \"{}\": {}", path.c_str(), Error::ErrorString(e));
+        Logger::Error("Failed to load material \"{}\": {}", path.c_str(), e);
     }
     return mapMaterial;
 }
 
 
-Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
+const Error &MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
 {
     assert(buffer.empty());
 
@@ -100,7 +100,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
             {
                 Logger::Error("Brush {} \"{}\" has an invalid shape!", i, brush.editorName);
             }
-            return Error::ErrorCode::INCORRECT_FORMAT;
+            return Errors::INCORRECT_FORMAT;
         }
     }
 
@@ -144,7 +144,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
                 if (hasDirectionalLight)
                 {
                     Logger::Error("Found more than one directional light!");
-                    return Error::ErrorCode::INCORRECT_FORMAT;
+                    return Errors::INCORRECT_FORMAT;
                 }
                 hasDirectionalLight = true;
             }
@@ -231,7 +231,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     glm::uvec2 lightmapSize{1};
     if (!skipLighting && !LightmapPacker::CalculateLightmapUvs(lightmapSize, mapMeshBuilders, pathManager))
     {
-        return Error::ErrorCode::LIGHTMAP_TOO_LARGE;
+        return Error("Lightmap too large");
     }
 
     writer.Write<size_t>(mapMeshBuilders.size());
@@ -268,7 +268,8 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
                         settings.bounceCount,
                         settings.sampleCount))
         {
-            return Error::ErrorCode::UNKNOWN;
+            // TODO return a useful error from LightBaker::Bake
+            return Error("Failed to bake lighting");
         }
     } else
     {
@@ -292,7 +293,7 @@ Error::ErrorCode MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         }
     }
     writer.CopyToVector(buffer);
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
 bool MapCompiler::SectorFloorCeilingCompare(const std::array<float, 2> &a, const std::array<float, 2> &b)

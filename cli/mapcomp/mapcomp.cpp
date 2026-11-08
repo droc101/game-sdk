@@ -63,10 +63,10 @@ int main(const int argc, const char **argv)
 
     const std::string gameConfigPath = args.GetFlagValue("--assets-dir") + "/game.gkvl";
     DataAsset gameConfig{};
-    const Error::ErrorCode e = gameConfig.LoadFromAsset(gameConfigPath);
-    if (e != Error::ErrorCode::OK)
+    const Error &e = gameConfig.LoadFromAsset(gameConfigPath);
+    if (e.Failed())
     {
-        Logger::Error("Failed to open {}: {}", gameConfigPath.c_str(), Error::ErrorString(e).c_str());
+        Logger::Error("Failed to open {}: {}", gameConfigPath.c_str(), e);
         return 1;
     }
 
@@ -105,17 +105,17 @@ int main(const int argc, const char **argv)
 
     if (args.HasFlagWithValue("--map-source"))
     {
-        const Error::ErrorCode mapLoadResult = compiler.LoadMapSource(args.GetFlagValue("--map-source"));
-        if (mapLoadResult != Error::ErrorCode::OK)
+        const Error &mapLoadError = compiler.LoadMapSource(args.GetFlagValue("--map-source"));
+        if (mapLoadError.Failed())
         {
-            Logger::Error("Failed to load map source: {}", Error::ErrorString(mapLoadResult).c_str());
+            Logger::Error("Failed to load map source: {}", mapLoadError);
             return 1;
         }
 
-        const Error::ErrorCode mapCompileResult = compiler.Compile();
-        if (mapCompileResult != Error::ErrorCode::OK)
+        const Error &mapCompileError = compiler.Compile();
+        if (mapCompileError.Failed())
         {
-            Logger::Error("Failed to compile map: {}", Error::ErrorString(mapCompileResult).c_str());
+            Logger::Error("Failed to compile map: {}", mapCompileError);
             return 1;
         }
     } else
@@ -127,12 +127,10 @@ int main(const int argc, const char **argv)
         for (const std::string &map: maps)
         {
             Logger::Info("Compiling map \"{}\"...", map);
-            const Error::ErrorCode mapLoadResult = compiler.LoadMapSource(args.GetFlagValue("--map-sources-dir") +
-                                                                          "/" +
-                                                                          map);
-            if (mapLoadResult != Error::ErrorCode::OK)
+            const Error &mapLoadError = compiler.LoadMapSource(args.GetFlagValue("--map-sources-dir") + "/" + map);
+            if (mapLoadError.Failed())
             {
-                Logger::Error("Failed to load map source: {}", Error::ErrorString(mapLoadResult).c_str());
+                Logger::Error("Failed to load map source: {}", mapLoadError);
                 if (returnOnError)
                 {
                     return 1;
@@ -140,10 +138,10 @@ int main(const int argc, const char **argv)
                 continue;
             }
 
-            const Error::ErrorCode mapCompileResult = compiler.Compile();
-            if (mapCompileResult != Error::ErrorCode::OK)
+            const Error mapCompileError = compiler.Compile();
+            if (mapCompileError.Failed())
             {
-                Logger::Error("Failed to compile map: {}", Error::ErrorString(mapCompileResult).c_str());
+                Logger::Error("Failed to compile map: {}", mapCompileError);
                 if (returnOnError)
                 {
                     return 1;

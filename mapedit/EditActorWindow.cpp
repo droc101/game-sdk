@@ -156,8 +156,8 @@ void EditActorWindow::RenderParamsTab(const ActorDefinition &definition)
         for (const std::string &key: paramNamesV)
         {
             std::shared_ptr<ParamDefinition> paramDef = nullptr;
-            const Error::ErrorCode e = definition.GetParam(key, paramDef);
-            if (e != Error::ErrorCode::OK)
+            const Error &e = definition.GetParam(key, paramDef);
+            if (e.Failed())
             {
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
@@ -206,10 +206,10 @@ void EditActorWindow::RenderParamsTab(const ActorDefinition &definition)
         if (!paramNamesV.empty())
         {
             std::shared_ptr<ParamDefinition> paramDef = nullptr;
-            const Error::ErrorCode e = definition.GetParam(paramNamesV.at(selectedParam), paramDef);
+            const Error &e = definition.GetParam(paramNamesV.at(selectedParam), paramDef);
             Param &param = actor.params.at(paramNamesV.at(selectedParam));
             ImGui::SetCursorPosX(cursorPos.x);
-            if (e == Error::ErrorCode::OK)
+            if (e.Ok())
             {
                 ImGui::TextWrapped("%s",
                                    paramDef->description.empty() ? "No Description" : paramDef->description.c_str());
@@ -512,7 +512,7 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                 ImGui::Text("Source Output");
 
                 OutputDefinition outputDef{};
-                if (definition.GetOutput(connection.sourceOutput, outputDef) != Error::ErrorCode::OK)
+                if (definition.GetOutput(connection.sourceOutput, outputDef).Failed())
                 {
                     ImGui::SameLine();
                     ImGui::TextColored(ImVec4(1, 0, 0, 1), "Unknown Output");
@@ -610,8 +610,8 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                         ImGui::EndCombo();
                     }
 
-                    const Error::ErrorCode e = targetDef.GetInput(connection.targetInput, inputDef);
-                    if (e == Error::ErrorCode::OK)
+                    const Error &e = targetDef.GetInput(connection.targetInput, inputDef);
+                    if (e.Ok())
                     {
                         if (!inputDef.AcceptsType(inputDef.GetPrimaryType()))
                         {

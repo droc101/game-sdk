@@ -35,7 +35,7 @@ void LevelMaterialAsset::Reset()
     emissive = 0;
 }
 
-Error::ErrorCode LevelMaterialAsset::LoadFromBuffer(DataReader &reader)
+const Error &LevelMaterialAsset::LoadFromBuffer(DataReader &reader)
 {
     Reset();
     reader.ReadStringWithSize(texture);
@@ -44,10 +44,10 @@ Error::ErrorCode LevelMaterialAsset::LoadFromBuffer(DataReader &reader)
     soundClass = static_cast<SoundClass>(reader.Read<uint8_t>());
     flags = reader.Read<uint32_t>();
     emissive = reader.Read<float>();
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode LevelMaterialAsset::SaveToBuffer(DataWriter &writer) const
+const Error &LevelMaterialAsset::SaveToBuffer(DataWriter &writer) const
 {
     writer.WriteString(texture);
     writer.WriteVec2(baseScale);
@@ -55,7 +55,7 @@ Error::ErrorCode LevelMaterialAsset::SaveToBuffer(DataWriter &writer) const
     writer.Write<uint8_t>(static_cast<uint8_t>(soundClass));
     writer.Write<uint32_t>(flags);
     writer.Write<float>(emissive);
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
 bool LevelMaterialAsset::HasFlags(const uint32_t flagsToCheck) const

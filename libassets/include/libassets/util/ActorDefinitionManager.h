@@ -17,7 +17,7 @@ class ActorDefinitionManager
 {
     public:
         ActorDefinitionManager() = default;
-        ActorDefinitionManager(const SearchPathManager &searchPathManager, Error::ErrorCode &status);
+        ActorDefinitionManager(const SearchPathManager &searchPathManager, Error &status);
 
         /**
          * Check if a given actor class exists
@@ -50,7 +50,7 @@ class ActorDefinitionManager
         std::map<std::string, ActorDefinition> actorDefinitions{};
         std::vector<std::string> actorClassNames{};
 
-        Error::ErrorCode LoadActorDefinitions(const SearchPathManager &pathManager);
+        const Error &LoadActorDefinitions(const SearchPathManager &pathManager);
         void LoadOptionDefinitions(const SearchPathManager &pathManager);
 };
 
