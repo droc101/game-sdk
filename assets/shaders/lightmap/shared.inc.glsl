@@ -34,8 +34,7 @@ struct MapVertex {
 #pragma region LightTypeEnum
 const uint LIGHT_TYPE_POINT = 0u;
 const uint LIGHT_TYPE_SPOT = 1u;
-const uint LIGHT_TYPE_AREA = 2u;
-const uint LIGHT_TYPE_DIRECTIONAL = 3u;
+const uint LIGHT_TYPE_DIRECTIONAL = 2u;
 #pragma endregion LightTypeEnum
 
 /// The format of the lights in the map. Interop with C++ must use scalar block layout

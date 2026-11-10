@@ -21,7 +21,6 @@ public:
     {
         POINT,
         SPOT,
-        AREA,
         DIRECTIONAL,
     };
 
