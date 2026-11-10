@@ -171,6 +171,10 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                 state = PolygonToolState::WAITING_TO_PLACE;
             }
             startDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(axis, worldSpaceHover));
+            if (axis == Axis::Z)
+            {
+                startDepth *= -1;
+            }
         } else if (state == PolygonToolState::DRAGGING_END_DEPTH)
         {
             if (!ImGui::IsMouseDown(ImGuiMouseButton_Left))
@@ -178,6 +182,10 @@ void AddPolygonTool::RenderViewport(Viewport &vp)
                 state = PolygonToolState::WAITING_TO_PLACE;
             }
             endDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(axis, worldSpaceHover));
+            if (axis == Axis::Z)
+            {
+                endDepth *= -1;
+            }
         }
     }
 

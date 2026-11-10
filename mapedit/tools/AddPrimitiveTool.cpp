@@ -90,9 +90,17 @@ void AddPrimitiveTool::RenderViewport(Viewport &vp)
                     break;
                 case DragMode::DRAGGING_START_DEPTH:
                     startDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(axis, worldSpaceHover));
+                    if (axis == Axis::Z)
+                    {
+                        startDepth *= -1;
+                    }
                     break;
                 case DragMode::DRAGGING_END_DEPTH:
                     endDepth = MapEditor::SnapToGrid(AxisHelper::GetComponent(axis, worldSpaceHover));
+                    if (axis == Axis::Z)
+                    {
+                        endDepth *= -1;
+                    }
                     break;
                 default:
                     break;
