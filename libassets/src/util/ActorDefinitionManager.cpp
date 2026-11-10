@@ -2,6 +2,7 @@
 // Created by droc101 on 3/12/26.
 //
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <libassets/type/ActorDefinition.h>
@@ -96,6 +97,8 @@ Error ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &path
     {
         Logger::Warning("No \"actor\" actor class definition was loaded!");
     }
+
+    std::ranges::sort(actorClassNames, [](const std::string &a, const std::string &b) { return a < b; });
 
     return Errors::OK;
 }
