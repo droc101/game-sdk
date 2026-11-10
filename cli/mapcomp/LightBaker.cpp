@@ -1626,6 +1626,8 @@ bool LightBaker::CreateBLAS(const std::vector<BrushMeshBuilder> &meshBuilders, c
                                             &buildGeometryInfo,
                                             &pBuildRangeInfo);
 
+        blas.firstIndex = indexBufferOffset / sizeof(uint32_t);
+
         indexBufferOffset += meshBuilder.GetIndices().size() * sizeof(uint32_t);
     }
 
@@ -1647,8 +1649,8 @@ bool LightBaker::CreateTLAS()
         return false;
     }
 
-    constexpr LunaBufferCreationInfo instancesBufferCreationInfo = {
-        .size = sizeof(VkAccelerationStructureInstanceKHR),
+    const LunaBufferCreationInfo instancesBufferCreationInfo = {
+        .size = bottomLevelAccelerationStructures.size() * sizeof(VkAccelerationStructureInstanceKHR),
         .alignment = 16, // 16 is directly required by the spec
         .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
         .additionalUsageFlags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
@@ -1668,7 +1670,7 @@ bool LightBaker::CreateTLAS()
             .accelerationStructure = blas.accelerationStructure,
         };
         instances.emplace_back(TRANSFORM_MATRIX_IDENTITY,
-                               0,
+                               blas.firstIndex,
                                0xFF,
                                0,
                                VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR,

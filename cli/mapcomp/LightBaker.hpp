@@ -47,6 +47,7 @@ class LightBaker
 
         struct AccelerationStructure
         {
+                uint32_t firstIndex;
                 LunaBuffer buffer;
                 VkAccelerationStructureKHR accelerationStructure;
                 LunaBuffer scratchBuffer;
