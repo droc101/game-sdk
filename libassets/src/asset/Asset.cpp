@@ -11,10 +11,10 @@
 #include <string>
 #include <vector>
 
-const Error &Asset::LoadFromAsset(const std::string &filePath)
+Error Asset::LoadFromAsset(const std::string &filePath)
 {
     AssetContainer asset;
-    const Error &error = AssetContainer::LoadFromFile(filePath, asset);
+    const Error error = AssetContainer::LoadFromFile(filePath, asset);
     if (error.Failed())
     {
         return error;
@@ -30,10 +30,10 @@ const Error &Asset::LoadFromAsset(const std::string &filePath)
     return LoadFromBuffer(asset.reader);
 }
 
-const Error &Asset::SaveToAsset(const std::string &filePath) const
+Error Asset::SaveToAsset(const std::string &filePath) const
 {
     DataWriter writer{};
-    const Error &writeError = SaveToBuffer(writer);
+    const Error writeError = SaveToBuffer(writer);
     if (writeError.Failed())
     {
         return writeError;
@@ -48,25 +48,25 @@ const Error &Asset::SaveToAsset(const std::string &filePath) const
                                       AssetContainer::BEST_COMPRESSION);
 }
 
-const Error &Asset::LoadFromBuffer(DataReader &reader)
+Error Asset::LoadFromBuffer(DataReader &reader)
 {
     (void)reader;
     return Errors::NOT_IMPLEMENTED;
 }
 
-const Error &Asset::SaveToBuffer(DataWriter &writer) const
+Error Asset::SaveToBuffer(DataWriter &writer) const
 {
     (void)writer;
     return Errors::NOT_IMPLEMENTED;
 }
 
-const Error &Asset::Import(const std::string &filePath)
+Error Asset::Import(const std::string &filePath)
 {
     (void)filePath;
     return Errors::NOT_IMPLEMENTED;
 }
 
-const Error &Asset::Export(const std::string &filePath) const
+Error Asset::Export(const std::string &filePath) const
 {
     (void)filePath;
     return Errors::NOT_IMPLEMENTED;

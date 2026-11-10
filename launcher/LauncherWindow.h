@@ -34,7 +34,7 @@ class LauncherWindow final: public Window
         std::string selectionCategory;
         std::string selectionIndex;
 
-        const Error &LoadLauncherConfig();
+        Error LoadLauncherConfig();
 
         static constexpr void StringReplace(std::string &string, const std::string &find, const std::string &replace);
 

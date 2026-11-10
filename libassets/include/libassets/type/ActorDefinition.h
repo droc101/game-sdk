@@ -42,7 +42,7 @@ class ActorDefinition
      * @param path The path to the JSON file
      * @param definition The definition to populate
      */
-        [[nodiscard]] static const Error &Create(const std::string &path, ActorDefinition &definition);
+        [[nodiscard]] static Error Create(const std::string &path, ActorDefinition &definition);
 
         /**
      * Check if this definition extends another at any point
@@ -68,17 +68,17 @@ class ActorDefinition
      * @param name The input name
      * @param input The InputDefinition to populate
      */
-        [[nodiscard]] const Error &GetInput(const std::string &name, InputDefinition &input) const;
+        [[nodiscard]] Error GetInput(const std::string &name, InputDefinition &input) const;
         /**
      * Get an output definition by name
      * @param name The output name
      * @param output The OutputDefinition to populate
      */
-        [[nodiscard]] const Error &GetOutput(const std::string &name, OutputDefinition &output) const;
+        [[nodiscard]] Error GetOutput(const std::string &name, OutputDefinition &output) const;
         /**
      * Get a param definition by name
      * @param name The param name
      * @param param The ParamDefinition to populate
      */
-        [[nodiscard]] const Error &GetParam(const std::string &name, std::shared_ptr<ParamDefinition> &param) const;
+        [[nodiscard]] Error GetParam(const std::string &name, std::shared_ptr<ParamDefinition> &param) const;
 };

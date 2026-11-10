@@ -43,7 +43,7 @@ void FontAsset::Reset()
     charWidths = {};
 }
 
-const Error &FontAsset::LoadFromBuffer(DataReader &reader)
+Error FontAsset::LoadFromBuffer(DataReader &reader)
 {
     Reset();
     charWidth = reader.Read<uint8_t>();
@@ -72,7 +72,7 @@ const Error &FontAsset::LoadFromBuffer(DataReader &reader)
     return Errors::OK;
 }
 
-const Error &FontAsset::SaveToBuffer(DataWriter &writer) const
+Error FontAsset::SaveToBuffer(DataWriter &writer) const
 {
     writer.Write<uint8_t>(charWidth);
     writer.Write<uint8_t>(textureHeight);

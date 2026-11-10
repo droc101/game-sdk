@@ -138,7 +138,7 @@ bool MapeditWindow::ToolbarToolButton(const char *id,
         ImGui::EndTooltip();
     }
     ImTextureID tex = 0;
-    const Error &e = SharedMgr::Get().textureCache.GetTextureID(icon, tex);
+    const Error e = SharedMgr::Get().textureCache.GetTextureID(icon, tex);
     if (e.Failed())
     {
         tex = SharedMgr::Get().textureCache.GetMissingTextureID();
@@ -195,7 +195,7 @@ void MapeditWindow::SetupDockspace()
 
 void MapeditWindow::OpenJson(const std::string &path) const
 {
-    const Error &errorCode = MapEditor::map.Import(path);
+    const Error errorCode = MapEditor::map.Import(path);
     if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to open the map!\n{}", errorCode));
@@ -221,7 +221,7 @@ void MapeditWindow::OpenJson(const std::string &path) const
 
 void MapeditWindow::SaveJson(const std::string &path) const
 {
-    const Error &errorCode = MapEditor::map.Export(path);
+    const Error errorCode = MapEditor::map.Export(path);
     if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to save the map!\n{}", errorCode));

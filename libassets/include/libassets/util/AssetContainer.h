@@ -22,7 +22,7 @@ class AssetContainer
         static constexpr uint8_t FASTEST_COMPRESSION = Z_BEST_SPEED;
         static constexpr uint8_t NO_COMPRESSION = Z_NO_COMPRESSION;
 
-        [[nodiscard]] static const Error &LoadFromFile(const std::string &filePath, AssetContainer &outAsset);
+        [[nodiscard]] static Error LoadFromFile(const std::string &filePath, AssetContainer &outAsset);
 
         /**
          * Create an asset file on disk
@@ -32,11 +32,11 @@ class AssetContainer
          * @param typeVersion The version of the asset type to store
          * @param compressionLevel The compression level to use
          */
-        [[nodiscard]] static const Error &SaveToFile(const std::string &filePath,
-                                                     std::vector<uint8_t> &data,
-                                                     Asset::AssetType type,
-                                                     uint8_t typeVersion,
-                                                     uint8_t compressionLevel);
+        [[nodiscard]] static Error SaveToFile(const std::string &filePath,
+                                              std::vector<uint8_t> &data,
+                                              Asset::AssetType type,
+                                              uint8_t typeVersion,
+                                              uint8_t compressionLevel);
 
         uint8_t containerVersion{};
         Asset::AssetType type{};
@@ -50,7 +50,7 @@ class AssetContainer
         static constexpr uint32_t ASSET_CONTAINER_MAGIC = 0x454D4147; // "GAME"
         static constexpr size_t ASSET_HEADER_SIZE = sizeof(uint32_t) + (sizeof(uint8_t) * 3) + (sizeof(size_t) * 2);
 
-        [[nodiscard]] static const Error &Decompress(std::vector<uint8_t> &asset, AssetContainer &outAsset);
+        [[nodiscard]] static Error Decompress(std::vector<uint8_t> &asset, AssetContainer &outAsset);
 
         /**
          * Create an asset given the uncompressed payload
@@ -60,9 +60,9 @@ class AssetContainer
          * @param typeVersion The version of the asset type to store
          * @param compressionLevel The compression level to use
          */
-        [[nodiscard]] static const Error &Compress(std::vector<uint8_t> &inBuffer,
-                                                   std::vector<uint8_t> &outBuffer,
-                                                   Asset::AssetType type,
-                                                   uint8_t typeVersion,
-                                                   uint8_t compressionLevel);
+        [[nodiscard]] static Error Compress(std::vector<uint8_t> &inBuffer,
+                                            std::vector<uint8_t> &outBuffer,
+                                            Asset::AssetType type,
+                                            uint8_t typeVersion,
+                                            uint8_t compressionLevel);
 };

@@ -57,7 +57,7 @@ int main(const int argc, const char **argv)
     Logger::Info("Loading map...");
 
     AssetContainer asset;
-    const Error &e = AssetContainer::LoadFromFile(args.GetFlagValue("--map").c_str(), asset);
+    const Error e = AssetContainer::LoadFromFile(args.GetFlagValue("--map").c_str(), asset);
     if (e.Failed())
     {
         Logger::Error("Failed to open map file: {}", e);

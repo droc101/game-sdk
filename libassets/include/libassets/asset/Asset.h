@@ -30,14 +30,14 @@ class Asset
 
         virtual void Reset() = 0;
 
-        [[nodiscard]] virtual const Error &LoadFromBuffer(DataReader &reader);
-        [[nodiscard]] virtual const Error &SaveToBuffer(DataWriter &writer) const;
+        [[nodiscard]] virtual Error LoadFromBuffer(DataReader &reader);
+        [[nodiscard]] virtual Error SaveToBuffer(DataWriter &writer) const;
 
-        [[nodiscard]] virtual const Error &LoadFromAsset(const std::string &filePath);
-        [[nodiscard]] virtual const Error &SaveToAsset(const std::string &filePath) const;
+        [[nodiscard]] virtual Error LoadFromAsset(const std::string &filePath);
+        [[nodiscard]] virtual Error SaveToAsset(const std::string &filePath) const;
 
-        [[nodiscard]] virtual const Error &Import(const std::string &filePath);
-        [[nodiscard]] virtual const Error &Export(const std::string &filePath) const;
+        [[nodiscard]] virtual Error Import(const std::string &filePath);
+        [[nodiscard]] virtual Error Export(const std::string &filePath) const;
 
         [[nodiscard]] virtual AssetType GetAssetType() const = 0;
         [[nodiscard]] virtual uint8_t GetAssetTypeVersion() const = 0;

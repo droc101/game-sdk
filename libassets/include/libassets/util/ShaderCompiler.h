@@ -46,7 +46,7 @@ class ShaderCompiler
 
         ShaderCompiler(const std::filesystem::path &path, EShLanguage shaderType, bool optimize, bool debugInfo);
 
-        [[nodiscard]] const Error &Compile(std::vector<uint32_t> &outputSpirv);
+        [[nodiscard]] Error Compile(std::vector<uint32_t> &outputSpirv);
 
         [[nodiscard]] const std::string &GetErrorMessage() const;
 

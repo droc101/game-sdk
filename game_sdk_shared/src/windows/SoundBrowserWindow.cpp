@@ -90,7 +90,7 @@ void SoundBrowserWindow::Render()
     ImGui::Dummy({0, 4});
     if (ImGui::Button("Preview", ImVec2(60, 0)))
     {
-        const Error &loadError = previewSoundAsset.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(*str));
+        const Error loadError = previewSoundAsset.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(*str));
         if (loadError.Failed())
         {
             ErrorMessage(std::format("Failed to open sound \"{}\": {}", *str, loadError));

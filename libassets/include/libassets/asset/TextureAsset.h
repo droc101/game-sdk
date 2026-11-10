@@ -36,13 +36,13 @@ class TextureAsset final: public Asset
 
         void Reset() override;
 
-        [[nodiscard]] const Error &LoadFromBuffer(DataReader &reader) override;
-        [[nodiscard]] const Error &SaveToBuffer(DataWriter &writer) const override;
+        [[nodiscard]] Error LoadFromBuffer(DataReader &reader) override;
+        [[nodiscard]] Error SaveToBuffer(DataWriter &writer) const override;
 
-        [[nodiscard]] const Error &LoadFromAsset(const std::string &filePath) override;
+        [[nodiscard]] Error LoadFromAsset(const std::string &filePath) override;
 
-        [[nodiscard]] const Error &Import(const std::string &filePath) override;
-        [[nodiscard]] const Error &Export(const std::string &filePath) const override;
+        [[nodiscard]] Error Import(const std::string &filePath) override;
+        [[nodiscard]] Error Export(const std::string &filePath) const override;
 
         [[nodiscard]] AssetType GetAssetType() const override;
         [[nodiscard]] uint8_t GetAssetTypeVersion() const override;
@@ -81,24 +81,24 @@ class TextureAsset final: public Asset
         * @param imagePath The path to the PNG
         * @return Error Code
         */
-        [[nodiscard]] const Error &CreateFromSdrImage(const std::string &imagePath);
+        [[nodiscard]] Error CreateFromSdrImage(const std::string &imagePath);
 
         /**
          * Create an HDR @c TextureAsset from an EXR image
          * @param imagePath The path to the EXR
          * @return Error Code
          */
-        [[nodiscard]] const Error &CreateFromHdrImage(const std::string &imagePath);
+        [[nodiscard]] Error CreateFromHdrImage(const std::string &imagePath);
 
         /**
          * Save this @c TextureAsset as a standard PNG image
          * @param imagePath The path to save to
          */
-        [[nodiscard]] const Error &SaveAsPNG(const std::string &imagePath) const;
+        [[nodiscard]] Error SaveAsPNG(const std::string &imagePath) const;
 
         /**
          * Save this @c TextureAsset as a standard EXR image
          * @param imagePath The path to save to
          */
-        [[nodiscard]] const Error &SaveAsEXR(const std::string &imagePath) const;
+        [[nodiscard]] Error SaveAsEXR(const std::string &imagePath) const;
 };

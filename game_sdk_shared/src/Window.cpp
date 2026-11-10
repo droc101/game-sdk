@@ -251,7 +251,7 @@ void Window::MakeCurrent() const
 void Window::SetWindowIcon(const std::string &iconName) const
 {
     TextureAsset iconAsset{};
-    const Error &e = iconAsset.Import("assets/icons/" + iconName + ".png");
+    const Error e = iconAsset.Import("assets/icons/" + iconName + ".png");
     if (e.Failed())
     {
         iconAsset.CreateMissingTexture();

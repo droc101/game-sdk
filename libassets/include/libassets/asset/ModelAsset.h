@@ -35,10 +35,10 @@ class ModelAsset final: public Asset
 
         void Reset() override;
 
-        [[nodiscard]] const Error &LoadFromBuffer(DataReader &reader) override;
-        [[nodiscard]] const Error &SaveToBuffer(DataWriter &writer) const override;
+        [[nodiscard]] Error LoadFromBuffer(DataReader &reader) override;
+        [[nodiscard]] Error SaveToBuffer(DataWriter &writer) const override;
 
-        [[nodiscard]] const Error &Import(const std::string &filePath) override;
+        [[nodiscard]] Error Import(const std::string &filePath) override;
 
         [[nodiscard]] AssetType GetAssetType() const override;
         [[nodiscard]] uint8_t GetAssetTypeVersion() const override;
@@ -162,7 +162,7 @@ class ModelAsset final: public Asset
         /**
          * Add convex hulls from a model
          */
-        [[nodiscard]] const Error &AddHulls(const std::string &path);
+        [[nodiscard]] Error AddHulls(const std::string &path);
 
         /**
          * Remove a hull by index

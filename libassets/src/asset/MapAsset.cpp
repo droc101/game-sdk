@@ -40,10 +40,10 @@ void MapAsset::Reset()
     lightCubeLuxelsPerUnit = 4;
 }
 
-const Error &MapAsset::Import(const std::string &filePath)
+Error MapAsset::Import(const std::string &filePath)
 {
     std::string jsonString;
-    const Error &readError = FileIo::ReadFileToString(filePath, jsonString);
+    const Error readError = FileIo::ReadFileToString(filePath, jsonString);
     if (readError.Failed())
     {
         return readError;
@@ -82,7 +82,7 @@ const Error &MapAsset::Import(const std::string &filePath)
     return Errors::OK;
 }
 
-const Error &MapAsset::Export(const std::string &filePath) const
+Error MapAsset::Export(const std::string &filePath) const
 {
     nlohmann::ordered_json src = nlohmann::ordered_json();
     src["version"] = MAP_JSON_VERSION;

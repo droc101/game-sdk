@@ -36,7 +36,7 @@ const Window::WindowProperties &CompileProgressWindow::GetProperties() const
 bool CompileProgressWindow::Init()
 {
     log = "";
-    const Error &errorCode = MapEditor::map.Export(MapEditor::mapFile);
+    const Error errorCode = MapEditor::map.Export(MapEditor::mapFile);
     if (errorCode.Failed())
     {
         log += std::format("Failed to save the level!{}\n", errorCode);

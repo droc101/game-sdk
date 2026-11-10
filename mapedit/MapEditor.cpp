@@ -156,7 +156,7 @@ bool MapEditor::MaterialSelectionTool(std::string &inputMaterial)
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
     const LevelMaterialAsset &mat = MaterialCache::GetMaterial(inputMaterial);
-    const Error &e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
+    const Error e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e.Ok())
     {

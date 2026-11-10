@@ -114,7 +114,7 @@ void ConvexHull::CalculateOffset()
     offset = bb.origin;
 }
 
-const Error &ConvexHull::ImportMultiple(const std::string &path, std::vector<ConvexHull> &output)
+Error ConvexHull::ImportMultiple(const std::string &path, std::vector<ConvexHull> &output)
 {
     Assimp::Importer importer;
     (void)importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS,

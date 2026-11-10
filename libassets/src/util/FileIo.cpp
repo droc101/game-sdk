@@ -15,7 +15,7 @@
 #include <unistd.h>
 #include <vector>
 
-const Error &FileIo::OpenFileR(const std::string &filename, std::ifstream &stream, const std::ios::openmode mode)
+Error FileIo::OpenFileR(const std::string &filename, std::ifstream &stream, const std::ios::openmode mode)
 {
     if (access(filename.c_str(), F_OK))
     {
@@ -33,7 +33,7 @@ const Error &FileIo::OpenFileR(const std::string &filename, std::ifstream &strea
     return Errors::OK;
 }
 
-const Error &FileIo::OpenFileW(const std::string &filename, std::ofstream &stream, const std::ios::openmode mode)
+Error FileIo::OpenFileW(const std::string &filename, std::ofstream &stream, const std::ios::openmode mode)
 {
     stream = std::ofstream(filename, mode);
     if (!stream.is_open())
@@ -43,10 +43,10 @@ const Error &FileIo::OpenFileW(const std::string &filename, std::ofstream &strea
     return Errors::OK;
 }
 
-const Error &FileIo::ReadFileToString(const std::string &filename, std::string &output)
+Error FileIo::ReadFileToString(const std::string &filename, std::string &output)
 {
     std::ifstream file;
-    const Error &openError = OpenFileR(filename, file);
+    const Error openError = OpenFileR(filename, file);
     if (openError.Failed())
     {
         return openError;
@@ -58,14 +58,14 @@ const Error &FileIo::ReadFileToString(const std::string &filename, std::string &
     return Errors::OK;
 }
 
-const Error &FileIo::ReadFileToBuffer(const std::string &filename, std::vector<uint8_t> &output)
+Error FileIo::ReadFileToBuffer(const std::string &filename, std::vector<uint8_t> &output)
 {
     if (!output.empty())
     {
         return Errors::INVALID_ARGUMENT;
     }
     std::ifstream file;
-    const Error &openError = OpenFileR(filename, file, std::ios::binary);
+    const Error openError = OpenFileR(filename, file, std::ios::binary);
     if (openError.Failed())
     {
         return openError;
@@ -78,10 +78,10 @@ const Error &FileIo::ReadFileToBuffer(const std::string &filename, std::vector<u
     return Errors::OK;
 }
 
-const Error &FileIo::CreateFileDataReader(const std::string &filename, DataReader &reader)
+Error FileIo::CreateFileDataReader(const std::string &filename, DataReader &reader)
 {
     std::vector<uint8_t> backingBuffer{};
-    const Error &readError = ReadFileToBuffer(filename, backingBuffer);
+    const Error readError = ReadFileToBuffer(filename, backingBuffer);
     if (readError.Failed())
     {
         return readError;
@@ -90,10 +90,10 @@ const Error &FileIo::CreateFileDataReader(const std::string &filename, DataReade
     return Errors::OK;
 }
 
-const Error &FileIo::WriteStringToFile(const std::string &filename, const std::string &contents)
+Error FileIo::WriteStringToFile(const std::string &filename, const std::string &contents)
 {
     std::ofstream file;
-    const Error &openError = OpenFileW(filename, file);
+    const Error openError = OpenFileW(filename, file);
     if (openError.Failed())
     {
         return openError;
@@ -103,10 +103,10 @@ const Error &FileIo::WriteStringToFile(const std::string &filename, const std::s
     return Errors::OK;
 }
 
-const Error &FileIo::WriteBufferToFile(const std::string &filename, const std::vector<uint8_t> &buffer)
+Error FileIo::WriteBufferToFile(const std::string &filename, const std::vector<uint8_t> &buffer)
 {
     std::ofstream file;
-    const Error &openError = OpenFileW(filename, file, std::ios::binary);
+    const Error openError = OpenFileW(filename, file, std::ios::binary);
     if (openError.Failed())
     {
         return openError;

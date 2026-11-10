@@ -50,7 +50,7 @@ class ActorDefinitionManager
         std::map<std::string, ActorDefinition> actorDefinitions{};
         std::vector<std::string> actorClassNames{};
 
-        const Error &LoadActorDefinitions(const SearchPathManager &pathManager);
+        Error LoadActorDefinitions(const SearchPathManager &pathManager);
         void LoadOptionDefinitions(const SearchPathManager &pathManager);
 };
 

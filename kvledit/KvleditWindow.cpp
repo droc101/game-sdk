@@ -23,7 +23,7 @@
 
 void KvleditWindow::OpenGkvl(const std::string &path)
 {
-    const Error &errorCode = dataAsset.LoadFromAsset(path);
+    const Error errorCode = dataAsset.LoadFromAsset(path);
     if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to open the KvList!\n{}", errorCode));
@@ -32,7 +32,7 @@ void KvleditWindow::OpenGkvl(const std::string &path)
 
 void KvleditWindow::OpenKvl(const std::string &path)
 {
-    const Error &errorCode = dataAsset.CreateFromKvlFile(path);
+    const Error errorCode = dataAsset.CreateFromKvlFile(path);
     if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to open the KvList!\n{}", errorCode));
@@ -41,7 +41,7 @@ void KvleditWindow::OpenKvl(const std::string &path)
 
 void KvleditWindow::ImportJson(const std::string &path)
 {
-    const Error &errorCode = dataAsset.Import(path);
+    const Error errorCode = dataAsset.Import(path);
     if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to import the KvList!\n{}", errorCode));
@@ -50,7 +50,7 @@ void KvleditWindow::ImportJson(const std::string &path)
 
 void KvleditWindow::SaveGkvl(const std::string &path) const
 {
-    const Error &errorCode = dataAsset.SaveToAsset(path);
+    const Error errorCode = dataAsset.SaveToAsset(path);
     if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to save the KvList!\n{}", errorCode));
@@ -59,7 +59,7 @@ void KvleditWindow::SaveGkvl(const std::string &path) const
 
 void KvleditWindow::SaveKvl(const std::string &path) const
 {
-    const Error &errorCode = dataAsset.SaveAsKvlFile(path);
+    const Error errorCode = dataAsset.SaveAsKvlFile(path);
     if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to save the KvList!\n{}", errorCode));
@@ -68,7 +68,7 @@ void KvleditWindow::SaveKvl(const std::string &path) const
 
 void KvleditWindow::ExportJson(const std::string &path) const
 {
-    const Error &errorCode = dataAsset.Export(path);
+    const Error errorCode = dataAsset.Export(path);
     if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to export the KvList!\n{}", errorCode));

@@ -34,7 +34,7 @@ static std::atomic_bool successful = true;
 static void CompileFile(const std::string &file, const ShaderAsset::ShaderType type)
 {
     ShaderAsset shader;
-    const Error &e = shader.Import(file);
+    const Error e = shader.Import(file);
     if (e.Failed())
     {
         Logger::Error("Failed to compile shaders: {}", e);
@@ -84,7 +84,7 @@ static void CompileFile(const std::string &file, const ShaderAsset::ShaderType t
 
     Logger::Info("Compiling \"{}\"...", file);
     std::string errorLog{};
-    const Error &saveError = shader.SaveToAssetEx(outputPath,
+    const Error saveError = shader.SaveToAssetEx(outputPath,
                                                   enableOptimization,
                                                   debugInfo,
                                                   &errorLog,
@@ -98,7 +98,7 @@ static void CompileFile(const std::string &file, const ShaderAsset::ShaderType t
     }
 }
 
-static const Error &Compile()
+static const Error Compile()
 {
     if (!std::filesystem::is_directory(outputFolder))
     {
@@ -256,7 +256,7 @@ int main(const int argc, const char **argv)
     }
 
     Logger::Info("Compiling shaders...");
-    const Error &e = Compile();
+    const Error e = Compile();
     if (e.Failed())
     {
         Logger::Error("Failed to compile shaders: {}", e);

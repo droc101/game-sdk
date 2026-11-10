@@ -156,7 +156,7 @@ void EditActorWindow::RenderParamsTab(const ActorDefinition &definition)
         for (const std::string &key: paramNamesV)
         {
             std::shared_ptr<ParamDefinition> paramDef = nullptr;
-            const Error &e = definition.GetParam(key, paramDef);
+            const Error e = definition.GetParam(key, paramDef);
             if (e.Failed())
             {
                 ImGui::TableNextRow();
@@ -206,7 +206,7 @@ void EditActorWindow::RenderParamsTab(const ActorDefinition &definition)
         if (!paramNamesV.empty())
         {
             std::shared_ptr<ParamDefinition> paramDef = nullptr;
-            const Error &e = definition.GetParam(paramNamesV.at(selectedParam), paramDef);
+            const Error e = definition.GetParam(paramNamesV.at(selectedParam), paramDef);
             Param &param = actor.params.at(paramNamesV.at(selectedParam));
             ImGui::SetCursorPosX(cursorPos.x);
             if (e.Ok())
@@ -610,7 +610,7 @@ void EditActorWindow::RenderOutputsTab(const ActorDefinition &definition)
                         ImGui::EndCombo();
                     }
 
-                    const Error &e = targetDef.GetInput(connection.targetInput, inputDef);
+                    const Error e = targetDef.GetInput(connection.targetInput, inputDef);
                     if (e.Ok())
                     {
                         if (!inputDef.AcceptsType(inputDef.GetPrimaryType()))

@@ -76,7 +76,7 @@ void MaterialsTab::Render()
 
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
-    const Error &e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
+    const Error e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e.Ok())
     {

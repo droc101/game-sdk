@@ -35,7 +35,7 @@ void LevelMaterialAsset::Reset()
     emissive = 0;
 }
 
-const Error &LevelMaterialAsset::LoadFromBuffer(DataReader &reader)
+Error LevelMaterialAsset::LoadFromBuffer(DataReader &reader)
 {
     Reset();
     reader.ReadStringWithSize(texture);
@@ -47,7 +47,7 @@ const Error &LevelMaterialAsset::LoadFromBuffer(DataReader &reader)
     return Errors::OK;
 }
 
-const Error &LevelMaterialAsset::SaveToBuffer(DataWriter &writer) const
+Error LevelMaterialAsset::SaveToBuffer(DataWriter &writer) const
 {
     writer.WriteString(texture);
     writer.WriteVec2(baseScale);

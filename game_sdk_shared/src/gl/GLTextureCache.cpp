@@ -75,7 +75,7 @@ GLuint GLTextureCache::CreateTexture(const TextureAsset &textureAsset)
     return glTexture;
 }
 
-const Error &GLTextureCache::GetTextureID(const std::string &relPath, ImTextureID &outTexture)
+Error GLTextureCache::GetTextureID(const std::string &relPath, ImTextureID &outTexture)
 {
     if (textureBuffers.contains(relPath))
     {
@@ -89,7 +89,7 @@ const Error &GLTextureCache::GetTextureID(const std::string &relPath, ImTextureI
         return Errors::OK;
     }
     TextureAsset asset;
-    const Error &error = asset.LoadFromAsset(texturePath);
+    const Error error = asset.LoadFromAsset(texturePath);
     if (error.Failed())
     {
         return error;
@@ -100,10 +100,10 @@ const Error &GLTextureCache::GetTextureID(const std::string &relPath, ImTextureI
     return Errors::OK;
 }
 
-const Error &GLTextureCache::GetTextureSize(const std::string &relPath, ImVec2 &outSize)
+Error GLTextureCache::GetTextureSize(const std::string &relPath, ImVec2 &outSize)
 {
     ImTextureID texture = 0;
-    const Error &error = GetTextureID(relPath, texture);
+    const Error error = GetTextureID(relPath, texture);
     if (error.Failed())
     {
         return error;
@@ -117,10 +117,10 @@ const Error &GLTextureCache::GetTextureSize(const std::string &relPath, ImVec2 &
     return Errors::OK;
 }
 
-const Error &GLTextureCache::GetTextureGLuint(const std::string &relPath, GLuint &outTexture)
+Error GLTextureCache::GetTextureGLuint(const std::string &relPath, GLuint &outTexture)
 {
     ImTextureID texture = 0;
-    const Error &error = GetTextureID(relPath, texture);
+    const Error error = GetTextureID(relPath, texture);
     if (error.Failed())
     {
         return error;
@@ -129,20 +129,20 @@ const Error &GLTextureCache::GetTextureGLuint(const std::string &relPath, GLuint
     return Errors::OK;
 }
 
-const Error &GLTextureCache::LoadTexture(const std::string &relPath)
+Error GLTextureCache::LoadTexture(const std::string &relPath)
 {
     ImTextureID unused = 0;
     return GetTextureID(relPath, unused);
 }
 
-const Error &GLTextureCache::RegisterPng(const std::string &pngPath,
-                                         const std::string &name,
-                                         const bool filter,
-                                         const bool repeat,
-                                         const bool mipmaps)
+Error GLTextureCache::RegisterPng(const std::string &pngPath,
+                                  const std::string &name,
+                                  const bool filter,
+                                  const bool repeat,
+                                  const bool mipmaps)
 {
     TextureAsset tex;
-    const Error &e = tex.Import(pngPath);
+    const Error e = tex.Import(pngPath);
     if (e.Failed())
     {
         return e;

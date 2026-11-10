@@ -16,10 +16,10 @@
 #include <utility>
 #include <vector>
 
-const Error &OptionDefinition::Create(const std::string &path, OptionDefinition &def)
+Error OptionDefinition::Create(const std::string &path, OptionDefinition &def)
 {
     std::string jsonStr;
-    const Error &readError = FileIo::ReadFileToString(path, jsonStr);
+    const Error readError = FileIo::ReadFileToString(path, jsonStr);
     if (readError.Failed())
     {
         return readError;

@@ -17,7 +17,7 @@
 #include <zconf.h>
 #include <zlib.h>
 
-const Error &AssetContainer::Decompress(std::vector<uint8_t> &asset, AssetContainer &outAsset)
+Error AssetContainer::Decompress(std::vector<uint8_t> &asset, AssetContainer &outAsset)
 {
     if (!outAsset.reader.bytes.empty())
     {
@@ -87,11 +87,11 @@ const Error &AssetContainer::Decompress(std::vector<uint8_t> &asset, AssetContai
     return Errors::OK;
 }
 
-const Error &AssetContainer::Compress(std::vector<uint8_t> &inBuffer,
-                                      std::vector<uint8_t> &outBuffer,
-                                      const Asset::AssetType type,
-                                      const uint8_t typeVersion,
-                                      const uint8_t compressionLevel)
+Error AssetContainer::Compress(std::vector<uint8_t> &inBuffer,
+                               std::vector<uint8_t> &outBuffer,
+                               const Asset::AssetType type,
+                               const uint8_t typeVersion,
+                               const uint8_t compressionLevel)
 {
     if (inBuffer.empty())
     {
@@ -145,26 +145,26 @@ const Error &AssetContainer::Compress(std::vector<uint8_t> &inBuffer,
     return Errors::OK;
 }
 
-const Error &AssetContainer::SaveToFile(const std::string &filePath,
-                                        std::vector<uint8_t> &data,
-                                        const Asset::AssetType type,
-                                        const uint8_t typeVersion,
-                                        const uint8_t compressionLevel)
+Error AssetContainer::SaveToFile(const std::string &filePath,
+                                 std::vector<uint8_t> &data,
+                                 const Asset::AssetType type,
+                                 const uint8_t typeVersion,
+                                 const uint8_t compressionLevel)
 {
     std::vector<uint8_t> compressedData;
-    const Error &compressError = Compress(data, compressedData, type, typeVersion, compressionLevel);
+    const Error compressError = Compress(data, compressedData, type, typeVersion, compressionLevel);
     if (compressError.Failed())
     {
         return compressError;
     }
-    const Error &writeError = FileIo::WriteBufferToFile(filePath, compressedData);
+    const Error writeError = FileIo::WriteBufferToFile(filePath, compressedData);
     return writeError;
 }
 
-const Error &AssetContainer::LoadFromFile(const std::string &filePath, AssetContainer &outAsset)
+Error AssetContainer::LoadFromFile(const std::string &filePath, AssetContainer &outAsset)
 {
     std::vector<uint8_t> compressedData;
-    const Error &readError = FileIo::ReadFileToBuffer(filePath, compressedData);
+    const Error readError = FileIo::ReadFileToBuffer(filePath, compressedData);
     if (readError.Failed())
     {
         return readError;

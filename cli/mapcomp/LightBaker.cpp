@@ -570,14 +570,14 @@ bool LightBaker::GetTextureIndex(const std::string &materialName, uint32_t &inde
     }
     const std::string materialPath = pathManager.GetAssetPath(materialName);
     LevelMaterialAsset material{};
-    const Error &error = material.LoadFromAsset(materialPath);
+    const Error error = material.LoadFromAsset(materialPath);
     if (error.Failed())
     {
         Logger::Error("Creating material asset \"{}\" failed with error: {}", materialPath, error);
     }
     const std::string texturePath = pathManager.GetAssetPath(material.texture);
     TextureAsset image{};
-    const Error &texError = image.LoadFromAsset(texturePath);
+    const Error texError = image.LoadFromAsset(texturePath);
     if (texError.Failed())
     {
         Logger::Error("Creating texture asset \"{}\" failed with error: {}", materialPath, texError);

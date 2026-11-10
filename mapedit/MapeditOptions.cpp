@@ -14,7 +14,7 @@ void MapeditOptions::Load()
 {
     const std::string path = SDL_GetBasePath() + std::string("mapedit_options.json");
     std::string jsonString;
-    const Error &readError = FileIo::ReadFileToString(path, jsonString);
+    const Error readError = FileIo::ReadFileToString(path, jsonString);
     if (readError.Failed())
     {
         Logger::Error("Could not open options file {}: {}", path.data(), readError);
@@ -82,7 +82,7 @@ void MapeditOptions::Save()
         {"show_2d_viewports", show2dViewports},
     };
     const std::string path = SDL_GetBasePath() + std::string("mapedit_options.json");
-    const Error &writeError = FileIo::WriteStringToFile(path, savedata.dump(4));
+    const Error writeError = FileIo::WriteStringToFile(path, savedata.dump(4));
     if (writeError.Failed())
     {
         Logger::Error("Failed to write mapedit options to \"{}\": {}", path, writeError);

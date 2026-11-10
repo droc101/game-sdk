@@ -64,7 +64,7 @@ void TextureAsset::Reset()
     pixelData = {};
 }
 
-const Error &TextureAsset::LoadFromBuffer(DataReader &reader)
+Error TextureAsset::LoadFromBuffer(DataReader &reader)
 {
     Reset();
     width = reader.Read<size_t>();
@@ -86,7 +86,7 @@ const Error &TextureAsset::LoadFromBuffer(DataReader &reader)
     return Errors::OK;
 }
 
-const Error &TextureAsset::SaveToBuffer(DataWriter &writer) const
+Error TextureAsset::SaveToBuffer(DataWriter &writer) const
 {
     writer.Write<size_t>(width);
     writer.Write<size_t>(height);
@@ -99,7 +99,7 @@ const Error &TextureAsset::SaveToBuffer(DataWriter &writer) const
     return Errors::OK;
 }
 
-const Error &TextureAsset::CreateFromSdrImage(const string &imagePath)
+Error TextureAsset::CreateFromSdrImage(const string &imagePath)
 {
     if (access(imagePath.c_str(), F_OK | R_OK) != 0)
     {
@@ -140,7 +140,7 @@ const Error &TextureAsset::CreateFromSdrImage(const string &imagePath)
     return Errors::OK;
 }
 
-const Error &TextureAsset::CreateFromHdrImage(const string &imagePath)
+Error TextureAsset::CreateFromHdrImage(const string &imagePath)
 {
     Reset();
     RgbaInputFile file = RgbaInputFile(imagePath.c_str());
@@ -193,11 +193,11 @@ void TextureAsset::CreateMissingTexture()
     }
 }
 
-const Error &TextureAsset::LoadFromAsset(const std::string &filePath)
+Error TextureAsset::LoadFromAsset(const std::string &filePath)
 {
     Reset();
     AssetContainer asset;
-    const Error &error = AssetContainer::LoadFromFile(filePath.c_str(), asset);
+    const Error error = AssetContainer::LoadFromFile(filePath.c_str(), asset);
     if (error.Failed())
     {
         CreateMissingTexture();
@@ -213,7 +213,7 @@ const Error &TextureAsset::LoadFromAsset(const std::string &filePath)
         CreateMissingTexture();
         return Errors::OK;
     }
-    const Error &loadErr = LoadFromBuffer(asset.reader);
+    const Error loadErr = LoadFromBuffer(asset.reader);
     if (loadErr.Failed())
     {
         CreateMissingTexture();
@@ -221,7 +221,7 @@ const Error &TextureAsset::LoadFromAsset(const std::string &filePath)
     return Errors::OK;
 }
 
-const Error &TextureAsset::Import(const std::string &filePath)
+Error TextureAsset::Import(const std::string &filePath)
 {
     const std::filesystem::path path = filePath;
     const std::string extension = path.extension().string();
@@ -236,7 +236,7 @@ const Error &TextureAsset::Import(const std::string &filePath)
     return Errors::INCORRECT_FORMAT;
 }
 
-const Error &TextureAsset::Export(const std::string &filePath) const
+Error TextureAsset::Export(const std::string &filePath) const
 {
     switch (pixelFormat)
     {
@@ -263,7 +263,7 @@ size_t TextureAsset::GetPixelDataSize() const
     return pixelData.size();
 }
 
-const Error &TextureAsset::SaveAsPNG(const string &imagePath) const
+Error TextureAsset::SaveAsPNG(const string &imagePath) const
 {
     std::vector<uint8_t> pixelDataCopy = pixelData;
     const uint32_t *texturePixels = reinterpret_cast<uint32_t *>(pixelDataCopy.data());
@@ -276,7 +276,7 @@ const Error &TextureAsset::SaveAsPNG(const string &imagePath) const
     return code != 0 ? Errors::OK : Error("Failed to write PNG");
 }
 
-const Error &TextureAsset::SaveAsEXR(const string &imagePath) const
+Error TextureAsset::SaveAsEXR(const string &imagePath) const
 {
     Header header = Header(static_cast<int>(width), static_cast<int>(height));
     header.channels().insert("R", Channel(HALF));

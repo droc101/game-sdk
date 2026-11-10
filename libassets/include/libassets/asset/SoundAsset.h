@@ -20,11 +20,11 @@ class SoundAsset final: public Asset
 
         void Reset() override;
 
-        [[nodiscard]] const Error &LoadFromBuffer(DataReader &reader) override;
-        [[nodiscard]] const Error &SaveToBuffer(DataWriter &writer) const override;
+        [[nodiscard]] Error LoadFromBuffer(DataReader &reader) override;
+        [[nodiscard]] Error SaveToBuffer(DataWriter &writer) const override;
 
-        [[nodiscard]] const Error &Import(const std::string &filePath) override;
-        [[nodiscard]] const Error &Export(const std::string &filePath) const override;
+        [[nodiscard]] Error Import(const std::string &filePath) override;
+        [[nodiscard]] Error Export(const std::string &filePath) const override;
 
         [[nodiscard]] AssetType GetAssetType() const override;
         [[nodiscard]] uint8_t GetAssetTypeVersion() const override;

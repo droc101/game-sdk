@@ -43,16 +43,16 @@ MapCompiler::MapCompiler(MapCompilerSettings &settings)
     }
 }
 
-const Error &MapCompiler::LoadMapSource(const std::string &mapSourceFile)
+Error MapCompiler::LoadMapSource(const std::string &mapSourceFile)
 {
     mapBasename = std::filesystem::path(mapSourceFile).stem().string();
     return map.Import(mapSourceFile);
 }
 
-const Error &MapCompiler::Compile()
+Error MapCompiler::Compile()
 {
     std::vector<uint8_t> buffer;
-    const Error &e = SaveToBuffer(buffer);
+    const Error e = SaveToBuffer(buffer);
     if (e.Failed())
     {
         return e;
@@ -72,7 +72,7 @@ LevelMaterialAsset MapCompiler::GetMapMaterial(const std::string &path) const
 {
     LevelMaterialAsset mapMaterial;
     const std::string absPath = pathManager.GetAssetPath(path);
-    const Error &e = mapMaterial.LoadFromAsset(absPath);
+    const Error e = mapMaterial.LoadFromAsset(absPath);
     if (e.Failed())
     {
         Logger::Error("Failed to load material \"{}\": {}", path.c_str(), e);
@@ -81,7 +81,7 @@ LevelMaterialAsset MapCompiler::GetMapMaterial(const std::string &path) const
 }
 
 
-const Error &MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
+const Error MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
 {
     assert(buffer.empty());
 

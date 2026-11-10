@@ -34,7 +34,7 @@ void SoundAsset::Reset()
     wavData = {};
 }
 
-const Error &SoundAsset::LoadFromBuffer(DataReader &reader)
+Error SoundAsset::LoadFromBuffer(DataReader &reader)
 {
     Reset();
     wavData.reserve(reader.TotalSize());
@@ -42,19 +42,19 @@ const Error &SoundAsset::LoadFromBuffer(DataReader &reader)
     return Errors::OK;
 }
 
-const Error &SoundAsset::SaveToBuffer(DataWriter &writer) const
+Error SoundAsset::SaveToBuffer(DataWriter &writer) const
 {
     writer.WriteBuffer(wavData);
     return Errors::OK;
 }
 
-const Error &SoundAsset::Import(const std::string &filePath)
+Error SoundAsset::Import(const std::string &filePath)
 {
     Reset();
     return FileIo::ReadFileToBuffer(filePath, wavData);
 }
 
-const Error &SoundAsset::Export(const std::string &filePath) const
+Error SoundAsset::Export(const std::string &filePath) const
 {
     return FileIo::WriteBufferToFile(filePath, wavData);
 }

@@ -21,10 +21,10 @@
 
 bool ModelViewer::GlobalInit()
 {
-    const Error &modelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/model_viewer/model.frag",
+    const Error modelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/model_viewer/model.frag",
                                                                  "assets/shaders/model_viewer/model.vert",
                                                                  ModelViewerShared::Get().program);
-    const Error &cubeProgramErrorCode = GLHelper::CreateProgram("assets/shaders/model_viewer/uniform_color.frag",
+    const Error cubeProgramErrorCode = GLHelper::CreateProgram("assets/shaders/model_viewer/uniform_color.frag",
                                                                 "assets/shaders/model_viewer/uniform_color.vert",
                                                                 ModelViewerShared::Get().linesProgram);
     if (modelProgramErrorCode.Failed() || cubeProgramErrorCode.Failed())
@@ -304,7 +304,7 @@ void ModelViewer::RenderFramebuffer()
         glUniform4fv(glGetUniformLocation(ModelViewerShared::Get().program, "ALBEDO"), 1, mat.color.GetDataPointer());
 
         GLuint texture = 0;
-        const Error &code = SharedMgr::Get().textureCache.GetTextureGLuint(mat.texture, texture);
+        const Error code = SharedMgr::Get().textureCache.GetTextureGLuint(mat.texture, texture);
         if (code.Failed())
         {
             texture = SharedMgr::Get().textureCache.GetMissingTextureGLuint();

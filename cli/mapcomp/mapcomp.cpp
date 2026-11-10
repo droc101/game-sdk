@@ -63,7 +63,7 @@ int main(const int argc, const char **argv)
 
     const std::string gameConfigPath = args.GetFlagValue("--assets-dir") + "/game.gkvl";
     DataAsset gameConfig{};
-    const Error &e = gameConfig.LoadFromAsset(gameConfigPath);
+    const Error e = gameConfig.LoadFromAsset(gameConfigPath);
     if (e.Failed())
     {
         Logger::Error("Failed to open {}: {}", gameConfigPath.c_str(), e);
@@ -105,14 +105,14 @@ int main(const int argc, const char **argv)
 
     if (args.HasFlagWithValue("--map-source"))
     {
-        const Error &mapLoadError = compiler.LoadMapSource(args.GetFlagValue("--map-source"));
+        const Error mapLoadError = compiler.LoadMapSource(args.GetFlagValue("--map-source"));
         if (mapLoadError.Failed())
         {
             Logger::Error("Failed to load map source: {}", mapLoadError);
             return 1;
         }
 
-        const Error &mapCompileError = compiler.Compile();
+        const Error mapCompileError = compiler.Compile();
         if (mapCompileError.Failed())
         {
             Logger::Error("Failed to compile map: {}", mapCompileError);
@@ -127,7 +127,7 @@ int main(const int argc, const char **argv)
         for (const std::string &map: maps)
         {
             Logger::Info("Compiling map \"{}\"...", map);
-            const Error &mapLoadError = compiler.LoadMapSource(args.GetFlagValue("--map-sources-dir") + "/" + map);
+            const Error mapLoadError = compiler.LoadMapSource(args.GetFlagValue("--map-sources-dir") + "/" + map);
             if (mapLoadError.Failed())
             {
                 Logger::Error("Failed to load map source: {}", mapLoadError);

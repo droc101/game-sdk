@@ -34,27 +34,27 @@ class GLTextureCache
          * @param relPath The texture path
          * @param outTexture Where to store the ID
          */
-        [[nodiscard]] const Error &GetTextureID(const std::string &relPath, ImTextureID &outTexture);
+        [[nodiscard]] Error GetTextureID(const std::string &relPath, ImTextureID &outTexture);
 
         /**
          * Get the size of a texture at a given path
          * @param relPath The texture path
          * @param outSize Where to store the size
          */
-        [[nodiscard]] const Error &GetTextureSize(const std::string &relPath, ImVec2 &outSize);
+        [[nodiscard]] Error GetTextureSize(const std::string &relPath, ImVec2 &outSize);
 
         /**
          * Get the OpenGL texture ID for a given path
          * @param relPath The texture path
          * @param outTexture Where to store the ID
          */
-        [[nodiscard]] const Error &GetTextureGLuint(const std::string &relPath, GLuint &outTexture);
+        [[nodiscard]] Error GetTextureGLuint(const std::string &relPath, GLuint &outTexture);
 
         /**
          * Load a texture from a given path
          * @param relPath The path to load
          */
-        [[nodiscard]] const Error &LoadTexture(const std::string &relPath);
+        [[nodiscard]] Error LoadTexture(const std::string &relPath);
 
         /**
          * Register a PNG file as a texture with an arbitrary name
@@ -64,11 +64,11 @@ class GLTextureCache
          * @param repeat
          * @param mipmaps
          */
-        [[nodiscard]] const Error &RegisterPng(const std::string &pngPath,
-                                               const std::string &name,
-                                               bool filter = false,
-                                               bool repeat = false,
-                                               bool mipmaps = false);
+        [[nodiscard]] Error RegisterPng(const std::string &pngPath,
+                                        const std::string &name,
+                                        bool filter = false,
+                                        bool repeat = false,
+                                        bool mipmaps = false);
 
         [[nodiscard]] static GLuint CreateTexture(const TextureAsset &textureAsset);
 

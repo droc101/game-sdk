@@ -74,7 +74,7 @@ void MdleditWindow::FileDropped(const std::string &filePath)
 void MdleditWindow::OpenGmdl(const std::string &path) const
 {
     ModelAsset model;
-    const Error &errorCode = model.LoadFromAsset(path);
+    const Error errorCode = model.LoadFromAsset(path);
     if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to open the model!\n{}", errorCode));
@@ -88,7 +88,7 @@ void MdleditWindow::OpenGmdl(const std::string &path) const
 void MdleditWindow::ImportModel(const std::string &path) const
 {
     ModelAsset model;
-    const Error &errorCode = model.Import(path);
+    const Error errorCode = model.Import(path);
     for (size_t i = 0; i < model.GetMaterialCount(); i++)
     {
         model.GetMaterial(i).texture = Options::Get().defaultTexture;
@@ -105,7 +105,7 @@ void MdleditWindow::ImportModel(const std::string &path) const
 
 void MdleditWindow::SaveGmdl(const std::string &path) const
 {
-    const Error &errorCode = ModelEditor::modelViewer.GetModel().SaveToAsset(path);
+    const Error errorCode = ModelEditor::modelViewer.GetModel().SaveToAsset(path);
     if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to save the model!\n{}", errorCode));

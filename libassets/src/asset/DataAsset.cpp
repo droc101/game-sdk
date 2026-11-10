@@ -38,14 +38,14 @@ void DataAsset::Reset()
     data = {};
 }
 
-const Error &DataAsset::LoadFromBuffer(DataReader &reader)
+Error DataAsset::LoadFromBuffer(DataReader &reader)
 {
     Reset();
     data = Param::ReadKvList(reader);
     return Errors::OK;
 }
 
-const Error &DataAsset::SaveToBuffer(DataWriter &writer) const
+Error DataAsset::SaveToBuffer(DataWriter &writer) const
 {
     if (writer.GetBufferSize() != 0)
     {
@@ -55,10 +55,10 @@ const Error &DataAsset::SaveToBuffer(DataWriter &writer) const
     return Errors::OK;
 }
 
-const Error &DataAsset::Import(const std::string &filePath)
+Error DataAsset::Import(const std::string &filePath)
 {
     std::string jsonString;
-    const Error &readError = FileIo::ReadFileToString(filePath, jsonString);
+    const Error readError = FileIo::ReadFileToString(filePath, jsonString);
     if (readError.Failed())
     {
         return readError;
@@ -73,16 +73,16 @@ const Error &DataAsset::Import(const std::string &filePath)
     return Errors::OK;
 }
 
-const Error &DataAsset::Export(const std::string &filePath) const
+Error DataAsset::Export(const std::string &filePath) const
 {
     const std::string json = Param::GenerateKvListJson(data).dump();
     return FileIo::WriteStringToFile(filePath, json);
 }
 
-const Error &DataAsset::CreateFromKvlFile(const std::string &kvlPath)
+Error DataAsset::CreateFromKvlFile(const std::string &kvlPath)
 {
     DataReader reader;
-    const Error &readError = FileIo::CreateFileDataReader(kvlPath, reader);
+    const Error readError = FileIo::CreateFileDataReader(kvlPath, reader);
     if (readError.Failed())
     {
         return readError;
@@ -110,10 +110,10 @@ const Error &DataAsset::CreateFromKvlFile(const std::string &kvlPath)
     return Errors::OK;
 }
 
-const Error &DataAsset::SaveAsKvlFile(const std::string &kvlFile) const
+Error DataAsset::SaveAsKvlFile(const std::string &kvlFile) const
 {
     std::ofstream file;
-    const Error &openError = FileIo::OpenFileW(kvlFile, file);
+    const Error openError = FileIo::OpenFileW(kvlFile, file);
     if (openError.Failed())
     {
         return openError;

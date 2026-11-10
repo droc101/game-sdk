@@ -47,7 +47,7 @@ void ModelAsset::Reset()
     staticCollisionMesh = StaticCollisionMesh();
 }
 
-const Error &ModelAsset::LoadFromBuffer(DataReader &reader)
+Error ModelAsset::LoadFromBuffer(DataReader &reader)
 {
     Reset();
     const uint32_t materialCount = reader.Read<uint32_t>();
@@ -95,7 +95,7 @@ const Error &ModelAsset::LoadFromBuffer(DataReader &reader)
     return Errors::OK;
 }
 
-const Error &ModelAsset::SaveToBuffer(DataWriter &writer) const
+Error ModelAsset::SaveToBuffer(DataWriter &writer) const
 {
     assert(!skins.empty()); // you gotta have a skin
     assert(!skins.at(0).empty()); // you gotta have materials
@@ -144,7 +144,7 @@ const Error &ModelAsset::SaveToBuffer(DataWriter &writer) const
     return Errors::OK;
 }
 
-const Error &ModelAsset::Import(const std::string &filePath)
+Error ModelAsset::Import(const std::string &filePath)
 {
     Reset();
     Error lodCode = Errors::UNKNOWN;
@@ -332,7 +332,7 @@ void ModelAsset::AddHull(const ConvexHull &hull)
     convexHulls.push_back(hull);
 }
 
-const Error &ModelAsset::AddHulls(const std::string &path)
+Error ModelAsset::AddHulls(const std::string &path)
 {
     return ConvexHull::ImportMultiple(path, convexHulls);
 }

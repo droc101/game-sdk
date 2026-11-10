@@ -44,7 +44,7 @@ void MtleditWindow::FileDropped(const std::string &filePath)
 
 void MtleditWindow::OpenGmtl(const std::string &path)
 {
-    const Error &errorCode = material.LoadFromAsset(path);
+    const Error errorCode = material.LoadFromAsset(path);
     if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to open the material!\n{}", errorCode));
@@ -53,7 +53,7 @@ void MtleditWindow::OpenGmtl(const std::string &path)
 
 void MtleditWindow::SaveGmtl(const std::string &path) const
 {
-    const Error &errorCode = material.SaveToAsset(path);
+    const Error errorCode = material.SaveToAsset(path);
     if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to save the material!\n{}", errorCode));
@@ -97,7 +97,7 @@ void MtleditWindow::Render()
 
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
-    const Error &e = SharedMgr::Get().textureCache.GetTextureID(material.texture, tid);
+    const Error e = SharedMgr::Get().textureCache.GetTextureID(material.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
     if (e.Ok())
     {

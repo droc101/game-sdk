@@ -41,5 +41,5 @@ class ShdeditWindow final: public Window
         void OutPathCallback(const std::string &path);
         void BasePathCallback(const std::string &path);
         void AddFolderCallback(const std::string &folder);
-        const Error &Execute(std::string &errorLog);
+        Error Execute(std::string &errorLog);
 };

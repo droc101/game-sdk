@@ -80,7 +80,7 @@ void SharedMgr::SharedMenuUI(const std::string &programName)
 void SharedMgr::UpdateAssetPaths()
 {
     DataAsset gameConfig{};
-    const Error &e = gameConfig.LoadFromAsset(Options::Get().gameConfigPath);
+    const Error e = gameConfig.LoadFromAsset(Options::Get().gameConfigPath);
     if (e.Failed())
     {
         return;

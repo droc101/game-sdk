@@ -20,13 +20,13 @@
 #include <string>
 #include <utility>
 
-const Error &ActorDefinition::Create(const std::string &path, ActorDefinition &definition)
+Error ActorDefinition::Create(const std::string &path, ActorDefinition &definition)
 {
     const std::regex validIdentifierRegex = std::regex(VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX);
     std::smatch match;
 
     std::string jsonString;
-    const Error &readError = FileIo::ReadFileToString(path, jsonString);
+    const Error readError = FileIo::ReadFileToString(path, jsonString);
     if (readError.Failed())
     {
         return readError;
@@ -197,7 +197,7 @@ void ActorDefinition::GetParamNames(std::set<std::string> &out) const
     }
 }
 
-const Error &ActorDefinition::GetInput(const std::string &name, InputDefinition &input) const
+Error ActorDefinition::GetInput(const std::string &name, InputDefinition &input) const
 {
     if (inputs.contains(name))
     {
@@ -211,7 +211,7 @@ const Error &ActorDefinition::GetInput(const std::string &name, InputDefinition 
     return Errors::NOT_FOUND;
 }
 
-const Error &ActorDefinition::GetOutput(const std::string &name, OutputDefinition &output) const
+Error ActorDefinition::GetOutput(const std::string &name, OutputDefinition &output) const
 {
     if (outputs.contains(name))
     {
@@ -225,7 +225,7 @@ const Error &ActorDefinition::GetOutput(const std::string &name, OutputDefinitio
     return Errors::NOT_FOUND;
 }
 
-const Error &ActorDefinition::GetParam(const std::string &name, std::shared_ptr<ParamDefinition> &param) const
+Error ActorDefinition::GetParam(const std::string &name, std::shared_ptr<ParamDefinition> &param) const
 {
     if (params.contains(name))
     {

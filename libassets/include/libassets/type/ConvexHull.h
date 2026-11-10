@@ -51,7 +51,7 @@ class ConvexHull
          * @param path The OBJ file to import from
          * @param output Where to store the ConvexHulls=
          */
-        [[nodiscard]] static const Error &ImportMultiple(const std::string &path, std::vector<ConvexHull> &output);
+        [[nodiscard]] static Error ImportMultiple(const std::string &path, std::vector<ConvexHull> &output);
 
     private:
         glm::vec3 offset{};

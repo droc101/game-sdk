@@ -166,7 +166,7 @@ void ShdeditWindow::AddFolderCallback(const std::string &folder)
     SelectCallback(sourcePaths);
 }
 
-const Error &ShdeditWindow::Execute(std::string &errorLog)
+Error ShdeditWindow::Execute(std::string &errorLog)
 {
     if (!std::filesystem::is_directory(outputFolder))
     {
@@ -178,7 +178,7 @@ const Error &ShdeditWindow::Execute(std::string &errorLog)
         const std::string &file = files.at(i);
         const ShaderAsset::ShaderType kind = types.at(i);
         ShaderAsset shader;
-        const Error &e = shader.Import(file);
+        const Error e = shader.Import(file);
         if (e.Failed())
         {
             return e;
@@ -224,7 +224,7 @@ const Error &ShdeditWindow::Execute(std::string &errorLog)
             }
         }
 
-        const Error &writeError = shader.SaveToAssetEx(outputPath,
+        const Error writeError = shader.SaveToAssetEx(outputPath,
                                                        enableOptimization,
                                                        debugInfo,
                                                        &errorLog,
@@ -388,7 +388,7 @@ void ShdeditWindow::Render()
         } else
         {
             std::string compileLog;
-            const Error &e = Execute(compileLog);
+            const Error e = Execute(compileLog);
             if (e.Ok())
             {
                 InfoMessage("Successfully compiled", "");

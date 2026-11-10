@@ -43,10 +43,10 @@ bool GLHelper::Init()
     return true;
 }
 
-const Error &GLHelper::CreateShader(const char *filename, const GLenum type, GLuint &outShader)
+Error GLHelper::CreateShader(const char *filename, const GLenum type, GLuint &outShader)
 {
     std::string glsl;
-    const Error &readError = FileIo::ReadFileToString(filename, glsl);
+    const Error readError = FileIo::ReadFileToString(filename, glsl);
     if (readError.Failed())
     {
         Logger::Error("Failed to open shader file {}: {}!", filename, readError);
@@ -70,12 +70,12 @@ const Error &GLHelper::CreateShader(const char *filename, const GLenum type, GLu
     return Errors::OK;
 }
 
-const Error &GLHelper::CreateProgram(const char *fragmentFilename, const char *vertexFilename, GLuint &outProgram)
+Error GLHelper::CreateProgram(const char *fragmentFilename, const char *vertexFilename, GLuint &outProgram)
 {
     GLuint vertexShader = 0;
     GLuint fragmentShader = 0;
-    const Error &vertexShaderErrorCode = CreateShader(vertexFilename, GL_VERTEX_SHADER, vertexShader);
-    const Error &fragmentShaderErrorCode = CreateShader(fragmentFilename, GL_FRAGMENT_SHADER, fragmentShader);
+    const Error vertexShaderErrorCode = CreateShader(vertexFilename, GL_VERTEX_SHADER, vertexShader);
+    const Error fragmentShaderErrorCode = CreateShader(fragmentFilename, GL_FRAGMENT_SHADER, fragmentShader);
     if (vertexShaderErrorCode.Failed() || fragmentShaderErrorCode.Failed())
     {
         glDeleteShader(vertexShader);

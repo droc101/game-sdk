@@ -30,7 +30,7 @@ void ActorDefinitionManager::LoadOptionDefinitions(const SearchPathManager &path
     for (const std::string &val: defs)
     {
         OptionDefinition def{};
-        const Error &e = OptionDefinition::Create(val, def);
+        const Error e = OptionDefinition::Create(val, def);
         if (e.Ok())
         {
             optionDefinitions[def.GetName()] = def;
@@ -42,13 +42,13 @@ void ActorDefinitionManager::LoadOptionDefinitions(const SearchPathManager &path
     Logger::Verbose("Loaded {} option definitions", optionDefinitions.size());
 }
 
-const Error &ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathManager)
+Error ActorDefinitionManager::LoadActorDefinitions(const SearchPathManager &pathManager)
 {
     const std::vector<std::string> defs = pathManager.ScanAssetFolderA("defs/actors", ".json");
     for (const std::string &val: defs)
     {
         ActorDefinition def{};
-        const Error &e = ActorDefinition::Create(val, def);
+        const Error e = ActorDefinition::Create(val, def);
         if (e.Ok())
         {
             actorDefinitions[def.className] = def;

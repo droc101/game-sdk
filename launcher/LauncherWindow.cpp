@@ -36,7 +36,7 @@ bool LauncherWindow::Init()
         (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/" + icon, basename);
     }
 
-    const Error &c = LoadLauncherConfig();
+    const Error c = LoadLauncherConfig();
     if (c.Failed())
     {
         Logger::Error("Failed to load launcher.json: %s", c);
@@ -126,10 +126,10 @@ const Window::WindowProperties &LauncherWindow::GetProperties() const
     return properties;
 }
 
-const Error &LauncherWindow::LoadLauncherConfig()
+Error LauncherWindow::LoadLauncherConfig()
 {
     std::string jsonStr;
-    const Error &readError = FileIo::ReadFileToString("assets/launcher.json", jsonStr);
+    const Error readError = FileIo::ReadFileToString("assets/launcher.json", jsonStr);
     if (readError.Failed())
     {
         return readError;
