@@ -445,15 +445,13 @@ LightBaker::LightBaker()
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 #endif
     };
-    static constexpr LunaDeviceCreationInfo2 DEVICE_CREATION_INFO = {
-        .extensionCount = REQUIRED_EXTENSIONS.size(),
-        .extensionNames = REQUIRED_EXTENSIONS.data(),
+    static constexpr LunaDeviceCreationInfo DEVICE_CREATION_INFO = {
+        .requiredExtensionCount = REQUIRED_EXTENSIONS.size(),
+        .requiredExtensionNames = REQUIRED_EXTENSIONS.data(),
         .requiredFeatures = REQUIRED_FEATURES,
         .physicalDevicePreferenceDefinition = &PHYSICAL_DEVICE_PREFERENCE_DEFINITION,
-        .allocatorCreateFlags = VMA_ALLOCATOR_CREATE_EXTERNALLY_SYNCHRONIZED_BIT |
-                                VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT,
     };
-    if (!CheckResult(lunaCreateDevice2(&DEVICE_CREATION_INFO, &device)))
+    if (!CheckResult(lunaCreateDevice(&DEVICE_CREATION_INFO, &device)))
     {
         return;
     }
@@ -1422,7 +1420,21 @@ bool LightBaker::CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize)
         return false;
     }
 
-    const std::array descriptorPoolSizes = {
+    static constexpr uint32_t ZERO = 0;
+    static constexpr LunaBufferWriteInfo WRITE_INFO = {
+        .size = sizeof(ZERO),
+        .data = &ZERO,
+        .sourceStageMask = VK_PIPELINE_STAGE_2_NONE,
+        .sourceAccessMask = VK_ACCESS_2_NONE,
+        .destinationStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+        .destinationAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+    };
+    if (!CheckResult(lunaWriteDataToBuffer(device, commandBuffer, emissiveLuxelIndicesBuffer, &WRITE_INFO)))
+    {
+        return false;
+    }
+
+    static constexpr std::array DESCRIPTOR_POOL_SIZES = {
         VkDescriptorPoolSize{
             .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
             .descriptorCount = 1,
@@ -1432,13 +1444,13 @@ bool LightBaker::CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize)
             .descriptorCount = 1,
         },
     };
-    const LunaDescriptorPoolCreationInfo descriptorPoolCreationInfo = {
+    static constexpr LunaDescriptorPoolCreationInfo DESCRIPTOR_POOL_CREATION_INFO = {
         .maxSets = 1,
-        .poolSizeCount = descriptorPoolSizes.size(),
-        .poolSizes = descriptorPoolSizes.data(),
+        .poolSizeCount = DESCRIPTOR_POOL_SIZES.size(),
+        .poolSizes = DESCRIPTOR_POOL_SIZES.data(),
     };
     LunaDescriptorPool computeDescriptorPool{};
-    if (!CheckResult(lunaCreateDescriptorPool(device, &descriptorPoolCreationInfo, &computeDescriptorPool)))
+    if (!CheckResult(lunaCreateDescriptorPool(device, &DESCRIPTOR_POOL_CREATION_INFO, &computeDescriptorPool)))
     {
         return false;
     }
@@ -1518,6 +1530,7 @@ bool LightBaker::CreateBLAS(const std::vector<BrushMeshBuilder> &meshBuilders, c
         return false;
     }
 
+    bottomLevelAccelerationStructures.clear();
     bottomLevelAccelerationStructures.reserve(meshBuilders.size());
     VkDeviceSize indexBufferOffset = 0;
     for (const BrushMeshBuilder &meshBuilder: meshBuilders)
@@ -2370,8 +2383,19 @@ bool LightBaker::CreateShaderBindingTables()
         return false;
     }
 
-    // TODO: This is unsynchronized
-    return CheckResult(lunaFillBuffer(device, commandBuffer, nullShaderBindingTable, 0));
+    std::vector<uint8_t> data(physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize);
+    const LunaBufferWriteInfo nullShaderBindingTableWriteInfo = {
+        .size = physicalDeviceRayTracingPipelineProperties.shaderGroupHandleSize,
+        .data = data.data(),
+        .sourceStageMask = VK_PIPELINE_STAGE_2_NONE,
+        .sourceAccessMask = VK_ACCESS_2_NONE,
+        .destinationStageMask = VK_PIPELINE_STAGE_2_RAY_TRACING_SHADER_BIT_KHR,
+        .destinationAccessMask = VK_ACCESS_2_SHADER_BINDING_TABLE_READ_BIT_KHR,
+    };
+    return CheckResult(lunaWriteDataToBuffer(device,
+                                             commandBuffer,
+                                             nullShaderBindingTable,
+                                             &nullShaderBindingTableWriteInfo));
 }
 
 bool LightBaker::SingleBakeIteration(const uint32_t width,
