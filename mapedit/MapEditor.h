@@ -55,7 +55,7 @@ class MapEditor
                 {1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0};
         static constexpr float MAP_HALF_SIZE = MapAsset::MAP_MAX_HALF_EXTENTS;
         static constexpr float MAP_SIZE = MAP_HALF_SIZE * 2;
-        static constexpr std::array<float, 7> luxelScaleValues = {0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0};
+        static constexpr std::array<float, 7> LUXEL_SCALE_VALUES = {0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0};
 
         static constexpr const char *SELECT_ICON_NAME = "editor/icon_select";
         static constexpr const char *ACTOR_ICON_NAME = "editor/icon_actor";

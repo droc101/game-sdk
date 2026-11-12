@@ -235,10 +235,10 @@ void Viewport::Render()
                 glm::vec2 mouseDelta{};
                 (void)SDL_GetRelativeMouseState(&mouseDelta.x, &mouseDelta.y);
                 perspectiveCameraRotation.x += glm::radians(mouseDelta.y / -5.0f);
-                perspectiveCameraRotation.y += glm::radians(mouseDelta.x / 5.0f);
                 perspectiveCameraRotation.x = glm::clamp(perspectiveCameraRotation.x,
                                                          glm::radians(-89.0f),
                                                          glm::radians(89.0f));
+                perspectiveCameraRotation.y += glm::radians(mouseDelta.x / 5.0f);
             }
             glm::vec3 moveDir{};
             if (ImGui::IsKeyDown(ImGuiKey_W))
@@ -423,7 +423,7 @@ void Viewport::RecalculateMatrices()
     {
         const glm::mat4 perspectiveMatrix = glm::perspective(glm::radians(90.0f),
                                                              aspect,
-                                                             MapAsset::MAP_MAX_HALF_EXTENTS * 3.0f,
+                                                             MapAsset::MAP_MAX_HALF_EXTENTS * std::sqrt(3.0f),
                                                              0.01f);
 
         const glm::mat4 view = glm::lookAt(perspectiveCameraPos,

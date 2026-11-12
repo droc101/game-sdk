@@ -137,7 +137,7 @@ bool MapEditor::BrushFaceToolWindow(Brush::Face &face)
     ImGui::Text("Units per Luxel (lower is higher quality)");
     if (ImGui::BeginCombo("##unitsPerLuxel", std::format("{}", face.unitsPerLuxel).c_str()))
     {
-        for (float luxelScaleValue: luxelScaleValues)
+        for (float luxelScaleValue: LUXEL_SCALE_VALUES)
         {
             if (ImGui::Selectable(std::format("{}", luxelScaleValue).c_str(), face.unitsPerLuxel == luxelScaleValue))
             {

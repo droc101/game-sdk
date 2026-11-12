@@ -539,7 +539,7 @@ void ViewportRenderer::RenderActor(const Actor &a, const Viewport &vp, const Col
                                overlayColor);
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_CIRCLE:
-                RenderCircleRdef(dynamic_cast<CircleRenderDefinition *>(rdef.get()), a, vp);
+                RenderCircleRdef(dynamic_cast<CircleRenderDefinition *>(rdef.get()), a, vp.GetType());
                 break;
             case RenderDefinition::RenderDefinitionType::RD_TYPE_CONE:
                 RenderConeRdef(dynamic_cast<ConeRenderDefinition *>(rdef.get()), a, worldMatrix);
@@ -817,7 +817,9 @@ void ViewportRenderer::RenderWallRdef(WallRenderDefinition *rdef,
     }
 }
 
-void ViewportRenderer::RenderCircleRdef(CircleRenderDefinition *rdef, const Actor &actor, const Viewport &vp)
+void ViewportRenderer::RenderCircleRdef(CircleRenderDefinition *rdef,
+                                        const Actor &actor,
+                                        const Viewport::ViewportType viewportType)
 {
     const float radius = rdef->GetRadius(actor);
     const Color color = rdef->GetColor(actor);
@@ -839,7 +841,7 @@ void ViewportRenderer::RenderCircleRdef(CircleRenderDefinition *rdef, const Acto
         const size_t nextIndex = (i + 1) % numVerts;
         const glm::vec2 &startPoint = pts.at(i);
         const glm::vec2 &endPoint = pts.at(nextIndex);
-        switch (vp.GetType())
+        switch (viewportType)
         {
             case Viewport::ViewportType::TOP_DOWN_XZ:
                 MapRenderer::CmdLine(glm::vec3(startPoint.x + actor.position.x,

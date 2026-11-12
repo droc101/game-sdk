@@ -31,15 +31,15 @@ Brush::Brush(nlohmann::ordered_json json)
     rotation.y = json["rotation_y"];
     rotation.z = json["rotation_z"];
 
-    const nlohmann::ordered_json jsonVertices = json.at("vertices");
+    const nlohmann::ordered_json &jsonVertices = json.at("vertices");
     for (const auto &item: jsonVertices.items())
     {
-        vertices.push_back({item.value().value("x", 0.0f),
-                            item.value().value("y", 0.0f),
-                            item.value().value("z", 0.0f)});
+        vertices.emplace_back(item.value().value("x", 0.0f),
+                              item.value().value("y", 0.0f),
+                              item.value().value("z", 0.0f));
     }
 
-    const nlohmann::ordered_json jsonFaces = json.at("faces");
+    const nlohmann::ordered_json &jsonFaces = json.at("faces");
     for (const auto &item: jsonFaces.items())
     {
         faces.emplace_back(item.value());
@@ -145,7 +145,7 @@ nlohmann::ordered_json Brush::GenerateJson() const
 
 Brush::Face::Face(nlohmann::ordered_json json)
 {
-    const nlohmann::ordered_json jsonIndices = json.at("indices");
+    const nlohmann::ordered_json &jsonIndices = json.at("indices");
     for (const auto &item: jsonIndices.items())
     {
         indices.push_back(item.value().get<uint32_t>());

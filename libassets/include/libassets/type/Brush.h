@@ -53,7 +53,7 @@ class Brush
                 std::vector<uint32_t> indices;
                 std::vector<MapVertex> vertices;
 
-                glm::vec2 faceSize;
+                glm::vec2 faceSize{};
 
             private:
                 void CalculateUVs(const glm::vec3 &brushOrigin, const Face &face);

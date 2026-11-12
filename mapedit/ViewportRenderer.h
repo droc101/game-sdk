@@ -25,8 +25,7 @@
 #include <vector>
 #include "ResizeGizmoHelper.h"
 #include "tools/EditorTool.h"
-
-class Viewport;
+#include "Viewport.h"
 
 class ViewportRenderer
 {
@@ -166,8 +165,7 @@ class ViewportRenderer
                                    bool textured,
                                    const Color &overlayColor);
 
-        // TODO: This only needs the viewport type, but because of the hacks required to make the scale gizmo work it's taking an entire viewport reference
-        static void RenderCircleRdef(CircleRenderDefinition *rdef, const Actor &actor, const Viewport &vp);
+        static void RenderCircleRdef(CircleRenderDefinition *rdef, const Actor &actor, Viewport::ViewportType viewportType);
 
         static void RenderConeRdef(ConeRenderDefinition *rdef, const Actor &actor, const glm::mat4 &worldMatrix);
 };
