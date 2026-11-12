@@ -28,9 +28,10 @@ DesktopInterface &DesktopInterface::Get()
 
 bool DesktopInterface::ExecuteProcess(const std::string &executable,
                                       const std::vector<std::string> &arguments,
-                                      int *exitCode,const bool redirectStdio)
+                                      int *exitCode,
+                                      const bool redirectStdio)
 {
-    SDL_Process *p = StartSDLProcess(executable, arguments,redirectStdio);
+    SDL_Process *p = StartSDLProcess(executable, arguments, redirectStdio);
     if (p == nullptr)
     {
         return false;
@@ -38,7 +39,9 @@ bool DesktopInterface::ExecuteProcess(const std::string &executable,
     return SDL_WaitProcess(p, true, exitCode);
 }
 
-SDL_Process *DesktopInterface::StartSDLProcess(const std::string &executable, const std::vector<std::string> &arguments,const bool redirectStdio)
+SDL_Process *DesktopInterface::StartSDLProcess(const std::string &executable,
+                                               const std::vector<std::string> &arguments,
+                                               const bool redirectStdio)
 {
     std::vector<const char *> args{};
     args.push_back(executable.c_str());
@@ -68,9 +71,10 @@ SDL_Process *DesktopInterface::StartSDLProcess(const std::string &executable, co
 }
 
 bool DesktopInterface::ExecuteProcessNonBlocking(const std::string &executable,
-                                                 const std::vector<std::string> &arguments,const bool redirectStdio)
+                                                 const std::vector<std::string> &arguments,
+                                                 const bool redirectStdio)
 {
-    SDL_Process *p = StartSDLProcess(executable, arguments,redirectStdio);
+    SDL_Process *p = StartSDLProcess(executable, arguments, redirectStdio);
     if (p == nullptr)
     {
         return false;
@@ -101,7 +105,7 @@ bool DesktopInterface::OpenFilesystemPath(const std::string &path)
     info.fMask = 0;
     return ShellExecuteEx(&info);
 #else
-    return ExecuteProcess("xdg-open", {path}, nullptr,false);
+    return ExecuteProcess("xdg-open", {path}, nullptr, false);
 #endif
 }
 

@@ -98,7 +98,7 @@ static void CompileFile(const std::string &file, const ShaderAsset::ShaderType t
     }
 }
 
-static const Error Compile()
+static Error Compile()
 {
     if (!std::filesystem::is_directory(outputFolder))
     {

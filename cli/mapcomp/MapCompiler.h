@@ -57,7 +57,7 @@ class MapCompiler
 
         static constexpr float FAST_COMPILE_MIN_UNITS_PER_LUXEL = 2.0f;
 
-        const Error SaveToBuffer(std::vector<uint8_t> &buffer);
+        Error SaveToBuffer(std::vector<uint8_t> &buffer);
 
         [[nodiscard]] LevelMaterialAsset GetMapMaterial(const std::string &path) const;
 

@@ -21,7 +21,10 @@ class DesktopInterface
          * @param exitCode Where to store the process's exit code, can be nullptr
          * @param redirectStdio
          */
-        bool ExecuteProcess(const std::string &executable, const std::vector<std::string> &arguments, int *exitCode,bool redirectStdio);
+        bool ExecuteProcess(const std::string &executable,
+                            const std::vector<std::string> &arguments,
+                            int *exitCode,
+                            bool redirectStdio);
 
         /**
          * Create and start an SDL_Process
@@ -30,7 +33,9 @@ class DesktopInterface
          * @param redirectStdio
          * @return SDL_Process pointer or nullptr on failure
          */
-        SDL_Process *StartSDLProcess(const std::string &executable, const std::vector<std::string> &arguments,bool redirectStdio);
+        SDL_Process *StartSDLProcess(const std::string &executable,
+                                     const std::vector<std::string> &arguments,
+                                     bool redirectStdio);
 
         /**
          * Execute a process, do not block
@@ -39,7 +44,9 @@ class DesktopInterface
          * @param redirectStdio
          * @note You cannot later block on this process or obtain its exit code
          */
-        bool ExecuteProcessNonBlocking(const std::string &executable, const std::vector<std::string> &arguments,bool redirectStdio);
+        bool ExecuteProcessNonBlocking(const std::string &executable,
+                                       const std::vector<std::string> &arguments,
+                                       bool redirectStdio);
 
         /**
          * Open a filesystem path in the default program

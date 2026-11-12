@@ -14,10 +14,7 @@ BrushCollisionBuilder::BrushCollisionBuilder(const Brush &brush)
 {
     origin = brush.origin;
     rotation = brush.rotation;
-    for (const glm::vec3 &vertex: brush.vertices)
-    {
-        vertices.push_back(vertex);
-    }
+    vertices = brush.vertices;
 }
 
 void BrushCollisionBuilder::Write(DataWriter &writer) const

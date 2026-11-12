@@ -97,8 +97,6 @@ class Brush
 
     private:
         std::vector<TriangulatedFace> triangulatedFaces{};
-
-        glm::vec3 GetTransformedVertex(size_t index) const;
 };
 
 template<> struct std::hash<std::pair<glm::vec3, glm::vec3>>

@@ -6,12 +6,11 @@
 
 #include <cstdint>
 #include <libassets/type/renderDefs/values/BoolDefinitionValue.h>
+#include <libassets/type/renderDefs/values/StringDefinitionValue.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
-
-#include "values/StringDefinitionValue.h"
 
 class Actor;
 
@@ -55,7 +54,6 @@ class RenderDefinition
         RenderDefinitionType type = RenderDefinitionType::RD_TYPE_UNKNOWN;
         BoolDefinitionValue gizmo;
         StringDefinitionValue viewportMode;
-
 
     private:
         static RenderDefinitionType ParseType(const std::string &type);

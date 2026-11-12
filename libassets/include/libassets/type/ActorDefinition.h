@@ -38,47 +38,47 @@ class ActorDefinition
         static constexpr const char *VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX = R"/(^[a-z_]+$)/";
 
         /**
-     * Create an ActorDefinition from a JSON file
-     * @param path The path to the JSON file
-     * @param definition The definition to populate
-     */
+         * Create an ActorDefinition from a JSON file
+         * @param path The path to the JSON file
+         * @param definition The definition to populate
+         */
         [[nodiscard]] static Error Create(const std::string &path, ActorDefinition &definition);
 
         /**
-     * Check if this definition extends another at any point
-     * @param baseClass The class to look for
-     */
+         * Check if this definition extends another at any point
+         * @param baseClass The class to look for
+         */
         [[nodiscard]] bool Extends(const std::string &baseClass) const;
 
         /**
-     * Get all input names in this definition and all parents
-     */
+         * Get all input names in this definition and all parents
+         */
         void GetInputNames(std::set<std::string> &out) const;
         /**
-     * Get all output names in this definition and all parents
-     */
+         * Get all output names in this definition and all parents
+         */
         void GetOutputNames(std::set<std::string> &out) const;
         /**
-     * Get all param names in this definition and all parents
-     */
+         * Get all param names in this definition and all parents
+         */
         void GetParamNames(std::set<std::string> &out) const;
 
         /**
-     * Get an input definition by name
-     * @param name The input name
-     * @param input The InputDefinition to populate
-     */
+         * Get an input definition by name
+         * @param name The input name
+         * @param input The InputDefinition to populate
+         */
         [[nodiscard]] Error GetInput(const std::string &name, InputDefinition &input) const;
         /**
-     * Get an output definition by name
-     * @param name The output name
-     * @param output The OutputDefinition to populate
-     */
+         * Get an output definition by name
+         * @param name The output name
+         * @param output The OutputDefinition to populate
+         */
         [[nodiscard]] Error GetOutput(const std::string &name, OutputDefinition &output) const;
         /**
-     * Get a param definition by name
-     * @param name The param name
-     * @param param The ParamDefinition to populate
-     */
+         * Get a param definition by name
+         * @param name The param name
+         * @param param The ParamDefinition to populate
+         */
         [[nodiscard]] Error GetParam(const std::string &name, std::shared_ptr<ParamDefinition> &param) const;
 };

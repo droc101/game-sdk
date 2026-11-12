@@ -81,7 +81,7 @@ LevelMaterialAsset MapCompiler::GetMapMaterial(const std::string &path) const
 }
 
 
-const Error MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
+Error MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
 {
     assert(buffer.empty());
 
@@ -194,10 +194,9 @@ const Error MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
 
     std::vector<BrushMeshBuilder> mapMeshBuilders{};
     std::vector<BrushCollisionBuilder> collisionBuilders{};
-    for (size_t brushIndex = 0; brushIndex < map.brushes.size(); brushIndex++)
+    for (const Brush &brush: map.brushes)
     {
-        const Brush &brush = map.brushes.at(brushIndex);
-        std::unordered_map<std::string, BrushMeshBuilder> sectorMeshBuilders{};
+        std::unordered_map<std::string, BrushMeshBuilder> brushMeshBuilders{};
 
         for (size_t i = 0; i < brush.faces.size(); i++)
         {
@@ -205,15 +204,15 @@ const Error MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
             const LevelMaterialAsset mapMaterial = GetMapMaterial(face.material);
             if (!mapMaterial.HasFlags(LevelMaterialAsset::FLAG_INVISIBLE))
             {
-                if (!sectorMeshBuilders.contains(face.material))
+                if (!brushMeshBuilders.contains(face.material))
                 {
-                    sectorMeshBuilders.emplace(face.material, BrushMeshBuilder(pathManager, face.material));
+                    brushMeshBuilders.emplace(face.material, BrushMeshBuilder(pathManager, face.material));
                 }
-                sectorMeshBuilders.at(face.material).AddFace(brush, i);
+                brushMeshBuilders.at(face.material).AddFace(brush, i);
             }
         }
 
-        for (const BrushMeshBuilder &b: sectorMeshBuilders | std::views::values)
+        for (const BrushMeshBuilder &b: brushMeshBuilders | std::views::values)
         {
             mapMeshBuilders.push_back(b);
         }
