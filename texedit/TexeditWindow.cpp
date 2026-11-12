@@ -20,12 +20,19 @@ const Window::WindowProperties &TexeditWindow::GetProperties() const
 
 bool TexeditWindow::Init()
 {
-    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/checkerboard.png",
-                                                    CHECKERBOARD_ICON_NAME,
-                                                    false,
-                                                    true);
-    const Error e = SharedMgr::Get().textureCache.GetTextureID(CHECKERBOARD_ICON_NAME, checkerboardTexture);
-    assert(e.Ok());
+    Error e = SharedMgr::Get().textureCache.RegisterPng("assets/icons/checkerboard.png",
+                                                        CHECKERBOARD_ICON_NAME,
+                                                        false,
+                                                        true);
+    if (e.Failed())
+    {
+        return false;
+    }
+    e = SharedMgr::Get().textureCache.GetTextureID(CHECKERBOARD_ICON_NAME, checkerboardTexture);
+    if (e.Failed())
+    {
+        return false;
+    }
 
     const std::string &openPath = WindowManager::Get().GetArgumentParser().GetFileArgument({".gtex"});
     if (!openPath.empty())

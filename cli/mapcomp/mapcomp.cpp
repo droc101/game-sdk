@@ -77,17 +77,19 @@ int main(const int argc, const char **argv)
 
     if (args.HasFlagWithValue("--bounces"))
     {
-        bounces = std::strtol(args.GetFlagValue("--bounces").c_str(), nullptr, 10);
+        bounces = std::strtoul(args.GetFlagValue("--bounces").c_str(), nullptr, 10);
     }
 
     if (args.HasFlagWithValue("--samples"))
     {
-        samples = std::strtol(args.GetFlagValue("--samples").c_str(), nullptr, 10);
+        samples = std::strtoul(args.GetFlagValue("--samples").c_str(), nullptr, 10);
     }
 
-    // TODO: If bounces are enabled, samples must be a positive integer multiple of LightBaker::SAMPLES_PER_THREAD
-    assert(bounces == 0 ||
-           (samples / LightBaker::SAMPLES_PER_THREAD > 0 && samples % LightBaker::SAMPLES_PER_THREAD == 0));
+    if (bounces != 0 && (samples == 0 || samples % LightBaker::SAMPLES_PER_THREAD != 0))
+    {
+        Logger::Error("Samples must be a positive integer of %u!", LightBaker::SAMPLES_PER_THREAD);
+        return 1;
+    }
 
     MapCompiler::MapCompilerSettings settings = {
         .assetsDirectory = assetsPath,

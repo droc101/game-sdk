@@ -27,7 +27,7 @@ bool LightmapPacker::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
     {
         const std::string materialPath = pathMgr.GetAssetPath(builder.GetMaterialPath());
         LevelMaterialAsset material{};
-        material.LoadFromAsset(materialPath);
+        (void)material.LoadFromAsset(materialPath);
         if (material.shader == Material::MaterialShader::SHADER_SHADED)
         {
             for (const FaceData &faceData: builder.faceDatas)
@@ -48,7 +48,7 @@ bool LightmapPacker::CalculateLightmapUvs(glm::uvec2 &lightmapSize,
     {
         const std::string materialPath = pathMgr.GetAssetPath(builder.GetMaterialPath());
         LevelMaterialAsset material{};
-        material.LoadFromAsset(materialPath);
+        (void)material.LoadFromAsset(materialPath);
         if (material.shader != Material::MaterialShader::SHADER_SHADED)
         {
             for (size_t _ = 0; _ < builder.faceDatas.size(); _++)

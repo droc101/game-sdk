@@ -19,7 +19,7 @@ class DesktopInterface
          * @param executable Executable to run
          * @param arguments Arguments to pass to the process
          * @param exitCode Where to store the process's exit code, can be nullptr
-         * @param redirectStdio
+         * @param redirectStdio Redirect STDOUT and STDERR to an SDL_IOStream
          */
         bool ExecuteProcess(const std::string &executable,
                             const std::vector<std::string> &arguments,
@@ -30,7 +30,7 @@ class DesktopInterface
          * Create and start an SDL_Process
          * @param executable The executable to run
          * @param arguments Arguments to pass to the process
-         * @param redirectStdio
+         * @param redirectStdio Redirect STDOUT and STDERR to an SDL_IOStream
          * @return SDL_Process pointer or nullptr on failure
          */
         SDL_Process *StartSDLProcess(const std::string &executable,
