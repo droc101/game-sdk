@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include "../Viewport.h"
 #include "EditorTool.h"
 
 class AddActorTool final: public EditorTool

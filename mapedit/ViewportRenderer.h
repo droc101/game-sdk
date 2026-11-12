@@ -4,9 +4,14 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
+#include <cstdint>
 #include <glm/vec3.hpp>
 #include <libassets/type/Actor.h>
+#include <libassets/type/Axis.h>
+#include <libassets/type/BoundingBox.h>
+#include <libassets/type/Brush.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/renderDefs/BoxRenderDefinition.h>
 #include <libassets/type/renderDefs/CircleRenderDefinition.h>
@@ -16,9 +21,9 @@
 #include <libassets/type/renderDefs/PointRenderDefinition.h>
 #include <libassets/type/renderDefs/SpriteRenderDefinition.h>
 #include <libassets/type/renderDefs/WallRenderDefinition.h>
-#include <libassets/type/Sector.h>
 #include <string>
 #include <vector>
+#include "ResizeGizmoHelper.h"
 #include "tools/EditorTool.h"
 #include "Viewport.h"
 
@@ -31,14 +36,13 @@ class ViewportRenderer
         {
                 /// The points in the new primitive
                 std::vector<glm::vec2> points;
-                /// The floor height of the new primitive
-                float floor;
-                /// The ceiling height of the new primitive
-                float ceiling;
+                float startDepth;
+                float endDepth;
                 /// The AABB start of the new primitive
-                glm::vec3 aabbStart;
+                glm::vec2 aabbStart;
                 /// The AABB end of the new primitive
-                glm::vec3 aabbEnd;
+                glm::vec2 aabbEnd;
+                Axis axis;
         };
 
         /// A new polygon, rendered without the final line connecting the first and last points.
@@ -47,10 +51,9 @@ class ViewportRenderer
         {
                 /// The points in the polygon
                 std::vector<glm::vec2> points;
-                /// The floor height of the new polygon
-                float floor;
-                /// The ceiling height of the new polygon
-                float ceiling;
+                float startDepth;
+                float endDepth;
+                Axis axis;
         };
 
         /// A new actor, rendered according to the class's definition with default params
@@ -75,36 +78,47 @@ class ViewportRenderer
                 float size;
         };
 
-        struct ViewportRenderGizmo
+        struct ViewportRenderRotationGizmo
         {
                 glm::vec3 position;
                 float radiusInPx;
         };
 
+        struct ViewportRenderResizeGizmo
+        {
+                ResizeGizmoHelper::Handle hoveredHandle;
+                BoundingBox boundingBox;
+        };
+
         struct ViewportRenderSettings
         {
-                /// Whether a sector is focused for editing
-                bool sectorFocusMode = false;
-                /// The index of the sector that is focused
-                size_t focusedSectorIndex = 0;
+                /// Whether a brush is focused for editing
+                bool brushFocusMode = false;
+                /// The index of the brush that is focused
+                size_t focusedBrushIndex = 0;
 
                 /// The type of element that is hovered
                 EditorTool::ItemType hoverType = EditorTool::ItemType::NONE;
                 /// The index of the hovered element
                 size_t hoverIndex = 0;
+                /// The index of the hovered vertex/line/face
+                size_t hoverSubIndex = 0;
 
                 /// The type of element that is selected
                 EditorTool::ItemType selectionType = EditorTool::ItemType::NONE;
-                /// The index of the selected element, or the sector index for LINE and VERTEX
+                /// The index of the selected element, or the brush index for LINE and VERTEX
                 size_t selectionIndex = 0;
-                /// The index of the selected vertex/line
-                size_t selectionVertexIndex = 0;
+                /// The index of the selected vertex/line/face
+                size_t selectionSubIndex = 0;
+
+                bool renderObjectBuffers = false;
 
                 ViewportRenderPoint *point = nullptr;
                 ViewportRenderNewPrimitive *newPrimitive = nullptr;
                 ViewportRenderNewActor *newActor = nullptr;
                 ViewportRenderNewPolygon *newPolygon = nullptr;
-                ViewportRenderGizmo *gizmo = nullptr;
+                ViewportRenderRotationGizmo *rotationGizmo = nullptr;
+                ViewportRenderResizeGizmo *resizeGizmo = nullptr;
         };
 
         ViewportRenderer() = delete;
@@ -117,53 +131,41 @@ class ViewportRenderer
         static void RenderViewport(Viewport &vp, const ViewportRenderSettings &settings);
 
     private:
-        static void RenderSector(const Viewport &vp,
-                                 const ViewportRenderSettings &settings,
-                                 size_t sectorIndex,
-                                 const glm::mat4 &matrix);
-        static void RenderPoint(const ViewportRenderPoint *point, const glm::mat4 &matrix);
-        static void RenderNewPrimitive(Viewport &vp, const ViewportRenderNewPrimitive *prim, glm::mat4 &matrix);
-        static void RenderNewActor(const Viewport &vp, const ViewportRenderNewActor *actor, const glm::mat4 &matrix);
-        static void RenderNewPolygon(const Viewport &vp, const ViewportRenderNewPolygon *poly, const glm::mat4 &matrix);
-        static void RenderGizmo(const Viewport &vp, const ViewportRenderGizmo *gizmo, const glm::mat4 &matrix);
+        static void RenderBrush(const Viewport &vp, const ViewportRenderSettings &settings, size_t brushIndex);
+        static void RenderPoint(const ViewportRenderPoint *point);
+        static void RenderNewPrimitive(Viewport &vp, const ViewportRenderNewPrimitive *prim);
+        static void RenderNewActor(const Viewport &vp, const ViewportRenderNewActor *actor);
+        static void RenderNewPolygon(const Viewport &vp, const ViewportRenderNewPolygon *poly);
+        static void RenderRotationGizmo(const Viewport &vp, const ViewportRenderRotationGizmo *rotationGizmo);
+        static void RenderResizeGizmo(const Viewport &vp, const ViewportRenderResizeGizmo *resizeGizmo);
 
-        static bool SectorIsCulled(const Sector &sector, const Viewport &vp);
+        static bool BrushIsCulled(const Brush &brush, const Viewport &vp);
 
-        static void RenderActor(const Actor &a, const glm::mat4 &matrix, const Viewport &vp);
+        static void RenderActor(const Actor &a, const Viewport &vp, const Color &overlayColor, bool isSelected);
 
-        static bool ActorIsCulled(const Actor &actor, const Viewport &vp);
+        static bool ActorIsCulled(const Actor &actor, const Viewport &vp, bool isSelected);
 
-        static void RenderBoxRdef(BoxRenderDefinition *rdef,
-                                  const Actor &actor,
-                                  const glm::mat4 &worldMatrix,
-                                  const glm::mat4 &matrix);
+        static void RenderBoxRdef(BoxRenderDefinition *rdef, const Actor &actor, const glm::mat4 &worldMatrix);
 
         static void RenderModelRdef(ModelRenderDefinition *rdef,
                                     const Actor &actor,
                                     const glm::mat4 &worldMatrix,
-                                    const glm::mat4 &matrix);
+                                    bool textured,
+                                    const Color &overlayColor);
 
-        static void RenderOrientationRdef(OrientationRenderDefinition *rdef,
-                                          const Actor &actor,
-                                          const glm::mat4 &matrix,
-                                          const Viewport &vp);
+        static void RenderOrientationRdef(OrientationRenderDefinition *rdef, const Actor &actor, const Viewport &vp);
 
-        static void RenderPointRdef(PointRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix);
+        static void RenderPointRdef(PointRenderDefinition *rdef, const Actor &actor);
 
-        static void RenderSpriteRdef(SpriteRenderDefinition *rdef, const Actor &actor, const glm::mat4 &matrix);
+        static void RenderSpriteRdef(SpriteRenderDefinition *rdef, const Actor &actor);
 
         static void RenderWallRdef(WallRenderDefinition *rdef,
                                    const Actor &actor,
                                    const glm::mat4 &worldMatrix,
-                                   const glm::mat4 &matrix);
+                                   bool textured,
+                                   const Color &overlayColor);
 
-        static void RenderCircleRdef(CircleRenderDefinition *rdef,
-                                     const Actor &actor,
-                                     const glm::mat4 &worldMatrix,
-                                     Viewport::ViewportType type);
+        static void RenderCircleRdef(CircleRenderDefinition *rdef, const Actor &actor, Viewport::ViewportType viewportType);
 
-        static void RenderConeRdef(ConeRenderDefinition *rdef,
-                                   const Actor &actor,
-                                   const glm::mat4 &matrix,
-                                   const glm::mat4 &worldMatrix);
+        static void RenderConeRdef(ConeRenderDefinition *rdef, const Actor &actor, const glm::mat4 &worldMatrix);
 };

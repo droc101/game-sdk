@@ -37,16 +37,16 @@ void ShaderAsset::Reset()
     glsl = "";
 }
 
-Error::ErrorCode ShaderAsset::SaveToBuffer(DataWriter &writer) const
+Error ShaderAsset::SaveToBuffer(DataWriter &writer) const
 {
     return SaveToBufferEx(writer, false, false);
 }
 
-Error::ErrorCode ShaderAsset::SaveToBufferEx(DataWriter &writer,
-                                             const bool enableOptimization,
-                                             const bool debugInfo,
-                                             std::string *errorLog,
-                                             const std::string &shaderFilename) const
+Error ShaderAsset::SaveToBufferEx(DataWriter &writer,
+                                  const bool enableOptimization,
+                                  const bool debugInfo,
+                                  std::string *errorLog,
+                                  const std::string &shaderFilename) const
 {
     writer.Write<uint8_t>(static_cast<uint8_t>(type));
     std::vector<uint32_t> spirv;
@@ -67,8 +67,8 @@ Error::ErrorCode ShaderAsset::SaveToBufferEx(DataWriter &writer,
             break;
     }
     ShaderCompiler compiler = ShaderCompiler(glsl, shaderType, shaderFilename, enableOptimization, debugInfo);
-    const Error::ErrorCode error = compiler.Compile(spirv);
-    if (error != Error::ErrorCode::OK)
+    const Error error = compiler.Compile(spirv);
+    if (error.Failed())
     {
         if (errorLog != nullptr)
         {
@@ -79,25 +79,25 @@ Error::ErrorCode ShaderAsset::SaveToBufferEx(DataWriter &writer,
 
     writer.Write<size_t>(spirv.size());
     writer.WriteBuffer<uint32_t>(spirv);
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode ShaderAsset::Import(const std::string &filePath)
+Error ShaderAsset::Import(const std::string &filePath)
 {
     Reset();
     return FileIo::ReadFileToString(filePath, glsl);
 }
 
-Error::ErrorCode ShaderAsset::SaveToAssetEx(const std::string &filePath,
-                                            const bool enableOptimization,
-                                            const bool debugInfo,
-                                            std::string *errorLog,
-                                            const std::string &shaderFilename,
-                                            const bool dumpSpvBinary) const
+Error ShaderAsset::SaveToAssetEx(const std::string &filePath,
+                                 const bool enableOptimization,
+                                 const bool debugInfo,
+                                 std::string *errorLog,
+                                 const std::string &shaderFilename,
+                                 const bool dumpSpvBinary) const
 {
     DataWriter writer{};
-    const Error::ErrorCode writeError = SaveToBufferEx(writer, enableOptimization, debugInfo, errorLog, shaderFilename);
-    if (writeError != Error::ErrorCode::OK)
+    const Error writeError = SaveToBufferEx(writer, enableOptimization, debugInfo, errorLog, shaderFilename);
+    if (writeError.Failed())
     {
         return writeError;
     }
@@ -110,8 +110,8 @@ Error::ErrorCode ShaderAsset::SaveToAssetEx(const std::string &filePath,
         std::vector<uint8_t> spv{};
         spv.reserve(data.size() - sizeof(size_t) - sizeof(uint8_t));
         std::copy(data.begin() + sizeof(size_t) + sizeof(uint8_t), data.end(), std::back_inserter(spv));
-        const Error::ErrorCode e = FileIo::WriteBufferToFile(filePath + ".spv", spv);
-        if (e != Error::ErrorCode::OK)
+        const Error e = FileIo::WriteBufferToFile(filePath + ".spv", spv);
+        if (e.Failed())
         {
             return e;
         }

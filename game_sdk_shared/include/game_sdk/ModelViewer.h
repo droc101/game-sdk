@@ -5,6 +5,7 @@
 #ifndef GAME_SDK_MODELVIEWER_H
 #define GAME_SDK_MODELVIEWER_H
 
+#include <cstddef>
 #include <game_sdk/Flycam.h>
 #include <game_sdk/gl/GLHelper.h>
 #include <GL/glew.h>

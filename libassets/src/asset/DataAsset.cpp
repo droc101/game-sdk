@@ -38,53 +38,52 @@ void DataAsset::Reset()
     data = {};
 }
 
-Error::ErrorCode DataAsset::LoadFromBuffer(DataReader &reader)
+Error DataAsset::LoadFromBuffer(DataReader &reader)
 {
     Reset();
     data = Param::ReadKvList(reader);
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode DataAsset::SaveToBuffer(DataWriter &writer) const
+Error DataAsset::SaveToBuffer(DataWriter &writer) const
 {
     if (writer.GetBufferSize() != 0)
     {
-        return Error::ErrorCode::UNKNOWN;
+        return Error("Buffer not empty");
     }
     Param::WriteKvList(writer, data);
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode DataAsset::Import(const std::string &filePath)
+Error DataAsset::Import(const std::string &filePath)
 {
     std::string jsonString;
-    const Error::ErrorCode readError = FileIo::ReadFileToString(filePath, jsonString);
-    if (readError != Error::ErrorCode::OK)
+    const Error readError = FileIo::ReadFileToString(filePath, jsonString);
+    if (readError.Failed())
     {
         return readError;
     }
     const nlohmann::json json = nlohmann::json::parse(jsonString);
     if (json.is_discarded())
     {
-        return Error::ErrorCode::INCORRECT_FORMAT;
+        return Errors::INCORRECT_FORMAT;
     }
     Reset();
     data = Param::KvListFromJson(json);
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode DataAsset::Export(const std::string &filePath) const
+Error DataAsset::Export(const std::string &filePath) const
 {
     const std::string json = Param::GenerateKvListJson(data).dump();
-    const Error::ErrorCode writeError = FileIo::WriteStringToFile(filePath, json);
-    return writeError;
+    return FileIo::WriteStringToFile(filePath, json);
 }
 
-Error::ErrorCode DataAsset::CreateFromKvlFile(const std::string &kvlPath)
+Error DataAsset::CreateFromKvlFile(const std::string &kvlPath)
 {
     DataReader reader;
-    const Error::ErrorCode readError = FileIo::CreateFileDataReader(kvlPath, reader);
-    if (readError != Error::ErrorCode::OK)
+    const Error readError = FileIo::CreateFileDataReader(kvlPath, reader);
+    if (readError.Failed())
     {
         return readError;
     }
@@ -94,30 +93,30 @@ Error::ErrorCode DataAsset::CreateFromKvlFile(const std::string &kvlPath)
     header.checksum = reader.Read<uint16_t>();
     if (header.magic != KVL_MAGIC)
     {
-        return Error::ErrorCode::INVALID_HEADER;
+        return Errors::INVALID_HEADER;
     }
     if (header.version != KVL_VERSION)
     {
-        return Error::ErrorCode::INCORRECT_VERSION;
+        return Errors::INCORRECT_VERSION;
     }
     const uint16_t calculatedChecksum = Checksum::Calculate(reader, sizeof(KvlFileHeader));
     if (header.checksum != calculatedChecksum)
     {
         Logger::Error("KvlFile checksum mismatch, expected {}, got {}", header.checksum, calculatedChecksum);
-        return Error::ErrorCode::INVALID_BODY;
+        return Errors::INVALID_BODY;
     }
     Reset();
     data = Param::ReadKvList(reader);
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode DataAsset::SaveAsKvlFile(const std::string &kvlFile) const
+Error DataAsset::SaveAsKvlFile(const std::string &kvlFile) const
 {
     std::ofstream file;
-    const Error::ErrorCode openError = FileIo::OpenFileW(kvlFile, file);
-    if (openError != Error::ErrorCode::OK)
+    const Error openError = FileIo::OpenFileW(kvlFile, file);
+    if (openError.Failed())
     {
-        return Error::ErrorCode::OK;
+        return openError;
     }
     DataWriter writer{};
     Param::WriteKvList(writer, data);
@@ -131,5 +130,5 @@ Error::ErrorCode DataAsset::SaveAsKvlFile(const std::string &kvlFile) const
     writer.CopyToVector(bytes);
     file.write(reinterpret_cast<const std::ostream::char_type *>(bytes.data()), bytes.size());
     file.close();
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }

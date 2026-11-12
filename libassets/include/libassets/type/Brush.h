@@ -1,0 +1,119 @@
+//
+// Created by droc101 on 9/2/26.
+//
+
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <glm/fwd.hpp>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <libassets/type/Axis.h>
+#include <libassets/type/BoundingBox.h>
+#include <nlohmann/json.hpp>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+#include "MapVertex.h"
+
+class Brush
+{
+    public:
+        class Face
+        {
+            public:
+                Face() = default;
+                explicit Face(nlohmann::ordered_json json);
+
+                [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
+
+                std::vector<uint32_t> indices{};
+
+                std::string material;
+
+                /// Number of units per texture repetition
+                glm::vec2 textureScale = {16.0f, 16.0f};
+                glm::vec2 textureOffset = {0.0f, 0.0f};
+                float textureRotation = 0;
+                bool worldAlignedTextureUVs = true;
+
+                float unitsPerLuxel = 1.0f;
+        };
+
+        class TriangulatedFace
+        {
+            public:
+                TriangulatedFace() = delete;
+                explicit TriangulatedFace(const Brush &brush, const Face &face);
+
+                std::string material;
+                std::vector<uint32_t> indices;
+                std::vector<MapVertex> vertices;
+
+                glm::vec2 faceSize{};
+
+            private:
+                void CalculateUVs(const glm::vec3 &brushOrigin, const Face &face);
+        };
+
+        Brush() = default;
+        explicit Brush(nlohmann::ordered_json json);
+
+        Brush(const std::vector<glm::vec2> &points,
+              float startDepth,
+              float endDepth,
+              Axis axis,
+              const std::string &material);
+
+        [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
+
+        [[nodiscard]] bool IsValid() const;
+
+        [[nodiscard]] BoundingBox GetAABB() const;
+
+        [[nodiscard]] glm::mat4 GetTransformMatrix() const;
+
+        [[nodiscard]] std::unordered_set<std::pair<glm::vec3, glm::vec3>> GetUniqueEdges() const;
+
+        [[nodiscard]] std::unordered_set<std::pair<glm::vec3, glm::vec3>> GetFaceEdges(size_t faceIndex) const;
+
+        [[nodiscard]] bool ContainsPoint(Axis axis, glm::vec2 point) const;
+
+        [[nodiscard]] const std::vector<TriangulatedFace> &GetTriangulatedMesh();
+
+        void CenterOrigin(bool fromWorldSpace = false);
+
+        std::string editorName{};
+
+        glm::vec3 origin{};
+        glm::vec3 rotation{};
+
+        bool facesNeedRetriangulation = true;
+        std::vector<glm::vec3> vertices{};
+        std::vector<Face> faces{};
+
+    private:
+        std::vector<TriangulatedFace> triangulatedFaces{};
+};
+
+template<> struct std::hash<std::pair<glm::vec3, glm::vec3>>
+{
+        size_t operator()(const std::pair<glm::vec3, glm::vec3> &pair) const noexcept
+        {
+            constexpr size_t GOLDEN_RATIO = 0x9e3779b9;
+            size_t hashValue = 0;
+
+            hashValue ^= std::hash<float>()(pair.first.x) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(pair.first.y) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(pair.first.z) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+
+            hashValue ^= std::hash<float>()(pair.second.x) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(pair.second.y) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+            hashValue ^= std::hash<float>()(pair.second.z) + GOLDEN_RATIO + (hashValue << 6) + (hashValue >> 2);
+
+            return hashValue;
+        }
+};

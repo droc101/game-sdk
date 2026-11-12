@@ -39,8 +39,8 @@ bool ModelBrowserWindow::Init()
         modelAbsPaths.push_back(mPath.absolutePath);
     }
     ModelAsset mdlAsset{};
-    const Error::ErrorCode e = mdlAsset.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(*str));
-    if (e != Error::ErrorCode::OK)
+    const Error e = mdlAsset.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(*str));
+    if (e.Failed())
     {
         return true;
     }
@@ -103,8 +103,8 @@ void ModelBrowserWindow::Render()
                 if (*str != "model/" + model)
                 {
                     ModelAsset mdlAsset{};
-                    const Error::ErrorCode e = mdlAsset.LoadFromAsset(modelAbs);
-                    assert(e == Error::ErrorCode::OK);
+                    const Error e = mdlAsset.LoadFromAsset(modelAbs);
+                    assert(e.Ok());
                     viewer.SetModel(std::move(mdlAsset));
                 }
                 *str = "model/" + model;

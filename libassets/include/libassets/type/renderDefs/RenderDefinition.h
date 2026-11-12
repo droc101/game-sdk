@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <libassets/type/renderDefs/values/BoolDefinitionValue.h>
+#include <libassets/type/renderDefs/values/StringDefinitionValue.h>
 #include <libassets/util/Error.h>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -29,20 +30,30 @@ class RenderDefinition
             RD_TYPE_CONE,
         };
 
+        enum class RenderDefinitionViewportMode : uint8_t
+        {
+            ALL_VIEWPORTS,
+            ONLY_2D,
+            ONLY_3D,
+        };
+
         RenderDefinition();
         explicit RenderDefinition(const nlohmann::json &json);
 
         virtual ~RenderDefinition() = default;
 
-        [[nodiscard]] static std::unique_ptr<RenderDefinition> Create(const nlohmann::json &json, Error::ErrorCode &e);
+        [[nodiscard]] static std::unique_ptr<RenderDefinition> Create(const nlohmann::json &json, Error &e);
 
         [[nodiscard]] RenderDefinitionType GetType() const;
 
         [[nodiscard]] bool IsGizmo(const Actor &actor);
 
+        [[nodiscard]] RenderDefinitionViewportMode GetViewportMode(const Actor &actor);
+
     protected:
         RenderDefinitionType type = RenderDefinitionType::RD_TYPE_UNKNOWN;
         BoolDefinitionValue gizmo;
+        StringDefinitionValue viewportMode;
 
     private:
         static RenderDefinitionType ParseType(const std::string &type);

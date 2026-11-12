@@ -3,9 +3,10 @@
 //
 
 #include "ActorBrowserWindow.h"
-#include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <game_sdk/Window.h>
+#include <game_sdk/WindowManager.h>
 #include <imgui.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/InputDefinition.h>
@@ -24,16 +25,17 @@
 #include <libassets/type/paramDefs/Vec3ParamDefinition.h>
 #include <libassets/util/Error.h>
 #include <memory>
-#include <set>
+#include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 #include "MapEditor.h"
 
 ActorBrowserWindow::ActorBrowserWindow(const std::string &classname)
 {
-    if (MapEditor::adm.HasActorClass(classname))
+    if (MapEditor::adm.HasActorClass(classname) && (history.empty() || history.back() != classname))
     {
-        selectedClass = classname;
+        history.push_back(classname);
     }
 }
 
@@ -51,320 +53,300 @@ void ActorBrowserWindow::Render()
         return;
     }
 
-    ImGui::Text("Class");
-    if (ImGui::BeginCombo("##a", selectedClass.c_str()))
+    ImGui::BeginDisabled(history.empty());
+    if (ImGui::Button("Back"))
     {
-        for (const std::string &key: MapEditor::adm.GetActorClasses())
-        {
-            if (selectedClass == key)
-            {
-                ImGui::SetItemDefaultFocus();
-            }
-            if (ImGui::Selectable(key.c_str(), key == selectedClass))
-            {
-                selectedClass = key;
-                selectedParam = 0;
-            }
-        }
-        ImGui::EndCombo();
+        history.pop_back();
+        resetScrollAfterNav = true;
+    }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    ImGui::BeginDisabled(history.empty() || history.back() == HOME_PAGE);
+    if (ImGui::Button("Home"))
+    {
+        history.clear();
+        resetScrollAfterNav = true;
+    }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    ImGui::Text("%s", history.empty() ? HOME_PAGE.c_str() : history.back().c_str());
+
+    if (resetScrollAfterNav)
+    {
+        ImGui::SetNextWindowScroll({0, 0});
+        resetScrollAfterNav = false;
     }
 
-    const ActorDefinition &def = MapEditor::adm.GetActorDefinition(selectedClass);
-
-    ImGui::Text("%s %s: %s",
-                def.isVirtual ? "Virtual class" : "Class",
-                selectedClass.c_str(),
-                def.description.empty() ? "no description" : def.description.c_str());
-
-    ImGui::Dummy(ImVec2(0, 8));
-
-    if (ImGui::BeginTabBar("##classInfo"))
+    if (ImGui::BeginChild("##browser", ImGui::GetContentRegionAvail(), ImGuiChildFlags_Borders))
     {
-        if (ImGui::BeginTabItem("Params"))
+        if (history.empty() || history.back() == HOME_PAGE)
         {
-            RenderParamsTab(def);
-            ImGui::EndTabItem();
-        }
-        if (ImGui::BeginTabItem("Inputs"))
-        {
-            RenderInputsTab(def);
-            ImGui::EndTabItem();
-        }
-        if (ImGui::BeginTabItem("Outputs"))
-        {
-            RenderOutputsTab(def);
-            ImGui::EndTabItem();
-        }
-        ImGui::EndTabBar();
-    }
-}
-
-void ActorBrowserWindow::RenderParamsTab(const ActorDefinition &def)
-{
-    const float boxSize = ImGui::GetContentRegionAvail().x - 300;
-    ImVec2 cursorPos = ImGui::GetCursorPos();
-    cursorPos.x += boxSize + 8;
-    if (ImGui::BeginTable("charTable", 3, ImGuiTableFlags_ScrollY | ImGuiTableFlags_BordersH, ImVec2(boxSize, -1)))
-    {
-        ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("Display Name", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableHeadersRow();
-        std::set<std::string> paramNames{};
-        def.GetParamNames(paramNames);
-        std::vector<std::string> paramNamesV(paramNames.begin(), paramNames.end());
-        std::ranges::sort(paramNamesV);
-        size_t i = 0;
-        for (const std::string &key: paramNamesV)
-        {
-            std::shared_ptr<ParamDefinition> param = nullptr;
-            const Error::ErrorCode e = def.GetParam(key, param);
-            if (e != Error::ErrorCode::OK)
-            {
-                continue;
-            }
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            if (ImGui::Selectable(key.c_str(), selectedParam == i, ImGuiSelectableFlags_SpanAllColumns))
-            {
-                selectedParam = i;
-            }
-
-            ImGui::TableNextColumn();
-            ImGui::Text("%s", param->displayName.c_str());
-
-            ImGui::TableNextColumn();
-            switch (param->type)
-            {
-                case Param::ParamType::PARAM_TYPE_BYTE:
-                    ImGui::Text("Byte");
-                    break;
-                case Param::ParamType::PARAM_TYPE_INTEGER:
-                    ImGui::Text("Integer");
-                    break;
-                case Param::ParamType::PARAM_TYPE_FLOAT:
-                    ImGui::Text("Float");
-                    break;
-                case Param::ParamType::PARAM_TYPE_BOOL:
-                    ImGui::Text("Boolean");
-                    break;
-                case Param::ParamType::PARAM_TYPE_STRING:
-                    ImGui::Text("String");
-                    break;
-                case Param::ParamType::PARAM_TYPE_COLOR:
-                    ImGui::Text("Color");
-                    break;
-                case Param::ParamType::PARAM_TYPE_UINT_64:
-                    ImGui::Text("Uint64");
-                    break;
-                case Param::ParamType::PARAM_TYPE_VEC2:
-                    ImGui::Text("Vector2");
-                    break;
-                case Param::ParamType::PARAM_TYPE_VEC3:
-                    ImGui::Text("Vector3");
-                    break;
-                default:
-                    ImGui::Text("Unknown");
-            }
-
-            i++;
-        }
-        ImGui::EndTable();
-
-        ImGui::SetCursorPos(cursorPos);
-        if (!paramNamesV.empty())
-        {
-            std::shared_ptr<ParamDefinition> param = nullptr;
-            const Error::ErrorCode e = def.GetParam(paramNamesV.at(selectedParam), param);
-            if (e == Error::ErrorCode::OK)
-            {
-                ImGui::SetCursorPosX(cursorPos.x);
-                ImGui::TextWrapped("%s", param->description.empty() ? "No Description" : param->description.c_str());
-                ImGui::SetCursorPosX(cursorPos.x);
-                const OptionParamDefinition *opt = dynamic_cast<OptionParamDefinition *>(param.get());
-                if (opt != nullptr)
-                {
-                    ImGui::Text("Options List: %s", opt->optionListName.c_str());
-                    ImGui::SetCursorPosX(cursorPos.x);
-                    if (ImGui::BeginListBox("##optionsList", ImVec2(300 - 16, 0)))
-                    {
-                        for (auto &option: opt->definition->GetOptions())
-                        {
-                            ImGui::Text("%s", option.c_str());
-                        }
-                        ImGui::EndListBox();
-                    }
-                    ImGui::SetCursorPosX(cursorPos.x);
-                    ImGui::Text("Default Value: %s", opt->defaultValue.c_str());
-                } else
-                {
-                    if (param->type == Param::ParamType::PARAM_TYPE_BYTE)
-                    {
-                        const ByteParamDefinition *p = dynamic_cast<ByteParamDefinition *>(param.get());
-                        ImGui::Text("Minimum: %d", p->minimumValue);
-                        ImGui::SetCursorPosX(cursorPos.x);
-                        ImGui::Text("Maximum: %d", p->maximumValue);
-                        ImGui::SetCursorPosX(cursorPos.x);
-                        ImGui::Text("Default: %d", p->defaultValue);
-                    } else if (param->type == Param::ParamType::PARAM_TYPE_INTEGER)
-                    {
-                        const IntParamDefinition *p = dynamic_cast<IntParamDefinition *>(param.get());
-                        ImGui::Text("Minimum: %d", p->minimumValue);
-                        ImGui::SetCursorPosX(cursorPos.x);
-                        ImGui::Text("Maximum: %d", p->maximumValue);
-                        ImGui::SetCursorPosX(cursorPos.x);
-                        ImGui::Text("Default: %d", p->defaultValue);
-                    } else if (param->type == Param::ParamType::PARAM_TYPE_FLOAT)
-                    {
-                        const FloatParamDefinition *p = dynamic_cast<FloatParamDefinition *>(param.get());
-                        ImGui::TextWrapped("Minimum: %.3f", p->minimumValue);
-                        ImGui::SetCursorPosX(cursorPos.x);
-                        ImGui::TextWrapped("Maximum: %.3f", p->maximumValue);
-                        ImGui::SetCursorPosX(cursorPos.x);
-                        ImGui::TextWrapped("Default: %.3f", p->defaultValue);
-                        ImGui::SetCursorPosX(cursorPos.x);
-                        ImGui::TextWrapped("Step: %.3f", p->step);
-                    } else if (param->type == Param::ParamType::PARAM_TYPE_BOOL)
-                    {
-                        const BoolParamDefinition *p = dynamic_cast<BoolParamDefinition *>(param.get());
-                        ImGui::Text("Default: %s", p->defaultValue ? "true" : "false");
-                    } else if (param->type == Param::ParamType::PARAM_TYPE_STRING)
-                    {
-                        const StringParamDefinition *p = dynamic_cast<StringParamDefinition *>(param.get());
-                        ImGui::TextWrapped("Default: \"%s\"", p->defaultValue.c_str());
-                        ImGui::SetCursorPosX(cursorPos.x);
-                        switch (p->hintType)
-                        {
-                            case StringParamDefinition::StringParamHint::NONE:
-                                ImGui::Text("Hint: None");
-                                break;
-                            case StringParamDefinition::StringParamHint::ACTOR:
-                                ImGui::Text("Hint: Actor Name");
-                                break;
-                            case StringParamDefinition::StringParamHint::MODEL:
-                                ImGui::Text("Hint: Model");
-                                break;
-                            case StringParamDefinition::StringParamHint::SOUND:
-                                ImGui::Text("Hint: Sound");
-                                break;
-                            case StringParamDefinition::StringParamHint::TEXTURE:
-                                ImGui::Text("Hint: Texture");
-                                break;
-                            case StringParamDefinition::StringParamHint::MATERIAL:
-                                ImGui::Text("Hint: Material");
-                                break;
-                        }
-                    } else if (param->type == Param::ParamType::PARAM_TYPE_COLOR)
-                    {
-                        const ColorParamDefinition *p = dynamic_cast<ColorParamDefinition *>(param.get());
-                        ImGui::Text("Show Alpha: %s", p->showAlpha ? "Yes" : "No");
-                        ImGui::SetCursorPosX(cursorPos.x);
-                        ImGui::Text("Default: %x", p->defaultValue.GetUint32());
-                    } else if (param->type == Param::ParamType::PARAM_TYPE_UINT_64)
-                    {
-                        const Uint64ParamDefinition *p = dynamic_cast<Uint64ParamDefinition *>(param.get());
-                        ImGui::Text("Minimum: %zu", p->minimumValue);
-                        ImGui::SetCursorPosX(cursorPos.x);
-                        ImGui::Text("Maximum: %zu", p->maximumValue);
-                        ImGui::SetCursorPosX(cursorPos.x);
-                        ImGui::Text("Default: %zu", p->defaultValue);
-                    } else if (param->type == Param::ParamType::PARAM_TYPE_VEC2)
-                    {
-                        const Vec2ParamDefinition *p = dynamic_cast<Vec2ParamDefinition *>(param.get());
-                        ImGui::Text("Default: (%.3f, %.3f)", p->defaultValue.x, p->defaultValue.y);
-                    } else if (param->type == Param::ParamType::PARAM_TYPE_VEC3)
-                    {
-                        const Vec3ParamDefinition *p = dynamic_cast<Vec3ParamDefinition *>(param.get());
-                        ImGui::Text("Default: (%.3f, %.3f, %.3f)",
-                                    p->defaultValue.x,
-                                    p->defaultValue.y,
-                                    p->defaultValue.z);
-                    }
-                }
-            }
+            RenderHomePage();
         } else
         {
-            ImGui::TextDisabled("This class has no params");
+            RenderActorPage(history.back());
+        }
+        ImGui::EndChild();
+    }
+}
+
+void ActorBrowserWindow::RenderClassTree(const std::string &baseClass)
+{
+    std::vector<std::string> derived{};
+    MapEditor::adm.GetDerivedActorClasses(baseClass, derived);
+    for (const std::string &actorClass: derived)
+    {
+        if (ImGui::TextLink(actorClass.c_str()))
+        {
+            history.push_back(actorClass);
+            resetScrollAfterNav = true;
+        }
+        ImGui::Indent();
+        RenderClassTree(actorClass);
+        ImGui::Unindent();
+    }
+}
+
+void ActorBrowserWindow::RenderHomePage()
+{
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 32);
+    ImGui::Text("%s", HOME_PAGE.c_str());
+    ImGui::PopFont();
+    ImGui::Separator();
+
+    RenderClassTree("");
+}
+
+void ActorBrowserWindow::RenderParamDef(const std::shared_ptr<ParamDefinition> &param)
+{
+    ImGui::Text("%s", param->description.empty() ? "No Description" : param->description.c_str());
+    const OptionParamDefinition *opt = dynamic_cast<OptionParamDefinition *>(param.get());
+    if (opt != nullptr)
+    {
+        ImGui::Text("Options List: %s", opt->optionListName.c_str());
+        for (const std::string &option: opt->definition->GetOptions())
+        {
+            ImGui::BulletText("%s", option.c_str());
+        }
+        ImGui::Text("Default Value: %s", opt->defaultValue.c_str());
+    } else
+    {
+        if (param->type == Param::ParamType::PARAM_TYPE_BYTE)
+        {
+            const ByteParamDefinition *p = dynamic_cast<ByteParamDefinition *>(param.get());
+            ImGui::Text("Range: %d to %d", p->minimumValue, p->maximumValue);
+            ImGui::Text("Default: %d", p->defaultValue);
+        } else if (param->type == Param::ParamType::PARAM_TYPE_INTEGER)
+        {
+            const IntParamDefinition *p = dynamic_cast<IntParamDefinition *>(param.get());
+            ImGui::Text("Range: %d to %d", p->minimumValue, p->maximumValue);
+            ImGui::Text("Default: %d", p->defaultValue);
+        } else if (param->type == Param::ParamType::PARAM_TYPE_FLOAT)
+        {
+            const FloatParamDefinition *p = dynamic_cast<FloatParamDefinition *>(param.get());
+            ImGui::Text("Range: %.3f to %.3f", p->minimumValue, p->maximumValue);
+            ImGui::TextWrapped("Default: %.3f", p->defaultValue);
+            ImGui::TextWrapped("Step: %.3f", p->step);
+        } else if (param->type == Param::ParamType::PARAM_TYPE_BOOL)
+        {
+            const BoolParamDefinition *p = dynamic_cast<BoolParamDefinition *>(param.get());
+            ImGui::Text("Default: %s", p->defaultValue ? "true" : "false");
+        } else if (param->type == Param::ParamType::PARAM_TYPE_STRING)
+        {
+            const StringParamDefinition *p = dynamic_cast<StringParamDefinition *>(param.get());
+            ImGui::TextWrapped("Default: \"%s\"", p->defaultValue.c_str());
+            switch (p->hintType)
+            {
+                case StringParamDefinition::StringParamHint::NONE:
+                    break;
+                case StringParamDefinition::StringParamHint::ACTOR:
+                    ImGui::Text("Hint: Actor Name");
+                    break;
+                case StringParamDefinition::StringParamHint::MODEL:
+                    ImGui::Text("Hint: Model");
+                    break;
+                case StringParamDefinition::StringParamHint::SOUND:
+                    ImGui::Text("Hint: Sound");
+                    break;
+                case StringParamDefinition::StringParamHint::TEXTURE:
+                    ImGui::Text("Hint: Texture");
+                    break;
+                case StringParamDefinition::StringParamHint::MATERIAL:
+                    ImGui::Text("Hint: Material");
+                    break;
+            }
+        } else if (param->type == Param::ParamType::PARAM_TYPE_COLOR)
+        {
+            const ColorParamDefinition *p = dynamic_cast<ColorParamDefinition *>(param.get());
+            ImGui::Text("Show Alpha: %s", p->showAlpha ? "Yes" : "No");
+            ImGui::Text("Default: #%X", p->defaultValue.GetUint32());
+        } else if (param->type == Param::ParamType::PARAM_TYPE_UINT_64)
+        {
+            const Uint64ParamDefinition *p = dynamic_cast<Uint64ParamDefinition *>(param.get());
+            ImGui::Text("Range: %zu to %zu", p->minimumValue, p->maximumValue);
+            ImGui::Text("Default: %zu", p->defaultValue);
+        } else if (param->type == Param::ParamType::PARAM_TYPE_VEC2)
+        {
+            const Vec2ParamDefinition *p = dynamic_cast<Vec2ParamDefinition *>(param.get());
+            ImGui::Text("Default: (%.3f, %.3f)", p->defaultValue.x, p->defaultValue.y);
+        } else if (param->type == Param::ParamType::PARAM_TYPE_VEC3)
+        {
+            const Vec3ParamDefinition *p = dynamic_cast<Vec3ParamDefinition *>(param.get());
+            ImGui::Text("Default: (%.3f, %.3f, %.3f)", p->defaultValue.x, p->defaultValue.y, p->defaultValue.z);
         }
     }
 }
 
-void ActorBrowserWindow::RenderInputsTab(const ActorDefinition &def)
+void ActorBrowserWindow::RenderParams(const ActorDefinition &def)
 {
-    if (ImGui::BeginTable("inputTable", 3, ImGuiTableFlags_ScrollY | ImGuiTableFlags_BordersH, ImVec2(-1, -1)))
+    ImGui::Dummy({1, 4});
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 24);
+    ImGui::Text("Params");
+    ImGui::PopFont();
+    ImGui::Separator();
+    for (const std::pair<const std::string, std::shared_ptr<ParamDefinition>> &paramPair: def.params)
     {
-        ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("Description", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableHeadersRow();
-        std::set<std::string> inputNames{};
-        def.GetInputNames(inputNames);
-        for (const std::string &key: inputNames)
-        {
-            InputDefinition signal{};
-            const Error::ErrorCode e = def.GetInput(key, signal);
-            if (e != Error::ErrorCode::OK)
-            {
-                continue;
-            }
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%s", key.c_str());
+        ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
+        ImGui::Text("%s", paramPair.first.c_str());
+        ImGui::SameLine();
+        ImGui::TextDisabled(": %s", Param::GetTypeName(paramPair.second->type).c_str());
+        ImGui::PopFont();
+        ImGui::Indent();
 
-            ImGui::TableNextColumn();
-            std::vector<std::string> typeNames{};
-            for (const Param::ParamType &type: signal.GetTypes())
-            {
-                typeNames.push_back(Param::GetTypeName(type));
-            }
-            if (!typeNames.empty())
-            {
-                for (const std::string &type: typeNames)
-                {
-                    ImGui::Text("%s", type.c_str());
-                }
-            } else
-            {
-                ImGui::Text("None");
-            }
+        std::shared_ptr<ParamDefinition> param;
+        const Error e = def.GetParam(paramPair.first, param);
+        assert(e.Ok()); // TODO: Should this be handled in release?
+        RenderParamDef(param);
 
-            ImGui::TableNextColumn();
-            ImGui::TextWrapped("%s",
-                               signal.GetDescription().empty() ? "No Description" : signal.GetDescription().c_str());
-        }
-        ImGui::EndTable();
+        ImGui::Unindent();
     }
 }
 
-void ActorBrowserWindow::RenderOutputsTab(const ActorDefinition &def)
+void ActorBrowserWindow::RenderInputs(const ActorDefinition &def)
 {
-    if (ImGui::BeginTable("outputTable", 3, ImGuiTableFlags_ScrollY | ImGuiTableFlags_BordersH, ImVec2(-1, -1)))
+    ImGui::Dummy({1, 4});
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 24);
+    ImGui::Text("Inputs");
+    ImGui::PopFont();
+    ImGui::Separator();
+    for (const std::pair<const std::string, InputDefinition> &input: def.inputs)
     {
-        ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableSetupColumn("Description", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthStretch);
-        ImGui::TableHeadersRow();
-        std::set<std::string> outputNames{};
-        def.GetOutputNames(outputNames);
-        for (const std::string &key: outputNames)
+        ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
+        ImGui::Text("%s", input.first.c_str());
+        std::vector<std::string> types{};
+        for (const Param::ParamType &type: input.second.GetTypes())
         {
-            OutputDefinition signal{};
-            const Error::ErrorCode e = def.GetOutput(key, signal);
-            if (e != Error::ErrorCode::OK)
-            {
-                continue;
-            }
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%s", key.c_str());
-
-            ImGui::TableNextColumn();
-            ImGui::Text("%s", Param::GetTypeName(signal.GetType()).c_str());
-
-            ImGui::TableNextColumn();
-            ImGui::TextWrapped("%s",
-                               signal.GetDescription().empty() ? "No Description" : signal.GetDescription().c_str());
+            types.push_back(Param::GetTypeName(type));
         }
-        ImGui::EndTable();
+        std::stringstream typesString{};
+        for (size_t i = 0; i < types.size(); i++)
+        {
+            if (i != 0)
+            {
+                typesString << " | ";
+            }
+            typesString << types.at(i);
+        }
+
+        ImGui::SameLine();
+        ImGui::TextDisabled(": %s", typesString.str().c_str());
+        ImGui::PopFont();
+        ImGui::Indent();
+
+        ImGui::Text("%s",
+                    input.second.GetDescription().empty() ? "No Description" : input.second.GetDescription().c_str());
+
+        ImGui::Unindent();
+    }
+}
+
+void ActorBrowserWindow::RenderOutputs(const ActorDefinition &def)
+{
+    ImGui::Dummy({1, 4});
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 24);
+    ImGui::Text("Outputs");
+    ImGui::PopFont();
+    ImGui::Separator();
+    for (const std::pair<const std::string, OutputDefinition> &output: def.outputs)
+    {
+        ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetMonospaceFont());
+        ImGui::Text("%s", output.first.c_str());
+        ImGui::SameLine();
+        ImGui::TextDisabled(": %s", Param::GetTypeName(output.second.GetType()).c_str());
+        ImGui::PopFont();
+        ImGui::Indent();
+
+        ImGui::Text("%s",
+                    output.second.GetDescription().empty() ? "No Description" : output.second.GetDescription().c_str());
+
+        ImGui::Unindent();
+    }
+}
+
+void ActorBrowserWindow::RenderActorPage(const std::string &actorClass)
+{
+    const ActorDefinition &def = MapEditor::adm.GetActorDefinition(actorClass);
+    ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 32);
+    if (def.isVirtual)
+    {
+        ImGui::TextDisabled("virtual");
+        ImGui::SameLine();
+    }
+    if (def.editorOnly)
+    {
+        ImGui::TextDisabled("editor");
+        ImGui::SameLine();
+    }
+    ImGui::TextDisabled("class");
+    ImGui::SameLine();
+    ImGui::Text("%s", actorClass.c_str());
+    if (!def.parentClassName.empty())
+    {
+        ImGui::SameLine();
+        ImGui::TextDisabled("extends");
+        ImGui::SameLine();
+        if (ImGui::TextLink(def.parentClassName.c_str()))
+        {
+            history.push_back(def.parentClassName);
+            resetScrollAfterNav = true;
+        }
+    }
+    ImGui::PopFont();
+    ImGui::Separator();
+    ImGui::TextWrapped("%s", def.description.empty() ? "No Description" : def.description.c_str());
+
+    if (!def.params.empty())
+    {
+        RenderParams(def);
+    }
+
+    if (!def.inputs.empty())
+    {
+        RenderInputs(def);
+    }
+
+    if (!def.outputs.empty())
+    {
+        RenderOutputs(def);
+    }
+
+    std::vector<std::string> derived{};
+    MapEditor::adm.GetDerivedActorClasses(actorClass, derived);
+    if (!derived.empty())
+    {
+        ImGui::Dummy({1, 4});
+        ImGui::PushFont(WindowManager::Get().GetCurrentWindow()->GetNormalFont(), 24);
+        ImGui::Text("Derived Classes");
+        ImGui::PopFont();
+        ImGui::Separator();
+        for (const std::string &classname: derived)
+        {
+            ImGui::Bullet();
+            if (ImGui::TextLink(classname.c_str()))
+            {
+                history.push_back(classname);
+                resetScrollAfterNav = true;
+            }
+        }
     }
 }

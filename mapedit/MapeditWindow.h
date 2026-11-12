@@ -22,6 +22,8 @@ class MapeditWindow final: public Window
 
         void FileDropped(const std::string &filePath) override;
 
+        bool ProcessEvent(SDL_Event *event) override;
+
         [[nodiscard]] const WindowProperties &GetProperties() const override;
 
     private:
@@ -33,6 +35,7 @@ class MapeditWindow final: public Window
             .defaultImguiWindow = false,
         };
 
+        Viewport vpPerspective = Viewport(Viewport::ViewportType::PERSPECTIVE);
         Viewport vpTopDown = Viewport(Viewport::ViewportType::TOP_DOWN_XZ);
         Viewport vpFront = Viewport(Viewport::ViewportType::FRONT_XY);
         Viewport vpSide = Viewport(Viewport::ViewportType::SIDE_YZ);
@@ -47,12 +50,14 @@ class MapeditWindow final: public Window
         std::string soundBrowserToolSelection{};
 
         static bool ToolbarToolButton(const char *id,
-                               const char *tooltip,
-                               const char *icon,
-                               bool selected,
-                               int spacing = 2,
-                               const char *shortcutText = nullptr,
-                               ImGuiKeyChord shortcut = 0);
+                                      const char *tooltip,
+                                      const char *icon,
+                                      bool selected,
+                                      int spacing = 2,
+                                      const char *shortcutText = nullptr,
+                                      ImGuiKeyChord shortcut = 0);
+
+        static void ToolbarSeparator();
 
         void SaveJson(const std::string &path) const;
 

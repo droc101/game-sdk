@@ -3,6 +3,7 @@
 //
 
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <ios>
 #include <istream>
@@ -12,42 +13,39 @@
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <unistd.h>
 #include <vector>
 
-Error::ErrorCode FileIo::OpenFileR(const std::string &filename, std::ifstream &stream, const std::ios::openmode mode)
+Error FileIo::OpenFileR(const std::string &filename, std::ifstream &stream, const std::ios::openmode mode)
 {
-    if (access(filename.c_str(), F_OK))
-    {
-        return Error::ErrorCode::FILE_NOT_FOUND;
+    if (!std::filesystem::exists(filename)) {
+        return Errors::FILE_NOT_FOUND;
     }
-    if (access(filename.c_str(), R_OK))
-    {
-        return Error::ErrorCode::PERMISSION_DENIED;
+    if (!std::filesystem::is_regular_file(filename)) {
+        return Errors::CANT_OPEN_FILE;
     }
     stream = std::ifstream(filename, mode);
     if (!stream.is_open())
     {
-        return Error::ErrorCode::CANT_OPEN_FILE;
+        return Errors::CANT_OPEN_FILE;
     }
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode FileIo::OpenFileW(const std::string &filename, std::ofstream &stream, const std::ios::openmode mode)
+Error FileIo::OpenFileW(const std::string &filename, std::ofstream &stream, const std::ios::openmode mode)
 {
     stream = std::ofstream(filename, mode);
     if (!stream.is_open())
     {
-        return Error::ErrorCode::CANT_OPEN_FILE;
+        return Errors::CANT_OPEN_FILE;
     }
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode FileIo::ReadFileToString(const std::string &filename, std::string &output)
+Error FileIo::ReadFileToString(const std::string &filename, std::string &output)
 {
     std::ifstream file;
-    const Error::ErrorCode openError = OpenFileR(filename, file);
-    if (openError != Error::ErrorCode::OK)
+    Error openError = OpenFileR(filename, file);
+    if (openError.Failed())
     {
         return openError;
     }
@@ -55,18 +53,18 @@ Error::ErrorCode FileIo::ReadFileToString(const std::string &filename, std::stri
     ss << file.rdbuf();
     output = ss.str();
     file.close();
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode FileIo::ReadFileToBuffer(const std::string &filename, std::vector<uint8_t> &output)
+Error FileIo::ReadFileToBuffer(const std::string &filename, std::vector<uint8_t> &output)
 {
     if (!output.empty())
     {
-        return Error::ErrorCode::INVALID_ARGUMENT;
+        return Errors::INVALID_ARGUMENT;
     }
     std::ifstream file;
-    const Error::ErrorCode openError = OpenFileR(filename, file, std::ios::binary);
-    if (openError != Error::ErrorCode::OK)
+    Error openError = OpenFileR(filename, file, std::ios::binary);
+    if (openError.Failed())
     {
         return openError;
     }
@@ -75,43 +73,43 @@ Error::ErrorCode FileIo::ReadFileToBuffer(const std::string &filename, std::vect
     output.resize(size);
     file.seekg(0, std::ios::seekdir::_S_beg);
     file.read(reinterpret_cast<std::istream::char_type *>(output.data()), size);
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode FileIo::CreateFileDataReader(const std::string &filename, DataReader &reader)
+Error FileIo::CreateFileDataReader(const std::string &filename, DataReader &reader)
 {
     std::vector<uint8_t> backingBuffer{};
-    const Error::ErrorCode readError = ReadFileToBuffer(filename, backingBuffer);
-    if (readError != Error::ErrorCode::OK)
+    Error readError = ReadFileToBuffer(filename, backingBuffer);
+    if (readError.Failed())
     {
         return readError;
     }
     reader = DataReader(backingBuffer);
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode FileIo::WriteStringToFile(const std::string &filename, const std::string &contents)
+Error FileIo::WriteStringToFile(const std::string &filename, const std::string &contents)
 {
     std::ofstream file;
-    const Error::ErrorCode openError = OpenFileW(filename, file);
-    if (openError != Error::ErrorCode::OK)
+    Error openError = OpenFileW(filename, file);
+    if (openError.Failed())
     {
         return openError;
     }
     file << contents;
     file.close();
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode FileIo::WriteBufferToFile(const std::string &filename, const std::vector<uint8_t> &buffer)
+Error FileIo::WriteBufferToFile(const std::string &filename, const std::vector<uint8_t> &buffer)
 {
     std::ofstream file;
-    const Error::ErrorCode openError = OpenFileW(filename, file, std::ios::binary);
-    if (openError != Error::ErrorCode::OK)
+    Error openError = OpenFileW(filename, file, std::ios::binary);
+    if (openError.Failed())
     {
         return openError;
     }
     file.write(reinterpret_cast<const std::ostream::char_type *>(buffer.data()), buffer.size());
     file.close();
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }

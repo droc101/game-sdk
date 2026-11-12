@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
 #include <glm/ext/matrix_transform.hpp>
@@ -11,6 +12,8 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <imgui.h>
+#include <libassets/type/Axis.h>
+#include "tools/EditorTool.h"
 
 class Viewport
 {
@@ -20,6 +23,16 @@ class Viewport
             TOP_DOWN_XZ,
             FRONT_XY,
             SIDE_YZ,
+            PERSPECTIVE,
+        };
+
+        struct PerspectiveHoverInfo
+        {
+                EditorTool::ItemType objectType;
+                size_t objectIndex;
+                size_t objectSubIndex;
+                glm::vec3 position;
+                glm::vec3 normal;
         };
 
         Viewport() = delete;
@@ -84,7 +97,7 @@ class Viewport
         /**
          * Get the local mouse position in the viewport
          */
-        [[nodiscard]] ImVec2 GetLocalMousePos() const;
+        [[nodiscard]] glm::vec2 GetLocalMousePos() const;
 
         /**
          * Adjust zoom
@@ -102,9 +115,41 @@ class Viewport
          */
         [[nodiscard]] glm::vec3 GetCameraPos() const;
 
+        [[nodiscard]] glm::vec3 Make3D(glm::vec2 twoDimensionalComponent, float otherAxis) const;
+
+        [[nodiscard]] glm::vec2 Make2D(glm::vec3 point) const;
+
+        [[nodiscard]] Axis GetAxis() const;
+
+        [[nodiscard]] bool Is3D() const;
+
+        [[nodiscard]] glm::vec3 GetPerspectiveCameraPosition() const;
+
+        void BindWorldBuffers() const;
+
+        [[nodiscard]] PerspectiveHoverInfo GetPerspectiveHover();
+
+        void ClearPerspectiveHover();
+
+        /**
+         * Check if this viewport has captured the mouse (relative mouse mode while dragging the perspective camera)
+         */
+        [[nodiscard]] bool IsMouseCaptured() const;
+
         static constexpr float ZOOM_STEP = 20.0f;
 
     private:
+        struct WorldBuffersFramebuffer
+        {
+                bool created = false;
+                glm::vec2 size;
+                GLuint objectInfoTexture;
+                GLuint positionTexture;
+                GLuint normalTexture;
+                GLuint fbo;
+                GLuint rbo;
+        };
+
         /// Screen space window position
         ImVec2 windowPos;
         /// Screen space window size
@@ -118,14 +163,40 @@ class Viewport
         glm::mat4 worldScreenMatrix = glm::identity<glm::mat4>();
         /// Inverse of world to screen matrix
         glm::mat4 inverseWorldScreenMatrix = glm::identity<glm::mat4>();
+        PerspectiveHoverInfo lastHoverInfo{};
 
         /// The OpenGL framebuffer
         GLHelper::GL_Framebuffer framebuffer{};
+        WorldBuffersFramebuffer worldBuffers{};
 
         /// The camera's center position
         ImVec2 scrollCenterPos{};
         /// The number of units visible along the vertical axis of the viewport
         float zoom = 160.0f;
 
+        glm::vec3 perspectiveCameraPos{};
+        glm::vec3 perspectiveCameraRotation{};
+        float perspectiveCameraSpeed = 4.0f;
+
+        /// Whether the mouse is currently captured by this viewport
+        bool mouseCaptured = false;
+        /// The mouse position (in SDL window coordinates) to restore when the capture ends
+        ImVec2 mouseCaptureStartPos{};
+
         void RecalculateMatrices();
+
+        void BeginMouseCapture(ImGuiMouseButton button);
+
+        void EndMouseCapture();
+
+        /// Get the unit look direction of the perspective camera (rotation x = pitch, y = yaw)
+        [[nodiscard]] glm::vec3 GetPerspectiveForward() const;
+
+        void CreateWorldBuffers(glm::vec2 size);
+
+        void ResizeWorldBuffers(glm::vec2 size);
+
+        void DestroyWorldBuffers();
+
+        void UpdatePerspectiveHover();
 };

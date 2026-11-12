@@ -17,7 +17,7 @@ class ActorDefinitionManager
 {
     public:
         ActorDefinitionManager() = default;
-        ActorDefinitionManager(const SearchPathManager &searchPathManager, Error::ErrorCode &status);
+        ActorDefinitionManager(const SearchPathManager &searchPathManager, Error &status);
 
         /**
          * Check if a given actor class exists
@@ -39,12 +39,18 @@ class ActorDefinitionManager
          */
         [[nodiscard]] const std::vector<std::string> &GetActorClasses() const;
 
+        /**
+         * Get all actor classes immediately deriving a base class (does NOT include the base class)
+         */
+        void GetDerivedActorClasses(const std::string &baseClassName,
+                                    std::vector<std::string> &derivedClassOutput) const;
+
     private:
         std::map<std::string, OptionDefinition> optionDefinitions{};
         std::map<std::string, ActorDefinition> actorDefinitions{};
         std::vector<std::string> actorClassNames{};
 
-        Error::ErrorCode LoadActorDefinitions(const SearchPathManager &pathManager);
+        Error LoadActorDefinitions(const SearchPathManager &pathManager);
         void LoadOptionDefinitions(const SearchPathManager &pathManager);
 };
 

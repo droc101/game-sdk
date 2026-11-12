@@ -91,10 +91,6 @@ add_library(assets SHARED
         include/libassets/type/ConvexHull.h
         src/type/StaticCollisionMesh.cpp
         include/libassets/type/StaticCollisionMesh.h
-        src/type/Sector.cpp
-        include/libassets/type/Sector.h
-        src/type/WallMaterial.cpp
-        include/libassets/type/WallMaterial.h
         src/type/Param.cpp
         include/libassets/type/Param.h
         src/type/Actor.cpp
@@ -171,7 +167,14 @@ add_library(assets SHARED
         include/libassets/util/Colors.h
         src/type/OutputDefinition.cpp
         include/libassets/type/OutputDefinition.h
+        src/type/Brush.cpp
+        include/libassets/type/Brush.h
+        include/libassets/type/Axis.h
+        src/type/Axis.cpp
+        src/util/Error.cpp
 )
+
+target_precompile_headers(assets PUBLIC "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch/pch.h>")
 
 set_target_properties(assets PROPERTIES
         POSITION_INDEPENDENT_CODE TRUE

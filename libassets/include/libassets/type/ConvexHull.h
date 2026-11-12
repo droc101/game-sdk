@@ -19,7 +19,7 @@ class ConvexHull
          * @param objPath The path to the OBJ file
          * @param status Error code output
          */
-        ConvexHull(const std::string &objPath, Error::ErrorCode &status);
+        ConvexHull(const std::string &objPath, Error &status);
         /**
          * Read a ConvexHull from a DataReader
          */
@@ -51,7 +51,7 @@ class ConvexHull
          * @param path The OBJ file to import from
          * @param output Where to store the ConvexHulls=
          */
-        [[nodiscard]] static Error::ErrorCode ImportMultiple(const std::string &path, std::vector<ConvexHull> &output);
+        [[nodiscard]] static Error ImportMultiple(const std::string &path, std::vector<ConvexHull> &output);
 
     private:
         glm::vec3 offset{};

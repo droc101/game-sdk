@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include <libassets/type/InputDefinition.h>
+#include <libassets/type/OutputDefinition.h>
 #include <libassets/type/paramDefs/ParamDefinition.h>
 #include <libassets/type/renderDefs/RenderDefinition.h>
-#include <libassets/type/InputDefinition.h>
 #include <libassets/util/Error.h>
-#include <libassets/type/OutputDefinition.h>
 #include <map>
 #include <memory>
 #include <set>
@@ -17,68 +17,68 @@
 
 class ActorDefinition
 {
-public:
-    ActorDefinition() = default;
+    public:
+        ActorDefinition() = default;
 
-    std::string className;
-    std::string description;
+        std::string className;
+        std::string description;
 
-    std::string parentClassName;
-    ActorDefinition* parentClass = nullptr;
+        std::string parentClassName;
+        ActorDefinition *parentClass = nullptr;
 
-    bool isVirtual = false;
-    bool editorOnly = false;
+        bool isVirtual = false;
+        bool editorOnly = false;
 
-    std::vector<std::shared_ptr<RenderDefinition>> renderDefinitions{};
+        std::vector<std::shared_ptr<RenderDefinition>> renderDefinitions{};
 
-    std::map<std::string, InputDefinition> inputs{};
-    std::map<std::string, OutputDefinition> outputs{};
-    std::map<std::string, std::shared_ptr<ParamDefinition>> params{};
+        std::map<std::string, InputDefinition> inputs{};
+        std::map<std::string, OutputDefinition> outputs{};
+        std::map<std::string, std::shared_ptr<ParamDefinition>> params{};
 
-    static constexpr const char* VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX = R"/(^[a-z_]+$)/";
+        static constexpr const char *VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX = R"/(^[a-z_]+$)/";
 
-    /**
-     * Create an ActorDefinition from a JSON file
-     * @param path The path to the JSON file
-     * @param definition The definition to populate
-     */
-    [[nodiscard]] static Error::ErrorCode Create(const std::string& path, ActorDefinition& definition);
+        /**
+         * Create an ActorDefinition from a JSON file
+         * @param path The path to the JSON file
+         * @param definition The definition to populate
+         */
+        [[nodiscard]] static Error Create(const std::string &path, ActorDefinition &definition);
 
-    /**
-     * Check if this definition extends another at any point
-     * @param baseClass The class to look for
-     */
-    [[nodiscard]] bool Extends(const std::string& baseClass) const;
+        /**
+         * Check if this definition extends another at any point
+         * @param baseClass The class to look for
+         */
+        [[nodiscard]] bool Extends(const std::string &baseClass) const;
 
-    /**
-     * Get all input names in this definition and all parents
-     */
-    void GetInputNames(std::set<std::string>& out) const;
-    /**
-     * Get all output names in this definition and all parents
-     */
-    void GetOutputNames(std::set<std::string>& out) const;
-    /**
-     * Get all param names in this definition and all parents
-     */
-    void GetParamNames(std::set<std::string>& out) const;
+        /**
+         * Get all input names in this definition and all parents
+         */
+        void GetInputNames(std::set<std::string> &out) const;
+        /**
+         * Get all output names in this definition and all parents
+         */
+        void GetOutputNames(std::set<std::string> &out) const;
+        /**
+         * Get all param names in this definition and all parents
+         */
+        void GetParamNames(std::set<std::string> &out) const;
 
-    /**
-     * Get an input definition by name
-     * @param name The input name
-     * @param input The InputDefinition to populate
-     */
-    [[nodiscard]] Error::ErrorCode GetInput(const std::string& name, InputDefinition& input) const;
-    /**
-     * Get an output definition by name
-     * @param name The output name
-     * @param output The OutputDefinition to populate
-     */
-    [[nodiscard]] Error::ErrorCode GetOutput(const std::string& name, OutputDefinition& output) const;
-    /**
-     * Get a param definition by name
-     * @param name The param name
-     * @param param The ParamDefinition to populate
-     */
-    [[nodiscard]] Error::ErrorCode GetParam(const std::string& name, std::shared_ptr<ParamDefinition>& param) const;
+        /**
+         * Get an input definition by name
+         * @param name The input name
+         * @param input The InputDefinition to populate
+         */
+        [[nodiscard]] Error GetInput(const std::string &name, InputDefinition &input) const;
+        /**
+         * Get an output definition by name
+         * @param name The output name
+         * @param output The OutputDefinition to populate
+         */
+        [[nodiscard]] Error GetOutput(const std::string &name, OutputDefinition &output) const;
+        /**
+         * Get a param definition by name
+         * @param name The param name
+         * @param param The ParamDefinition to populate
+         */
+        [[nodiscard]] Error GetParam(const std::string &name, std::shared_ptr<ParamDefinition> &param) const;
 };

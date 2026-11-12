@@ -47,7 +47,7 @@ void ModelAsset::Reset()
     staticCollisionMesh = StaticCollisionMesh();
 }
 
-Error::ErrorCode ModelAsset::LoadFromBuffer(DataReader &reader)
+Error ModelAsset::LoadFromBuffer(DataReader &reader)
 {
     Reset();
     const uint32_t materialCount = reader.Read<uint32_t>();
@@ -92,10 +92,10 @@ Error::ErrorCode ModelAsset::LoadFromBuffer(DataReader &reader)
         staticCollisionMesh = StaticCollisionMesh(reader);
     }
 
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode ModelAsset::SaveToBuffer(DataWriter &writer) const
+Error ModelAsset::SaveToBuffer(DataWriter &writer) const
 {
     assert(!skins.empty()); // you gotta have a skin
     assert(!skins.at(0).empty()); // you gotta have materials
@@ -141,15 +141,15 @@ Error::ErrorCode ModelAsset::SaveToBuffer(DataWriter &writer) const
         staticCollisionMesh.Write(writer);
     }
 
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode ModelAsset::Import(const std::string &filePath)
+Error ModelAsset::Import(const std::string &filePath)
 {
     Reset();
-    Error::ErrorCode lodCode = Error::ErrorCode::UNKNOWN;
+    Error lodCode = Errors::UNKNOWN;
     lods.emplace_back(filePath, 0, lodCode);
-    if (lodCode != Error::ErrorCode::OK)
+    if (lodCode.Failed())
     {
         return lodCode;
     }
@@ -164,7 +164,7 @@ Error::ErrorCode ModelAsset::Import(const std::string &filePath)
         skins.at(0).push_back(mat);
     }
 
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
 ModelLod &ModelAsset::GetLod(const uint32_t index)
@@ -232,9 +232,9 @@ void ModelAsset::SortLODs()
 bool ModelAsset::AddLod(const std::string &path)
 {
     const float dist = lods.back().distance + 5;
-    Error::ErrorCode status = Error::ErrorCode::UNKNOWN;
+    Error status = Errors::UNKNOWN;
     const ModelLod lod(path, dist, status);
-    if (status != Error::ErrorCode::OK)
+    if (status.Failed())
     {
         return false;
     }
@@ -332,7 +332,7 @@ void ModelAsset::AddHull(const ConvexHull &hull)
     convexHulls.push_back(hull);
 }
 
-Error::ErrorCode ModelAsset::AddHulls(const std::string &path)
+Error ModelAsset::AddHulls(const std::string &path)
 {
     return ConvexHull::ImportMultiple(path, convexHulls);
 }

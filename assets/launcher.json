@@ -8,58 +8,71 @@
           "--nosteam",
           "--game=$ASSETSDIR"
         ],
-        "icon": "game"
+        "icon": "game",
+        "description": "Launch a new instance of GAME using the configured assets directory"
       },
       "GAME Directory": {
         "folder": "$GAMEDIR",
-        "icon": "folder"
+        "icon": "folder",
+        "description": "Open the game executable folder"
       },
       "Assets Directory": {
         "folder": "$ASSETSDIR",
-        "icon": "folder"
+        "icon": "folder",
+        "description": "Open the game assets folder"
       },
       "GAME Log": {
         "file": "$GAMEDIR/game.log",
-        "icon": "file"
+        "icon": "file",
+        "description": "Open the log file from the most recent run of game"
       }
     },
 
     "SDK Tools": {
       "Map Editor": {
         "binary": "$SDKDIR/mapedit",
-        "icon": "mapedit"
+        "icon": "mapedit",
+        "description": "Create, edit, and compile maps for GAME"
       },
       "Texture Editor": {
         "binary": "$SDKDIR/texedit",
-        "icon": "texedit"
+        "icon": "texedit",
+        "description": "Create and edit textures for GAME"
       },
       "Material Editor": {
         "binary": "$SDKDIR/mtledit",
-        "icon": "mtledit"
+        "icon": "mtledit",
+        "description": "Create and edit map materials for GAME"
       },
       "Model Editor": {
         "binary": "$SDKDIR/mdledit",
-        "icon": "mdledit"
+        "icon": "mdledit",
+        "description": "Create and edit models for GAME"
       },
       "Sound Editor": {
         "binary": "$SDKDIR/sndedit",
-        "icon": "sndedit"
+        "icon": "sndedit",
+        "description": "Import sounds for GAME"
       },
       "Key-Value List Editor": {
         "binary": "$SDKDIR/kvledit",
-        "icon": "kvledit"
+        "icon": "kvledit",
+        "description": "Create and edit KvList assets and KvlFiles"
       },
       "Font Editor": {
         "binary": "$SDKDIR/fonedit",
-        "icon": "fonedit"
+        "icon": "fonedit",
+        "description": "Create and edit fonts for GAME"
       },
       "Shader Editor": {
         "binary": "$SDKDIR/shdedit",
-        "icon": "shdedit"
+        "icon": "shdedit",
+        "description": "Compile shaders for GAME"
       },
       "SDK Directory": {
         "folder": "$SDKDIR",
-        "icon": "folder"
+        "icon": "folder",
+        "description": "Open the SDK tools folder"
       }
     },
 

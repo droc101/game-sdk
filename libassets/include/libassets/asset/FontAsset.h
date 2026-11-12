@@ -49,8 +49,8 @@ class FontAsset final: public Asset
 
         void Reset() override;
 
-        [[nodiscard]] Error::ErrorCode LoadFromBuffer(DataReader &reader) override;
-        [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
+        [[nodiscard]] Error LoadFromBuffer(DataReader &reader) override;
+        [[nodiscard]] Error SaveToBuffer(DataWriter &writer) const override;
 
         [[nodiscard]] AssetType GetAssetType() const override;
         [[nodiscard]] uint8_t GetAssetTypeVersion() const override;

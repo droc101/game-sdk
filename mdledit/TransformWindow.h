@@ -7,8 +7,6 @@
 
 #include <game_sdk/Window.h>
 #include <glm/vec3.hpp>
-#include <SDL3/SDL_video.h>
-#include <vector>
 
 class TransformWindow final: public Window
 {
@@ -24,7 +22,7 @@ class TransformWindow final: public Window
             .title = "Scale Model",
             .defaultSize = glm::ivec2(400, 120),
             .icon = "",
-            .defaultFlags = SDL_WINDOW_UTILITY,
+            .defaultFlags = 0,
             .defaultImguiWindow = true,
         };
 

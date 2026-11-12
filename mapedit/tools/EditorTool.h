@@ -5,7 +5,8 @@
 #pragma once
 
 #include <cstdint>
-#include "../Viewport.h"
+
+class Viewport;
 
 class EditorTool
 {
@@ -22,9 +23,9 @@ class EditorTool
             NONE,
             VERTEX,
             LINE,
-            CEILING,
-            FLOOR,
-            SECTOR,
+            BRUSH,
             ACTOR,
+            FACE,
         };
+        static_assert(ItemType::NONE == static_cast<ItemType>(0));
 };

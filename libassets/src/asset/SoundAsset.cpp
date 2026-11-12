@@ -34,27 +34,27 @@ void SoundAsset::Reset()
     wavData = {};
 }
 
-Error::ErrorCode SoundAsset::LoadFromBuffer(DataReader &reader)
+Error SoundAsset::LoadFromBuffer(DataReader &reader)
 {
     Reset();
     wavData.reserve(reader.TotalSize());
     reader.ReadToVector<uint8_t>(wavData, reader.TotalSize());
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode SoundAsset::SaveToBuffer(DataWriter &writer) const
+Error SoundAsset::SaveToBuffer(DataWriter &writer) const
 {
     writer.WriteBuffer(wavData);
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode SoundAsset::Import(const std::string &filePath)
+Error SoundAsset::Import(const std::string &filePath)
 {
     Reset();
     return FileIo::ReadFileToBuffer(filePath, wavData);
 }
 
-Error::ErrorCode SoundAsset::Export(const std::string &filePath) const
+Error SoundAsset::Export(const std::string &filePath) const
 {
     return FileIo::WriteBufferToFile(filePath, wavData);
 }

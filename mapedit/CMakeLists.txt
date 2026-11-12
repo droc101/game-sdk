@@ -33,6 +33,22 @@ add_executable(mapedit mapedit.cpp
         MapeditWindow.h
         CompileProgressWindow.cpp
         CompileProgressWindow.h
+        tools/CutTool.cpp
+        tools/CutTool.h
+        tools/VertexTool.cpp
+        tools/VertexTool.h
+        WorldBuffersRenderer.cpp
+        WorldBuffersRenderer.h
+        tools/FaceTool.cpp
+        tools/FaceTool.h
+        ResizeGizmoHelper.cpp
+        ResizeGizmoHelper.h
+        MaterialCache.cpp
+        MaterialCache.h
+        MapeditOptionsWindow.cpp
+        MapeditOptionsWindow.h
+        MapeditOptions.cpp
+        MapeditOptions.h
 )
 
 configure_sdk_gui_program(mapedit)

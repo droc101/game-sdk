@@ -25,7 +25,7 @@
 #include <string>
 
 std::unique_ptr<ParamDefinition> ParamDefinition::Create(const nlohmann::json &json,
-                                                         Error::ErrorCode &e,
+                                                         Error &e,
                                                          const std::string &paramName)
 {
     std::unique_ptr<ParamDefinition> output = nullptr;
@@ -33,7 +33,7 @@ std::unique_ptr<ParamDefinition> ParamDefinition::Create(const nlohmann::json &j
     if (type == Param::ParamType::PARAM_TYPE_NONE)
     {
         Logger::Error("Failed to parse type of param:\n{}", json.dump(4).c_str());
-        e = Error::ErrorCode::INCORRECT_FORMAT;
+        e = Errors::INCORRECT_FORMAT;
         return nullptr;
     }
     const std::string desc = json.value("description", "");
@@ -46,7 +46,7 @@ std::unique_ptr<ParamDefinition> ParamDefinition::Create(const nlohmann::json &j
             Logger::Error("Invalid options list name \"{}\". Options list names may only contain letters and "
                           "underscores.",
                           optionListName);
-            e = Error::ErrorCode::INCORRECT_FORMAT;
+            e = Errors::INCORRECT_FORMAT;
             return nullptr;
         }
         output = std::make_unique<OptionParamDefinition>(optionListName, json.value("default", ""));
@@ -99,7 +99,7 @@ std::unique_ptr<ParamDefinition> ParamDefinition::Create(const nlohmann::json &j
             });
         } else
         {
-            e = Error::ErrorCode::INCORRECT_FORMAT;
+            e = Errors::INCORRECT_FORMAT;
             return nullptr;
         }
     }
@@ -108,6 +108,6 @@ std::unique_ptr<ParamDefinition> ParamDefinition::Create(const nlohmann::json &j
     output->type = type;
     output->displayName = displayName;
 
-    e = Error::ErrorCode::OK;
+    e = Errors::OK;
     return output;
 }

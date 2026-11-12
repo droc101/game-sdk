@@ -12,6 +12,7 @@ const float PI = 3.141592653589793;
 const float MIN_BRIGHTNESS = 1.0 / 256.0;
 const float MIN_RAY_LENGTH = 0.0001;
 const float MAX_RAY_LENGTH = 28400; // 2 * sqrt(3) * MAP_MAX_HALF_EXTENTS; Rounded up slightly
+const float RAY_LENGTH_OFFSET = 0.001953125;
 
 layout (constant_id = 0) const uint WIDTH = 8192;
 layout (constant_id = 1) const uint HEIGHT = 4096;
@@ -33,8 +34,7 @@ struct MapVertex {
 #pragma region LightTypeEnum
 const uint LIGHT_TYPE_POINT = 0u;
 const uint LIGHT_TYPE_SPOT = 1u;
-const uint LIGHT_TYPE_AREA = 2u;
-const uint LIGHT_TYPE_DIRECTIONAL = 3u;
+const uint LIGHT_TYPE_DIRECTIONAL = 2u;
 #pragma endregion LightTypeEnum
 
 /// The format of the lights in the map. Interop with C++ must use scalar block layout
@@ -60,13 +60,14 @@ struct Light {
 #pragma region Pipeline Layout
 
 layout (push_constant) uniform PushConstants {
-    uint baseLuxelIndex;
+    int baseLuxelIndex;
+    uint baseSampleIndex;
 } pushConstants;
 
 layout (set = 0, binding = 0) uniform accelerationStructureEXT accelerationStructure;
 layout (set = 0, binding = 1, rgba16f) restrict uniform imageBuffer outputLightmap;
 layout (set = 0, binding = 2, rgba16f) readonly restrict uniform imageBuffer previousBounceLightmap;
-layout (set = 0, binding = 3, rgba16f) writeonly restrict uniform imageBuffer currentBounceLightmap;
+layout (set = 0, binding = 3, rgba16f) restrict uniform imageBuffer currentBounceLightmap;
 layout (set = 0, binding = 4, rgba32f) readonly restrict uniform image2D luxelPositions;
 layout (set = 0, binding = 5, rgba32f) readonly restrict uniform image2D luxelNormals;
 layout (set = 0, binding = 6, rgba16f) readonly restrict uniform image2D luxelAlbedos;

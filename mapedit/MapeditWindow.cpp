@@ -20,15 +20,20 @@
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
+#include <SDL3/SDL_events.h>
 #include <SDL3/SDL_video.h>
 #include "ActorBrowserWindow.h"
 #include "MapCompileWindow.h"
+#include "MapeditOptionsWindow.h"
 #include "MapEditor.h"
 #include "MapPropertiesWindow.h"
 #include "MapRenderer.h"
 #include "tools/AddActorTool.h"
 #include "tools/AddPolygonTool.h"
 #include "tools/AddPrimitiveTool.h"
+#include "tools/CutTool.h"
+#include "tools/FaceTool.h"
+#include "tools/VertexTool.h"
 
 const Window::WindowProperties &MapeditWindow::GetProperties() const
 {
@@ -39,9 +44,9 @@ bool MapeditWindow::Init()
 {
     SoundSystem::Get().Init();
 
-    Error::ErrorCode adms = Error::ErrorCode::UNKNOWN;
+    Error adms = Errors::UNKNOWN;
     MapEditor::adm = ActorDefinitionManager(SharedMgr::Get().pathManager, adms);
-    if (adms != Error::ErrorCode::OK)
+    if (adms.Failed())
     {
         ErrorMessage("Failed to load actor definitions");
         return false;
@@ -62,7 +67,8 @@ bool MapeditWindow::Init()
         return false;
     }
 
-    MapEditor::mat = WallMaterial(Options::Get().defaultMaterial);
+    MapEditor::options.Load();
+    MapEditor::material = MapEditor::options.defaultMaterial;
     if (!MapRenderer::Init())
     {
         Logger::Error("Failed to start renderer!");
@@ -74,6 +80,9 @@ bool MapeditWindow::Init()
     (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/actors.png", MapEditor::ACTOR_ICON_NAME);
     (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/primitives.png", MapEditor::PRIMITIVE_ICON_NAME);
     (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/polygon.png", MapEditor::POLYGON_ICON_NAME);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/cut.png", MapEditor::CUT_ICON_NAME);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/vertex.png", MapEditor::VERTEX_ICON_NAME);
+    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/face.png", MapEditor::FACE_ICON_NAME);
 
     vpTopDown.GetZoom() = MapEditor::DEFAULT_ZOOM;
     vpFront.GetZoom() = MapEditor::DEFAULT_ZOOM;
@@ -96,8 +105,14 @@ void MapeditWindow::FileDropped(const std::string &filePath)
     }
 }
 
+bool MapeditWindow::ProcessEvent(SDL_Event *event)
+{
+    return event->type == SDL_EVENT_MOUSE_MOTION && vpPerspective.IsMouseCaptured();
+}
+
 void MapeditWindow::Destroy()
 {
+    MapEditor::options.Save();
     SoundSystem::Get().Destroy();
     MapRenderer::Destroy();
 }
@@ -123,8 +138,8 @@ bool MapeditWindow::ToolbarToolButton(const char *id,
         ImGui::EndTooltip();
     }
     ImTextureID tex = 0;
-    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(icon, tex);
-    if (e != Error::ErrorCode::OK)
+    const Error e = SharedMgr::Get().textureCache.GetTextureID(icon, tex);
+    if (e.Failed())
     {
         tex = SharedMgr::Get().textureCache.GetMissingTextureID();
     }
@@ -136,37 +151,52 @@ bool MapeditWindow::ToolbarToolButton(const char *id,
     return r;
 }
 
+void MapeditWindow::ToolbarSeparator()
+{
+    ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical, 1);
+    ImGui::SameLine();
+}
+
 void MapeditWindow::SetupDockspace()
 {
     if (dockspaceSetup)
     {
         return;
     }
+
+    const ImGuiViewport *viewport = ImGui::GetMainViewport();
+    const float sidebarSize = MapEditor::options.showSidebar ? MapEditor::SIDEBAR_WIDTH : 0;
+    const ImVec2 vpAreaSize = ImVec2((viewport->WorkSize.x - sidebarSize),
+                                     (viewport->WorkSize.y - MapEditor::TOOLBAR_HEIGHT));
+
     dockspaceSetup = true;
     dockspaceId = ImGui::GetID("dockspace");
     rootDockspaceID = dockspaceId;
     ImGui::DockBuilderRemoveNode(dockspaceId);
     ImGui::DockBuilderAddNode(dockspaceId, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_NoCloseButton);
-    ImGui::DockBuilderSetNodeSize(dockspaceId, ImGui::GetMainViewport()->Size);
+    ImGui::DockBuilderSetNodeSize(dockspaceId, vpAreaSize);
 
-    ImGuiID lowerLeftDock = ImGui::DockBuilderSplitNode(dockspaceId, ImGuiDir_Down, 0.35f, nullptr, &dockspaceId);
-    const ImGuiID lowerRightDock = ImGui::DockBuilderSplitNode(lowerLeftDock,
-                                                               ImGuiDir_Right,
-                                                               0.5f,
-                                                               nullptr,
-                                                               &lowerLeftDock);
+    ImGuiID topLeftDock;
+    ImGuiID topRightDock;
+    ImGuiID bottomLeftDock;
+    ImGuiID bottomRightDock;
 
-    ImGui::DockBuilderDockWindow("Top down (XZ)", dockspaceId);
-    ImGui::DockBuilderDockWindow("Front (XY)", lowerLeftDock);
-    ImGui::DockBuilderDockWindow("Side (YZ)", lowerRightDock);
+    ImGui::DockBuilderSplitNode(dockspaceId, ImGuiDir_Down, 0.5f, &bottomLeftDock, &topLeftDock);
+    ImGui::DockBuilderSplitNode(topLeftDock, ImGuiDir_Right, 0.5f, &topRightDock, &topLeftDock);
+    ImGui::DockBuilderSplitNode(bottomLeftDock, ImGuiDir_Right, 0.5f, &bottomRightDock, &bottomLeftDock);
+
+    ImGui::DockBuilderDockWindow("3D", topLeftDock);
+    ImGui::DockBuilderDockWindow("Top down (XZ)", topRightDock);
+    ImGui::DockBuilderDockWindow("Front (XY)", bottomLeftDock);
+    ImGui::DockBuilderDockWindow("Side (YZ)", bottomRightDock);
 
     ImGui::DockBuilderFinish(rootDockspaceID);
 }
 
 void MapeditWindow::OpenJson(const std::string &path) const
 {
-    const Error::ErrorCode errorCode = MapEditor::map.Import(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error errorCode = MapEditor::map.Import(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to open the map!\n{}", errorCode));
         return;
@@ -185,12 +215,14 @@ void MapeditWindow::OpenJson(const std::string &path) const
 
         actor.ApplyDefinition(MapEditor::adm.GetActorDefinition(actor.className), false);
     }
+    MapEditor::toolType = MapEditor::EditorToolType::SELECT;
+    MapEditor::tool = std::make_unique<SelectTool>();
 }
 
 void MapeditWindow::SaveJson(const std::string &path) const
 {
-    const Error::ErrorCode errorCode = MapEditor::map.Export(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error errorCode = MapEditor::map.Export(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to save the map!\n{}", errorCode));
         return;
@@ -266,7 +298,8 @@ void MapeditWindow::Render()
 
     bool newPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N, ImGuiInputFlags_RouteGlobal);
     bool openPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_O, ImGuiInputFlags_RouteGlobal);
-    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_N, ImGuiInputFlags_RouteGlobal);
+    bool savePressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_S, ImGuiInputFlags_RouteGlobal);
+    bool saveAsPressed = ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Shift | ImGuiKey_S, ImGuiInputFlags_RouteGlobal);
     bool compilePressed = ImGui::Shortcut(ImGuiKey_F5, ImGuiInputFlags_RouteGlobal);
     bool cutPressed = canCutCopy && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_X, ImGuiInputFlags_RouteGlobal);
     bool copyPressed = canCutCopy && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_C, ImGuiInputFlags_RouteGlobal);
@@ -280,6 +313,7 @@ void MapeditWindow::Render()
             ImGui::Separator();
             openPressed |= ImGui::MenuItem("Open", "Ctrl+O");
             savePressed |= ImGui::MenuItem("Save", "Ctrl+S");
+            saveAsPressed |= ImGui::MenuItem("Save As", "Ctrl+Shift+S");
             ImGui::Separator();
             compilePressed |= ImGui::MenuItem("Compile", "F5");
             ImGui::Separator();
@@ -296,9 +330,9 @@ void MapeditWindow::Render()
                 WindowManager::Get().AddModalWindow<MapPropertiesWindow>();
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Snap on Grid", "", MapEditor::snapToGrid))
+            if (ImGui::MenuItem("Snap on Grid", "", MapEditor::options.snapToGrid))
             {
-                MapEditor::snapToGrid = !MapEditor::snapToGrid;
+                MapEditor::options.snapToGrid = !MapEditor::options.snapToGrid;
             }
             if (ImGui::MenuItem("Smaller Grid", "["))
             {
@@ -372,34 +406,42 @@ void MapeditWindow::Render()
                 vpSide.CenterPosition(center);
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Show Viewport Information", "", MapEditor::drawViewportInfo))
+            if (ImGui::MenuItem("Show Viewport Information", "", MapEditor::options.drawViewportInfo))
             {
-                MapEditor::drawViewportInfo = !MapEditor::drawViewportInfo;
+                MapEditor::options.drawViewportInfo = !MapEditor::options.drawViewportInfo;
             }
-            if (ImGui::MenuItem("Show Axes", "", MapEditor::drawAxisHelper))
+            if (ImGui::MenuItem("Show Axes", "", MapEditor::options.drawAxisHelper))
             {
-                MapEditor::drawAxisHelper = !MapEditor::drawAxisHelper;
+                MapEditor::options.drawAxisHelper = !MapEditor::options.drawAxisHelper;
             }
-            if (ImGui::MenuItem("Show World Border", "", MapEditor::drawWorldBorder))
+            if (ImGui::MenuItem("Show World Border", "", MapEditor::options.drawWorldBorder))
             {
-                MapEditor::drawWorldBorder = !MapEditor::drawWorldBorder;
+                MapEditor::options.drawWorldBorder = !MapEditor::options.drawWorldBorder;
             }
-            if (ImGui::MenuItem("Show 3D Models", "", MapEditor::drawModels))
+            if (ImGui::MenuItem("Show 3D Models in 2D viewports", "", MapEditor::options.drawModels))
             {
-                MapEditor::drawModels = !MapEditor::drawModels;
+                MapEditor::options.drawModels = !MapEditor::options.drawModels;
             }
-            if (ImGui::MenuItem("Show Gizmos", "", MapEditor::drawGizmos))
+            if (ImGui::MenuItem("Enable Culling", "", MapEditor::options.culling))
             {
-                MapEditor::drawGizmos = !MapEditor::drawGizmos;
+                MapEditor::options.culling = !MapEditor::options.culling;
             }
-            if (ImGui::MenuItem("Enable Culling", "", MapEditor::culling))
+            if (ImGui::MenuItem("Show Internal Buffers", "", MapEditor::options.showInternalBuffers))
             {
-                MapEditor::culling = !MapEditor::culling;
+                MapEditor::options.showInternalBuffers = !MapEditor::options.showInternalBuffers;
+            }
+            if (ImGui::MenuItem("Show 2D Viewports", "", MapEditor::options.show2dViewports))
+            {
+                MapEditor::options.show2dViewports = !MapEditor::options.show2dViewports;
+            }
+            if (ImGui::MenuItem("Show Invisible Faces", "", MapEditor::options.showInvisibleFaces))
+            {
+                MapEditor::options.showInvisibleFaces = !MapEditor::options.showInvisibleFaces;
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Show Grid", "", MapEditor::drawGrid))
+            if (ImGui::MenuItem("Show Grid", "", MapEditor::options.drawGrid))
             {
-                MapEditor::drawGrid = !MapEditor::drawGrid;
+                MapEditor::options.drawGrid = !MapEditor::options.drawGrid;
             }
             if (ImGui::MenuItem("Smaller Grid", "["))
             {
@@ -422,9 +464,9 @@ void MapeditWindow::Render()
                 MapEditor::gridSpacingIndex = MapEditor::DEFAULT_GRID_SPACING_INDEX;
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Show Sidebar", "", MapEditor::showSidebar))
+            if (ImGui::MenuItem("Show Sidebar", "", MapEditor::options.showSidebar))
             {
-                MapEditor::showSidebar = !MapEditor::showSidebar;
+                MapEditor::options.showSidebar = !MapEditor::options.showSidebar;
             }
             ImGui::EndMenu();
         }
@@ -461,6 +503,10 @@ void MapeditWindow::Render()
                 }
             }
             ImGui::Separator();
+            if (ImGui::MenuItem("Map Editor Options"))
+            {
+                WindowManager::Get().AddModalWindow<MapeditOptionsWindow>();
+            }
             ImGui::EndMenu();
         }
         SharedMgr::Get().SharedMenuUI("mapedit");
@@ -469,18 +515,28 @@ void MapeditWindow::Render()
 
     if (newPressed)
     {
-        MapEditor::map = MapAsset();
         MapEditor::toolType = MapEditor::EditorToolType::SELECT;
         MapEditor::tool = std::make_unique<SelectTool>();
+        vpPerspective.ClearPerspectiveHover();
+        MapEditor::map = MapAsset();
         MapEditor::mapFile = "";
     }
     if (openPressed)
     {
         OpenFileDialog(FILE_DIALOG_CALLBACK(OpenJson), DialogFilters::MAP_JSON_FILTERS);
-        MapEditor::toolType = MapEditor::EditorToolType::SELECT;
-        MapEditor::tool = std::make_unique<SelectTool>();
     }
     if (savePressed)
+    {
+        if (MapEditor::mapFile.empty())
+        {
+            SaveFileDialog(FILE_DIALOG_CALLBACK(SaveJson), DialogFilters::MAP_JSON_FILTERS);
+        } else
+        {
+            // TODO visual feedback that this save happened
+            SaveJson(MapEditor::mapFile);
+        }
+    }
+    if (saveAsPressed)
     {
         SaveFileDialog(FILE_DIALOG_CALLBACK(SaveJson), DialogFilters::MAP_JSON_FILTERS);
     }
@@ -524,6 +580,8 @@ void MapeditWindow::Render()
         MapEditor::tool = std::make_unique<SelectTool>();
     }
 
+    ToolbarSeparator();
+
     if (ToolbarToolButton("##actorTool",
                           "Add Actor",
                           MapEditor::ACTOR_ICON_NAME,
@@ -535,6 +593,8 @@ void MapeditWindow::Render()
         MapEditor::toolType = MapEditor::EditorToolType::ADD_ACTOR;
         MapEditor::tool = std::make_unique<AddActorTool>();
     }
+
+    ToolbarSeparator();
 
     if (ToolbarToolButton("##primTool",
                           "Add Primitive",
@@ -560,10 +620,48 @@ void MapeditWindow::Render()
         MapEditor::tool = std::make_unique<AddPolygonTool>();
     }
 
+    ToolbarSeparator();
+
+    if (ToolbarToolButton("##cutTool",
+                          "Cut Brushes",
+                          MapEditor::CUT_ICON_NAME,
+                          MapEditor::toolType == MapEditor::EditorToolType::CUT,
+                          2,
+                          "Ctrl+5",
+                          ImGuiMod_Ctrl | ImGuiKey_5))
+    {
+        MapEditor::toolType = MapEditor::EditorToolType::CUT;
+        MapEditor::tool = std::make_unique<CutTool>();
+    }
+
+    if (ToolbarToolButton("##vertexTool",
+                          "Vertex Tool",
+                          MapEditor::CUT_ICON_NAME,
+                          MapEditor::toolType == MapEditor::EditorToolType::VERTEX,
+                          2,
+                          "Ctrl+6",
+                          ImGuiMod_Ctrl | ImGuiKey_6))
+    {
+        MapEditor::toolType = MapEditor::EditorToolType::VERTEX;
+        MapEditor::tool = std::make_unique<VertexTool>();
+    }
+
+    if (ToolbarToolButton("##faceTool",
+                          "Face Tool",
+                          MapEditor::FACE_ICON_NAME,
+                          MapEditor::toolType == MapEditor::EditorToolType::FACE,
+                          2,
+                          "Ctrl+7",
+                          ImGuiMod_Ctrl | ImGuiKey_7))
+    {
+        MapEditor::toolType = MapEditor::EditorToolType::FACE;
+        MapEditor::tool = std::make_unique<FaceTool>();
+    }
+
     ImGui::Dummy({1, 1});
     ImGui::End();
 
-    if (MapEditor::showSidebar)
+    if (MapEditor::options.showSidebar)
     {
         ImGui::SetNextWindowPos(ImVec2(0, viewport->WorkPos.y + MapEditor::TOOLBAR_HEIGHT));
         ImGui::SetNextWindowSize(ImVec2(MapEditor::SIDEBAR_WIDTH, viewport->WorkSize.y - MapEditor::TOOLBAR_HEIGHT));
@@ -580,7 +678,7 @@ void MapeditWindow::Render()
         ImGui::End();
     }
 
-    const float sidebarSize = MapEditor::showSidebar ? MapEditor::SIDEBAR_WIDTH : 0;
+    const float sidebarSize = MapEditor::options.showSidebar ? MapEditor::SIDEBAR_WIDTH : 0;
     const ImVec2 vpAreaTopLeft = ImVec2(viewport->WorkPos.x + sidebarSize,
                                         viewport->WorkPos.y + MapEditor::TOOLBAR_HEIGHT);
     const ImVec2 vpAreaSize = ImVec2((viewport->WorkSize.x - sidebarSize),
@@ -601,7 +699,11 @@ void MapeditWindow::Render()
     ImGui::PopStyleVar();
     ImGui::PopStyleVar();
 
-    vpTopDown.Render();
-    vpFront.Render();
-    vpSide.Render();
+    vpPerspective.Render();
+    if (MapEditor::options.show2dViewports)
+    {
+        vpTopDown.Render();
+        vpFront.Render();
+        vpSide.Render();
+    }
 }

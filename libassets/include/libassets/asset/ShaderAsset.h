@@ -30,21 +30,21 @@ class ShaderAsset final: public Asset
 
         void Reset() override;
 
-        [[nodiscard]] Error::ErrorCode SaveToBuffer(DataWriter &writer) const override;
-        [[nodiscard]] Error::ErrorCode SaveToBufferEx(DataWriter &writer,
-                                                      bool enableOptimization,
-                                                      bool debugInfo,
-                                                      std::string *errorLog = nullptr,
-                                                      const std::string &shaderFilename = "glsl_source") const;
+        [[nodiscard]] Error SaveToBuffer(DataWriter &writer) const override;
+        [[nodiscard]] Error SaveToBufferEx(DataWriter &writer,
+                                           bool enableOptimization,
+                                           bool debugInfo,
+                                           std::string *errorLog = nullptr,
+                                           const std::string &shaderFilename = "glsl_source") const;
 
-        [[nodiscard]] Error::ErrorCode SaveToAssetEx(const std::string &filePath,
-                                                     bool enableOptimization,
-                                                     bool debugInfo,
-                                                     std::string *errorLog = nullptr,
-                                                     const std::string &shaderFilename = "glsl_source",
-                                                     bool dumpSpvBinary = false) const;
+        [[nodiscard]] Error SaveToAssetEx(const std::string &filePath,
+                                          bool enableOptimization,
+                                          bool debugInfo,
+                                          std::string *errorLog = nullptr,
+                                          const std::string &shaderFilename = "glsl_source",
+                                          bool dumpSpvBinary = false) const;
 
-        [[nodiscard]] Error::ErrorCode Import(const std::string &filePath) override;
+        [[nodiscard]] Error Import(const std::string &filePath) override;
 
         [[nodiscard]] AssetType GetAssetType() const override;
         [[nodiscard]] uint8_t GetAssetTypeVersion() const override;

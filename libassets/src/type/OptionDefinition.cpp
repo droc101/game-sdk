@@ -16,25 +16,25 @@
 #include <utility>
 #include <vector>
 
-Error::ErrorCode OptionDefinition::Create(const std::string &path, OptionDefinition &def)
+Error OptionDefinition::Create(const std::string &path, OptionDefinition &def)
 {
     std::string jsonStr;
-    const Error::ErrorCode readError = FileIo::ReadFileToString(path, jsonStr);
-    if (readError != Error::ErrorCode::OK)
+    const Error readError = FileIo::ReadFileToString(path, jsonStr);
+    if (readError.Failed())
     {
         return readError;
     }
     const nlohmann::json definitionJson = nlohmann::json::parse(jsonStr);
     if (definitionJson.is_discarded())
     {
-        return Error::ErrorCode::INCORRECT_FORMAT;
+        return Errors::INCORRECT_FORMAT;
     }
 
     def.valueType = Param::ParseType(definitionJson.value("type", std::string()));
     if (def.valueType == Param::ParamType::PARAM_TYPE_NONE)
     {
         Logger::Error("Invalid option value type!");
-        return Error::ErrorCode::INCORRECT_FORMAT;
+        return Errors::INCORRECT_FORMAT;
     }
 
     def.name = std::filesystem::path(path).stem().string();
@@ -43,10 +43,10 @@ Error::ErrorCode OptionDefinition::Create(const std::string &path, OptionDefinit
         Logger::Error("Invalid options list name (definition file name) \"{}\". Options list names may only contain "
                       "letters and underscores.",
                       def.name);
-        return Error::ErrorCode::INCORRECT_FORMAT;
+        return Errors::INCORRECT_FORMAT;
     }
 
-    Error::ErrorCode e = Error::ErrorCode::OK;
+    Error e = Errors::OK;
 
     switch (def.valueType)
     {
@@ -75,15 +75,15 @@ Error::ErrorCode OptionDefinition::Create(const std::string &path, OptionDefinit
             e = def.LoadOptions<glm::vec3>(definitionJson);
             break;
         default:
-            e = Error::ErrorCode::INCORRECT_FORMAT;
+            e = Errors::INCORRECT_FORMAT;
             break;
     }
-    if (e != Error::ErrorCode::OK)
+    if (e.Failed())
     {
         return e;
     }
 
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
 Param::ParamType OptionDefinition::GetValueType() const

@@ -29,16 +29,22 @@ const Window::WindowProperties &MapCompileWindow::GetProperties() const
 void MapCompileWindow::Render()
 {
     ImGui::SeparatorText("Compile Mode");
-    if (ImGui::RadioButton("Full Compile", !opts.fastCompile))
+    if (ImGui::RadioButton("Full (Slow!)", opts.compileMode == CompileProgressWindow::CompileMode::FULL))
     {
-        opts.fastCompile = false;
+        opts.compileMode = CompileProgressWindow::CompileMode::FULL;
     }
-    if (ImGui::RadioButton("Fast Compile", opts.fastCompile))
+    if (ImGui::RadioButton("Normal", opts.compileMode == CompileProgressWindow::CompileMode::NORMAL))
     {
-        opts.fastCompile = true;
+        opts.compileMode = CompileProgressWindow::CompileMode::NORMAL;
     }
-    ImGui::SeparatorText("Lighting Options");
-    ImGui::Checkbox("Skip lighting", &opts.skipLighting);
+    if (ImGui::RadioButton("Fast", opts.compileMode == CompileProgressWindow::CompileMode::FAST))
+    {
+        opts.compileMode = CompileProgressWindow::CompileMode::FAST;
+    }
+    if (ImGui::RadioButton("Skip Lighting", opts.compileMode == CompileProgressWindow::CompileMode::SKIP_LIGHTING))
+    {
+        opts.compileMode = CompileProgressWindow::CompileMode::SKIP_LIGHTING;
+    }
     ImGui::SeparatorText("Debug Options");
     ImGui::Checkbox("Verbose Logging", &opts.verbose);
     ImGui::SeparatorText("Game Options");

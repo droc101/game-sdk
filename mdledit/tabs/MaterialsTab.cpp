@@ -43,7 +43,7 @@ void MaterialsTab::Render()
         {
             Material &mat = ModelEditor::modelViewer.GetModel().GetMaterial(m);
             ImTextureID textureId;
-            if (SharedMgr::Get().textureCache.GetTextureID(mat.texture, textureId) != Error::ErrorCode::OK)
+            if (SharedMgr::Get().textureCache.GetTextureID(mat.texture, textureId).Failed())
             {
                 textureId = SharedMgr::Get().textureCache.GetMissingTextureID();
             }
@@ -76,9 +76,9 @@ void MaterialsTab::Render()
 
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
-    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
+    const Error e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
-    if (e == Error::ErrorCode::OK)
+    if (e.Ok())
     {
         constexpr int IMAGE_PANEL_HEIGHT = 128;
         ImVec2 imageSize{};

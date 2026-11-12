@@ -20,14 +20,14 @@
 #include <string>
 #include <utility>
 
-Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinition &definition)
+Error ActorDefinition::Create(const std::string &path, ActorDefinition &definition)
 {
     const std::regex validIdentifierRegex = std::regex(VALID_ACTOR_DEFINITION_IDENTIFIER_REGEX);
     std::smatch match;
 
     std::string jsonString;
-    const Error::ErrorCode readError = FileIo::ReadFileToString(path, jsonString);
-    if (readError != Error::ErrorCode::OK)
+    const Error readError = FileIo::ReadFileToString(path, jsonString);
+    if (readError.Failed())
     {
         return readError;
     }
@@ -35,7 +35,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
     if (definitionJson.is_discarded())
     {
         Logger::Error("File \"{}\" is not a valid JSON file", path);
-        return Error::ErrorCode::INCORRECT_FORMAT;
+        return Errors::INCORRECT_FORMAT;
     }
 
     definition = ActorDefinition();
@@ -45,7 +45,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         Logger::Error("Invalid actor class name (definition file name) \"{}\". Actor class names may only contain "
                       "letters and underscores.",
                       definition.className);
-        return Error::ErrorCode::INCORRECT_FORMAT;
+        return Errors::INCORRECT_FORMAT;
     }
     definition.parentClassName = definitionJson.value("extends", "");
     if (!definition.parentClassName.empty() && !std::regex_match(definition.parentClassName, validIdentifierRegex))
@@ -53,7 +53,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         Logger::Error("Invalid actor parent class name (definition file name) \"{}\". Actor class names may only "
                       "contain letters and underscores.",
                       definition.parentClassName);
-        return Error::ErrorCode::INCORRECT_FORMAT;
+        return Errors::INCORRECT_FORMAT;
     }
     definition.description = definitionJson.value("description", "");
     definition.isVirtual = definitionJson.value("virtual", false);
@@ -64,9 +64,9 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         const nlohmann::json &renderDefs = definitionJson.at("renderers");
         for (const auto &[key, value]: renderDefs.items())
         {
-            Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
+            Error e = Errors::UNKNOWN;
             std::unique_ptr<RenderDefinition> rdef = RenderDefinition::Create(value, e);
-            if (e == Error::ErrorCode::OK)
+            if (e.Ok())
             {
                 definition.renderDefinitions.push_back(std::move(rdef));
             }
@@ -93,7 +93,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
                 Logger::Error("Invalid actor definition input name \"{}\". Input names may only contain letters and "
                               "underscores.",
                               key);
-                return Error::ErrorCode::INCORRECT_FORMAT;
+                return Errors::INCORRECT_FORMAT;
             }
         }
     }
@@ -111,7 +111,7 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
                 Logger::Error("Invalid actor definition output name \"{}\". Output names may only contain letters and "
                               "underscores.",
                               key);
-                return Error::ErrorCode::INCORRECT_FORMAT;
+                return Errors::INCORRECT_FORMAT;
             }
         }
     }
@@ -123,16 +123,16 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
         {
             if (std::regex_match(key, match, validIdentifierRegex))
             {
-                Error::ErrorCode e = Error::ErrorCode::UNKNOWN;
+                Error e = Errors::UNKNOWN;
                 std::unique_ptr<ParamDefinition> param = ParamDefinition::Create(value, e, key);
-                if (e != Error::ErrorCode::OK)
+                if (e.Failed())
                 {
                     // TODO delete any existing params
                     return e;
                 }
                 if (param == nullptr)
                 {
-                    return Error::ErrorCode::UNKNOWN;
+                    return Errors::UNKNOWN;
                 }
                 definition.params[key] = std::move(param);
             } else
@@ -140,12 +140,12 @@ Error::ErrorCode ActorDefinition::Create(const std::string &path, ActorDefinitio
                 Logger::Error("Invalid actor definition param name \"{}\". Param names may only contain letters and "
                               "underscores.",
                               key);
-                return Error::ErrorCode::INCORRECT_FORMAT;
+                return Errors::INCORRECT_FORMAT;
             }
         }
     }
 
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
 bool ActorDefinition::Extends(const std::string &baseClass) const
@@ -197,44 +197,44 @@ void ActorDefinition::GetParamNames(std::set<std::string> &out) const
     }
 }
 
-Error::ErrorCode ActorDefinition::GetInput(const std::string &name, InputDefinition &input) const
+Error ActorDefinition::GetInput(const std::string &name, InputDefinition &input) const
 {
     if (inputs.contains(name))
     {
         input = inputs.at(name);
-        return Error::ErrorCode::OK;
+        return Errors::OK;
     }
     if (parentClass != nullptr)
     {
         return parentClass->GetInput(name, input);
     }
-    return Error::ErrorCode::NOT_FOUND;
+    return Errors::NOT_FOUND;
 }
 
-Error::ErrorCode ActorDefinition::GetOutput(const std::string &name, OutputDefinition &output) const
+Error ActorDefinition::GetOutput(const std::string &name, OutputDefinition &output) const
 {
     if (outputs.contains(name))
     {
         output = outputs.at(name);
-        return Error::ErrorCode::OK;
+        return Errors::OK;
     }
     if (parentClass != nullptr)
     {
         return parentClass->GetOutput(name, output);
     }
-    return Error::ErrorCode::NOT_FOUND;
+    return Errors::NOT_FOUND;
 }
 
-Error::ErrorCode ActorDefinition::GetParam(const std::string &name, std::shared_ptr<ParamDefinition> &param) const
+Error ActorDefinition::GetParam(const std::string &name, std::shared_ptr<ParamDefinition> &param) const
 {
     if (params.contains(name))
     {
         param = params.at(name);
-        return Error::ErrorCode::OK;
+        return Errors::OK;
     }
     if (parentClass != nullptr)
     {
         return parentClass->GetParam(name, param);
     }
-    return Error::ErrorCode::NOT_FOUND;
+    return Errors::NOT_FOUND;
 }

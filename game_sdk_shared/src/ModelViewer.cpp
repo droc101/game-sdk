@@ -3,8 +3,6 @@
 //
 
 #include <array>
-#include <cfloat>
-#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <game_sdk/gl/GLHelper.h>
@@ -23,13 +21,13 @@
 
 bool ModelViewer::GlobalInit()
 {
-    const Error::ErrorCode modelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/model.frag",
-                                                                           "assets/shaders/model.vert",
-                                                                           ModelViewerShared::Get().program);
-    const Error::ErrorCode cubeProgramErrorCode = GLHelper::CreateProgram("assets/shaders/uniform_color.frag",
-                                                                          "assets/shaders/uniform_color.vert",
-                                                                          ModelViewerShared::Get().linesProgram);
-    if (modelProgramErrorCode != Error::ErrorCode::OK || cubeProgramErrorCode != Error::ErrorCode::OK)
+    const Error modelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/model_viewer/model.frag",
+                                                                 "assets/shaders/model_viewer/model.vert",
+                                                                 ModelViewerShared::Get().program);
+    const Error cubeProgramErrorCode = GLHelper::CreateProgram("assets/shaders/model_viewer/uniform_color.frag",
+                                                                "assets/shaders/model_viewer/uniform_color.vert",
+                                                                ModelViewerShared::Get().linesProgram);
+    if (modelProgramErrorCode.Failed() || cubeProgramErrorCode.Failed())
     {
         return false;
     }
@@ -184,8 +182,14 @@ void ModelViewer::DestroyModel()
 
 void ModelViewer::RenderImGui()
 {
-    const float windowSizeX = ImGui::GetContentRegionAvail().x + ImGui::GetCursorScreenPos().x - ImGui::GetWindowPos().x + 8;
-    const float windowSizeY = ImGui::GetContentRegionAvail().y + ImGui::GetCursorScreenPos().y - ImGui::GetWindowPos().y + 8;
+    const float windowSizeX = ImGui::GetContentRegionAvail().x +
+                              ImGui::GetCursorScreenPos().x -
+                              ImGui::GetWindowPos().x +
+                              8;
+    const float windowSizeY = ImGui::GetContentRegionAvail().y +
+                              ImGui::GetCursorScreenPos().y -
+                              ImGui::GetWindowPos().y +
+                              8;
     ResizeWindow(static_cast<GLsizei>(windowSizeX), static_cast<GLsizei>(windowSizeY));
 
     const bool previewFocused = ImGui::IsWindowHovered();
@@ -207,6 +211,7 @@ void ModelViewer::RenderFramebuffer()
 
     const float *color = backgroundColor.GetDataPointer();
     glClearColor(color[0], color[1], color[2], color[3]);
+    glClearDepth(0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
@@ -217,7 +222,7 @@ void ModelViewer::RenderFramebuffer()
     }
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glDepthFunc(GL_GEQUAL);
     if (cullBackfaces)
     {
         glEnable(GL_CULL_FACE);
@@ -269,14 +274,14 @@ void ModelViewer::RenderFramebuffer()
     glEnableVertexAttribArray(colorAttrib);
     glEnableVertexAttribArray(normAttrib);
 
-    glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().program, "PROJECTION"),
+    glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().program, "VIEW_MATRIX"),
                        1,
                        GL_FALSE,
                        glm::value_ptr(camera.GetPerspectiveMatrix()));
-    glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().program, "VIEW"),
+    glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().program, "WORLD_MATRIX"),
                        1,
                        GL_FALSE,
-                       glm::value_ptr(camera.GetViewMatrix()));
+                       glm::value_ptr(camera.GetWorldMatrix()));
 
     for (size_t i = 0; i < model.GetMaterialsPerSkin(); i++)
     {
@@ -295,12 +300,12 @@ void ModelViewer::RenderFramebuffer()
             }
         }
 
-        glUniform1i(glGetUniformLocation(ModelViewerShared::Get().program, "displayMode"), static_cast<GLint>(mode));
+        glUniform1i(glGetUniformLocation(ModelViewerShared::Get().program, "DISPLAY_MODE"), static_cast<GLint>(mode));
         glUniform4fv(glGetUniformLocation(ModelViewerShared::Get().program, "ALBEDO"), 1, mat.color.GetDataPointer());
 
         GLuint texture = 0;
-        const Error::ErrorCode code = SharedMgr::Get().textureCache.GetTextureGLuint(mat.texture, texture);
-        if (code != Error::ErrorCode::OK)
+        const Error code = SharedMgr::Get().textureCache.GetTextureGLuint(mat.texture, texture);
+        if (code.Failed())
         {
             texture = SharedMgr::Get().textureCache.GetMissingTextureGLuint();
         }
@@ -324,15 +329,15 @@ void ModelViewer::RenderFramebuffer()
         posAttrib = glGetAttribLocation(ModelViewerShared::Get().linesProgram, "VERTEX");
         glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
         glEnableVertexAttribArray(posAttrib);
-        glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "PROJECTION"),
+        glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW_MATRIX"),
                            1,
                            GL_FALSE,
                            glm::value_ptr(camera.GetPerspectiveMatrix()));
-        glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW"),
+        glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "WORLD_MATRIX"),
                            1,
                            GL_FALSE,
-                           glm::value_ptr(camera.GetViewMatrix()));
-        glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"), 0.2f, 0.2f, 0.2f, 1.0f);
+                           glm::value_ptr(camera.GetWorldMatrix()));
+        glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "COLOR"), 0.2f, 0.2f, 0.2f, 1.0f);
         glDrawArrays(GL_LINES, 0, 24);
     }
 
@@ -342,19 +347,15 @@ void ModelViewer::RenderFramebuffer()
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glUseProgram(ModelViewerShared::Get().linesProgram);
-            glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "PROJECTION"),
+            glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW_MATRIX"),
                                1,
                                GL_FALSE,
                                glm::value_ptr(camera.GetPerspectiveMatrix()));
-            glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW"),
+            glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "WORLD_MATRIX"),
                                1,
                                GL_FALSE,
-                               glm::value_ptr(camera.GetViewMatrix()));
-            glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"),
-                        1.0f,
-                        0.5f,
-                        0.5f,
-                        1.0f);
+                               glm::value_ptr(camera.GetWorldMatrix()));
+            glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "COLOR"), 1.0f, 0.5f, 0.5f, 1.0f);
             for (const GLHull &hull: hulls)
             {
                 glBindVertexArray(hull.vao);
@@ -376,26 +377,18 @@ void ModelViewer::RenderFramebuffer()
             posAttrib = glGetAttribLocation(ModelViewerShared::Get().linesProgram, "VERTEX");
             glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
             glEnableVertexAttribArray(posAttrib);
-            glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "PROJECTION"),
+            glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW_MATRIX"),
                                1,
                                GL_FALSE,
                                glm::value_ptr(camera.GetPerspectiveMatrix()));
-            glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW"),
+            glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "WORLD_MATRIX"),
                                1,
                                GL_FALSE,
-                               glm::value_ptr(camera.GetViewMatrix()));
-            glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"),
-                        1.0f,
-                        0.5f,
-                        0.5f,
-                        0.25f);
+                               glm::value_ptr(camera.GetWorldMatrix()));
+            glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "COLOR"), 1.0f, 0.5f, 0.5f, 0.25f);
             glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(model.GetStaticCollisionMesh().GetNumTriangles()) * 3);
 
-            glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"),
-                        1.0f,
-                        0.5f,
-                        0.5f,
-                        1.0f);
+            glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "COLOR"), 1.0f, 0.5f, 0.5f, 1.0f);
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(model.GetStaticCollisionMesh().GetNumTriangles()) * 3);
         }
@@ -413,18 +406,18 @@ void ModelViewer::RenderFramebuffer()
         posAttrib = glGetAttribLocation(ModelViewerShared::Get().linesProgram, "VERTEX");
         glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
         glEnableVertexAttribArray(posAttrib);
-        glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "PROJECTION"),
+        glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW_MATRIX"),
                            1,
                            GL_FALSE,
                            glm::value_ptr(camera.GetPerspectiveMatrix()));
-        glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "VIEW"),
+        glUniformMatrix4fv(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "WORLD_MATRIX"),
                            1,
                            GL_FALSE,
-                           glm::value_ptr(camera.GetViewMatrix()));
-        glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"), 0.1f, 0.5f, 0.8f, 0.25f);
+                           glm::value_ptr(camera.GetWorldMatrix()));
+        glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "COLOR"), 0.1f, 0.5f, 0.8f, 0.25f);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
-        glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "lineColor"), 0.1f, 0.5f, 0.8f, 1.0f);
+        glUniform4f(glGetUniformLocation(ModelViewerShared::Get().linesProgram, "COLOR"), 0.1f, 0.5f, 0.8f, 1.0f);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
     }

@@ -23,19 +23,15 @@ bool GLHelper::Init()
         return false;
     }
 
-    if (!GLEW_VERSION_4_6)
-    {
-        Logger::Error("GLEW init failure -- we don't have opengl 4.6");
-        return false;
-    }
-
 #ifdef BUILDSTYLE_DEBUG
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(GLDebug::GL_DebugMessageCallback, nullptr);
 #endif
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glDepthRange(0.0, 1.0);
+    glClearDepth(0.0f);
+    glDepthFunc(GL_GEQUAL);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
@@ -47,11 +43,11 @@ bool GLHelper::Init()
     return true;
 }
 
-Error::ErrorCode GLHelper::CreateShader(const char *filename, const GLenum type, GLuint &outShader)
+Error GLHelper::CreateShader(const char *filename, const GLenum type, GLuint &outShader)
 {
     std::string glsl;
-    Error::ErrorCode readError = FileIo::ReadFileToString(filename, glsl);
-    if (readError != Error::ErrorCode::OK)
+    const Error readError = FileIo::ReadFileToString(filename, glsl);
+    if (readError.Failed())
     {
         Logger::Error("Failed to open shader file {}: {}!", filename, readError);
         return readError;
@@ -68,24 +64,24 @@ Error::ErrorCode GLHelper::CreateShader(const char *filename, const GLenum type,
         glGetShaderInfoLog(shader, 512, nullptr, infoLog.data());
         Logger::Error("Shader compile failed: {}", infoLog.data());
         glDeleteShader(shader);
-        return Error::ErrorCode::UNKNOWN;
+        return Error("Shader compile failed: {}", infoLog.data());
     }
     outShader = shader;
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode GLHelper::CreateProgram(const char *fragmentFilename, const char *vertexFilename, GLuint &outProgram)
+Error GLHelper::CreateProgram(const char *fragmentFilename, const char *vertexFilename, GLuint &outProgram)
 {
     GLuint vertexShader = 0;
     GLuint fragmentShader = 0;
-    const Error::ErrorCode vertexShaderErrorCode = CreateShader(vertexFilename, GL_VERTEX_SHADER, vertexShader);
-    const Error::ErrorCode fragmentShaderErrorCode = CreateShader(fragmentFilename, GL_FRAGMENT_SHADER, fragmentShader);
-    if (vertexShaderErrorCode != Error::ErrorCode::OK || fragmentShaderErrorCode != Error::ErrorCode::OK)
+    const Error vertexShaderErrorCode = CreateShader(vertexFilename, GL_VERTEX_SHADER, vertexShader);
+    const Error fragmentShaderErrorCode = CreateShader(fragmentFilename, GL_FRAGMENT_SHADER, fragmentShader);
+    if (vertexShaderErrorCode.Failed() || fragmentShaderErrorCode.Failed())
     {
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
         Logger::Error("Could not create shader program");
-        return Error::ErrorCode::UNKNOWN;
+        return Error("Could not create shader program");
     }
 
     const GLuint newProgram = glCreateProgram();
@@ -100,14 +96,14 @@ Error::ErrorCode GLHelper::CreateProgram(const char *fragmentFilename, const cha
         glGetProgramInfoLog(newProgram, 512, nullptr, infoLog.data());
         fprintf(stderr, "Program link failed: %s\n", infoLog.data());
         glDeleteProgram(newProgram);
-        return Error::ErrorCode::UNKNOWN;
+        return Error("Failed to link shader program: {}", infoLog.data());
     }
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
     outProgram = newProgram;
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
 GLHelper::GL_Buffer GLHelper::CreateBuffer()
@@ -197,6 +193,11 @@ GLHelper::GL_Framebuffer GLHelper::CreateFramebuffer(const glm::vec2 size)
                           static_cast<GLsizei>(size.y));
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fb.rbo);
 
+    constexpr std::array<GLenum, 1> COLOR_ATTACHMENTS = {
+        GL_COLOR_ATTACHMENT0,
+    };
+    glDrawBuffers(COLOR_ATTACHMENTS.size(), COLOR_ATTACHMENTS.data());
+
     const GLenum frameBufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     assert(frameBufferStatus == GL_FRAMEBUFFER_COMPLETE);
 
@@ -265,7 +266,15 @@ glm::vec2 GLHelper::ScreenToNDC(const glm::vec2 screenPos, const glm::vec2 scree
     return {screenPos.x / screenSize.x * 2.0f - 1.0f, 1.0f - screenPos.y / screenSize.y * 2.0f};
 }
 
+void GLHelper::Clear()
+{
+    glClearColor(0, 0, 0, 1);
+    glClearDepth(0.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
 void GLHelper::ClearDepth()
 {
+    glClearDepth(0.0f);
     glClear(GL_DEPTH_BUFFER_BIT);
 }

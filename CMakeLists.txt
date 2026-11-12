@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 project(game-sdk)
 
+option(ENABLE_MAPCOMP_RENDERDOC "Enable the RenderDoc API in mapcomp" OFF)
+
 include(cmake/utils.cmake)
 
 set(CMAKE_CXX_STANDARD 20)

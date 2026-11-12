@@ -20,12 +20,19 @@ const Window::WindowProperties &TexeditWindow::GetProperties() const
 
 bool TexeditWindow::Init()
 {
-    (void)SharedMgr::Get().textureCache.RegisterPng("assets/icons/checkerboard.png",
-                                                    CHECKERBOARD_ICON_NAME,
-                                                    false,
-                                                    true);
-    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(CHECKERBOARD_ICON_NAME, checkerboardTexture);
-    assert(e == Error::ErrorCode::OK);
+    Error e = SharedMgr::Get().textureCache.RegisterPng("assets/icons/checkerboard.png",
+                                                        CHECKERBOARD_ICON_NAME,
+                                                        false,
+                                                        true);
+    if (e.Failed())
+    {
+        return false;
+    }
+    e = SharedMgr::Get().textureCache.GetTextureID(CHECKERBOARD_ICON_NAME, checkerboardTexture);
+    if (e.Failed())
+    {
+        return false;
+    }
 
     const std::string &openPath = WindowManager::Get().GetArgumentParser().GetFileArgument({".gtex"});
     if (!openPath.empty())
@@ -50,7 +57,11 @@ void TexeditWindow::FileDropped(const std::string &filePath)
     if (filePath.ends_with(".gtex"))
     {
         OpenGtex(filePath);
-    } else if (filePath.ends_with(".png") || filePath.ends_with(".exr") || filePath.ends_with(".jpg") || filePath.ends_with(".jpeg") || filePath.ends_with(".tga"))
+    } else if (filePath.ends_with(".png") ||
+               filePath.ends_with(".exr") ||
+               filePath.ends_with(".jpg") ||
+               filePath.ends_with(".jpeg") ||
+               filePath.ends_with(".tga"))
     {
         ImportImage(filePath);
     }
@@ -81,8 +92,8 @@ void TexeditWindow::LoadTexture()
 
 void TexeditWindow::OpenGtex(const std::string &path)
 {
-    const Error::ErrorCode errorCode = texture.LoadFromAsset(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error errorCode = texture.LoadFromAsset(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to open the texture!\n{}", errorCode));
         return;
@@ -92,8 +103,8 @@ void TexeditWindow::OpenGtex(const std::string &path)
 
 void TexeditWindow::ImportImage(const std::string &path)
 {
-    Error::ErrorCode errorCode = texture.Import(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error errorCode = texture.Import(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to import the texture!\n{}", errorCode));
         return;
@@ -103,8 +114,8 @@ void TexeditWindow::ImportImage(const std::string &path)
 
 void TexeditWindow::SaveGtex(const std::string &path) const
 {
-    const Error::ErrorCode errorCode = texture.SaveToAsset(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error errorCode = texture.SaveToAsset(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to save the texture!\n{}", errorCode));
     }
@@ -112,8 +123,8 @@ void TexeditWindow::SaveGtex(const std::string &path) const
 
 void TexeditWindow::Export(const std::string &path) const
 {
-    const Error::ErrorCode errorCode = texture.Export(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error errorCode = texture.Export(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to export the texture!\n{}", errorCode));
     }

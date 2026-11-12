@@ -5,9 +5,8 @@
 #pragma once
 
 #include <array>
-#include <cmath>
 #include <cstdint>
-#include <libassets/type/WallMaterial.h>
+#include <libassets/type/Axis.h>
 #include <vector>
 #include "../Viewport.h"
 #include "EditorTool.h"
@@ -36,18 +35,27 @@ class AddPrimitiveTool final: public EditorTool
             "Ngon",
         };
 
-        bool hasDrawnShape = false;
-        bool isDragging = false;
-        glm::vec3 shapeStart{};
-        glm::vec3 shapeEnd{};
-        float ceiling = 16;
-        float floor = -16;
+        enum class DragMode : uint8_t
+        {
+            NOT_DRAGGING,
+            DRAGGING_PRIMARY_BOX,
+            DRAGGING_START_DEPTH,
+            DRAGGING_END_DEPTH,
+        };
+
+        static inline bool hasDrawnShape = false;
+        DragMode dragMode = DragMode::NOT_DRAGGING;
+        static inline glm::vec2 shapeStart{};
+        static inline glm::vec2 shapeEnd{};
+        static inline float startDepth = 16;
+        static inline float endDepth = -16;
+        static inline Axis axis = Axis::Y;
 
         static inline int32_t ngonSides = 16;
         static inline float ngonStartAngle = 0;
         static inline PrimitiveType primitive = PrimitiveType::RECTANGLE;
 
-        [[nodiscard]] std::vector<glm::vec2> GetPoints() const;
+        [[nodiscard]] static std::vector<glm::vec2> GetPoints();
 
         static std::vector<glm::vec2> BuildNgon(int n,
                                                 const glm::vec2 &p0,
@@ -57,4 +65,6 @@ class AddPrimitiveTool final: public EditorTool
         static std::vector<glm::vec2> BuildRect(const glm::vec2 &p0, const glm::vec2 &p1);
 
         static std::vector<glm::vec2> BuildTriangle(const glm::vec2 &p0, const glm::vec2 &p1);
+
+        void AddBrush();
 };

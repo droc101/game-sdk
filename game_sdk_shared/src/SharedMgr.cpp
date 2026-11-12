@@ -45,7 +45,7 @@ void SharedMgr::SharedMenuUI(const std::string &programName)
 {
     if (ImGui::BeginMenu("Tools"))
     {
-        if (ImGui::MenuItem("Options"))
+        if (ImGui::MenuItem("GAME SDK Options"))
         {
             WindowManager::Get().AddModalWindow<OptionsWindow>();
         }
@@ -80,8 +80,8 @@ void SharedMgr::SharedMenuUI(const std::string &programName)
 void SharedMgr::UpdateAssetPaths()
 {
     DataAsset gameConfig{};
-    const Error::ErrorCode e = gameConfig.LoadFromAsset(Options::Get().gameConfigPath);
-    if (e != Error::ErrorCode::OK)
+    const Error e = gameConfig.LoadFromAsset(Options::Get().gameConfigPath);
+    if (e.Failed())
     {
         return;
     }

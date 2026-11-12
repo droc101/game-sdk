@@ -4,6 +4,9 @@
 
 #include "MtleditWindow.h"
 #include <algorithm>
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <format>
 #include <game_sdk/DialogFilters.h>
 #include <game_sdk/SharedMgr.h>
@@ -41,8 +44,8 @@ void MtleditWindow::FileDropped(const std::string &filePath)
 
 void MtleditWindow::OpenGmtl(const std::string &path)
 {
-    const Error::ErrorCode errorCode = material.LoadFromAsset(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error errorCode = material.LoadFromAsset(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to open the material!\n{}", errorCode));
     }
@@ -50,8 +53,8 @@ void MtleditWindow::OpenGmtl(const std::string &path)
 
 void MtleditWindow::SaveGmtl(const std::string &path) const
 {
-    const Error::ErrorCode errorCode = material.SaveToAsset(path);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error errorCode = material.SaveToAsset(path);
+    if (errorCode.Failed())
     {
         ErrorMessage(std::format("Failed to save the material!\n{}", errorCode));
     }
@@ -94,9 +97,9 @@ void MtleditWindow::Render()
 
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
-    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(material.texture, tid);
+    const Error e = SharedMgr::Get().textureCache.GetTextureID(material.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
-    if (e == Error::ErrorCode::OK)
+    if (e.Ok())
     {
         constexpr int IMAGE_PANEL_HEIGHT = 128;
         ImVec2 imageSize{};
@@ -128,16 +131,34 @@ void MtleditWindow::Render()
     ImGui::PushItemWidth(-1);
     ImGui::InputFloat2("##baseScale", glm::value_ptr(material.baseScale));
     // TODO soundClass (when more exist)
-    ImGui::Separator();
-    bool unshaded = material.shader == Material::MaterialShader::SHADER_UNSHADED;
-    if (ImGui::Checkbox("Unshaded", &unshaded))
+    ImGui::TextUnformatted("Shader");
+    constexpr std::array<const char *, 3> SHADERS = {"Sky", "Unshaded", "Shaded"};
+    size_t sel = static_cast<uint32_t>(material.shader);
+    if (ImGui::BeginCombo("##shader", SHADERS.at(sel)))
     {
-        material.shader = unshaded ? Material::MaterialShader::SHADER_UNSHADED
-                                   : Material::MaterialShader::SHADER_SHADED;
+        for (size_t i = 0; i < SHADERS.size(); i++)
+        {
+            if (i == static_cast<size_t>(Material::MaterialShader::SHADER_SKY))
+            {
+                continue;
+            }
+            const bool isSelected = sel == i;
+            if (ImGui::Selectable(SHADERS.at(i), isSelected))
+            {
+                sel = i;
+            }
+            material.shader = static_cast<Material::MaterialShader>(sel);
+            if (isSelected)
+            {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
     }
-    ImGui::Checkbox("Invisible", &material.compileInvisible);
-    ImGui::Checkbox("No Collision", &material.compileNoClip);
-    ImGui::Checkbox("Casts Shadows", &material.castsShadows);
+
+    ImGui::Separator();
+    ImGui::CheckboxFlags("Invisible", &material.flags, LevelMaterialAsset::FLAG_INVISIBLE);
+    ImGui::CheckboxFlags("Casts Shadows", &material.flags, LevelMaterialAsset::FLAG_CASTS_SHADOWS);
     ImGui::Separator();
     ImGui::SetNextItemWidth(-1);
     ImGui::Text("Emissive Strength");

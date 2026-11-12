@@ -2,14 +2,16 @@
 // Created by droc101 on 11/17/25.
 //
 
+#include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <libassets/asset/DataAsset.h>
 #include <libassets/util/ArgumentParser.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
-#include <unistd.h>
 #include <vector>
+#include "LightBaker.hpp"
 #include "MapCompiler.h"
 
 int main(const int argc, const char **argv)
@@ -27,11 +29,15 @@ int main(const int argc, const char **argv)
         printf("Usage: mapcomp [options]\n");
         printf("\n-- Compiler Options --\n");
         printf("--map-source=/path/to/map.json.................Path to the map source to compile\n");
-        printf("--map-sources-dir=/path/to/map/sources/dir.....Path to a directory containing map sources to compile\n");
+        printf("--map-sources-dir=/path/to/map/sources/dir.....Path to a directory containing map sources to "
+               "compile\n");
         printf("--assets-dir=/path/to/game/assets..............Path to the directory containing game.gkvl\n");
         printf("--executable-dir=/path/to/game/dir.............Path to the directory containing the game executable\n");
         printf("--skip-lighting................................Skip light baking\n");
-        printf("--fast.........................................Bake lower quality lighting to decrease compile time\n");
+        printf("--fast-compression.............................Compress maps faster, but with worse compression\n");
+        printf("--low-resolution...............................Limit the number of units per luxel\n");
+        printf("--bounces=N....................................Number of GI bounces\n");
+        printf("--samples=N....................................Number of GI samples\n");
         printf("--no-ansi......................................Disable ANSI output\n");
         printf("--verbose......................................Enable verbose output\n");
         return 0;
@@ -57,14 +63,33 @@ int main(const int argc, const char **argv)
 
     const std::string gameConfigPath = args.GetFlagValue("--assets-dir") + "/game.gkvl";
     DataAsset gameConfig{};
-    const Error::ErrorCode e = gameConfig.LoadFromAsset(gameConfigPath);
-    if (e != Error::ErrorCode::OK)
+    const Error e = gameConfig.LoadFromAsset(gameConfigPath);
+    if (e.Failed())
     {
-        Logger::Error("Failed to open {}: {}", gameConfigPath.c_str(), Error::ErrorString(e).c_str());
+        Logger::Error("Failed to open {}: {}", gameConfigPath.c_str(), e);
         return 1;
     }
 
     const std::string assetsPath = args.GetFlagValue("--assets-dir");
+
+    uint32_t bounces = 3;
+    uint32_t samples = 8192;
+
+    if (args.HasFlagWithValue("--bounces"))
+    {
+        bounces = std::strtoul(args.GetFlagValue("--bounces").c_str(), nullptr, 10);
+    }
+
+    if (args.HasFlagWithValue("--samples"))
+    {
+        samples = std::strtoul(args.GetFlagValue("--samples").c_str(), nullptr, 10);
+    }
+
+    if (bounces != 0 && (samples == 0 || samples % LightBaker::SAMPLES_PER_THREAD != 0))
+    {
+        Logger::Error("Samples must be a positive integer of %u!", LightBaker::SAMPLES_PER_THREAD);
+        return 1;
+    }
 
     MapCompiler::MapCompilerSettings settings = {
         .assetsDirectory = assetsPath,
@@ -72,24 +97,27 @@ int main(const int argc, const char **argv)
         .gameConfigParentDirectory = std::filesystem::path(assetsPath).parent_path().string(),
         .gameConfig = gameConfig,
         .skipLighting = args.HasFlag("--skip-lighting"),
-        .fastCompile = args.HasFlag("--fast"),
+        .lowResolutionLightmap = args.HasFlag("--low-resolution"),
+        .fastCompression = args.HasFlag("--fast-compression"),
+        .bounceCount = bounces,
+        .sampleCount = samples,
     };
 
     MapCompiler compiler = MapCompiler(settings);
 
     if (args.HasFlagWithValue("--map-source"))
     {
-        const Error::ErrorCode mapLoadResult = compiler.LoadMapSource(args.GetFlagValue("--map-source"));
-        if (mapLoadResult != Error::ErrorCode::OK)
+        const Error mapLoadError = compiler.LoadMapSource(args.GetFlagValue("--map-source"));
+        if (mapLoadError.Failed())
         {
-            Logger::Error("Failed to load map source: {}", Error::ErrorString(mapLoadResult).c_str());
+            Logger::Error("Failed to load map source: {}", mapLoadError);
             return 1;
         }
 
-        const Error::ErrorCode mapCompileResult = compiler.Compile();
-        if (mapCompileResult != Error::ErrorCode::OK)
+        const Error mapCompileError = compiler.Compile();
+        if (mapCompileError.Failed())
         {
-            Logger::Error("Failed to compile map: {}", Error::ErrorString(mapCompileResult).c_str());
+            Logger::Error("Failed to compile map: {}", mapCompileError);
             return 1;
         }
     } else
@@ -101,12 +129,10 @@ int main(const int argc, const char **argv)
         for (const std::string &map: maps)
         {
             Logger::Info("Compiling map \"{}\"...", map);
-            const Error::ErrorCode mapLoadResult = compiler.LoadMapSource(args.GetFlagValue("--map-sources-dir") +
-                                                                          "/" +
-                                                                          map);
-            if (mapLoadResult != Error::ErrorCode::OK)
+            const Error mapLoadError = compiler.LoadMapSource(args.GetFlagValue("--map-sources-dir") + "/" + map);
+            if (mapLoadError.Failed())
             {
-                Logger::Error("Failed to load map source: {}", Error::ErrorString(mapLoadResult).c_str());
+                Logger::Error("Failed to load map source: {}", mapLoadError);
                 if (returnOnError)
                 {
                     return 1;
@@ -114,10 +140,10 @@ int main(const int argc, const char **argv)
                 continue;
             }
 
-            const Error::ErrorCode mapCompileResult = compiler.Compile();
-            if (mapCompileResult != Error::ErrorCode::OK)
+            const Error mapCompileError = compiler.Compile();
+            if (mapCompileError.Failed())
             {
-                Logger::Error("Failed to compile map: {}", Error::ErrorString(mapCompileResult).c_str());
+                Logger::Error("Failed to compile map: {}", mapCompileError);
                 if (returnOnError)
                 {
                     return 1;

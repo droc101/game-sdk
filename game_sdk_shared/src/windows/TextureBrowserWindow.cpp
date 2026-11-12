@@ -54,16 +54,16 @@ void TextureBrowserWindow::Render()
 
             ImVec2 texSize;
             ImTextureID tex = 0;
-            if (SharedMgr::Get().textureCache.GetTextureID("texture/" + textures.at(i), tex) != Error::ErrorCode::OK)
+            const Error textureIdError = SharedMgr::Get().textureCache.GetTextureID("texture/" + textures.at(i), tex);
+            if (textureIdError.Failed())
             {
                 texSize = SharedMgr::Get().textureCache.GetMissingTextureSize();
                 tex = SharedMgr::Get().textureCache.GetMissingTextureID();
             } else
             {
-                const Error::ErrorCode sizeError = SharedMgr::Get().textureCache.GetTextureSize("texture/" +
-                                                                                                        textures.at(i),
-                                                                                                texSize);
-                assert(sizeError == Error::ErrorCode::OK);
+                const Error sizeError = SharedMgr::Get().textureCache.GetTextureSize("texture/" + textures.at(i),
+                                                                                      texSize);
+                assert(sizeError.Ok());
             }
 
             ImGui::PushID(static_cast<int>(i));

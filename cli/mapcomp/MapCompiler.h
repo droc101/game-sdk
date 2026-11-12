@@ -25,7 +25,10 @@ class MapCompiler
                 std::string gameConfigParentDirectory;
                 DataAsset gameConfig;
                 bool skipLighting = false;
-                bool fastCompile = false;
+                bool lowResolutionLightmap = false;
+                bool fastCompression = false;
+                uint32_t bounceCount;
+                uint32_t sampleCount;
         };
 
         /**
@@ -37,13 +40,13 @@ class MapCompiler
          * Load a map source file
          * @return Error code
          */
-        [[nodiscard]] Error::ErrorCode LoadMapSource(const std::string &mapSourceFile);
+        [[nodiscard]] Error LoadMapSource(const std::string &mapSourceFile);
 
         /**
          * Compile the loaded map
          * @return Error code
          */
-        [[nodiscard]] Error::ErrorCode Compile();
+        [[nodiscard]] Error Compile();
 
     private:
         MapCompilerSettings settings;
@@ -54,7 +57,7 @@ class MapCompiler
 
         static constexpr float FAST_COMPILE_MIN_UNITS_PER_LUXEL = 2.0f;
 
-        Error::ErrorCode SaveToBuffer(std::vector<uint8_t> &buffer);
+        Error SaveToBuffer(std::vector<uint8_t> &buffer);
 
         [[nodiscard]] LevelMaterialAsset GetMapMaterial(const std::string &path) const;
 

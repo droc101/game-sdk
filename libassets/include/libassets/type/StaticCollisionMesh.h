@@ -15,7 +15,7 @@
 class StaticCollisionMesh
 {
     public:
-        StaticCollisionMesh(const std::string &objPath, Error::ErrorCode &status);
+        StaticCollisionMesh(const std::string &objPath, Error &status);
         explicit StaticCollisionMesh(DataReader &reader);
         StaticCollisionMesh() = default;
 

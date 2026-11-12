@@ -7,8 +7,8 @@
 #include <libassets/asset/Asset.h>
 #include <libassets/asset/MapAsset.h>
 #include <libassets/type/Actor.h>
+#include <libassets/type/Brush.h>
 #include <libassets/type/Param.h>
-#include <libassets/type/Sector.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/FileIo.h>
 #include <string>
@@ -31,7 +31,7 @@ uint8_t MapAsset::GetAssetTypeVersion() const
 
 void MapAsset::Reset()
 {
-    sectors = {};
+    brushes = {};
     actors = {};
     discordRpcIconId = "logo";
     discordRpcMapName = "Unnamed Map";
@@ -40,22 +40,22 @@ void MapAsset::Reset()
     lightCubeLuxelsPerUnit = 4;
 }
 
-Error::ErrorCode MapAsset::Import(const std::string &filePath)
+Error MapAsset::Import(const std::string &filePath)
 {
     std::string jsonString;
-    const Error::ErrorCode readError = FileIo::ReadFileToString(filePath, jsonString);
-    if (readError != Error::ErrorCode::OK)
+    const Error readError = FileIo::ReadFileToString(filePath, jsonString);
+    if (readError.Failed())
     {
         return readError;
     }
     const nlohmann::ordered_json json = nlohmann::ordered_json::parse(jsonString);
     if (json.is_discarded())
     {
-        return Error::ErrorCode::INCORRECT_FORMAT;
+        return Errors::INCORRECT_FORMAT;
     }
     if (json.value("version", 0) != MAP_JSON_VERSION)
     {
-        return Error::ErrorCode::INCORRECT_VERSION;
+        return Errors::INCORRECT_VERSION;
     }
 
     Reset();
@@ -68,10 +68,10 @@ Error::ErrorCode MapAsset::Import(const std::string &filePath)
 
     lightCubeLuxelsPerUnit = json.value("light_cube_luxels_per_unit", 4);
 
-    const nlohmann::ordered_json &jsonSectors = json.at("sectors");
-    for (const nlohmann::ordered_json &sect: jsonSectors)
+    const nlohmann::ordered_json &jsonBrushes = json.value("brushes", nlohmann::ordered_json());
+    for (const nlohmann::ordered_json &brush: jsonBrushes)
     {
-        sectors.emplace_back(sect);
+        brushes.emplace_back(brush);
     }
 
     const nlohmann::ordered_json &jsonActors = json.at("actors");
@@ -79,10 +79,10 @@ Error::ErrorCode MapAsset::Import(const std::string &filePath)
     {
         actors.emplace_back(actor);
     }
-    return Error::ErrorCode::OK;
+    return Errors::OK;
 }
 
-Error::ErrorCode MapAsset::Export(const std::string &filePath) const
+Error MapAsset::Export(const std::string &filePath) const
 {
     nlohmann::ordered_json src = nlohmann::ordered_json();
     src["version"] = MAP_JSON_VERSION;
@@ -91,11 +91,11 @@ Error::ErrorCode MapAsset::Export(const std::string &filePath) const
     src["has_sky"] = hasSky;
     src["sky_texture"] = skyTexture;
     src["light_cube_luxels_per_unit"] = lightCubeLuxelsPerUnit;
-    src["sectors"] = nlohmann::ordered_json::array();
+    src["brushes"] = nlohmann::ordered_json::array();
     src["actors"] = nlohmann::ordered_json::array();
-    for (const Sector &sector: sectors)
+    for (const Brush &brush: brushes)
     {
-        src["sectors"].push_back(sector.GenerateJson());
+        src["brushes"].push_back(brush.GenerateJson());
     }
     for (const Actor &actor: actors)
     {

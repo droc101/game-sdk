@@ -22,8 +22,8 @@ void Options::Load()
 {
     const std::string path = SDL_GetBasePath() + std::string("sdk_options.json");
     std::string jsonString;
-    Error::ErrorCode readError = FileIo::ReadFileToString(path, jsonString);
-    if (readError != Error::ErrorCode::OK)
+    const Error readError = FileIo::ReadFileToString(path, jsonString);
+    if (readError.Failed())
     {
         Logger::Error("Could not open options file {}: {}", path.data(), readError);
         LoadDefault();
@@ -45,7 +45,6 @@ void Options::Load()
         gameExecutablePath = savedata.value("game_executable_path", "");
         gameConfigPath = savedata.value("game_config_path", "");
         defaultTexture = savedata.value("default_texture", DEFAULT_TEXTURE);
-        defaultMaterial = savedata.value("default_material", DEFAULT_MATERIAL);
         theme = savedata.value("theme", Theme::SYSTEM);
     }
 }
@@ -54,7 +53,6 @@ void Options::LoadDefault()
 {
     gameExecutablePath = "";
     defaultTexture = DEFAULT_TEXTURE;
-    defaultMaterial = DEFAULT_MATERIAL;
     gameConfigPath = "";
     theme = Theme::SYSTEM;
 }
@@ -64,13 +62,12 @@ void Options::Save()
     const nlohmann::json savedata = {
         {"game_executable_path", gameExecutablePath},
         {"default_texture", defaultTexture},
-        {"default_material", defaultMaterial},
         {"theme", theme},
         {"game_config_path", gameConfigPath},
     };
     const std::string path = SDL_GetBasePath() + std::string("sdk_options.json");
-    const Error::ErrorCode writeError = FileIo::WriteStringToFile(path, savedata.dump(4));
-    if (writeError != Error::ErrorCode::OK)
+    const Error writeError = FileIo::WriteStringToFile(path, savedata.dump(4));
+    if (writeError.Failed())
     {
         Logger::Error("Failed to write options to \"{}\": {}", path, writeError);
     }

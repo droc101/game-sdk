@@ -3,40 +3,38 @@ project(mapcomp)
 
 set(CMAKE_CXX_STANDARD 23)
 
-fetch_earcut_hpp()
-
-fetch_clipper2()
-
 FetchContent_Declare(
         Luna
         GIT_REPOSITORY https://github.com/NBT22/Luna
-        GIT_TAG 4902420b47ef06d6dc4e67fb3af2c6a989e9d6a1
+        GIT_TAG 93cb73600b0a60aab7ffd65f255112d01315ae9f
         GIT_PROGRESS TRUE
 )
 FetchContent_MakeAvailable(Luna)
 
 add_executable(mapcomp mapcomp.cpp
-        LevelMeshBuilder.cpp
-        LevelMeshBuilder.h
+        BrushMeshBuilder.cpp
+        BrushMeshBuilder.h
         MapCompiler.cpp
         MapCompiler.h
-        SectorCollisionBuilder.cpp
-        SectorCollisionBuilder.h
-        SectorClipper.cpp
-        SectorClipper.h
+        BrushCollisionBuilder.cpp
+        BrushCollisionBuilder.h
         Light.h
         LightBaker.cpp
         LightBaker.hpp
-        LightBakerGpu.cpp
-        LightBakerGpu.hpp
         Light.cpp
+        LightmapPacker.cpp
+        LightmapPacker.h
+        RenderdocManager.cpp
+        RenderdocManager.h
 )
+
+if (ENABLE_MAPCOMP_RENDERDOC)
+    target_compile_definitions(mapcomp PRIVATE ENABLE_RENDERDOC)
+endif ()
 
 configure_sdk_cli_program(mapcomp)
 
 target_link_libraries(mapcomp PRIVATE
-        earcut
-        Clipper2
         glm::glm
         Luna
 )

@@ -4,9 +4,16 @@
 
 #include "Viewport.h"
 #include <game_sdk/gl/GLHelper.h>
+#include <game_sdk/WindowManager.h>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/fwd.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
+#include <imgui_internal.h>
+#include <libassets/asset/MapAsset.h>
+#include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_video.h>
 #include <string>
 #include "MapEditor.h"
 
@@ -18,6 +25,10 @@ Viewport::Viewport(const ViewportType type)
 Viewport::~Viewport()
 {
     GLHelper::DestroyFramebuffer(framebuffer);
+    if (type == ViewportType::PERSPECTIVE)
+    {
+        DestroyWorldBuffers();
+    }
 }
 
 void Viewport::GetWindowRect(ImVec2 &pos, ImVec2 &size) const
@@ -38,6 +49,9 @@ void Viewport::Render()
     } else if (type == ViewportType::SIDE_YZ)
     {
         title = "Side (YZ)";
+    } else if (type == ViewportType::PERSPECTIVE)
+    {
+        title = "3D";
     }
     ImGui::PushStyleColor(ImGuiCol_Border, ImGui::GetColorU32(ImGuiCol_WindowBg));
     ImGui::PushStyleColor(ImGuiCol_WindowBg, 0);
@@ -52,13 +66,34 @@ void Viewport::Render()
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();
 
-    const ImVec2 wPos = ImGui::GetWindowPos();
-    const ImVec2 mPos = ImGui::GetMousePos();
-    lastLocalMousePos = {mPos.x - wPos.x, mPos.y - wPos.y};
+    if (ImGui::IsWindowDocked())
+    {
+        const ImGuiWindow *w = ImGui::FindWindowByName(title.c_str());
+        if (w->DockNode->IsHiddenTabBar())
+        {
+            w->DockNode->WantHiddenTabBarToggle = true;
+        }
+    }
 
     windowPos = ImGui::GetWindowPos();
-    const float windowSizeX = ImGui::GetContentRegionAvail().x + ImGui::GetCursorScreenPos().x - ImGui::GetWindowPos().x + 8;
-    const float windowSizeY = ImGui::GetContentRegionAvail().y + ImGui::GetCursorScreenPos().y - ImGui::GetWindowPos().y + 8;
+    const ImVec2 mPos = ImGui::GetMousePos();
+    lastLocalMousePos = {mPos.x - windowPos.x, mPos.y - windowPos.y};
+    if (type == ViewportType::PERSPECTIVE && MapEditor::options.showInternalBuffers && mPos.x != -FLT_MAX)
+    {
+        lastLocalMousePos.x *= 2;
+        lastLocalMousePos.y *= 2;
+        lastLocalMousePos.x = static_cast<uint32_t>(lastLocalMousePos.x) % static_cast<uint32_t>(windowSize.x);
+        lastLocalMousePos.y = static_cast<uint32_t>(lastLocalMousePos.y) % static_cast<uint32_t>(windowSize.y);
+    }
+
+    const float windowSizeX = ImGui::GetContentRegionAvail().x +
+                              ImGui::GetCursorScreenPos().x -
+                              ImGui::GetWindowPos().x +
+                              8;
+    const float windowSizeY = ImGui::GetContentRegionAvail().y +
+                              ImGui::GetCursorScreenPos().y -
+                              ImGui::GetWindowPos().y +
+                              8;
     windowSize = {windowSizeX, windowSizeY};
 
     if (!framebuffer.created)
@@ -69,17 +104,45 @@ void Viewport::Render()
         GLHelper::ResizeFramebuffer(framebuffer, {windowSize.x, windowSize.y});
     }
 
+    if (GetType() == ViewportType::PERSPECTIVE)
+    {
+        if (!worldBuffers.created)
+        {
+            CreateWorldBuffers(glm::vec2(windowSize.x, windowSize.y));
+        } else if (glm::vec2(windowSize.x, windowSize.y) != worldBuffers.size)
+        {
+            ResizeWorldBuffers(glm::vec2(windowSize.x, windowSize.y));
+        }
+    }
+
     GLHelper::BindFramebuffer(framebuffer);
 
     RecalculateMatrices();
 
     MapEditor::tool->RenderViewport(*this);
 
+    if (type == ViewportType::PERSPECTIVE && !mouseCaptured)
+    {
+        UpdatePerspectiveHover();
+    }
     GLHelper::UnbindFramebuffer();
 
     const ImVec2 origCursor = ImGui::GetCursorPos();
     ImGui::SetCursorPos({0, 0});
-    ImGui::Image(framebuffer.colorTexture, {framebuffer.size.x, framebuffer.size.y}, {0, 1}, {1, 0});
+    if (type == ViewportType::PERSPECTIVE && MapEditor::options.showInternalBuffers)
+    {
+        const ImVec2 imgSize = {windowSize.x / 2, windowSize.y / 2};
+        ImGui::Image(framebuffer.colorTexture, imgSize, {0, 1}, {1, 0});
+        ImGui::SetCursorPos({imgSize.x, 0});
+        ImGui::Image(worldBuffers.objectInfoTexture, imgSize, {0, 1}, {1, 0});
+        ImGui::SetCursorPos({0, imgSize.y});
+        ImGui::Image(worldBuffers.positionTexture, imgSize, {0, 1}, {1, 0});
+        ImGui::SetCursorPos({imgSize.x, imgSize.y});
+        ImGui::Image(worldBuffers.normalTexture, imgSize, {0, 1}, {1, 0});
+    } else
+    {
+        ImGui::Image(framebuffer.colorTexture, {framebuffer.size.x, framebuffer.size.y}, {0, 1}, {1, 0});
+    }
     ImGui::SetCursorPos(origCursor);
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetColorU32(ImGuiCol_WindowBg));
@@ -88,13 +151,25 @@ void Viewport::Render()
                                             ImGuiChildFlags_AutoResizeX |
                                             ImGuiChildFlags_AutoResizeY |
                                             ImGuiChildFlags_Borders;
-    if (MapEditor::drawViewportInfo && ImGui::BeginChild("_vp_stats", ImVec2(0, 0), CHILD_FLAGS))
+    if (MapEditor::options.drawViewportInfo && ImGui::BeginChild("_vp_stats", ImVec2(0, 0), CHILD_FLAGS))
     {
-        ImGui::Text("Pos: %.2f, %.2f\nZoom: %.2f units/screen\nGrid: %.3f units",
-                    scrollCenterPos.x,
-                    scrollCenterPos.y,
-                    zoom,
-                    MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex));
+        if (type != ViewportType::PERSPECTIVE)
+        {
+            ImGui::Text("Pos: %.2f, %.2f\nZoom: %.2f units/screen\nGrid: %.3f units",
+                        scrollCenterPos.x,
+                        scrollCenterPos.y,
+                        zoom,
+                        MapEditor::GRID_SPACING_VALUES.at(MapEditor::gridSpacingIndex));
+        } else
+        {
+            ImGui::Text("Pos: %.2f, %.2f, %.2f\nRotation: %.2f, %.2f\nSpeed: %.2f",
+                        perspectiveCameraPos.x,
+                        perspectiveCameraPos.y,
+                        perspectiveCameraPos.z,
+                        glm::degrees(perspectiveCameraRotation.x),
+                        glm::degrees(perspectiveCameraRotation.y),
+                        perspectiveCameraSpeed);
+        }
         ImGui::EndChild();
     }
     ImGui::PopStyleColor();
@@ -107,34 +182,95 @@ void Viewport::Render()
         ImGui::SetWindowFocus();
     }
 
-    if (ImGui::IsWindowFocused() && ImGui::IsWindowHovered())
+    if (mouseCaptured || (ImGui::IsWindowFocused() && ImGui::IsWindowHovered()))
     {
-        if (ImGui::IsMouseDown(ImGuiMouseButton_Right) || ImGui::IsMouseDown(ImGuiMouseButton_Middle))
+        if (type != ViewportType::PERSPECTIVE)
         {
-            const ImVec2 mouseDelta = ImGui::GetIO().MouseDelta;
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Right) || ImGui::IsMouseDown(ImGuiMouseButton_Middle))
+            {
+                const ImVec2 mouseDelta = ImGui::GetIO().MouseDelta;
 
-            const float unitsPerPixel = zoom / windowSize.y;
-            scrollCenterPos = ImVec2(scrollCenterPos.x + (mouseDelta.x * -unitsPerPixel),
-                                     scrollCenterPos.y + (mouseDelta.y * unitsPerPixel));
-            if (scrollCenterPos.x > MapEditor::MAP_HALF_SIZE + 50)
-            {
-                scrollCenterPos.x = MapEditor::MAP_HALF_SIZE + 50;
+                const float unitsPerPixel = zoom / windowSize.y;
+                scrollCenterPos = ImVec2(scrollCenterPos.x + (mouseDelta.x * -unitsPerPixel),
+                                         scrollCenterPos.y + (mouseDelta.y * unitsPerPixel));
+                if (scrollCenterPos.x > MapEditor::MAP_HALF_SIZE + 50)
+                {
+                    scrollCenterPos.x = MapEditor::MAP_HALF_SIZE + 50;
+                }
+                if (scrollCenterPos.y > MapEditor::MAP_HALF_SIZE + 50)
+                {
+                    scrollCenterPos.y = MapEditor::MAP_HALF_SIZE + 50;
+                }
+                if (scrollCenterPos.x < -(MapEditor::MAP_HALF_SIZE + 50))
+                {
+                    scrollCenterPos.x = -(MapEditor::MAP_HALF_SIZE + 50);
+                }
+                if (scrollCenterPos.y < -(MapEditor::MAP_HALF_SIZE + 50))
+                {
+                    scrollCenterPos.y = -(MapEditor::MAP_HALF_SIZE + 50);
+                }
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
             }
-            if (scrollCenterPos.y > MapEditor::MAP_HALF_SIZE + 50)
+            ChangeZoom(ImGui::GetIO().MouseWheel * -ZOOM_STEP);
+        } else
+        {
+            ImGuiIO &io = ImGui::GetIO();
+            if (!mouseCaptured)
             {
-                scrollCenterPos.y = MapEditor::MAP_HALF_SIZE + 50;
-            }
-            if (scrollCenterPos.x < -(MapEditor::MAP_HALF_SIZE + 50))
+                if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+                {
+                    BeginMouseCapture(ImGuiMouseButton_Right);
+                } else if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
+                {
+                    BeginMouseCapture(ImGuiMouseButton_Middle);
+                }
+            } else if (!ImGui::IsMouseDown(ImGuiMouseButton_Right) && !ImGui::IsMouseDown(ImGuiMouseButton_Middle))
             {
-                scrollCenterPos.x = -(MapEditor::MAP_HALF_SIZE + 50);
+                EndMouseCapture();
             }
-            if (scrollCenterPos.y < -(MapEditor::MAP_HALF_SIZE + 50))
+            if (mouseCaptured)
             {
-                scrollCenterPos.y = -(MapEditor::MAP_HALF_SIZE + 50);
+                io.WantCaptureMouse = false;
+                ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+                glm::vec2 mouseDelta{};
+                (void)SDL_GetRelativeMouseState(&mouseDelta.x, &mouseDelta.y);
+                perspectiveCameraRotation.x += glm::radians(mouseDelta.y / -5.0f);
+                perspectiveCameraRotation.x = glm::clamp(perspectiveCameraRotation.x,
+                                                         glm::radians(-89.0f),
+                                                         glm::radians(89.0f));
+                perspectiveCameraRotation.y += glm::radians(mouseDelta.x / 5.0f);
             }
-            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+            glm::vec3 moveDir{};
+            if (ImGui::IsKeyDown(ImGuiKey_W))
+            {
+                moveDir.z = 1;
+            } else if (ImGui::IsKeyDown(ImGuiKey_S))
+            {
+                moveDir.z = -1;
+            }
+            if (ImGui::IsKeyDown(ImGuiKey_A))
+            {
+                moveDir.x = -1;
+            } else if (ImGui::IsKeyDown(ImGuiKey_D))
+            {
+                moveDir.x = 1;
+            }
+
+            if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
+            {
+                moveDir *= 2.0f;
+            } else if (ImGui::IsKeyDown(ImGuiKey_LeftAlt))
+            {
+                moveDir /= 8.0f;
+            }
+
+            perspectiveCameraSpeed += ImGui::GetIO().MouseWheel;
+            perspectiveCameraSpeed = glm::clamp(perspectiveCameraSpeed, 1.0f, 128.0f);
+
+            const glm::vec3 forward = GetPerspectiveForward();
+            const glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0, 1, 0)));
+            perspectiveCameraPos += (forward * moveDir.z + right * moveDir.x) * perspectiveCameraSpeed;
         }
-        ChangeZoom(ImGui::GetIO().MouseWheel * -ZOOM_STEP);
     }
 
     ImGui::End();
@@ -173,13 +309,13 @@ glm::vec3 Viewport::ScreenToWorldPos(ImVec2 localScreenPos) const
 
 glm::vec2 Viewport::WorldToScreenPos(const glm::vec3 worldPos) const
 {
-    ImVec2 WindowSize;
-    ImVec2 WindowPos;
-    GetWindowRect(WindowPos, WindowSize);
+    ImVec2 igWindowSize;
+    ImVec2 igWindowPos;
+    GetWindowRect(igWindowPos, igWindowSize);
     const glm::vec4 fullNdc = worldScreenMatrix * glm::vec4(worldPos, 1.0f);
     const glm::vec2 ndc = glm::vec2(fullNdc.x, fullNdc.y);
-    const float screenX = (ndc.x * 0.5f + 0.5f) * WindowSize.x;
-    const float screenY = (-ndc.y * 0.5f + 0.5f) * WindowSize.y;
+    const float screenX = (ndc.x * 0.5f + 0.5f) * igWindowSize.x;
+    const float screenY = (-ndc.y * 0.5f + 0.5f) * igWindowSize.y;
     return {screenX, screenY};
 }
 
@@ -220,9 +356,9 @@ float Viewport::GetZoom() const
     return zoom;
 }
 
-ImVec2 Viewport::GetLocalMousePos() const
+glm::vec2 Viewport::GetLocalMousePos() const
 {
-    return lastLocalMousePos;
+    return glm::vec2{lastLocalMousePos.x, lastLocalMousePos.y};
 }
 
 glm::vec3 Viewport::GetWorldSpaceMousePos() const
@@ -253,34 +389,350 @@ void Viewport::RecalculateMatrices()
     const float halfHeight = zoom / 2.0f;
     const float halfWidth = aspect * halfHeight;
 
-    const float left = scrollCenterPos.x - halfWidth;
-    const float right = scrollCenterPos.x + halfWidth;
-    const float top = scrollCenterPos.y + halfHeight;
-    const float bottom = scrollCenterPos.y - halfHeight;
-    const glm::mat4 ortho = glm::ortho(left, right, bottom, top, 0.01f, MapEditor::MAP_SIZE + 100);
+    if (type != ViewportType::PERSPECTIVE)
+    {
+        const float left = scrollCenterPos.x - halfWidth;
+        const float right = scrollCenterPos.x + halfWidth;
+        const float top = scrollCenterPos.y + halfHeight;
+        const float bottom = scrollCenterPos.y - halfHeight;
+        const glm::mat4 ortho = glm::ortho(left, right, bottom, top, 0.01f, MapEditor::MAP_SIZE + 100);
 
-    glm::vec3 up;
-    glm::vec3 eye;
-    glm::vec3 target;
-    if (type == ViewportType::TOP_DOWN_XZ)
-    {
-        target = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 8, 0);
-        eye = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 18, 0);
-        up = glm::vec3(0, 0, -1);
-    } else if (type == ViewportType::SIDE_YZ)
-    {
-        target = glm::vec3(MapEditor::MAP_HALF_SIZE + 8, 0, 0);
-        eye = glm::vec3(MapEditor::MAP_HALF_SIZE + 18, 0, 0);
-        up = glm::vec3(0, 1, 0);
+        glm::vec3 up;
+        glm::vec3 eye;
+        glm::vec3 target;
+        if (type == ViewportType::TOP_DOWN_XZ)
+        {
+            target = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 8, 0);
+            eye = glm::vec3(0, MapEditor::MAP_HALF_SIZE + 18, 0);
+            up = glm::vec3(0, 0, -1);
+        } else if (type == ViewportType::SIDE_YZ)
+        {
+            target = glm::vec3(MapEditor::MAP_HALF_SIZE + 8, 0, 0);
+            eye = glm::vec3(MapEditor::MAP_HALF_SIZE + 18, 0, 0);
+            up = glm::vec3(0, 1, 0);
+        } else
+        {
+            target = glm::vec3(0, 0, MapEditor::MAP_HALF_SIZE + 8);
+            eye = glm::vec3(0, 0, MapEditor::MAP_HALF_SIZE + 18);
+            up = glm::vec3(0, 1, 0);
+        }
+
+        const glm::mat4 view = glm::lookAt(eye, target, up);
+        worldScreenMatrix = ortho * view;
     } else
     {
-        target = glm::vec3(0, 0, MapEditor::MAP_HALF_SIZE + 8);
-        eye = glm::vec3(0, 0, MapEditor::MAP_HALF_SIZE + 18);
-        up = glm::vec3(0, 1, 0);
+        const glm::mat4 perspectiveMatrix = glm::perspective(glm::radians(90.0f),
+                                                             aspect,
+                                                             MapAsset::MAP_MAX_HALF_EXTENTS * std::sqrt(3.0f),
+                                                             0.01f);
+
+        const glm::mat4 view = glm::lookAt(perspectiveCameraPos,
+                                           perspectiveCameraPos + GetPerspectiveForward(),
+                                           glm::vec3(0, 1, 0));
+
+        worldScreenMatrix = perspectiveMatrix * view;
     }
 
-    const glm::mat4 view = glm::lookAt(eye, target, up);
-
-    worldScreenMatrix = ortho * view;
     inverseWorldScreenMatrix = glm::inverse(worldScreenMatrix);
+}
+
+glm::vec3 Viewport::Make3D(const glm::vec2 twoDimensionalComponent, const float otherAxis) const
+{
+    return AxisHelper::Make3D(GetAxis(), twoDimensionalComponent, otherAxis);
+}
+
+glm::vec2 Viewport::Make2D(const glm::vec3 point) const
+{
+    return AxisHelper::Make2D(GetAxis(), point);
+}
+
+Axis Viewport::GetAxis() const
+{
+    assert(type != ViewportType::PERSPECTIVE);
+    switch (type)
+    {
+        default:
+        case ViewportType::TOP_DOWN_XZ:
+            return Axis::Y;
+        case ViewportType::FRONT_XY:
+            return Axis::Z;
+        case ViewportType::SIDE_YZ:
+            return Axis::X;
+    }
+}
+
+bool Viewport::Is3D() const
+{
+    return type == ViewportType::PERSPECTIVE;
+}
+
+glm::vec3 Viewport::GetPerspectiveForward() const
+{
+    const float pitch = perspectiveCameraRotation.x;
+    const float yaw = perspectiveCameraRotation.y;
+    return {glm::sin(yaw) * glm::cos(pitch), glm::sin(pitch), -glm::cos(yaw) * glm::cos(pitch)};
+}
+
+glm::vec3 Viewport::GetPerspectiveCameraPosition() const
+{
+    return perspectiveCameraPos;
+}
+
+void Viewport::CreateWorldBuffers(const glm::vec2 size)
+{
+    glGenFramebuffers(1, &worldBuffers.fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, worldBuffers.fbo);
+    glGenRenderbuffers(1, &worldBuffers.rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, worldBuffers.rbo);
+
+    glGenTextures(1, &worldBuffers.objectInfoTexture);
+    glBindTexture(GL_TEXTURE_2D, worldBuffers.objectInfoTexture);
+
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB32F,
+                 static_cast<GLsizei>(size.x),
+                 static_cast<GLsizei>(size.y),
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 nullptr);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, worldBuffers.objectInfoTexture, 0);
+
+    glGenTextures(1, &worldBuffers.positionTexture);
+    glBindTexture(GL_TEXTURE_2D, worldBuffers.positionTexture);
+
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB32F,
+                 static_cast<GLsizei>(size.x),
+                 static_cast<GLsizei>(size.y),
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 nullptr);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, worldBuffers.positionTexture, 0);
+
+    glGenTextures(1, &worldBuffers.normalTexture);
+    glBindTexture(GL_TEXTURE_2D, worldBuffers.normalTexture);
+
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB32F,
+                 static_cast<GLsizei>(size.x),
+                 static_cast<GLsizei>(size.y),
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 nullptr);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, worldBuffers.normalTexture, 0);
+
+    glRenderbufferStorage(GL_RENDERBUFFER,
+                          GL_DEPTH24_STENCIL8,
+                          static_cast<GLsizei>(size.x),
+                          static_cast<GLsizei>(size.y));
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, worldBuffers.rbo);
+
+    constexpr std::array<GLenum, 3> COLOR_ATTACHMENTS = {
+        GL_COLOR_ATTACHMENT0,
+        GL_COLOR_ATTACHMENT1,
+        GL_COLOR_ATTACHMENT2,
+    };
+    glDrawBuffers(COLOR_ATTACHMENTS.size(), COLOR_ATTACHMENTS.data());
+
+    const GLenum frameBufferStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    assert(frameBufferStatus == GL_FRAMEBUFFER_COMPLETE);
+
+    GLHelper::UnbindFramebuffer();
+
+    worldBuffers.size = size;
+    worldBuffers.created = true;
+}
+
+void Viewport::ResizeWorldBuffers(const glm::vec2 size)
+{
+    if (worldBuffers.size == size)
+    {
+        return;
+    }
+
+    GLint boundRbo = GL_NONE;
+    glGetIntegerv(GL_RENDERBUFFER_BINDING, &boundRbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, worldBuffers.rbo);
+
+    glBindTexture(GL_TEXTURE_2D, worldBuffers.objectInfoTexture);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB32F,
+                 static_cast<GLsizei>(size.x),
+                 static_cast<GLsizei>(size.y),
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 nullptr);
+
+    glBindTexture(GL_TEXTURE_2D, worldBuffers.positionTexture);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB32F,
+                 static_cast<GLsizei>(size.x),
+                 static_cast<GLsizei>(size.y),
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 nullptr);
+
+    glBindTexture(GL_TEXTURE_2D, worldBuffers.normalTexture);
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB32F,
+                 static_cast<GLsizei>(size.x),
+                 static_cast<GLsizei>(size.y),
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 nullptr);
+
+    glRenderbufferStorage(GL_RENDERBUFFER,
+                          GL_DEPTH24_STENCIL8,
+                          static_cast<GLsizei>(size.x),
+                          static_cast<GLsizei>(size.y));
+
+    glBindRenderbuffer(GL_RENDERBUFFER, boundRbo);
+
+    worldBuffers.size = size;
+}
+
+void Viewport::DestroyWorldBuffers()
+{
+    worldBuffers.created = false;
+    glDeleteTextures(1, &worldBuffers.objectInfoTexture);
+    glDeleteTextures(1, &worldBuffers.positionTexture);
+    glDeleteTextures(1, &worldBuffers.normalTexture);
+    glDeleteFramebuffers(1, &worldBuffers.fbo);
+    glDeleteRenderbuffers(1, &worldBuffers.rbo);
+}
+
+void Viewport::BindWorldBuffers() const
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, worldBuffers.fbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, worldBuffers.rbo);
+    glViewport(0, 0, static_cast<GLsizei>(worldBuffers.size.x), static_cast<GLsizei>(worldBuffers.size.y));
+}
+
+Viewport::PerspectiveHoverInfo Viewport::GetPerspectiveHover()
+{
+    assert(type == ViewportType::PERSPECTIVE);
+    // This info is 1 frame out of date, this makes sure it doesn't index out of bounds.
+    switch (lastHoverInfo.objectType)
+    {
+        case EditorTool::ItemType::BRUSH:
+            if (MapEditor::map.brushes.size() <= lastHoverInfo.objectIndex)
+            {
+                lastHoverInfo.objectType = EditorTool::ItemType::NONE;
+            }
+            break;
+        case EditorTool::ItemType::ACTOR:
+            if (MapEditor::map.actors.size() <= lastHoverInfo.objectIndex)
+            {
+                lastHoverInfo.objectType = EditorTool::ItemType::NONE;
+            }
+            break;
+        case EditorTool::ItemType::FACE:
+            if (MapEditor::map.brushes.size() <= lastHoverInfo.objectIndex ||
+                MapEditor::map.brushes.at(lastHoverInfo.objectIndex).faces.size() <= lastHoverInfo.objectSubIndex)
+            {
+                lastHoverInfo.objectType = EditorTool::ItemType::NONE;
+            }
+            break;
+        default:
+            break;
+    }
+    return lastHoverInfo;
+}
+
+void Viewport::ClearPerspectiveHover()
+{
+    lastHoverInfo.objectType = EditorTool::ItemType::NONE;
+}
+
+bool Viewport::IsMouseCaptured() const
+{
+    return mouseCaptured;
+}
+
+void Viewport::BeginMouseCapture(const ImGuiMouseButton button)
+{
+    assert(type == ViewportType::PERSPECTIVE);
+    mouseCaptured = true;
+    const ImGuiIO &io = ImGui::GetIO();
+    assert(button < (sizeof(io.MouseClickedPos) / sizeof(*io.MouseClickedPos)));
+    mouseCaptureStartPos = io.MouseClickedPos[button]; // NOLINT(*-pro-bounds-constant-array-index)
+    ClearPerspectiveHover();
+    (void)SDL_SetWindowRelativeMouseMode(WindowManager::Get().GetCurrentWindow()->GetWindow(), true);
+    (void)SDL_GetRelativeMouseState(nullptr, nullptr);
+}
+
+void Viewport::EndMouseCapture()
+{
+    mouseCaptured = false;
+    SDL_Window *window = WindowManager::Get().GetCurrentWindow()->GetWindow();
+    SDL_WarpMouseInWindow(window, mouseCaptureStartPos.x, mouseCaptureStartPos.y);
+    (void)SDL_SetWindowRelativeMouseMode(window, false);
+    ImGui::GetIO().AddMousePosEvent(mouseCaptureStartPos.x, mouseCaptureStartPos.y);
+}
+
+void Viewport::UpdatePerspectiveHover()
+{
+    assert(type == ViewportType::PERSPECTIVE);
+    BindWorldBuffers();
+    std::array<float, 3> rawObjectInfo{};
+    lastHoverInfo = {
+        .objectType = EditorTool::ItemType::NONE,
+        .objectIndex = 0,
+        .objectSubIndex = 0,
+        .position = {},
+        .normal = {},
+    };
+
+    const GLint mouseX = static_cast<GLint>(lastLocalMousePos.x);
+    const GLint mouseY = static_cast<GLint>(windowSize.y - lastLocalMousePos.y);
+
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glReadPixels(mouseX, mouseY, 1, 1, GL_RGB, GL_FLOAT, rawObjectInfo.data());
+
+    lastHoverInfo.objectType = *reinterpret_cast<EditorTool::ItemType *>(&rawObjectInfo.at(0));
+
+    if (lastHoverInfo.objectType == EditorTool::ItemType::NONE)
+    {
+        GLHelper::UnbindFramebuffer();
+        return; // no need to bother reading the other values if nothing is hovered
+    }
+
+    lastHoverInfo.objectIndex = *reinterpret_cast<uint32_t *>(&rawObjectInfo.at(1));
+    lastHoverInfo.objectSubIndex = *reinterpret_cast<uint32_t *>(&rawObjectInfo.at(2));
+
+    glReadBuffer(GL_COLOR_ATTACHMENT1);
+    glReadPixels(mouseX, mouseY, 1, 1, GL_RGB, GL_FLOAT, glm::value_ptr(lastHoverInfo.position));
+
+    glReadBuffer(GL_COLOR_ATTACHMENT2);
+    glReadPixels(mouseX, mouseY, 1, 1, GL_RGB, GL_FLOAT, glm::value_ptr(lastHoverInfo.normal));
 }

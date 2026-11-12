@@ -19,21 +19,23 @@
 RenderDefinition::RenderDefinition()
 {
     gizmo = BoolDefinitionValue(false);
+    viewportMode = StringDefinitionValue("all");
 }
 
 RenderDefinition::RenderDefinition(const nlohmann::json &json)
 {
     gizmo = BoolDefinitionValue(json, "is_gizmo", false);
+    viewportMode = StringDefinitionValue(json, "viewport_mode", "all");
 }
 
-std::unique_ptr<RenderDefinition> RenderDefinition::Create(const nlohmann::json &json, Error::ErrorCode &e)
+std::unique_ptr<RenderDefinition> RenderDefinition::Create(const nlohmann::json &json, Error &e)
 {
     std::unique_ptr<RenderDefinition> output = nullptr;
     const RenderDefinitionType type = ParseType(json.value("type", "point"));
     if (type == RenderDefinitionType::RD_TYPE_UNKNOWN)
     {
         Logger::Error("Failed to parse type of render definition:\n{}", json.dump(4).c_str());
-        e = Error::ErrorCode::INCORRECT_FORMAT;
+        e = Errors::INCORRECT_FORMAT;
         return nullptr;
     }
 
@@ -70,7 +72,7 @@ std::unique_ptr<RenderDefinition> RenderDefinition::Create(const nlohmann::json 
 
     output->type = type;
 
-    e = Error::ErrorCode::OK;
+    e = Errors::OK;
     return output;
 }
 
@@ -119,4 +121,22 @@ RenderDefinition::RenderDefinitionType RenderDefinition::ParseType(const std::st
 bool RenderDefinition::IsGizmo(const Actor &actor)
 {
     return gizmo.Get(actor.params, false);
+}
+
+RenderDefinition::RenderDefinitionViewportMode RenderDefinition::GetViewportMode(const Actor &actor)
+{
+    const std::string &mode = viewportMode.Get(actor.params, "all");
+    if (mode == "all")
+    {
+        return RenderDefinitionViewportMode::ALL_VIEWPORTS;
+    }
+    if (mode == "3d" || mode == "only_3d")
+    {
+        return RenderDefinitionViewportMode::ONLY_3D;
+    }
+    if (mode == "2d" || mode == "only_2d")
+    {
+        return RenderDefinitionViewportMode::ONLY_2D;
+    }
+    return RenderDefinitionViewportMode::ALL_VIEWPORTS;
 }

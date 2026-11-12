@@ -17,9 +17,9 @@ class OptionsWindow final: public Window
     private:
         WindowProperties properties = {
             .title = "GAME SDK Setup",
-            .defaultSize = {450, 370},
+            .defaultSize = {450, 320},
             .icon = "",
-            .defaultFlags = SDL_WINDOW_UTILITY,
+            .defaultFlags = 0,
             .defaultImguiWindow = true,
         };
 

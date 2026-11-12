@@ -18,7 +18,7 @@ class OptionDefinition
     public:
         OptionDefinition() = default;
 
-        static Error::ErrorCode Create(const std::string &path, OptionDefinition &def);
+        static Error Create(const std::string &path, OptionDefinition &def);
 
         /**
          * Get the type this option definition uses
@@ -51,7 +51,7 @@ class OptionDefinition
         Param::ParamType valueType = Param::ParamType::PARAM_TYPE_NONE;
         std::map<std::string, Param> options{};
 
-        template<ParamTypeTemplate T> [[nodiscard]] Error::ErrorCode LoadOptions(const nlohmann::json &definitionJson)
+        template<ParamTypeTemplate T> [[nodiscard]] Error LoadOptions(const nlohmann::json &definitionJson)
         {
             const nlohmann::json &optionsJson = definitionJson.value("options", nlohmann::json{});
             for (const auto &[key, value]: optionsJson.items())
@@ -78,6 +78,6 @@ class OptionDefinition
                 }
             }
 
-            return Error::ErrorCode::OK;
+            return Errors::OK;
         }
 };

@@ -36,10 +36,10 @@ const Window::WindowProperties &CompileProgressWindow::GetProperties() const
 bool CompileProgressWindow::Init()
 {
     log = "";
-    const Error::ErrorCode errorCode = MapEditor::map.Export(MapEditor::mapFile);
-    if (errorCode != Error::ErrorCode::OK)
+    const Error errorCode = MapEditor::map.Export(MapEditor::mapFile);
+    if (errorCode.Failed())
     {
-        log += std::format("Failed to save the level!{}\n", Error::ErrorString(errorCode));
+        log += std::format("Failed to save the level!{}\n", errorCode);
         return false;
     }
     std::string compilerPath = SDL_GetBasePath();
@@ -55,21 +55,34 @@ bool CompileProgressWindow::Init()
         "--no-ansi",
     };
 
-    if (opts.fastCompile)
+    switch (opts.compileMode)
     {
-        arguments.emplace_back("--fast");
+        case CompileMode::SKIP_LIGHTING:
+            arguments.emplace_back("--skip-lighting");
+            arguments.emplace_back("--fast-compression");
+            break;
+        case CompileMode::FAST:
+            arguments.emplace_back("--low-resolution");
+            arguments.emplace_back("--fast-compression");
+            arguments.emplace_back("--bounces=2");
+            arguments.emplace_back("--samples=2048");
+            break;
+        case CompileMode::NORMAL:
+            arguments.emplace_back("--bounces=4");
+            arguments.emplace_back("--samples=8192");
+            break;
+        case CompileMode::FULL:
+            arguments.emplace_back("--bounces=8");
+            arguments.emplace_back("--samples=16384");
+            break;
     }
 
-    if (opts.skipLighting)
-    {
-        arguments.emplace_back("--skip-lighting");
-    }
     if (opts.verbose)
     {
         arguments.emplace_back("--verbose");
     }
 
-    compilerProcess = DesktopInterface::Get().StartSDLProcess(compilerPath, arguments);
+    compilerProcess = DesktopInterface::Get().StartSDLProcess(compilerPath, arguments, true);
 
     if (compilerProcess == nullptr)
     {
@@ -171,7 +184,9 @@ void CompileProgressWindow::ProcessCompilerOutput()
                     "--nosteam",
                     "--show-console",
                 };
-                if (!DesktopInterface::Get().ExecuteProcessNonBlocking(Options::Get().gameExecutablePath, arguments))
+                if (!DesktopInterface::Get().ExecuteProcessNonBlocking(Options::Get().gameExecutablePath,
+                                                                       arguments,
+                                                                       false))
                 {
                     log += "Failed to execute game binary";
                 }

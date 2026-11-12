@@ -11,5 +11,6 @@ class StringDefinitionValue: public BasicDefinitionValue<std::string>
 {
     public:
         StringDefinitionValue() = default;
+        explicit StringDefinitionValue(const std::string &value): BasicDefinitionValue(value) {}
         StringDefinitionValue(const nlohmann::json &json, const std::string &key, const std::string &defaultValue);
 };

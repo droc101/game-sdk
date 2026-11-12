@@ -8,18 +8,22 @@
 #include <cmath>
 #include <format>
 #include <game_sdk/SharedMgr.h>
+#include <game_sdk/WindowManager.h>
 #include <game_sdk/windows/MaterialBrowserWindow.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 #include <libassets/asset/LevelMaterialAsset.h>
-#include <libassets/type/WallMaterial.h>
+#include <libassets/type/Brush.h>
 #include <libassets/util/Error.h>
 #include <limits>
+#include <SDL3/SDL_mouse.h>
+#include <string>
 #include <vector>
+#include "MaterialCache.h"
 
 float MapEditor::SnapToGrid(const float f)
 {
-    if (!snapToGrid)
+    if (!options.snapToGrid)
     {
         return f;
     }
@@ -38,7 +42,6 @@ glm::vec2 MapEditor::SnapToGrid(const glm::vec2 v)
 {
     return {SnapToGrid(v.x), SnapToGrid(v.y)};
 }
-
 
 bool MapEditor::IsPointInBounds(const glm::vec3 p)
 {
@@ -87,7 +90,6 @@ std::array<float, 4> MapEditor::CalculateBBox(const std::vector<std::array<float
     return CalculateBBox(glmPoints);
 }
 
-
 std::array<float, 4> MapEditor::CalculateBBox(const std::vector<glm::vec2> &points)
 {
     glm::vec2 minPoint = {std::numeric_limits<float>::max(), std::numeric_limits<float>::max()};
@@ -95,40 +97,72 @@ std::array<float, 4> MapEditor::CalculateBBox(const std::vector<glm::vec2> &poin
 
     for (const glm::vec2 &vert: points)
     {
-        if (vert.x < minPoint.x)
-        {
-            minPoint.x = vert.x;
-        }
-        if (vert.x > maxPoint.x)
-        {
-            maxPoint.x = vert.x;
-        }
-
-        if (vert.y < minPoint.y)
-        {
-            minPoint.y = vert.y;
-        }
-        if (vert.y > maxPoint.y)
-        {
-            maxPoint.y = vert.y;
-        }
+        minPoint = glm::min(minPoint, vert);
+        maxPoint = glm::max(maxPoint, vert);
     }
     return {minPoint.x, minPoint.y, maxPoint.x, maxPoint.y};
 }
 
-void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
+bool MapEditor::BrushFaceToolWindow(Brush::Face &face)
 {
+    bool modified = false;
+    modified |= MaterialSelectionTool(face.material);
+    ImGui::PushItemWidth(-1);
+    ImGui::Separator();
+    ImGui::Text("Texture Offset");
+    modified |= ImGui::InputFloat2("##uvOffset", glm::value_ptr(face.textureOffset));
+    ImGui::Text("Texture Scale");
+    modified |= ImGui::InputFloat2("##uvScale", glm::value_ptr(face.textureScale));
+    ImGui::Text("Texture Rotation");
+    modified |= ImGui::DragFloat("##textureRotation",
+                                 &face.textureRotation,
+                                 1.0,
+                                 0.0,
+                                 360.0,
+                                 "%.3f",
+                                 ImGuiSliderFlags_NoRoundToFormat | ImGuiSliderFlags_WrapAround);
+    if (ImGui::IsItemActive())
+    {
+        ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+    }
+    if (ImGui::IsItemActivated())
+    {
+        (void)SDL_SetWindowRelativeMouseMode(WindowManager::Get().GetCurrentWindow()->GetWindow(), true);
+    } else if (ImGui::IsItemDeactivated())
+    {
+        (void)SDL_SetWindowRelativeMouseMode(WindowManager::Get().GetCurrentWindow()->GetWindow(), false);
+    }
+    modified |= ImGui::Checkbox("Align Texture to World Grid", &face.worldAlignedTextureUVs);
+    ImGui::Separator();
+    ImGui::Text("Units per Luxel (lower is higher quality)");
+    if (ImGui::BeginCombo("##unitsPerLuxel", std::format("{}", face.unitsPerLuxel).c_str()))
+    {
+        for (float luxelScaleValue: LUXEL_SCALE_VALUES)
+        {
+            if (ImGui::Selectable(std::format("{}", luxelScaleValue).c_str(), face.unitsPerLuxel == luxelScaleValue))
+            {
+                face.unitsPerLuxel = luxelScaleValue;
+                modified = true;
+            }
+        }
+        ImGui::EndCombo();
+    }
+    return modified;
+}
+
+bool MapEditor::MaterialSelectionTool(std::string &inputMaterial)
+{
+    const std::string startString = inputMaterial;
     ImGui::PushItemWidth(-1);
     ImTextureID tid{};
-    LevelMaterialAsset material;
-    material.LoadFromAsset(SharedMgr::Get().pathManager.GetAssetPath(wallMat.material)); // TODO improve
-    const Error::ErrorCode e = SharedMgr::Get().textureCache.GetTextureID(material.texture, tid);
+    const LevelMaterialAsset &mat = MaterialCache::GetMaterial(inputMaterial);
+    const Error e = SharedMgr::Get().textureCache.GetTextureID(mat.texture, tid);
     ImVec2 sz = ImGui::GetContentRegionAvail();
-    if (e == Error::ErrorCode::OK)
+    if (e.Ok())
     {
         constexpr int IMAGE_PANEL_HEIGHT = 128;
         ImVec2 imageSize{};
-        SharedMgr::Get().textureCache.GetTextureSize(material.texture, imageSize);
+        SharedMgr::Get().textureCache.GetTextureSize(mat.texture, imageSize);
         const glm::vec2 scales = {(sz.x - 16) / imageSize.x, IMAGE_PANEL_HEIGHT / imageSize.y};
         const float scale = std::ranges::min(scales.x, scales.y);
 
@@ -148,22 +182,10 @@ void MapEditor::MaterialToolWindow(WallMaterial &wallMat)
         }
         ImGui::EndChild();
     }
-    MaterialBrowserWindow::InputMaterial("##Texture", wallMat.material);
-    ImGui::Separator();
-    ImGui::Text("UV Offset");
-    ImGui::InputFloat2("##uvOffset", glm::value_ptr(wallMat.uvOffset));
-    ImGui::Text("UV Scale");
-    ImGui::InputFloat2("##uvScale", glm::value_ptr(wallMat.uvScale));
-    ImGui::Text("Units per Luxel (lower is higher quality)");
-    if (ImGui::BeginCombo("##unitsPerLuxel", std::format("{}", wallMat.unitsPerLuxel).c_str()))
+    MaterialBrowserWindow::InputMaterial("##Texture", inputMaterial);
+    if (ImGui::Button("Change to invisible", {-1, 0}))
     {
-        for (float luxelScaleValue: luxelScaleValues)
-        {
-            if (ImGui::Selectable(std::format("{}", luxelScaleValue).c_str(), wallMat.unitsPerLuxel == luxelScaleValue))
-            {
-                wallMat.unitsPerLuxel = luxelScaleValue;
-            }
-        }
-        ImGui::EndCombo();
+        inputMaterial = "material/tools/invisible.gmtl";
     }
+    return inputMaterial == startString;
 }

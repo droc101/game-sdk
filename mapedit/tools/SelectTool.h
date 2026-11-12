@@ -5,11 +5,12 @@
 #pragma once
 
 #include <cstddef>
-#include <libassets/type/Color.h>
-#include <libassets/type/Sector.h>
+#include <glm/gtc/quaternion.hpp>
+#include <libassets/type/BoundingBox.h>
 #include <tuple>
 #include <vector>
 #include "../Viewport.h"
+#include "../ViewportRenderer.h"
 #include "EditorTool.h"
 
 class SelectTool final: public EditorTool
@@ -18,39 +19,13 @@ class SelectTool final: public EditorTool
         SelectTool() = default;
         ~SelectTool() override = default;
 
-        void HandleDrag(const Viewport &vp, bool isHovered, glm::vec3 worldSpaceHover);
+        SelectTool(ItemType selectionType, size_t selectionIndex);
 
-        void ProcessSectorHover(const Viewport &vp,
-                                const Sector &sector,
-                                bool isHovered,
-                                glm::vec2 screenSpaceHover,
-                                size_t sectorIndex);
+        void HandleDrag(const Viewport &vp, glm::vec3 worldSpaceHover);
 
-        void ProcessVertexHover(const Viewport &viewport,
-                                glm::vec2 vertexScreenSpace,
-                                glm::vec2 screenSpaceHover,
-                                bool isHovered,
-                                Sector &sector,
-                                glm::vec2 endVertexScreenSpace,
-                                glm::vec3 worldSpaceHover,
-                                size_t vertexIndex,
-                                size_t sectorIndex,
-                                Color &vertexColor,
-                                glm::vec3 startCeiling,
-                                Color &lineColor,
-                                bool &haveAddedNewVertex);
+        void DetermineHoveredItem(Viewport &vp, const glm::vec3 &worldSpaceHover);
 
-        std::vector<std::tuple<ItemType, size_t, float>> DetermineHoveredItem(const Viewport &vp,
-                                                                              bool isHovered,
-                                                                              const glm::vec3 &worldSpaceHover);
-
-        void ProcessViewportSelectMode(const Viewport &vp, bool isHovered, const glm::vec3 &worldSpaceHover);
-
-        void ProcessViewportVertexMode(const Viewport &vp,
-                                       glm::mat4 &matrix,
-                                       bool isHovered,
-                                       const glm::vec3 &worldSpaceHover,
-                                       const glm::vec2 &screenSpaceHover);
+        void ProcessViewportSelectMode(Viewport &vp, const glm::vec3 &worldSpaceHover);
 
         void RenderViewport(Viewport &vp) override;
 
@@ -69,33 +44,27 @@ class SelectTool final: public EditorTool
         [[nodiscard]] glm::vec3 SelectionCenter() const;
 
     private:
-        bool sectorFocusMode = false;
-        size_t focusedSectorIndex = 0;
-
         ItemType hoverType = ItemType::NONE;
         size_t hoverIndex = 0;
 
         ItemType selectionType = ItemType::NONE;
         size_t selectionIndex = 0;
-        size_t selectionVertexIndex = 0;
 
-        /// The difference from the first vertex to the 2nd vertex (firstVertex + lineDragModeSecondVertexOffset = secondVertex)
-        glm::vec2 lineDragModeSecondVertexOffset{};
-        /// The difference from the mouse to the 1st vertex (worldSpaceMouse - lineDragModeMouseOffset = firstVertex)
-        glm::vec2 lineDragModeMouseOffset{};
+        glm::vec3 brushDragStart{};
+        glm::vec3 brushDragStartOrigin{};
 
-        glm::vec2 sectorDragMouseOffset{};
-        std::vector<glm::vec2> sectorDragVertexOffsets{};
+        bool draggingRotationGizmo = false;
+        glm::quat rotationGizmoStart{1.0f, 0.0f, 0.0f, 0.0f};
+        glm::vec2 rotationGizmoLastMouseDirection{};
+        float rotationGizmoAngle = 0.0f;
 
-        glm::vec2 vertexDragOriginalPoint{};
-
-        bool actorDraggingRotationGizmo = false;
-        float rotationGizmoLastAngle = 0.0f;
-        float rotationGizmoActorAngle = 0.0f;
+        bool draggingResizeGizmo = false;
+        glm::vec3 resizeGizmoDragStart{};
+        BoundingBox resizeGizmoStartBounds{};
+        std::vector<glm::vec3> resizeGizmoStartVertices{};
+        ResizeGizmoHelper::Handle resizeGizmoDraggedHandle{};
 
         std::vector<std::tuple<ItemType, size_t, float>> menuHoveredItems{};
 
         bool dragging = false;
-
-        static float WrapAndSnapAngle(float angle);
 };

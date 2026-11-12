@@ -39,8 +39,8 @@ bool MaterialBrowserWindow::Init()
     for (const SearchPathManager::AssetResult &path: absMaterialPaths)
     {
         LevelMaterialAsset mat;
-        const Error::ErrorCode e = mat.LoadFromAsset(path.absolutePath);
-        if (e != Error::ErrorCode::OK)
+        const Error e = mat.LoadFromAsset(path.absolutePath);
+        if (e.Failed())
         {
             Logger::Error("Failed to load level material asset \"{}\"", path.absolutePath.c_str());
         }
@@ -73,14 +73,15 @@ void MaterialBrowserWindow::Render()
 
             ImVec2 texSize;
             ImTextureID tex = 0;
-            if (SharedMgr::Get().textureCache.GetTextureID(textureName, tex) != Error::ErrorCode::OK)
+            const Error textureIdError = SharedMgr::Get().textureCache.GetTextureID(textureName, tex);
+            if (textureIdError.Failed())
             {
                 texSize = SharedMgr::Get().textureCache.GetMissingTextureSize();
                 tex = SharedMgr::Get().textureCache.GetMissingTextureID();
             } else
             {
-                const Error::ErrorCode sizeError = SharedMgr::Get().textureCache.GetTextureSize(textureName, texSize);
-                assert(sizeError == Error::ErrorCode::OK);
+                const Error sizeError = SharedMgr::Get().textureCache.GetTextureSize(textureName, texSize);
+                assert(sizeError.Ok());
             }
 
             ImGui::PushID(static_cast<int>(i));
