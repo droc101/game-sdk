@@ -29,6 +29,7 @@ class MapCompiler
                 bool fastCompression = false;
                 uint32_t bounceCount;
                 uint32_t sampleCount;
+                bool enableRenderdocCapture = false;
         };
 
         /**

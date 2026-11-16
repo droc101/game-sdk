@@ -43,6 +43,7 @@ class LightBaker
         };
 
     public:
+        static inline bool enableRenderdocCapture = false;
         static constexpr uint32_t SAMPLES_PER_THREAD = 256;
 
         static LightBaker &Get();

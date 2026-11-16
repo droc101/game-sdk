@@ -41,6 +41,8 @@ MapCompiler::MapCompiler(MapCompilerSettings &settings)
     {
         Logger::Error("Failed to load actor definitions");
     }
+
+    LightBaker::enableRenderdocCapture = settings.enableRenderdocCapture;
 }
 
 Error MapCompiler::LoadMapSource(const std::string &mapSourceFile)

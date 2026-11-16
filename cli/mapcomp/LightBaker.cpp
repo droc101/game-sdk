@@ -391,7 +391,10 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
 
 LightBaker::LightBaker()
 {
-    (void)RenderdocManager::InitRenderdoc();
+    if (enableRenderdocCapture)
+    {
+        (void)RenderdocManager::InitRenderdoc();
+    }
 
 #ifdef INVALID_PRESENT_FOR_CAPTURING
     static constexpr std::array INSTANCE_EXTENSIONS = {VK_KHR_SURFACE_EXTENSION_NAME};
@@ -413,7 +416,7 @@ LightBaker::LightBaker()
     }
 
     static constexpr LunaPhysicalDevicePreferenceDefinition PHYSICAL_DEVICE_PREFERENCE_DEFINITION = {
-        .preferredDeviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
+        .preferredDeviceType = VK_PHYSICAL_DEVICE_TYPE_CPU,
     };
     static constexpr VkPhysicalDeviceFeatures REQUIRED_1_0_FEATURES = {
         .shaderFloat64 = VK_TRUE,
@@ -552,7 +555,10 @@ LightBaker::LightBaker()
 LightBaker::~LightBaker()
 {
     lunaDestroyInstance();
-    RenderdocManager::DestroyRenderdoc();
+    if (enableRenderdocCapture)
+    {
+        RenderdocManager::DestroyRenderdoc();
+    }
 }
 
 LightBaker &LightBaker::Get()
@@ -693,7 +699,10 @@ bool LightBaker::Bake(const SearchPathManager &pathManager,
                       const uint32_t bounceCount,
                       const uint32_t sampleCount)
 {
-    RenderdocManager::StartCapture("bake");
+    if (enableRenderdocCapture)
+    {
+        RenderdocManager::StartCapture("bake");
+    }
     const uint64_t luxelCount = lightmapSize.x * lightmapSize.y;
     const uint32_t width = std::min(luxelCount, uint64_t{MAX_DISPATCH_DIMENSION});
     const uint32_t height = std::min(std::max(luxelCount / width, uint64_t{1}), uint64_t{MAX_DISPATCH_DIMENSION});
@@ -923,7 +932,11 @@ bool LightBaker::Bake(const SearchPathManager &pathManager,
             return false;
         }
     }
-    RenderdocManager::EndCapture();
+
+    if (enableRenderdocCapture)
+    {
+        RenderdocManager::EndCapture();
+    }
 
     lunaDeviceWaitIdle(device);
     AddPaddingToLightmap(lightmapSize,

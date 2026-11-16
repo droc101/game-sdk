@@ -101,6 +101,7 @@ int main(const int argc, const char **argv)
         .fastCompression = args.HasFlag("--fast-compression"),
         .bounceCount = bounces,
         .sampleCount = samples,
+        .enableRenderdocCapture = args.HasFlag("--renderdoc-capture"),
     };
 
     MapCompiler compiler = MapCompiler(settings);
