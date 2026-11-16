@@ -57,6 +57,7 @@ class LightBaker
         };
 
         static inline bool enableRenderdocCapture = false;
+        static inline bool enableNsightCapture = false;
         static constexpr uint32_t SAMPLES_PER_THREAD = 256;
 
         static LightBaker &Get();
@@ -138,6 +139,8 @@ class LightBaker
 
         bool CreateShaderBindingTables();
 
+        [[nodiscard]] bool SubmitFrameBoundary();
+
         [[nodiscard]] bool SingleBakeIteration(uint32_t width,
                                                uint32_t height,
                                                uint32_t baseLuxelIndex,
@@ -159,6 +162,8 @@ class LightBaker
         static inline std::vector<std::pair<std::string, LunaImage>> loadedTextures{};
 
         bool initialized{};
+        bool frameBoundaryEnabled{};
+        uint64_t currentFrameId{};
         LunaDevice device{};
         uint32_t queueFamilyIndex{};
         VkQueue queue{};

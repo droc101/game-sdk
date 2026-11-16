@@ -45,12 +45,11 @@
 #include "libassets/type/renderDefs/RenderDefinition.h"
 #include "libassets/util/SearchPathManager.h"
 #include "Light.h"
+#include "NsightManager.h"
 #include "RenderdocManager.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/rotate_vector.hpp>
-
-#define INVALID_PRESENT_FOR_CAPTURING
 
 namespace
 {
@@ -406,7 +405,11 @@ LightBaker::LightBaker()
 {
     if (enableRenderdocCapture)
     {
-        (void)RenderdocManager::InitRenderdoc();
+        enableRenderdocCapture = RenderdocManager::InitRenderdoc();
+    }
+    if (enableNsightCapture)
+    {
+        enableNsightCapture = NsightManager::InitNsight();
     }
 
 #ifdef INVALID_PRESENT_FOR_CAPTURING
@@ -467,15 +470,45 @@ LightBaker::LightBaker()
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 #endif
     };
-    static constexpr LunaDeviceCreationInfo DEVICE_CREATION_INFO = {
+    static constexpr std::array OPTIONAL_EXTENSIONS = {VK_EXT_FRAME_BOUNDARY_EXTENSION_NAME};
+    static VkPhysicalDeviceFrameBoundaryFeaturesEXT frameBoundaryFeatures = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAME_BOUNDARY_FEATURES_EXT,
+        .frameBoundary = VK_TRUE,
+    };
+    static constexpr VkPhysicalDeviceFeatures2 OPTIONAL_FEATURES = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &frameBoundaryFeatures,
+    };
+    const LunaDeviceCreationInfo deviceCreationInfo = {
         .requiredExtensionCount = REQUIRED_EXTENSIONS.size(),
         .requiredExtensionNames = REQUIRED_EXTENSIONS.data(),
+        .optionalExtensionCount = OPTIONAL_EXTENSIONS.size(),
+        .optionalExtensionNames = OPTIONAL_EXTENSIONS.data(),
         .requiredFeatures = REQUIRED_FEATURES,
+        .optionalFeatures = &OPTIONAL_FEATURES,
         .physicalDevicePreferenceDefinition = &PHYSICAL_DEVICE_PREFERENCE_DEFINITION,
     };
-    if (!CheckResult(lunaCreateDevice(&DEVICE_CREATION_INFO, &device)))
+    if (!CheckResult(lunaCreateDevice(&deviceCreationInfo, &device)))
     {
         return;
+    }
+
+    if (enableNsightCapture)
+    {
+        VkPhysicalDeviceFrameBoundaryFeaturesEXT enabledFrameBoundaryFeatures = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAME_BOUNDARY_FEATURES_EXT,
+            .frameBoundary = VK_TRUE,
+        };
+        VkPhysicalDeviceFeatures2 enabledFeatures = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+            .pNext = &enabledFrameBoundaryFeatures,
+        };
+        frameBoundaryEnabled = lunaDeviceIsExtensionEnabled(device, VK_EXT_FRAME_BOUNDARY_EXTENSION_NAME) &&
+                               lunaGetEnabledDeviceFeatures(device, &enabledFeatures);
+        if (!frameBoundaryEnabled)
+        {
+            Logger::Warning("VK_EXT_frame_boundary is not available, so no Nsight Graphics capture will be made");
+        }
     }
 
     constexpr LunaQueueFamilyProperties REQUIRED_PROPERTIES = {
@@ -713,6 +746,14 @@ bool LightBaker::Bake(const SearchPathManager &pathManager,
     {
         RenderdocManager::StartCapture("bake");
     }
+    if (frameBoundaryEnabled)
+    {
+        NsightManager::StartCapture();
+        if (!SubmitFrameBoundary())
+        {
+            return false;
+        }
+    }
     const uint64_t luxelCount = settings.lightmapSize.x * settings.lightmapSize.y;
     const uint32_t width = std::min(luxelCount, uint64_t{MAX_DISPATCH_DIMENSION});
     const uint32_t height = std::min(std::max(luxelCount / width, uint64_t{1}), uint64_t{MAX_DISPATCH_DIMENSION});
@@ -946,6 +987,14 @@ bool LightBaker::Bake(const SearchPathManager &pathManager,
         }
     }
 
+    if (frameBoundaryEnabled)
+    {
+        if (!SubmitFrameBoundary())
+        {
+            return false;
+        }
+        NsightManager::EndCapture();
+    }
     if (enableRenderdocCapture)
     {
         RenderdocManager::EndCapture();
@@ -2643,6 +2692,20 @@ bool LightBaker::CreateShaderBindingTables()
                                              commandBuffer,
                                              nullShaderBindingTable,
                                              &nullShaderBindingTableWriteInfo));
+}
+
+bool LightBaker::SubmitFrameBoundary()
+{
+    const VkFrameBoundaryEXT frameBoundary = {
+        .sType = VK_STRUCTURE_TYPE_FRAME_BOUNDARY_EXT,
+        .flags = VK_FRAME_BOUNDARY_FRAME_END_BIT_EXT,
+        .frameID = currentFrameId++,
+    };
+    const VkSubmitInfo frameBoundarySubmitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = &frameBoundary,
+    };
+    return CheckResult(vkQueueSubmit(queue, 1, &frameBoundarySubmitInfo, VK_NULL_HANDLE));
 }
 
 bool LightBaker::SingleBakeIteration(const uint32_t width,

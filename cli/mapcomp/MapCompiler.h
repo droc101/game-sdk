@@ -30,6 +30,7 @@ class MapCompiler
                 uint32_t bounceCount;
                 uint32_t sampleCount;
                 bool enableRenderdocCapture = false;
+                bool enableNsightCapture = false;
         };
 
         /**

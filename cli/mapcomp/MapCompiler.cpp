@@ -43,6 +43,7 @@ MapCompiler::MapCompiler(MapCompilerSettings &settings)
     }
 
     LightBaker::enableRenderdocCapture = settings.enableRenderdocCapture;
+    LightBaker::enableNsightCapture = settings.enableNsightCapture;
 }
 
 Error MapCompiler::LoadMapSource(const std::string &mapSourceFile)
