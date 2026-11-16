@@ -259,7 +259,8 @@ Error MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     {
         Logger::Info("Baking lightmap...");
         LightBaker &baker = LightBaker::Get();
-        if (!baker.Bake(mapMeshBuilders,
+        if (!baker.Bake(pathManager,
+                        mapMeshBuilders,
                         lights,
                         lightmapSize,
                         lightmapPixels,

@@ -25,12 +25,30 @@ class LightBaker
                 VkBufferView bufferView;
         };
 
+        struct ShaderLight
+        {
+                Light::Type type;
+                glm::vec3 position;
+                glm::vec3 cookieAxisV;
+                glm::vec3 negativeForwardDirection;
+                glm::vec3 color;
+                float brightness;
+                float constantAttenuation;
+                float linearAttenuation;
+                float quadraticAttenuation;
+                float attenuationMultiplier;
+                float brightAngle;
+                float fadingAngle;
+                uint32_t cookieTextureIndex;
+        };
+
     public:
         static constexpr uint32_t SAMPLES_PER_THREAD = 256;
 
         static LightBaker &Get();
 
-        bool Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
+        bool Bake(const SearchPathManager &pathManager,
+                  const std::vector<BrushMeshBuilder> &meshBuilders,
                   const std::vector<Light> &lights,
                   const glm::uvec2 &lightmapSize,
                   std::vector<uint16_t> &pixelData,
@@ -38,7 +56,10 @@ class LightBaker
                   uint32_t bounceCount,
                   uint32_t sampleCount);
 
-        bool GetTextureIndex(const std::string &materialName, uint32_t &index, const SearchPathManager &pathManager);
+        bool GetTextureIndex(const std::string &texture, uint32_t &index, const SearchPathManager &pathManager);
+        bool GetMaterialTextureIndex(const std::string &materialName,
+                                     uint32_t &index,
+                                     const SearchPathManager &pathManager);
 
     private:
         LightBaker();
@@ -125,10 +146,13 @@ class LightBaker
         VkDescriptorSet graphicsDescriptorSet{};
         /// The ray tracing pipeline layout
         /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
-        VkPipelineLayout pipelineLayout{};
+        VkPipelineLayout directLightingPipelineLayout{};
         /// The ray tracing pipeline used for calculating direct lighting
         /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
         VkPipeline directLightingPipeline{};
+        /// The ray tracing pipeline layout
+        /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
+        VkPipelineLayout globalIlluminationPipelineLayout{};
         /// The ray tracing pipeline used for calculating global illumination
         /// @note This is not managed by Luna because of lack of Luna support for ray tracing extensions
         VkPipeline globalIlluminationPipeline{};

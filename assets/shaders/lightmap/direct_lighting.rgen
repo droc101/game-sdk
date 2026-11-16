@@ -1,5 +1,7 @@
 #version 460
 
+#extension GL_EXT_nonuniform_qualifier : require
+
 #include "shared.inc.glsl"
 
 const uint RAY_FLAGS = gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsSkipClosestHitShaderEXT;
@@ -8,6 +10,8 @@ layout (constant_id = 2) const uint LIGHT_COUNT = 0;
 layout (constant_id = 3) const bool STORE_DIRECT = false;
 
 layout (location = 0) rayPayloadEXT bool isLightVisible;
+
+layout(set = 1, binding = 0) uniform sampler2D textureSampler[];
 
 vec3 getLightColor(const Light light, const float distance, const float theta) {
     float multiplierSquared;
@@ -88,7 +92,14 @@ void main() {
         }
         traceRayEXT(accelerationStructure, RAY_FLAGS, 0xFF, 0, 0, 0, luxelPosition.xyz + rayDirection * RAY_LENGTH_OFFSET, MIN_RAY_LENGTH, rayDirection, distance, 0);
         if (isLightVisible) {
-            accumulatedColor += getLightColor(light, distance, theta) * max(dot(rayDirection, luxelNormal.xyz), 0);
+            if (light.cookieTextureIndex != 0 && light.type == LIGHT_TYPE_SPOT) {
+                const float dottedDirection = dot(rayDirection, light.negativeForwardDirection);
+                const vec3 base = rayDirection / dottedDirection - light.negativeForwardDirection;
+                const vec4 cookieColor = texture(textureSampler[nonuniformEXT(light.cookieTextureIndex - 1)], vec2(dot(base, cross(light.negativeForwardDirection, light.cookieAxisV)), dot(base, light.cookieAxisV)) / (2 * tan(radians(light.fadingAngle))) + 0.5);
+                accumulatedColor += getLightColor(light, distance, theta) * max(dot(rayDirection, luxelNormal.xyz), 0) * cookieColor.rgb * cookieColor.a;
+            } else {
+                accumulatedColor += getLightColor(light, distance, theta) * max(dot(rayDirection, luxelNormal.xyz), 0);
+            }
         }
     }
 

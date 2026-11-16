@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cmath>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
@@ -34,6 +35,9 @@
 #include "BrushMeshBuilder.h"
 #include "Light.h"
 #include "RenderdocManager.h"
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/rotate_vector.hpp>
 
 namespace
 {
@@ -387,6 +391,8 @@ void AddPaddingToLightmap(const glm::uvec2 &lightmapSize, const float16_t *light
 
 LightBaker::LightBaker()
 {
+    (void)RenderdocManager::InitRenderdoc();
+
 #ifdef INVALID_PRESENT_FOR_CAPTURING
     static constexpr std::array INSTANCE_EXTENSIONS = {VK_KHR_SURFACE_EXTENSION_NAME};
 #else
@@ -501,7 +507,7 @@ LightBaker::LightBaker()
     static constexpr VkDescriptorSetLayoutBinding DESCRIPTOR_BINDING = {
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
         .descriptorCount = MAX_TEXTURES,
-        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_RAYGEN_BIT_KHR,
     };
     static constexpr VkDescriptorSetLayoutCreateInfo LAYOUT_CREATE_INFO = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
@@ -540,15 +546,13 @@ LightBaker::LightBaker()
                  VK_API_VERSION_MINOR(physicalDeviceProperties.properties.apiVersion),
                  VK_API_VERSION_PATCH(physicalDeviceProperties.properties.apiVersion));
 
-    (void)RenderdocManager::InitRenderdoc();
-
     initialized = true;
 }
 
 LightBaker::~LightBaker()
 {
-    RenderdocManager::DestroyRenderdoc();
     lunaDestroyInstance();
+    RenderdocManager::DestroyRenderdoc();
 }
 
 LightBaker &LightBaker::Get()
@@ -557,28 +561,22 @@ LightBaker &LightBaker::Get()
     return lightBakerGpu;
 }
 
-bool LightBaker::GetTextureIndex(const std::string &materialName, uint32_t &index, const SearchPathManager &pathManager)
+bool LightBaker::GetTextureIndex(const std::string &texture, uint32_t &index, const SearchPathManager &pathManager)
 {
     for (index = 0; index < loadedTextures.size(); index++)
     {
-        if (loadedTextures.at(index).first == materialName)
+        if (loadedTextures.at(index).first == texture)
         {
             return true;
         }
     }
-    const std::string materialPath = pathManager.GetAssetPath(materialName);
-    LevelMaterialAsset material{};
-    const Error error = material.LoadFromAsset(materialPath);
-    if (error.Failed())
-    {
-        Logger::Error("Creating material asset \"{}\" failed with error: {}", materialPath, error);
-    }
-    const std::string texturePath = pathManager.GetAssetPath(material.texture);
+
+    const std::string texturePath = pathManager.GetAssetPath(texture);
     TextureAsset image{};
     const Error texError = image.LoadFromAsset(texturePath);
     if (texError.Failed())
     {
-        Logger::Error("Creating texture asset \"{}\" failed with error: {}", materialPath, texError);
+        Logger::Error("Creating texture asset \"{}\" failed with error: {}", texturePath, texError);
     }
     const VkSamplerAddressMode samplerAddressMode = image.repeat ? VK_SAMPLER_ADDRESS_MODE_REPEAT
                                                                  : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
@@ -635,8 +633,23 @@ bool LightBaker::GetTextureIndex(const std::string &materialName, uint32_t &inde
     };
     vkUpdateDescriptorSets(lunaGetVkDevice(device), 1, &writeDescriptor, 0, nullptr);
 
-    loadedTextures.emplace_back(materialName, lunaImage);
+    loadedTextures.emplace_back(texture, lunaImage);
     return true;
+}
+
+bool LightBaker::GetMaterialTextureIndex(const std::string &materialName,
+                                         uint32_t &index,
+                                         const SearchPathManager &pathManager)
+{
+    const std::string materialPath = pathManager.GetAssetPath(materialName);
+    LevelMaterialAsset material{};
+    const Error error = material.LoadFromAsset(materialPath);
+    if (error.Failed())
+    {
+        Logger::Error("Creating material asset \"{}\" failed with error: {}", materialPath, error);
+    }
+
+    return GetTextureIndex(material.texture, index, pathManager);
 }
 
 VkResult LightBaker::CreateBufferView(const LunaBuffer buffer, const VkFormat format, VkBufferView &bufferView) const
@@ -671,7 +684,8 @@ bool LightBaker::CreateLightmap(Lightmap &lightmap, const glm::uvec2 &lightmapSi
 }
 
 // TODO return an Error from this now that they can contain more details
-bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
+bool LightBaker::Bake(const SearchPathManager &pathManager,
+                      const std::vector<BrushMeshBuilder> &meshBuilders,
                       const std::vector<Light> &lights,
                       const glm::uvec2 &lightmapSize,
                       std::vector<uint16_t> &pixelData,
@@ -699,7 +713,7 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
     }
 
     const LunaBufferCreationInfo lightsBufferCreationInfo = {
-        .size = sizeof(Light) * lights.size(),
+        .size = sizeof(ShaderLight) * lights.size(),
         .alignment = physicalDeviceProperties.properties.limits.minStorageBufferOffsetAlignment,
         .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
     };
@@ -708,9 +722,43 @@ bool LightBaker::Bake(const std::vector<BrushMeshBuilder> &meshBuilders,
         return false;
     }
 
+    std::vector<ShaderLight> shaderLights;
+    shaderLights.reserve(lights.size());
+    for (const Light &light: lights)
+    {
+        uint32_t cookieTextureIndex = 0;
+        if (!light.cookie.empty())
+        {
+            if (!GetTextureIndex(light.cookie, cookieTextureIndex, pathManager))
+            {
+                return false;
+            }
+            cookieTextureIndex++;
+        }
+        shaderLights
+                .emplace_back(light.type,
+                              light.position,
+                              glm::rotate(glm::normalize(glm::vec3{std::sin(glm::radians(light.rotation.y)) *
+                                                                           std::sin(glm::radians(light.rotation.x)),
+                                                                   std::cos(glm::radians(light.rotation.x)),
+                                                                   std::cos(glm::radians(light.rotation.y)) *
+                                                                           std::sin(glm::radians(light.rotation.x))}),
+                                          -glm::radians(light.rotation.z),
+                                          light.negativeForwardDirection),
+                              light.negativeForwardDirection,
+                              light.color,
+                              light.brightness,
+                              light.constantAttenuation,
+                              light.linearAttenuation,
+                              light.quadraticAttenuation,
+                              light.attenuationMultiplier,
+                              light.brightAngle,
+                              light.fadingAngle,
+                              cookieTextureIndex);
+    }
     const LunaBufferWriteInfo lightsBufferWriteInfo = {
-        .size = sizeof(Light) * lights.size(),
-        .data = lights.data(),
+        .size = sizeof(ShaderLight) * shaderLights.size(),
+        .data = shaderLights.data(),
         .sourceStageMask = VK_PIPELINE_STAGE_2_NONE,
         .sourceAccessMask = VK_ACCESS_2_NONE,
         .destinationStageMask = VK_PIPELINE_STAGE_2_RAY_TRACING_SHADER_BIT_KHR,
@@ -1875,14 +1923,18 @@ bool LightBaker::CreateDirectLightingPipeline(const glm::uvec2 &lightmapSize,
         .stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR,
         .size = sizeof(uint32_t) * 2,
     };
+    const std::array descriptorSetLayouts = {descriptorSetLayout, graphicsDescriptorSetLayout};
     const VkPipelineLayoutCreateInfo layoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 1,
-        .pSetLayouts = &descriptorSetLayout,
+        .setLayoutCount = descriptorSetLayouts.size(),
+        .pSetLayouts = descriptorSetLayouts.data(),
         .pushConstantRangeCount = 1,
         .pPushConstantRanges = &PUSH_CONSTANT_RANGE,
     };
-    if (!CheckResult(vkCreatePipelineLayout(lunaGetVkDevice(device), &layoutCreateInfo, nullptr, &pipelineLayout)))
+    if (!CheckResult(vkCreatePipelineLayout(lunaGetVkDevice(device),
+                                            &layoutCreateInfo,
+                                            nullptr,
+                                            &directLightingPipelineLayout)))
     {
         return false;
     }
@@ -1894,7 +1946,7 @@ bool LightBaker::CreateDirectLightingPipeline(const glm::uvec2 &lightmapSize,
         .groupCount = SHADER_GROUPS.size(),
         .pGroups = SHADER_GROUPS.data(),
         .maxPipelineRayRecursionDepth = 1,
-        .layout = pipelineLayout,
+        .layout = directLightingPipelineLayout,
     };
     if (!CheckResult(vkCreateRayTracingPipelinesKHR(lunaGetVkDevice(device),
                                                     VK_NULL_HANDLE,
@@ -1997,7 +2049,10 @@ bool LightBaker::CreateGlobalIlluminationPipeline(const glm::uvec2 &lightmapSize
         .pushConstantRangeCount = 1,
         .pPushConstantRanges = &PUSH_CONSTANT_RANGE,
     };
-    if (!CheckResult(vkCreatePipelineLayout(lunaGetVkDevice(device), &layoutCreateInfo, nullptr, &pipelineLayout)))
+    if (!CheckResult(vkCreatePipelineLayout(lunaGetVkDevice(device),
+                                            &layoutCreateInfo,
+                                            nullptr,
+                                            &globalIlluminationPipelineLayout)))
     {
         return false;
     }
@@ -2009,7 +2064,7 @@ bool LightBaker::CreateGlobalIlluminationPipeline(const glm::uvec2 &lightmapSize
         .groupCount = SHADER_GROUPS.size(),
         .pGroups = SHADER_GROUPS.data(),
         .maxPipelineRayRecursionDepth = 1,
-        .layout = pipelineLayout,
+        .layout = globalIlluminationPipelineLayout,
     };
     if (!CheckResult(vkCreateRayTracingPipelinesKHR(lunaGetVkDevice(device),
                                                     VK_NULL_HANDLE,
@@ -2413,14 +2468,25 @@ bool LightBaker::SingleBakeIteration(const uint32_t width,
 
     vkCmdBindDescriptorSets(vkCommandBuffer,
                             VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
-                            pipelineLayout,
+                            directLighting ? directLightingPipelineLayout : globalIlluminationPipelineLayout,
                             0,
                             1,
                             &descriptorSet,
                             0,
                             nullptr);
+    if (directLighting)
+    {
+        vkCmdBindDescriptorSets(vkCommandBuffer,
+                                VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
+                                directLightingPipelineLayout,
+                                1,
+                                1,
+                                &graphicsDescriptorSet,
+                                0,
+                                nullptr);
+    }
     vkCmdPushConstants(vkCommandBuffer,
-                       pipelineLayout,
+                       directLighting ? directLightingPipelineLayout : globalIlluminationPipelineLayout,
                        VK_SHADER_STAGE_RAYGEN_BIT_KHR,
                        0,
                        sizeof(baseLuxelIndex),
@@ -2428,7 +2494,7 @@ bool LightBaker::SingleBakeIteration(const uint32_t width,
     if (!directLighting)
     {
         vkCmdPushConstants(vkCommandBuffer,
-                           pipelineLayout,
+                           globalIlluminationPipelineLayout,
                            VK_SHADER_STAGE_RAYGEN_BIT_KHR,
                            sizeof(baseLuxelIndex),
                            sizeof(baseSampleIndex),
