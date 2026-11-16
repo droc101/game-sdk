@@ -489,11 +489,7 @@ void ViewportRenderer::RenderActor(const Actor &a, const Viewport &vp, const Col
 
     const ActorDefinition &definition = MapEditor::adm.GetActorDefinition(a.className);
 
-    glm::mat4 worldMatrix = glm::identity<glm::mat4>();
-    worldMatrix = glm::translate(worldMatrix, a.position);
-    worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.y), glm::vec3(0, 1, 0));
-    worldMatrix = glm::rotate(worldMatrix, glm::radians(a.rotation.x), glm::vec3(1, 0, 0));
-    worldMatrix = glm::rotate(worldMatrix, -glm::radians(a.rotation.z), glm::vec3(0, 0, 1));
+    const glm::mat4 worldMatrix = a.GetTransformMatrix();
 
     for (const std::shared_ptr<RenderDefinition> &rdef: definition.renderDefinitions)
     {

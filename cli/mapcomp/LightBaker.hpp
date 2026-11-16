@@ -7,6 +7,9 @@
 #include <cstdint>
 #include <filesystem>
 #include <glslang/Public/ShaderLang.h>
+#include <libassets/type/Actor.h>
+#include <libassets/type/ModelLod.h>
+#include <libassets/util/ActorDefinitionManager.h>
 #include <libassets/util/Logger.h>
 #include <libassets/util/SearchPathManager.h>
 #include <luna/lunaTypes.h>
@@ -43,19 +46,26 @@ class LightBaker
         };
 
     public:
+        struct BakeSettings
+        {
+                const glm::uvec2 &lightmapSize;
+                uint32_t bounceCount;
+                uint32_t sampleCount;
+                const std::vector<BrushMeshBuilder> &meshBuilders;
+                const std::vector<Actor> &actors;
+                const std::vector<Light> &lights;
+        };
+
         static inline bool enableRenderdocCapture = false;
         static constexpr uint32_t SAMPLES_PER_THREAD = 256;
 
         static LightBaker &Get();
 
         bool Bake(const SearchPathManager &pathManager,
-                  const std::vector<BrushMeshBuilder> &meshBuilders,
-                  const std::vector<Light> &lights,
-                  const glm::uvec2 &lightmapSize,
+                  const ActorDefinitionManager &definitionManager,
+                  const BakeSettings &settings,
                   std::vector<uint16_t> &pixelData,
-                  std::vector<uint16_t> &indirectLightingPixelData,
-                  uint32_t bounceCount,
-                  uint32_t sampleCount);
+                  std::vector<uint16_t> &indirectLightingPixelData);
 
         bool GetTextureIndex(const std::string &texture, uint32_t &index, const SearchPathManager &pathManager);
         bool GetMaterialTextureIndex(const std::string &materialName,
@@ -69,7 +79,7 @@ class LightBaker
 
         struct AccelerationStructure
         {
-                uint32_t firstIndex;
+                VkAccelerationStructureInstanceKHR instance;
                 LunaBuffer buffer;
                 VkAccelerationStructureKHR accelerationStructure;
                 LunaBuffer scratchBuffer;
@@ -100,8 +110,22 @@ class LightBaker
 
         bool CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize);
 
+        [[nodiscard]] LunaBuffer CreateLodVertexBufferForBLAS(const ModelLod &lod) const;
+
+        /// Create a single bottom-level acceleration structure
+        bool CreateBLAS(const VkDeviceOrHostAddressConstKHR &vertexDataAddress,
+                        const VkDeviceOrHostAddressConstKHR &indexDataAddress,
+                        uint32_t triangleCount,
+                        uint32_t maxVertex,
+                        const VkTransformMatrixKHR &transform,
+                        uint32_t firstIndex);
+
         /// Create the bottom-level acceleration structures
-        bool CreateBLAS(const std::vector<BrushMeshBuilder> &meshBuilders, uint32_t vertexCount);
+        bool CreateBLAS(const SearchPathManager &pathManager,
+                        const ActorDefinitionManager &definitionManager,
+                        const std::vector<BrushMeshBuilder> &meshBuilders,
+                        const std::vector<Actor> &actors,
+                        uint32_t vertexCount);
 
         /// Create the top-level acceleration structures
         bool CreateTLAS();
@@ -178,8 +202,8 @@ class LightBaker
         LunaBuffer accelerationStructureInstancesBuffer{};
         /// The top-level acceleration structure used for hardware acceleration of path tracing
         AccelerationStructure tlas{};
-        LunaBuffer vertexBuffer{};
-        LunaBuffer indexBuffer{};
+        LunaBuffer brushesVertexBuffer{};
+        LunaBuffer brushesIndexBuffer{};
         LunaImage luxelPositionsImage{};
         LunaImage luxelNormalsImage{};
         LunaImage luxelAlbedosImage{};

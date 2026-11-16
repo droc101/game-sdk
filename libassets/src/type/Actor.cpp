@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <glm/ext/matrix_transform.hpp>
 #include <libassets/type/Actor.h>
 #include <libassets/type/ActorDefinition.h>
 #include <libassets/type/Color.h>
@@ -183,6 +184,16 @@ void Actor::Write(DataWriter &writer) const
         connection.Write(writer);
     }
     Param::WriteKvList(writer, params);
+}
+
+glm::mat4 Actor::GetTransformMatrix() const
+{
+    glm::mat4 worldMatrix = glm::identity<glm::mat4>();
+    worldMatrix = glm::translate(worldMatrix, position);
+    worldMatrix = glm::rotate(worldMatrix, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+    worldMatrix = glm::rotate(worldMatrix, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+    worldMatrix = glm::rotate(worldMatrix, -glm::radians(rotation.z), glm::vec3(0, 0, 1));
+    return worldMatrix;
 }
 
 void Actor::RemoveUnknownParams(const ActorDefinition &definition)

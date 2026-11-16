@@ -12,13 +12,19 @@
 #include <cstdint>
 #include <filesystem>
 #include <glm/glm.hpp>
+#include <glslang/Public/ShaderLang.h>
 #include <libassets/asset/LevelMaterialAsset.h>
+#include <libassets/asset/ModelAsset.h>
 #include <libassets/asset/TextureAsset.h>
 #include <libassets/type/MapVertex.h>
+#include <libassets/type/ModelVertex.h>
+#include <libassets/type/renderDefs/ModelRenderDefinition.h>
+#include <libassets/util/ActorDefinitionManager.h>
 #include <libassets/util/Error.h>
 #include <libassets/util/LightmapHelpers.hpp>
 #include <libassets/util/Logger.h>
 #include <libassets/util/ShaderCompiler.h>
+#include <limits>
 #include <luna/luna.h>
 #include <luna/lunaBuffer.h>
 #include <luna/lunaCommandBuffer.h>
@@ -27,17 +33,24 @@
 #include <luna/lunaInstance.h>
 #include <luna/lunaSynchronization.h>
 #include <luna/lunaTypes.h>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 #include <volk.h>
 #include <vulkan/vulkan_core.h>
 #include "BrushMeshBuilder.h"
+#include "libassets/type/ActorDefinition.h"
+#include "libassets/type/ModelLod.h"
+#include "libassets/type/renderDefs/RenderDefinition.h"
+#include "libassets/util/SearchPathManager.h"
 #include "Light.h"
 #include "RenderdocManager.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/rotate_vector.hpp>
+
+#define INVALID_PRESENT_FOR_CAPTURING
 
 namespace
 {
@@ -691,38 +704,37 @@ bool LightBaker::CreateLightmap(Lightmap &lightmap, const glm::uvec2 &lightmapSi
 
 // TODO return an Error from this now that they can contain more details
 bool LightBaker::Bake(const SearchPathManager &pathManager,
-                      const std::vector<BrushMeshBuilder> &meshBuilders,
-                      const std::vector<Light> &lights,
-                      const glm::uvec2 &lightmapSize,
+                      const ActorDefinitionManager &definitionManager,
+                      const BakeSettings &settings,
                       std::vector<uint16_t> &pixelData,
-                      std::vector<uint16_t> &indirectLightingPixelData,
-                      const uint32_t bounceCount,
-                      const uint32_t sampleCount)
+                      std::vector<uint16_t> &indirectLightingPixelData)
 {
     if (enableRenderdocCapture)
     {
         RenderdocManager::StartCapture("bake");
     }
-    const uint64_t luxelCount = lightmapSize.x * lightmapSize.y;
+    const uint64_t luxelCount = settings.lightmapSize.x * settings.lightmapSize.y;
     const uint32_t width = std::min(luxelCount, uint64_t{MAX_DISPATCH_DIMENSION});
     const uint32_t height = std::min(std::max(luxelCount / width, uint64_t{1}), uint64_t{MAX_DISPATCH_DIMENSION});
     const uint32_t iterations = std::max(luxelCount / width / height, uint64_t{1});
-    const uint32_t perLuxelBounceIterations = sampleCount / SAMPLES_PER_THREAD;
-    const float totalBounceDispatches = static_cast<float>(iterations * perLuxelBounceIterations * bounceCount);
+    const uint32_t perLuxelBounceIterations = settings.sampleCount / SAMPLES_PER_THREAD;
+    const float totalBounceDispatches = static_cast<float>(iterations *
+                                                           perLuxelBounceIterations *
+                                                           settings.bounceCount);
     const float totalDispatches = static_cast<float>(2 * iterations) + totalBounceDispatches;
 
-    if (meshBuilders.empty())
+    if (settings.meshBuilders.empty())
     {
         return false;
     }
-    if (lights.size() > 16384)
+    if (settings.lights.size() > 16384)
     {
         Logger::Error("Maximum number of lights allowed in a level is 16384!");
         return false;
     }
 
     const LunaBufferCreationInfo lightsBufferCreationInfo = {
-        .size = sizeof(ShaderLight) * lights.size(),
+        .size = sizeof(ShaderLight) * settings.lights.size(),
         .alignment = physicalDeviceProperties.properties.limits.minStorageBufferOffsetAlignment,
         .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
     };
@@ -732,8 +744,8 @@ bool LightBaker::Bake(const SearchPathManager &pathManager,
     }
 
     std::vector<ShaderLight> shaderLights;
-    shaderLights.reserve(lights.size());
-    for (const Light &light: lights)
+    shaderLights.reserve(settings.lights.size());
+    for (const Light &light: settings.lights)
     {
         uint32_t cookieTextureIndex = 0;
         if (!light.cookie.empty())
@@ -744,26 +756,27 @@ bool LightBaker::Bake(const SearchPathManager &pathManager,
             }
             cookieTextureIndex++;
         }
-        shaderLights
-                .emplace_back(light.type,
-                              light.position,
-                              glm::rotate(glm::normalize(glm::vec3{std::sin(glm::radians(light.rotation.y)) *
-                                                                           std::sin(glm::radians(light.rotation.x)),
-                                                                   std::cos(glm::radians(light.rotation.x)),
-                                                                   std::cos(glm::radians(light.rotation.y)) *
-                                                                           std::sin(glm::radians(light.rotation.x))}),
-                                          -glm::radians(light.rotation.z),
-                                          light.negativeForwardDirection),
-                              light.negativeForwardDirection,
-                              light.color,
-                              light.brightness,
-                              light.constantAttenuation,
-                              light.linearAttenuation,
-                              light.quadraticAttenuation,
-                              light.attenuationMultiplier,
-                              light.brightAngle,
-                              light.fadingAngle,
-                              cookieTextureIndex);
+        const glm::vec3 unRotatedAxisV = glm::normalize(glm::vec3{
+            std::sin(glm::radians(light.rotation.y)) * std::sin(glm::radians(light.rotation.x)),
+            std::cos(glm::radians(light.rotation.x)),
+            std::cos(glm::radians(light.rotation.y)) * std::sin(glm::radians(light.rotation.x)),
+        });
+        const glm::vec3 cookieAxisV = glm::rotate(unRotatedAxisV,
+                                                  -glm::radians(light.rotation.z),
+                                                  light.negativeForwardDirection);
+        shaderLights.emplace_back(light.type,
+                                  light.position,
+                                  cookieAxisV,
+                                  light.negativeForwardDirection,
+                                  light.color,
+                                  light.brightness,
+                                  light.constantAttenuation,
+                                  light.linearAttenuation,
+                                  light.quadraticAttenuation,
+                                  light.attenuationMultiplier,
+                                  light.brightAngle,
+                                  light.fadingAngle,
+                                  cookieTextureIndex);
     }
     const LunaBufferWriteInfo lightsBufferWriteInfo = {
         .size = sizeof(ShaderLight) * shaderLights.size(),
@@ -778,37 +791,37 @@ bool LightBaker::Bake(const SearchPathManager &pathManager,
         return false;
     }
 
-    if (!CreateLightmap(lightmapOne, lightmapSize))
+    if (!CreateLightmap(lightmapOne, settings.lightmapSize))
     {
         return false;
     }
-    if (!CreateLightmap(lightmapTwo, lightmapSize))
+    if (!CreateLightmap(lightmapTwo, settings.lightmapSize))
     {
         return false;
     }
-    if (!CreateLightmap(lightmapThree, lightmapSize))
+    if (!CreateLightmap(lightmapThree, settings.lightmapSize))
     {
         return false;
     }
 
     uint32_t vertexCount{};
     uint32_t indexCount{};
-    if (!CreateVertexAndIndexBuffers(meshBuilders, vertexCount, indexCount))
+    if (!CreateVertexAndIndexBuffers(settings.meshBuilders, vertexCount, indexCount))
     {
         return false;
     }
 
-    if (!PrecomputeLuxelInformation(lightmapSize, indexCount))
+    if (!PrecomputeLuxelInformation(settings.lightmapSize, indexCount))
     {
         return false;
     }
 
-    if (!CacheEmissiveLuxelIndices(lightmapSize))
+    if (!CacheEmissiveLuxelIndices(settings.lightmapSize))
     {
         return false;
     }
 
-    if (!CreateBLAS(meshBuilders, vertexCount))
+    if (!CreateBLAS(pathManager, definitionManager, settings.meshBuilders, settings.actors, vertexCount))
     {
         return false;
     }
@@ -820,11 +833,11 @@ bool LightBaker::Bake(const SearchPathManager &pathManager,
     {
         return false;
     }
-    if (!CreateDirectLightingPipeline(lightmapSize, lights.size(), VK_FALSE))
+    if (!CreateDirectLightingPipeline(settings.lightmapSize, settings.lights.size(), VK_FALSE))
     {
         return false;
     }
-    if (!CreateGlobalIlluminationPipeline(lightmapSize, sampleCount))
+    if (!CreateGlobalIlluminationPipeline(settings.lightmapSize, settings.sampleCount))
     {
         return false;
     }
@@ -850,7 +863,7 @@ bool LightBaker::Bake(const SearchPathManager &pathManager,
             return false;
         }
     }
-    for (uint32_t bounce = 0; bounce < bounceCount; bounce++)
+    for (uint32_t bounce = 0; bounce < settings.bounceCount; bounce++)
     {
         lunaDeviceWaitIdle(device);
         const std::array descriptorSetWrites = {
@@ -905,11 +918,11 @@ bool LightBaker::Bake(const SearchPathManager &pathManager,
     }
 
     lunaDeviceWaitIdle(device);
-    AddPaddingToLightmap(lightmapSize,
+    AddPaddingToLightmap(settings.lightmapSize,
                          static_cast<float16_t *>(lunaGetBufferDataPointer(lightmapOne.buffer)),
                          indirectLightingPixelData);
 
-    if (!CreateDirectLightingPipeline(lightmapSize, lights.size(), VK_TRUE))
+    if (!CreateDirectLightingPipeline(settings.lightmapSize, settings.lights.size(), VK_TRUE))
     {
         return false;
     }
@@ -939,7 +952,7 @@ bool LightBaker::Bake(const SearchPathManager &pathManager,
     }
 
     lunaDeviceWaitIdle(device);
-    AddPaddingToLightmap(lightmapSize,
+    AddPaddingToLightmap(settings.lightmapSize,
                          static_cast<float16_t *>(lunaGetBufferDataPointer(lightmapOne.buffer)),
                          pixelData);
 
@@ -1007,7 +1020,7 @@ bool LightBaker::CreateVertexAndIndexBuffers(const std::vector<BrushMeshBuilder>
         .additionalUsageFlags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
                                 VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
     };
-    if (!CheckResult(lunaCreateBuffer(device, &vertexBufferCreationInfo, &vertexBuffer)))
+    if (!CheckResult(lunaCreateBuffer(device, &vertexBufferCreationInfo, &brushesVertexBuffer)))
     {
         return false;
     }
@@ -1017,7 +1030,7 @@ bool LightBaker::CreateVertexAndIndexBuffers(const std::vector<BrushMeshBuilder>
         .additionalUsageFlags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
                                 VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
     };
-    if (!CheckResult(lunaCreateBuffer(device, &indexBufferCreationInfo, &indexBuffer)))
+    if (!CheckResult(lunaCreateBuffer(device, &indexBufferCreationInfo, &brushesIndexBuffer)))
     {
         return false;
     }
@@ -1029,10 +1042,11 @@ bool LightBaker::CreateVertexAndIndexBuffers(const std::vector<BrushMeshBuilder>
         .sourceAccessMask = VK_ACCESS_2_NONE,
         .destinationStageMask = VK_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR |
                                 VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT,
-        .destinationAccessMask = VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR |
+        .destinationAccessMask = VK_ACCESS_2_ACCELERATION_STRUCTURE_READ_BIT_KHR |
+                                 VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR |
                                  VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT,
     };
-    if (!CheckResult(lunaWriteDataToBuffer(device, commandBuffer, vertexBuffer, &vertexBufferWriteInfo)))
+    if (!CheckResult(lunaWriteDataToBuffer(device, commandBuffer, brushesVertexBuffer, &vertexBufferWriteInfo)))
     {
         return false;
     }
@@ -1043,9 +1057,11 @@ bool LightBaker::CreateVertexAndIndexBuffers(const std::vector<BrushMeshBuilder>
         .sourceAccessMask = VK_ACCESS_2_NONE,
         .destinationStageMask = VK_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR |
                                 VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT,
-        .destinationAccessMask = VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR | VK_ACCESS_2_INDEX_READ_BIT,
+        .destinationAccessMask = VK_ACCESS_2_ACCELERATION_STRUCTURE_READ_BIT_KHR |
+                                 VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR |
+                                 VK_ACCESS_2_INDEX_READ_BIT,
     };
-    if (!CheckResult(lunaWriteDataToBuffer(device, commandBuffer, indexBuffer, &indexBufferWriteInfo)))
+    if (!CheckResult(lunaWriteDataToBuffer(device, commandBuffer, brushesIndexBuffer, &indexBufferWriteInfo)))
     {
         return false;
     }
@@ -1373,12 +1389,12 @@ bool LightBaker::PrecomputeLuxelInformation(const glm::uvec2 &lightmapSize, cons
 
     vkCmdBindPipeline(vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-    const VkBuffer vkVertexBuffer = lunaGetVkBuffer(vertexBuffer);
-    const VkDeviceSize vertexBufferOffset = lunaGetBufferOffset(vertexBuffer);
+    const VkBuffer vkVertexBuffer = lunaGetVkBuffer(brushesVertexBuffer);
+    const VkDeviceSize vertexBufferOffset = lunaGetBufferOffset(brushesVertexBuffer);
     vkCmdBindVertexBuffers(vkCommandBuffer, 0, 1, &vkVertexBuffer, &vertexBufferOffset);
     vkCmdBindIndexBuffer(vkCommandBuffer,
-                         lunaGetVkBuffer(indexBuffer),
-                         lunaGetBufferOffset(indexBuffer),
+                         lunaGetVkBuffer(brushesIndexBuffer),
+                         lunaGetBufferOffset(brushesIndexBuffer),
                          VK_INDEX_TYPE_UINT32);
     vkCmdBindDescriptorSets(vkCommandBuffer,
                             VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -1432,7 +1448,7 @@ bool LightBaker::CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize)
         .module = shaderModule,
         .specializationInfo = &specializationInfo,
     };
-    const std::array descriptorSetLayoutBindings = {
+    static constexpr std::array DESCRIPTOR_SET_LAYOUT_BINDINGS = {
         LunaDescriptorSetLayoutBinding{
             .bindingName = "Luxel Normals",
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
@@ -1446,13 +1462,13 @@ bool LightBaker::CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize)
             .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
         },
     };
-    const LunaDescriptorSetLayoutCreationInfo descriptorSetLayoutCreationInfo = {
-        .bindingCount = descriptorSetLayoutBindings.size(),
-        .bindings = descriptorSetLayoutBindings.data(),
+    static constexpr LunaDescriptorSetLayoutCreationInfo DESCRIPTOR_SET_LAYOUT_CREATION_INFO = {
+        .bindingCount = DESCRIPTOR_SET_LAYOUT_BINDINGS.size(),
+        .bindings = DESCRIPTOR_SET_LAYOUT_BINDINGS.data(),
     };
     LunaDescriptorSetLayout computePipelineDescriptorSetLayout{};
     if (!CheckResult(lunaCreateDescriptorSetLayout(device,
-                                                   &descriptorSetLayoutCreationInfo,
+                                                   &DESCRIPTOR_SET_LAYOUT_CREATION_INFO,
                                                    &computePipelineDescriptorSetLayout)))
     {
         return false;
@@ -1575,15 +1591,167 @@ bool LightBaker::CacheEmissiveLuxelIndices(const glm::uvec2 &lightmapSize)
     return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
 }
 
-bool LightBaker::CreateBLAS(const std::vector<BrushMeshBuilder> &meshBuilders, const uint32_t vertexCount)
+LunaBuffer LightBaker::CreateLodVertexBufferForBLAS(const ModelLod &lod) const
+{
+    const VkDeviceSize bufferSize = lod.vertices.size() * sizeof(decltype(lod.vertices)::value_type);
+
+    LunaBuffer buffer{};
+    const LunaBufferCreationInfo creationInfo = {
+        .size = bufferSize,
+        .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
+        .additionalUsageFlags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+                                VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+    };
+    if (!CheckResult(lunaCreateBuffer(device, &creationInfo, &buffer)))
+    {
+        return LUNA_NULL_HANDLE;
+    }
+    const LunaBufferWriteInfo writeInfo = {
+        .size = bufferSize,
+        .data = lod.vertices.data(),
+        .destinationStageMask = VK_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
+        .destinationAccessMask = VK_ACCESS_2_ACCELERATION_STRUCTURE_READ_BIT_KHR |
+                                 VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR,
+    };
+    if (!CheckResult(lunaWriteDataToBuffer(device, commandBuffer, buffer, &writeInfo)))
+    {
+        lunaDestroyBuffer(buffer);
+        return LUNA_NULL_HANDLE;
+    }
+    return buffer;
+}
+
+bool LightBaker::CreateBLAS(const VkDeviceOrHostAddressConstKHR &vertexDataAddress,
+                            const VkDeviceOrHostAddressConstKHR &indexDataAddress,
+                            const uint32_t triangleCount,
+                            const uint32_t maxVertex,
+                            const VkTransformMatrixKHR &transform,
+                            const uint32_t firstIndex)
+{
+    AccelerationStructure &blas = bottomLevelAccelerationStructures.emplace_back();
+    const VkAccelerationStructureGeometryTrianglesDataKHR geometryTrianglesData = {
+        .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR,
+        .vertexFormat = VK_FORMAT_R32G32B32_SFLOAT,
+        .vertexData = vertexDataAddress,
+        .vertexStride = sizeof(MapVertex),
+        .maxVertex = maxVertex,
+        .indexType = VK_INDEX_TYPE_UINT32,
+        .indexData = indexDataAddress,
+    };
+    const VkAccelerationStructureGeometryDataKHR geometryData = {
+        .triangles = geometryTrianglesData,
+    };
+    const VkAccelerationStructureGeometryKHR geometry = {
+        .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR,
+        .geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR,
+        .geometry = geometryData,
+        .flags = VK_GEOMETRY_OPAQUE_BIT_KHR,
+    };
+
+    const VkAccelerationStructureBuildGeometryInfoKHR buildSizesGeometryInfo = {
+        .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
+        .type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
+        .flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
+        .mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
+        .geometryCount = 1,
+        .pGeometries = &geometry,
+    };
+    VkAccelerationStructureBuildSizesInfoKHR buildSizesInfo = {
+        .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR,
+    };
+    vkGetAccelerationStructureBuildSizesKHR(lunaGetVkDevice(device),
+                                            VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+                                            &buildSizesGeometryInfo,
+                                            &triangleCount,
+                                            &buildSizesInfo);
+
+    const LunaBufferCreationInfo bufferCreationInfo = {
+        .size = buildSizesInfo.accelerationStructureSize,
+        .alignment = 256, // 256 is directly required by the spec
+        .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
+        .additionalUsageFlags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
+                                VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+    };
+    if (!CheckResult(lunaCreateBuffer(device, &bufferCreationInfo, &blas.buffer)))
+    {
+        return false;
+    }
+
+    const VkAccelerationStructureCreateInfoKHR createInfo = {
+        .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR,
+        .buffer = lunaGetVkBuffer(blas.buffer),
+        .offset = lunaGetBufferOffset(blas.buffer),
+        .size = lunaGetBufferSize(blas.buffer),
+        .type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
+    };
+    if (!CheckResult(vkCreateAccelerationStructureKHR(lunaGetVkDevice(device),
+                                                      &createInfo,
+                                                      nullptr,
+                                                      &blas.accelerationStructure)))
+    {
+        return false;
+    }
+
+    const LunaBufferCreationInfo scratchBufferCreationInfo = {
+        .size = buildSizesInfo.buildScratchSize,
+        .alignment = physicalDeviceAccelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment,
+        .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
+        .additionalUsageFlags = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+    };
+    if (!CheckResult(lunaCreateBuffer(device, &scratchBufferCreationInfo, &blas.scratchBuffer)))
+    {
+        return false;
+    }
+
+    const VkDeviceOrHostAddressKHR scratchDataAddress = {
+        .deviceAddress = lunaGetBufferDeviceAddress(device, blas.scratchBuffer),
+    };
+    const VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfo = {
+        .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
+        .type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
+        .flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
+        .mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
+        .dstAccelerationStructure = blas.accelerationStructure,
+        .geometryCount = 1,
+        .pGeometries = &geometry,
+        .scratchData = scratchDataAddress,
+    };
+    const VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo = {
+        .primitiveCount = triangleCount,
+    };
+    const VkAccelerationStructureBuildRangeInfoKHR *pBuildRangeInfo = &buildRangeInfo;
+    vkCmdBuildAccelerationStructuresKHR(lunaGetVkCommandBuffer(commandBuffer), 1, &buildGeometryInfo, &pBuildRangeInfo);
+
+    blas.instance.transform = transform;
+    blas.instance.instanceCustomIndex = firstIndex;
+    blas.instance.mask = 0xFF;
+    blas.instance.instanceShaderBindingTableRecordOffset = 0;
+    const VkAccelerationStructureDeviceAddressInfoKHR deviceAddressInfo = {
+        .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR,
+        .accelerationStructure = blas.accelerationStructure,
+    };
+    blas.instance.accelerationStructureReference = vkGetAccelerationStructureDeviceAddressKHR(lunaGetVkDevice(device),
+                                                                                              &deviceAddressInfo);
+
+    return true;
+}
+
+bool LightBaker::CreateBLAS(const SearchPathManager &pathManager,
+                            const ActorDefinitionManager &definitionManager,
+                            const std::vector<BrushMeshBuilder> &meshBuilders,
+                            const std::vector<Actor> &actors,
+                            const uint32_t vertexCount)
 {
     // The position MUST be at the start of the struct for the acceleration structure to work properly
     static_assert(offsetof(MapVertex, position) == 0, "MapVertex::position must be at offset zero!");
+    static_assert(offsetof(ModelVertex, position) == 0, "ModelVertex::position must be at offset zero!");
     // The position of the vertex must be three single precision floating point numbers,
     //  since we use VK_FORMAT_R32G32B32_SFLOAT as the vertex format.
     //  If the type used for position changes, update the vertex format accordingly.
     static_assert(std::same_as<decltype(MapVertex::position), glm::vec3>,
                   "MapVertex::position must be a three-component vector of single precision floats!");
+    static_assert(std::same_as<decltype(ModelVertex::position), glm::vec3>,
+                  "ModelVertex::position must be a three-component vector of single precision floats!");
 
 
     if (!CheckResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
@@ -1596,113 +1764,140 @@ bool LightBaker::CreateBLAS(const std::vector<BrushMeshBuilder> &meshBuilders, c
     VkDeviceSize indexBufferOffset = 0;
     for (const BrushMeshBuilder &meshBuilder: meshBuilders)
     {
-        AccelerationStructure &blas = bottomLevelAccelerationStructures.emplace_back();
+        static constexpr VkTransformMatrixKHR TRANSFORM_MATRIX_IDENTITY = {
+            {
+                {1, 0, 0, 0},
+                {0, 1, 0, 0},
+                {0, 0, 1, 0},
+            },
+        };
+
         const VkDeviceOrHostAddressConstKHR vertexDataAddress = {
-            .deviceAddress = lunaGetBufferDeviceAddress(device, vertexBuffer),
+            .deviceAddress = lunaGetBufferDeviceAddress(device, brushesVertexBuffer),
         };
         const VkDeviceOrHostAddressConstKHR indexDataAddress = {
-            .deviceAddress = lunaGetBufferDeviceAddress(device, indexBuffer) + indexBufferOffset,
+            .deviceAddress = lunaGetBufferDeviceAddress(device, brushesIndexBuffer) + indexBufferOffset,
         };
-        const VkAccelerationStructureGeometryTrianglesDataKHR geometryTrianglesData = {
-            .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR,
-            .vertexFormat = VK_FORMAT_R32G32B32_SFLOAT,
-            .vertexData = vertexDataAddress,
-            .vertexStride = sizeof(MapVertex),
-            .maxVertex = vertexCount - 1,
-            .indexType = VK_INDEX_TYPE_UINT32,
-            .indexData = indexDataAddress,
-        };
-        const VkAccelerationStructureGeometryDataKHR geometryData = {
-            .triangles = geometryTrianglesData,
-        };
-        const VkAccelerationStructureGeometryKHR geometry = {
-            .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR,
-            .geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR,
-            .geometry = geometryData,
-            .flags = VK_GEOMETRY_OPAQUE_BIT_KHR,
-        };
-
-        const VkAccelerationStructureBuildGeometryInfoKHR buildSizesGeometryInfo = {
-            .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
-            .type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
-            .flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
-            .mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
-            .geometryCount = 1,
-            .pGeometries = &geometry,
-        };
-        VkAccelerationStructureBuildSizesInfoKHR buildSizesInfo = {
-            .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR,
-        };
-        const uint32_t triangleCount = meshBuilder.GetIndices().size() / 3;
-        vkGetAccelerationStructureBuildSizesKHR(lunaGetVkDevice(device),
-                                                VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-                                                &buildSizesGeometryInfo,
-                                                &triangleCount,
-                                                &buildSizesInfo);
-
-        const LunaBufferCreationInfo bufferCreationInfo = {
-            .size = buildSizesInfo.accelerationStructureSize,
-            .alignment = 256, // 256 is directly required by the spec
-            .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
-            .additionalUsageFlags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
-                                    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-        };
-        if (!CheckResult(lunaCreateBuffer(device, &bufferCreationInfo, &blas.buffer)))
+        if (!CreateBLAS(vertexDataAddress,
+                        indexDataAddress,
+                        meshBuilder.GetIndices().size() / 3,
+                        vertexCount - 1,
+                        TRANSFORM_MATRIX_IDENTITY,
+                        indexBufferOffset / sizeof(uint32_t)))
         {
             return false;
         }
-
-        const VkAccelerationStructureCreateInfoKHR createInfo = {
-            .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR,
-            .buffer = lunaGetVkBuffer(blas.buffer),
-            .offset = lunaGetBufferOffset(blas.buffer),
-            .size = lunaGetBufferSize(blas.buffer),
-            .type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
-        };
-        if (!CheckResult(vkCreateAccelerationStructureKHR(lunaGetVkDevice(device),
-                                                          &createInfo,
-                                                          nullptr,
-                                                          &blas.accelerationStructure)))
-        {
-            return false;
-        }
-
-        const LunaBufferCreationInfo scratchBufferCreationInfo = {
-            .size = buildSizesInfo.buildScratchSize,
-            .alignment = physicalDeviceAccelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment,
-            .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
-            .additionalUsageFlags = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-        };
-        if (!CheckResult(lunaCreateBuffer(device, &scratchBufferCreationInfo, &blas.scratchBuffer)))
-        {
-            return false;
-        }
-
-        const VkDeviceOrHostAddressKHR scratchDataAddress = {
-            .deviceAddress = lunaGetBufferDeviceAddress(device, blas.scratchBuffer),
-        };
-        const VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfo = {
-            .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
-            .type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
-            .flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR,
-            .mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
-            .dstAccelerationStructure = blas.accelerationStructure,
-            .geometryCount = 1,
-            .pGeometries = &geometry,
-            .scratchData = scratchDataAddress,
-        };
-        const VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo = {
-            .primitiveCount = triangleCount,
-        };
-        const VkAccelerationStructureBuildRangeInfoKHR *pBuildRangeInfo = &buildRangeInfo;
-        vkCmdBuildAccelerationStructuresKHR(lunaGetVkCommandBuffer(commandBuffer),
-                                            1,
-                                            &buildGeometryInfo,
-                                            &pBuildRangeInfo);
-
-        blas.firstIndex = indexBufferOffset / sizeof(uint32_t);
 
         indexBufferOffset += meshBuilder.GetIndices().size() * sizeof(uint32_t);
+    }
+    for (const Actor &actor: actors)
+    {
+        const ActorDefinition &actorDefinition = definitionManager.GetActorDefinition(actor.className);
+        for (const std::shared_ptr<RenderDefinition> &renderDefinition: actorDefinition.renderDefinitions)
+        {
+            if (renderDefinition == nullptr ||
+                renderDefinition->GetType() != RenderDefinition::RenderDefinitionType::RD_TYPE_MODEL)
+            {
+                continue;
+            }
+            ModelRenderDefinition *modelRenderDefinition = dynamic_cast<ModelRenderDefinition *>(renderDefinition
+                                                                                                         .get());
+            if (modelRenderDefinition == nullptr)
+            {
+                continue;
+            }
+            if (!modelRenderDefinition->GetAffectLightmap(actor))
+            {
+                break;
+            }
+
+            ModelAsset modelAsset{};
+            const Error error = modelAsset.LoadFromAsset(pathManager
+                                                                 .GetAssetPath(modelRenderDefinition->GetModel(actor)));
+            if (error.Failed())
+            {
+                break;
+            }
+            const ModelLod &lod = modelAsset.GetLod(0);
+
+            const LunaBuffer vertexBuffer = CreateLodVertexBufferForBLAS(lod);
+            if (vertexBuffer == LUNA_NULL_HANDLE)
+            {
+                break;
+            }
+
+            for (const ModelLod::ModelComponent &component: lod.components)
+            {
+                // TODO: Respect the shadow casting property and transparency on the material, as well as mod color and vertex color
+
+                const VkDeviceSize indexBufferSize = component.indices.size() *
+                                                     sizeof(decltype(component.indices)::value_type);
+                LunaBuffer indexBuffer{};
+                const LunaBufferCreationInfo indexBufferCreationInfo = {
+                    .size = indexBufferSize,
+                    .memoryType = LUNA_MEMORY_TYPE_DEVICE_LOCAL,
+                    .additionalUsageFlags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+                                            VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+                };
+                if (!CheckResult(lunaCreateBuffer(device, &indexBufferCreationInfo, &indexBuffer)))
+                {
+                    continue;
+                }
+                const LunaBufferWriteInfo writeInfo = {
+                    .size = indexBufferSize,
+                    .data = component.indices.data(),
+                    .destinationStageMask = VK_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
+                    .destinationAccessMask = VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR,
+                };
+                if (!CheckResult(lunaWriteDataToBuffer(device, commandBuffer, indexBuffer, &writeInfo)))
+                {
+                    lunaDestroyBuffer(indexBuffer);
+                    continue;
+                }
+
+                glm::mat4 transformMatrix = actor.GetTransformMatrix();
+                transformMatrix = glm::translate(transformMatrix, component.centerOffset);
+
+                const VkDeviceOrHostAddressConstKHR vertexDataAddress = {
+                    .deviceAddress = lunaGetBufferDeviceAddress(device, vertexBuffer),
+                };
+                const VkDeviceOrHostAddressConstKHR indexDataAddress = {
+                    .deviceAddress = lunaGetBufferDeviceAddress(device, indexBuffer),
+                };
+                if (!CreateBLAS(vertexDataAddress,
+                                indexDataAddress,
+                                component.indices.size() / 3,
+                                lod.vertices.size(),
+                                VkTransformMatrixKHR{
+                                    {
+                                        {
+                                            transformMatrix[0][0],
+                                            transformMatrix[1][0],
+                                            transformMatrix[2][0],
+                                            transformMatrix[3][0],
+                                        },
+                                        {
+                                            transformMatrix[0][1],
+                                            transformMatrix[1][1],
+                                            transformMatrix[2][1],
+                                            transformMatrix[3][1],
+                                        },
+                                        {
+                                            transformMatrix[0][2],
+                                            transformMatrix[1][2],
+                                            transformMatrix[2][2],
+                                            transformMatrix[3][2],
+                                        },
+                                    },
+                                },
+                                0))
+                {
+                    continue;
+                }
+            }
+
+            break;
+        }
     }
 
     return CheckResult(lunaEndAndSubmitCommandBuffer(device, commandBuffer, &submitInfo));
@@ -1710,14 +1905,6 @@ bool LightBaker::CreateBLAS(const std::vector<BrushMeshBuilder> &meshBuilders, c
 
 bool LightBaker::CreateTLAS()
 {
-    static constexpr VkTransformMatrixKHR TRANSFORM_MATRIX_IDENTITY = {
-        {
-            {1, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 0, 1, 0},
-        },
-    };
-
     if (!CheckResult(lunaBeginSingleUseCommandBuffer(device, commandBuffer)))
     {
         return false;
@@ -1739,16 +1926,7 @@ bool LightBaker::CreateTLAS()
     instances.reserve(bottomLevelAccelerationStructures.size());
     for (const AccelerationStructure &blas: bottomLevelAccelerationStructures)
     {
-        const VkAccelerationStructureDeviceAddressInfoKHR deviceAddressInfo = {
-            .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR,
-            .accelerationStructure = blas.accelerationStructure,
-        };
-        instances.emplace_back(TRANSFORM_MATRIX_IDENTITY,
-                               blas.firstIndex,
-                               0xFF,
-                               0,
-                               VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR,
-                               vkGetAccelerationStructureDeviceAddressKHR(lunaGetVkDevice(device), &deviceAddressInfo));
+        instances.emplace_back(blas.instance);
     }
     const LunaBufferWriteInfo instancesBufferWriteInfo = {
         .size = instances.size() * sizeof(VkAccelerationStructureInstanceKHR),
@@ -1756,7 +1934,8 @@ bool LightBaker::CreateTLAS()
         .sourceStageMask = VK_PIPELINE_STAGE_2_NONE,
         .sourceAccessMask = VK_ACCESS_2_NONE,
         .destinationStageMask = VK_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
-        .destinationAccessMask = VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR,
+        .destinationAccessMask = VK_ACCESS_2_ACCELERATION_STRUCTURE_READ_BIT_KHR |
+                                 VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR,
     };
     if (!CheckResult(lunaWriteDataToBuffer(device,
                                            commandBuffer,
@@ -2169,7 +2348,7 @@ bool LightBaker::CreateAndWriteDescriptorSet()
         return false;
     }
 
-    constexpr std::array DESCRIPTOR_POOL_SIZES = {
+    static constexpr std::array DESCRIPTOR_POOL_SIZES = {
         VkDescriptorPoolSize{
             .type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
             .descriptorCount = 1,
@@ -2187,14 +2366,14 @@ bool LightBaker::CreateAndWriteDescriptorSet()
             .descriptorCount = 4,
         },
     };
-    const VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {
+    static constexpr VkDescriptorPoolCreateInfo DESCRIPTOR_POOL_CREATE_INFO = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .maxSets = 1,
         .poolSizeCount = DESCRIPTOR_POOL_SIZES.size(),
         .pPoolSizes = DESCRIPTOR_POOL_SIZES.data(),
     };
     if (!CheckResult(vkCreateDescriptorPool(lunaGetVkDevice(device),
-                                            &descriptorPoolCreateInfo,
+                                            &DESCRIPTOR_POOL_CREATE_INFO,
                                             nullptr,
                                             &descriptorPool)))
     {
@@ -2243,14 +2422,14 @@ bool LightBaker::CreateAndWriteDescriptorSet()
         .range = lunaGetBufferSize(emissiveLuxelIndicesBuffer),
     };
     const VkDescriptorBufferInfo vertexBufferInfo = {
-        .buffer = lunaGetVkBuffer(vertexBuffer),
-        .offset = lunaGetBufferOffset(vertexBuffer),
-        .range = lunaGetBufferSize(vertexBuffer),
+        .buffer = lunaGetVkBuffer(brushesVertexBuffer),
+        .offset = lunaGetBufferOffset(brushesVertexBuffer),
+        .range = lunaGetBufferSize(brushesVertexBuffer),
     };
     const VkDescriptorBufferInfo indexBufferInfo = {
-        .buffer = lunaGetVkBuffer(indexBuffer),
-        .offset = lunaGetBufferOffset(indexBuffer),
-        .range = lunaGetBufferSize(indexBuffer),
+        .buffer = lunaGetVkBuffer(brushesIndexBuffer),
+        .offset = lunaGetBufferOffset(brushesIndexBuffer),
+        .range = lunaGetBufferSize(brushesIndexBuffer),
     };
     const std::array descriptorSetWrites = {
         VkWriteDescriptorSet{

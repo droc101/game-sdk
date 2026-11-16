@@ -40,4 +40,6 @@ class Actor
         [[nodiscard]] nlohmann::ordered_json GenerateJson() const;
 
         void Write(DataWriter &writer) const;
+
+        [[nodiscard]] glm::mat4 GetTransformMatrix() const;
 };

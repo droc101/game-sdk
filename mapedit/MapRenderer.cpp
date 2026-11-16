@@ -14,6 +14,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <libassets/asset/LevelMaterialAsset.h>
 #include <libassets/asset/ModelAsset.h>
+#include <libassets/type/Brush.h>
 #include <libassets/type/Color.h>
 #include <libassets/type/MapVertex.h>
 #include <libassets/type/Material.h>
@@ -25,7 +26,6 @@
 #include <ranges>
 #include <string>
 #include <vector>
-#include "libassets/type/Brush.h"
 #include "MapEditor.h"
 #include "MaterialCache.h"
 #include "Viewport.h"
@@ -33,40 +33,40 @@
 bool MapRenderer::Init()
 {
     const Error vertexColorProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
-                                                                       "vertex_color.frag",
-                                                                       "assets/shaders/mapedit/"
-                                                                       "vertex_color.vert",
-                                                                       vertexColorProgram);
+                                                                      "vertex_color.frag",
+                                                                      "assets/shaders/mapedit/"
+                                                                      "vertex_color.vert",
+                                                                      vertexColorProgram);
 
     const Error gridProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/grid.frag",
-                                                                "assets/shaders/mapedit/grid.vert",
-                                                                gridProgram);
+                                                               "assets/shaders/mapedit/grid.vert",
+                                                               gridProgram);
 
     const Error uniformColorProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
-                                                                        "uniform_color.frag",
-                                                                        "assets/shaders/mapedit/"
-                                                                        "uniform_color.vert",
-                                                                        uniformColorProgram);
+                                                                       "uniform_color.frag",
+                                                                       "assets/shaders/mapedit/"
+                                                                       "uniform_color.vert",
+                                                                       uniformColorProgram);
 
     const Error spriteProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/sprite.frag",
-                                                                  "assets/shaders/mapedit/sprite.vert",
-                                                                  spriteProgram);
+                                                                 "assets/shaders/mapedit/sprite.vert",
+                                                                 spriteProgram);
 
     const Error shadedModelProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
-                                                                       "model_shaded.frag",
-                                                                       "assets/shaders/mapedit/"
-                                                                       "model_shaded.vert",
-                                                                       shadedModelProgram);
+                                                                      "model_shaded.frag",
+                                                                      "assets/shaders/mapedit/"
+                                                                      "model_shaded.vert",
+                                                                      shadedModelProgram);
 
     const Error brushProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/brush.frag",
-                                                                 "assets/shaders/mapedit/brush.vert",
-                                                                 brushProgram);
+                                                                "assets/shaders/mapedit/brush.vert",
+                                                                brushProgram);
 
     const Error worldBuffersProgramErrorCode = GLHelper::CreateProgram("assets/shaders/mapedit/"
-                                                                        "world_buffers.frag",
-                                                                        "assets/shaders/mapedit/"
-                                                                        "world_buffers.vert",
-                                                                        worldBuffersProgram);
+                                                                       "world_buffers.frag",
+                                                                       "assets/shaders/mapedit/"
+                                                                       "world_buffers.vert",
+                                                                       worldBuffersProgram);
 
     if (uniformColorProgramErrorCode.Failed() ||
         vertexColorProgramErrorCode.Failed() ||

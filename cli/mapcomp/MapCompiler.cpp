@@ -262,13 +262,17 @@ Error MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
         Logger::Info("Baking lightmap...");
         LightBaker &baker = LightBaker::Get();
         if (!baker.Bake(pathManager,
-                        mapMeshBuilders,
-                        lights,
-                        lightmapSize,
+                        defManager,
+                        LightBaker::BakeSettings{
+                            .lightmapSize = lightmapSize,
+                            .bounceCount = settings.bounceCount,
+                            .sampleCount = settings.sampleCount,
+                            .meshBuilders = mapMeshBuilders,
+                            .actors = actorsToWrite,
+                            .lights = lights,
+                        },
                         lightmapPixels,
-                        indirectLightingLightmapPixels,
-                        settings.bounceCount,
-                        settings.sampleCount))
+                        indirectLightingLightmapPixels))
         {
             // TODO return a useful error from LightBaker::Bake
             return Error("Failed to bake lighting");
