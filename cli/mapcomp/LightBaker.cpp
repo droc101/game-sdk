@@ -1621,19 +1621,19 @@ LunaBuffer LightBaker::CreateLodVertexBufferForBLAS(const ModelLod &lod) const
     return buffer;
 }
 
-bool LightBaker::CreateBLAS(const VkDeviceOrHostAddressConstKHR &vertexDataAddress,
-                            const VkDeviceOrHostAddressConstKHR &indexDataAddress,
-                            const uint32_t triangleCount,
-                            const uint32_t maxVertex,
-                            const VkTransformMatrixKHR &transform,
-                            const uint32_t firstIndex)
+template<typename VertexType> bool LightBaker::CreateBLAS(const VkDeviceOrHostAddressConstKHR &vertexDataAddress,
+                                                          const VkDeviceOrHostAddressConstKHR &indexDataAddress,
+                                                          const uint32_t triangleCount,
+                                                          const uint32_t maxVertex,
+                                                          const VkTransformMatrixKHR &transform,
+                                                          const uint32_t firstIndex)
 {
     AccelerationStructure &blas = bottomLevelAccelerationStructures.emplace_back();
     const VkAccelerationStructureGeometryTrianglesDataKHR geometryTrianglesData = {
         .sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR,
         .vertexFormat = VK_FORMAT_R32G32B32_SFLOAT,
         .vertexData = vertexDataAddress,
-        .vertexStride = sizeof(MapVertex),
+        .vertexStride = sizeof(VertexType),
         .maxVertex = maxVertex,
         .indexType = VK_INDEX_TYPE_UINT32,
         .indexData = indexDataAddress,
@@ -1778,12 +1778,12 @@ bool LightBaker::CreateBLAS(const SearchPathManager &pathManager,
         const VkDeviceOrHostAddressConstKHR indexDataAddress = {
             .deviceAddress = lunaGetBufferDeviceAddress(device, brushesIndexBuffer) + indexBufferOffset,
         };
-        if (!CreateBLAS(vertexDataAddress,
-                        indexDataAddress,
-                        meshBuilder.GetIndices().size() / 3,
-                        vertexCount - 1,
-                        TRANSFORM_MATRIX_IDENTITY,
-                        indexBufferOffset / sizeof(uint32_t)))
+        if (!CreateBLAS<MapVertex>(vertexDataAddress,
+                                   indexDataAddress,
+                                   meshBuilder.GetIndices().size() / 3,
+                                   vertexCount - 1,
+                                   TRANSFORM_MATRIX_IDENTITY,
+                                   indexBufferOffset / sizeof(uint32_t)))
         {
             return false;
         }
@@ -1864,33 +1864,33 @@ bool LightBaker::CreateBLAS(const SearchPathManager &pathManager,
                 const VkDeviceOrHostAddressConstKHR indexDataAddress = {
                     .deviceAddress = lunaGetBufferDeviceAddress(device, indexBuffer),
                 };
-                if (!CreateBLAS(vertexDataAddress,
-                                indexDataAddress,
-                                component.indices.size() / 3,
-                                lod.vertices.size(),
-                                VkTransformMatrixKHR{
-                                    {
-                                        {
-                                            transformMatrix[0][0],
-                                            transformMatrix[1][0],
-                                            transformMatrix[2][0],
-                                            transformMatrix[3][0],
-                                        },
-                                        {
-                                            transformMatrix[0][1],
-                                            transformMatrix[1][1],
-                                            transformMatrix[2][1],
-                                            transformMatrix[3][1],
-                                        },
-                                        {
-                                            transformMatrix[0][2],
-                                            transformMatrix[1][2],
-                                            transformMatrix[2][2],
-                                            transformMatrix[3][2],
-                                        },
-                                    },
-                                },
-                                0))
+                if (!CreateBLAS<ModelVertex>(vertexDataAddress,
+                                             indexDataAddress,
+                                             component.indices.size() / 3,
+                                             lod.vertices.size(),
+                                             VkTransformMatrixKHR{
+                                                 {
+                                                     {
+                                                         transformMatrix[0][0],
+                                                         transformMatrix[1][0],
+                                                         transformMatrix[2][0],
+                                                         transformMatrix[3][0],
+                                                     },
+                                                     {
+                                                         transformMatrix[0][1],
+                                                         transformMatrix[1][1],
+                                                         transformMatrix[2][1],
+                                                         transformMatrix[3][1],
+                                                     },
+                                                     {
+                                                         transformMatrix[0][2],
+                                                         transformMatrix[1][2],
+                                                         transformMatrix[2][2],
+                                                         transformMatrix[3][2],
+                                                     },
+                                                 },
+                                             },
+                                             0))
                 {
                     continue;
                 }

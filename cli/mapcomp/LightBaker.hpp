@@ -113,12 +113,12 @@ class LightBaker
         [[nodiscard]] LunaBuffer CreateLodVertexBufferForBLAS(const ModelLod &lod) const;
 
         /// Create a single bottom-level acceleration structure
-        bool CreateBLAS(const VkDeviceOrHostAddressConstKHR &vertexDataAddress,
-                        const VkDeviceOrHostAddressConstKHR &indexDataAddress,
-                        uint32_t triangleCount,
-                        uint32_t maxVertex,
-                        const VkTransformMatrixKHR &transform,
-                        uint32_t firstIndex);
+        template<typename VertexType> bool CreateBLAS(const VkDeviceOrHostAddressConstKHR &vertexDataAddress,
+                                                      const VkDeviceOrHostAddressConstKHR &indexDataAddress,
+                                                      uint32_t triangleCount,
+                                                      uint32_t maxVertex,
+                                                      const VkTransformMatrixKHR &transform,
+                                                      uint32_t firstIndex);
 
         /// Create the bottom-level acceleration structures
         bool CreateBLAS(const SearchPathManager &pathManager,
