@@ -42,6 +42,14 @@ if (ENABLE_MAPCOMP_NSIGHT)
 
     target_compile_definitions(mapcomp PRIVATE ENABLE_NSIGHT)
     target_include_directories(mapcomp SYSTEM PRIVATE "${NSIGHT_GRAPHICS_SDK_INCLUDE_DIR}")
+    if (MINGW)
+        # MINGW UCRT doesn't have shlobj_core.h, which is needed for NSIGHT. Since it's a subset of shlobj.h,
+        #  create shlobj_core.h as a wrapper around shlobj.h
+        file(GENERATE
+                OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/include/compat/shlobj_core.h"
+                CONTENT "#pragma once\n#include <shlobj.h>\n")
+        target_include_directories(mapcomp SYSTEM PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/include/compat")
+    endif ()
     if (NOT WIN32)
         target_link_libraries(mapcomp PRIVATE ${CMAKE_DL_LIBS})
     endif ()
