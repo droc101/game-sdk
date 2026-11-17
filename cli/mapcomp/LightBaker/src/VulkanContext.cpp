@@ -28,8 +28,8 @@
 static constexpr VkPipelineStageFlagBits2 WAIT_STAGE = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT |
                                                        VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
 
-VulkanContext::VulkanContext(const SearchPathManager &pathManager, const bool enableNsightCapture):
-    pathManager(pathManager)
+VulkanContext::VulkanContext(SearchPathManager pathManager, const bool enableNsightCapture):
+    pathManager(std::move(pathManager))
 {
 #ifdef INVALID_PRESENT_FOR_CAPTURING
     static constexpr std::array INSTANCE_EXTENSIONS = {VK_KHR_SURFACE_EXTENSION_NAME};

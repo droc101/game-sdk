@@ -22,9 +22,13 @@ class VulkanContext
         friend class LightBaker;
 
     public:
-        /// @warning The @c pathManager reference must outlive the constructed @c VulkanContext
-        VulkanContext(const SearchPathManager &pathManager, bool enableNsightCapture);
+        VulkanContext(SearchPathManager pathManager, bool enableNsightCapture);
         ~VulkanContext();
+
+        VulkanContext(const VulkanContext &other) = delete;
+        VulkanContext(VulkanContext &&other) noexcept = delete;
+        VulkanContext &operator=(const VulkanContext &other) = delete;
+        VulkanContext &operator=(VulkanContext &&other) noexcept = delete;
 
         bool GetTextureIndex(const std::string &texture, uint32_t &index);
         bool GetMaterialTextureIndex(const std::string &materialName, uint32_t &index);
@@ -52,7 +56,7 @@ class VulkanContext
 
         [[nodiscard]] bool SubmitFrameBoundary();
 
-        const SearchPathManager &pathManager;
+        SearchPathManager pathManager;
         bool valid{};
         bool frameBoundaryEnabled{};
         uint64_t currentFrameId{};
