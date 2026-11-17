@@ -191,9 +191,10 @@ AccelerationStructure::AccelerationStructure(const VulkanContext &context,
                                                      &geometryTrianglesData,
                                              uint32_t triangleCount,
                                              const VkTransformMatrixKHR &transform,
-                                             uint32_t firstIndex):
+                                             const uint32_t firstIndex,
+                                             const uint8_t mask):
     context(context),
-    instance(transform, firstIndex, 0xFF, 0, 0, 0)
+    instance(transform, firstIndex, mask, 0, 0, 0)
 {
     const VkDevice vkDevice = lunaGetVkDevice(context.device);
 

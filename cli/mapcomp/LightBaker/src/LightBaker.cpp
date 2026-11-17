@@ -1068,7 +1068,8 @@ bool LightBaker::CreateBLAS(const ActorDefinitionManager &definitionManager,
                                                                   trianglesData,
                                                                   meshBuilder.GetIndices().size() / 3,
                                                                   TRANSFORM_MATRIX_IDENTITY,
-                                                                  indexBufferOffset / sizeof(uint32_t));
+                                                                  indexBufferOffset / sizeof(uint32_t),
+                                                                  0xFF);
         if (!blas.IsValid())
         {
             return false;
@@ -1185,7 +1186,8 @@ bool LightBaker::CreateBLAS(const ActorDefinitionManager &definitionManager,
                                                                                   },
                                                                               },
                                                                           },
-                                                                          0);
+                                                                          0,
+                                                                          0x80);
                 if (!blas.IsValid())
                 {
                     return false;

@@ -25,7 +25,8 @@ class AccelerationStructure
                               const VkAccelerationStructureGeometryTrianglesDataKHR &geometryTrianglesData,
                               uint32_t triangleCount,
                               const VkTransformMatrixKHR &transform,
-                              uint32_t firstIndex);
+                              uint32_t firstIndex,
+                              uint8_t mask);
 
         void WriteToDescriptorSet(const VkDescriptorSet &descriptorSet, uint32_t bindingIndex) const;
 
