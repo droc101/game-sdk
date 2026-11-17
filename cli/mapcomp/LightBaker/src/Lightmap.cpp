@@ -71,8 +71,6 @@ void Lightmap::AddPadding(std::vector<uint16_t> &output) const
     static_assert(2 <= LightmapHelpers::LIGHTMAP_PADDING,
                   "Padding does not work correctly with fewer than two luxels of padding.");
 
-    static constexpr bool OVERWRITE_EDGE = false;
-
     lunaDeviceWaitIdle(context.device);
 
     float16_t *lightmapData = static_cast<float16_t *>(lunaGetBufferDataPointer(buffer));
@@ -106,29 +104,9 @@ void Lightmap::AddPadding(std::vector<uint16_t> &output) const
             if (hasFullPadding)
             {
                 edgeLuxel = &outputData[i + LightmapHelpers::LIGHTMAP_PADDING * lightmapWidthChannelCount - 3];
-
-                // Check the alpha of the luxel two rows down
-                if (NonZero(lightmapData[i + (LightmapHelpers::LIGHTMAP_PADDING + 2) * lightmapWidthChannelCount]) &&
-                    OVERWRITE_EDGE)
-                {
-                    // There are at least three used luxels.
-                    // If there are two or fewer luxels we just use the luxel at the edge,
-                    //  otherwise we pull the luxel inset one from the edge to reduce the effects of light leakage.
-
-                    std::copy_n(&lightmapData[i +
-                                              (LightmapHelpers::LIGHTMAP_PADDING + 1) * lightmapWidthChannelCount -
-                                              3],
-                                4,
-                                color.data());
-                    assert(NonZero(color.at(3))); // Internal state check.
-
-                    std::copy_n(color.data(), 4, edgeLuxel);
-                } else
-                {
-                    std::copy_n(&lightmapData[i + LightmapHelpers::LIGHTMAP_PADDING * lightmapWidthChannelCount - 3],
-                                4,
-                                color.data());
-                }
+                std::copy_n(&lightmapData[i + LightmapHelpers::LIGHTMAP_PADDING * lightmapWidthChannelCount - 3],
+                            4,
+                            color.data());
                 for (uint32_t j = LightmapHelpers::LIGHTMAP_PADDING; j > 0; j--)
                 {
                     std::copy_n(color.data(), 4, edgeLuxel - j * lightmapWidthChannelCount);
@@ -140,22 +118,8 @@ void Lightmap::AddPadding(std::vector<uint16_t> &output) const
 
             edgeLuxel = &outputData[i - 3];
 
-            if (i > 2 * lightmapWidthChannelCount &&
-                NonZero(lightmapData[i - 2 * lightmapWidthChannelCount]) &&
-                OVERWRITE_EDGE)
-            {
-                // There are at least three used luxels.
-                // If there are two or fewer luxels we just use the luxel at the edge,
-                //  otherwise we pull the luxel inset one from the edge to reduce the effects of light leakage.
+            std::copy_n(&lightmapData[i - 3], 4, color.data());
 
-                std::copy_n(&lightmapData[i - lightmapWidthChannelCount - 3], 4, color.data());
-                assert(NonZero(color.at(4))); // Internal state check.
-
-                std::copy_n(color.data(), 4, edgeLuxel);
-            } else
-            {
-                std::copy_n(&lightmapData[i - 3], 4, color.data());
-            }
             // We assume that there is sufficient padding, to save time on checking
             for (uint32_t j = LightmapHelpers::LIGHTMAP_PADDING; j > 0; j--)
             {
@@ -215,22 +179,7 @@ void Lightmap::AddPadding(std::vector<uint16_t> &output) const
                 }
 
                 edgeLuxel = &outputData[i + LightmapHelpers::LIGHTMAP_PADDING * 4 - 3];
-
-                // Check the alpha of the luxel two columns over
-                if (NonZero(lightmapData[i + (LightmapHelpers::LIGHTMAP_PADDING + 2) * 4]) && OVERWRITE_EDGE)
-                {
-                    // There are at least three used luxels.
-                    // If there are two or fewer luxels we just use the luxel at the edge,
-                    //  otherwise we pull the luxel inset one from the edge to reduce the effects of light leakage.
-
-                    std::copy_n(&lightmapData[i + (LightmapHelpers::LIGHTMAP_PADDING + 1) * 4 - 3], 4, color.data());
-                    assert(NonZero(color.at(4))); // Internal state check.
-
-                    std::copy_n(color.data(), 4, edgeLuxel);
-                } else
-                {
-                    std::copy_n(&lightmapData[i + LightmapHelpers::LIGHTMAP_PADDING * 4 - 3], 4, color.data());
-                }
+                std::copy_n(&lightmapData[i + LightmapHelpers::LIGHTMAP_PADDING * 4 - 3], 4, color.data());
                 for (uint32_t j = LightmapHelpers::LIGHTMAP_PADDING; j > 0; j--)
                 {
                     std::copy_n(color.data(), 4, edgeLuxel - j * 4);
@@ -290,21 +239,8 @@ void Lightmap::AddPadding(std::vector<uint16_t> &output) const
             }
 
             edgeLuxel = &outputData[i - 3];
+            std::copy_n(&lightmapData[i - 3], 4, color.data());
 
-            if (i > 2 * 4 && NonZero(lightmapData[i - 2 * 4]) && OVERWRITE_EDGE)
-            {
-                // There are at least three used luxels.
-                // If there are two or fewer luxels we just use the luxel at the edge,
-                //  otherwise we pull the luxel inset one from the edge to reduce the effects of light leakage.
-
-                std::copy_n(&lightmapData[i - 4 - 3], 4, color.data());
-                assert(NonZero(color.at(4))); // Internal state check.
-
-                std::copy_n(color.data(), 4, edgeLuxel);
-            } else
-            {
-                std::copy_n(&lightmapData[i - 3], 4, color.data());
-            }
             // We assume that there is sufficient padding, to save time on checking
             for (uint32_t j = LightmapHelpers::LIGHTMAP_PADDING; j > 0; j--)
             {
