@@ -14,14 +14,15 @@
 #include <string>
 #include <vector>
 #include "LightmapPacker.h"
+#include "VulkanContext.hpp"
 
 class BrushMeshBuilder
 {
         friend class LightmapPacker;
 
     public:
-
-        BrushMeshBuilder(const SearchPathManager &pathManager, const std::string &materialPath);
+        /// @warning The @c context reference must outlive the constructed @c BrushMeshBuilder
+        BrushMeshBuilder(VulkanContext &context, const SearchPathManager &pathManager, const std::string &materialPath);
 
         void AddFace(const Brush &brush, size_t faceIndex);
 
@@ -49,11 +50,11 @@ class BrushMeshBuilder
         [[nodiscard]] const std::string &GetMaterialPath() const;
 
     private:
+        std::reference_wrapper<VulkanContext> context;
         std::vector<MapVertex> vertices{};
         std::vector<uint32_t> indices{};
         std::vector<LightmapPacker::FaceData> faceDatas{};
         uint32_t currentIndex = 0;
-        SearchPathManager pathManager;
         std::string materialPath;
         LevelMaterialAsset materialAsset{};
 };

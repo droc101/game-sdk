@@ -3,13 +3,7 @@ project(mapcomp)
 
 set(CMAKE_CXX_STANDARD 23)
 
-FetchContent_Declare(
-        Luna
-        GIT_REPOSITORY https://github.com/NBT22/Luna
-        GIT_TAG b374cb2f6c479abe02dd4a882da7789528248e44
-        GIT_PROGRESS TRUE
-)
-FetchContent_MakeAvailable(Luna)
+add_subdirectory(LightBaker)
 
 add_executable(mapcomp mapcomp.cpp
         BrushMeshBuilder.cpp
@@ -19,15 +13,9 @@ add_executable(mapcomp mapcomp.cpp
         BrushCollisionBuilder.cpp
         BrushCollisionBuilder.h
         Light.h
-        LightBaker.cpp
-        LightBaker.hpp
         Light.cpp
         LightmapPacker.cpp
         LightmapPacker.h
-        RenderdocManager.cpp
-        RenderdocManager.h
-        NsightManager.cpp
-        NsightManager.h
 )
 
 if (ENABLE_MAPCOMP_RENDERDOC)
@@ -59,5 +47,5 @@ configure_sdk_cli_program(mapcomp)
 
 target_link_libraries(mapcomp PRIVATE
         glm::glm
-        Luna
+        LightBaker
 )

@@ -28,6 +28,7 @@
 #include "BrushMeshBuilder.h"
 #include "Light.h"
 #include "LightBaker.hpp"
+#include "VulkanContext.hpp"
 
 MapCompiler::MapCompiler(MapCompilerSettings &settings)
 {
@@ -87,6 +88,8 @@ LevelMaterialAsset MapCompiler::GetMapMaterial(const std::string &path) const
 Error MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
 {
     assert(buffer.empty());
+
+    VulkanContext vulkanContext = VulkanContext(pathManager, settings.enableNsightCapture);
 
     Logger::Info("Found {} brushes", map.brushes.size());
     Logger::Info("Found {} actors", map.actors.size());
@@ -209,7 +212,8 @@ Error MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
             {
                 if (!brushMeshBuilders.contains(face.material))
                 {
-                    brushMeshBuilders.emplace(face.material, BrushMeshBuilder(pathManager, face.material));
+                    brushMeshBuilders.emplace(face.material,
+                                              BrushMeshBuilder(vulkanContext, pathManager, face.material));
                 }
                 brushMeshBuilders.at(face.material).AddFace(brush, i);
             }
@@ -261,19 +265,15 @@ Error MapCompiler::SaveToBuffer(std::vector<uint8_t> &buffer)
     if (!skipLighting)
     {
         Logger::Info("Baking lightmap...");
-        LightBaker &baker = LightBaker::Get();
-        if (!baker.Bake(pathManager,
-                        defManager,
-                        LightBaker::BakeSettings{
-                            .lightmapSize = lightmapSize,
-                            .bounceCount = settings.bounceCount,
-                            .sampleCount = settings.sampleCount,
-                            .meshBuilders = mapMeshBuilders,
-                            .actors = actorsToWrite,
-                            .lights = lights,
-                        },
-                        lightmapPixels,
-                        indirectLightingLightmapPixels))
+        LightBaker baker = LightBaker(vulkanContext,
+                                      defManager,
+                                      mapMeshBuilders,
+                                      actorsToWrite,
+                                      lights,
+                                      lightmapSize,
+                                      settings.bounceCount,
+                                      settings.sampleCount);
+        if (!baker.Bake(lightmapPixels, indirectLightingLightmapPixels))
         {
             // TODO return a useful error from LightBaker::Bake
             return Error("Failed to bake lighting");

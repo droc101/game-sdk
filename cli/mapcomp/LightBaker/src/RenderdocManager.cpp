@@ -34,22 +34,6 @@ bool RenderdocManager::InitRenderdoc()
     return true;
 }
 
-void RenderdocManager::DestroyRenderdoc()
-{
-#ifdef ENABLE_RENDERDOC
-    if (renderdocApi != nullptr)
-    {
-        renderdocApi->Shutdown();
-        renderdocApi = nullptr;
-    }
-    if (renderdocLibrary != nullptr)
-    {
-        dlclose(renderdocLibrary);
-        renderdocLibrary = nullptr;
-    }
-#endif
-}
-
 void RenderdocManager::StartCapture(const char *captureName)
 {
 #ifdef ENABLE_RENDERDOC

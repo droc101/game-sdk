@@ -15,8 +15,6 @@ class RenderdocManager
 
         static bool InitRenderdoc();
 
-        static void DestroyRenderdoc();
-
         static void StartCapture(const char *captureName);
 
         static void EndCapture();

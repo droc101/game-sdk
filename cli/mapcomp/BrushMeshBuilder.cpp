@@ -17,9 +17,11 @@
 #include "LightBaker.hpp"
 #include "LightmapPacker.h"
 
-BrushMeshBuilder::BrushMeshBuilder(const SearchPathManager &pathManager, const std::string &materialPath)
+BrushMeshBuilder::BrushMeshBuilder(VulkanContext &context,
+                                   const SearchPathManager &pathManager,
+                                   const std::string &materialPath):
+    context(context)
 {
-    this->pathManager = pathManager;
     this->materialPath = materialPath;
     (void)materialAsset.LoadFromAsset(pathManager.GetAssetPath(materialPath));
 }
@@ -47,7 +49,7 @@ void BrushMeshBuilder::AddFace(const Brush &brush, const size_t faceIndex)
         vertex.position = matrix * glm::vec4(vertex.position, 1.0f);
         vertex.normal = matrix * glm::vec4(vertex.normal, 0.0f);
         vertex.emissive = materialAsset.emissive;
-        if (!LightBaker::Get().GetMaterialTextureIndex(face.material, vertex.textureIndex, pathManager))
+        if (!context.get().GetMaterialTextureIndex(face.material, vertex.textureIndex))
         {
             vertex.textureIndex = 0;
         }

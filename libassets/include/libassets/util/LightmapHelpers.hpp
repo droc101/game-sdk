@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <glm/glm.hpp>
 #include <stb_rect_pack.h>
 #include <vector>
